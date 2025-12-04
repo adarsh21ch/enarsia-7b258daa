@@ -11,6 +11,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { MessageCircle, Phone, Trash2, Calendar as CalendarIcon, ChevronDown, ChevronUp } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 import { cn } from '@/lib/utils';
+import { useCustomOptionsContext } from '@/contexts/CustomOptionsContext';
 
 interface ProspectRowProps {
   prospect: Prospect;
@@ -42,6 +43,14 @@ export function ProspectRow({
   const [isDeleting, setIsDeleting] = useState(false);
   const nameRef = useRef<HTMLInputElement>(null);
   const phoneRef = useRef<HTMLInputElement>(null);
+  
+  const { addOption, deleteOption, getOptionsForType, getCustomOptionsForType } = useCustomOptionsContext();
+
+  // Get combined options (default + custom)
+  const stageOptions = getOptionsForType('funnel_stage', FUNNEL_STAGES) as FunnelStage[];
+  const actionOptions = getOptionsForType('action_taken', EXTENDED_ACTIONS) as ExtendedActionTaken[];
+  const statusOptions = getOptionsForType('prospect_status', STATUSES) as ProspectStatus[];
+  const priorityOptions = getOptionsForType('priority', PRIORITIES) as PriorityLevel[];
 
   useEffect(() => {
     setLocalName(prospect.name);
@@ -160,9 +169,15 @@ export function ProspectRow({
           <td key={columnId} className="px-3 py-3" style={style}>
             <InlineSelect
               value={prospect.funnel_stage}
-              options={FUNNEL_STAGES}
+              options={stageOptions}
               onChange={(value) => onUpdate(prospect.id, { funnel_stage: value })}
               renderValue={(value) => <StageBadge stage={value} />}
+              placeholder="Select..."
+              optionType="funnel_stage"
+              customOptions={getCustomOptionsForType('funnel_stage')}
+              onAddOption={addOption}
+              onDeleteOption={deleteOption}
+              defaultOptions={FUNNEL_STAGES}
             />
           </td>
         );
@@ -171,10 +186,15 @@ export function ProspectRow({
           <td key={columnId} className="px-3 py-3" style={style}>
             <InlineSelect
               value={getActionDisplayValue()}
-              options={isCalling ? EXTENDED_ACTIONS : EXTENDED_ACTIONS.filter(a => a !== 'Enrolled')}
+              options={isCalling ? actionOptions : actionOptions.filter(a => a !== 'Enrolled')}
               onChange={handleActionChange}
               placeholder="Select..."
               renderValue={(value) => <ActionBadge action={value} />}
+              optionType="action_taken"
+              customOptions={getCustomOptionsForType('action_taken')}
+              onAddOption={addOption}
+              onDeleteOption={deleteOption}
+              defaultOptions={EXTENDED_ACTIONS}
             />
           </td>
         );
@@ -183,10 +203,15 @@ export function ProspectRow({
           <td key={columnId} className="px-3 py-3" style={style}>
             <InlineSelect
               value={prospect.prospect_status}
-              options={STATUSES}
+              options={statusOptions}
               onChange={(value) => onUpdate(prospect.id, { prospect_status: value })}
-              placeholder="Status"
+              placeholder="Select..."
               renderValue={(value) => <StatusBadge status={value} />}
+              optionType="prospect_status"
+              customOptions={getCustomOptionsForType('prospect_status')}
+              onAddOption={addOption}
+              onDeleteOption={deleteOption}
+              defaultOptions={STATUSES}
             />
           </td>
         );
@@ -195,9 +220,15 @@ export function ProspectRow({
           <td key={columnId} className="px-3 py-3" style={style}>
             <InlineSelect
               value={prospect.priority}
-              options={PRIORITIES}
+              options={priorityOptions}
               onChange={(value) => onUpdate(prospect.id, { priority: value })}
               renderValue={(value) => <PriorityBadge priority={value} />}
+              placeholder="Select..."
+              optionType="priority"
+              customOptions={getCustomOptionsForType('priority')}
+              onAddOption={addOption}
+              onDeleteOption={deleteOption}
+              defaultOptions={PRIORITIES}
             />
           </td>
         );

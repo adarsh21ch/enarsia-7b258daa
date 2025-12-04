@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Prospect, FUNNEL_STAGES, EXTENDED_ACTIONS, STATUSES, PRIORITIES, ExtendedActionTaken, ActionTaken } from '@/types/prospect';
+import { Prospect, FunnelStage, ProspectStatus, PriorityLevel, FUNNEL_STAGES, EXTENDED_ACTIONS, STATUSES, PRIORITIES, ExtendedActionTaken, ActionTaken } from '@/types/prospect';
 import { InlineSelect } from './InlineSelect';
 import { StatusBadge, PriorityBadge, StageBadge, ActionBadge } from './StatusBadge';
 import { Button } from '@/components/ui/button';
@@ -12,6 +12,7 @@ import { MessageCircle, Phone, Trash2, Calendar as CalendarIcon, ChevronDown, Ch
 import { format, parseISO, formatDistanceToNow } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { useActivityLogs } from '@/hooks/useActivityLogs';
+import { useCustomOptionsContext } from '@/contexts/CustomOptionsContext';
 
 interface MobileProspectCardProps {
   prospect: Prospect;
@@ -33,6 +34,13 @@ export function MobileProspectCard({ prospect, index, isCalling, onUpdate, onDel
   });
   const [isDeleting, setIsDeleting] = useState(false);
   const { activities } = useActivityLogs();
+  const { addOption, deleteOption, getOptionsForType, getCustomOptionsForType } = useCustomOptionsContext();
+
+  // Get combined options (cast to proper types)
+  const stageOptions = getOptionsForType('funnel_stage', FUNNEL_STAGES) as (typeof FUNNEL_STAGES[number])[];
+  const actionOptions = getOptionsForType('action_taken', EXTENDED_ACTIONS) as (typeof EXTENDED_ACTIONS[number])[];
+  const statusOptions = getOptionsForType('prospect_status', STATUSES) as (typeof STATUSES[number])[];
+  const priorityOptions = getOptionsForType('priority', PRIORITIES) as (typeof PRIORITIES[number])[];
 
   useEffect(() => {
     setLocalData({
@@ -133,32 +141,54 @@ export function MobileProspectCard({ prospect, index, isCalling, onUpdate, onDel
       {/* Status Chips Row */}
       <div className="px-4 py-3 flex flex-wrap items-center gap-2 bg-muted/10">
         {!isCalling && (
-          <InlineSelect
+          <InlineSelect<FunnelStage>
             value={prospect.funnel_stage}
-            options={FUNNEL_STAGES}
+            options={stageOptions as FunnelStage[]}
             onChange={(value) => onUpdate(prospect.id, { funnel_stage: value })}
             renderValue={(value) => <StageBadge stage={value} />}
+            placeholder="Stage"
+            optionType="funnel_stage"
+            customOptions={getCustomOptionsForType('funnel_stage')}
+            onAddOption={addOption}
+            onDeleteOption={deleteOption}
+            defaultOptions={FUNNEL_STAGES}
           />
         )}
-        <InlineSelect
+        <InlineSelect<ExtendedActionTaken>
           value={getActionDisplayValue()}
-          options={isCalling ? EXTENDED_ACTIONS : EXTENDED_ACTIONS.filter(a => a !== 'Enrolled')}
+          options={(isCalling ? actionOptions : actionOptions.filter(a => a !== 'Enrolled')) as ExtendedActionTaken[]}
           onChange={handleActionChange}
           placeholder="Action"
           renderValue={(value) => <ActionBadge action={value} />}
+          optionType="action_taken"
+          customOptions={getCustomOptionsForType('action_taken')}
+          onAddOption={addOption}
+          onDeleteOption={deleteOption}
+          defaultOptions={EXTENDED_ACTIONS}
         />
-        <InlineSelect
+        <InlineSelect<ProspectStatus>
           value={prospect.prospect_status}
-          options={STATUSES}
+          options={statusOptions as ProspectStatus[]}
           onChange={(value) => onUpdate(prospect.id, { prospect_status: value })}
           placeholder="Status"
           renderValue={(value) => <StatusBadge status={value} />}
+          optionType="prospect_status"
+          customOptions={getCustomOptionsForType('prospect_status')}
+          onAddOption={addOption}
+          onDeleteOption={deleteOption}
+          defaultOptions={STATUSES}
         />
-        <InlineSelect
+        <InlineSelect<PriorityLevel>
           value={prospect.priority}
-          options={PRIORITIES}
+          options={priorityOptions as PriorityLevel[]}
           onChange={(value) => onUpdate(prospect.id, { priority: value })}
           renderValue={(value) => <PriorityBadge priority={value} />}
+          placeholder="Priority"
+          optionType="priority"
+          customOptions={getCustomOptionsForType('priority')}
+          onAddOption={addOption}
+          onDeleteOption={deleteOption}
+          defaultOptions={PRIORITIES}
         />
       </div>
 
