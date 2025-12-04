@@ -1,12 +1,13 @@
 import { useState } from 'react';
 import { useProspectFunnelStats, FunnelStats } from '@/hooks/useProspectFunnelStats';
+import { useFunnelTracking } from '@/hooks/useFunnelTracking';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
-import { ChevronDown, ChevronUp, Flame, TrendingUp, TrendingDown, Minus, Sparkles, Users } from 'lucide-react';
+import { ChevronDown, ChevronUp, Flame, TrendingUp, TrendingDown, Minus, Sparkles, Users, Plus, Grid3X3 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { Button } from '@/components/ui/button';
-
+import { EditableCell } from './EditableCell';
 const STAGES = ['enrollment', 'day_1', 'day_2', 'day_3', 'minimum_bill', 'level_up', 'two_cc'] as const;
 type StageKey = typeof STAGES[number];
 
@@ -63,6 +64,7 @@ function getConversionTextColor(percentage: number) {
 
 export function FunnelTracker() {
   const { totals, loading, totalProspects } = useProspectFunnelStats();
+  const { rows, loading: funnelLoading, updateCell, addRow, totals: funnelTotals } = useFunnelTracking();
   const [fromStage, setFromStage] = useState<StageKey>('enrollment');
   const [toStage, setToStage] = useState<StageKey>('day_1');
   const [stepConversionOpen, setStepConversionOpen] = useState(true);
@@ -78,7 +80,7 @@ export function FunnelTracker() {
     return { from: fromVal, to: toVal, percentage };
   };
 
-  if (loading) {
+  if (loading || funnelLoading) {
     return (
       <div className="space-y-4">
         <Skeleton className="h-64 w-full rounded-2xl" />
@@ -104,6 +106,93 @@ export function FunnelTracker() {
             </div>
           </div>
           <p className="text-xs text-muted-foreground">Auto-synced from FollowUp</p>
+        </div>
+      </div>
+
+      {/* Funnel-wise Tracking Table */}
+      <div className="glass-card rounded-2xl overflow-hidden">
+        <div className="p-4 border-b border-border/50">
+          <div className="flex items-center gap-2">
+            <Grid3X3 className="h-5 w-5 text-primary" />
+            <h3 className="font-semibold">Funnel Tracker</h3>
+          </div>
+          <p className="text-xs text-muted-foreground mt-1">Click any cell to edit. Changes save automatically.</p>
+        </div>
+        
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b border-border/50 bg-muted/30">
+                <th className="px-3 py-3 text-left font-medium text-muted-foreground w-20">Funnel</th>
+                <th className="px-3 py-3 text-center font-medium text-muted-foreground">Day 1</th>
+                <th className="px-3 py-3 text-center font-medium text-muted-foreground">Day 2</th>
+                <th className="px-3 py-3 text-center font-medium text-muted-foreground">Min Billing</th>
+                <th className="px-3 py-3 text-center font-medium text-muted-foreground">Level Up</th>
+                <th className="px-3 py-3 text-center font-medium text-muted-foreground">2CC</th>
+              </tr>
+            </thead>
+            <tbody>
+              {rows.map((row) => (
+                <tr key={row.funnel_number} className="border-b border-border/30 hover:bg-muted/20 transition-colors">
+                  <td className="px-3 py-2 font-semibold text-muted-foreground">{row.funnel_number}</td>
+                  <td className="px-2 py-1">
+                    <EditableCell
+                      value={row.day_1}
+                      onChange={(v) => updateCell(row.funnel_number, 'day_1', v)}
+                    />
+                  </td>
+                  <td className="px-2 py-1">
+                    <EditableCell
+                      value={row.day_2}
+                      onChange={(v) => updateCell(row.funnel_number, 'day_2', v)}
+                    />
+                  </td>
+                  <td className="px-2 py-1">
+                    <EditableCell
+                      value={row.minimum_billing}
+                      onChange={(v) => updateCell(row.funnel_number, 'minimum_billing', v)}
+                    />
+                  </td>
+                  <td className="px-2 py-1">
+                    <EditableCell
+                      value={row.level_up}
+                      onChange={(v) => updateCell(row.funnel_number, 'level_up', v)}
+                    />
+                  </td>
+                  <td className="px-2 py-1">
+                    <EditableCell
+                      value={row.two_cc}
+                      onChange={(v) => updateCell(row.funnel_number, 'two_cc', v)}
+                    />
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+            <tfoot>
+              <tr className="border-t-2 border-border/50">
+                <td className="px-3 py-2">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={addRow}
+                    className="h-8 px-2 text-xs text-muted-foreground hover:text-foreground"
+                  >
+                    <Plus className="h-3 w-3 mr-1" />
+                    Add row
+                  </Button>
+                </td>
+                <td colSpan={5}></td>
+              </tr>
+              <tr className="bg-muted/40 font-semibold">
+                <td className="px-3 py-3 text-muted-foreground">TOTAL</td>
+                <td className="px-3 py-3 text-center">{funnelTotals.day_1}</td>
+                <td className="px-3 py-3 text-center">{funnelTotals.day_2}</td>
+                <td className="px-3 py-3 text-center">{funnelTotals.minimum_billing}</td>
+                <td className="px-3 py-3 text-center">{funnelTotals.level_up}</td>
+                <td className="px-3 py-3 text-center">{funnelTotals.two_cc}</td>
+              </tr>
+            </tfoot>
+          </table>
         </div>
       </div>
 
