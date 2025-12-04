@@ -1,36 +1,48 @@
 import { useState } from 'react';
-import { useFunnelTracking, FunnelRow } from '@/hooks/useFunnelTracking';
-import { EditableCell } from './EditableCell';
-import { Button } from '@/components/ui/button';
+import { useProspectFunnelStats, FunnelStats } from '@/hooks/useProspectFunnelStats';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Plus, ChevronDown, ChevronUp, Flame, TrendingUp, TrendingDown, Minus, Sparkles } from 'lucide-react';
+import { ChevronDown, ChevronUp, Flame, TrendingUp, TrendingDown, Minus, Sparkles, Users } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { Button } from '@/components/ui/button';
 
-const STAGES = ['day_1', 'day_2', 'minimum_billing', 'level_up', 'two_cc'] as const;
-const STAGE_LABELS: Record<string, string> = {
+const STAGES = ['enrollment', 'day_1', 'day_2', 'day_3', 'minimum_bill', 'level_up'] as const;
+type StageKey = typeof STAGES[number];
+
+const STAGE_LABELS: Record<StageKey, string> = {
+  enrollment: 'Enrollment',
   day_1: 'Day 1',
   day_2: 'Day 2',
-  minimum_billing: 'Min Billing',
+  day_3: 'Day 3',
+  minimum_bill: 'Min Bill',
   level_up: 'Level Up',
-  two_cc: '2CC',
 };
 
-const STAGE_COLORS: Record<string, string> = {
+const STAGE_COLORS: Record<StageKey, string> = {
+  enrollment: 'from-blue-500/20 to-blue-500/5',
   day_1: 'from-violet-500/20 to-violet-500/5',
   day_2: 'from-pink-500/20 to-pink-500/5',
-  minimum_billing: 'from-amber-500/20 to-amber-500/5',
-  level_up: 'from-emerald-500/20 to-emerald-500/5',
-  two_cc: 'from-cyan-500/20 to-cyan-500/5',
+  day_3: 'from-amber-500/20 to-amber-500/5',
+  minimum_bill: 'from-emerald-500/20 to-emerald-500/5',
+  level_up: 'from-cyan-500/20 to-cyan-500/5',
+};
+
+const STAGE_ICONS_COLORS: Record<StageKey, string> = {
+  enrollment: 'bg-blue-500',
+  day_1: 'bg-violet-500',
+  day_2: 'bg-pink-500',
+  day_3: 'bg-amber-500',
+  minimum_bill: 'bg-emerald-500',
+  level_up: 'bg-cyan-500',
 };
 
 const STEP_CONVERSIONS = [
-  { from: 'start', to: 'day_1', label: 'Start → Day 1' },
+  { from: 'enrollment', to: 'day_1', label: 'Enrollment → Day 1' },
   { from: 'day_1', to: 'day_2', label: 'Day 1 → Day 2' },
-  { from: 'day_2', to: 'minimum_billing', label: 'Day 2 → Min Billing' },
-  { from: 'minimum_billing', to: 'level_up', label: 'Min Billing → Level Up' },
-  { from: 'level_up', to: 'two_cc', label: 'Level Up → 2CC' },
+  { from: 'day_2', to: 'day_3', label: 'Day 2 → Day 3' },
+  { from: 'day_3', to: 'minimum_bill', label: 'Day 3 → Min Bill' },
+  { from: 'minimum_bill', to: 'level_up', label: 'Min Bill → Level Up' },
 ];
 
 function getConversionColor(percentage: number) {
@@ -46,25 +58,18 @@ function getConversionTextColor(percentage: number) {
 }
 
 export function FunnelTracker() {
-  const { rows, loading, updateCell, addRow, totals } = useFunnelTracking();
-  const [fromStage, setFromStage] = useState<string>('day_1');
-  const [toStage, setToStage] = useState<string>('day_2');
+  const { totals, loading, totalProspects } = useProspectFunnelStats();
+  const [fromStage, setFromStage] = useState<StageKey>('enrollment');
+  const [toStage, setToStage] = useState<StageKey>('day_1');
   const [stepConversionOpen, setStepConversionOpen] = useState(true);
 
-  const handleCellChange = (funnelNumber: number, field: keyof FunnelRow, value: number) => {
-    updateCell(funnelNumber, field, value);
-  };
-
-  const fromValue = fromStage === 'start' ? rows.length * 10 : totals[fromStage as keyof typeof totals] || 0;
-  const toValue = totals[toStage as keyof typeof totals] || 0;
+  const fromValue = totals[fromStage] || 0;
+  const toValue = totals[toStage] || 0;
   const conversionPercentage = fromValue > 0 ? Math.round((toValue / fromValue) * 100) : 0;
 
-  const getStepConversion = (from: string, to: string) => {
-    const fromVal = from === 'start' ? totals.day_1 : totals[from as keyof typeof totals] || 0;
-    const toVal = totals[to as keyof typeof totals] || 0;
-    if (from === 'start') {
-      return { from: fromVal || 1, to: fromVal, percentage: fromVal > 0 ? 100 : 0 };
-    }
+  const getStepConversion = (from: StageKey, to: StageKey) => {
+    const fromVal = totals[from] || 0;
+    const toVal = totals[to] || 0;
     const percentage = fromVal > 0 ? Math.round((toVal / fromVal) * 100) : 0;
     return { from: fromVal, to: toVal, percentage };
   };
@@ -78,65 +83,63 @@ export function FunnelTracker() {
     );
   }
 
+  const maxCount = Math.max(...Object.values(totals), 1);
+
   return (
     <div className="space-y-6 animate-fade-in">
-      {/* Funnel Table */}
+      {/* Total Prospects Card */}
+      <div className="glass-card rounded-2xl p-4 bg-gradient-to-br from-primary/10 to-primary/5">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="p-3 rounded-xl bg-primary/20">
+              <Users className="h-6 w-6 text-primary" />
+            </div>
+            <div>
+              <p className="text-sm text-muted-foreground">Total Prospects</p>
+              <p className="text-3xl font-bold">{totalProspects}</p>
+            </div>
+          </div>
+          <p className="text-xs text-muted-foreground">Auto-synced from FollowUp</p>
+        </div>
+      </div>
+
+      {/* Funnel Stage Distribution */}
       <div className="glass-card rounded-2xl overflow-hidden">
         <div className="p-4 border-b border-border/50">
           <div className="flex items-center gap-2">
             <Sparkles className="h-5 w-5 text-primary" />
-            <h3 className="font-semibold">Funnel Tracker</h3>
+            <h3 className="font-semibold">Funnel Stage Distribution</h3>
           </div>
-          <p className="text-xs text-muted-foreground mt-1">Click any cell to edit. Changes save automatically.</p>
+          <p className="text-xs text-muted-foreground mt-1">Prospect counts from your FollowUp list</p>
         </div>
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead>
-              <tr className="bg-muted/30">
-                <th className="py-3 px-3 text-left text-xs font-semibold text-muted-foreground w-16">Funnel</th>
-                {STAGES.map(stage => (
-                  <th key={stage} className={cn("py-3 px-2 text-center text-xs font-semibold", "bg-gradient-to-b", STAGE_COLORS[stage])}>
-                    {STAGE_LABELS[stage]}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {rows.map((row, idx) => (
-                <tr key={row.funnel_number} className={cn("border-b border-border/30", idx % 2 === 0 ? "bg-background" : "bg-muted/20")}>
-                  <td className="py-2 px-3 text-sm font-bold text-muted-foreground">{row.funnel_number}</td>
-                  {STAGES.map(stage => (
-                    <td key={stage} className="py-2 px-2">
-                      <EditableCell
-                        value={row[stage]}
-                        onChange={(value) => handleCellChange(row.funnel_number, stage, value)}
-                      />
-                    </td>
-                  ))}
-                </tr>
-              ))}
-              <tr>
-                <td colSpan={6} className="py-2 px-3">
-                  <Button variant="ghost" size="sm" onClick={addRow} className="text-xs text-primary hover:text-primary hover:bg-primary/10">
-                    <Plus className="h-3.5 w-3.5 mr-1" />
-                    Add row
-                  </Button>
-                </td>
-              </tr>
-            </tbody>
-            <tfoot>
-              <tr className="bg-gradient-to-r from-primary/10 via-primary/5 to-transparent">
-                <td className="py-3 px-3 text-sm font-bold">TOTAL</td>
-                {STAGES.map(stage => (
-                  <td key={stage} className="py-3 px-2">
-                    <div className="h-9 flex items-center justify-center text-base font-bold rounded-lg bg-background/80 backdrop-blur-sm shadow-sm">
-                      {totals[stage]}
-                    </div>
-                  </td>
-                ))}
-              </tr>
-            </tfoot>
-          </table>
+        
+        <div className="p-4 grid grid-cols-2 sm:grid-cols-3 gap-3">
+          {STAGES.map((stage, idx) => {
+            const count = totals[stage];
+            const percentage = (count / maxCount) * 100;
+            return (
+              <div
+                key={stage}
+                className={cn(
+                  "relative overflow-hidden rounded-xl p-4 bg-gradient-to-br border border-border/30",
+                  STAGE_COLORS[stage]
+                )}
+                style={{ animationDelay: `${idx * 50}ms` }}
+              >
+                <div className="flex items-start justify-between mb-2">
+                  <div className={cn("w-3 h-3 rounded-full", STAGE_ICONS_COLORS[stage])} />
+                  <span className="text-2xl font-bold">{count}</span>
+                </div>
+                <p className="text-xs font-medium text-muted-foreground">{STAGE_LABELS[stage]}</p>
+                <div className="mt-2 h-1.5 bg-background/50 rounded-full overflow-hidden">
+                  <div
+                    className={cn("h-full rounded-full transition-all duration-700", STAGE_ICONS_COLORS[stage])}
+                    style={{ width: `${percentage}%` }}
+                  />
+                </div>
+              </div>
+            );
+          })}
         </div>
       </div>
 
@@ -149,7 +152,7 @@ export function FunnelTracker() {
               <h3 className="font-semibold">Conversion Rate</h3>
             </div>
             <div className="flex items-center gap-2">
-              <Select value={fromStage} onValueChange={setFromStage}>
+              <Select value={fromStage} onValueChange={(v) => setFromStage(v as StageKey)}>
                 <SelectTrigger className="w-28 h-8 text-xs bg-muted/50 border-0">
                   <SelectValue />
                 </SelectTrigger>
@@ -160,12 +163,12 @@ export function FunnelTracker() {
                 </SelectContent>
               </Select>
               <span className="text-muted-foreground">→</span>
-              <Select value={toStage} onValueChange={setToStage}>
+              <Select value={toStage} onValueChange={(v) => setToStage(v as StageKey)}>
                 <SelectTrigger className="w-28 h-8 text-xs bg-muted/50 border-0">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent className="bg-popover border border-border z-50">
-                  {STAGES.filter(s => STAGES.indexOf(s) > STAGES.indexOf(fromStage as any)).map(stage => (
+                  {STAGES.filter(s => STAGES.indexOf(s) > STAGES.indexOf(fromStage)).map(stage => (
                     <SelectItem key={stage} value={stage} className="text-xs">{STAGE_LABELS[stage]}</SelectItem>
                   ))}
                 </SelectContent>
@@ -203,7 +206,7 @@ export function FunnelTracker() {
             </CollapsibleTrigger>
             <CollapsibleContent className="space-y-3 pt-2">
               {STEP_CONVERSIONS.map((step, i) => {
-                const conv = getStepConversion(step.from, step.to);
+                const conv = getStepConversion(step.from as StageKey, step.to as StageKey);
                 return (
                   <div
                     key={step.label}
