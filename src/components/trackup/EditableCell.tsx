@@ -43,6 +43,7 @@ export function EditableCell({ value, onChange, className }: EditableCellProps) 
       className={cn(
         "w-full h-8 px-1 text-center text-sm bg-transparent border-none",
         "focus:outline-none focus:bg-muted/50 rounded",
+        "[appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none",
         value === 0 ? "text-muted-foreground/50" : "text-foreground font-medium",
         className
       )}
