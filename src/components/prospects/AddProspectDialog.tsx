@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Plus } from 'lucide-react';
 import { Prospect } from '@/types/prospect';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 interface AddProspectDialogProps {
   onAdd: (prospect: Partial<Prospect>) => Promise<Prospect | null>;
@@ -16,6 +17,7 @@ export function AddProspectDialog({ onAdd }: AddProspectDialogProps) {
   const [phone, setPhone] = useState('');
   const [email, setEmail] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const isMobile = useIsMobile();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -40,9 +42,9 @@ export function AddProspectDialog({ onAdd }: AddProspectDialogProps) {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button size="sm" className="gap-1.5">
+        <Button size="sm" className="gap-1">
           <Plus className="h-4 w-4" />
-          Add Prospect
+          {isMobile ? 'Add' : 'Add Prospect'}
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-md bg-card border-border">
