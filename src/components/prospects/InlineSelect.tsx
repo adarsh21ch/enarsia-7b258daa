@@ -85,14 +85,28 @@ export function InlineSelect<T extends string>({
           }
         }}
       >
-        <SelectTrigger className={cn('h-8 text-xs border-0 bg-transparent hover:bg-muted focus:ring-1 focus:ring-accent/30', className)}>
+        <SelectTrigger 
+          className={cn(
+            'h-9 sm:h-8 text-xs border-0 bg-transparent hover:bg-muted focus:ring-1 focus:ring-accent/30 min-w-[70px]',
+            className
+          )}
+        >
           <SelectValue placeholder={placeholder}>
             {value && renderValue ? renderValue(value) : value || placeholder}
           </SelectValue>
         </SelectTrigger>
-        <SelectContent className="bg-popover border border-border z-50 max-h-[300px]">
+        <SelectContent 
+          className="bg-popover border border-border z-[100] max-h-[280px] overflow-y-auto"
+          position="popper"
+          sideOffset={4}
+          align="start"
+        >
           {options.map((option) => (
-            <SelectItem key={option} value={option} className="text-xs">
+            <SelectItem 
+              key={option} 
+              value={option} 
+              className="text-xs min-h-[44px] sm:min-h-[32px] flex items-center"
+            >
               <div className="flex items-center gap-2">
                 {renderValue ? renderValue(option) : option}
               </div>
@@ -101,7 +115,10 @@ export function InlineSelect<T extends string>({
           
           {/* Add new option */}
           {canManageOptions && (
-            <SelectItem value="__add_new__" className="text-xs text-accent border-t border-border mt-1 pt-1">
+            <SelectItem 
+              value="__add_new__" 
+              className="text-xs text-accent border-t border-border mt-1 pt-1 min-h-[44px] sm:min-h-[32px]"
+            >
               <div className="flex items-center gap-1.5">
                 <Plus className="h-3 w-3" />
                 <span>Add new...</span>
@@ -118,24 +135,28 @@ export function InlineSelect<T extends string>({
             <Button
               variant="ghost"
               size="icon"
-              className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
+              className="h-7 w-7 sm:h-6 sm:w-6 opacity-50 sm:opacity-0 group-hover:opacity-100 transition-opacity"
             >
-              <Settings2 className="h-3 w-3 text-muted-foreground" />
+              <Settings2 className="h-3.5 w-3.5 sm:h-3 sm:w-3 text-muted-foreground" />
             </Button>
           </PopoverTrigger>
-          <PopoverContent align="start" className="w-48 p-2 bg-popover border-border z-50">
+          <PopoverContent 
+            align="start" 
+            className="w-48 p-2 bg-popover border-border z-[100]"
+            sideOffset={4}
+          >
             <p className="text-xs font-medium text-muted-foreground mb-2">Custom options</p>
             <div className="space-y-1">
               {customOptions.map((opt) => (
-                <div key={opt.id} className="flex items-center justify-between text-xs py-1 px-2 rounded hover:bg-muted">
+                <div key={opt.id} className="flex items-center justify-between text-xs py-2 sm:py-1 px-2 rounded hover:bg-muted">
                   <span>{opt.option_value}</span>
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="h-5 w-5 text-muted-foreground hover:text-destructive"
+                    className="h-7 w-7 sm:h-5 sm:w-5 text-muted-foreground hover:text-destructive"
                     onClick={() => handleDeleteCustom(opt.id, opt.option_value)}
                   >
-                    <Trash2 className="h-3 w-3" />
+                    <Trash2 className="h-3.5 w-3.5 sm:h-3 sm:w-3" />
                   </Button>
                 </div>
               ))}
@@ -146,14 +167,14 @@ export function InlineSelect<T extends string>({
 
       {/* Add new dialog */}
       {isAddingNew && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={() => setIsAddingNew(false)}>
-          <div className="bg-card rounded-lg border border-border p-4 w-[280px] shadow-xl" onClick={e => e.stopPropagation()}>
+        <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/50 p-4" onClick={() => setIsAddingNew(false)}>
+          <div className="bg-card rounded-lg border border-border p-4 w-full max-w-[300px] shadow-xl" onClick={e => e.stopPropagation()}>
             <p className="text-sm font-medium mb-3">Add new option</p>
             <Input
               value={newValue}
               onChange={(e) => setNewValue(e.target.value)}
               placeholder="Enter option name..."
-              className="h-9 text-sm mb-3"
+              className="h-11 sm:h-9 text-sm mb-3"
               autoFocus
               onKeyDown={(e) => {
                 if (e.key === 'Enter') handleAddNew();
@@ -161,10 +182,10 @@ export function InlineSelect<T extends string>({
               }}
             />
             <div className="flex gap-2 justify-end">
-              <Button variant="outline" size="sm" onClick={() => setIsAddingNew(false)}>
+              <Button variant="outline" size="sm" className="h-10 sm:h-9" onClick={() => setIsAddingNew(false)}>
                 Cancel
               </Button>
-              <Button size="sm" onClick={handleAddNew} disabled={!newValue.trim()}>
+              <Button size="sm" className="h-10 sm:h-9" onClick={handleAddNew} disabled={!newValue.trim()}>
                 Add
               </Button>
             </div>

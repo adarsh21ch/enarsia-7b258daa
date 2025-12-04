@@ -38,18 +38,21 @@ interface ProspectTableProps {
   subFilter: 'all' | 'hot' | 'scheduled' | 'day1' | 'progress';
 }
 
-// Column configuration
+// Column configuration - desktop widths
 const COLUMNS = [
-  { id: 'index', label: '#', defaultWidth: 50, minWidth: 40 },
-  { id: 'name', label: 'Name', defaultWidth: 180, minWidth: 120 },
-  { id: 'phone', label: 'Phone', defaultWidth: 160, minWidth: 120 },
-  { id: 'stage', label: 'Stage', defaultWidth: 120, minWidth: 100 },
-  { id: 'action', label: 'Action', defaultWidth: 140, minWidth: 100 },
-  { id: 'status', label: 'Status', defaultWidth: 100, minWidth: 80 },
-  { id: 'priority', label: 'Priority', defaultWidth: 100, minWidth: 80 },
-  { id: 'lastContact', label: 'Last Contact', defaultWidth: 110, minWidth: 90 },
-  { id: 'actions', label: 'Actions', defaultWidth: 90, minWidth: 80 },
+  { id: 'index', label: '#', defaultWidth: 50, minWidth: 40, mobileWidth: 32, showOnMobile: false },
+  { id: 'name', label: 'Name', defaultWidth: 180, minWidth: 120, mobileWidth: 110, showOnMobile: true },
+  { id: 'phone', label: 'Phone', defaultWidth: 160, minWidth: 120, mobileWidth: 100, showOnMobile: false },
+  { id: 'stage', label: 'Stage', defaultWidth: 120, minWidth: 100, mobileWidth: 80, showOnMobile: true },
+  { id: 'action', label: 'Action', defaultWidth: 140, minWidth: 100, mobileWidth: 80, showOnMobile: false },
+  { id: 'status', label: 'Status', defaultWidth: 100, minWidth: 80, mobileWidth: 70, showOnMobile: false },
+  { id: 'priority', label: 'Priority', defaultWidth: 100, minWidth: 80, mobileWidth: 70, showOnMobile: true },
+  { id: 'lastContact', label: 'Contact', defaultWidth: 110, minWidth: 90, mobileWidth: 70, showOnMobile: true },
+  { id: 'actions', label: '', defaultWidth: 90, minWidth: 80, mobileWidth: 70, showOnMobile: true },
 ];
+
+// Mobile-optimized column order (Name, Stage, Priority, Last Contact, Actions)
+const MOBILE_COLUMN_ORDER = ['name', 'stage', 'priority', 'lastContact', 'actions'];
 
 export function ProspectTable({
   prospects,
@@ -292,17 +295,17 @@ export function ProspectTable({
       )}
 
       {/* Toolbar: Filters + Actions */}
-      <div className="bg-card/50 rounded-xl border border-border/50 p-3 space-y-3">
-        <div className="flex flex-col lg:flex-row gap-3 lg:items-center lg:justify-between">
+      <div className="bg-card/50 rounded-xl border border-border/50 p-2 sm:p-3 space-y-2 sm:space-y-3">
+        <div className="flex flex-col gap-2 sm:gap-3">
           <ProspectFilters filters={filters} onFiltersChange={setFilters} onExport={exportToCSV} />
-          <div className="flex gap-2 items-center">
+          <div className="flex gap-2 items-center justify-between sm:justify-end">
             {/* Mobile View Toggle */}
             {isMobile && (
               <div className="flex items-center bg-muted rounded-lg p-0.5">
                 <Button
                   variant={mobileViewMode === 'card' ? 'secondary' : 'ghost'}
                   size="sm"
-                  className="h-8 px-2"
+                  className="h-9 px-3"
                   onClick={() => setMobileViewMode('card')}
                 >
                   <LayoutGrid className="h-4 w-4" />
@@ -310,15 +313,17 @@ export function ProspectTable({
                 <Button
                   variant={mobileViewMode === 'table' ? 'secondary' : 'ghost'}
                   size="sm"
-                  className="h-8 px-2"
+                  className="h-9 px-3"
                   onClick={() => setMobileViewMode('table')}
                 >
                   <Table2 className="h-4 w-4" />
                 </Button>
               </div>
             )}
-            <ImportExcelDialog onImport={handleImportProspects} />
-            <AddProspectDialog onAdd={handleAddProspect} />
+            <div className="flex gap-2">
+              <ImportExcelDialog onImport={handleImportProspects} />
+              <AddProspectDialog onAdd={handleAddProspect} />
+            </div>
           </div>
         </div>
       </div>
@@ -368,16 +373,17 @@ export function ProspectTable({
       ) : (
         // Table Layout (Desktop or Mobile Table View)
         <div className="bg-card rounded-xl border border-border overflow-hidden shadow-sm">
-          <div className="overflow-x-auto">
-            <table className={cn("text-sm border-collapse", isMobile ? "w-max" : "w-full")}>
+          <div className="overflow-x-auto -webkit-overflow-scrolling-touch">
+            <table className={cn("text-sm border-collapse", isMobile ? "w-full min-w-[360px]" : "w-full")}>
               <thead className="bg-muted/50 text-xs font-semibold text-muted-foreground border-b border-border">
                 <tr>
-                  {columnOrder.map((columnId) => {
-                    const width = columnWidths[columnId];
+                  {(isMobile ? MOBILE_COLUMN_ORDER : columnOrder).map((columnId) => {
+                    const col = COLUMNS.find(c => c.id === columnId);
+                    const width = isMobile ? col?.mobileWidth : columnWidths[columnId];
                     const isDragging = draggedColumn === columnId;
                     const isResizing = resizingColumn === columnId;
                     
-                    // On mobile, only Name is sticky
+                    // On mobile, Name column is sticky
                     const isNameSticky = isMobile && columnId === 'name';
                     
                     return (
@@ -392,20 +398,16 @@ export function ProspectTable({
                           isDragging && "opacity-50 bg-primary/10",
                           columnId === 'index' && "text-center",
                           !isMobile && "hover:bg-muted/50 cursor-grab active:cursor-grabbing px-3 py-3",
-                          isNameSticky && "sticky left-0 z-20 bg-muted/50 shadow-[2px_0_4px_-2px_rgba(0,0,0,0.1)]"
+                          isNameSticky && "sticky left-0 z-20 bg-muted/50"
                         )}
                         style={{ 
-                          width: isMobile 
-                            ? (columnId === 'index' ? '36px' : columnId === 'name' ? '100px' : columnId === 'phone' ? '100px' : '80px') 
-                            : `${width}px`, 
-                          minWidth: isMobile 
-                            ? (columnId === 'index' ? '36px' : columnId === 'name' ? '100px' : columnId === 'phone' ? '100px' : '80px') 
-                            : `${width}px`
+                          width: `${width}px`, 
+                          minWidth: `${width}px`
                         }}
                       >
                         <div className="flex items-center gap-1">
                           {!isMobile && <GripVertical className="h-3 w-3 text-muted-foreground/50" />}
-                          <span className={cn(isMobile && "text-[10px] font-bold")}>{getColumnLabel(columnId)}</span>
+                          <span className={cn(isMobile && "text-[11px] font-semibold")}>{col?.label || columnId}</span>
                         </div>
                         {!isMobile && (
                           <div
@@ -433,8 +435,11 @@ export function ProspectTable({
                     onUpdate={onUpdate}
                     onDelete={onDelete}
                     isEven={index % 2 === 0}
-                    columnOrder={columnOrder}
-                    columnWidths={isMobile ? { index: 36, name: 100, phone: 100, stage: 80, action: 80, status: 70, priority: 70, lastContact: 80, actions: 70 } : columnWidths}
+                    columnOrder={isMobile ? MOBILE_COLUMN_ORDER : columnOrder}
+                    columnWidths={isMobile 
+                      ? Object.fromEntries(COLUMNS.map(c => [c.id, c.mobileWidth])) 
+                      : columnWidths
+                    }
                     isMobileTable={isMobile}
                   />
                 ))}
@@ -445,9 +450,8 @@ export function ProspectTable({
             "px-4 py-3 border-t border-border/50 bg-muted/20 text-xs text-muted-foreground flex items-center justify-between",
             isMobile && "px-2 py-2"
           )}>
-            <span>Showing {filteredProspects.length} of {baseProspects.length}</span>
+            <span>{filteredProspects.length} of {baseProspects.length}</span>
             {!isMobile && <span className="text-muted-foreground/60">Drag columns to reorder • Drag edges to resize</span>}
-            {isMobile && <span className="text-muted-foreground/60">Swipe → for more</span>}
           </div>
         </div>
       )}

@@ -127,9 +127,9 @@ export function ProspectRow({
     const bgColor = isEven ? "bg-muted/20" : "bg-card";
     
     const cellClass = cn(
-      "px-2 py-2 whitespace-nowrap",
-      !isMobileTable && "px-3 py-3",
-      isNameSticky && `sticky left-0 z-10 ${bgColor} shadow-[2px_0_4px_-2px_rgba(0,0,0,0.1)]`
+      "px-2 py-2",
+      !isMobileTable && "px-3 py-3 whitespace-nowrap",
+      isNameSticky && `sticky left-0 z-10 ${bgColor}`
     );
     
     switch (columnId) {
@@ -144,15 +144,39 @@ export function ProspectRow({
       case 'name':
         return (
           <td key={columnId} className={cellClass} style={style}>
-            <button
-              onClick={onToggleExpand}
-              className={cn(
-                "text-left font-semibold text-foreground hover:text-primary transition-colors cursor-pointer bg-transparent border-0 p-0 truncate block max-w-full",
-                isMobileTable && "text-xs"
-              )}
-            >
-              {localName}
-            </button>
+            {isMobileTable ? (
+              // Mobile: Name + Phone + Call buttons stacked
+              <div className="space-y-0.5">
+                <button
+                  onClick={onToggleExpand}
+                  className="text-left font-semibold text-foreground hover:text-primary text-xs truncate block w-full"
+                >
+                  {localName}
+                </button>
+                <div className="flex items-center gap-1">
+                  <a 
+                    href={`tel:${cleanPhoneNumber(prospect.phone)}`}
+                    className="text-[10px] text-muted-foreground hover:text-primary truncate"
+                  >
+                    {localPhone}
+                  </a>
+                  <Button variant="ghost" size="icon" className="h-5 w-5 shrink-0" onClick={openCall}>
+                    <Phone className="h-2.5 w-2.5 text-accent" />
+                  </Button>
+                  <Button variant="ghost" size="icon" className="h-5 w-5 shrink-0 text-green-500" onClick={openWhatsApp}>
+                    <MessageCircle className="h-2.5 w-2.5" />
+                  </Button>
+                </div>
+              </div>
+            ) : (
+              // Desktop: Just name
+              <button
+                onClick={onToggleExpand}
+                className="text-left font-semibold text-foreground hover:text-primary transition-colors cursor-pointer bg-transparent border-0 p-0 truncate block max-w-full"
+              >
+                {localName}
+              </button>
+            )}
           </td>
         );
       case 'phone':
@@ -161,30 +185,16 @@ export function ProspectRow({
             <div className="flex items-center gap-0.5">
               <a 
                 href={`tel:${cleanPhoneNumber(prospect.phone)}`}
-                className={cn("text-sm text-muted-foreground font-medium hover:text-primary", isMobileTable && "text-[11px]")}
+                className="text-sm text-muted-foreground font-medium hover:text-primary"
               >
                 {localPhone}
               </a>
-              {isMobileTable && (
-                <>
-                  <Button variant="ghost" size="icon" className="h-6 w-6 shrink-0" onClick={openCall}>
-                    <Phone className="h-3 w-3 text-accent" />
-                  </Button>
-                  <Button variant="ghost" size="icon" className="h-6 w-6 shrink-0 text-green-500" onClick={openWhatsApp}>
-                    <MessageCircle className="h-3 w-3" />
-                  </Button>
-                </>
-              )}
-              {!isMobileTable && (
-                <>
-                  <Button variant="ghost" size="icon" className="h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity" onClick={openCall}>
-                    <Phone className="h-3.5 w-3.5 text-accent" />
-                  </Button>
-                  <Button variant="ghost" size="icon" className="h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity text-green-500 hover:text-green-600" onClick={openWhatsApp}>
-                    <MessageCircle className="h-3.5 w-3.5" />
-                  </Button>
-                </>
-              )}
+              <Button variant="ghost" size="icon" className="h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity" onClick={openCall}>
+                <Phone className="h-3.5 w-3.5 text-accent" />
+              </Button>
+              <Button variant="ghost" size="icon" className="h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity text-green-500 hover:text-green-600" onClick={openWhatsApp}>
+                <MessageCircle className="h-3.5 w-3.5" />
+              </Button>
             </div>
           </td>
         );
