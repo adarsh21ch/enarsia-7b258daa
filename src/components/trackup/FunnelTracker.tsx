@@ -48,10 +48,10 @@ export function FunnelTracker() {
 
       {/* Conversion Rate */}
       <div className="glass-card rounded-2xl overflow-hidden">
-        <div className="p-4 border-b border-border/50 bg-gradient-to-r from-orange-500/5 to-transparent">
+        <div className="p-4 border-b border-border/50">
           <div className="flex items-center gap-2">
             <Flame className="h-5 w-5 text-orange-500" />
-            <h3 className="font-semibold">Conversion Rate (Manual Planning)</h3>
+            <h3 className="font-semibold">Conversion Rate</h3>
           </div>
         </div>
         

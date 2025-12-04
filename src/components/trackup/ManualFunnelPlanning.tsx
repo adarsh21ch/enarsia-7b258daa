@@ -25,13 +25,13 @@ export function ManualFunnelPlanning() {
 
   return (
     <div className="glass-card rounded-2xl overflow-hidden">
-      <div className="p-4 border-b border-border/50 bg-gradient-to-r from-amber-500/5 to-transparent">
+      <div className="p-4 border-b border-border/50">
         <div className="flex items-center gap-2">
-          <Sparkles className="h-5 w-5 text-amber-500" />
-          <h3 className="font-semibold">Manual Funnel Planning</h3>
+          <Sparkles className="h-5 w-5 text-primary" />
+          <h3 className="font-semibold">Funnel Tracker</h3>
         </div>
         <p className="text-xs text-muted-foreground mt-1">
-          Click any cell to edit. Changes save automatically. Use for targets/planning.
+          Click any cell to edit. Changes save automatically.
         </p>
       </div>
 
@@ -92,7 +92,7 @@ export function ManualFunnelPlanning() {
       </div>
 
       {/* Totals Row */}
-      <div className="bg-amber-500/10 border-t border-amber-500/20">
+      <div className="bg-muted/40 border-t border-border/50">
         <table className="w-full">
           <tbody>
             <tr>
@@ -101,7 +101,7 @@ export function ManualFunnelPlanning() {
               </td>
               {STAGES.map(stage => (
                 <td key={stage} className="px-2 py-3 text-center min-w-[80px]">
-                  <span className="text-sm font-bold text-amber-600 dark:text-amber-400">{totals[stage]}</span>
+                  <span className="text-sm font-bold text-primary">{totals[stage]}</span>
                 </td>
               ))}
             </tr>
