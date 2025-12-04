@@ -6,7 +6,7 @@ import { BottomNav } from '@/components/layout/BottomNav';
 import { EditProfileDialog } from '@/components/profile/EditProfileDialog';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { User, LogOut, Settings, Bell, HelpCircle, ChevronRight, Crown, Phone, Building2, MapPin, Loader2 } from 'lucide-react';
+import { User, LogOut, ChevronRight, Crown, Phone, Building2, MapPin, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import nevoraLogo from '@/assets/nevorai-logo.jpeg';
 
@@ -156,63 +156,6 @@ export default function Profile() {
                 <User className="h-5 w-5" />
               </div>
               <span className="font-medium">Edit Profile</span>
-            </div>
-            <ChevronRight className="h-5 w-5 text-muted-foreground" />
-          </button>
-
-          <button
-            className={cn(
-              "w-full relative overflow-hidden rounded-xl p-4",
-              "bg-gradient-to-r backdrop-blur-sm",
-              "border border-border/50 shadow-sm",
-              "flex items-center justify-between",
-              "transition-all duration-300 hover:shadow-md hover:scale-[1.01]",
-              "from-violet-500/20 to-violet-500/5"
-            )}
-          >
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-card/50">
-                <Bell className="h-5 w-5" />
-              </div>
-              <span className="font-medium">Notifications</span>
-            </div>
-            <ChevronRight className="h-5 w-5 text-muted-foreground" />
-          </button>
-
-          <button
-            className={cn(
-              "w-full relative overflow-hidden rounded-xl p-4",
-              "bg-gradient-to-r backdrop-blur-sm",
-              "border border-border/50 shadow-sm",
-              "flex items-center justify-between",
-              "transition-all duration-300 hover:shadow-md hover:scale-[1.01]",
-              "from-slate-500/20 to-slate-500/5"
-            )}
-          >
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-card/50">
-                <Settings className="h-5 w-5" />
-              </div>
-              <span className="font-medium">Settings</span>
-            </div>
-            <ChevronRight className="h-5 w-5 text-muted-foreground" />
-          </button>
-
-          <button
-            className={cn(
-              "w-full relative overflow-hidden rounded-xl p-4",
-              "bg-gradient-to-r backdrop-blur-sm",
-              "border border-border/50 shadow-sm",
-              "flex items-center justify-between",
-              "transition-all duration-300 hover:shadow-md hover:scale-[1.01]",
-              "from-emerald-500/20 to-emerald-500/5"
-            )}
-          >
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-card/50">
-                <HelpCircle className="h-5 w-5" />
-              </div>
-              <span className="font-medium">Help & Support</span>
             </div>
             <ChevronRight className="h-5 w-5 text-muted-foreground" />
           </button>
