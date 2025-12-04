@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useProspects } from '@/hooks/useProspects';
 import { useTodos } from '@/hooks/useTodos';
+import { useUserTargets } from '@/hooks/useUserTargets';
 import { BottomNav } from '@/components/layout/BottomNav';
 import { StageBadge, StatusBadge, PriorityBadge } from '@/components/prospects/StatusBadge';
 import { Button } from '@/components/ui/button';
@@ -11,32 +12,27 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Progress } from '@/components/ui/progress';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Label } from '@/components/ui/label';
 import { 
   Loader2, Users, CheckCircle, TrendingUp, Target, Calendar as CalendarIcon,
-  Plus, Trash2, Phone, MessageCircle, ChevronRight
+  Plus, Trash2, Phone, MessageCircle, ChevronRight, Settings2
 } from 'lucide-react';
 import { format, parseISO, isToday, isPast } from 'date-fns';
 import { cn } from '@/lib/utils';
 import nevoraLogo from '@/assets/nevorai-logo.jpeg';
 import { FUNNEL_STAGES, FunnelStage } from '@/types/prospect';
 
-const MONTHLY_TARGETS: Record<FunnelStage, number> = {
-  'Enrollment': 100,
-  'Day 1': 80,
-  'Day 2': 60,
-  'Day 3': 50,
-  'Minimum Bill': 30,
-  'Level Up': 20,
-  '2CC': 10,
-};
-
 export default function Home() {
   const navigate = useNavigate();
   const { user, loading: authLoading } = useAuth();
   const { prospects, loading: prospectsLoading } = useProspects();
   const { todos, loading: todosLoading, addTodo, toggleTodo, deleteTodo } = useTodos();
+  const { targets, loading: targetsLoading, updateTarget } = useUserTargets();
   const [newTodoTitle, setNewTodoTitle] = useState('');
   const [newTodoDueDate, setNewTodoDueDate] = useState<Date | undefined>();
+  const [editTargetsOpen, setEditTargetsOpen] = useState(false);
+  const [editingTargets, setEditingTargets] = useState<Record<string, number>>({});
 
   useEffect(() => {
     if (!user && !authLoading) {
@@ -156,15 +152,68 @@ export default function Home() {
 
         {/* Monthly Targets */}
         <div className="bg-card rounded-2xl p-4 border border-border/50">
-          <div className="flex items-center gap-2 mb-4">
-            <Target className="h-5 w-5 text-primary" />
-            <h3 className="font-semibold">Monthly Targets</h3>
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-2">
+              <Target className="h-5 w-5 text-primary" />
+              <h3 className="font-semibold">Monthly Targets</h3>
+            </div>
+            <Dialog open={editTargetsOpen} onOpenChange={setEditTargetsOpen}>
+              <DialogTrigger asChild>
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  className="h-8 text-xs"
+                  onClick={() => setEditingTargets({ ...targets })}
+                >
+                  <Settings2 className="h-3.5 w-3.5 mr-1" />
+                  Edit
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-md">
+                <DialogHeader>
+                  <DialogTitle>Edit Monthly Targets</DialogTitle>
+                </DialogHeader>
+                <div className="space-y-4 py-4 max-h-[60vh] overflow-y-auto">
+                  {FUNNEL_STAGES.map(stage => (
+                    <div key={stage} className="flex items-center justify-between gap-4">
+                      <Label className="text-sm font-medium flex-1">{stage}</Label>
+                      <Input
+                        type="number"
+                        min="0"
+                        value={editingTargets[stage] || 0}
+                        onChange={(e) => setEditingTargets(prev => ({
+                          ...prev,
+                          [stage]: parseInt(e.target.value) || 0
+                        }))}
+                        className="w-24 text-right"
+                      />
+                    </div>
+                  ))}
+                </div>
+                <div className="flex justify-end gap-2">
+                  <Button variant="outline" onClick={() => setEditTargetsOpen(false)}>
+                    Cancel
+                  </Button>
+                  <Button onClick={async () => {
+                    // Save all edited targets
+                    for (const stage of FUNNEL_STAGES) {
+                      if (editingTargets[stage] !== targets[stage]) {
+                        await updateTarget(stage, editingTargets[stage]);
+                      }
+                    }
+                    setEditTargetsOpen(false);
+                  }}>
+                    Save Targets
+                  </Button>
+                </div>
+              </DialogContent>
+            </Dialog>
           </div>
           <div className="space-y-3">
             {FUNNEL_STAGES.map(stage => {
               const current = kpis.stageCounts[stage];
-              const target = MONTHLY_TARGETS[stage];
-              const progress = Math.min((current / target) * 100, 100);
+              const target = targets[stage] || 0;
+              const progress = target > 0 ? Math.min((current / target) * 100, 100) : 0;
               
               return (
                 <div key={stage} className="space-y-1.5">
