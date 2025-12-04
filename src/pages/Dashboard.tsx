@@ -4,7 +4,8 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useProspects } from '@/hooks/useProspects';
 import { BottomNav } from '@/components/layout/BottomNav';
 import { ProspectTable } from '@/components/prospects/ProspectTable';
-import { Loader2, Menu } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
+import nevoraLogo from '@/assets/nevorai-logo.jpeg';
 
 export default function Dashboard() {
   const navigate = useNavigate();
@@ -35,12 +36,14 @@ export default function Dashboard() {
       <header className="sticky top-0 z-40 bg-card/80 backdrop-blur-xl border-b border-border/50">
         <div className="flex items-center justify-between px-4 py-3">
           <div className="flex items-center gap-3">
-            <button className="p-2 rounded-xl hover:bg-muted/80 transition-colors">
-              <Menu className="h-5 w-5" />
-            </button>
+            <img 
+              src={nevoraLogo} 
+              alt="NevorAI Logo" 
+              className="h-10 w-10 rounded-xl object-cover shadow-md"
+            />
             <div>
-              <h1 className="text-lg font-bold tracking-tight">NEVORUP</h1>
-              <p className="text-[10px] text-muted-foreground font-medium">Never miss a follow-up</p>
+              <h1 className="text-lg font-bold tracking-tight">NevorAI</h1>
+              <p className="text-[10px] text-muted-foreground font-medium">Never miss a followup Again</p>
             </div>
           </div>
           <div className="bg-gradient-to-br from-primary/10 to-primary/5 rounded-xl px-4 py-2 text-right border border-primary/10">

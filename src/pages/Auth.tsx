@@ -8,6 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from 'sonner';
 import { Loader2 } from 'lucide-react';
+import nevoraLogo from '@/assets/nevorai-logo.jpeg';
 
 export default function Auth() {
   const navigate = useNavigate();
@@ -87,12 +88,14 @@ export default function Auth() {
     <div className="min-h-screen flex items-center justify-center bg-background p-4">
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
-          <div className="h-12 w-12 rounded-xl bg-accent flex items-center justify-center mx-auto mb-4">
-            <span className="text-accent-foreground font-bold text-xl">N</span>
-          </div>
-          <h1 className="text-2xl font-bold">NEVORAI</h1>
+          <img 
+            src={nevoraLogo} 
+            alt="NevorAI Logo" 
+            className="h-16 w-16 rounded-xl mx-auto mb-4 object-cover shadow-lg"
+          />
+          <h1 className="text-2xl font-bold">NevorAI</h1>
           <p className="text-sm text-muted-foreground mt-1">
-            Sales Prospect Management
+            Never miss a followup Again
           </p>
         </div>
 

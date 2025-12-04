@@ -6,9 +6,10 @@ import { FunnelTracker } from '@/components/trackup/FunnelTracker';
 import { LeadsTracker } from '@/components/trackup/LeadsTracker';
 import { ProspectAnalytics } from '@/components/trackup/ProspectAnalytics';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Loader2, Menu, TrendingUp, BarChart3, Calendar } from 'lucide-react';
+import { Loader2, TrendingUp, BarChart3, Calendar } from 'lucide-react';
 import { useProspects } from '@/hooks/useProspects';
 import { cn } from '@/lib/utils';
+import nevoraLogo from '@/assets/nevorai-logo.jpeg';
 
 export default function Tracking() {
   const navigate = useNavigate();
@@ -40,12 +41,14 @@ export default function Tracking() {
       <header className="sticky top-0 z-40 bg-card/80 backdrop-blur-xl border-b border-border/50">
         <div className="flex items-center justify-between px-4 py-3">
           <div className="flex items-center gap-3">
-            <button className="p-2 rounded-xl hover:bg-muted/80 transition-colors">
-              <Menu className="h-5 w-5" />
-            </button>
+            <img 
+              src={nevoraLogo} 
+              alt="NevorAI Logo" 
+              className="h-10 w-10 rounded-xl object-cover shadow-md"
+            />
             <div>
-              <h1 className="text-lg font-bold tracking-tight">NEVORUP</h1>
-              <p className="text-[10px] text-muted-foreground font-medium">Never miss a follow-up</p>
+              <h1 className="text-lg font-bold tracking-tight">NevorAI</h1>
+              <p className="text-[10px] text-muted-foreground font-medium">Never miss a followup Again</p>
             </div>
           </div>
           <div className="bg-gradient-to-br from-primary/10 to-primary/5 rounded-xl px-4 py-2 text-right border border-primary/10">
