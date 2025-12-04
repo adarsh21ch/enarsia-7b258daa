@@ -7,6 +7,7 @@ import { AddProspectDialog } from './AddProspectDialog';
 import { ImportExcelDialog } from './ImportExcelDialog';
 import { CallingFunnelTabs, TabType } from './CallingFunnelTabs';
 import { SheetTabs } from './SheetTabs';
+import { ProspectReportCard } from './ProspectReportCard';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Users } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
@@ -55,6 +56,8 @@ export function ProspectTable({
     status: 'all',
     priority: 'all',
   });
+  const [reportCardProspect, setReportCardProspect] = useState<Prospect | null>(null);
+  const [reportCardOpen, setReportCardOpen] = useState(false);
   const isMobile = useIsMobile();
 
   // Separate prospects into Calling vs Funnel
@@ -139,6 +142,11 @@ export function ProspectTable({
       prospectsData = prospectsData.map(p => ({ ...p, sheet_id: selectedSheetId }));
     }
     return onImport(prospectsData);
+  };
+
+  const handleOpenReportCard = (prospect: Prospect) => {
+    setReportCardProspect(prospect);
+    setReportCardOpen(true);
   };
 
   if (loading) {
@@ -235,6 +243,7 @@ export function ProspectTable({
               isCalling={isCalling}
               onUpdate={onUpdate}
               onDelete={onDelete}
+              onOpenReportCard={handleOpenReportCard}
             />
           ))}
           <div className="text-center text-xs text-muted-foreground py-2">
@@ -268,6 +277,7 @@ export function ProspectTable({
                     isCalling={isCalling}
                     onUpdate={onUpdate}
                     onDelete={onDelete}
+                    onOpenReportCard={handleOpenReportCard}
                   />
                 ))}
               </tbody>
@@ -278,6 +288,14 @@ export function ProspectTable({
           </div>
         </div>
       )}
+
+      {/* Prospect Report Card Drawer */}
+      <ProspectReportCard
+        prospect={reportCardProspect}
+        open={reportCardOpen}
+        onOpenChange={setReportCardOpen}
+        onUpdate={onUpdate}
+      />
     </div>
   );
 }

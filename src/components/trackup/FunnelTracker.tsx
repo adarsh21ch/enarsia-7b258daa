@@ -7,7 +7,7 @@ import { cn } from '@/lib/utils';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { Button } from '@/components/ui/button';
 
-const STAGES = ['enrollment', 'day_1', 'day_2', 'day_3', 'minimum_bill', 'level_up'] as const;
+const STAGES = ['enrollment', 'day_1', 'day_2', 'day_3', 'minimum_bill', 'level_up', 'two_cc'] as const;
 type StageKey = typeof STAGES[number];
 
 const STAGE_LABELS: Record<StageKey, string> = {
@@ -17,6 +17,7 @@ const STAGE_LABELS: Record<StageKey, string> = {
   day_3: 'Day 3',
   minimum_bill: 'Min Bill',
   level_up: 'Level Up',
+  two_cc: '2CC',
 };
 
 const STAGE_COLORS: Record<StageKey, string> = {
@@ -26,6 +27,7 @@ const STAGE_COLORS: Record<StageKey, string> = {
   day_3: 'from-amber-500/20 to-amber-500/5',
   minimum_bill: 'from-emerald-500/20 to-emerald-500/5',
   level_up: 'from-cyan-500/20 to-cyan-500/5',
+  two_cc: 'from-yellow-500/20 to-yellow-500/5',
 };
 
 const STAGE_ICONS_COLORS: Record<StageKey, string> = {
@@ -35,6 +37,7 @@ const STAGE_ICONS_COLORS: Record<StageKey, string> = {
   day_3: 'bg-amber-500',
   minimum_bill: 'bg-emerald-500',
   level_up: 'bg-cyan-500',
+  two_cc: 'bg-yellow-500',
 };
 
 const STEP_CONVERSIONS = [
@@ -43,6 +46,7 @@ const STEP_CONVERSIONS = [
   { from: 'day_2', to: 'day_3', label: 'Day 2 → Day 3' },
   { from: 'day_3', to: 'minimum_bill', label: 'Day 3 → Min Bill' },
   { from: 'minimum_bill', to: 'level_up', label: 'Min Bill → Level Up' },
+  { from: 'level_up', to: 'two_cc', label: 'Level Up → 2CC' },
 ];
 
 function getConversionColor(percentage: number) {
@@ -113,7 +117,7 @@ export function FunnelTracker() {
           <p className="text-xs text-muted-foreground mt-1">Prospect counts from your FollowUp list</p>
         </div>
         
-        <div className="p-4 grid grid-cols-2 sm:grid-cols-3 gap-3">
+        <div className="p-4 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
           {STAGES.map((stage, idx) => {
             const count = totals[stage];
             const percentage = (count / maxCount) * 100;

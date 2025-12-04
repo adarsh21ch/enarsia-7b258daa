@@ -18,9 +18,10 @@ interface MobileProspectCardProps {
   isCalling: boolean;
   onUpdate: (id: string, updates: Partial<Prospect>) => Promise<Prospect | null>;
   onDelete: (id: string) => Promise<boolean>;
+  onOpenReportCard?: (prospect: Prospect) => void;
 }
 
-export function MobileProspectCard({ prospect, index, isCalling, onUpdate, onDelete }: MobileProspectCardProps) {
+export function MobileProspectCard({ prospect, index, isCalling, onUpdate, onDelete, onOpenReportCard }: MobileProspectCardProps) {
   const [isExpanded, setIsExpanded] = useState(false);
   const [localName, setLocalName] = useState(prospect.name);
   const [localPhone, setLocalPhone] = useState(prospect.phone);
@@ -43,6 +44,12 @@ export function MobileProspectCard({ prospect, index, isCalling, onUpdate, onDel
     setIsDeleting(false);
   };
 
+  const handleNameClick = () => {
+    if (onOpenReportCard) {
+      onOpenReportCard(prospect);
+    }
+  };
+
   return (
     <div className="bg-card rounded-xl border border-border/50 p-3 space-y-2.5 shadow-sm">
       {/* Header: # + Name + Phone + Quick Actions */}
@@ -51,12 +58,21 @@ export function MobileProspectCard({ prospect, index, isCalling, onUpdate, onDel
           #{index}
         </span>
         <div className="flex-1 min-w-0">
-          <Input
-            value={localName}
-            onChange={(e) => setLocalName(e.target.value)}
-            onBlur={() => localName !== prospect.name && localName.trim() && onUpdate(prospect.id, { name: localName.trim() })}
-            className="h-7 text-sm font-semibold border-0 p-0 focus-visible:ring-0 bg-transparent"
-          />
+          {onOpenReportCard ? (
+            <button
+              onClick={handleNameClick}
+              className="text-sm font-semibold text-primary hover:underline cursor-pointer bg-transparent border-0 p-0 text-left"
+            >
+              {localName}
+            </button>
+          ) : (
+            <Input
+              value={localName}
+              onChange={(e) => setLocalName(e.target.value)}
+              onBlur={() => localName !== prospect.name && localName.trim() && onUpdate(prospect.id, { name: localName.trim() })}
+              className="h-7 text-sm font-semibold border-0 p-0 focus-visible:ring-0 bg-transparent"
+            />
+          )}
           <div className="flex items-center gap-1 mt-0.5">
             <Input
               value={localPhone}

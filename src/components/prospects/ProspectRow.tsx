@@ -18,9 +18,10 @@ interface ProspectRowProps {
   isCalling: boolean;
   onUpdate: (id: string, updates: Partial<Prospect>) => Promise<Prospect | null>;
   onDelete: (id: string) => Promise<boolean>;
+  onOpenReportCard?: (prospect: Prospect) => void;
 }
 
-export function ProspectRow({ prospect, index, isCalling, onUpdate, onDelete }: ProspectRowProps) {
+export function ProspectRow({ prospect, index, isCalling, onUpdate, onDelete, onOpenReportCard }: ProspectRowProps) {
   const [isExpanded, setIsExpanded] = useState(false);
   const [localName, setLocalName] = useState(prospect.name);
   const [localPhone, setLocalPhone] = useState(prospect.phone);
@@ -68,6 +69,12 @@ export function ProspectRow({ prospect, index, isCalling, onUpdate, onDelete }: 
     onUpdate(prospect.id, updates);
   };
 
+  const handleNameClick = () => {
+    if (onOpenReportCard) {
+      onOpenReportCard(prospect);
+    }
+  };
+
   const cleanPhoneNumber = (phone: string) => {
     return phone.replace(/[^0-9+]/g, '');
   };
@@ -91,13 +98,22 @@ export function ProspectRow({ prospect, index, isCalling, onUpdate, onDelete }: 
           </span>
         </td>
         <td className="px-3 py-2">
-          <Input
-            ref={nameRef}
-            value={localName}
-            onChange={(e) => setLocalName(e.target.value)}
-            onBlur={handleNameBlur}
-            className="inline-edit-input font-medium"
-          />
+          {onOpenReportCard ? (
+            <button
+              onClick={handleNameClick}
+              className="text-left w-full font-medium text-primary hover:underline cursor-pointer bg-transparent border-0 p-0"
+            >
+              {localName}
+            </button>
+          ) : (
+            <Input
+              ref={nameRef}
+              value={localName}
+              onChange={(e) => setLocalName(e.target.value)}
+              onBlur={handleNameBlur}
+              className="inline-edit-input font-medium"
+            />
+          )}
         </td>
         <td className="px-3 py-2">
           <div className="flex items-center gap-1">
