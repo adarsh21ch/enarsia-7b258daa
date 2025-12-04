@@ -7,7 +7,8 @@ import { AddProspectDialog } from './AddProspectDialog';
 import { ImportExcelDialog } from './ImportExcelDialog';
 import { SheetTabs } from './SheetTabs';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Users, GripVertical } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Users, GripVertical, LayoutGrid, Table2 } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { cn } from '@/lib/utils';
 
@@ -73,6 +74,7 @@ export function ProspectTable({
     priority: 'all',
   });
   const [expandedRowId, setExpandedRowId] = useState<string | null>(null);
+  const [mobileViewMode, setMobileViewMode] = useState<'card' | 'table'>('table');
   const isMobile = useIsMobile();
 
   // Column state for reordering and resizing
@@ -293,7 +295,28 @@ export function ProspectTable({
       <div className="bg-card/50 rounded-xl border border-border/50 p-3 space-y-3">
         <div className="flex flex-col lg:flex-row gap-3 lg:items-center lg:justify-between">
           <ProspectFilters filters={filters} onFiltersChange={setFilters} onExport={exportToCSV} />
-          <div className="flex gap-2">
+          <div className="flex gap-2 items-center">
+            {/* Mobile View Toggle */}
+            {isMobile && (
+              <div className="flex items-center bg-muted rounded-lg p-0.5">
+                <Button
+                  variant={mobileViewMode === 'card' ? 'secondary' : 'ghost'}
+                  size="sm"
+                  className="h-8 px-2"
+                  onClick={() => setMobileViewMode('card')}
+                >
+                  <LayoutGrid className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant={mobileViewMode === 'table' ? 'secondary' : 'ghost'}
+                  size="sm"
+                  className="h-8 px-2"
+                  onClick={() => setMobileViewMode('table')}
+                >
+                  <Table2 className="h-4 w-4" />
+                </Button>
+              </div>
+            )}
             <ImportExcelDialog onImport={handleImportProspects} />
             <AddProspectDialog onAdd={handleAddProspect} />
           </div>
@@ -325,7 +348,7 @@ export function ProspectTable({
             </button>
           </p>
         </div>
-      ) : isMobile ? (
+      ) : isMobile && mobileViewMode === 'card' ? (
         // Mobile Card Layout
         <div className="space-y-3">
           {filteredProspects.map((prospect, index) => (
@@ -343,10 +366,10 @@ export function ProspectTable({
           </div>
         </div>
       ) : (
-        // Desktop Table Layout with drag/resize
+        // Table Layout (Desktop or Mobile Table View)
         <div className="bg-card rounded-xl border border-border overflow-hidden shadow-sm">
           <div className="overflow-x-auto">
-            <table className="w-full text-sm">
+            <table className={cn("w-full text-sm", isMobile && "min-w-[600px]")}>
               <thead className="bg-muted/30 text-xs font-semibold text-muted-foreground border-b border-border/50">
                 <tr>
                   {columnOrder.map((columnId) => {
@@ -354,33 +377,46 @@ export function ProspectTable({
                     const isDragging = draggedColumn === columnId;
                     const isResizing = resizingColumn === columnId;
                     
+                    // On mobile table view, make Name and Phone sticky
+                    const isSticky = isMobile && (columnId === 'name' || columnId === 'phone' || columnId === 'index');
+                    const stickyLeft = isMobile && columnId === 'index' ? 0 : 
+                                       isMobile && columnId === 'name' ? columnWidths['index'] :
+                                       isMobile && columnId === 'phone' ? columnWidths['index'] + columnWidths['name'] : undefined;
+                    
                     return (
                       <th
                         key={columnId}
-                        draggable
-                        onDragStart={() => handleDragStart(columnId)}
-                        onDragOver={(e) => handleDragOver(e, columnId)}
-                        onDragEnd={handleDragEnd}
+                        draggable={!isMobile}
+                        onDragStart={() => !isMobile && handleDragStart(columnId)}
+                        onDragOver={(e) => !isMobile && handleDragOver(e, columnId)}
+                        onDragEnd={() => !isMobile && handleDragEnd()}
                         className={cn(
                           "px-3 py-3 text-left relative select-none transition-colors",
                           isDragging && "opacity-50 bg-primary/10",
                           columnId === 'index' && "text-center",
-                          "hover:bg-muted/50 cursor-grab active:cursor-grabbing"
+                          !isMobile && "hover:bg-muted/50 cursor-grab active:cursor-grabbing",
+                          isSticky && "sticky bg-muted/30 z-10"
                         )}
-                        style={{ width: `${width}px`, minWidth: `${width}px` }}
+                        style={{ 
+                          width: isMobile ? (columnId === 'index' ? '40px' : columnId === 'name' ? '120px' : columnId === 'phone' ? '110px' : `${width}px`) : `${width}px`, 
+                          minWidth: isMobile ? (columnId === 'index' ? '40px' : columnId === 'name' ? '120px' : columnId === 'phone' ? '110px' : `${width}px`) : `${width}px`,
+                          left: stickyLeft !== undefined ? `${stickyLeft}px` : undefined 
+                        }}
                       >
                         <div className="flex items-center gap-1.5">
-                          <GripVertical className="h-3 w-3 text-muted-foreground/50" />
-                          <span>{getColumnLabel(columnId)}</span>
+                          {!isMobile && <GripVertical className="h-3 w-3 text-muted-foreground/50" />}
+                          <span className={cn(isMobile && "text-[10px]")}>{getColumnLabel(columnId)}</span>
                         </div>
-                        {/* Resize handle */}
-                        <div
-                          className={cn(
-                            "absolute right-0 top-0 bottom-0 w-1 cursor-col-resize hover:bg-primary/50 transition-colors",
-                            isResizing && "bg-primary"
-                          )}
-                          onMouseDown={(e) => handleResizeStart(e, columnId)}
-                        />
+                        {/* Resize handle - desktop only */}
+                        {!isMobile && (
+                          <div
+                            className={cn(
+                              "absolute right-0 top-0 bottom-0 w-1 cursor-col-resize hover:bg-primary/50 transition-colors",
+                              isResizing && "bg-primary"
+                            )}
+                            onMouseDown={(e) => handleResizeStart(e, columnId)}
+                          />
+                        )}
                       </th>
                     );
                   })}
@@ -399,15 +435,20 @@ export function ProspectTable({
                     onDelete={onDelete}
                     isEven={index % 2 === 0}
                     columnOrder={columnOrder}
-                    columnWidths={columnWidths}
+                    columnWidths={isMobile ? { ...columnWidths, index: 40, name: 120, phone: 110 } : columnWidths}
+                    isMobileTable={isMobile}
                   />
                 ))}
               </tbody>
             </table>
           </div>
-          <div className="px-4 py-3 border-t border-border/50 bg-muted/20 text-xs text-muted-foreground flex items-center justify-between">
-            <span>Showing {filteredProspects.length} of {baseProspects.length} prospects</span>
-            <span className="text-muted-foreground/60">Drag columns to reorder • Drag edges to resize</span>
+          <div className={cn(
+            "px-4 py-3 border-t border-border/50 bg-muted/20 text-xs text-muted-foreground flex items-center justify-between",
+            isMobile && "px-2 py-2"
+          )}>
+            <span>Showing {filteredProspects.length} of {baseProspects.length}</span>
+            {!isMobile && <span className="text-muted-foreground/60">Drag columns to reorder • Drag edges to resize</span>}
+            {isMobile && <span className="text-muted-foreground/60">← Scroll →</span>}
           </div>
         </div>
       )}

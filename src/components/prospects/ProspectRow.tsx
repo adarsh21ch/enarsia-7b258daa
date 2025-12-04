@@ -24,6 +24,7 @@ interface ProspectRowProps {
   isEven: boolean;
   columnOrder: string[];
   columnWidths: Record<string, number>;
+  isMobileTable?: boolean;
 }
 
 export function ProspectRow({ 
@@ -37,6 +38,7 @@ export function ProspectRow({
   isEven,
   columnOrder,
   columnWidths,
+  isMobileTable = false,
 }: ProspectRowProps) {
   const [localName, setLocalName] = useState(prospect.name);
   const [localPhone, setLocalPhone] = useState(prospect.phone);
@@ -120,21 +122,35 @@ export function ProspectRow({
     const width = columnWidths[columnId];
     const style = { width: width ? `${width}px` : undefined, minWidth: width ? `${width}px` : undefined };
     
+    // Sticky columns for mobile table
+    const isSticky = isMobileTable && (columnId === 'name' || columnId === 'phone' || columnId === 'index');
+    const stickyLeft = isMobileTable && columnId === 'index' ? 0 : 
+                       isMobileTable && columnId === 'name' ? columnWidths['index'] :
+                       isMobileTable && columnId === 'phone' ? columnWidths['index'] + columnWidths['name'] : undefined;
+    
+    const stickyClass = isSticky ? cn(
+      "sticky z-10",
+      isEven ? "bg-muted/20" : "bg-card"
+    ) : "";
+    
     switch (columnId) {
       case 'index':
         return (
-          <td key={columnId} className="px-3 py-3 text-center" style={style}>
-            <span className="text-xs font-semibold text-muted-foreground bg-muted/60 rounded-md px-2 py-1">
+          <td key={columnId} className={cn("px-2 py-2 text-center", stickyClass)} style={{ ...style, left: stickyLeft !== undefined ? `${stickyLeft}px` : undefined }}>
+            <span className={cn("text-xs font-semibold text-muted-foreground bg-muted/60 rounded-md px-1.5 py-0.5", isMobileTable && "text-[10px] px-1")}>
               {index}
             </span>
           </td>
         );
       case 'name':
         return (
-          <td key={columnId} className="px-3 py-3" style={style}>
+          <td key={columnId} className={cn("px-2 py-2", stickyClass)} style={{ ...style, left: stickyLeft !== undefined ? `${stickyLeft}px` : undefined }}>
             <button
               onClick={onToggleExpand}
-              className="text-left font-semibold text-foreground hover:text-primary transition-colors cursor-pointer bg-transparent border-0 p-0"
+              className={cn(
+                "text-left font-semibold text-foreground hover:text-primary transition-colors cursor-pointer bg-transparent border-0 p-0 truncate max-w-full",
+                isMobileTable && "text-xs"
+              )}
             >
               {localName}
             </button>
@@ -142,24 +158,24 @@ export function ProspectRow({
         );
       case 'phone':
         return (
-          <td key={columnId} className="px-3 py-3" style={style}>
-            <div className="flex items-center gap-1.5">
-              <span className="text-sm text-muted-foreground font-medium">{localPhone}</span>
+          <td key={columnId} className={cn("px-2 py-2", stickyClass)} style={{ ...style, left: stickyLeft !== undefined ? `${stickyLeft}px` : undefined }}>
+            <div className="flex items-center gap-1">
+              <span className={cn("text-sm text-muted-foreground font-medium truncate", isMobileTable && "text-xs")}>{localPhone}</span>
               <Button
                 variant="ghost"
                 size="icon"
-                className="h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity"
+                className={cn("h-6 w-6 shrink-0", !isMobileTable && "opacity-0 group-hover:opacity-100 transition-opacity")}
                 onClick={openCall}
               >
-                <Phone className="h-3.5 w-3.5 text-accent" />
+                <Phone className="h-3 w-3 text-accent" />
               </Button>
               <Button
                 variant="ghost"
                 size="icon"
-                className="h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity text-green-500 hover:text-green-600"
+                className={cn("h-6 w-6 shrink-0 text-green-500 hover:text-green-600", !isMobileTable && "opacity-0 group-hover:opacity-100 transition-opacity")}
                 onClick={openWhatsApp}
               >
-                <MessageCircle className="h-3.5 w-3.5" />
+                <MessageCircle className="h-3 w-3" />
               </Button>
             </div>
           </td>
