@@ -186,6 +186,10 @@
 }
 
 @layer utilities {
+  .safe-area-pb {
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+
   .animate-fade-in {
     animation: fadeIn 0.2s ease-out;
   }

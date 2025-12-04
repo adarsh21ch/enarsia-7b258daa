@@ -14,6 +14,84 @@ export type Database = {
   }
   public: {
     Tables: {
+      daily_leads: {
+        Row: {
+          calls: number | null
+          created_at: string
+          day_number: number
+          enrolls: number | null
+          id: string
+          leads: number | null
+          month_year: string
+          updated_at: string
+          user_id: string
+          videos: number | null
+        }
+        Insert: {
+          calls?: number | null
+          created_at?: string
+          day_number: number
+          enrolls?: number | null
+          id?: string
+          leads?: number | null
+          month_year: string
+          updated_at?: string
+          user_id: string
+          videos?: number | null
+        }
+        Update: {
+          calls?: number | null
+          created_at?: string
+          day_number?: number
+          enrolls?: number | null
+          id?: string
+          leads?: number | null
+          month_year?: string
+          updated_at?: string
+          user_id?: string
+          videos?: number | null
+        }
+        Relationships: []
+      }
+      funnel_tracking: {
+        Row: {
+          created_at: string
+          day_1: number | null
+          day_2: number | null
+          funnel_number: number
+          id: string
+          level_up: number | null
+          minimum_billing: number | null
+          two_cc: number | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          day_1?: number | null
+          day_2?: number | null
+          funnel_number: number
+          id?: string
+          level_up?: number | null
+          minimum_billing?: number | null
+          two_cc?: number | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          day_1?: number | null
+          day_2?: number | null
+          funnel_number?: number
+          id?: string
+          level_up?: number | null
+          minimum_billing?: number | null
+          two_cc?: number | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       prospects: {
         Row: {
           action_taken: Database["public"]["Enums"]["action_taken"] | null
