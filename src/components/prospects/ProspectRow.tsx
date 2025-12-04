@@ -100,6 +100,14 @@ export function ProspectRow({ prospect, onUpdate, onDelete }: ProspectRowProps) 
             >
               <Phone className="h-3.5 w-3.5 text-accent" />
             </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity text-status-positive hover:text-status-positive"
+              onClick={openWhatsApp}
+            >
+              <MessageCircle className="h-3.5 w-3.5" />
+            </Button>
           </div>
         </td>
         <td className="px-3 py-2">
@@ -165,14 +173,6 @@ export function ProspectRow({ prospect, onUpdate, onDelete }: ProspectRowProps) 
               onClick={() => setIsExpanded(!isExpanded)}
             >
               {isExpanded ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
-            </Button>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-7 w-7 text-status-positive hover:text-status-positive"
-              onClick={openWhatsApp}
-            >
-              <MessageCircle className="h-3.5 w-3.5" />
             </Button>
             <AlertDialog>
               <AlertDialogTrigger asChild>
