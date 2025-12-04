@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { LogOut, Menu, X, List, BarChart3 } from 'lucide-react';
 import { useState } from 'react';
 import { cn } from '@/lib/utils';
+import nevoraLogo from '@/assets/nevorai-logo.jpeg';
 
 export function Header() {
   const { user, signOut } = useAuth();
@@ -22,10 +23,12 @@ export function Header() {
       <div className="container flex h-14 items-center justify-between">
         <div className="flex items-center gap-6">
           <Link to="/dashboard" className="flex items-center gap-2">
-            <div className="h-8 w-8 rounded-lg bg-accent flex items-center justify-center">
-              <span className="text-accent-foreground font-bold text-sm">N</span>
-            </div>
-            <span className="font-semibold text-lg hidden sm:inline">NEVORAI</span>
+            <img 
+              src={nevoraLogo} 
+              alt="NevorAI Logo" 
+              className="h-8 w-8 rounded-lg object-cover"
+            />
+            <span className="font-semibold text-lg hidden sm:inline">NevorAI</span>
           </Link>
 
           <nav className="hidden md:flex items-center gap-1">

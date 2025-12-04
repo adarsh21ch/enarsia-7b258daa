@@ -7,6 +7,7 @@ import { User, LogOut, Settings, Bell, HelpCircle, ChevronRight, Crown } from 'l
 import { useEffect } from 'react';
 import { Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import nevoraLogo from '@/assets/nevorai-logo.jpeg';
 
 const menuItems = [
   { icon: User, label: 'Edit Profile', color: 'from-blue-500/20 to-blue-500/5' },
@@ -44,17 +45,32 @@ export default function Profile() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-background via-background to-muted/20 pb-24">
-      <header className="sticky top-0 z-40 bg-card/80 backdrop-blur-xl border-b border-border/50 px-4 py-4">
-        <h1 className="text-2xl font-bold tracking-tight">Profile</h1>
-        <p className="text-sm text-muted-foreground">Manage your account</p>
-        <div className="flex items-center gap-1 mt-2">
-          <div className="w-8 h-1 bg-primary rounded-full" />
-          <div className="w-2 h-1 bg-primary/50 rounded-full" />
-          <div className="w-1 h-1 bg-primary/30 rounded-full" />
+      <header className="sticky top-0 z-40 bg-card/80 backdrop-blur-xl border-b border-border/50">
+        <div className="flex items-center justify-between px-4 py-3">
+          <div className="flex items-center gap-3">
+            <img 
+              src={nevoraLogo} 
+              alt="NevorAI Logo" 
+              className="h-10 w-10 rounded-xl object-cover shadow-md"
+            />
+            <div>
+              <h1 className="text-lg font-bold tracking-tight">NevorAI</h1>
+              <p className="text-[10px] text-muted-foreground font-medium">Never miss a followup Again</p>
+            </div>
+          </div>
         </div>
       </header>
 
       <main className="container py-4 px-4 space-y-4">
+        <div className="mb-5">
+          <h2 className="text-2xl font-bold tracking-tight">Profile</h2>
+          <p className="text-sm text-muted-foreground">Manage your account</p>
+          <div className="flex items-center gap-1 mt-2">
+            <div className="w-8 h-1 bg-primary rounded-full" />
+            <div className="w-2 h-1 bg-primary/50 rounded-full" />
+            <div className="w-1 h-1 bg-primary/30 rounded-full" />
+          </div>
+        </div>
         {/* User Card */}
         <div className="relative overflow-hidden rounded-2xl p-5 bg-gradient-to-br from-primary/10 via-primary/5 to-transparent border border-primary/10 shadow-lg">
           <div className="flex items-center gap-4">
