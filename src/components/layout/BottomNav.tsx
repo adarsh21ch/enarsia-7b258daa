@@ -1,12 +1,12 @@
 import { NavLink, useLocation } from 'react-router-dom';
-import { Calendar, CheckSquare, Home, BookOpen, User } from 'lucide-react';
+import { Calendar, CheckSquare, Home, Zap, User } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const navItems = [
   { path: '/dashboard', icon: Calendar, label: 'Follow Up' },
   { path: '/tracking', icon: CheckSquare, label: 'TrackUp' },
-  { path: '/', icon: Home, label: 'Home' },
-  { path: '/learn', icon: BookOpen, label: 'LearnUp' },
+  { path: '/home', icon: Home, label: 'Home' },
+  { path: '/action', icon: Zap, label: 'ActionUp' },
   { path: '/profile', icon: User, label: 'Profile' },
 ];
 
@@ -18,8 +18,7 @@ export function BottomNav() {
       <div className="flex items-center justify-around h-16 max-w-lg mx-auto">
         {navItems.map(item => {
           const Icon = item.icon;
-          const isActive = location.pathname === item.path || 
-            (item.path === '/' && location.pathname === '/');
+          const isActive = location.pathname === item.path;
           
           return (
             <NavLink

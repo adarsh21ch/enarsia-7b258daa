@@ -8,7 +8,8 @@ import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import Dashboard from "./pages/Dashboard";
 import Tracking from "./pages/Tracking";
-import Learn from "./pages/Learn";
+import Home from "./pages/Home";
+import ActionUp from "./pages/ActionUp";
 import Profile from "./pages/Profile";
 import NotFound from "./pages/NotFound";
 
@@ -26,7 +27,8 @@ const App = () => (
             <Route path="/auth" element={<Auth />} />
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/tracking" element={<Tracking />} />
-            <Route path="/learn" element={<Learn />} />
+            <Route path="/home" element={<Home />} />
+            <Route path="/action" element={<ActionUp />} />
             <Route path="/profile" element={<Profile />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
