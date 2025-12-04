@@ -250,14 +250,14 @@ export function ImportExcelDialog({ onImport }: ImportExcelDialogProps) {
                 <div key={field} className="space-y-1.5">
                   <Label className="text-xs">{FIELD_LABELS[field]}</Label>
                   <Select
-                    value={mapping[field] || ''}
-                    onValueChange={(value) => setMapping({ ...mapping, [field]: value || null })}
+                    value={mapping[field] || '__none__'}
+                    onValueChange={(value) => setMapping({ ...mapping, [field]: value === '__none__' ? null : value })}
                   >
                     <SelectTrigger className="h-9 text-xs">
                       <SelectValue placeholder="Select column..." />
                     </SelectTrigger>
                     <SelectContent className="bg-popover border-border z-50">
-                      <SelectItem value="">None</SelectItem>
+                      <SelectItem value="__none__">None</SelectItem>
                       {columns.map((col) => (
                         <SelectItem key={col} value={col} className="text-xs">
                           {col}
