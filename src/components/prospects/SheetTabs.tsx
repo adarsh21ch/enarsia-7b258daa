@@ -61,43 +61,44 @@ export function SheetTabs({
   };
 
   return (
-    <div className="flex items-center gap-2 mb-3">
+    <div className="flex items-center bg-muted/50 border-t border-border rounded-b-xl">
       <ScrollArea className="flex-1 whitespace-nowrap">
-        <div className="flex items-center gap-1.5 pb-1">
-          <Button
-            variant={selectedSheetId === null ? 'default' : 'outline'}
-            size="sm"
+        <div className="flex items-center">
+          <button
             onClick={() => onSelectSheet(null)}
-            className="h-8 text-xs shrink-0"
+            className={cn(
+              "px-3 py-2 text-xs font-medium border-r border-border/50 transition-colors",
+              selectedSheetId === null 
+                ? "bg-card text-foreground border-t-2 border-t-primary" 
+                : "text-muted-foreground hover:text-foreground hover:bg-muted/80"
+            )}
           >
-            <FileSpreadsheet className="h-3.5 w-3.5 mr-1.5" />
-            All Leads
-          </Button>
+            <FileSpreadsheet className="h-3.5 w-3.5 inline mr-1.5" />
+            All
+          </button>
           {sheets.map((sheet) => (
-            <div key={sheet.id} className="flex items-center shrink-0">
-              <Button
-                variant={selectedSheetId === sheet.id ? 'default' : 'outline'}
-                size="sm"
+            <div key={sheet.id} className="flex items-center border-r border-border/50">
+              <button
                 onClick={() => onSelectSheet(sheet.id)}
                 className={cn(
-                  "h-8 text-xs rounded-r-none border-r-0",
-                  selectedSheetId === sheet.id && "bg-primary text-primary-foreground"
+                  "px-3 py-2 text-xs font-medium transition-colors",
+                  selectedSheetId === sheet.id 
+                    ? "bg-card text-foreground border-t-2 border-t-primary" 
+                    : "text-muted-foreground hover:text-foreground hover:bg-muted/80"
                 )}
               >
                 {sheet.name}
-              </Button>
+              </button>
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button
-                    variant={selectedSheetId === sheet.id ? 'default' : 'outline'}
-                    size="sm"
+                  <button
                     className={cn(
-                      "h-8 w-7 p-0 rounded-l-none",
-                      selectedSheetId === sheet.id && "bg-primary text-primary-foreground"
+                      "px-1 py-2 text-muted-foreground hover:text-foreground",
+                      selectedSheetId === sheet.id && "text-foreground"
                     )}
                   >
-                    <MoreVertical className="h-3.5 w-3.5" />
-                  </Button>
+                    <MoreVertical className="h-3 w-3" />
+                  </button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="bg-popover border-border z-50">
                   <DropdownMenuItem onClick={() => openEditDialog(sheet)}>
@@ -121,10 +122,11 @@ export function SheetTabs({
 
       <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
         <DialogTrigger asChild>
-          <Button variant="outline" size="sm" className="h-8 text-xs shrink-0">
-            <Plus className="h-3.5 w-3.5 mr-1" />
-            Add Sheet
-          </Button>
+          <button className="px-3 py-2 text-xs text-muted-foreground hover:text-foreground hover:bg-muted/80 border-l border-border/50">
+            <Plus className="h-3.5 w-3.5 inline mr-1" />
+            <span className="hidden sm:inline">Add Sheet</span>
+            <span className="sm:hidden">+</span>
+          </button>
         </DialogTrigger>
         <DialogContent className="sm:max-w-[400px]">
           <DialogHeader>
