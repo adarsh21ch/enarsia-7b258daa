@@ -13,6 +13,9 @@ export default {
       },
     },
     extend: {
+      fontFamily: {
+        sans: ['Inter', 'system-ui', 'sans-serif'],
+      },
       colors: {
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
@@ -57,6 +60,32 @@ export default {
           border: "hsl(var(--sidebar-border))",
           ring: "hsl(var(--sidebar-ring))",
         },
+        status: {
+          positive: "hsl(var(--status-positive))",
+          "positive-bg": "hsl(var(--status-positive-bg))",
+          negative: "hsl(var(--status-negative))",
+          "negative-bg": "hsl(var(--status-negative-bg))",
+          neutral: "hsl(var(--status-neutral))",
+          "neutral-bg": "hsl(var(--status-neutral-bg))",
+          uncertain: "hsl(var(--status-uncertain))",
+          "uncertain-bg": "hsl(var(--status-uncertain-bg))",
+        },
+        priority: {
+          high: "hsl(var(--priority-high))",
+          "high-bg": "hsl(var(--priority-high-bg))",
+          medium: "hsl(var(--priority-medium))",
+          "medium-bg": "hsl(var(--priority-medium-bg))",
+          low: "hsl(var(--priority-low))",
+          "low-bg": "hsl(var(--priority-low-bg))",
+        },
+        stage: {
+          enrollment: "hsl(var(--stage-enrollment))",
+          day1: "hsl(var(--stage-day1))",
+          day2: "hsl(var(--stage-day2))",
+          day3: "hsl(var(--stage-day3))",
+          minimum: "hsl(var(--stage-minimum))",
+          levelup: "hsl(var(--stage-levelup))",
+        },
       },
       borderRadius: {
         lg: "var(--radius)",
@@ -65,20 +94,12 @@ export default {
       },
       keyframes: {
         "accordion-down": {
-          from: {
-            height: "0",
-          },
-          to: {
-            height: "var(--radix-accordion-content-height)",
-          },
+          from: { height: "0" },
+          to: { height: "var(--radix-accordion-content-height)" },
         },
         "accordion-up": {
-          from: {
-            height: "var(--radix-accordion-content-height)",
-          },
-          to: {
-            height: "0",
-          },
+          from: { height: "var(--radix-accordion-content-height)" },
+          to: { height: "0" },
         },
       },
       animation: {
