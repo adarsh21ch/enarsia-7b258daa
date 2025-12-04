@@ -43,6 +43,8 @@ export function ProspectRow({
   const [localName, setLocalName] = useState(prospect.name);
   const [localPhone, setLocalPhone] = useState(prospect.phone);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isEditingName, setIsEditingName] = useState(false);
+  const [isEditingPhone, setIsEditingPhone] = useState(false);
   const nameRef = useRef<HTMLInputElement>(null);
   const phoneRef = useRef<HTMLInputElement>(null);
   
@@ -59,15 +61,53 @@ export function ProspectRow({
     setLocalPhone(prospect.phone);
   }, [prospect]);
 
+  useEffect(() => {
+    if (isEditingName && nameRef.current) {
+      nameRef.current.focus();
+      nameRef.current.select();
+    }
+  }, [isEditingName]);
+
+  useEffect(() => {
+    if (isEditingPhone && phoneRef.current) {
+      phoneRef.current.focus();
+      phoneRef.current.select();
+    }
+  }, [isEditingPhone]);
+
   const handleNameBlur = () => {
+    setIsEditingName(false);
     if (localName !== prospect.name && localName.trim()) {
       onUpdate(prospect.id, { name: localName.trim() });
+    } else {
+      setLocalName(prospect.name);
     }
   };
 
   const handlePhoneBlur = () => {
+    setIsEditingPhone(false);
     if (localPhone !== prospect.phone && localPhone.trim()) {
       onUpdate(prospect.id, { phone: localPhone.trim() });
+    } else {
+      setLocalPhone(prospect.phone);
+    }
+  };
+
+  const handleNameKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      handleNameBlur();
+    } else if (e.key === 'Escape') {
+      setLocalName(prospect.name);
+      setIsEditingName(false);
+    }
+  };
+
+  const handlePhoneKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      handlePhoneBlur();
+    } else if (e.key === 'Escape') {
+      setLocalPhone(prospect.phone);
+      setIsEditingPhone(false);
     }
   };
 
@@ -141,18 +181,50 @@ export function ProspectRow({
         return (
           <td key={columnId} className={cellClass} style={style}>
             <div className="space-y-0.5">
-              <button
-                onClick={onToggleExpand}
-                className={cn(
-                  "text-left font-semibold text-foreground hover:text-primary transition-colors cursor-pointer bg-transparent border-0 p-0 truncate block max-w-full",
-                  isMobileTable && "text-xs"
-                )}
-              >
-                {localName}
-              </button>
+              {isEditingName ? (
+                <Input
+                  ref={nameRef}
+                  value={localName}
+                  onChange={(e) => setLocalName(e.target.value)}
+                  onBlur={handleNameBlur}
+                  onKeyDown={handleNameKeyDown}
+                  className={cn(
+                    "h-7 px-1.5 text-sm font-semibold border-primary",
+                    isMobileTable && "h-6 text-xs"
+                  )}
+                />
+              ) : (
+                <button
+                  onClick={() => setIsEditingName(true)}
+                  className={cn(
+                    "text-left font-semibold text-foreground hover:text-primary hover:bg-muted/50 transition-colors cursor-pointer bg-transparent border-0 p-0.5 px-1 -ml-1 rounded truncate block max-w-full",
+                    isMobileTable && "text-xs"
+                  )}
+                  title="Click to edit name"
+                >
+                  {localName}
+                </button>
+              )}
               {isMobileTable && (
                 <div className="flex items-center gap-1">
-                  <span className="text-[10px] text-muted-foreground truncate">{localPhone}</span>
+                  {isEditingPhone ? (
+                    <Input
+                      ref={phoneRef}
+                      value={localPhone}
+                      onChange={(e) => setLocalPhone(e.target.value)}
+                      onBlur={handlePhoneBlur}
+                      onKeyDown={handlePhoneKeyDown}
+                      className="h-5 px-1 text-[10px] w-20 border-primary"
+                    />
+                  ) : (
+                    <button
+                      onClick={() => setIsEditingPhone(true)}
+                      className="text-[10px] text-muted-foreground hover:text-primary hover:bg-muted/50 truncate px-0.5 rounded"
+                      title="Click to edit phone"
+                    >
+                      {localPhone}
+                    </button>
+                  )}
                   <Button variant="ghost" size="icon" className="h-5 w-5 shrink-0" onClick={openCall}>
                     <Phone className="h-2.5 w-2.5 text-accent" />
                   </Button>
@@ -168,12 +240,24 @@ export function ProspectRow({
         return (
           <td key={columnId} className={cellClass} style={style}>
             <div className="flex items-center gap-0.5">
-              <a 
-                href={`tel:${cleanPhoneNumber(prospect.phone)}`}
-                className="text-sm text-muted-foreground font-medium hover:text-primary"
-              >
-                {localPhone}
-              </a>
+              {isEditingPhone ? (
+                <Input
+                  ref={phoneRef}
+                  value={localPhone}
+                  onChange={(e) => setLocalPhone(e.target.value)}
+                  onBlur={handlePhoneBlur}
+                  onKeyDown={handlePhoneKeyDown}
+                  className="h-7 px-1.5 text-sm w-28 border-primary"
+                />
+              ) : (
+                <button
+                  onClick={() => setIsEditingPhone(true)}
+                  className="text-sm text-muted-foreground font-medium hover:text-primary hover:bg-muted/50 px-1 py-0.5 -ml-1 rounded transition-colors"
+                  title="Click to edit phone"
+                >
+                  {localPhone}
+                </button>
+              )}
               <Button variant="ghost" size="icon" className="h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity" onClick={openCall}>
                 <Phone className="h-3.5 w-3.5 text-accent" />
               </Button>
