@@ -5,7 +5,6 @@ import { MobileProspectCard } from './MobileProspectCard';
 import { ProspectFilters } from './ProspectFilters';
 import { AddProspectDialog } from './AddProspectDialog';
 import { ImportExcelDialog } from './ImportExcelDialog';
-import { CallingFunnelTabs, TabType } from './CallingFunnelTabs';
 import { SheetTabs } from './SheetTabs';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Users, GripVertical } from 'lucide-react';
@@ -33,6 +32,9 @@ interface ProspectTableProps {
   onAddSheet: (name: string) => Promise<Sheet | null>;
   onUpdateSheet: (id: string, name: string) => Promise<Sheet | null>;
   onDeleteSheet: (id: string) => Promise<boolean>;
+  // Filter mode from parent
+  filterMode: 'calling' | 'funnel';
+  subFilter: 'all' | 'hot' | 'scheduled' | 'day1' | 'progress';
 }
 
 // Column configuration
@@ -61,8 +63,9 @@ export function ProspectTable({
   onAddSheet,
   onUpdateSheet,
   onDeleteSheet,
+  filterMode,
+  subFilter,
 }: ProspectTableProps) {
-  const [activeTab, setActiveTab] = useState<TabType>('calling');
   const [filters, setFilters] = useState<Filters>({
     search: '',
     stage: 'all',
@@ -95,14 +98,39 @@ export function ProspectTable({
     );
   }, [prospects]);
 
-  // Get base prospects based on active tab
-  const baseProspects = activeTab === 'calling' ? callingProspects : funnelProspects;
+  // Get base prospects based on filter mode
+  const baseProspects = useMemo(() => {
+    const base = filterMode === 'calling' ? callingProspects : funnelProspects;
+    
+    // Apply sub-filter
+    if (filterMode === 'calling') {
+      switch (subFilter) {
+        case 'hot':
+          return base.filter(p => p.priority === 'High' || p.prospect_status === '+VE');
+        case 'scheduled':
+          return base.filter(p => p.last_contact_date);
+        default:
+          return base;
+      }
+    } else {
+      switch (subFilter) {
+        case 'day1':
+          return base.filter(p => p.funnel_stage === 'Day 1');
+        case 'progress':
+          return base.filter(p => 
+            p.funnel_stage && ['Day 2', 'Day 3', 'Minimum Bill'].includes(p.funnel_stage)
+          );
+        default:
+          return base;
+      }
+    }
+  }, [callingProspects, funnelProspects, filterMode, subFilter]);
 
   // Filter by sheet (only in Calling tab)
   const sheetFilteredProspects = useMemo(() => {
-    if (activeTab !== 'calling' || !selectedSheetId) return baseProspects;
+    if (filterMode !== 'calling' || !selectedSheetId) return baseProspects;
     return baseProspects.filter(p => p.sheet_id === selectedSheetId);
-  }, [baseProspects, activeTab, selectedSheetId]);
+  }, [baseProspects, filterMode, selectedSheetId]);
 
   // Apply search and other filters
   const filteredProspects = useMemo(() => {
@@ -144,13 +172,13 @@ export function ProspectTable({
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const link = document.createElement('a');
     link.href = URL.createObjectURL(blob);
-    link.download = `prospects_${activeTab}_${new Date().toISOString().split('T')[0]}.csv`;
+    link.download = `prospects_${filterMode}_${new Date().toISOString().split('T')[0]}.csv`;
     link.click();
   };
 
   const handleAddProspect = async (prospect: Partial<Prospect>) => {
     // Automatically set sheet_id if a sheet is selected in Calling tab
-    if (activeTab === 'calling' && selectedSheetId) {
+    if (filterMode === 'calling' && selectedSheetId) {
       prospect.sheet_id = selectedSheetId;
     }
     return onAdd(prospect);
@@ -158,7 +186,7 @@ export function ProspectTable({
 
   const handleImportProspects = async (prospectsData: Partial<Prospect>[]) => {
     // Automatically set sheet_id for imported prospects if a sheet is selected
-    if (activeTab === 'calling' && selectedSheetId) {
+    if (filterMode === 'calling' && selectedSheetId) {
       prospectsData = prospectsData.map(p => ({ ...p, sheet_id: selectedSheetId }));
     }
     return onImport(prospectsData);
@@ -245,20 +273,12 @@ export function ProspectTable({
     );
   }
 
-  const isCalling = activeTab === 'calling';
+  const isCalling = filterMode === 'calling';
 
   return (
     <div className="space-y-4">
-      {/* Calling/Funnel Tabs */}
-      <CallingFunnelTabs
-        activeTab={activeTab}
-        onTabChange={setActiveTab}
-        callingCount={callingProspects.length}
-        funnelCount={funnelProspects.length}
-      />
-
       {/* Sheet Tabs (only in Calling) */}
-      {activeTab === 'calling' && (
+      {filterMode === 'calling' && subFilter === 'all' && (
         <SheetTabs
           sheets={sheets}
           selectedSheetId={selectedSheetId}
