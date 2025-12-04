@@ -40,19 +40,20 @@ interface ProspectTableProps {
 
 // Column configuration - desktop widths
 const COLUMNS = [
-  { id: 'index', label: '#', defaultWidth: 50, minWidth: 40, mobileWidth: 36, showOnMobile: false },
-  { id: 'name', label: 'Name', defaultWidth: 180, minWidth: 120, mobileWidth: 130, showOnMobile: true },
-  { id: 'phone', label: 'Phone', defaultWidth: 160, minWidth: 120, mobileWidth: 100, showOnMobile: false },
-  { id: 'stage', label: 'Stage', defaultWidth: 120, minWidth: 100, mobileWidth: 90, showOnMobile: true },
-  { id: 'action', label: 'Action', defaultWidth: 140, minWidth: 100, mobileWidth: 90, showOnMobile: false },
-  { id: 'status', label: 'Status', defaultWidth: 100, minWidth: 80, mobileWidth: 80, showOnMobile: false },
-  { id: 'priority', label: 'Priority', defaultWidth: 100, minWidth: 80, mobileWidth: 80, showOnMobile: true },
-  { id: 'lastContact', label: 'Contact', defaultWidth: 110, minWidth: 90, mobileWidth: 80, showOnMobile: true },
-  { id: 'actions', label: '', defaultWidth: 90, minWidth: 80, mobileWidth: 70, showOnMobile: true },
+  { id: 'index', label: '#', defaultWidth: 50, minWidth: 40, mobileWidth: 32, showOnMobile: true },
+  { id: 'name', label: 'Name', defaultWidth: 180, minWidth: 120, mobileWidth: 100, showOnMobile: true },
+  { id: 'phone', label: 'Phone', defaultWidth: 160, minWidth: 120, mobileWidth: 90, showOnMobile: true },
+  { id: 'contact', label: 'Call', defaultWidth: 70, minWidth: 60, mobileWidth: 60, showOnMobile: true },
+  { id: 'stage', label: 'Stage', defaultWidth: 120, minWidth: 100, mobileWidth: 80, showOnMobile: true },
+  { id: 'action', label: 'Action', defaultWidth: 140, minWidth: 100, mobileWidth: 80, showOnMobile: false },
+  { id: 'status', label: 'Status', defaultWidth: 100, minWidth: 80, mobileWidth: 70, showOnMobile: false },
+  { id: 'priority', label: 'Priority', defaultWidth: 100, minWidth: 80, mobileWidth: 70, showOnMobile: true },
+  { id: 'lastContact', label: 'Date', defaultWidth: 110, minWidth: 90, mobileWidth: 70, showOnMobile: true },
+  { id: 'actions', label: '', defaultWidth: 90, minWidth: 80, mobileWidth: 50, showOnMobile: true },
 ];
 
-// Mobile-optimized column order (Name, Stage, Priority, Last Contact, Actions)
-const MOBILE_COLUMN_ORDER = ['name', 'stage', 'priority', 'lastContact', 'actions'];
+// Mobile column order: #, Name, Phone, Call/WhatsApp, Stage, Priority, Date, Actions
+const MOBILE_COLUMN_ORDER = ['index', 'name', 'phone', 'contact', 'stage', 'priority', 'lastContact', 'actions'];
 
 export function ProspectTable({
   prospects,
@@ -385,7 +386,7 @@ export function ProspectTable({
           >
             <table 
               className="text-sm border-collapse"
-              style={{ width: '100%', minWidth: isMobile ? '520px' : '800px' }}
+              style={{ width: '100%', minWidth: isMobile ? '580px' : '800px' }}
             >
               <thead className="bg-muted/50 text-xs font-semibold text-muted-foreground border-b border-border">
                 <tr>

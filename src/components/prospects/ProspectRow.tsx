@@ -180,60 +180,30 @@ export function ProspectRow({
       case 'name':
         return (
           <td key={columnId} className={cellClass} style={style}>
-            <div className="space-y-0.5">
-              {isEditingName ? (
-                <Input
-                  ref={nameRef}
-                  value={localName}
-                  onChange={(e) => setLocalName(e.target.value)}
-                  onBlur={handleNameBlur}
-                  onKeyDown={handleNameKeyDown}
-                  className={cn(
-                    "h-7 px-1.5 text-sm font-semibold border-primary",
-                    isMobileTable && "h-6 text-xs"
-                  )}
-                />
-              ) : (
-                <button
-                  onClick={() => setIsEditingName(true)}
-                  className={cn(
-                    "text-left font-semibold text-foreground hover:text-primary hover:bg-muted/50 transition-colors cursor-pointer bg-transparent border-0 p-0.5 px-1 -ml-1 rounded truncate block max-w-full",
-                    isMobileTable && "text-xs"
-                  )}
-                  title="Click to edit name"
-                >
-                  {localName}
-                </button>
-              )}
-              {isMobileTable && (
-                <div className="flex items-center gap-1">
-                  {isEditingPhone ? (
-                    <Input
-                      ref={phoneRef}
-                      value={localPhone}
-                      onChange={(e) => setLocalPhone(e.target.value)}
-                      onBlur={handlePhoneBlur}
-                      onKeyDown={handlePhoneKeyDown}
-                      className="h-5 px-1 text-[10px] w-20 border-primary"
-                    />
-                  ) : (
-                    <button
-                      onClick={() => setIsEditingPhone(true)}
-                      className="text-[10px] text-muted-foreground hover:text-primary hover:bg-muted/50 truncate px-0.5 rounded"
-                      title="Click to edit phone"
-                    >
-                      {localPhone}
-                    </button>
-                  )}
-                  <Button variant="ghost" size="icon" className="h-5 w-5 shrink-0" onClick={openCall}>
-                    <Phone className="h-2.5 w-2.5 text-accent" />
-                  </Button>
-                  <Button variant="ghost" size="icon" className="h-5 w-5 shrink-0 text-green-500" onClick={openWhatsApp}>
-                    <MessageCircle className="h-2.5 w-2.5" />
-                  </Button>
-                </div>
-              )}
-            </div>
+            {isEditingName ? (
+              <Input
+                ref={nameRef}
+                value={localName}
+                onChange={(e) => setLocalName(e.target.value)}
+                onBlur={handleNameBlur}
+                onKeyDown={handleNameKeyDown}
+                className={cn(
+                  "h-7 px-1.5 text-sm font-semibold border-primary",
+                  isMobileTable && "h-6 text-xs w-full"
+                )}
+              />
+            ) : (
+              <button
+                onClick={() => setIsEditingName(true)}
+                className={cn(
+                  "text-left font-semibold text-foreground hover:text-primary hover:bg-muted/50 transition-colors cursor-pointer bg-transparent border-0 p-0.5 px-1 -ml-1 rounded truncate block max-w-full",
+                  isMobileTable && "text-xs"
+                )}
+                title="Click to edit name"
+              >
+                {localName}
+              </button>
+            )}
           </td>
         );
       case 'phone':
@@ -247,22 +217,55 @@ export function ProspectRow({
                   onChange={(e) => setLocalPhone(e.target.value)}
                   onBlur={handlePhoneBlur}
                   onKeyDown={handlePhoneKeyDown}
-                  className="h-7 px-1.5 text-sm w-28 border-primary"
+                  className={cn(
+                    "h-7 px-1.5 text-sm border-primary",
+                    isMobileTable ? "h-5 text-[10px] w-full" : "w-28"
+                  )}
                 />
               ) : (
                 <button
                   onClick={() => setIsEditingPhone(true)}
-                  className="text-sm text-muted-foreground font-medium hover:text-primary hover:bg-muted/50 px-1 py-0.5 -ml-1 rounded transition-colors"
+                  className={cn(
+                    "text-muted-foreground font-medium hover:text-primary hover:bg-muted/50 px-1 py-0.5 -ml-1 rounded transition-colors truncate",
+                    isMobileTable ? "text-[10px]" : "text-sm"
+                  )}
                   title="Click to edit phone"
                 >
                   {localPhone}
                 </button>
               )}
-              <Button variant="ghost" size="icon" className="h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity" onClick={openCall}>
-                <Phone className="h-3.5 w-3.5 text-accent" />
+              {!isMobileTable && (
+                <>
+                  <Button variant="ghost" size="icon" className="h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity" onClick={openCall}>
+                    <Phone className="h-3.5 w-3.5 text-accent" />
+                  </Button>
+                  <Button variant="ghost" size="icon" className="h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity text-green-500 hover:text-green-600" onClick={openWhatsApp}>
+                    <MessageCircle className="h-3.5 w-3.5" />
+                  </Button>
+                </>
+              )}
+            </div>
+          </td>
+        );
+      case 'contact':
+        return (
+          <td key={columnId} className={cellClass} style={style}>
+            <div className="flex items-center gap-0.5">
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                className={cn("hover:bg-accent/10", isMobileTable ? "h-6 w-6" : "h-7 w-7")} 
+                onClick={openCall}
+              >
+                <Phone className={cn("text-accent", isMobileTable ? "h-3 w-3" : "h-3.5 w-3.5")} />
               </Button>
-              <Button variant="ghost" size="icon" className="h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity text-green-500 hover:text-green-600" onClick={openWhatsApp}>
-                <MessageCircle className="h-3.5 w-3.5" />
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                className={cn("text-green-500 hover:text-green-600 hover:bg-green-500/10", isMobileTable ? "h-6 w-6" : "h-7 w-7")} 
+                onClick={openWhatsApp}
+              >
+                <MessageCircle className={cn(isMobileTable ? "h-3 w-3" : "h-3.5 w-3.5")} />
               </Button>
             </div>
           </td>
