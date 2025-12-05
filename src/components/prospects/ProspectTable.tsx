@@ -132,11 +132,11 @@ export function ProspectTable({
     }
   }, [callingProspects, funnelProspects, filterMode, subFilter]);
 
-  // Filter by sheet (only in Calling tab)
+  // Filter by sheet (works for both Calling and Funnel tabs)
   const sheetFilteredProspects = useMemo(() => {
-    if (filterMode !== 'calling' || !selectedSheetId) return baseProspects;
+    if (!selectedSheetId) return baseProspects;
     return baseProspects.filter(p => p.sheet_id === selectedSheetId);
-  }, [baseProspects, filterMode, selectedSheetId]);
+  }, [baseProspects, selectedSheetId]);
 
   // Apply search and other filters
   const filteredProspects = useMemo(() => {
@@ -183,8 +183,8 @@ export function ProspectTable({
   };
 
   const handleAddProspect = async (prospect: Partial<Prospect>) => {
-    // Automatically set sheet_id if a sheet is selected in Calling tab
-    if (filterMode === 'calling' && selectedSheetId) {
+    // Automatically set sheet_id if a sheet is selected
+    if (selectedSheetId) {
       prospect.sheet_id = selectedSheetId;
     }
     return onAdd(prospect);
@@ -192,7 +192,7 @@ export function ProspectTable({
 
   const handleImportProspects = async (prospectsData: Partial<Prospect>[]) => {
     // Automatically set sheet_id for imported prospects if a sheet is selected
-    if (filterMode === 'calling' && selectedSheetId) {
+    if (selectedSheetId) {
       prospectsData = prospectsData.map(p => ({ ...p, sheet_id: selectedSheetId }));
     }
     return onImport(prospectsData);
@@ -283,7 +283,7 @@ export function ProspectTable({
 
   // Sheet tabs component to render at bottom (sticky)
   const renderSheetTabs = () => {
-    if (filterMode !== 'calling' || subFilter !== 'all') return null;
+    if (subFilter !== 'all') return null;
     return (
       <div className="fixed bottom-16 left-0 right-0 z-40 bg-background border-t border-border shadow-lg">
         <SheetTabs
@@ -299,7 +299,7 @@ export function ProspectTable({
   };
 
   return (
-    <div className={cn("space-y-4", filterMode === 'calling' && subFilter === 'all' && "pb-12")}>
+    <div className={cn("space-y-4", subFilter === 'all' && "pb-12")}>
       {/* Fixed Sheet Tabs at bottom */}
       {renderSheetTabs()}
       
