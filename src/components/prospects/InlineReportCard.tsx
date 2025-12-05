@@ -8,9 +8,8 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Calendar } from '@/components/ui/calendar';
 import { Button } from '@/components/ui/button';
 import { StageBadge, StatusBadge, PriorityBadge, EnrollBadge } from './StatusBadge';
-import { Phone, MessageCircle, Calendar as CalendarIcon, Clock, MapPin, Cake, Target, Mail, User, Briefcase, Save, X } from 'lucide-react';
+import { Phone, MessageCircle, Calendar as CalendarIcon, Save, X } from 'lucide-react';
 import { format, parseISO, formatDistanceToNow } from 'date-fns';
-import { useActivityLogs } from '@/hooks/useActivityLogs';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 
@@ -25,12 +24,6 @@ export function InlineReportCard({ prospect, onUpdate, onClose, colSpan }: Inlin
   const [localData, setLocalData] = useState<Partial<Prospect>>({});
   const [isSaving, setIsSaving] = useState(false);
   const [hasChanges, setHasChanges] = useState(false);
-  const { activities } = useActivityLogs();
-
-  // Filter activities for this prospect (last 5)
-  const prospectActivities = activities
-    .filter(log => log.prospect_id === prospect.id)
-    .slice(0, 5);
 
   useEffect(() => {
     setLocalData({
@@ -66,7 +59,6 @@ export function InlineReportCard({ prospect, onUpdate, onClose, colSpan }: Inlin
     try {
       const updates: Partial<Prospect> = {};
       
-      // Only include changed fields
       if (localData.name !== prospect.name) updates.name = localData.name;
       if (localData.phone !== prospect.phone) updates.phone = localData.phone;
       if ((localData.email || null) !== (prospect.email || null)) updates.email = localData.email || null;
@@ -87,12 +79,12 @@ export function InlineReportCard({ prospect, onUpdate, onClose, colSpan }: Inlin
       if (Object.keys(updates).length > 0) {
         const result = await onUpdate(prospect.id, updates);
         if (result) {
-          toast.success('Prospect updated successfully');
+          toast.success('Prospect updated');
           setHasChanges(false);
         }
       }
     } catch (error) {
-      toast.error('Failed to update prospect');
+      toast.error('Failed to update');
     } finally {
       setIsSaving(false);
     }
@@ -109,332 +101,230 @@ export function InlineReportCard({ prospect, onUpdate, onClose, colSpan }: Inlin
   };
 
   return (
-    <tr className="bg-muted/20 animate-fade-in">
+    <tr className="bg-muted/30">
       <td colSpan={colSpan} className="p-0">
-        <div className="p-4 border-t border-b-2 border-primary/20 bg-gradient-to-b from-muted/30 to-transparent">
-          {/* Header with Close button */}
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-3">
-              <h3 className="font-semibold text-foreground">{localData.name}</h3>
-              <div className="flex flex-wrap gap-1.5">
+        <div className="px-3 py-2 border-t border-b border-primary/20 bg-gradient-to-b from-muted/40 to-transparent">
+          {/* Row 1: Header - Name, Badges, Actions, Close */}
+          <div className="flex items-center justify-between gap-2 flex-wrap mb-2">
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="font-semibold text-foreground text-sm">{localData.name}</span>
+              <div className="flex items-center gap-1 flex-wrap">
                 {localData.funnel_stage && <StageBadge stage={localData.funnel_stage} />}
                 {localData.enrollment_status && <EnrollBadge status={localData.enrollment_status} />}
-                {localData.prospect_status && <StatusBadge status={localData.prospect_status} />}
                 {localData.priority && <PriorityBadge priority={localData.priority} />}
+                {localData.prospect_status && <StatusBadge status={localData.prospect_status} />}
+              </div>
+              {/* Quick Actions inline */}
+              <div className="flex gap-1 ml-2">
+                <Button onClick={openCall} variant="ghost" size="sm" className="h-6 px-2 gap-1 text-xs">
+                  <Phone className="h-3 w-3" /> Call
+                </Button>
+                <Button onClick={openWhatsApp} variant="ghost" size="sm" className="h-6 px-2 gap-1 text-xs text-green-600 hover:text-green-600">
+                  <MessageCircle className="h-3 w-3" /> WA
+                </Button>
               </div>
             </div>
-            <Button variant="ghost" size="icon" onClick={onClose} className="h-8 w-8">
-              <X className="h-4 w-4" />
+            <Button variant="ghost" size="icon" onClick={onClose} className="h-6 w-6">
+              <X className="h-3 w-3" />
             </Button>
           </div>
 
-          {/* Quick Actions */}
-          <div className="flex gap-2 mb-4">
-            <Button onClick={openCall} variant="outline" size="sm" className="gap-2">
-              <Phone className="h-3.5 w-3.5" />
-              Call
-            </Button>
-            <Button onClick={openWhatsApp} variant="outline" size="sm" className="gap-2 text-green-600 hover:text-green-600">
-              <MessageCircle className="h-3.5 w-3.5" />
-              WhatsApp
-            </Button>
-          </div>
-
-          {/* Main Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            {/* Column 1 - Basic Info */}
-            <div className="space-y-3">
-              <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Basic Info</h4>
-              
-              <div className="space-y-2">
-                <div>
-                  <Label className="text-xs text-muted-foreground flex items-center gap-1.5 mb-1">
-                    <User className="h-3 w-3" /> Name *
-                  </Label>
-                  <Input
-                    value={localData.name || ''}
-                    onChange={(e) => handleFieldChange('name', e.target.value)}
-                    placeholder="Prospect name"
-                    className="h-8 text-sm"
-                  />
-                </div>
-                
-                <div>
-                  <Label className="text-xs text-muted-foreground flex items-center gap-1.5 mb-1">
-                    <Phone className="h-3 w-3" /> Phone *
-                  </Label>
-                  <Input
-                    value={localData.phone || ''}
-                    onChange={(e) => handleFieldChange('phone', e.target.value)}
-                    placeholder="Phone number"
-                    className="h-8 text-sm"
-                  />
-                </div>
-
-                <div>
-                  <Label className="text-xs text-muted-foreground flex items-center gap-1.5 mb-1">
-                    <Mail className="h-3 w-3" /> Email
-                  </Label>
-                  <Input
-                    type="email"
-                    value={localData.email || ''}
-                    onChange={(e) => handleFieldChange('email', e.target.value)}
-                    placeholder="email@example.com"
-                    className="h-8 text-sm"
-                  />
-                </div>
-              </div>
-            </div>
-
-            {/* Column 2 - Location & Demographics */}
-            <div className="space-y-3">
-              <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Demographics</h4>
-              
-              <div className="space-y-2">
-                <div className="grid grid-cols-2 gap-2">
-                  <div>
-                    <Label className="text-xs text-muted-foreground flex items-center gap-1.5 mb-1">
-                      <MapPin className="h-3 w-3" /> City
-                    </Label>
-                    <Input
-                      value={localData.city || ''}
-                      onChange={(e) => handleFieldChange('city', e.target.value)}
-                      placeholder="City"
-                      className="h-8 text-sm"
-                    />
-                  </div>
-                  <div>
-                    <Label className="text-xs text-muted-foreground mb-1">State</Label>
-                    <Input
-                      value={localData.state || ''}
-                      onChange={(e) => handleFieldChange('state', e.target.value)}
-                      placeholder="State"
-                      className="h-8 text-sm"
-                    />
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-2">
-                  <div>
-                    <Label className="text-xs text-muted-foreground mb-1">Age</Label>
-                    <Input
-                      type="number"
-                      value={localData.age || ''}
-                      onChange={(e) => handleFieldChange('age', e.target.value ? parseInt(e.target.value) : undefined)}
-                      placeholder="Age"
-                      className="h-8 text-sm"
-                    />
-                  </div>
-                  <div>
-                    <Label className="text-xs text-muted-foreground flex items-center gap-1.5 mb-1">
-                      <Cake className="h-3 w-3" /> DOB
-                    </Label>
-                    <Popover>
-                      <PopoverTrigger asChild>
-                        <Button variant="outline" size="sm" className="w-full justify-start text-left font-normal h-8 text-xs">
-                          <CalendarIcon className="mr-1.5 h-3 w-3" />
-                          {localData.date_of_birth ? format(parseISO(localData.date_of_birth), 'MMM d, yy') : 'Select'}
-                        </Button>
-                      </PopoverTrigger>
-                      <PopoverContent className="w-auto p-0 bg-popover border-border z-50" align="start">
-                        <Calendar
-                          mode="single"
-                          selected={localData.date_of_birth ? parseISO(localData.date_of_birth) : undefined}
-                          onSelect={(date) => handleFieldChange('date_of_birth', date ? format(date, 'yyyy-MM-dd') : null)}
-                        />
-                      </PopoverContent>
-                    </Popover>
-                  </div>
-                </div>
-
-                <div>
-                  <Label className="text-xs text-muted-foreground flex items-center gap-1.5 mb-1">
-                    <Briefcase className="h-3 w-3" /> Currently Doing
-                  </Label>
-                  <Input
-                    value={localData.currently_doing || ''}
-                    onChange={(e) => handleFieldChange('currently_doing', e.target.value)}
-                    placeholder="Job / Business / Profession"
-                    className="h-8 text-sm"
-                  />
-                </div>
-              </div>
-            </div>
-
-            {/* Column 3 - Status & Dropdowns */}
-            <div className="space-y-3">
-              <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Status</h4>
-              
-              <div className="space-y-2">
-                <div className="grid grid-cols-2 gap-2">
-                  <div>
-                    <Label className="text-xs text-muted-foreground mb-1">Stage</Label>
-                    <Select
-                      value={localData.funnel_stage || ''}
-                      onValueChange={(value) => handleFieldChange('funnel_stage', value)}
-                    >
-                      <SelectTrigger className="h-8 text-xs">
-                        <SelectValue placeholder="Select" />
-                      </SelectTrigger>
-                      <SelectContent className="bg-popover border-border z-50">
-                        {FUNNEL_STAGES.map(stage => (
-                          <SelectItem key={stage} value={stage}>{stage}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div>
-                    <Label className="text-xs text-muted-foreground mb-1">Enrollment</Label>
-                    <Select
-                      value={localData.enrollment_status || 'Not Enrolled'}
-                      onValueChange={(value) => handleFieldChange('enrollment_status', value)}
-                    >
-                      <SelectTrigger className="h-8 text-xs">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent className="bg-popover border-border z-50">
-                        {ENROLLMENT_STATUSES.map(status => (
-                          <SelectItem key={status} value={status}>{status}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-2">
-                  <div>
-                    <Label className="text-xs text-muted-foreground mb-1">Status</Label>
-                    <Select
-                      value={localData.prospect_status || ''}
-                      onValueChange={(value) => handleFieldChange('prospect_status', value || null)}
-                    >
-                      <SelectTrigger className="h-8 text-xs">
-                        <SelectValue placeholder="Select" />
-                      </SelectTrigger>
-                      <SelectContent className="bg-popover border-border z-50">
-                        {STATUSES.map(status => (
-                          <SelectItem key={status} value={status}>{status}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div>
-                    <Label className="text-xs text-muted-foreground mb-1">Priority</Label>
-                    <Select
-                      value={localData.priority || ''}
-                      onValueChange={(value) => handleFieldChange('priority', value)}
-                    >
-                      <SelectTrigger className="h-8 text-xs">
-                        <SelectValue placeholder="Select" />
-                      </SelectTrigger>
-                      <SelectContent className="bg-popover border-border z-50">
-                        {PRIORITIES.map(priority => (
-                          <SelectItem key={priority} value={priority}>{priority}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-2">
-                  <div>
-                    <Label className="text-xs text-muted-foreground mb-1">Action</Label>
-                    <Select
-                      value={localData.action_taken || ''}
-                      onValueChange={(value) => handleFieldChange('action_taken', value || null)}
-                    >
-                      <SelectTrigger className="h-8 text-xs">
-                        <SelectValue placeholder="Select" />
-                      </SelectTrigger>
-                      <SelectContent className="bg-popover border-border z-50">
-                        {ACTIONS.map(action => (
-                          <SelectItem key={action} value={action}>{action}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div>
-                    <Label className="text-xs text-muted-foreground mb-1">Last Contact</Label>
-                    <Popover>
-                      <PopoverTrigger asChild>
-                        <Button variant="outline" size="sm" className="w-full justify-start text-left font-normal h-8 text-xs">
-                          <CalendarIcon className="mr-1.5 h-3 w-3" />
-                          {localData.last_contact_date ? format(parseISO(localData.last_contact_date), 'MMM d') : 'Set'}
-                        </Button>
-                      </PopoverTrigger>
-                      <PopoverContent className="w-auto p-0 bg-popover border-border z-50" align="start">
-                        <Calendar
-                          mode="single"
-                          selected={localData.last_contact_date ? parseISO(localData.last_contact_date) : undefined}
-                          onSelect={(date) => handleFieldChange('last_contact_date', date ? format(date, 'yyyy-MM-dd') : null)}
-                        />
-                      </PopoverContent>
-                    </Popover>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Column 4 - Notes & Activity */}
-            <div className="space-y-3">
-              <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
-                <Target className="h-3 w-3" /> Why / Need
-              </h4>
-              <Textarea
-                value={localData.why_need || ''}
-                onChange={(e) => handleFieldChange('why_need', e.target.value)}
-                placeholder="Why do they want to earn?"
-                className="min-h-[50px] text-sm resize-none"
+          {/* Row 2: All editable fields in compact grid */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-2 mb-2">
+            {/* Name */}
+            <div>
+              <Label className="text-[10px] text-muted-foreground mb-0.5 block">Name *</Label>
+              <Input
+                value={localData.name || ''}
+                onChange={(e) => handleFieldChange('name', e.target.value)}
+                className="h-7 text-xs"
               />
-              
-              <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Notes</h4>
-              <Textarea
-                value={localData.notes || ''}
-                onChange={(e) => handleFieldChange('notes', e.target.value)}
-                placeholder="Call notes, action items..."
-                className="min-h-[60px] text-sm resize-none"
+            </div>
+            {/* Phone */}
+            <div>
+              <Label className="text-[10px] text-muted-foreground mb-0.5 block">Phone *</Label>
+              <Input
+                value={localData.phone || ''}
+                onChange={(e) => handleFieldChange('phone', e.target.value)}
+                className="h-7 text-xs"
+              />
+            </div>
+            {/* Email */}
+            <div>
+              <Label className="text-[10px] text-muted-foreground mb-0.5 block">Email</Label>
+              <Input
+                type="email"
+                value={localData.email || ''}
+                onChange={(e) => handleFieldChange('email', e.target.value)}
+                className="h-7 text-xs"
+              />
+            </div>
+            {/* City */}
+            <div>
+              <Label className="text-[10px] text-muted-foreground mb-0.5 block">City</Label>
+              <Input
+                value={localData.city || ''}
+                onChange={(e) => handleFieldChange('city', e.target.value)}
+                className="h-7 text-xs"
+              />
+            </div>
+            {/* State */}
+            <div>
+              <Label className="text-[10px] text-muted-foreground mb-0.5 block">State</Label>
+              <Input
+                value={localData.state || ''}
+                onChange={(e) => handleFieldChange('state', e.target.value)}
+                className="h-7 text-xs"
+              />
+            </div>
+            {/* Age */}
+            <div>
+              <Label className="text-[10px] text-muted-foreground mb-0.5 block">Age</Label>
+              <Input
+                type="number"
+                value={localData.age || ''}
+                onChange={(e) => handleFieldChange('age', e.target.value ? parseInt(e.target.value) : undefined)}
+                className="h-7 text-xs"
+              />
+            </div>
+            {/* DOB */}
+            <div>
+              <Label className="text-[10px] text-muted-foreground mb-0.5 block">DOB</Label>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button variant="outline" size="sm" className="w-full justify-start h-7 text-[10px] px-2">
+                    <CalendarIcon className="mr-1 h-3 w-3" />
+                    {localData.date_of_birth ? format(parseISO(localData.date_of_birth), 'MMM d, yy') : '—'}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0 bg-popover border-border z-50" align="start">
+                  <Calendar
+                    mode="single"
+                    selected={localData.date_of_birth ? parseISO(localData.date_of_birth) : undefined}
+                    onSelect={(date) => handleFieldChange('date_of_birth', date ? format(date, 'yyyy-MM-dd') : null)}
+                  />
+                </PopoverContent>
+              </Popover>
+            </div>
+            {/* Currently Doing */}
+            <div>
+              <Label className="text-[10px] text-muted-foreground mb-0.5 block">Profession</Label>
+              <Input
+                value={localData.currently_doing || ''}
+                onChange={(e) => handleFieldChange('currently_doing', e.target.value)}
+                className="h-7 text-xs"
+                placeholder="Job/Biz"
               />
             </div>
           </div>
 
-          {/* Activity Timeline & Save Button Row */}
-          <div className="mt-4 pt-4 border-t border-border/30 flex flex-col md:flex-row md:items-start md:justify-between gap-4">
-            {/* Recent Activity */}
-            <div className="flex-1 max-w-md">
-              <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5 mb-2">
-                <Clock className="h-3 w-3" /> Recent Activity
-              </h4>
-              {prospectActivities.length > 0 ? (
-                <div className="flex flex-wrap gap-2">
-                  {prospectActivities.slice(0, 3).map((activity) => (
-                    <div key={activity.id} className="text-xs bg-background/50 rounded px-2 py-1 border border-border/30">
-                      <span className="text-foreground">{activity.description}</span>
-                      <span className="text-muted-foreground ml-1.5">
-                        {formatDistanceToNow(parseISO(activity.created_at), { addSuffix: true })}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <p className="text-xs text-muted-foreground italic">No recent activity</p>
-              )}
-              <div className="mt-2 text-xs text-muted-foreground">
-                Added {formatDistanceToNow(parseISO(prospect.date_added), { addSuffix: true })} • Updated {formatDistanceToNow(parseISO(prospect.updated_at), { addSuffix: true })}
+          {/* Row 3: Status dropdowns in compact grid */}
+          <div className="grid grid-cols-3 sm:grid-cols-6 gap-2 mb-2">
+            {/* Stage */}
+            <div>
+              <Label className="text-[10px] text-muted-foreground mb-0.5 block">Stage</Label>
+              <Select value={localData.funnel_stage || ''} onValueChange={(v) => handleFieldChange('funnel_stage', v)}>
+                <SelectTrigger className="h-7 text-xs"><SelectValue placeholder="—" /></SelectTrigger>
+                <SelectContent className="bg-popover border-border z-50">
+                  {FUNNEL_STAGES.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+            {/* Enrollment */}
+            <div>
+              <Label className="text-[10px] text-muted-foreground mb-0.5 block">Enrollment</Label>
+              <Select value={localData.enrollment_status || 'Not Enrolled'} onValueChange={(v) => handleFieldChange('enrollment_status', v)}>
+                <SelectTrigger className="h-7 text-xs"><SelectValue /></SelectTrigger>
+                <SelectContent className="bg-popover border-border z-50">
+                  {ENROLLMENT_STATUSES.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+            {/* Status */}
+            <div>
+              <Label className="text-[10px] text-muted-foreground mb-0.5 block">Status</Label>
+              <Select value={localData.prospect_status || ''} onValueChange={(v) => handleFieldChange('prospect_status', v || null)}>
+                <SelectTrigger className="h-7 text-xs"><SelectValue placeholder="—" /></SelectTrigger>
+                <SelectContent className="bg-popover border-border z-50">
+                  {STATUSES.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+            {/* Priority */}
+            <div>
+              <Label className="text-[10px] text-muted-foreground mb-0.5 block">Priority</Label>
+              <Select value={localData.priority || ''} onValueChange={(v) => handleFieldChange('priority', v)}>
+                <SelectTrigger className="h-7 text-xs"><SelectValue placeholder="—" /></SelectTrigger>
+                <SelectContent className="bg-popover border-border z-50">
+                  {PRIORITIES.map(p => <SelectItem key={p} value={p}>{p}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+            {/* Action */}
+            <div>
+              <Label className="text-[10px] text-muted-foreground mb-0.5 block">Action</Label>
+              <Select value={localData.action_taken || ''} onValueChange={(v) => handleFieldChange('action_taken', v || null)}>
+                <SelectTrigger className="h-7 text-xs"><SelectValue placeholder="—" /></SelectTrigger>
+                <SelectContent className="bg-popover border-border z-50">
+                  {ACTIONS.map(a => <SelectItem key={a} value={a}>{a}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+            {/* Last Contact */}
+            <div>
+              <Label className="text-[10px] text-muted-foreground mb-0.5 block">Last Contact</Label>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button variant="outline" size="sm" className="w-full justify-start h-7 text-[10px] px-2">
+                    <CalendarIcon className="mr-1 h-3 w-3" />
+                    {localData.last_contact_date ? format(parseISO(localData.last_contact_date), 'MMM d') : '—'}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0 bg-popover border-border z-50" align="start">
+                  <Calendar
+                    mode="single"
+                    selected={localData.last_contact_date ? parseISO(localData.last_contact_date) : undefined}
+                    onSelect={(date) => handleFieldChange('last_contact_date', date ? format(date, 'yyyy-MM-dd') : null)}
+                  />
+                </PopoverContent>
+              </Popover>
+            </div>
+          </div>
+
+          {/* Row 4: Context (Why/Need + Notes) + Save */}
+          <div className="flex flex-col sm:flex-row gap-2">
+            <div className="flex-1 grid grid-cols-2 gap-2">
+              <div>
+                <Label className="text-[10px] text-muted-foreground mb-0.5 block">Why / Need</Label>
+                <Textarea
+                  value={localData.why_need || ''}
+                  onChange={(e) => handleFieldChange('why_need', e.target.value)}
+                  placeholder="Reason for earning..."
+                  className="min-h-[36px] h-9 text-xs resize-none"
+                />
+              </div>
+              <div>
+                <Label className="text-[10px] text-muted-foreground mb-0.5 block">Notes</Label>
+                <Textarea
+                  value={localData.notes || ''}
+                  onChange={(e) => handleFieldChange('notes', e.target.value)}
+                  placeholder="Call notes..."
+                  className="min-h-[36px] h-9 text-xs resize-none"
+                />
               </div>
             </div>
-
-            {/* Save Button */}
-            <div className="flex-shrink-0">
+            <div className="flex items-end gap-2">
+              <span className="text-[10px] text-muted-foreground hidden sm:inline">
+                Updated {formatDistanceToNow(parseISO(prospect.updated_at), { addSuffix: true })}
+              </span>
               <Button 
                 onClick={handleSave} 
                 disabled={isSaving || !hasChanges}
-                className={cn(
-                  "gap-2 min-w-[140px]",
-                  hasChanges && "bg-primary hover:bg-primary/90"
-                )}
+                size="sm"
+                className={cn("h-8 px-3 gap-1.5 text-xs", hasChanges && "bg-primary hover:bg-primary/90")}
               >
-                <Save className="h-4 w-4" />
-                {isSaving ? 'Saving...' : hasChanges ? 'Save Changes' : 'Saved'}
+                <Save className="h-3 w-3" />
+                {isSaving ? 'Saving...' : hasChanges ? 'Save' : 'Saved'}
               </Button>
             </div>
           </div>
