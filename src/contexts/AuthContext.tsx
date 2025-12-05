@@ -19,6 +19,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    const liveUrl = 'https://wpczgwxsriezaubncuom.lovable.app';
+    
+    // Check if we're on a preview URL with OAuth tokens - redirect to live domain
+    const currentUrl = window.location.href;
+    const isPreviewUrl = currentUrl.includes('.lovable.app') && !currentUrl.includes('wpczgwxsriezaubncuom');
+    const hasAuthToken = window.location.hash.includes('access_token');
+    
+    if (isPreviewUrl && hasAuthToken) {
+      // Redirect to live domain with the same hash
+      window.location.href = `${liveUrl}/dashboard${window.location.hash}`;
+      return;
+    }
+
     // Set up auth state listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
