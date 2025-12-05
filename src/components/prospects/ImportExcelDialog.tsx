@@ -7,6 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Upload, FileSpreadsheet, AlertCircle } from 'lucide-react';
 import { Prospect, FUNNEL_STAGES, ACTIONS, STATUSES, PRIORITIES } from '@/types/prospect';
 import { toast } from 'sonner';
+import { sanitizeImportString, validateImportedProspect } from '@/lib/validations';
 
 interface ImportExcelDialogProps {
   onImport: (prospects: Partial<Prospect>[]) => Promise<{ imported: number; skipped: number }>;
@@ -149,48 +150,70 @@ export function ImportExcelDialog({ onImport }: ImportExcelDialogProps) {
     setIsImporting(true);
     setError(null);
 
-    const prospects: Partial<Prospect>[] = fullData.map((row) => {
+    let skippedCount = 0;
+    const prospects: Partial<Prospect>[] = [];
+
+    fullData.forEach((row) => {
+      // Validate and sanitize required fields
+      const validation = validateImportedProspect(row, mapping.name!, mapping.phone!);
+      
+      if (!validation.valid) {
+        skippedCount++;
+        return;
+      }
+
       const prospect: Partial<Prospect> = {
-        name: row[mapping.name!]?.toString().trim() || '',
-        phone: row[mapping.phone!]?.toString().trim() || '',
+        name: validation.name,
+        phone: validation.phone,
       };
 
+      // Sanitize optional fields with length limits
       if (mapping.email && row[mapping.email]) {
-        prospect.email = row[mapping.email].toString().trim();
+        const email = sanitizeImportString(row[mapping.email], 255);
+        // Basic email validation
+        if (email && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+          prospect.email = email;
+        }
       }
       if (mapping.notes && row[mapping.notes]) {
-        prospect.notes = row[mapping.notes].toString().trim();
+        prospect.notes = sanitizeImportString(row[mapping.notes], 2000);
       }
       if (mapping.funnel_stage && row[mapping.funnel_stage]) {
-        const stage = row[mapping.funnel_stage].toString().trim();
+        const stage = sanitizeImportString(row[mapping.funnel_stage], 50);
         if (FUNNEL_STAGES.includes(stage as any)) {
           prospect.funnel_stage = stage as any;
         }
       }
       if (mapping.action_taken && row[mapping.action_taken]) {
-        const action = row[mapping.action_taken].toString().trim();
+        const action = sanitizeImportString(row[mapping.action_taken], 50);
         if (ACTIONS.includes(action as any)) {
           prospect.action_taken = action as any;
         }
       }
       if (mapping.prospect_status && row[mapping.prospect_status]) {
-        const status = row[mapping.prospect_status].toString().trim();
+        const status = sanitizeImportString(row[mapping.prospect_status], 20);
         if (STATUSES.includes(status as any)) {
           prospect.prospect_status = status as any;
         }
       }
       if (mapping.priority && row[mapping.priority]) {
-        const priority = row[mapping.priority].toString().trim();
+        const priority = sanitizeImportString(row[mapping.priority], 20);
         if (PRIORITIES.includes(priority as any)) {
           prospect.priority = priority as any;
         }
       }
 
-      return prospect;
+      prospects.push(prospect);
     });
 
+    if (prospects.length === 0) {
+      setError('No valid prospects found. Please check that Name and Phone columns have valid data.');
+      setIsImporting(false);
+      return;
+    }
+
     const result = await onImport(prospects);
-    toast.success(`${result.imported} prospects imported, ${result.skipped} rows skipped`);
+    toast.success(`${result.imported} prospects imported, ${result.skipped + skippedCount} rows skipped`);
     setIsImporting(false);
     resetState();
     setOpen(false);
