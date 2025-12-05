@@ -21,7 +21,6 @@ interface ProspectRowProps {
   onToggleExpand: () => void;
   onUpdate: (id: string, updates: Partial<Prospect>) => Promise<Prospect | null>;
   onDelete: (id: string) => Promise<boolean>;
-  onOpenReportCard: (prospect: Prospect) => void;
   isEven: boolean;
   columnOrder: string[];
   columnWidths: Record<string, number>;
@@ -36,7 +35,6 @@ export function ProspectRow({
   onToggleExpand,
   onUpdate, 
   onDelete,
-  onOpenReportCard,
   isEven,
   columnOrder,
   columnWidths,
@@ -160,12 +158,13 @@ export function ProspectRow({
         return (
           <td key={columnId} className={cellClass} style={style}>
             <button
-              onClick={() => onOpenReportCard(prospect)}
+              onClick={onToggleExpand}
               className={cn(
                 "text-left font-semibold text-foreground hover:text-primary hover:underline transition-colors cursor-pointer bg-transparent border-0 p-0.5 px-1 -ml-1 rounded truncate block max-w-full",
-                isMobileTable && "text-xs"
+                isMobileTable && "text-xs",
+                isExpanded && "text-primary"
               )}
-              title="Click to open Report Card"
+              title="Click to expand details"
             >
               {prospect.name}
             </button>
@@ -390,6 +389,7 @@ export function ProspectRow({
         <InlineReportCard 
           prospect={prospect} 
           onUpdate={onUpdate} 
+          onClose={onToggleExpand}
           colSpan={columnOrder.length}
         />
       )}

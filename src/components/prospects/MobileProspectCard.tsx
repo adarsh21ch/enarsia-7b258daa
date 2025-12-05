@@ -20,10 +20,9 @@ interface MobileProspectCardProps {
   isCalling: boolean;
   onUpdate: (id: string, updates: Partial<Prospect>) => Promise<Prospect | null>;
   onDelete: (id: string) => Promise<boolean>;
-  onOpenReportCard: (prospect: Prospect) => void;
 }
 
-export function MobileProspectCard({ prospect, index, isCalling, onUpdate, onDelete, onOpenReportCard }: MobileProspectCardProps) {
+export function MobileProspectCard({ prospect, index, isCalling, onUpdate, onDelete }: MobileProspectCardProps) {
   const [isExpanded, setIsExpanded] = useState(false);
   const [localData, setLocalData] = useState({
     name: prospect.name,
@@ -115,7 +114,7 @@ export function MobileProspectCard({ prospect, index, isCalling, onUpdate, onDel
                 #{index}
               </span>
               <button
-                onClick={() => onOpenReportCard(prospect)}
+                onClick={() => setIsExpanded(!isExpanded)}
                 className="text-base font-bold text-foreground hover:text-primary hover:underline transition-colors text-left truncate"
               >
                 {prospect.name}
