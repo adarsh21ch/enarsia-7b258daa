@@ -14,13 +14,19 @@ export const prospectPhoneSchema = z
   .max(20, 'Phone number must be less than 20 characters')
   .regex(/^[\d\s\-+()]+$/, 'Phone number can only contain digits, spaces, and +()-');
 
+export const prospectEmailSchema = z
+  .string()
+  .trim()
+  .email('Please enter a valid email address')
+  .max(255, 'Email must be less than 255 characters')
+  .optional()
+  .or(z.literal(''))
+  .transform(val => val || null);
+
 export const addProspectSchema = z.object({
   name: prospectNameSchema,
   phone: prospectPhoneSchema,
-  age_or_dob: z.string().trim().max(50).optional().or(z.literal('')).transform(val => val || null),
-  city: z.string().trim().max(100).optional().or(z.literal('')).transform(val => val || null),
-  state: z.string().trim().max(100).optional().or(z.literal('')).transform(val => val || null),
-  gender: z.string().trim().max(20).optional().or(z.literal('')).transform(val => val || null),
+  email: prospectEmailSchema,
 });
 
 // Auth validation schemas

@@ -1,5 +1,5 @@
 import { useState, useMemo, useCallback } from 'react';
-import { Prospect, Sheet } from '@/types/prospect';
+import { Prospect, FunnelStage, ProspectStatus, Sheet, ExtendedActionTaken } from '@/types/prospect';
 import { ProspectRow } from './ProspectRow';
 import { MobileProspectCard } from './MobileProspectCard';
 import { ProspectFilters } from './ProspectFilters';
@@ -8,13 +8,16 @@ import { ImportExcelDialog } from './ImportExcelDialog';
 import { SheetTabs } from './SheetTabs';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
-import { Users, LayoutGrid, Table2 } from 'lucide-react';
+import { Users, GripVertical, LayoutGrid, Table2 } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
-import { useDebouncedValue } from '@/hooks/useDebouncedValue';
 import { cn } from '@/lib/utils';
 
 interface Filters {
   search: string;
+  stage: FunnelStage | 'all';
+  status: ProspectStatus | 'all';
+  actions: ExtendedActionTaken[];
+  incompleteOnly: boolean;
 }
 
 interface ProspectTableProps {
@@ -31,23 +34,26 @@ interface ProspectTableProps {
   onAddSheet: (name: string) => Promise<Sheet | null>;
   onUpdateSheet: (id: string, name: string) => Promise<Sheet | null>;
   onDeleteSheet: (id: string) => Promise<boolean>;
+  // Filter mode from parent
+  filterMode: 'calling' | 'funnel';
+  subFilter: 'all' | 'hot' | 'scheduled' | 'day1' | 'progress';
 }
 
-// Column configuration
+// Column configuration - desktop widths (removed priority)
 const COLUMNS = [
   { id: 'index', label: '#', defaultWidth: 50, minWidth: 40, mobileWidth: 36 },
   { id: 'name', label: 'Name', defaultWidth: 180, minWidth: 120, mobileWidth: 130 },
   { id: 'phone', label: 'Phone', defaultWidth: 160, minWidth: 120, mobileWidth: 100 },
   { id: 'contact', label: 'Call', defaultWidth: 70, minWidth: 60, mobileWidth: 60 },
-  { id: 'age_or_dob', label: 'Age / DOB', defaultWidth: 100, minWidth: 80, mobileWidth: 70 },
-  { id: 'city', label: 'City', defaultWidth: 100, minWidth: 80, mobileWidth: 80 },
-  { id: 'state', label: 'State', defaultWidth: 100, minWidth: 80, mobileWidth: 80 },
-  { id: 'gender', label: 'Gender', defaultWidth: 80, minWidth: 60, mobileWidth: 60 },
+  { id: 'stage', label: 'Stage', defaultWidth: 120, minWidth: 100, mobileWidth: 80 },
+  { id: 'action', label: 'Action', defaultWidth: 140, minWidth: 100, mobileWidth: 90 },
+  { id: 'status', label: 'Status', defaultWidth: 100, minWidth: 80, mobileWidth: 80 },
+  { id: 'lastContact', label: 'Date', defaultWidth: 110, minWidth: 90, mobileWidth: 70 },
   { id: 'actions', label: '', defaultWidth: 90, minWidth: 80, mobileWidth: 50 },
 ];
 
-// Mobile column order
-const MOBILE_COLUMN_ORDER = ['index', 'name', 'phone', 'contact', 'age_or_dob', 'city', 'state', 'gender', 'actions'];
+// Mobile column order (removed priority)
+const MOBILE_COLUMN_ORDER = ['index', 'name', 'phone', 'contact', 'stage', 'action', 'status', 'lastContact', 'actions'];
 
 export function ProspectTable({
   prospects,
@@ -62,16 +68,19 @@ export function ProspectTable({
   onAddSheet,
   onUpdateSheet,
   onDeleteSheet,
+  filterMode,
+  subFilter,
 }: ProspectTableProps) {
   const [filters, setFilters] = useState<Filters>({
     search: '',
+    stage: 'all',
+    status: 'all',
+    actions: [],
+    incompleteOnly: false,
   });
   const [expandedRowId, setExpandedRowId] = useState<string | null>(null);
   const [mobileViewMode, setMobileViewMode] = useState<'card' | 'table'>('table');
   const isMobile = useIsMobile();
-  
-  // Debounce search for better performance
-  const debouncedSearch = useDebouncedValue(filters.search, 200);
 
   // Column state for reordering and resizing
   const [columnOrder, setColumnOrder] = useState<string[]>(COLUMNS.map(c => c.id));
@@ -81,38 +90,96 @@ export function ProspectTable({
   const [draggedColumn, setDraggedColumn] = useState<string | null>(null);
   const [resizingColumn, setResizingColumn] = useState<string | null>(null);
 
-  // Filter by sheet
-  const sheetFilteredProspects = useMemo(() => {
-    if (!selectedSheetId) return prospects;
-    return prospects.filter(p => p.sheet_id === selectedSheetId);
-  }, [prospects, selectedSheetId]);
+  // Separate prospects into Calling vs Funnel
+  const callingProspects = useMemo(() => {
+    return prospects.filter(p => 
+      (!p.enrollment_status || p.enrollment_status === 'Not Enrolled') &&
+      (!p.funnel_stage || p.funnel_stage === 'Enrollment')
+    );
+  }, [prospects]);
 
-  // Apply search filter (using debounced search)
+  const funnelProspects = useMemo(() => {
+    return prospects.filter(p => 
+      p.enrollment_status === 'Enrolled' ||
+      (p.funnel_stage && p.funnel_stage !== 'Enrollment')
+    );
+  }, [prospects]);
+
+  // Get base prospects based on filter mode
+  const baseProspects = useMemo(() => {
+    const base = filterMode === 'calling' ? callingProspects : funnelProspects;
+    
+    // Apply sub-filter
+    if (filterMode === 'calling') {
+      switch (subFilter) {
+        case 'hot':
+          return base.filter(p => p.priority === 'High' || p.prospect_status === 'Good');
+        case 'scheduled':
+          return base.filter(p => p.last_contact_date);
+        default:
+          return base;
+      }
+    } else {
+      switch (subFilter) {
+        case 'day1':
+          return base.filter(p => p.funnel_stage === 'Day 1');
+        case 'progress':
+          return base.filter(p => 
+            p.funnel_stage && ['Day 2', 'Day 3', 'Minimum Bill'].includes(p.funnel_stage)
+          );
+        default:
+          return base;
+      }
+    }
+  }, [callingProspects, funnelProspects, filterMode, subFilter]);
+
+  // Filter by sheet (works for both Calling and Funnel tabs)
+  const sheetFilteredProspects = useMemo(() => {
+    if (!selectedSheetId) return baseProspects;
+    return baseProspects.filter(p => p.sheet_id === selectedSheetId);
+  }, [baseProspects, selectedSheetId]);
+
+  // Apply search and other filters
   const filteredProspects = useMemo(() => {
     return sheetFilteredProspects.filter((prospect) => {
-      const searchLower = debouncedSearch.toLowerCase();
-      const matchesSearch = !debouncedSearch ||
+      const searchLower = filters.search.toLowerCase();
+      const matchesSearch = !filters.search ||
         prospect.name.toLowerCase().includes(searchLower) ||
         prospect.phone.toLowerCase().includes(searchLower) ||
-        (prospect.city?.toLowerCase().includes(searchLower)) ||
-        (prospect.state?.toLowerCase().includes(searchLower));
+        (prospect.notes?.toLowerCase().includes(searchLower));
 
-      return matchesSearch;
+      const matchesStage = filters.stage === 'all' || prospect.funnel_stage === filters.stage;
+      const matchesStatus = filters.status === 'all' || prospect.prospect_status === filters.status;
+      
+      // Multi-select action filter
+      const matchesAction = filters.actions.length === 0 || 
+        filters.actions.includes(prospect.action_taken as ExtendedActionTaken) ||
+        (filters.actions.includes('Enrolled') && prospect.enrollment_status === 'Enrolled');
+
+      // Incomplete filter - show only prospects missing stage, status, or action
+      const matchesIncomplete = !filters.incompleteOnly || 
+        !prospect.funnel_stage || 
+        !prospect.prospect_status || 
+        !prospect.action_taken;
+
+      return matchesSearch && matchesStage && matchesStatus && matchesAction && matchesIncomplete;
     });
-  }, [sheetFilteredProspects, debouncedSearch]);
+  }, [sheetFilteredProspects, filters]);
 
   const exportToCSV = () => {
-    const headers = ['#', 'Name', 'Phone', 'Age / DOB', 'City', 'State', 'Gender', 'Date Added'];
+    const headers = ['#', 'Name', 'Phone', 'City & State', 'Funnel Stage', 'Action Taken', 'Status', 'Notes', 'Last Contact Date', 'Date Added'];
     const csvContent = [
       headers.join(','),
       ...filteredProspects.map((p, i) => [
         i + 1,
         `"${p.name}"`,
         `"${p.phone}"`,
-        `"${p.age_or_dob || ''}"`,
-        `"${p.city || ''}"`,
-        `"${p.state || ''}"`,
-        `"${p.gender || ''}"`,
+        `"${[p.city, p.state].filter(Boolean).join(', ')}"`,
+        `"${p.funnel_stage}"`,
+        `"${p.action_taken || ''}"`,
+        `"${p.prospect_status || ''}"`,
+        `"${(p.notes || '').replace(/"/g, '""')}"`,
+        `"${p.last_contact_date || ''}"`,
         `"${p.date_added}"`,
       ].join(','))
     ].join('\n');
@@ -120,7 +187,7 @@ export function ProspectTable({
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const link = document.createElement('a');
     link.href = URL.createObjectURL(blob);
-    link.download = `prospects_${new Date().toISOString().split('T')[0]}.csv`;
+    link.download = `prospects_${filterMode}_${new Date().toISOString().split('T')[0]}.csv`;
     link.click();
   };
 
@@ -141,6 +208,7 @@ export function ProspectTable({
   };
 
   const handleToggleExpand = useCallback((prospectId: string) => {
+    // Smooth transition - collapse first if different row, then expand new one
     if (expandedRowId && expandedRowId !== prospectId) {
       setExpandedRowId(null);
       setTimeout(() => setExpandedRowId(prospectId), 50);
@@ -226,8 +294,11 @@ export function ProspectTable({
     );
   }
 
+  const isCalling = filterMode === 'calling';
+
   // Sheet tabs component to render at bottom (sticky)
   const renderSheetTabs = () => {
+    if (subFilter !== 'all') return null;
     return (
       <div className="fixed bottom-16 left-0 right-0 z-40 bg-background border-t border-border shadow-lg">
         <SheetTabs
@@ -243,7 +314,7 @@ export function ProspectTable({
   };
 
   return (
-    <div className="space-y-4 pb-12">
+    <div className={cn("space-y-4", subFilter === 'all' && "pb-12")}>
       {/* Fixed Sheet Tabs at bottom */}
       {renderSheetTabs()}
       
@@ -299,7 +370,7 @@ export function ProspectTable({
           <p className="text-sm text-muted-foreground">
             No prospects match your filters.{' '}
             <button
-              onClick={() => setFilters({ search: '' })}
+              onClick={() => setFilters({ search: '', stage: 'all', status: 'all', actions: [], incompleteOnly: false })}
               className="text-accent hover:underline"
             >
               Clear filters
@@ -314,12 +385,13 @@ export function ProspectTable({
               key={prospect.id}
               prospect={prospect}
               index={index + 1}
+              isCalling={isCalling}
               onUpdate={onUpdate}
               onDelete={onDelete}
             />
           ))}
           <div className="text-center text-xs text-muted-foreground py-2">
-            Showing {filteredProspects.length} of {prospects.length} prospects
+            Showing {filteredProspects.length} of {baseProspects.length} prospects
           </div>
         </div>
       ) : (
@@ -337,7 +409,7 @@ export function ProspectTable({
           >
             <table 
               className="text-sm border-collapse"
-              style={{ width: '100%', minWidth: isMobile ? '600px' : '800px' }}
+              style={{ width: '100%', minWidth: isMobile ? '680px' : '800px' }}
             >
               <thead className="bg-muted/50 text-xs font-semibold text-muted-foreground border-b border-border">
                 <tr>
@@ -370,14 +442,14 @@ export function ProspectTable({
                         style={{ width: `${width}px`, minWidth: `${width}px` }}
                       >
                         <div className="flex items-center gap-1">
-                          {getColumnLabel(columnId)}
+                          {!isMobile && <GripVertical className="h-3 w-3 text-muted-foreground/50" />}
+                          <span>{col?.label || columnId}</span>
                         </div>
-                        {/* Resize handle - desktop only */}
-                        {!isMobile && columnId !== 'actions' && (
+                        {!isMobile && (
                           <div
                             className={cn(
-                              "absolute right-0 top-0 bottom-0 w-1 cursor-col-resize hover:bg-primary/30",
-                              isResizing && "bg-primary/50"
+                              "absolute right-0 top-0 bottom-0 w-1 cursor-col-resize hover:bg-primary/50 transition-colors",
+                              isResizing && "bg-primary"
                             )}
                             onMouseDown={(e) => handleResizeStart(e, columnId)}
                           />
@@ -393,24 +465,22 @@ export function ProspectTable({
                     key={prospect.id}
                     prospect={prospect}
                     index={index + 1}
+                    isCalling={isCalling}
                     isExpanded={expandedRowId === prospect.id}
                     onToggleExpand={() => handleToggleExpand(prospect.id)}
                     onUpdate={onUpdate}
                     onDelete={onDelete}
                     isEven={index % 2 === 0}
                     columnOrder={isMobile ? MOBILE_COLUMN_ORDER : columnOrder}
-                    columnWidths={isMobile 
-                      ? Object.fromEntries(COLUMNS.map(c => [c.id, c.mobileWidth]))
-                      : columnWidths
-                    }
+                    columnWidths={isMobile ? Object.fromEntries(COLUMNS.map(c => [c.id, c.mobileWidth])) : columnWidths}
                     isMobileTable={isMobile}
                   />
                 ))}
               </tbody>
             </table>
           </div>
-          <div className="px-4 py-2 text-xs text-muted-foreground border-t border-border bg-muted/20">
-            Showing {filteredProspects.length} of {prospects.length} prospects
+          <div className="px-4 py-3 border-t border-border bg-muted/20 text-xs text-muted-foreground flex items-center justify-between">
+            <span>Showing {filteredProspects.length} of {baseProspects.length} prospects</span>
           </div>
         </div>
       )}

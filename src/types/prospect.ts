@@ -1,17 +1,34 @@
+export type FunnelStage = 'Enrollment' | 'Day 1' | 'Day 2' | 'Day 3' | 'Minimum Bill' | 'Level Up' | '2CC';
+export type ActionTaken = 'Video Sent' | 'Called' | 'Not Picked' | 'Busy' | 'Follow Up Scheduled';
+export type ExtendedActionTaken = ActionTaken | 'Enrolled';
+export type ProspectStatus = 'Good' | 'Medium' | 'Bad';
+export type PriorityLevel = 'High' | 'Medium' | 'Low';
+export type EnrollmentStatus = 'Enrolled' | 'Not Enrolled';
+
 export interface Prospect {
   id: string;
   user_id: string;
   name: string;
   phone: string;
-  age_or_dob?: string | null;
-  city?: string | null;
-  state?: string | null;
-  gender?: string | null;
+  email?: string | null;
+  notes?: string | null;
+  funnel_stage: FunnelStage;
+  action_taken?: ActionTaken | null;
+  prospect_status?: ProspectStatus | null;
+  priority: PriorityLevel;
   date_added: string;
+  last_contact_date?: string | null;
   updated_at: string;
-  // Legacy fields for organization (kept for sheet management)
+  // New fields from Phase 1
   sheet_id?: string | null;
   batch_date?: string | null;
+  city?: string | null;
+  state?: string | null;
+  age?: number | null;
+  date_of_birth?: string | null;
+  why_need?: string | null;
+  currently_doing?: string | null;
+  enrollment_status?: EnrollmentStatus | null;
 }
 
 export interface Sheet {
@@ -42,5 +59,36 @@ export interface ActivityLog {
   created_at: string;
 }
 
-export const GENDER_OPTIONS = ['Male', 'Female', 'Other'] as const;
-export type Gender = typeof GENDER_OPTIONS[number];
+export const FUNNEL_STAGES: FunnelStage[] = ['Enrollment', 'Day 1', 'Day 2', 'Day 3', 'Minimum Bill', 'Level Up', '2CC'];
+export const CALLING_STAGES: FunnelStage[] = ['Enrollment'];
+export const FUNNEL_TAB_STAGES: FunnelStage[] = ['Day 1', 'Day 2', 'Day 3', 'Minimum Bill', 'Level Up', '2CC'];
+export const ACTIONS: ActionTaken[] = ['Video Sent', 'Called', 'Not Picked', 'Busy', 'Follow Up Scheduled'];
+export const EXTENDED_ACTIONS: ExtendedActionTaken[] = ['Video Sent', 'Called', 'Not Picked', 'Busy', 'Follow Up Scheduled', 'Enrolled'];
+export const STATUSES: ProspectStatus[] = ['Good', 'Medium', 'Bad'];
+export const PRIORITIES: PriorityLevel[] = ['High', 'Medium', 'Low'];
+export const ENROLLMENT_STATUSES: EnrollmentStatus[] = ['Enrolled', 'Not Enrolled'];
+
+// Helper to map old status values to new ones
+export const mapOldStatusToNew = (oldStatus: string | null | undefined): ProspectStatus | null => {
+  if (!oldStatus) return null;
+  const mapping: Record<string, ProspectStatus> = {
+    '+VE': 'Good',
+    'Good': 'Good',
+    '-VE': 'Bad',
+    'Bad': 'Bad',
+    '50-50': 'Medium',
+    '30-70': 'Medium',
+    'Medium': 'Medium',
+  };
+  return mapping[oldStatus] || null;
+};
+
+export const FUNNEL_STAGE_ORDER: Record<FunnelStage, number> = {
+  'Enrollment': 0,
+  'Day 1': 1,
+  'Day 2': 2,
+  'Day 3': 3,
+  'Minimum Bill': 4,
+  'Level Up': 5,
+  '2CC': 6,
+};

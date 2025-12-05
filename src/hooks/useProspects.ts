@@ -1,8 +1,14 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { Prospect } from '@/types/prospect';
+import { Prospect, mapOldStatusToNew } from '@/types/prospect';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
+
+// Map database prospect to app prospect (handles status mapping)
+const mapDbProspect = (dbProspect: any): Prospect => ({
+  ...dbProspect,
+  prospect_status: mapOldStatusToNew(dbProspect.prospect_status),
+});
 
 export function useProspects() {
   const { user } = useAuth();
@@ -20,7 +26,7 @@ export function useProspects() {
     try {
       const { data, error } = await supabase
         .from('prospects')
-        .select('id, user_id, name, phone, age_or_dob, city, state, gender, date_added, updated_at, sheet_id, batch_date')
+        .select('*')
         .eq('user_id', user.id)
         .order('date_added', { ascending: false });
 
@@ -29,7 +35,7 @@ export function useProspects() {
         console.error('Error fetching prospects:', error);
         setProspects([]);
       } else {
-        setProspects(data || []);
+        setProspects((data || []).map(mapDbProspect));
       }
     } catch (err) {
       console.error('Error in fetchProspects:', err);
@@ -58,15 +64,16 @@ export function useProspects() {
       .insert({
         name: prospect.name!,
         phone: prospect.phone!,
-        age_or_dob: prospect.age_or_dob || null,
-        city: prospect.city || null,
-        state: prospect.state || null,
-        gender: prospect.gender || null,
+        email: prospect.email || null,
+        notes: prospect.notes || null,
         user_id: user.id,
+        funnel_stage: prospect.funnel_stage || null,
+        priority: prospect.priority || null,
         sheet_id: prospect.sheet_id || null,
         batch_date: prospect.batch_date || new Date().toISOString().split('T')[0],
+        enrollment_status: (prospect.enrollment_status || 'Not Enrolled') as any,
       })
-      .select('id, user_id, name, phone, age_or_dob, city, state, gender, date_added, updated_at, sheet_id, batch_date')
+      .select()
       .single();
 
     if (error) {
@@ -75,9 +82,10 @@ export function useProspects() {
       return null;
     }
 
-    setProspects(prev => [data, ...prev]);
+    const newProspect = mapDbProspect(data);
+    setProspects(prev => [newProspect, ...prev]);
     toast.success('Prospect added');
-    return data;
+    return newProspect;
   };
 
   const updateProspect = async (id: string, updates: Partial<Prospect>) => {
@@ -85,7 +93,7 @@ export function useProspects() {
       .from('prospects')
       .update(updates as any)
       .eq('id', id)
-      .select('id, user_id, name, phone, age_or_dob, city, state, gender, date_added, updated_at, sheet_id, batch_date')
+      .select()
       .single();
 
     if (error) {
@@ -94,8 +102,9 @@ export function useProspects() {
       return null;
     }
 
-    setProspects(prev => prev.map(p => p.id === id ? data : p));
-    return data;
+    const updatedProspect = mapDbProspect(data);
+    setProspects(prev => prev.map(p => p.id === id ? updatedProspect : p));
+    return updatedProspect;
   };
 
   const deleteProspect = async (id: string) => {
@@ -129,18 +138,22 @@ export function useProspects() {
       user_id: user.id,
       name: p.name!,
       phone: p.phone!,
-      age_or_dob: p.age_or_dob || null,
-      city: p.city || null,
-      state: p.state || null,
-      gender: p.gender || null,
+      email: p.email || null,
+      notes: p.notes || null,
+      funnel_stage: p.funnel_stage || null,
+      action_taken: p.action_taken || null,
+      prospect_status: p.prospect_status || null,
+      priority: p.priority || null,
+      last_contact_date: p.last_contact_date || null,
       sheet_id: p.sheet_id || null,
       batch_date: p.batch_date || new Date().toISOString().split('T')[0],
+      enrollment_status: (p.enrollment_status || 'Not Enrolled') as any,
     }));
 
     const { data, error } = await supabase
       .from('prospects')
       .insert(prospectsToInsert as any)
-      .select('id, user_id, name, phone, age_or_dob, city, state, gender, date_added, updated_at, sheet_id, batch_date');
+      .select();
 
     if (error) {
       toast.error('Failed to import prospects');
@@ -148,7 +161,7 @@ export function useProspects() {
       return { imported: 0, skipped: prospectsData.length };
     }
 
-    setProspects(prev => [...(data || []), ...prev]);
+    setProspects(prev => [...(data || []).map(mapDbProspect), ...prev]);
     return { imported: data?.length || 0, skipped };
   };
 

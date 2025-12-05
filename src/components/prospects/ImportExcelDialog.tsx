@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import { Upload, FileSpreadsheet, AlertCircle } from 'lucide-react';
-import { Prospect, GENDER_OPTIONS } from '@/types/prospect';
+import { Prospect, FUNNEL_STAGES, ACTIONS, STATUSES, PRIORITIES } from '@/types/prospect';
 import { toast } from 'sonner';
 import { sanitizeImportString, validateImportedProspect } from '@/lib/validations';
 
@@ -16,19 +16,23 @@ interface ImportExcelDialogProps {
 interface ColumnMapping {
   name: string | null;
   phone: string | null;
-  age_or_dob: string | null;
-  city: string | null;
-  state: string | null;
-  gender: string | null;
+  email: string | null;
+  notes: string | null;
+  funnel_stage: string | null;
+  action_taken: string | null;
+  prospect_status: string | null;
+  priority: string | null;
 }
 
 const FIELD_LABELS: Record<keyof ColumnMapping, string> = {
   name: 'Name *',
   phone: 'Phone *',
-  age_or_dob: 'Age / Date of Birth',
-  city: 'City',
-  state: 'State',
-  gender: 'Gender',
+  email: 'Email',
+  notes: 'Notes',
+  funnel_stage: 'Funnel Stage',
+  action_taken: 'Action Taken',
+  prospect_status: 'Status',
+  priority: 'Priority',
 };
 
 export function ImportExcelDialog({ onImport }: ImportExcelDialogProps) {
@@ -40,10 +44,12 @@ export function ImportExcelDialog({ onImport }: ImportExcelDialogProps) {
   const [mapping, setMapping] = useState<ColumnMapping>({
     name: null,
     phone: null,
-    age_or_dob: null,
-    city: null,
-    state: null,
-    gender: null,
+    email: null,
+    notes: null,
+    funnel_stage: null,
+    action_taken: null,
+    prospect_status: null,
+    priority: null,
   });
   const [isImporting, setIsImporting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -57,10 +63,12 @@ export function ImportExcelDialog({ onImport }: ImportExcelDialogProps) {
     setMapping({
       name: null,
       phone: null,
-      age_or_dob: null,
-      city: null,
-      state: null,
-      gender: null,
+      email: null,
+      notes: null,
+      funnel_stage: null,
+      action_taken: null,
+      prospect_status: null,
+      priority: null,
     });
     setError(null);
     if (fileInputRef.current) {
@@ -72,10 +80,12 @@ export function ImportExcelDialog({ onImport }: ImportExcelDialogProps) {
     const newMapping: ColumnMapping = {
       name: null,
       phone: null,
-      age_or_dob: null,
-      city: null,
-      state: null,
-      gender: null,
+      email: null,
+      notes: null,
+      funnel_stage: null,
+      action_taken: null,
+      prospect_status: null,
+      priority: null,
     };
 
     cols.forEach((col) => {
@@ -84,14 +94,18 @@ export function ImportExcelDialog({ onImport }: ImportExcelDialogProps) {
         newMapping.name = col;
       } else if ((lowerCol.includes('phone') || lowerCol.includes('mobile') || lowerCol.includes('cell')) && !newMapping.phone) {
         newMapping.phone = col;
-      } else if ((lowerCol.includes('age') || lowerCol.includes('dob') || lowerCol.includes('birth')) && !newMapping.age_or_dob) {
-        newMapping.age_or_dob = col;
-      } else if (lowerCol.includes('city') && !newMapping.city) {
-        newMapping.city = col;
-      } else if (lowerCol.includes('state') && !newMapping.state) {
-        newMapping.state = col;
-      } else if (lowerCol.includes('gender') || lowerCol.includes('sex') && !newMapping.gender) {
-        newMapping.gender = col;
+      } else if (lowerCol.includes('email') && !newMapping.email) {
+        newMapping.email = col;
+      } else if ((lowerCol.includes('note') || lowerCol.includes('comment')) && !newMapping.notes) {
+        newMapping.notes = col;
+      } else if ((lowerCol.includes('stage') || lowerCol.includes('funnel')) && !newMapping.funnel_stage) {
+        newMapping.funnel_stage = col;
+      } else if ((lowerCol.includes('action') || lowerCol.includes('taken')) && !newMapping.action_taken) {
+        newMapping.action_taken = col;
+      } else if (lowerCol.includes('status') && !newMapping.prospect_status) {
+        newMapping.prospect_status = col;
+      } else if (lowerCol.includes('priority') && !newMapping.priority) {
+        newMapping.priority = col;
       }
     });
 
@@ -153,24 +167,39 @@ export function ImportExcelDialog({ onImport }: ImportExcelDialogProps) {
         phone: validation.phone,
       };
 
-      // Sanitize optional fields
-      if (mapping.age_or_dob && row[mapping.age_or_dob]) {
-        prospect.age_or_dob = sanitizeImportString(row[mapping.age_or_dob], 50);
+      // Sanitize optional fields with length limits
+      if (mapping.email && row[mapping.email]) {
+        const email = sanitizeImportString(row[mapping.email], 255);
+        // Basic email validation
+        if (email && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+          prospect.email = email;
+        }
       }
-      if (mapping.city && row[mapping.city]) {
-        prospect.city = sanitizeImportString(row[mapping.city], 100);
+      if (mapping.notes && row[mapping.notes]) {
+        prospect.notes = sanitizeImportString(row[mapping.notes], 2000);
       }
-      if (mapping.state && row[mapping.state]) {
-        prospect.state = sanitizeImportString(row[mapping.state], 100);
+      if (mapping.funnel_stage && row[mapping.funnel_stage]) {
+        const stage = sanitizeImportString(row[mapping.funnel_stage], 50);
+        if (FUNNEL_STAGES.includes(stage as any)) {
+          prospect.funnel_stage = stage as any;
+        }
       }
-      if (mapping.gender && row[mapping.gender]) {
-        const genderVal = sanitizeImportString(row[mapping.gender], 20);
-        // Normalize gender values
-        const normalizedGender = genderVal.charAt(0).toUpperCase() + genderVal.slice(1).toLowerCase();
-        if (GENDER_OPTIONS.includes(normalizedGender as any)) {
-          prospect.gender = normalizedGender;
-        } else {
-          prospect.gender = genderVal; // Keep original if not matching
+      if (mapping.action_taken && row[mapping.action_taken]) {
+        const action = sanitizeImportString(row[mapping.action_taken], 50);
+        if (ACTIONS.includes(action as any)) {
+          prospect.action_taken = action as any;
+        }
+      }
+      if (mapping.prospect_status && row[mapping.prospect_status]) {
+        const status = sanitizeImportString(row[mapping.prospect_status], 20);
+        if (STATUSES.includes(status as any)) {
+          prospect.prospect_status = status as any;
+        }
+      }
+      if (mapping.priority && row[mapping.priority]) {
+        const priority = sanitizeImportString(row[mapping.priority], 20);
+        if (PRIORITIES.includes(priority as any)) {
+          prospect.priority = priority as any;
         }
       }
 
@@ -239,7 +268,7 @@ export function ImportExcelDialog({ onImport }: ImportExcelDialogProps) {
 
         {step === 'mapping' && (
           <div className="space-y-4">
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+            <div className="grid grid-cols-2 gap-3">
               {(Object.keys(mapping) as (keyof ColumnMapping)[]).map((field) => (
                 <div key={field} className="space-y-1.5">
                   <Label className="text-xs">{FIELD_LABELS[field]}</Label>
@@ -269,7 +298,7 @@ export function ImportExcelDialog({ onImport }: ImportExcelDialogProps) {
                 <table className="w-full text-xs">
                   <thead className="bg-muted">
                     <tr>
-                      {columns.slice(0, 6).map((col) => (
+                      {columns.slice(0, 5).map((col) => (
                         <th key={col} className="px-2 py-1.5 text-left font-medium truncate max-w-[120px]">
                           {col}
                         </th>
@@ -279,7 +308,7 @@ export function ImportExcelDialog({ onImport }: ImportExcelDialogProps) {
                   <tbody>
                     {previewData.map((row, i) => (
                       <tr key={i} className="border-t border-border">
-                        {columns.slice(0, 6).map((col) => (
+                        {columns.slice(0, 5).map((col) => (
                           <td key={col} className="px-2 py-1.5 truncate max-w-[120px]">
                             {row[col]}
                           </td>

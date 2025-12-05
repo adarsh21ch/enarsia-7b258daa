@@ -1,15 +1,22 @@
 import { useState, useRef, useEffect } from 'react';
-import { Prospect } from '@/types/prospect';
+import { Prospect, FunnelStage, ActionTaken, ProspectStatus, FUNNEL_STAGES, EXTENDED_ACTIONS, STATUSES, ExtendedActionTaken } from '@/types/prospect';
+import { InlineSelect } from './InlineSelect';
+import { StatusBadge, StageBadge, ActionBadge } from './StatusBadge';
 import { InlineReportCard } from './InlineReportCard';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Calendar } from '@/components/ui/calendar';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
-import { MessageCircle, Phone, Trash2, ChevronDown } from 'lucide-react';
+import { MessageCircle, Phone, Trash2, Calendar as CalendarIcon, ChevronDown } from 'lucide-react';
+import { format, parseISO } from 'date-fns';
 import { cn } from '@/lib/utils';
+import { useCustomOptionsContext } from '@/contexts/CustomOptionsContext';
 
 interface ProspectRowProps {
   prospect: Prospect;
   index: number;
+  isCalling: boolean;
   isExpanded: boolean;
   onToggleExpand: () => void;
   onUpdate: (id: string, updates: Partial<Prospect>) => Promise<Prospect | null>;
@@ -23,6 +30,7 @@ interface ProspectRowProps {
 export function ProspectRow({ 
   prospect, 
   index, 
+  isCalling, 
   isExpanded,
   onToggleExpand,
   onUpdate, 
@@ -36,6 +44,13 @@ export function ProspectRow({
   const [isDeleting, setIsDeleting] = useState(false);
   const [isEditingPhone, setIsEditingPhone] = useState(false);
   const phoneRef = useRef<HTMLInputElement>(null);
+  
+  const { addOption, deleteOption, getOptionsForType, getCustomOptionsForType } = useCustomOptionsContext();
+
+  // Get combined options (default + custom)
+  const stageOptions = getOptionsForType('funnel_stage', FUNNEL_STAGES) as FunnelStage[];
+  const actionOptions = getOptionsForType('action_taken', EXTENDED_ACTIONS) as ExtendedActionTaken[];
+  const statusOptions = getOptionsForType('prospect_status', STATUSES) as ProspectStatus[];
 
   useEffect(() => {
     setLocalPhone(prospect.phone);
@@ -72,6 +87,25 @@ export function ProspectRow({
     setIsDeleting(false);
   };
 
+  // Handle action change - if "Enrolled" is selected, also update enrollment_status
+  const handleActionChange = (value: ExtendedActionTaken) => {
+    const updates: Partial<Prospect> = {};
+    
+    if (value === 'Enrolled') {
+      updates.enrollment_status = 'Enrolled';
+      // Auto-set to Day 1 if still at Enrollment stage
+      if (!prospect.funnel_stage || prospect.funnel_stage === 'Enrollment') {
+        updates.funnel_stage = 'Day 1';
+      }
+      // Keep the action as the last real action or null
+      updates.action_taken = prospect.action_taken;
+    } else {
+      updates.action_taken = value as ActionTaken;
+    }
+    
+    onUpdate(prospect.id, updates);
+  };
+
   const cleanPhoneNumber = (phone: string) => {
     return phone.replace(/[^0-9+]/g, '');
   };
@@ -84,6 +118,14 @@ export function ProspectRow({
   const openCall = () => {
     const cleanPhone = cleanPhoneNumber(prospect.phone);
     window.location.href = `tel:${cleanPhone}`;
+  };
+
+  // Get display value for action - show "Enrolled" if enrolled, otherwise show action
+  const getActionDisplayValue = (): ExtendedActionTaken | null => {
+    if (prospect.enrollment_status === 'Enrolled') {
+      return 'Enrolled';
+    }
+    return prospect.action_taken || null;
   };
 
   const renderCell = (columnId: string) => {
@@ -190,36 +232,79 @@ export function ProspectRow({
             </div>
           </td>
         );
-      case 'age_or_dob':
+      case 'stage':
         return (
           <td key={columnId} className={cellClass} style={style}>
-            <span className={cn("text-muted-foreground", isMobileTable ? "text-[10px]" : "text-sm")}>
-              {prospect.age_or_dob || '-'}
-            </span>
+            <InlineSelect
+              value={prospect.funnel_stage}
+              options={stageOptions}
+              onChange={(value) => onUpdate(prospect.id, { funnel_stage: value })}
+              renderValue={(value) => <StageBadge stage={value} />}
+              placeholder="Select..."
+              optionType="funnel_stage"
+              customOptions={getCustomOptionsForType('funnel_stage')}
+              onAddOption={addOption}
+              onDeleteOption={deleteOption}
+              defaultOptions={FUNNEL_STAGES}
+            />
           </td>
         );
-      case 'city':
+      case 'action':
         return (
           <td key={columnId} className={cellClass} style={style}>
-            <span className={cn("text-muted-foreground", isMobileTable ? "text-[10px]" : "text-sm")}>
-              {prospect.city || '-'}
-            </span>
+            <InlineSelect
+              value={getActionDisplayValue()}
+              options={isCalling ? actionOptions : actionOptions.filter(a => a !== 'Enrolled')}
+              onChange={handleActionChange}
+              placeholder="Select..."
+              renderValue={(value) => <ActionBadge action={value} />}
+              optionType="action_taken"
+              customOptions={getCustomOptionsForType('action_taken')}
+              onAddOption={addOption}
+              onDeleteOption={deleteOption}
+              defaultOptions={EXTENDED_ACTIONS}
+            />
           </td>
         );
-      case 'state':
+      case 'status':
         return (
           <td key={columnId} className={cellClass} style={style}>
-            <span className={cn("text-muted-foreground", isMobileTable ? "text-[10px]" : "text-sm")}>
-              {prospect.state || '-'}
-            </span>
+            <InlineSelect
+              value={prospect.prospect_status}
+              options={statusOptions}
+              onChange={(value) => onUpdate(prospect.id, { prospect_status: value })}
+              placeholder="Select..."
+              renderValue={(value) => <StatusBadge status={value} />}
+              optionType="prospect_status"
+              customOptions={getCustomOptionsForType('prospect_status')}
+              onAddOption={addOption}
+              onDeleteOption={deleteOption}
+              defaultOptions={STATUSES}
+            />
           </td>
         );
-      case 'gender':
+      case 'lastContact':
         return (
           <td key={columnId} className={cellClass} style={style}>
-            <span className={cn("text-muted-foreground", isMobileTable ? "text-[10px]" : "text-sm")}>
-              {prospect.gender || '-'}
-            </span>
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button variant="ghost" size="sm" className={cn("h-7 text-xs font-normal justify-start px-1.5 hover:bg-muted/50", isMobileTable && "h-6 text-[10px] px-1")}>
+                  <CalendarIcon className={cn("h-3 w-3 mr-1 text-muted-foreground", isMobileTable && "h-2.5 w-2.5")} />
+                  {prospect.last_contact_date
+                    ? format(parseISO(prospect.last_contact_date), 'M/d')
+                    : 'Date'}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0 bg-popover border border-border z-50" align="start">
+                <Calendar
+                  mode="single"
+                  selected={prospect.last_contact_date ? parseISO(prospect.last_contact_date) : undefined}
+                  onSelect={(date) => onUpdate(prospect.id, { last_contact_date: date ? format(date, 'yyyy-MM-dd') : null })}
+                  initialFocus
+                  className="pointer-events-auto"
+                />
+              </PopoverContent>
+            </Popover>
           </td>
         );
       case 'actions':
