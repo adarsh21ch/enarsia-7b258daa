@@ -39,7 +39,7 @@
         var hasAuthToken = window.location.hash.includes('access_token');
         
         if (isPreviewUrl && hasAuthToken) {
-          window.location.replace(liveUrl + '/dashboard' + window.location.hash);
+          window.location.replace(liveUrl + '/home' + window.location.hash);
         }
       })();
     </script>

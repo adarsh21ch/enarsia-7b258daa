@@ -20,7 +20,7 @@ export default function Auth() {
 
   useEffect(() => {
     if (user && !authLoading) {
-      navigate('/dashboard');
+      navigate('/home');
     }
   }, [user, authLoading, navigate]);
 
@@ -36,7 +36,7 @@ export default function Auth() {
       toast.error(error.message || 'Sign in failed');
     } else {
       toast.success('Welcome back!');
-      navigate('/dashboard');
+      navigate('/home');
     }
     setIsSubmitting(false);
   };
@@ -57,7 +57,7 @@ export default function Auth() {
       toast.error(error.message || 'Sign up failed');
     } else {
       toast.success('Account created! You can now sign in.');
-      navigate('/dashboard');
+      navigate('/home');
     }
     setIsSubmitting(false);
   };
@@ -67,7 +67,7 @@ export default function Auth() {
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
-        redirectTo: `${liveUrl}/dashboard`,
+        redirectTo: `${liveUrl}/home`,
       },
     });
     if (error) {

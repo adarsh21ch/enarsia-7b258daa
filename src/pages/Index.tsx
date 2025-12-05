@@ -10,19 +10,16 @@ const Index = () => {
   useEffect(() => {
     if (!loading) {
       if (user) {
-        navigate('/home');
+        navigate('/home', { replace: true });
       } else {
-        navigate('/auth');
+        navigate('/auth', { replace: true });
       }
     }
   }, [user, loading, navigate]);
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-white">
-      <div className="flex flex-col items-center gap-4">
-        <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
-        <p className="text-gray-600">Loading...</p>
-      </div>
+    <div className="min-h-screen flex items-center justify-center bg-background">
+      <Loader2 className="h-8 w-8 animate-spin text-primary" />
     </div>
   );
 };

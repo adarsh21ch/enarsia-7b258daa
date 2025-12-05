@@ -28,7 +28,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     
     if (isPreviewUrl && hasAuthToken) {
       // Redirect to live domain with the same hash
-      window.location.href = `${liveUrl}/dashboard${window.location.hash}`;
+      window.location.href = `${liveUrl}/home${window.location.hash}`;
       return;
     }
 
