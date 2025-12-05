@@ -3,11 +3,13 @@ import { supabase } from '@/integrations/supabase/client';
 import { Prospect } from '@/types/prospect';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
+import { useEncryption } from './useEncryption';
 
 export function useProspects() {
   const { user } = useAuth();
   const [prospects, setProspects] = useState<Prospect[]>([]);
   const [loading, setLoading] = useState(true);
+  const { encryptFields, decryptBatch } = useEncryption();
 
   const fetchProspects = useCallback(async () => {
     if (!user) return;
@@ -23,10 +25,12 @@ export function useProspects() {
       toast.error('Failed to fetch prospects');
       console.error('Error fetching prospects:', error);
     } else {
-      setProspects(data as Prospect[]);
+      // Decrypt phone and email fields
+      const decryptedData = await decryptBatch(data as Prospect[]);
+      setProspects(decryptedData);
     }
     setLoading(false);
-  }, [user]);
+  }, [user, decryptBatch]);
 
   useEffect(() => {
     fetchProspects();
@@ -35,12 +39,18 @@ export function useProspects() {
   const addProspect = async (prospect: Partial<Prospect>) => {
     if (!user) return null;
 
+    // Encrypt sensitive fields before storing
+    const encrypted = await encryptFields({
+      phone: prospect.phone,
+      email: prospect.email || undefined
+    });
+
     const { data, error } = await supabase
       .from('prospects')
       .insert({
         name: prospect.name!,
-        phone: prospect.phone!,
-        email: prospect.email || null,
+        phone: encrypted.phone || prospect.phone!,
+        email: encrypted.email || prospect.email || null,
         notes: prospect.notes || null,
         user_id: user.id,
         funnel_stage: prospect.funnel_stage || null,
@@ -58,15 +68,35 @@ export function useProspects() {
       return null;
     }
 
-    setProspects(prev => [data as Prospect, ...prev]);
+    // Store decrypted version in state for display
+    const decryptedProspect = {
+      ...data,
+      phone: prospect.phone!,
+      email: prospect.email || null
+    } as Prospect;
+    
+    setProspects(prev => [decryptedProspect, ...prev]);
     toast.success('Prospect added');
-    return data as Prospect;
+    return decryptedProspect;
   };
 
   const updateProspect = async (id: string, updates: Partial<Prospect>) => {
+    // Encrypt sensitive fields if being updated
+    let encryptedUpdates = { ...updates };
+    
+    if (updates.phone || updates.email) {
+      const encrypted = await encryptFields({
+        phone: updates.phone,
+        email: updates.email || undefined
+      });
+      
+      if (updates.phone) encryptedUpdates.phone = encrypted.phone;
+      if (updates.email) encryptedUpdates.email = encrypted.email;
+    }
+
     const { data, error } = await supabase
       .from('prospects')
-      .update(updates as any)
+      .update(encryptedUpdates as any)
       .eq('id', id)
       .select()
       .single();
@@ -77,8 +107,15 @@ export function useProspects() {
       return null;
     }
 
-    setProspects(prev => prev.map(p => p.id === id ? (data as Prospect) : p));
-    return data as Prospect;
+    // Update state with decrypted values for display
+    const decryptedUpdate = {
+      ...data,
+      phone: updates.phone || (data as Prospect).phone,
+      email: updates.email !== undefined ? updates.email : (data as Prospect).email
+    } as Prospect;
+    
+    setProspects(prev => prev.map(p => p.id === id ? decryptedUpdate : p));
+    return decryptedUpdate;
   };
 
   const deleteProspect = async (id: string) => {
@@ -108,21 +145,31 @@ export function useProspects() {
       return { imported: 0, skipped };
     }
 
-    const prospectsToInsert = validProspects.map(p => ({
-      user_id: user.id,
-      name: p.name!,
-      phone: p.phone!,
-      email: p.email || null,
-      notes: p.notes || null,
-      funnel_stage: p.funnel_stage || null,
-      action_taken: p.action_taken || null,
-      prospect_status: p.prospect_status || null,
-      priority: p.priority || null,
-      last_contact_date: p.last_contact_date || null,
-      sheet_id: p.sheet_id || null,
-      batch_date: p.batch_date || new Date().toISOString().split('T')[0],
-      enrollment_status: (p.enrollment_status || 'Not Enrolled') as any,
-    }));
+    // Encrypt phone and email for each prospect
+    const prospectsToInsert = await Promise.all(
+      validProspects.map(async (p) => {
+        const encrypted = await encryptFields({
+          phone: p.phone,
+          email: p.email || undefined
+        });
+        
+        return {
+          user_id: user.id,
+          name: p.name!,
+          phone: encrypted.phone || p.phone!,
+          email: encrypted.email || p.email || null,
+          notes: p.notes || null,
+          funnel_stage: p.funnel_stage || null,
+          action_taken: p.action_taken || null,
+          prospect_status: p.prospect_status || null,
+          priority: p.priority || null,
+          last_contact_date: p.last_contact_date || null,
+          sheet_id: p.sheet_id || null,
+          batch_date: p.batch_date || new Date().toISOString().split('T')[0],
+          enrollment_status: (p.enrollment_status || 'Not Enrolled') as any,
+        };
+      })
+    );
 
     const { data, error } = await supabase
       .from('prospects')
@@ -135,7 +182,9 @@ export function useProspects() {
       return { imported: 0, skipped: prospectsData.length };
     }
 
-    setProspects(prev => [...(data as Prospect[]), ...prev]);
+    // Decrypt for display
+    const decryptedData = await decryptBatch(data as Prospect[]);
+    setProspects(prev => [...decryptedData, ...prev]);
     return { imported: data.length, skipped };
   };
 
