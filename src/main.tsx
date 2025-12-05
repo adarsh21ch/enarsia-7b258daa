@@ -1,17 +1,23 @@
+import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import App from "./App";
 import "./index.css";
 
-const root = document.getElementById("root");
-if (root) {
-  createRoot(root).render(<App />);
+const rootElement = document.getElementById("root");
+
+if (rootElement) {
+  createRoot(rootElement).render(
+    <StrictMode>
+      <App />
+    </StrictMode>
+  );
 }
 
 // Register service worker for PWA
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
     navigator.serviceWorker.register("/sw.js").catch(() => {
-      // Silently fail - SW not critical
+      // SW registration not critical
     });
   });
 }
