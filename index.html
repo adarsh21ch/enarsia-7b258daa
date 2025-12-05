@@ -30,6 +30,19 @@
 
   <body>
     <div id="root"></div>
+    <script>
+      // Immediate OAuth redirect - runs before React loads
+      (function() {
+        var liveUrl = 'https://wpczgwxsriezaubncuom.lovable.app';
+        var currentUrl = window.location.href;
+        var isPreviewUrl = currentUrl.includes('.lovable.app') && !currentUrl.includes('wpczgwxsriezaubncuom');
+        var hasAuthToken = window.location.hash.includes('access_token');
+        
+        if (isPreviewUrl && hasAuthToken) {
+          window.location.replace(liveUrl + '/dashboard' + window.location.hash);
+        }
+      })();
+    </script>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
