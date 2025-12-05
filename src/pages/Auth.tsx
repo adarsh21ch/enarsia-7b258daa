@@ -157,7 +157,6 @@ export default function Auth() {
             />
             <span className="text-white font-bold text-xl tracking-tight">NevorAI</span>
           </div>
-          <h2 className="text-2xl font-bold text-white mt-6">Streamline Your Network Marketing</h2>
         </div>
 
         {/* Main Content */}
