@@ -1,13 +1,11 @@
 // Dashboard - Follow-Up List Page
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useData } from '@/contexts/DataContext';
 import { BottomNav } from '@/components/layout/BottomNav';
 import { ProspectTable } from '@/components/prospects/ProspectTable';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Loader2, Phone, GitBranch } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { Loader2 } from 'lucide-react';
 import nevoraLogo from '@/assets/nevorai-logo.jpeg';
 import { CustomOptionsProvider } from '@/contexts/CustomOptionsContext';
 
@@ -28,10 +26,6 @@ export default function Dashboard() {
     updateSheet,
     deleteSheet
   } = useData();
-  
-  const [mainTab, setMainTab] = useState<'calling' | 'funnel'>('calling');
-
-  const totalCC = prospects.filter(p => p.funnel_stage === 'Level Up' || p.funnel_stage === '2CC').length;
 
   useEffect(() => {
     if (!user && !authLoading) {
@@ -67,8 +61,8 @@ export default function Dashboard() {
               </div>
             </div>
             <div className="bg-gradient-to-br from-primary/10 to-primary/5 rounded-xl px-4 py-2 text-right border border-primary/10">
-              <p className="text-[10px] text-muted-foreground font-medium">Total CC</p>
-              <p className="text-2xl font-bold text-primary tracking-tight">{totalCC}</p>
+              <p className="text-[10px] text-muted-foreground font-medium">Total</p>
+              <p className="text-2xl font-bold text-primary tracking-tight">{prospects.length}</p>
             </div>
           </div>
         </header>
@@ -87,86 +81,20 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* Premium Segmented Control: Calling / Funnel */}
-        <Tabs value={mainTab} onValueChange={(v) => setMainTab(v as 'calling' | 'funnel')} className="w-full">
-          <TabsList className="w-full grid grid-cols-2 mb-5 h-14 p-1.5 bg-muted/50 rounded-2xl gap-1">
-            <TabsTrigger 
-              value="calling" 
-              className={cn(
-                "rounded-xl flex flex-col items-center justify-center gap-0.5 h-full transition-all duration-200",
-                "data-[state=active]:bg-card data-[state=active]:shadow-lg data-[state=active]:shadow-primary/10",
-                "data-[state=active]:text-primary"
-              )}
-            >
-              <Phone className="h-4 w-4" />
-              <span className="text-[10px] font-semibold">Calling</span>
-            </TabsTrigger>
-            <TabsTrigger 
-              value="funnel" 
-              className={cn(
-                "rounded-xl flex flex-col items-center justify-center gap-0.5 h-full transition-all duration-200",
-                "data-[state=active]:bg-card data-[state=active]:shadow-lg data-[state=active]:shadow-primary/10",
-                "data-[state=active]:text-primary"
-              )}
-            >
-              <GitBranch className="h-4 w-4" />
-              <span className="text-[10px] font-semibold">Funnel</span>
-            </TabsTrigger>
-          </TabsList>
-
-          {/* Keep both tabs mounted for instant switching */}
-          <TabsContent 
-            value="calling" 
-            forceMount 
-            className={cn(
-              "mt-0 focus-visible:outline-none focus-visible:ring-0",
-              mainTab !== 'calling' && "hidden"
-            )}
-          >
-            <ProspectTable
-              prospects={prospects}
-              loading={prospectsLoading}
-              onAdd={addProspect}
-              onUpdate={updateProspect}
-              onDelete={deleteProspect}
-              onImport={importProspects}
-              sheets={sheets}
-              selectedSheetId={selectedSheetId}
-              onSelectSheet={setSelectedSheetId}
-              onAddSheet={addSheet}
-              onUpdateSheet={updateSheet}
-              onDeleteSheet={deleteSheet}
-              filterMode="calling"
-              subFilter="all"
-            />
-          </TabsContent>
-
-          <TabsContent 
-            value="funnel" 
-            forceMount 
-            className={cn(
-              "mt-0 focus-visible:outline-none focus-visible:ring-0",
-              mainTab !== 'funnel' && "hidden"
-            )}
-          >
-            <ProspectTable
-              prospects={prospects}
-              loading={prospectsLoading}
-              onAdd={addProspect}
-              onUpdate={updateProspect}
-              onDelete={deleteProspect}
-              onImport={importProspects}
-              sheets={sheets}
-              selectedSheetId={selectedSheetId}
-              onSelectSheet={setSelectedSheetId}
-              onAddSheet={addSheet}
-              onUpdateSheet={updateSheet}
-              onDeleteSheet={deleteSheet}
-              filterMode="funnel"
-              subFilter="all"
-            />
-          </TabsContent>
-        </Tabs>
+        <ProspectTable
+          prospects={prospects}
+          loading={prospectsLoading}
+          onAdd={addProspect}
+          onUpdate={updateProspect}
+          onDelete={deleteProspect}
+          onImport={importProspects}
+          sheets={sheets}
+          selectedSheetId={selectedSheetId}
+          onSelectSheet={setSelectedSheetId}
+          onAddSheet={addSheet}
+          onUpdateSheet={updateSheet}
+          onDeleteSheet={deleteSheet}
+        />
       </main>
 
       <BottomNav />

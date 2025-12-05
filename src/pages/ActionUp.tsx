@@ -4,13 +4,12 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useData } from '@/contexts/DataContext';
 import { useActivityLogs } from '@/hooks/useActivityLogs';
 import { BottomNav } from '@/components/layout/BottomNav';
-import { StageBadge, StatusBadge } from '@/components/prospects/StatusBadge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Loader2, Activity, Clock, UserPlus, GitBranch, CheckCircle, Bell, Sparkles, Search } from 'lucide-react';
-import { formatDistanceToNow, parseISO, isToday, isPast } from 'date-fns';
+import { formatDistanceToNow, parseISO, isToday } from 'date-fns';
 import { cn } from '@/lib/utils';
 import nevoraLogo from '@/assets/nevorai-logo.jpeg';
 import { useDebouncedValue } from '@/hooks/useDebouncedValue';
@@ -36,19 +35,11 @@ export default function ActionUp() {
 
   // Calculate summary stats
   const summaryStats = useMemo(() => {
-    const followUpsDueToday = prospects.filter(p => 
-      p.last_contact_date && (isToday(parseISO(p.last_contact_date)) || isPast(parseISO(p.last_contact_date)))
-    ).length;
-    
     const newProspectsToday = prospects.filter(p => 
       isToday(parseISO(p.date_added))
     ).length;
-    
-    const enrollmentsToday = prospects.filter(p => 
-      p.enrollment_status === 'Enrolled' && isToday(parseISO(p.updated_at))
-    ).length;
 
-    return { followUpsDueToday, newProspectsToday, enrollmentsToday };
+    return { newProspectsToday };
   }, [prospects]);
 
   // Filter activities with debounced search
@@ -80,10 +71,8 @@ export default function ActionUp() {
         id: p.id,
         prospect_name: p.name,
         activity_type: 'prospect_update',
-        description: `${p.funnel_stage}${p.prospect_status ? ` • ${p.prospect_status}` : ''}`,
+        description: `${p.city || 'Unknown city'}${p.state ? `, ${p.state}` : ''}`,
         created_at: p.updated_at,
-        funnel_stage: p.funnel_stage,
-        prospect_status: p.prospect_status,
       }));
   }, [prospects, activities]);
 
@@ -110,9 +99,6 @@ export default function ActionUp() {
   const filterOptions: { value: ActivityFilter; label: string }[] = [
     { value: 'all', label: 'All' },
     { value: 'prospect_added', label: 'New Prospects' },
-    { value: 'stage_change', label: 'Stage Changes' },
-    { value: 'enrollment', label: 'Enrollments' },
-    { value: 'action_change', label: 'Actions' },
   ];
 
   if (authLoading) {
@@ -156,17 +142,13 @@ export default function ActionUp() {
 
         {/* Summary Chips */}
         <div className="flex flex-wrap gap-2">
-          <Badge variant="outline" className="gap-1.5 py-1.5 px-3 bg-amber-500/10 text-amber-600 border-amber-500/30">
-            <Bell className="h-3.5 w-3.5" />
-            {summaryStats.followUpsDueToday} Follow-ups due
-          </Badge>
           <Badge variant="outline" className="gap-1.5 py-1.5 px-3 bg-blue-500/10 text-blue-600 border-blue-500/30">
             <UserPlus className="h-3.5 w-3.5" />
             {summaryStats.newProspectsToday} New today
           </Badge>
           <Badge variant="outline" className="gap-1.5 py-1.5 px-3 bg-green-500/10 text-green-600 border-green-500/30">
             <CheckCircle className="h-3.5 w-3.5" />
-            {summaryStats.enrollmentsToday} Enrolled
+            {prospects.length} Total
           </Badge>
         </div>
 
@@ -183,8 +165,8 @@ export default function ActionUp() {
           </div>
           <div className="bg-card/50 rounded-xl p-3 text-sm text-muted-foreground min-h-[80px]">
             <p>📊 You have <strong>{prospects.length}</strong> total prospects.</p>
-            <p className="mt-1">🔔 <strong>{summaryStats.followUpsDueToday}</strong> prospects need follow-up today.</p>
-            <p className="mt-1">💡 <strong>Tip:</strong> Focus on +VE prospects with pending follow-ups first.</p>
+            <p className="mt-1">🔔 <strong>{summaryStats.newProspectsToday}</strong> prospects added today.</p>
+            <p className="mt-1">💡 <strong>Tip:</strong> Keep your prospect list organized by city and state.</p>
           </div>
           <Button variant="outline" size="sm" className="mt-3 w-full" disabled>
             <Sparkles className="h-4 w-4 mr-2" />
@@ -268,10 +250,7 @@ export default function ActionUp() {
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium">{activity.prospect_name}</p>
-                    <div className="flex items-center gap-2 mt-1">
-                      <StageBadge stage={activity.funnel_stage} />
-                      {activity.prospect_status && <StatusBadge status={activity.prospect_status} />}
-                    </div>
+                    <p className="text-xs text-muted-foreground">{activity.description}</p>
                   </div>
                   <span className="text-xs text-muted-foreground shrink-0">
                     {formatDistanceToNow(parseISO(activity.created_at), { addSuffix: true })}

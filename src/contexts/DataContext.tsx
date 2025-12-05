@@ -1,6 +1,6 @@
 import { createContext, useContext, useState, useEffect, useCallback, useRef, ReactNode } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { Prospect, Sheet, mapOldStatusToNew } from '@/types/prospect';
+import { Prospect, Sheet } from '@/types/prospect';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
 
@@ -24,11 +24,6 @@ interface DataContextType {
 }
 
 const DataContext = createContext<DataContextType | undefined>(undefined);
-
-const mapDbProspect = (dbProspect: any): Prospect => ({
-  ...dbProspect,
-  prospect_status: mapOldStatusToNew(dbProspect.prospect_status),
-});
 
 export function DataProvider({ children }: { children: ReactNode }) {
   const { user } = useAuth();
@@ -63,7 +58,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
         toast.error('Failed to fetch prospects');
         setProspects([]);
       } else {
-        setProspects((data || []).map(mapDbProspect));
+        setProspects((data || []) as Prospect[]);
       }
     } catch (err) {
       console.error('Error fetching prospects:', err);
@@ -130,14 +125,13 @@ export function DataProvider({ children }: { children: ReactNode }) {
       .insert({
         name: prospect.name!,
         phone: prospect.phone!,
-        email: prospect.email || null,
-        notes: prospect.notes || null,
+        age_or_dob: prospect.age_or_dob || null,
+        city: prospect.city || null,
+        state: prospect.state || null,
+        gender: prospect.gender || null,
         user_id: user.id,
-        funnel_stage: prospect.funnel_stage || null,
-        priority: prospect.priority || null,
         sheet_id: prospect.sheet_id || null,
         batch_date: prospect.batch_date || new Date().toISOString().split('T')[0],
-        enrollment_status: (prospect.enrollment_status || 'Not Enrolled') as any,
       })
       .select()
       .single();
@@ -147,7 +141,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
       return null;
     }
 
-    const newProspect = mapDbProspect(data);
+    const newProspect = data as Prospect;
     setProspects(prev => [newProspect, ...prev]);
     toast.success('Prospect added');
     return newProspect;
@@ -171,7 +165,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
       return null;
     }
 
-    const updatedProspect = mapDbProspect(data);
+    const updatedProspect = data as Prospect;
     setProspects(prev => prev.map(p => p.id === id ? updatedProspect : p));
     return updatedProspect;
   };
@@ -210,16 +204,12 @@ export function DataProvider({ children }: { children: ReactNode }) {
       user_id: user.id,
       name: p.name!,
       phone: p.phone!,
-      email: p.email || null,
-      notes: p.notes || null,
-      funnel_stage: p.funnel_stage || null,
-      action_taken: p.action_taken || null,
-      prospect_status: p.prospect_status || null,
-      priority: p.priority || null,
-      last_contact_date: p.last_contact_date || null,
+      age_or_dob: p.age_or_dob || null,
+      city: p.city || null,
+      state: p.state || null,
+      gender: p.gender || null,
       sheet_id: p.sheet_id || null,
       batch_date: p.batch_date || new Date().toISOString().split('T')[0],
-      enrollment_status: (p.enrollment_status || 'Not Enrolled') as any,
     }));
 
     const { data, error } = await supabase
@@ -232,7 +222,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
       return { imported: 0, skipped: prospectsData.length };
     }
 
-    setProspects(prev => [...(data || []).map(mapDbProspect), ...prev]);
+    setProspects(prev => [...(data || []) as Prospect[], ...prev]);
     return { imported: data?.length || 0, skipped };
   };
 

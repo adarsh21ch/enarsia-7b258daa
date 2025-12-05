@@ -4,37 +4,28 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useData } from '@/contexts/DataContext';
 import { useTodos } from '@/hooks/useTodos';
-import { useUserTargets } from '@/hooks/useUserTargets';
 import { BottomNav } from '@/components/layout/BottomNav';
-import { StageBadge, PriorityBadge } from '@/components/prospects/StatusBadge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Progress } from '@/components/ui/progress';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Label } from '@/components/ui/label';
 import { Skeleton } from '@/components/ui/skeleton';
 import { 
-  Loader2, Users, CheckCircle, TrendingUp, Target, Calendar as CalendarIcon,
-  Plus, Trash2, Phone, MessageCircle, ChevronRight, Settings2
+  Loader2, Users, CheckCircle, Calendar as CalendarIcon,
+  Plus, Trash2, Phone, MessageCircle, ChevronRight
 } from 'lucide-react';
-import { format, parseISO, isToday, isPast } from 'date-fns';
+import { format, parseISO, isToday } from 'date-fns';
 import { cn } from '@/lib/utils';
 import nevoraLogo from '@/assets/nevorai-logo.jpeg';
-import { FUNNEL_STAGES, FunnelStage } from '@/types/prospect';
 
 export default function Home() {
   const navigate = useNavigate();
   const { user, loading: authLoading } = useAuth();
   const { prospects, prospectsLoading } = useData();
   const { todos, loading: todosLoading, addTodo, toggleTodo, deleteTodo } = useTodos();
-  const { targets, loading: targetsLoading, updateTarget } = useUserTargets();
   const [newTodoTitle, setNewTodoTitle] = useState('');
   const [newTodoDueDate, setNewTodoDueDate] = useState<Date | undefined>();
-  const [editTargetsOpen, setEditTargetsOpen] = useState(false);
-  const [editingTargets, setEditingTargets] = useState<Record<string, number>>({});
 
   useEffect(() => {
     if (!user && !authLoading) {
@@ -44,31 +35,19 @@ export default function Home() {
 
   // Calculate KPIs
   const kpis = useMemo(() => {
-    const stageCounts: Record<FunnelStage, number> = {
-      'Enrollment': 0, 'Day 1': 0, 'Day 2': 0, 'Day 3': 0,
-      'Minimum Bill': 0, 'Level Up': 0, '2CC': 0,
-    };
-    
-    prospects.forEach(p => {
-      if (p.funnel_stage) stageCounts[p.funnel_stage]++;
-    });
-
-    const enrolled = prospects.filter(p => p.enrollment_status === 'Enrolled').length;
+    const todayProspects = prospects.filter(p => isToday(parseISO(p.date_added))).length;
     
     return {
       totalLeads: prospects.length,
-      totalEnrolled: enrolled,
-      stageCounts,
+      todayAdded: todayProspects,
     };
   }, [prospects]);
 
-  // Today's follow-ups
-  const todaysFollowUps = useMemo(() => {
-    return prospects.filter(p => {
-      if (!p.last_contact_date) return false;
-      const date = parseISO(p.last_contact_date);
-      return isToday(date) || isPast(date);
-    }).slice(0, 10);
+  // Recent prospects
+  const recentProspects = useMemo(() => {
+    return [...prospects]
+      .sort((a, b) => new Date(b.date_added).getTime() - new Date(a.date_added).getTime())
+      .slice(0, 10);
   }, [prospects]);
 
   const handleAddTodo = async () => {
@@ -125,18 +104,12 @@ export default function Home() {
             <>
               <Skeleton className="h-24 rounded-2xl" />
               <Skeleton className="h-24 rounded-2xl" />
-              <Skeleton className="h-24 rounded-2xl" />
-              <Skeleton className="h-24 rounded-2xl" />
             </>
           ) : (
             [{
               title: 'Total Leads', value: kpis.totalLeads, icon: Users, gradient: 'from-blue-500/20 to-blue-600/10', iconColor: 'text-blue-500'
             }, {
-              title: 'Enrolled', value: kpis.totalEnrolled, icon: CheckCircle, gradient: 'from-green-500/20 to-green-600/10', iconColor: 'text-green-500'
-            }, {
-              title: 'Day 1', value: kpis.stageCounts['Day 1'], icon: TrendingUp, gradient: 'from-purple-500/20 to-purple-600/10', iconColor: 'text-purple-500'
-            }, {
-              title: '2CC', value: kpis.stageCounts['2CC'], icon: Target, gradient: 'from-amber-500/20 to-amber-600/10', iconColor: 'text-amber-500'
+              title: 'Added Today', value: kpis.todayAdded, icon: CheckCircle, gradient: 'from-green-500/20 to-green-600/10', iconColor: 'text-green-500'
             }].map((stat) => {
               const Icon = stat.icon;
               return (
@@ -164,98 +137,15 @@ export default function Home() {
           )}
         </div>
 
-        {/* Monthly Targets */}
+        {/* Recent Prospects */}
         <div className="bg-card rounded-2xl p-4 border border-border/50">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2">
-              <Target className="h-5 w-5 text-primary" />
-              <h3 className="font-semibold">Monthly Targets</h3>
-            </div>
-            <Dialog open={editTargetsOpen} onOpenChange={setEditTargetsOpen}>
-              <DialogTrigger asChild>
-                <Button 
-                  variant="ghost" 
-                  size="sm" 
-                  className="h-8 text-xs"
-                  onClick={() => setEditingTargets({ ...targets })}
-                >
-                  <Settings2 className="h-3.5 w-3.5 mr-1" />
-                  Edit
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="sm:max-w-md">
-                <DialogHeader>
-                  <DialogTitle>Edit Monthly Targets</DialogTitle>
-                </DialogHeader>
-                <div className="space-y-4 py-4 max-h-[60vh] overflow-y-auto">
-                  {FUNNEL_STAGES.map(stage => (
-                    <div key={stage} className="flex items-center justify-between gap-4">
-                      <Label className="text-sm font-medium flex-1">{stage}</Label>
-                      <Input
-                        type="number"
-                        min="0"
-                        value={editingTargets[stage] || 0}
-                        onChange={(e) => setEditingTargets(prev => ({
-                          ...prev,
-                          [stage]: parseInt(e.target.value) || 0
-                        }))}
-                        className="w-24 text-right"
-                      />
-                    </div>
-                  ))}
-                </div>
-                <div className="flex justify-end gap-2">
-                  <Button variant="outline" onClick={() => setEditTargetsOpen(false)}>
-                    Cancel
-                  </Button>
-                  <Button onClick={async () => {
-                    for (const stage of FUNNEL_STAGES) {
-                      if (editingTargets[stage] !== targets[stage]) {
-                        await updateTarget(stage, editingTargets[stage]);
-                      }
-                    }
-                    setEditTargetsOpen(false);
-                  }}>
-                    Save Targets
-                  </Button>
-                </div>
-              </DialogContent>
-            </Dialog>
-          </div>
-          {targetsLoading ? (
-            <div className="space-y-3">
-              {[1,2,3].map(i => <Skeleton key={i} className="h-8" />)}
-            </div>
-          ) : (
-            <div className="space-y-3">
-              {FUNNEL_STAGES.map(stage => {
-                const current = kpis.stageCounts[stage];
-                const target = targets[stage] || 0;
-                const progress = target > 0 ? Math.min((current / target) * 100, 100) : 0;
-                
-                return (
-                  <div key={stage} className="space-y-1.5">
-                    <div className="flex items-center justify-between text-sm">
-                      <span className="text-muted-foreground">{stage}</span>
-                      <span className="font-medium">{current} / {target}</span>
-                    </div>
-                    <Progress value={progress} className="h-2" />
-                  </div>
-                );
-              })}
-            </div>
-          )}
-        </div>
-
-        {/* Today's Follow-Ups */}
-        <div className="bg-card rounded-2xl p-4 border border-border/50">
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-2">
-              <CalendarIcon className="h-5 w-5 text-primary" />
-              <h3 className="font-semibold">Today's Follow-Ups</h3>
+              <Users className="h-5 w-5 text-primary" />
+              <h3 className="font-semibold">Recent Prospects</h3>
             </div>
             <span className="text-xs bg-primary/10 text-primary px-2 py-1 rounded-full font-medium">
-              {todaysFollowUps.length}
+              {recentProspects.length}
             </span>
           </div>
           
@@ -263,23 +153,22 @@ export default function Home() {
             <div className="space-y-2">
               {[1,2,3].map(i => <Skeleton key={i} className="h-14 rounded-xl" />)}
             </div>
-          ) : todaysFollowUps.length === 0 ? (
+          ) : recentProspects.length === 0 ? (
             <p className="text-sm text-muted-foreground text-center py-4">
-              No follow-ups scheduled for today
+              No prospects yet
             </p>
           ) : (
             <div className="space-y-2">
-              {todaysFollowUps.map(prospect => (
+              {recentProspects.map(prospect => (
                 <div
                   key={prospect.id}
                   className="flex items-center gap-3 p-3 rounded-xl bg-muted/30 hover:bg-muted/50 transition-colors"
                 >
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium truncate">{prospect.name}</p>
-                    <div className="flex items-center gap-2 mt-1">
-                      <StageBadge stage={prospect.funnel_stage} />
-                      <PriorityBadge priority={prospect.priority} />
-                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      {prospect.city}{prospect.state ? `, ${prospect.state}` : ''}
+                    </p>
                   </div>
                   <div className="flex items-center gap-1">
                     <Button
