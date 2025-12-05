@@ -1,32 +1,21 @@
-import { Component, ReactNode, lazy, Suspense } from "react";
+import { Component, ReactNode } from "react";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { AuthProvider } from "@/contexts/AuthContext";
-import { DataProvider } from "@/contexts/DataContext";
 import { Toaster } from "sonner";
-import { Loader2 } from "lucide-react";
 
-// Critical routes - load immediately
+// Direct imports
 import Auth from "./pages/Auth";
 import Index from "./pages/Index";
+import Dashboard from "./pages/Dashboard";
+import Home from "./pages/Home";
+import Profile from "./pages/Profile";
+import Tracking from "./pages/Tracking";
+import ActionUp from "./pages/ActionUp";
+import ResetPassword from "./pages/ResetPassword";
+import NotFound from "./pages/NotFound";
 
-// Lazy load non-critical routes
-const Dashboard = lazy(() => import("./pages/Dashboard"));
-const Home = lazy(() => import("./pages/Home"));
-const Profile = lazy(() => import("./pages/Profile"));
-const Tracking = lazy(() => import("./pages/Tracking"));
-const ActionUp = lazy(() => import("./pages/ActionUp"));
-const ResetPassword = lazy(() => import("./pages/ResetPassword"));
-const NotFound = lazy(() => import("./pages/NotFound"));
-
-// Minimal loading fallback
-const PageLoader = () => (
-  <div className="min-h-screen flex items-center justify-center bg-background">
-    <Loader2 className="h-6 w-6 animate-spin text-primary" />
-  </div>
-);
-
-// Error Boundary
+// Error Boundary to catch rendering errors
 class ErrorBoundary extends Component<{ children: ReactNode }, { hasError: boolean; error: Error | null }> {
   constructor(props: { children: ReactNode }) {
     super(props);
@@ -61,8 +50,6 @@ const queryClient = new QueryClient({
     queries: {
       retry: 1,
       refetchOnWindowFocus: false,
-      staleTime: 5 * 60 * 1000, // 5 minutes
-      gcTime: 10 * 60 * 1000, // 10 minutes (formerly cacheTime)
     },
   },
 });
@@ -73,22 +60,18 @@ function App() {
       <QueryClientProvider client={queryClient}>
         <BrowserRouter>
           <AuthProvider>
-            <DataProvider>
-              <Toaster position="top-center" />
-              <Suspense fallback={<PageLoader />}>
-                <Routes>
-                  <Route path="/" element={<Index />} />
-                  <Route path="/auth" element={<Auth />} />
-                  <Route path="/reset-password" element={<ResetPassword />} />
-                  <Route path="/dashboard" element={<Dashboard />} />
-                  <Route path="/tracking" element={<Tracking />} />
-                  <Route path="/home" element={<Home />} />
-                  <Route path="/action" element={<ActionUp />} />
-                  <Route path="/profile" element={<Profile />} />
-                  <Route path="*" element={<NotFound />} />
-                </Routes>
-              </Suspense>
-            </DataProvider>
+            <Toaster position="top-center" />
+            <Routes>
+              <Route path="/" element={<Index />} />
+              <Route path="/auth" element={<Auth />} />
+              <Route path="/reset-password" element={<ResetPassword />} />
+              <Route path="/dashboard" element={<Dashboard />} />
+              <Route path="/tracking" element={<Tracking />} />
+              <Route path="/home" element={<Home />} />
+              <Route path="/action" element={<ActionUp />} />
+              <Route path="/profile" element={<Profile />} />
+              <Route path="*" element={<NotFound />} />
+            </Routes>
           </AuthProvider>
         </BrowserRouter>
       </QueryClientProvider>

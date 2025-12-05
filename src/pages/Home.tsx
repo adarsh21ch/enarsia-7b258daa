@@ -2,11 +2,11 @@
 import { useState, useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
-import { useData } from '@/contexts/DataContext';
+import { useProspects } from '@/hooks/useProspects';
 import { useTodos } from '@/hooks/useTodos';
 import { useUserTargets } from '@/hooks/useUserTargets';
 import { BottomNav } from '@/components/layout/BottomNav';
-import { StageBadge, PriorityBadge } from '@/components/prospects/StatusBadge';
+import { StageBadge, StatusBadge, PriorityBadge } from '@/components/prospects/StatusBadge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -15,7 +15,6 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Calendar } from '@/components/ui/calendar';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
-import { Skeleton } from '@/components/ui/skeleton';
 import { 
   Loader2, Users, CheckCircle, TrendingUp, Target, Calendar as CalendarIcon,
   Plus, Trash2, Phone, MessageCircle, ChevronRight, Settings2
@@ -28,7 +27,7 @@ import { FUNNEL_STAGES, FunnelStage } from '@/types/prospect';
 export default function Home() {
   const navigate = useNavigate();
   const { user, loading: authLoading } = useAuth();
-  const { prospects, prospectsLoading } = useData();
+  const { prospects, loading: prospectsLoading } = useProspects();
   const { todos, loading: todosLoading, addTodo, toggleTodo, deleteTodo } = useTodos();
   const { targets, loading: targetsLoading, updateTarget } = useUserTargets();
   const [newTodoTitle, setNewTodoTitle] = useState('');
@@ -80,7 +79,7 @@ export default function Home() {
 
   const cleanPhoneNumber = (phone: string) => phone.replace(/[^0-9+]/g, '');
 
-  if (authLoading) {
+  if (authLoading || prospectsLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -121,47 +120,35 @@ export default function Home() {
 
         {/* KPI Cards */}
         <div className="grid grid-cols-2 gap-3">
-          {prospectsLoading ? (
-            <>
-              <Skeleton className="h-24 rounded-2xl" />
-              <Skeleton className="h-24 rounded-2xl" />
-              <Skeleton className="h-24 rounded-2xl" />
-              <Skeleton className="h-24 rounded-2xl" />
-            </>
-          ) : (
-            [{
-              title: 'Total Leads', value: kpis.totalLeads, icon: Users, gradient: 'from-blue-500/20 to-blue-600/10', iconColor: 'text-blue-500'
-            }, {
-              title: 'Enrolled', value: kpis.totalEnrolled, icon: CheckCircle, gradient: 'from-green-500/20 to-green-600/10', iconColor: 'text-green-500'
-            }, {
-              title: 'Day 1', value: kpis.stageCounts['Day 1'], icon: TrendingUp, gradient: 'from-purple-500/20 to-purple-600/10', iconColor: 'text-purple-500'
-            }, {
-              title: '2CC', value: kpis.stageCounts['2CC'], icon: Target, gradient: 'from-amber-500/20 to-amber-600/10', iconColor: 'text-amber-500'
-            }].map((stat) => {
-              const Icon = stat.icon;
-              return (
-                <div
-                  key={stat.title}
-                  className={cn(
-                    "relative overflow-hidden rounded-2xl p-4 bg-gradient-to-br border-0",
-                    "backdrop-blur-sm shadow-lg shadow-black/5",
-                    stat.gradient
-                  )}
-                >
-                  <div className="flex items-start justify-between">
-                    <div>
-                      <p className="text-xs font-medium text-muted-foreground mb-1">{stat.title}</p>
-                      <p className="text-3xl font-bold tracking-tight">{stat.value}</p>
-                    </div>
-                    <div className={cn("p-2.5 rounded-xl bg-background/50 backdrop-blur-sm", stat.iconColor)}>
-                      <Icon className="h-5 w-5" />
-                    </div>
+          {[
+            { title: 'Total Leads', value: kpis.totalLeads, icon: Users, gradient: 'from-blue-500/20 to-blue-600/10', iconColor: 'text-blue-500' },
+            { title: 'Enrolled', value: kpis.totalEnrolled, icon: CheckCircle, gradient: 'from-green-500/20 to-green-600/10', iconColor: 'text-green-500' },
+            { title: 'Day 1', value: kpis.stageCounts['Day 1'], icon: TrendingUp, gradient: 'from-purple-500/20 to-purple-600/10', iconColor: 'text-purple-500' },
+            { title: '2CC', value: kpis.stageCounts['2CC'], icon: Target, gradient: 'from-amber-500/20 to-amber-600/10', iconColor: 'text-amber-500' },
+          ].map((stat, i) => {
+            const Icon = stat.icon;
+            return (
+              <div
+                key={stat.title}
+                className={cn(
+                  "relative overflow-hidden rounded-2xl p-4 bg-gradient-to-br border-0",
+                  "backdrop-blur-sm shadow-lg shadow-black/5",
+                  stat.gradient
+                )}
+              >
+                <div className="flex items-start justify-between">
+                  <div>
+                    <p className="text-xs font-medium text-muted-foreground mb-1">{stat.title}</p>
+                    <p className="text-3xl font-bold tracking-tight">{stat.value}</p>
                   </div>
-                  <div className="absolute -right-4 -bottom-4 w-20 h-20 rounded-full bg-white/5" />
+                  <div className={cn("p-2.5 rounded-xl bg-background/50 backdrop-blur-sm", stat.iconColor)}>
+                    <Icon className="h-5 w-5" />
+                  </div>
                 </div>
-              );
-            })
-          )}
+                <div className="absolute -right-4 -bottom-4 w-20 h-20 rounded-full bg-white/5" />
+              </div>
+            );
+          })}
         </div>
 
         {/* Monthly Targets */}
@@ -209,6 +196,7 @@ export default function Home() {
                     Cancel
                   </Button>
                   <Button onClick={async () => {
+                    // Save all edited targets
                     for (const stage of FUNNEL_STAGES) {
                       if (editingTargets[stage] !== targets[stage]) {
                         await updateTarget(stage, editingTargets[stage]);
@@ -222,29 +210,23 @@ export default function Home() {
               </DialogContent>
             </Dialog>
           </div>
-          {targetsLoading ? (
-            <div className="space-y-3">
-              {[1,2,3].map(i => <Skeleton key={i} className="h-8" />)}
-            </div>
-          ) : (
-            <div className="space-y-3">
-              {FUNNEL_STAGES.map(stage => {
-                const current = kpis.stageCounts[stage];
-                const target = targets[stage] || 0;
-                const progress = target > 0 ? Math.min((current / target) * 100, 100) : 0;
-                
-                return (
-                  <div key={stage} className="space-y-1.5">
-                    <div className="flex items-center justify-between text-sm">
-                      <span className="text-muted-foreground">{stage}</span>
-                      <span className="font-medium">{current} / {target}</span>
-                    </div>
-                    <Progress value={progress} className="h-2" />
+          <div className="space-y-3">
+            {FUNNEL_STAGES.map(stage => {
+              const current = kpis.stageCounts[stage];
+              const target = targets[stage] || 0;
+              const progress = target > 0 ? Math.min((current / target) * 100, 100) : 0;
+              
+              return (
+                <div key={stage} className="space-y-1.5">
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-muted-foreground">{stage}</span>
+                    <span className="font-medium">{current} / {target}</span>
                   </div>
-                );
-              })}
-            </div>
-          )}
+                  <Progress value={progress} className="h-2" />
+                </div>
+              );
+            })}
+          </div>
         </div>
 
         {/* Today's Follow-Ups */}
@@ -259,11 +241,7 @@ export default function Home() {
             </span>
           </div>
           
-          {prospectsLoading ? (
-            <div className="space-y-2">
-              {[1,2,3].map(i => <Skeleton key={i} className="h-14 rounded-xl" />)}
-            </div>
-          ) : todaysFollowUps.length === 0 ? (
+          {todaysFollowUps.length === 0 ? (
             <p className="text-sm text-muted-foreground text-center py-4">
               No follow-ups scheduled for today
             </p>
@@ -349,8 +327,8 @@ export default function Home() {
 
           {/* Todo list */}
           {todosLoading ? (
-            <div className="space-y-2">
-              {[1,2].map(i => <Skeleton key={i} className="h-12 rounded-xl" />)}
+            <div className="flex justify-center py-4">
+              <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
             </div>
           ) : todos.length === 0 ? (
             <p className="text-sm text-muted-foreground text-center py-4">

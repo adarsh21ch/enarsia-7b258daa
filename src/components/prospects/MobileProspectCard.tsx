@@ -1,47 +1,60 @@
 import { useState, useEffect } from 'react';
-import { Prospect, GENDERS } from '@/types/prospect';
+import { Prospect, FunnelStage, ProspectStatus, FUNNEL_STAGES, EXTENDED_ACTIONS, STATUSES, ExtendedActionTaken, ActionTaken } from '@/types/prospect';
+import { InlineSelect } from './InlineSelect';
+import { StatusBadge, StageBadge, ActionBadge } from './StatusBadge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Calendar } from '@/components/ui/calendar';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
-import { MessageCircle, Phone, Trash2, ChevronDown, MapPin, Save } from 'lucide-react';
-import { formatDistanceToNow, parseISO } from 'date-fns';
+import { MessageCircle, Phone, Trash2, Calendar as CalendarIcon, ChevronDown, MapPin, Target } from 'lucide-react';
+import { format, parseISO, formatDistanceToNow } from 'date-fns';
 import { cn } from '@/lib/utils';
-import { toast } from 'sonner';
+import { useActivityLogs } from '@/hooks/useActivityLogs';
+import { useCustomOptionsContext } from '@/contexts/CustomOptionsContext';
 
 interface MobileProspectCardProps {
   prospect: Prospect;
   index: number;
+  isCalling: boolean;
   onUpdate: (id: string, updates: Partial<Prospect>) => Promise<Prospect | null>;
   onDelete: (id: string) => Promise<boolean>;
 }
 
-export function MobileProspectCard({ prospect, index, onUpdate, onDelete }: MobileProspectCardProps) {
+export function MobileProspectCard({ prospect, index, isCalling, onUpdate, onDelete }: MobileProspectCardProps) {
   const [isExpanded, setIsExpanded] = useState(false);
   const [localData, setLocalData] = useState({
     name: prospect.name,
     phone: prospect.phone,
-    age_or_dob: prospect.age_or_dob || '',
     city: prospect.city || '',
     state: prospect.state || '',
-    gender: prospect.gender || '',
+    why_need: prospect.why_need || '',
+    notes: prospect.notes || '',
   });
   const [isDeleting, setIsDeleting] = useState(false);
-  const [hasChanges, setHasChanges] = useState(false);
-  const [isSaving, setIsSaving] = useState(false);
+  const { activities } = useActivityLogs();
+  const { addOption, deleteOption, getOptionsForType, getCustomOptionsForType } = useCustomOptionsContext();
+
+  // Get combined options (cast to proper types)
+  const stageOptions = getOptionsForType('funnel_stage', FUNNEL_STAGES) as (typeof FUNNEL_STAGES[number])[];
+  const actionOptions = getOptionsForType('action_taken', EXTENDED_ACTIONS) as (typeof EXTENDED_ACTIONS[number])[];
+  const statusOptions = getOptionsForType('prospect_status', STATUSES) as (typeof STATUSES[number])[];
 
   useEffect(() => {
     setLocalData({
       name: prospect.name,
       phone: prospect.phone,
-      age_or_dob: prospect.age_or_dob || '',
       city: prospect.city || '',
       state: prospect.state || '',
-      gender: prospect.gender || '',
+      why_need: prospect.why_need || '',
+      notes: prospect.notes || '',
     });
-    setHasChanges(false);
   }, [prospect]);
+
+  const prospectActivities = activities
+    .filter(log => log.prospect_id === prospect.id)
+    .slice(0, 3);
 
   const cleanPhoneNumber = (phone: string) => phone.replace(/[^0-9+]/g, '');
 
@@ -59,36 +72,52 @@ export function MobileProspectCard({ prospect, index, onUpdate, onDelete }: Mobi
     setIsDeleting(false);
   };
 
-  const handleFieldChange = (field: string, value: string) => {
-    setLocalData(prev => ({ ...prev, [field]: value }));
-    setHasChanges(true);
+  // Handle action change - if "Enrolled" is selected, also update enrollment_status
+  const handleActionChange = (value: ExtendedActionTaken) => {
+    const updates: Partial<Prospect> = {};
+    
+    if (value === 'Enrolled') {
+      updates.enrollment_status = 'Enrolled';
+      if (!prospect.funnel_stage || prospect.funnel_stage === 'Enrollment') {
+        updates.funnel_stage = 'Day 1';
+      }
+      updates.action_taken = prospect.action_taken;
+    } else {
+      updates.action_taken = value as ActionTaken;
+    }
+    
+    onUpdate(prospect.id, updates);
   };
 
-  const handleSave = async () => {
-    if (!hasChanges) return;
-    
-    setIsSaving(true);
-    try {
-      const updates: Partial<Prospect> = {};
-      
-      if (localData.name !== prospect.name) updates.name = localData.name;
-      if (localData.phone !== prospect.phone) updates.phone = localData.phone;
-      if ((localData.age_or_dob || null) !== (prospect.age_or_dob || null)) updates.age_or_dob = localData.age_or_dob || null;
-      if ((localData.city || null) !== (prospect.city || null)) updates.city = localData.city || null;
-      if ((localData.state || null) !== (prospect.state || null)) updates.state = localData.state || null;
-      if ((localData.gender || null) !== (prospect.gender || null)) updates.gender = localData.gender || null;
+  const getActionDisplayValue = (): ExtendedActionTaken | null => {
+    if (prospect.enrollment_status === 'Enrolled') {
+      return 'Enrolled';
+    }
+    return prospect.action_taken || null;
+  };
 
-      if (Object.keys(updates).length > 0) {
-        const result = await onUpdate(prospect.id, updates);
-        if (result) {
-          toast.success('Prospect updated');
-          setHasChanges(false);
-        }
-      }
-    } catch (error) {
-      toast.error('Failed to update');
-    } finally {
-      setIsSaving(false);
+  const handleFieldUpdate = (field: keyof Prospect, value: any) => {
+    if (value !== (prospect as any)[field]) {
+      onUpdate(prospect.id, { [field]: value || null });
+    }
+  };
+
+  // Handle combined city & state field
+  const handleCityStateChange = (value: string) => {
+    const parts = value.split(',').map(p => p.trim());
+    if (parts.length >= 2) {
+      setLocalData(prev => ({ ...prev, city: parts[0], state: parts.slice(1).join(', ') }));
+    } else {
+      setLocalData(prev => ({ ...prev, city: value, state: '' }));
+    }
+  };
+
+  const handleCityStateBlur = () => {
+    if (localData.city !== prospect.city) {
+      onUpdate(prospect.id, { city: localData.city || null });
+    }
+    if (localData.state !== prospect.state) {
+      onUpdate(prospect.id, { state: localData.state || null });
     }
   };
 
@@ -135,28 +164,73 @@ export function MobileProspectCard({ prospect, index, onUpdate, onDelete }: Mobi
         </div>
       </div>
 
-      {/* Info Chips Row */}
+      {/* Status Chips Row (removed Priority) */}
       <div className="px-4 py-3 flex flex-wrap items-center gap-2 bg-muted/10">
-        {prospect.city && (
-          <span className="text-xs bg-muted/50 text-muted-foreground px-2 py-1 rounded-md flex items-center gap-1">
-            <MapPin className="h-3 w-3" />
-            {[prospect.city, prospect.state].filter(Boolean).join(', ')}
-          </span>
+        {!isCalling && (
+          <InlineSelect<FunnelStage>
+            value={prospect.funnel_stage}
+            options={stageOptions as FunnelStage[]}
+            onChange={(value) => onUpdate(prospect.id, { funnel_stage: value })}
+            renderValue={(value) => <StageBadge stage={value} />}
+            placeholder="Stage"
+            optionType="funnel_stage"
+            customOptions={getCustomOptionsForType('funnel_stage')}
+            onAddOption={addOption}
+            onDeleteOption={deleteOption}
+            defaultOptions={FUNNEL_STAGES}
+          />
         )}
-        {prospect.age_or_dob && (
-          <span className="text-xs bg-muted/50 text-muted-foreground px-2 py-1 rounded-md">
-            {prospect.age_or_dob}
-          </span>
-        )}
-        {prospect.gender && (
-          <span className="text-xs bg-muted/50 text-muted-foreground px-2 py-1 rounded-md">
-            {prospect.gender}
-          </span>
-        )}
+        <InlineSelect<ExtendedActionTaken>
+          value={getActionDisplayValue()}
+          options={(isCalling ? actionOptions : actionOptions.filter(a => a !== 'Enrolled')) as ExtendedActionTaken[]}
+          onChange={handleActionChange}
+          placeholder="Action"
+          renderValue={(value) => <ActionBadge action={value} />}
+          optionType="action_taken"
+          customOptions={getCustomOptionsForType('action_taken')}
+          onAddOption={addOption}
+          onDeleteOption={deleteOption}
+          defaultOptions={EXTENDED_ACTIONS}
+        />
+        <InlineSelect<ProspectStatus>
+          value={prospect.prospect_status}
+          options={statusOptions as ProspectStatus[]}
+          onChange={(value) => onUpdate(prospect.id, { prospect_status: value })}
+          placeholder="Status"
+          renderValue={(value) => <StatusBadge status={value} />}
+          optionType="prospect_status"
+          customOptions={getCustomOptionsForType('prospect_status')}
+          onAddOption={addOption}
+          onDeleteOption={deleteOption}
+          defaultOptions={STATUSES}
+        />
       </div>
 
-      {/* Actions Row */}
+      {/* Date + Notes Preview + Expand */}
       <div className="px-4 py-3 flex items-center justify-between border-t border-border/30">
+        <div className="flex items-center gap-3">
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button variant="ghost" size="sm" className="h-8 text-xs px-2 hover:bg-muted/50">
+                <CalendarIcon className="h-3.5 w-3.5 mr-1.5" />
+                {prospect.last_contact_date ? format(parseISO(prospect.last_contact_date), 'MMM d') : 'Set date'}
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-0 bg-popover border-border z-50" align="start">
+              <Calendar
+                mode="single"
+                selected={prospect.last_contact_date ? parseISO(prospect.last_contact_date) : undefined}
+                onSelect={(date) => onUpdate(prospect.id, { last_contact_date: date ? format(date, 'yyyy-MM-dd') : null })}
+              />
+            </PopoverContent>
+          </Popover>
+          {prospect.notes && !isExpanded && (
+            <p className="text-xs text-muted-foreground truncate max-w-[120px]">
+              {prospect.notes}
+            </p>
+          )}
+        </div>
+
         <div className="flex items-center gap-1">
           <Button 
             variant="ghost" 
@@ -194,84 +268,74 @@ export function MobileProspectCard({ prospect, index, onUpdate, onDelete }: Mobi
             </AlertDialogContent>
           </AlertDialog>
         </div>
-        <span className="text-xs text-muted-foreground">
-          Added {formatDistanceToNow(parseISO(prospect.date_added), { addSuffix: true })}
-        </span>
       </div>
 
-      {/* Expanded Edit Form */}
+      {/* Expanded Report Card */}
       {isExpanded && (
         <div className="border-t border-border/50 p-4 space-y-4 bg-muted/10 animate-in fade-in-0 slide-in-from-top-2 duration-200">
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <Label className="text-xs text-muted-foreground mb-1 block">Name *</Label>
+          {/* Contact Info */}
+          <div className="space-y-2">
+            <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Contact Info</h4>
+            <div className="flex items-center gap-2">
+              <MapPin className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
               <Input
-                value={localData.name}
-                onChange={(e) => handleFieldChange('name', e.target.value)}
-                className="h-9"
-              />
-            </div>
-            <div>
-              <Label className="text-xs text-muted-foreground mb-1 block">Phone *</Label>
-              <Input
-                value={localData.phone}
-                onChange={(e) => handleFieldChange('phone', e.target.value)}
-                className="h-9"
-              />
-            </div>
-            <div>
-              <Label className="text-xs text-muted-foreground mb-1 block">Age / DOB</Label>
-              <Input
-                value={localData.age_or_dob}
-                onChange={(e) => handleFieldChange('age_or_dob', e.target.value)}
-                placeholder="e.g. 25 or 1998-05-15"
-                className="h-9"
-              />
-            </div>
-            <div>
-              <Label className="text-xs text-muted-foreground mb-1 block">Gender</Label>
-              <Select 
-                value={localData.gender} 
-                onValueChange={(val) => handleFieldChange('gender', val)}
-              >
-                <SelectTrigger className="h-9">
-                  <SelectValue placeholder="Select..." />
-                </SelectTrigger>
-                <SelectContent>
-                  {GENDERS.map(g => (
-                    <SelectItem key={g} value={g}>{g}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <Label className="text-xs text-muted-foreground mb-1 block">City</Label>
-              <Input
-                value={localData.city}
-                onChange={(e) => handleFieldChange('city', e.target.value)}
-                className="h-9"
-              />
-            </div>
-            <div>
-              <Label className="text-xs text-muted-foreground mb-1 block">State</Label>
-              <Input
-                value={localData.state}
-                onChange={(e) => handleFieldChange('state', e.target.value)}
-                className="h-9"
+                value={[localData.city, localData.state].filter(Boolean).join(', ')}
+                onChange={(e) => handleCityStateChange(e.target.value)}
+                onBlur={handleCityStateBlur}
+                placeholder="City, State"
+                className="h-8 text-sm"
               />
             </div>
           </div>
-          
-          {hasChanges && (
-            <Button 
-              onClick={handleSave} 
-              disabled={isSaving}
-              className="w-full gap-2"
-            >
-              <Save className="h-4 w-4" />
-              {isSaving ? 'Saving...' : 'Save Changes'}
-            </Button>
+
+          {/* Why/Need */}
+          <div className="space-y-2">
+            <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
+              <Target className="h-3.5 w-3.5" />
+              Why / Need
+            </h4>
+            <Textarea
+              value={localData.why_need}
+              onChange={(e) => setLocalData(prev => ({ ...prev, why_need: e.target.value }))}
+              onBlur={() => handleFieldUpdate('why_need', localData.why_need)}
+              placeholder="Why do they want to earn?"
+              className="min-h-[60px] text-sm resize-none"
+            />
+          </div>
+
+          {/* Notes */}
+          <div className="space-y-2">
+            <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Notes</h4>
+            <Textarea
+              value={localData.notes}
+              onChange={(e) => setLocalData(prev => ({ ...prev, notes: e.target.value }))}
+              onBlur={() => handleFieldUpdate('notes', localData.notes)}
+              placeholder="Call notes, action items..."
+              className="min-h-[80px] text-sm resize-none"
+            />
+          </div>
+
+          {/* Recent Activity */}
+          {prospectActivities.length > 0 && (
+            <div className="space-y-2">
+              <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Recent Activity</h4>
+              <div className="space-y-1.5">
+                {prospectActivities.map((activity) => (
+                  <div key={activity.id} className="text-xs bg-background rounded-lg p-2 border border-border/30">
+                    <p className="text-foreground">{activity.description}</p>
+                    <p className="text-muted-foreground mt-0.5">
+                      {formatDistanceToNow(parseISO(activity.created_at), { addSuffix: true })}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            </div>
           )}
+
+          {/* Meta */}
+          <div className="pt-2 border-t border-border/30 text-xs text-muted-foreground">
+            <p>Added {formatDistanceToNow(parseISO(prospect.date_added), { addSuffix: true })}</p>
+          </div>
         </div>
       )}
     </div>

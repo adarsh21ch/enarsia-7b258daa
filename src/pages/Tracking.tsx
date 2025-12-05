@@ -1,20 +1,20 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
-import { useData } from '@/contexts/DataContext';
 import { BottomNav } from '@/components/layout/BottomNav';
 import { FunnelTracker } from '@/components/trackup/FunnelTracker';
 import { LeadsTracker } from '@/components/trackup/LeadsTracker';
 import { ProspectAnalytics } from '@/components/trackup/ProspectAnalytics';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Loader2, TrendingUp, BarChart3, Calendar } from 'lucide-react';
+import { useProspects } from '@/hooks/useProspects';
 import { cn } from '@/lib/utils';
 import nevoraLogo from '@/assets/nevorai-logo.jpeg';
 
 export default function Tracking() {
   const navigate = useNavigate();
   const { user, loading: authLoading } = useAuth();
-  const { prospects } = useData();
+  const { prospects } = useProspects();
   const [activeTab, setActiveTab] = useState('funnel');
 
   const totalCC = prospects.filter(p => p.funnel_stage === 'Level Up').length;
@@ -76,7 +76,7 @@ export default function Tracking() {
             <TabsTrigger 
               value="funnel" 
               className={cn(
-                "rounded-xl flex flex-col items-center justify-center gap-0.5 h-full transition-all duration-200",
+                "rounded-xl flex flex-col items-center justify-center gap-0.5 h-full transition-all duration-300",
                 "data-[state=active]:bg-card data-[state=active]:shadow-lg data-[state=active]:shadow-primary/10",
                 "data-[state=active]:text-primary"
               )}
@@ -87,7 +87,7 @@ export default function Tracking() {
             <TabsTrigger 
               value="leads" 
               className={cn(
-                "rounded-xl flex flex-col items-center justify-center gap-0.5 h-full transition-all duration-200",
+                "rounded-xl flex flex-col items-center justify-center gap-0.5 h-full transition-all duration-300",
                 "data-[state=active]:bg-card data-[state=active]:shadow-lg data-[state=active]:shadow-primary/10",
                 "data-[state=active]:text-primary"
               )}
@@ -98,7 +98,7 @@ export default function Tracking() {
             <TabsTrigger 
               value="analytics" 
               className={cn(
-                "rounded-xl flex flex-col items-center justify-center gap-0.5 h-full transition-all duration-200",
+                "rounded-xl flex flex-col items-center justify-center gap-0.5 h-full transition-all duration-300",
                 "data-[state=active]:bg-card data-[state=active]:shadow-lg data-[state=active]:shadow-primary/10",
                 "data-[state=active]:text-primary"
               )}
@@ -108,12 +108,11 @@ export default function Tracking() {
             </TabsTrigger>
           </TabsList>
 
-          {/* Keep all tabs mounted for instant switching */}
           <TabsContent 
             value="funnel" 
             forceMount
             className={cn(
-              "mt-0 focus-visible:outline-none focus-visible:ring-0",
+              "mt-0 focus-visible:outline-none focus-visible:ring-0 transition-opacity duration-200",
               activeTab !== 'funnel' && "hidden"
             )}
           >
@@ -124,7 +123,7 @@ export default function Tracking() {
             value="leads" 
             forceMount
             className={cn(
-              "mt-0 focus-visible:outline-none focus-visible:ring-0",
+              "mt-0 focus-visible:outline-none focus-visible:ring-0 transition-opacity duration-200",
               activeTab !== 'leads' && "hidden"
             )}
           >
@@ -135,7 +134,7 @@ export default function Tracking() {
             value="analytics" 
             forceMount
             className={cn(
-              "mt-0 focus-visible:outline-none focus-visible:ring-0",
+              "mt-0 focus-visible:outline-none focus-visible:ring-0 transition-opacity duration-200",
               activeTab !== 'analytics' && "hidden"
             )}
           >

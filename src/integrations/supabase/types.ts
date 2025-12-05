@@ -204,46 +204,80 @@ export type Database = {
       }
       prospects: {
         Row: {
-          age_or_dob: string | null
+          action_taken: Database["public"]["Enums"]["action_taken"] | null
+          age: number | null
           batch_date: string | null
           city: string | null
+          currently_doing: string | null
           date_added: string
-          gender: string | null
+          date_of_birth: string | null
+          email: string | null
+          enrollment_status: string | null
+          funnel_stage: Database["public"]["Enums"]["funnel_stage"] | null
           id: string
+          last_contact_date: string | null
           name: string
+          notes: string | null
           phone: string
+          priority: Database["public"]["Enums"]["priority_level"] | null
+          prospect_status: Database["public"]["Enums"]["prospect_status"] | null
           sheet_id: string | null
           state: string | null
           updated_at: string
           user_id: string
+          why_need: string | null
         }
         Insert: {
-          age_or_dob?: string | null
+          action_taken?: Database["public"]["Enums"]["action_taken"] | null
+          age?: number | null
           batch_date?: string | null
           city?: string | null
+          currently_doing?: string | null
           date_added?: string
-          gender?: string | null
+          date_of_birth?: string | null
+          email?: string | null
+          enrollment_status?: string | null
+          funnel_stage?: Database["public"]["Enums"]["funnel_stage"] | null
           id?: string
+          last_contact_date?: string | null
           name: string
+          notes?: string | null
           phone: string
+          priority?: Database["public"]["Enums"]["priority_level"] | null
+          prospect_status?:
+            | Database["public"]["Enums"]["prospect_status"]
+            | null
           sheet_id?: string | null
           state?: string | null
           updated_at?: string
           user_id: string
+          why_need?: string | null
         }
         Update: {
-          age_or_dob?: string | null
+          action_taken?: Database["public"]["Enums"]["action_taken"] | null
+          age?: number | null
           batch_date?: string | null
           city?: string | null
+          currently_doing?: string | null
           date_added?: string
-          gender?: string | null
+          date_of_birth?: string | null
+          email?: string | null
+          enrollment_status?: string | null
+          funnel_stage?: Database["public"]["Enums"]["funnel_stage"] | null
           id?: string
+          last_contact_date?: string | null
           name?: string
+          notes?: string | null
           phone?: string
+          priority?: Database["public"]["Enums"]["priority_level"] | null
+          prospect_status?:
+            | Database["public"]["Enums"]["prospect_status"]
+            | null
           sheet_id?: string | null
           state?: string | null
           updated_at?: string
           user_id?: string
+          why_need?: string | null
         }
         Relationships: [
           {
