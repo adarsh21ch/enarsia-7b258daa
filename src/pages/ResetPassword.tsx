@@ -8,6 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { toast } from 'sonner';
 import { Loader2, CheckCircle } from 'lucide-react';
 import nevoraLogo from '@/assets/nevorai-logo.jpeg';
+import { passwordSchema } from '@/lib/validations';
 
 export default function ResetPassword() {
   const navigate = useNavigate();
@@ -31,8 +32,9 @@ export default function ResetPassword() {
   const handleResetPassword = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (password.length < 6) {
-      toast.error('Password must be at least 6 characters');
+    const result = passwordSchema.safeParse(password);
+    if (!result.success) {
+      toast.error(result.error.errors[0].message);
       return;
     }
 
@@ -100,11 +102,11 @@ export default function ResetPassword() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••"
-                  minLength={6}
+                  minLength={8}
                   required
                 />
                 <p className="text-xs text-muted-foreground">
-                  At least 6 characters
+                  8+ characters with uppercase, lowercase, and number
                 </p>
               </div>
               <div className="space-y-2">
