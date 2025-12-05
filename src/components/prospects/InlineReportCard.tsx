@@ -1,15 +1,13 @@
 import { useState, useEffect } from 'react';
-import { Prospect, FUNNEL_STAGES, ACTIONS, STATUSES } from '@/types/prospect';
+import { Prospect, FUNNEL_STAGES, ACTIONS, STATUSES, FunnelStage, ActionTaken, ProspectStatus } from '@/types/prospect';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Calendar } from '@/components/ui/calendar';
 import { Button } from '@/components/ui/button';
-import { StageBadge, StatusBadge } from './StatusBadge';
-import { Calendar as CalendarIcon, Save, X } from 'lucide-react';
-import { format, parseISO, formatDistanceToNow } from 'date-fns';
+import { StageBadge, StatusBadge, ActionBadge } from './StatusBadge';
+import { Save, X, Phone, MessageCircle, ChevronDown } from 'lucide-react';
+import { formatDistanceToNow, parseISO } from 'date-fns';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 
@@ -20,16 +18,64 @@ interface InlineReportCardProps {
   colSpan: number;
 }
 
+// Clickable tag that opens a dropdown for selection
+function EditableTag<T extends string>({ 
+  value, 
+  options, 
+  onChange, 
+  renderBadge,
+  placeholder = "Select"
+}: { 
+  value: T | null | undefined; 
+  options: readonly T[]; 
+  onChange: (val: T | null) => void;
+  renderBadge: (val: T) => React.ReactNode;
+  placeholder?: string;
+}) {
+  const [open, setOpen] = useState(false);
+
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <button className="inline-flex items-center gap-0.5 hover:opacity-80 transition-opacity cursor-pointer">
+          {value ? renderBadge(value) : (
+            <span className="text-[10px] text-muted-foreground bg-muted/50 rounded px-1.5 py-0.5">{placeholder}</span>
+          )}
+          <ChevronDown className="h-2.5 w-2.5 text-muted-foreground" />
+        </button>
+      </PopoverTrigger>
+      <PopoverContent className="w-auto p-1 bg-popover border-border z-50" align="start">
+        <div className="flex flex-col gap-0.5 max-h-48 overflow-y-auto">
+          {options.map((opt) => (
+            <button
+              key={opt}
+              onClick={() => { onChange(opt); setOpen(false); }}
+              className={cn(
+                "text-left px-2 py-1 text-xs rounded hover:bg-muted/50 transition-colors",
+                value === opt && "bg-primary/10 text-primary"
+              )}
+            >
+              {opt}
+            </button>
+          ))}
+          {value && (
+            <button
+              onClick={() => { onChange(null); setOpen(false); }}
+              className="text-left px-2 py-1 text-xs rounded hover:bg-destructive/10 text-muted-foreground"
+            >
+              Clear
+            </button>
+          )}
+        </div>
+      </PopoverContent>
+    </Popover>
+  );
+}
+
 export function InlineReportCard({ prospect, onUpdate, onClose, colSpan }: InlineReportCardProps) {
   const [localData, setLocalData] = useState<Partial<Prospect>>({});
   const [isSaving, setIsSaving] = useState(false);
   const [hasChanges, setHasChanges] = useState(false);
-
-  // Combine city and state into one field for display
-  const getCityState = () => {
-    const parts = [prospect.city, prospect.state].filter(Boolean);
-    return parts.join(', ');
-  };
 
   useEffect(() => {
     setLocalData({
@@ -44,7 +90,6 @@ export function InlineReportCard({ prospect, onUpdate, onClose, colSpan }: Inlin
       funnel_stage: prospect.funnel_stage,
       action_taken: prospect.action_taken,
       prospect_status: prospect.prospect_status,
-      last_contact_date: prospect.last_contact_date,
     });
     setHasChanges(false);
   }, [prospect]);
@@ -56,7 +101,6 @@ export function InlineReportCard({ prospect, onUpdate, onClose, colSpan }: Inlin
 
   // Handle combined city & state field
   const handleCityStateChange = (value: string) => {
-    // Try to split by comma
     const parts = value.split(',').map(p => p.trim());
     if (parts.length >= 2) {
       setLocalData(prev => ({ ...prev, city: parts[0], state: parts.slice(1).join(', ') }));
@@ -84,7 +128,6 @@ export function InlineReportCard({ prospect, onUpdate, onClose, colSpan }: Inlin
       if (localData.funnel_stage !== prospect.funnel_stage) updates.funnel_stage = localData.funnel_stage;
       if (localData.action_taken !== prospect.action_taken) updates.action_taken = localData.action_taken;
       if (localData.prospect_status !== prospect.prospect_status) updates.prospect_status = localData.prospect_status;
-      if (localData.last_contact_date !== prospect.last_contact_date) updates.last_contact_date = localData.last_contact_date;
 
       if (Object.keys(updates).length > 0) {
         const result = await onUpdate(prospect.id, updates);
@@ -100,26 +143,69 @@ export function InlineReportCard({ prospect, onUpdate, onClose, colSpan }: Inlin
     }
   };
 
+  const cleanPhoneNumber = (phone: string) => {
+    return phone.replace(/[^0-9+]/g, '');
+  };
+
+  const openWhatsApp = () => {
+    const cleanPhone = cleanPhoneNumber(prospect.phone);
+    window.location.href = `whatsapp://send?phone=${cleanPhone}`;
+  };
+
+  const openCall = () => {
+    const cleanPhone = cleanPhoneNumber(prospect.phone);
+    window.location.href = `tel:${cleanPhone}`;
+  };
+
   return (
     <tr className="animate-in fade-in-0 slide-in-from-top-2 duration-200">
       <td colSpan={colSpan} className="p-0">
         <div className="px-3 py-2 border-t border-b border-primary/20 bg-gradient-to-b from-muted/40 to-background/50 backdrop-blur-sm shadow-inner">
-          {/* Row 1: Header - Name, Badges, Close */}
+          {/* Row 1: Header - Name with Tags, Quick Actions, Close */}
           <div className="flex items-center justify-between gap-2 flex-wrap mb-2">
             <div className="flex items-center gap-2 flex-wrap">
               <span className="font-semibold text-foreground text-sm">{localData.name}</span>
-              <div className="flex items-center gap-1 flex-wrap">
-                {localData.funnel_stage && <StageBadge stage={localData.funnel_stage} />}
-                {localData.prospect_status && <StatusBadge status={localData.prospect_status} />}
+              {/* Editable Stage/Status/Action tags */}
+              <div className="flex items-center gap-1.5 flex-wrap">
+                <EditableTag
+                  value={localData.funnel_stage as FunnelStage}
+                  options={FUNNEL_STAGES}
+                  onChange={(val) => handleFieldChange('funnel_stage', val)}
+                  renderBadge={(val) => <StageBadge stage={val} />}
+                  placeholder="Stage"
+                />
+                <EditableTag
+                  value={localData.prospect_status as ProspectStatus}
+                  options={STATUSES}
+                  onChange={(val) => handleFieldChange('prospect_status', val)}
+                  renderBadge={(val) => <StatusBadge status={val} />}
+                  placeholder="Status"
+                />
+                <EditableTag
+                  value={localData.action_taken as ActionTaken}
+                  options={ACTIONS}
+                  onChange={(val) => handleFieldChange('action_taken', val)}
+                  renderBadge={(val) => <ActionBadge action={val} />}
+                  placeholder="Action"
+                />
               </div>
             </div>
-            <Button variant="ghost" size="icon" onClick={onClose} className="h-6 w-6">
-              <X className="h-3 w-3" />
-            </Button>
+            <div className="flex items-center gap-1">
+              {/* Quick Call/WhatsApp */}
+              <Button variant="ghost" size="icon" className="h-7 w-7 hover:bg-accent/10" onClick={openCall}>
+                <Phone className="h-3.5 w-3.5 text-accent" />
+              </Button>
+              <Button variant="ghost" size="icon" className="h-7 w-7 text-green-500 hover:text-green-600 hover:bg-green-500/10" onClick={openWhatsApp}>
+                <MessageCircle className="h-3.5 w-3.5" />
+              </Button>
+              <Button variant="ghost" size="icon" onClick={onClose} className="h-6 w-6 ml-1">
+                <X className="h-3 w-3" />
+              </Button>
+            </div>
           </div>
 
-          {/* Row 2: All editable fields in compact grid */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 gap-2 mb-2">
+          {/* Row 2: Compact editable fields grid */}
+          <div className="grid grid-cols-3 sm:grid-cols-5 gap-2 mb-2">
             {/* Name */}
             <div>
               <Label className="text-[10px] text-muted-foreground mb-0.5 block">Name *</Label>
@@ -148,82 +234,31 @@ export function InlineReportCard({ prospect, onUpdate, onClose, colSpan }: Inlin
                 placeholder="City, State"
               />
             </div>
-            {/* Age */}
-            <div>
+            {/* Age - compact */}
+            <div className="w-16">
               <Label className="text-[10px] text-muted-foreground mb-0.5 block">Age</Label>
               <Input
                 type="number"
                 value={localData.age || ''}
                 onChange={(e) => handleFieldChange('age', e.target.value ? parseInt(e.target.value) : undefined)}
-                className="h-7 text-xs"
+                className="h-7 text-xs w-16"
+                min={1}
+                max={120}
               />
             </div>
-            {/* Currently Doing */}
+            {/* Profession */}
             <div>
               <Label className="text-[10px] text-muted-foreground mb-0.5 block">Profession</Label>
               <Input
                 value={localData.currently_doing || ''}
                 onChange={(e) => handleFieldChange('currently_doing', e.target.value)}
                 className="h-7 text-xs"
-                placeholder="Job/Biz"
+                placeholder="student / job"
               />
             </div>
-            {/* Last Contact */}
-            <div>
-              <Label className="text-[10px] text-muted-foreground mb-0.5 block">Last Contact</Label>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button variant="outline" size="sm" className="w-full justify-start h-7 text-[10px] px-2">
-                    <CalendarIcon className="mr-1 h-3 w-3" />
-                    {localData.last_contact_date ? format(parseISO(localData.last_contact_date), 'MMM d') : '—'}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0 bg-popover border-border z-50" align="start">
-                  <Calendar
-                    mode="single"
-                    selected={localData.last_contact_date ? parseISO(localData.last_contact_date) : undefined}
-                    onSelect={(date) => handleFieldChange('last_contact_date', date ? format(date, 'yyyy-MM-dd') : null)}
-                  />
-                </PopoverContent>
-              </Popover>
-            </div>
           </div>
 
-          {/* Row 3: Status dropdowns in compact grid */}
-          <div className="grid grid-cols-3 gap-2 mb-2">
-            {/* Stage */}
-            <div>
-              <Label className="text-[10px] text-muted-foreground mb-0.5 block">Stage</Label>
-              <Select value={localData.funnel_stage || ''} onValueChange={(v) => handleFieldChange('funnel_stage', v)}>
-                <SelectTrigger className="h-7 text-xs"><SelectValue placeholder="—" /></SelectTrigger>
-                <SelectContent className="bg-popover border-border z-50">
-                  {FUNNEL_STAGES.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
-                </SelectContent>
-              </Select>
-            </div>
-            {/* Status */}
-            <div>
-              <Label className="text-[10px] text-muted-foreground mb-0.5 block">Status</Label>
-              <Select value={localData.prospect_status || ''} onValueChange={(v) => handleFieldChange('prospect_status', v || null)}>
-                <SelectTrigger className="h-7 text-xs"><SelectValue placeholder="—" /></SelectTrigger>
-                <SelectContent className="bg-popover border-border z-50">
-                  {STATUSES.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
-                </SelectContent>
-              </Select>
-            </div>
-            {/* Action */}
-            <div>
-              <Label className="text-[10px] text-muted-foreground mb-0.5 block">Action</Label>
-              <Select value={localData.action_taken || ''} onValueChange={(v) => handleFieldChange('action_taken', v || null)}>
-                <SelectTrigger className="h-7 text-xs"><SelectValue placeholder="—" /></SelectTrigger>
-                <SelectContent className="bg-popover border-border z-50">
-                  {ACTIONS.map(a => <SelectItem key={a} value={a}>{a}</SelectItem>)}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-
-          {/* Row 4: Context (Why/Need + Notes) + Save */}
+          {/* Row 3: Why/Need + Notes + Save */}
           <div className="flex flex-col sm:flex-row gap-2">
             <div className="flex-1 grid grid-cols-2 gap-2">
               <div>
