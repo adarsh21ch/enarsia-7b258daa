@@ -101,9 +101,9 @@ export function InlineReportCard({ prospect, onUpdate, onClose, colSpan }: Inlin
   };
 
   return (
-    <tr className="bg-muted/30">
+    <tr className="animate-in fade-in-0 slide-in-from-top-2 duration-200">
       <td colSpan={colSpan} className="p-0">
-        <div className="px-3 py-2 border-t border-b border-primary/20 bg-gradient-to-b from-muted/40 to-transparent">
+        <div className="px-3 py-2 border-t border-b border-primary/20 bg-gradient-to-b from-muted/40 to-background/50 backdrop-blur-sm shadow-inner">
           {/* Row 1: Header - Name, Badges, Actions, Close */}
           <div className="flex items-center justify-between gap-2 flex-wrap mb-2">
             <div className="flex items-center gap-2 flex-wrap">

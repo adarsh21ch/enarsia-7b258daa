@@ -199,8 +199,14 @@ export function ProspectTable({
   };
 
   const handleToggleExpand = useCallback((prospectId: string) => {
-    setExpandedRowId(prev => prev === prospectId ? null : prospectId);
-  }, []);
+    // Smooth transition - collapse first if different row, then expand new one
+    if (expandedRowId && expandedRowId !== prospectId) {
+      setExpandedRowId(null);
+      setTimeout(() => setExpandedRowId(prospectId), 50);
+    } else {
+      setExpandedRowId(prev => prev === prospectId ? null : prospectId);
+    }
+  }, [expandedRowId]);
 
   // Column drag handlers
   const handleDragStart = (columnId: string) => {

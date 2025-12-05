@@ -8,7 +8,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
-import { MessageCircle, Phone, Trash2, Calendar as CalendarIcon, ChevronDown, ChevronUp, MapPin, Mail, Target } from 'lucide-react';
+import { MessageCircle, Phone, Trash2, Calendar as CalendarIcon, ChevronDown, MapPin, Mail, Target } from 'lucide-react';
 import { format, parseISO, formatDistanceToNow } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { useActivityLogs } from '@/hooks/useActivityLogs';
@@ -115,9 +115,17 @@ export function MobileProspectCard({ prospect, index, isCalling, onUpdate, onDel
               </span>
               <button
                 onClick={() => setIsExpanded(!isExpanded)}
-                className="text-base font-bold text-foreground hover:text-primary hover:underline transition-colors text-left truncate"
+                className={cn(
+                  "group flex items-center gap-1.5 text-base font-bold text-foreground hover:text-primary transition-all duration-200 text-left truncate",
+                  "hover:bg-primary/5 px-1.5 py-0.5 -ml-1.5 rounded-md active:scale-[0.98]",
+                  isExpanded && "text-primary bg-primary/10"
+                )}
               >
-                {prospect.name}
+                <span className="truncate">{prospect.name}</span>
+                <ChevronDown className={cn(
+                  "h-3.5 w-3.5 text-muted-foreground group-hover:text-primary transition-transform duration-200",
+                  isExpanded && "rotate-180 text-primary"
+                )} />
               </button>
             </div>
             <a 
@@ -218,8 +226,19 @@ export function MobileProspectCard({ prospect, index, isCalling, onUpdate, onDel
         </div>
 
         <div className="flex items-center gap-1">
-          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setIsExpanded(!isExpanded)}>
-            {isExpanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            className={cn(
+              "h-8 w-8 transition-all duration-200",
+              isExpanded && "bg-primary/10 text-primary"
+            )} 
+            onClick={() => setIsExpanded(!isExpanded)}
+          >
+            <ChevronDown className={cn(
+              "h-4 w-4 transition-transform duration-200",
+              isExpanded && "rotate-180"
+            )} />
           </Button>
           <AlertDialog>
             <AlertDialogTrigger asChild>
@@ -247,7 +266,7 @@ export function MobileProspectCard({ prospect, index, isCalling, onUpdate, onDel
 
       {/* Expanded Report Card */}
       {isExpanded && (
-        <div className="border-t border-border/50 p-4 space-y-4 bg-muted/10 animate-fade-in">
+        <div className="border-t border-border/50 p-4 space-y-4 bg-muted/10 animate-in fade-in-0 slide-in-from-top-2 duration-200">
           {/* Contact Info */}
           <div className="space-y-2">
             <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Contact Info</h4>

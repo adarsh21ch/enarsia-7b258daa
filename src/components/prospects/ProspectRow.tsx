@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
-import { MessageCircle, Phone, Trash2, Calendar as CalendarIcon, ChevronDown, ChevronUp } from 'lucide-react';
+import { MessageCircle, Phone, Trash2, Calendar as CalendarIcon, ChevronDown } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { useCustomOptionsContext } from '@/contexts/CustomOptionsContext';
@@ -160,13 +160,20 @@ export function ProspectRow({
             <button
               onClick={onToggleExpand}
               className={cn(
-                "text-left font-semibold text-foreground hover:text-primary hover:underline transition-colors cursor-pointer bg-transparent border-0 p-0.5 px-1 -ml-1 rounded truncate block max-w-full",
-                isMobileTable && "text-xs",
-                isExpanded && "text-primary"
+                "group flex items-center gap-1 text-left font-semibold text-foreground hover:text-primary transition-all duration-200 cursor-pointer bg-transparent border-0 py-1 px-1.5 -ml-1.5 rounded-md truncate max-w-full",
+                "hover:bg-primary/5 active:scale-[0.98]",
+                isMobileTable && "text-xs py-0.5",
+                isExpanded && "text-primary bg-primary/10"
               )}
-              title="Click to expand details"
+              title={isExpanded ? "Click to collapse" : "Click to expand details"}
             >
-              {prospect.name}
+              <span className="truncate">{prospect.name}</span>
+              <span className={cn(
+                "transition-transform duration-200 text-muted-foreground group-hover:text-primary",
+                isExpanded && "rotate-180"
+              )}>
+                <ChevronDown className={cn("h-3 w-3", isMobileTable && "h-2.5 w-2.5")} />
+              </span>
             </button>
           </td>
         );
@@ -333,10 +340,18 @@ export function ProspectRow({
               <Button
                 variant="ghost"
                 size="icon"
-                className={cn("h-7 w-7 hover:bg-muted/50", isMobileTable && "h-6 w-6")}
+                className={cn(
+                  "h-7 w-7 hover:bg-muted/50 transition-all duration-200",
+                  isMobileTable && "h-6 w-6",
+                  isExpanded && "bg-primary/10 text-primary"
+                )}
                 onClick={onToggleExpand}
               >
-                {isExpanded ? <ChevronUp className={cn("h-4 w-4", isMobileTable && "h-3 w-3")} /> : <ChevronDown className={cn("h-4 w-4", isMobileTable && "h-3 w-3")} />}
+                <ChevronDown className={cn(
+                  "h-4 w-4 transition-transform duration-200",
+                  isMobileTable && "h-3 w-3",
+                  isExpanded && "rotate-180"
+                )} />
               </Button>
               <AlertDialog>
                 <AlertDialogTrigger asChild>
