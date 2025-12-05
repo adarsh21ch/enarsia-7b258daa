@@ -108,15 +108,36 @@ export default function Tracking() {
             </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="funnel" className="mt-0 focus-visible:outline-none focus-visible:ring-0">
+          <TabsContent 
+            value="funnel" 
+            forceMount
+            className={cn(
+              "mt-0 focus-visible:outline-none focus-visible:ring-0 transition-opacity duration-200",
+              activeTab !== 'funnel' && "hidden"
+            )}
+          >
             <FunnelTracker />
           </TabsContent>
 
-          <TabsContent value="leads" className="mt-0 focus-visible:outline-none focus-visible:ring-0">
+          <TabsContent 
+            value="leads" 
+            forceMount
+            className={cn(
+              "mt-0 focus-visible:outline-none focus-visible:ring-0 transition-opacity duration-200",
+              activeTab !== 'leads' && "hidden"
+            )}
+          >
             <LeadsTracker />
           </TabsContent>
 
-          <TabsContent value="analytics" className="mt-0 focus-visible:outline-none focus-visible:ring-0">
+          <TabsContent 
+            value="analytics" 
+            forceMount
+            className={cn(
+              "mt-0 focus-visible:outline-none focus-visible:ring-0 transition-opacity duration-200",
+              activeTab !== 'analytics' && "hidden"
+            )}
+          >
             <ProspectAnalytics prospects={prospects} />
           </TabsContent>
         </Tabs>
