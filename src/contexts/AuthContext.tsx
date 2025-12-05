@@ -39,12 +39,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const signUp = async (email: string, password: string) => {
-    const redirectUrl = `${window.location.origin}/`;
+    // Use live domain for email redirect to avoid preview shell issues
+    const liveUrl = 'https://wpczgwxsriezaubncuom.lovable.app';
     const { error } = await supabase.auth.signUp({
       email,
       password,
       options: {
-        emailRedirectTo: redirectUrl
+        emailRedirectTo: `${liveUrl}/`
       }
     });
     return { error: error as Error | null };

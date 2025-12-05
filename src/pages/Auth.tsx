@@ -98,8 +98,10 @@ export default function Auth() {
     }
 
     setIsResetting(true);
+    // Use live domain for password reset redirect
+    const liveUrl = 'https://wpczgwxsriezaubncuom.lovable.app';
     const { error } = await supabase.auth.resetPasswordForEmail(result.data, {
-      redirectTo: `${window.location.origin}/reset-password`,
+      redirectTo: `${liveUrl}/reset-password`,
     });
 
     if (error) {
@@ -113,10 +115,12 @@ export default function Auth() {
   };
 
   const handleGoogleSignIn = async () => {
+    // Use live domain for OAuth redirect to avoid preview shell issues
+    const liveUrl = 'https://wpczgwxsriezaubncuom.lovable.app';
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
-        redirectTo: `${window.location.origin}/dashboard`,
+        redirectTo: `${liveUrl}/dashboard`,
       },
     });
     if (error) {
