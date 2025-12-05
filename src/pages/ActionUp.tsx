@@ -2,7 +2,7 @@ import { useState, useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useProspects } from '@/hooks/useProspects';
-import { useEnrolledActivityLogs } from '@/hooks/useActivityLogs';
+import { useActivityLogs } from '@/hooks/useActivityLogs';
 import { BottomNav } from '@/components/layout/BottomNav';
 import { StageBadge, StatusBadge } from '@/components/prospects/StatusBadge';
 import { Button } from '@/components/ui/button';
@@ -19,7 +19,7 @@ export default function ActionUp() {
   const navigate = useNavigate();
   const { user, loading: authLoading } = useAuth();
   const { prospects } = useProspects();
-  const { activities, loading: activitiesLoading } = useEnrolledActivityLogs(100);
+  const { activities, loading: activitiesLoading } = useActivityLogs(100);
   const [searchQuery, setSearchQuery] = useState('');
   const [activeFilter, setActiveFilter] = useState<ActivityFilter>('all');
 
