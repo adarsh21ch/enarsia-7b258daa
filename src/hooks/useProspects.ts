@@ -3,23 +3,46 @@ import { supabase } from '@/integrations/supabase/client';
 import { Prospect } from '@/types/prospect';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
-import { useEncryption } from './useEncryption';
+
+// Encryption functions defined outside to avoid hook dependency issues
+async function encryptFieldsCall(data: { phone?: string; email?: string }) {
+  try {
+    const { data: result, error } = await supabase.functions.invoke('encrypt-data', {
+      body: { action: 'encrypt', data }
+    });
+    if (error) {
+      console.error('Encryption error:', error);
+      return data;
+    }
+    return result.encrypted;
+  } catch (err) {
+    console.error('Encryption failed:', err);
+    return data;
+  }
+}
+
+async function decryptBatchCall(records: Prospect[]): Promise<Prospect[]> {
+  if (records.length === 0) return records;
+  try {
+    const { data: result, error } = await supabase.functions.invoke('encrypt-data', {
+      body: { action: 'decrypt-batch', data: { records } }
+    });
+    if (error) {
+      console.error('Batch decryption error:', error);
+      return records;
+    }
+    return result.decrypted;
+  } catch (err) {
+    console.error('Batch decryption failed:', err);
+    return records;
+  }
+}
 
 export function useProspects() {
   const { user } = useAuth();
   const [prospects, setProspects] = useState<Prospect[]>([]);
   const [loading, setLoading] = useState(true);
-  const { encryptFields, decryptBatch } = useEncryption();
-  
-  // Use refs to avoid infinite loop with useCallback dependencies
-  const decryptBatchRef = useRef(decryptBatch);
-  const encryptFieldsRef = useRef(encryptFields);
-  
-  // Keep refs updated
-  useEffect(() => {
-    decryptBatchRef.current = decryptBatch;
-    encryptFieldsRef.current = encryptFields;
-  }, [decryptBatch, encryptFields]);
+  const hasFetched = useRef(false);
 
   const fetchProspects = useCallback(async () => {
     if (!user) return;
@@ -37,8 +60,7 @@ export function useProspects() {
         console.error('Error fetching prospects:', error);
         setProspects([]);
       } else {
-        // Decrypt phone and email fields
-        const decryptedData = await decryptBatchRef.current(data as Prospect[]);
+        const decryptedData = await decryptBatchCall(data as Prospect[]);
         setProspects(decryptedData);
       }
     } catch (err) {
@@ -47,12 +69,14 @@ export function useProspects() {
     } finally {
       setLoading(false);
     }
-  }, [user]); // Only depend on user, not decryptBatch
+  }, [user]);
 
   useEffect(() => {
-    if (user) {
+    if (user && !hasFetched.current) {
+      hasFetched.current = true;
       fetchProspects();
-    } else {
+    } else if (!user) {
+      hasFetched.current = false;
       setProspects([]);
       setLoading(false);
     }
@@ -61,8 +85,7 @@ export function useProspects() {
   const addProspect = async (prospect: Partial<Prospect>) => {
     if (!user) return null;
 
-    // Encrypt sensitive fields before storing
-    const encrypted = await encryptFieldsRef.current({
+    const encrypted = await encryptFieldsCall({
       phone: prospect.phone,
       email: prospect.email || undefined
     });
@@ -90,7 +113,6 @@ export function useProspects() {
       return null;
     }
 
-    // Store decrypted version in state for display
     const decryptedProspect = {
       ...data,
       phone: prospect.phone!,
@@ -103,11 +125,10 @@ export function useProspects() {
   };
 
   const updateProspect = async (id: string, updates: Partial<Prospect>) => {
-    // Encrypt sensitive fields if being updated
     let encryptedUpdates = { ...updates };
     
     if (updates.phone || updates.email) {
-      const encrypted = await encryptFieldsRef.current({
+      const encrypted = await encryptFieldsCall({
         phone: updates.phone,
         email: updates.email || undefined
       });
@@ -129,7 +150,6 @@ export function useProspects() {
       return null;
     }
 
-    // Update state with decrypted values for display
     const decryptedUpdate = {
       ...data,
       phone: updates.phone || (data as Prospect).phone,
@@ -167,10 +187,9 @@ export function useProspects() {
       return { imported: 0, skipped };
     }
 
-    // Encrypt phone and email for each prospect
     const prospectsToInsert = await Promise.all(
       validProspects.map(async (p) => {
-        const encrypted = await encryptFieldsRef.current({
+        const encrypted = await encryptFieldsCall({
           phone: p.phone,
           email: p.email || undefined
         });
@@ -204,8 +223,7 @@ export function useProspects() {
       return { imported: 0, skipped: prospectsData.length };
     }
 
-    // Decrypt for display
-    const decryptedData = await decryptBatchRef.current(data as Prospect[]);
+    const decryptedData = await decryptBatchCall(data as Prospect[]);
     setProspects(prev => [...decryptedData, ...prev]);
     return { imported: data.length, skipped };
   };

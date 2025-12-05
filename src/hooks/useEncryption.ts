@@ -1,8 +1,7 @@
-import { useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 
 export function useEncryption() {
-  const encryptFields = useCallback(async (data: { phone?: string; email?: string }) => {
+  const encryptFields = async (data: { phone?: string; email?: string }) => {
     try {
       const { data: result, error } = await supabase.functions.invoke('encrypt-data', {
         body: { action: 'encrypt', data }
@@ -18,9 +17,9 @@ export function useEncryption() {
       console.error('Encryption failed:', err);
       return data;
     }
-  }, []);
+  };
 
-  const decryptFields = useCallback(async (data: { phone?: string; email?: string }) => {
+  const decryptFields = async (data: { phone?: string; email?: string }) => {
     try {
       const { data: result, error } = await supabase.functions.invoke('encrypt-data', {
         body: { action: 'decrypt', data }
@@ -36,9 +35,9 @@ export function useEncryption() {
       console.error('Decryption failed:', err);
       return data;
     }
-  }, []);
+  };
 
-  const decryptBatch = useCallback(async <T extends { phone?: string; email?: string }>(records: T[]): Promise<T[]> => {
+  const decryptBatch = async <T extends { phone?: string; email?: string }>(records: T[]): Promise<T[]> => {
     if (records.length === 0) return records;
 
     try {
@@ -56,7 +55,7 @@ export function useEncryption() {
       console.error('Batch decryption failed:', err);
       return records;
     }
-  }, []);
+  };
 
   return { encryptFields, decryptFields, decryptBatch };
 }
