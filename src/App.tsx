@@ -7,12 +7,15 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import ResetPassword from "./pages/ResetPassword";
-import Dashboard from "./pages/Dashboard";
 import Tracking from "./pages/Tracking";
 import Home from "./pages/Home";
 import ActionUp from "./pages/ActionUp";
 import Profile from "./pages/Profile";
 import NotFound from "./pages/NotFound";
+
+// Lazy load Dashboard to isolate potential issues
+import { lazy, Suspense } from "react";
+const Dashboard = lazy(() => import("./pages/Dashboard"));
 
 const queryClient = new QueryClient();
 
@@ -27,7 +30,11 @@ const App = () => (
             <Route path="/" element={<Index />} />
             <Route path="/auth" element={<Auth />} />
             <Route path="/reset-password" element={<ResetPassword />} />
-            <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/dashboard" element={
+              <Suspense fallback={<div className="min-h-screen flex items-center justify-center bg-background">Loading...</div>}>
+                <Dashboard />
+              </Suspense>
+            } />
             <Route path="/tracking" element={<Tracking />} />
             <Route path="/home" element={<Home />} />
             <Route path="/action" element={<ActionUp />} />
