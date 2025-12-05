@@ -9,6 +9,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { toast } from 'sonner';
 import { Loader2, Mail, Lock, Eye, EyeOff, Phone, Bell, BarChart3, Zap, ArrowRight, User, Shield } from 'lucide-react';
 import nevoraLogo from '@/assets/nevorai-logo.jpeg';
+import { signUpSchema, signInSchema, emailSchema } from '@/lib/validations';
 
 export default function Auth() {
   const navigate = useNavigate();
@@ -32,13 +33,17 @@ export default function Auth() {
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!email || !password) {
-      toast.error('Please fill in all fields');
+    
+    // Validate with zod
+    const result = signInSchema.safeParse({ email, password });
+    if (!result.success) {
+      const firstError = result.error.errors[0];
+      toast.error(firstError.message);
       return;
     }
 
     setIsSubmitting(true);
-    const { error } = await signIn(email, password);
+    const { error } = await signIn(result.data.email, result.data.password);
     
     if (error) {
       if (error.message.includes('Invalid login credentials')) {
@@ -57,18 +62,17 @@ export default function Auth() {
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!email || !password) {
-      toast.error('Please fill in all fields');
-      return;
-    }
-
-    if (password.length < 6) {
-      toast.error('Password must be at least 6 characters');
+    
+    // Validate with zod
+    const result = signUpSchema.safeParse({ name, email, password });
+    if (!result.success) {
+      const firstError = result.error.errors[0];
+      toast.error(firstError.message);
       return;
     }
 
     setIsSubmitting(true);
-    const { error } = await signUp(email, password);
+    const { error } = await signUp(result.data.email, result.data.password);
     
     if (error) {
       if (error.message.includes('User already registered')) {
@@ -85,13 +89,16 @@ export default function Auth() {
 
   const handleForgotPassword = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!resetEmail) {
-      toast.error('Please enter your email');
+    
+    // Validate email with zod
+    const result = emailSchema.safeParse(resetEmail);
+    if (!result.success) {
+      toast.error(result.error.errors[0].message);
       return;
     }
 
     setIsResetting(true);
-    const { error } = await supabase.auth.resetPasswordForEmail(resetEmail, {
+    const { error } = await supabase.auth.resetPasswordForEmail(result.data, {
       redirectTo: `${window.location.origin}/reset-password`,
     });
 
@@ -385,7 +392,7 @@ export default function Auth() {
                       </button>
                     </div>
                     {isSignUp && (
-                      <p className="text-xs text-muted-foreground">At least 6 characters</p>
+                      <p className="text-xs text-muted-foreground">At least 8 characters with uppercase, lowercase, and number</p>
                     )}
                   </div>
 
