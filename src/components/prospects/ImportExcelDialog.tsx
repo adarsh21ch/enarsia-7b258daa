@@ -5,9 +5,8 @@ import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import { Upload, FileSpreadsheet, AlertCircle } from 'lucide-react';
-import { Prospect, FUNNEL_STAGES, ACTIONS, STATUSES, PRIORITIES } from '@/types/prospect';
+import { Prospect, GENDERS } from '@/types/prospect';
 import { toast } from 'sonner';
-import { sanitizeImportString, validateImportedProspect } from '@/lib/validations';
 
 interface ImportExcelDialogProps {
   onImport: (prospects: Partial<Prospect>[]) => Promise<{ imported: number; skipped: number }>;
@@ -16,23 +15,19 @@ interface ImportExcelDialogProps {
 interface ColumnMapping {
   name: string | null;
   phone: string | null;
-  email: string | null;
-  notes: string | null;
-  funnel_stage: string | null;
-  action_taken: string | null;
-  prospect_status: string | null;
-  priority: string | null;
+  age_or_dob: string | null;
+  city: string | null;
+  state: string | null;
+  gender: string | null;
 }
 
 const FIELD_LABELS: Record<keyof ColumnMapping, string> = {
   name: 'Name *',
   phone: 'Phone *',
-  email: 'Email',
-  notes: 'Notes',
-  funnel_stage: 'Funnel Stage',
-  action_taken: 'Action Taken',
-  prospect_status: 'Status',
-  priority: 'Priority',
+  age_or_dob: 'Age / DOB',
+  city: 'City',
+  state: 'State',
+  gender: 'Gender',
 };
 
 export function ImportExcelDialog({ onImport }: ImportExcelDialogProps) {
@@ -44,12 +39,10 @@ export function ImportExcelDialog({ onImport }: ImportExcelDialogProps) {
   const [mapping, setMapping] = useState<ColumnMapping>({
     name: null,
     phone: null,
-    email: null,
-    notes: null,
-    funnel_stage: null,
-    action_taken: null,
-    prospect_status: null,
-    priority: null,
+    age_or_dob: null,
+    city: null,
+    state: null,
+    gender: null,
   });
   const [isImporting, setIsImporting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -63,12 +56,10 @@ export function ImportExcelDialog({ onImport }: ImportExcelDialogProps) {
     setMapping({
       name: null,
       phone: null,
-      email: null,
-      notes: null,
-      funnel_stage: null,
-      action_taken: null,
-      prospect_status: null,
-      priority: null,
+      age_or_dob: null,
+      city: null,
+      state: null,
+      gender: null,
     });
     setError(null);
     if (fileInputRef.current) {
@@ -80,12 +71,10 @@ export function ImportExcelDialog({ onImport }: ImportExcelDialogProps) {
     const newMapping: ColumnMapping = {
       name: null,
       phone: null,
-      email: null,
-      notes: null,
-      funnel_stage: null,
-      action_taken: null,
-      prospect_status: null,
-      priority: null,
+      age_or_dob: null,
+      city: null,
+      state: null,
+      gender: null,
     };
 
     cols.forEach((col) => {
@@ -94,18 +83,14 @@ export function ImportExcelDialog({ onImport }: ImportExcelDialogProps) {
         newMapping.name = col;
       } else if ((lowerCol.includes('phone') || lowerCol.includes('mobile') || lowerCol.includes('cell')) && !newMapping.phone) {
         newMapping.phone = col;
-      } else if (lowerCol.includes('email') && !newMapping.email) {
-        newMapping.email = col;
-      } else if ((lowerCol.includes('note') || lowerCol.includes('comment')) && !newMapping.notes) {
-        newMapping.notes = col;
-      } else if ((lowerCol.includes('stage') || lowerCol.includes('funnel')) && !newMapping.funnel_stage) {
-        newMapping.funnel_stage = col;
-      } else if ((lowerCol.includes('action') || lowerCol.includes('taken')) && !newMapping.action_taken) {
-        newMapping.action_taken = col;
-      } else if (lowerCol.includes('status') && !newMapping.prospect_status) {
-        newMapping.prospect_status = col;
-      } else if (lowerCol.includes('priority') && !newMapping.priority) {
-        newMapping.priority = col;
+      } else if ((lowerCol.includes('age') || lowerCol.includes('dob') || lowerCol.includes('birth')) && !newMapping.age_or_dob) {
+        newMapping.age_or_dob = col;
+      } else if (lowerCol.includes('city') && !newMapping.city) {
+        newMapping.city = col;
+      } else if (lowerCol.includes('state') && !newMapping.state) {
+        newMapping.state = col;
+      } else if (lowerCol.includes('gender') && !newMapping.gender) {
+        newMapping.gender = col;
       }
     });
 
@@ -141,6 +126,11 @@ export function ImportExcelDialog({ onImport }: ImportExcelDialogProps) {
     }
   };
 
+  const sanitizeString = (value: any, maxLength: number): string => {
+    if (value === null || value === undefined) return '';
+    return String(value).trim().slice(0, maxLength);
+  };
+
   const handleImport = async () => {
     if (!mapping.name || !mapping.phone) {
       setError('Name and Phone columns are required');
@@ -154,52 +144,29 @@ export function ImportExcelDialog({ onImport }: ImportExcelDialogProps) {
     const prospects: Partial<Prospect>[] = [];
 
     fullData.forEach((row) => {
-      // Validate and sanitize required fields
-      const validation = validateImportedProspect(row, mapping.name!, mapping.phone!);
+      const name = sanitizeString(row[mapping.name!], 100);
+      const phone = sanitizeString(row[mapping.phone!], 20);
       
-      if (!validation.valid) {
+      if (!name || !phone) {
         skippedCount++;
         return;
       }
 
-      const prospect: Partial<Prospect> = {
-        name: validation.name,
-        phone: validation.phone,
-      };
+      const prospect: Partial<Prospect> = { name, phone };
 
-      // Sanitize optional fields with length limits
-      if (mapping.email && row[mapping.email]) {
-        const email = sanitizeImportString(row[mapping.email], 255);
-        // Basic email validation
-        if (email && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-          prospect.email = email;
-        }
+      if (mapping.age_or_dob && row[mapping.age_or_dob]) {
+        prospect.age_or_dob = sanitizeString(row[mapping.age_or_dob], 20);
       }
-      if (mapping.notes && row[mapping.notes]) {
-        prospect.notes = sanitizeImportString(row[mapping.notes], 2000);
+      if (mapping.city && row[mapping.city]) {
+        prospect.city = sanitizeString(row[mapping.city], 100);
       }
-      if (mapping.funnel_stage && row[mapping.funnel_stage]) {
-        const stage = sanitizeImportString(row[mapping.funnel_stage], 50);
-        if (FUNNEL_STAGES.includes(stage as any)) {
-          prospect.funnel_stage = stage as any;
-        }
+      if (mapping.state && row[mapping.state]) {
+        prospect.state = sanitizeString(row[mapping.state], 100);
       }
-      if (mapping.action_taken && row[mapping.action_taken]) {
-        const action = sanitizeImportString(row[mapping.action_taken], 50);
-        if (ACTIONS.includes(action as any)) {
-          prospect.action_taken = action as any;
-        }
-      }
-      if (mapping.prospect_status && row[mapping.prospect_status]) {
-        const status = sanitizeImportString(row[mapping.prospect_status], 20);
-        if (STATUSES.includes(status as any)) {
-          prospect.prospect_status = status as any;
-        }
-      }
-      if (mapping.priority && row[mapping.priority]) {
-        const priority = sanitizeImportString(row[mapping.priority], 20);
-        if (PRIORITIES.includes(priority as any)) {
-          prospect.priority = priority as any;
+      if (mapping.gender && row[mapping.gender]) {
+        const genderVal = sanitizeString(row[mapping.gender], 20);
+        if (GENDERS.includes(genderVal as any)) {
+          prospect.gender = genderVal;
         }
       }
 
