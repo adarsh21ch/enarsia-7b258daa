@@ -4,14 +4,18 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useProspects } from '@/hooks/useProspects';
 import { useActivityLogs } from '@/hooks/useActivityLogs';
 import { useSubscription } from '@/hooks/useSubscription';
+import { useTodos } from '@/hooks/useTodos';
 import { BottomNav } from '@/components/layout/BottomNav';
 import { UpgradeBar } from '@/components/subscription/UpgradeBar';
 import { StageBadge, StatusBadge } from '@/components/prospects/StatusBadge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Loader2, Activity, Clock, UserPlus, GitBranch, CheckCircle, Bell, Sparkles, Filter, Search, Lock } from 'lucide-react';
-import { formatDistanceToNow, parseISO, isToday, isPast } from 'date-fns';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Calendar } from '@/components/ui/calendar';
+import { Loader2, Activity, Clock, UserPlus, GitBranch, CheckCircle, Bell, Sparkles, Filter, Search, Lock, Calendar as CalendarIcon, Plus, Trash2 } from 'lucide-react';
+import { formatDistanceToNow, parseISO, isToday, isPast, format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import nevoraLogo from '@/assets/nevorai-logo.jpeg';
 
@@ -23,8 +27,11 @@ export default function ActionUp() {
   const { prospects } = useProspects();
   const { activities, loading: activitiesLoading } = useActivityLogs(100);
   const { isPro, loading: subLoading } = useSubscription();
+  const { todos, loading: todosLoading, addTodo, toggleTodo, deleteTodo } = useTodos();
   const [searchQuery, setSearchQuery] = useState('');
   const [activeFilter, setActiveFilter] = useState<ActivityFilter>('all');
+  const [newTodoTitle, setNewTodoTitle] = useState('');
+  const [newTodoDueDate, setNewTodoDueDate] = useState<Date | undefined>();
 
   useEffect(() => {
     if (!user && !authLoading) {
@@ -114,6 +121,13 @@ export default function ActionUp() {
     { value: 'action_change', label: 'Actions' },
   ];
 
+  const handleAddTodo = async () => {
+    if (!newTodoTitle.trim()) return;
+    await addTodo(newTodoTitle.trim(), newTodoDueDate ? format(newTodoDueDate, 'yyyy-MM-dd') : undefined);
+    setNewTodoTitle('');
+    setNewTodoDueDate(undefined);
+  };
+
   if (authLoading || subLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
@@ -182,6 +196,96 @@ export default function ActionUp() {
             <CheckCircle className="h-3.5 w-3.5" />
             {isPro ? summaryStats.enrollmentsToday : '–'} Enrolled
           </Badge>
+        </div>
+
+        {/* To-Do / Reminders - Moved from Home */}
+        <div className="bg-card rounded-2xl p-4 border border-border/50">
+          <div className="flex items-center gap-2 mb-4">
+            <CheckCircle className="h-5 w-5 text-primary" />
+            <h3 className="font-semibold">To-Do / Reminders</h3>
+          </div>
+          
+          {/* Add new todo */}
+          <div className="flex gap-2 mb-4">
+            <Input
+              placeholder="Add a task..."
+              value={newTodoTitle}
+              onChange={(e) => setNewTodoTitle(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && handleAddTodo()}
+              className="flex-1"
+              disabled={!isPro}
+            />
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button variant="outline" size="icon" className="shrink-0" disabled={!isPro}>
+                  <CalendarIcon className="h-4 w-4" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0 bg-popover border-border z-50" align="end">
+                <Calendar
+                  mode="single"
+                  selected={newTodoDueDate}
+                  onSelect={setNewTodoDueDate}
+                />
+              </PopoverContent>
+            </Popover>
+            <Button onClick={handleAddTodo} size="icon" className="shrink-0" disabled={!isPro}>
+              <Plus className="h-4 w-4" />
+            </Button>
+          </div>
+
+          {/* Todo list */}
+          {!isPro ? (
+            <p className="text-sm text-muted-foreground text-center py-4">
+              Upgrade to Pro to manage tasks
+            </p>
+          ) : todosLoading ? (
+            <div className="flex justify-center py-4">
+              <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+            </div>
+          ) : todos.length === 0 ? (
+            <p className="text-sm text-muted-foreground text-center py-4">
+              No tasks yet. Add one above!
+            </p>
+          ) : (
+            <div className="space-y-2">
+              {todos.map(todo => (
+                <div
+                  key={todo.id}
+                  className={cn(
+                    "flex items-center gap-3 p-3 rounded-xl transition-colors",
+                    todo.completed ? "bg-muted/20" : "bg-muted/30"
+                  )}
+                >
+                  <Checkbox
+                    checked={todo.completed}
+                    onCheckedChange={(checked) => toggleTodo(todo.id, !!checked)}
+                  />
+                  <div className="flex-1 min-w-0">
+                    <p className={cn(
+                      "text-sm",
+                      todo.completed && "line-through text-muted-foreground"
+                    )}>
+                      {todo.title}
+                    </p>
+                    {todo.due_date && (
+                      <p className="text-xs text-muted-foreground mt-0.5">
+                        Due: {format(parseISO(todo.due_date), 'MMM d')}
+                      </p>
+                    )}
+                  </div>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-7 w-7 text-muted-foreground hover:text-destructive shrink-0"
+                    onClick={() => deleteTodo(todo.id)}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* AI Smart Summary Panel */}

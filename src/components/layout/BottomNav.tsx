@@ -3,9 +3,9 @@ import { Calendar, CheckSquare, Home, Zap, User } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const navItems = [
-  { path: '/dashboard', icon: Calendar, label: 'Follow Up' },
-  { path: '/tracking', icon: CheckSquare, label: 'TrackUp' },
   { path: '/home', icon: Home, label: 'Home' },
+  { path: '/tracking', icon: CheckSquare, label: 'TrackUp' },
+  { path: '/dashboard', icon: Calendar, label: 'Follow Up' },
   { path: '/action', icon: Zap, label: 'ActionUp' },
   { path: '/profile', icon: User, label: 'Profile' },
 ];

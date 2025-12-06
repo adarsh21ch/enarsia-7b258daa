@@ -3,21 +3,18 @@ import { useState, useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useProspects } from '@/hooks/useProspects';
-import { useTodos } from '@/hooks/useTodos';
 import { useUserTargets } from '@/hooks/useUserTargets';
 import { BottomNav } from '@/components/layout/BottomNav';
-import { StageBadge, StatusBadge, PriorityBadge } from '@/components/prospects/StatusBadge';
+import { StageBadge, PriorityBadge } from '@/components/prospects/StatusBadge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Checkbox } from '@/components/ui/checkbox';
 import { Progress } from '@/components/ui/progress';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Calendar } from '@/components/ui/calendar';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { Label } from '@/components/ui/label';
 import { 
   Loader2, Users, CheckCircle, TrendingUp, Target, Calendar as CalendarIcon,
-  Plus, Trash2, Phone, MessageCircle, ChevronRight, Settings2
+  Phone, MessageCircle, ChevronRight, Settings2, ChevronDown
 } from 'lucide-react';
 import { format, parseISO, isToday, isPast } from 'date-fns';
 import { cn } from '@/lib/utils';
@@ -28,12 +25,10 @@ export default function Home() {
   const navigate = useNavigate();
   const { user, loading: authLoading } = useAuth();
   const { prospects, loading: prospectsLoading } = useProspects();
-  const { todos, loading: todosLoading, addTodo, toggleTodo, deleteTodo } = useTodos();
   const { targets, loading: targetsLoading, updateTarget } = useUserTargets();
-  const [newTodoTitle, setNewTodoTitle] = useState('');
-  const [newTodoDueDate, setNewTodoDueDate] = useState<Date | undefined>();
   const [editTargetsOpen, setEditTargetsOpen] = useState(false);
   const [editingTargets, setEditingTargets] = useState<Record<string, number>>({});
+  const [targetsExpanded, setTargetsExpanded] = useState(false);
 
   useEffect(() => {
     if (!user && !authLoading) {
@@ -41,7 +36,7 @@ export default function Home() {
     }
   }, [user, authLoading, navigate]);
 
-  // Calculate KPIs
+  // Calculate KPIs - 2CC counts as 2 in Total CC
   const kpis = useMemo(() => {
     const stageCounts: Record<FunnelStage, number> = {
       'Enrollment': 0, 'Day 1': 0, 'Day 2': 0, 'Day 3': 0,
@@ -54,10 +49,18 @@ export default function Home() {
 
     const enrolled = prospects.filter(p => p.enrollment_status === 'Enrolled').length;
     
+    // Calculate total CC: 2CC counts as 2, Level Up as 1
+    const totalCC = prospects.reduce((sum, p) => {
+      if (p.funnel_stage === '2CC') return sum + 2;
+      if (p.funnel_stage === 'Level Up') return sum + 1;
+      return sum;
+    }, 0);
+    
     return {
       totalLeads: prospects.length,
       totalEnrolled: enrolled,
       stageCounts,
+      totalCC,
     };
   }, [prospects]);
 
@@ -69,13 +72,6 @@ export default function Home() {
       return isToday(date) || isPast(date);
     }).slice(0, 10);
   }, [prospects]);
-
-  const handleAddTodo = async () => {
-    if (!newTodoTitle.trim()) return;
-    await addTodo(newTodoTitle.trim(), newTodoDueDate ? format(newTodoDueDate, 'yyyy-MM-dd') : undefined);
-    setNewTodoTitle('');
-    setNewTodoDueDate(undefined);
-  };
 
   const cleanPhoneNumber = (phone: string) => phone.replace(/[^0-9+]/g, '');
 
@@ -118,13 +114,13 @@ export default function Home() {
           </div>
         </div>
 
-        {/* KPI Cards */}
+        {/* KPI Cards - 2CC now shows count, not CC units */}
         <div className="grid grid-cols-2 gap-3">
           {[
             { title: 'Total Leads', value: kpis.totalLeads, icon: Users, gradient: 'from-blue-500/20 to-blue-600/10', iconColor: 'text-blue-500' },
             { title: 'Enrolled', value: kpis.totalEnrolled, icon: CheckCircle, gradient: 'from-green-500/20 to-green-600/10', iconColor: 'text-green-500' },
             { title: 'Day 1', value: kpis.stageCounts['Day 1'], icon: TrendingUp, gradient: 'from-purple-500/20 to-purple-600/10', iconColor: 'text-purple-500' },
-            { title: '2CC', value: kpis.stageCounts['2CC'], icon: Target, gradient: 'from-amber-500/20 to-amber-600/10', iconColor: 'text-amber-500' },
+            { title: 'Total CC', value: kpis.totalCC, icon: Target, gradient: 'from-amber-500/20 to-amber-600/10', iconColor: 'text-amber-500' },
           ].map((stat, i) => {
             const Icon = stat.icon;
             return (
@@ -151,82 +147,86 @@ export default function Home() {
           })}
         </div>
 
-        {/* Monthly Targets */}
+        {/* Monthly Targets - Collapsible */}
         <div className="bg-card rounded-2xl p-4 border border-border/50">
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-2">
-              <Target className="h-5 w-5 text-primary" />
-              <h3 className="font-semibold">Monthly Targets</h3>
-            </div>
-            <Dialog open={editTargetsOpen} onOpenChange={setEditTargetsOpen}>
-              <DialogTrigger asChild>
-                <Button 
-                  variant="ghost" 
-                  size="sm" 
-                  className="h-8 text-xs"
-                  onClick={() => setEditingTargets({ ...targets })}
-                >
-                  <Settings2 className="h-3.5 w-3.5 mr-1" />
-                  Edit
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="sm:max-w-md">
-                <DialogHeader>
-                  <DialogTitle>Edit Monthly Targets</DialogTitle>
-                </DialogHeader>
-                <div className="space-y-4 py-4 max-h-[60vh] overflow-y-auto">
-                  {FUNNEL_STAGES.map(stage => (
-                    <div key={stage} className="flex items-center justify-between gap-4">
-                      <Label className="text-sm font-medium flex-1">{stage}</Label>
-                      <Input
-                        type="number"
-                        min="0"
-                        value={editingTargets[stage] || 0}
-                        onChange={(e) => setEditingTargets(prev => ({
-                          ...prev,
-                          [stage]: parseInt(e.target.value) || 0
-                        }))}
-                        className="w-24 text-right"
-                      />
-                    </div>
-                  ))}
-                </div>
-                <div className="flex justify-end gap-2">
-                  <Button variant="outline" onClick={() => setEditTargetsOpen(false)}>
-                    Cancel
+          <Collapsible open={targetsExpanded} onOpenChange={setTargetsExpanded}>
+            <div className="flex items-center justify-between">
+              <CollapsibleTrigger className="flex items-center gap-2 hover:opacity-80 transition-opacity">
+                <Target className="h-5 w-5 text-primary" />
+                <h3 className="font-semibold">Monthly Targets</h3>
+                <ChevronDown className={cn("h-4 w-4 text-muted-foreground transition-transform", targetsExpanded && "rotate-180")} />
+              </CollapsibleTrigger>
+              <Dialog open={editTargetsOpen} onOpenChange={setEditTargetsOpen}>
+                <DialogTrigger asChild>
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    className="h-8 text-xs"
+                    onClick={() => setEditingTargets({ ...targets })}
+                  >
+                    <Settings2 className="h-3.5 w-3.5 mr-1" />
+                    Edit
                   </Button>
-                  <Button onClick={async () => {
-                    // Save all edited targets
-                    for (const stage of FUNNEL_STAGES) {
-                      if (editingTargets[stage] !== targets[stage]) {
-                        await updateTarget(stage, editingTargets[stage]);
-                      }
-                    }
-                    setEditTargetsOpen(false);
-                  }}>
-                    Save Targets
-                  </Button>
-                </div>
-              </DialogContent>
-            </Dialog>
-          </div>
-          <div className="space-y-3">
-            {FUNNEL_STAGES.map(stage => {
-              const current = kpis.stageCounts[stage];
-              const target = targets[stage] || 0;
-              const progress = target > 0 ? Math.min((current / target) * 100, 100) : 0;
-              
-              return (
-                <div key={stage} className="space-y-1.5">
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="text-muted-foreground">{stage}</span>
-                    <span className="font-medium">{current} / {target}</span>
+                </DialogTrigger>
+                <DialogContent className="sm:max-w-md">
+                  <DialogHeader>
+                    <DialogTitle>Edit Monthly Targets</DialogTitle>
+                  </DialogHeader>
+                  <div className="space-y-4 py-4 max-h-[60vh] overflow-y-auto">
+                    {FUNNEL_STAGES.map(stage => (
+                      <div key={stage} className="flex items-center justify-between gap-4">
+                        <Label className="text-sm font-medium flex-1">{stage}</Label>
+                        <Input
+                          type="number"
+                          min="0"
+                          value={editingTargets[stage] || 0}
+                          onChange={(e) => setEditingTargets(prev => ({
+                            ...prev,
+                            [stage]: parseInt(e.target.value) || 0
+                          }))}
+                          className="w-24 text-right"
+                        />
+                      </div>
+                    ))}
                   </div>
-                  <Progress value={progress} className="h-2" />
-                </div>
-              );
-            })}
-          </div>
+                  <div className="flex justify-end gap-2">
+                    <Button variant="outline" onClick={() => setEditTargetsOpen(false)}>
+                      Cancel
+                    </Button>
+                    <Button onClick={async () => {
+                      for (const stage of FUNNEL_STAGES) {
+                        if (editingTargets[stage] !== targets[stage]) {
+                          await updateTarget(stage, editingTargets[stage]);
+                        }
+                      }
+                      setEditTargetsOpen(false);
+                    }}>
+                      Save Targets
+                    </Button>
+                  </div>
+                </DialogContent>
+              </Dialog>
+            </div>
+            <CollapsibleContent className="mt-4">
+              <div className="space-y-3">
+                {FUNNEL_STAGES.map(stage => {
+                  const current = kpis.stageCounts[stage];
+                  const target = targets[stage] || 0;
+                  const progress = target > 0 ? Math.min((current / target) * 100, 100) : 0;
+                  
+                  return (
+                    <div key={stage} className="space-y-1.5">
+                      <div className="flex items-center justify-between text-sm">
+                        <span className="text-muted-foreground">{stage}</span>
+                        <span className="font-medium">{current} / {target}</span>
+                      </div>
+                      <Progress value={progress} className="h-2" />
+                    </div>
+                  );
+                })}
+              </div>
+            </CollapsibleContent>
+          </Collapsible>
         </div>
 
         {/* Today's Follow-Ups */}
@@ -286,91 +286,6 @@ export default function Home() {
               >
                 View all <ChevronRight className="h-4 w-4 ml-1" />
               </Button>
-            </div>
-          )}
-        </div>
-
-        {/* To-Do / Reminders */}
-        <div className="bg-card rounded-2xl p-4 border border-border/50">
-          <div className="flex items-center gap-2 mb-4">
-            <CheckCircle className="h-5 w-5 text-primary" />
-            <h3 className="font-semibold">To-Do / Reminders</h3>
-          </div>
-          
-          {/* Add new todo */}
-          <div className="flex gap-2 mb-4">
-            <Input
-              placeholder="Add a task..."
-              value={newTodoTitle}
-              onChange={(e) => setNewTodoTitle(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && handleAddTodo()}
-              className="flex-1"
-            />
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button variant="outline" size="icon" className="shrink-0">
-                  <CalendarIcon className="h-4 w-4" />
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-auto p-0 bg-popover border-border z-50" align="end">
-                <Calendar
-                  mode="single"
-                  selected={newTodoDueDate}
-                  onSelect={setNewTodoDueDate}
-                />
-              </PopoverContent>
-            </Popover>
-            <Button onClick={handleAddTodo} size="icon" className="shrink-0">
-              <Plus className="h-4 w-4" />
-            </Button>
-          </div>
-
-          {/* Todo list */}
-          {todosLoading ? (
-            <div className="flex justify-center py-4">
-              <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
-            </div>
-          ) : todos.length === 0 ? (
-            <p className="text-sm text-muted-foreground text-center py-4">
-              No tasks yet. Add one above!
-            </p>
-          ) : (
-            <div className="space-y-2">
-              {todos.map(todo => (
-                <div
-                  key={todo.id}
-                  className={cn(
-                    "flex items-center gap-3 p-3 rounded-xl transition-colors",
-                    todo.completed ? "bg-muted/20" : "bg-muted/30"
-                  )}
-                >
-                  <Checkbox
-                    checked={todo.completed}
-                    onCheckedChange={(checked) => toggleTodo(todo.id, !!checked)}
-                  />
-                  <div className="flex-1 min-w-0">
-                    <p className={cn(
-                      "text-sm",
-                      todo.completed && "line-through text-muted-foreground"
-                    )}>
-                      {todo.title}
-                    </p>
-                    {todo.due_date && (
-                      <p className="text-xs text-muted-foreground mt-0.5">
-                        Due: {format(parseISO(todo.due_date), 'MMM d')}
-                      </p>
-                    )}
-                  </div>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-7 w-7 text-muted-foreground hover:text-destructive shrink-0"
-                    onClick={() => deleteTodo(todo.id)}
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                </div>
-              ))}
             </div>
           )}
         </div>

@@ -20,7 +20,23 @@ export default function Dashboard() {
   
   const [mainTab, setMainTab] = useState<'calling' | 'funnel'>('calling');
 
-  const totalCC = prospects.filter(p => p.funnel_stage === 'Level Up' || p.funnel_stage === '2CC').length;
+  // Calculate Total CC: 2CC counts as 2, Level Up as 1
+  const totalCC = prospects.reduce((sum, p) => {
+    if (p.funnel_stage === '2CC') return sum + 2;
+    if (p.funnel_stage === 'Level Up') return sum + 1;
+    return sum;
+  }, 0);
+
+  // Calculate funnel counts for summary bar
+  const funnelCounts = {
+    enrollment: prospects.filter(p => p.funnel_stage === 'Enrollment').length,
+    day1: prospects.filter(p => p.funnel_stage === 'Day 1').length,
+    day2: prospects.filter(p => p.funnel_stage === 'Day 2').length,
+    day3: prospects.filter(p => p.funnel_stage === 'Day 3').length,
+    minBill: prospects.filter(p => p.funnel_stage === 'Minimum Bill').length,
+    levelUp: prospects.filter(p => p.funnel_stage === 'Level Up').length,
+    twoCC: prospects.filter(p => p.funnel_stage === '2CC').length,
+  };
 
   useEffect(() => {
     if (!user && !authLoading) {
@@ -64,7 +80,7 @@ export default function Dashboard() {
 
       <main className="container py-4 px-4">
         {/* Page Title */}
-        <div className="mb-5">
+        <div className="mb-3">
           <h2 className="text-2xl font-bold tracking-tight">Follow-Up List</h2>
           <p className="text-sm text-muted-foreground">
             Manage and track your sales prospects
@@ -74,6 +90,17 @@ export default function Dashboard() {
             <div className="w-2 h-1 bg-primary/50 rounded-full" />
             <div className="w-1 h-1 bg-primary/30 rounded-full" />
           </div>
+        </div>
+
+        {/* Compact Funnel Summary Bar */}
+        <div className="flex flex-wrap gap-x-3 gap-y-1 text-xs text-muted-foreground bg-muted/30 rounded-lg px-3 py-2 mb-4">
+          <span><strong className="text-foreground">{funnelCounts.enrollment}</strong> Enroll</span>
+          <span><strong className="text-foreground">{funnelCounts.day1}</strong> Day1</span>
+          <span><strong className="text-foreground">{funnelCounts.day2}</strong> Day2</span>
+          <span><strong className="text-foreground">{funnelCounts.day3}</strong> Day3</span>
+          <span><strong className="text-foreground">{funnelCounts.minBill}</strong> MinBill</span>
+          <span><strong className="text-foreground">{funnelCounts.levelUp}</strong> LevelUp</span>
+          <span><strong className="text-foreground">{funnelCounts.twoCC}</strong> 2CC</span>
         </div>
 
         {/* Premium Segmented Control: Calling / Funnel */}
