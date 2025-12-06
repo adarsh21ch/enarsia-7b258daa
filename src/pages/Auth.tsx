@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
 import { Loader2, Mail, Lock, Eye, EyeOff, ArrowLeft } from 'lucide-react';
-import nevoraLogo from '@/assets/nevorai-logo-n.jpeg';
+import nevoraLogo from '@/assets/nevorai-logo.jpeg';
 
 export default function Auth() {
   const navigate = useNavigate();
