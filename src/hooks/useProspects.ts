@@ -3,6 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Prospect, mapOldStatusToNew } from '@/types/prospect';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
+import { useEncryption } from '@/hooks/useEncryption';
 
 // Map database prospect to app prospect (handles status mapping)
 const mapDbProspect = (dbProspect: any): Prospect => ({
@@ -15,6 +16,7 @@ export function useProspects() {
   const [prospects, setProspects] = useState<Prospect[]>([]);
   const [loading, setLoading] = useState(true);
   const hasFetched = useRef(false);
+  const { encryptFields, decryptBatch, encryptBatch } = useEncryption();
 
   const fetchProspects = useCallback(async () => {
     if (!user) {
@@ -35,7 +37,9 @@ export function useProspects() {
         console.error('Error fetching prospects:', error);
         setProspects([]);
       } else {
-        setProspects((data || []).map(mapDbProspect));
+        // Decrypt phone numbers in batch
+        const decryptedData = await decryptBatch(data || []);
+        setProspects(decryptedData.map(mapDbProspect));
       }
     } catch (err) {
       console.error('Error in fetchProspects:', err);
@@ -59,11 +63,20 @@ export function useProspects() {
   const addProspect = async (prospect: Partial<Prospect>) => {
     if (!user) return null;
 
+    // Encrypt phone number before storing
+    let encryptedPhone = prospect.phone!;
+    try {
+      const encrypted = await encryptFields({ phone: prospect.phone! });
+      encryptedPhone = encrypted.phone || prospect.phone!;
+    } catch (err) {
+      console.error('Failed to encrypt phone:', err);
+    }
+
     const { data, error } = await supabase
       .from('prospects')
       .insert({
         name: prospect.name!,
-        phone: prospect.phone!,
+        phone: encryptedPhone,
         user_id: user.id,
         city: prospect.city || null,
         state: prospect.state || null,
@@ -83,7 +96,8 @@ export function useProspects() {
       return null;
     }
 
-    const newProspect = mapDbProspect(data);
+    // Store with decrypted phone for display
+    const newProspect = mapDbProspect({ ...data, phone: prospect.phone });
     setProspects(prev => [newProspect, ...prev]);
     toast.success('Prospect added');
     return newProspect;
@@ -97,7 +111,16 @@ export function useProspects() {
     
     // Map all database-compatible fields
     if (updates.name !== undefined) dbUpdates.name = updates.name;
-    if (updates.phone !== undefined) dbUpdates.phone = updates.phone;
+    if (updates.phone !== undefined) {
+      // Encrypt phone number before updating
+      try {
+        const encrypted = await encryptFields({ phone: updates.phone });
+        dbUpdates.phone = encrypted.phone || updates.phone;
+      } catch (err) {
+        console.error('Failed to encrypt phone:', err);
+        dbUpdates.phone = updates.phone;
+      }
+    }
     if (updates.city !== undefined) dbUpdates.city = updates.city;
     if (updates.state !== undefined) dbUpdates.state = updates.state;
     if ((updates as any).age_or_dob !== undefined) dbUpdates.age_or_dob = (updates as any).age_or_dob;
@@ -107,7 +130,7 @@ export function useProspects() {
     if (updates.sheet_id !== undefined) dbUpdates.sheet_id = updates.sheet_id;
     if (updates.batch_date !== undefined) dbUpdates.batch_date = updates.batch_date;
     
-    // NEW: Also save funnel_stage, action_taken, prospect_status, priority to database
+    // Also save funnel_stage, action_taken, prospect_status, priority to database
     if (updates.funnel_stage !== undefined) dbUpdates.funnel_stage = updates.funnel_stage;
     if (updates.action_taken !== undefined) dbUpdates.action_taken = updates.action_taken;
     if (updates.prospect_status !== undefined) dbUpdates.prospect_status = updates.prospect_status;
@@ -132,8 +155,8 @@ export function useProspects() {
       return null;
     }
 
-    // Update local state
-    const updatedProspect = data ? mapDbProspect(data) : { ...prospects.find(p => p.id === id), ...dbUpdates };
+    // Update local state with decrypted phone for display
+    const updatedProspect = data ? mapDbProspect({ ...data, phone: updates.phone || prospects.find(p => p.id === id)?.phone }) : { ...prospects.find(p => p.id === id), ...updates };
     setProspects(prev => prev.map(p => p.id === id ? { ...p, ...updatedProspect } : p));
     toast.success('Updated');
     return updatedProspect;
@@ -166,7 +189,8 @@ export function useProspects() {
       return { imported: 0, skipped };
     }
 
-    const prospectsToInsert = validProspects.map(p => ({
+    // Prepare prospects for encryption
+    const prospectsToProcess = validProspects.map(p => ({
       user_id: user.id,
       name: p.name!,
       phone: p.phone!,
@@ -180,9 +204,17 @@ export function useProspects() {
       batch_date: p.batch_date || new Date().toISOString().split('T')[0],
     }));
 
+    // Encrypt phone numbers in batch
+    let encryptedProspects = prospectsToProcess;
+    try {
+      encryptedProspects = await encryptBatch(prospectsToProcess);
+    } catch (err) {
+      console.error('Failed to encrypt batch:', err);
+    }
+
     const { data, error } = await supabase
       .from('prospects')
-      .insert(prospectsToInsert as any)
+      .insert(encryptedProspects as any)
       .select();
 
     if (error) {
@@ -191,7 +223,13 @@ export function useProspects() {
       return { imported: 0, skipped: prospectsData.length };
     }
 
-    setProspects(prev => [...(data || []).map(mapDbProspect), ...prev]);
+    // Store with original (decrypted) phone numbers for display
+    const importedWithDecryptedPhones = (data || []).map((d, i) => ({
+      ...mapDbProspect(d),
+      phone: prospectsToProcess[i]?.phone || d.phone,
+    }));
+    
+    setProspects(prev => [...importedWithDecryptedPhones, ...prev]);
     return { imported: data?.length || 0, skipped };
   };
 

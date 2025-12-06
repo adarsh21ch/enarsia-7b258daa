@@ -57,5 +57,25 @@ export function useEncryption() {
     }
   };
 
-  return { encryptFields, decryptFields, decryptBatch };
+  const encryptBatch = async <T extends { phone?: string; email?: string }>(records: T[]): Promise<T[]> => {
+    if (records.length === 0) return records;
+
+    try {
+      const { data: result, error } = await supabase.functions.invoke('encrypt-data', {
+        body: { action: 'encrypt-batch', data: { records } }
+      });
+
+      if (error) {
+        console.error('Batch encryption error:', error);
+        return records;
+      }
+
+      return result.encrypted;
+    } catch (err) {
+      console.error('Batch encryption failed:', err);
+      return records;
+    }
+  };
+
+  return { encryptFields, decryptFields, decryptBatch, encryptBatch };
 }

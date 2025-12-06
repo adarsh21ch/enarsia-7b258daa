@@ -141,6 +141,22 @@ serve(async (req) => {
       );
     }
 
+    if (action === 'encrypt-batch') {
+      // Encrypt multiple records at once (for bulk imports)
+      const encryptedRecords = data.records.map((record: any) => ({
+        ...record,
+        phone: record.phone ? encrypt(record.phone) : record.phone,
+        email: record.email ? encrypt(record.email) : record.email,
+      }));
+      
+      console.log(`Encrypted ${encryptedRecords.length} records`);
+      
+      return new Response(
+        JSON.stringify({ encrypted: encryptedRecords }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
     return new Response(
       JSON.stringify({ error: 'Invalid action' }),
       { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
