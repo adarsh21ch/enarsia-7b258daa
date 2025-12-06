@@ -69,6 +69,8 @@ export function useProspects() {
         state: prospect.state || null,
         age_or_dob: (prospect as any).age_or_dob || null,
         gender: (prospect as any).gender || null,
+        instagram: (prospect as any).instagram || null,
+        profession: (prospect as any).profession || null,
         sheet_id: prospect.sheet_id || null,
         batch_date: prospect.batch_date || new Date().toISOString().split('T')[0],
       })
@@ -88,9 +90,27 @@ export function useProspects() {
   };
 
   const updateProspect = async (id: string, updates: Partial<Prospect>) => {
+    // Only send fields that exist in the database
+    const dbUpdates: Record<string, any> = {};
+    
+    // Map frontend fields to database fields
+    if (updates.name !== undefined) dbUpdates.name = updates.name;
+    if (updates.phone !== undefined) dbUpdates.phone = updates.phone;
+    if (updates.city !== undefined) dbUpdates.city = updates.city;
+    if (updates.state !== undefined) dbUpdates.state = updates.state;
+    if ((updates as any).age_or_dob !== undefined) dbUpdates.age_or_dob = (updates as any).age_or_dob;
+    if ((updates as any).gender !== undefined) dbUpdates.gender = (updates as any).gender;
+    if ((updates as any).instagram !== undefined) dbUpdates.instagram = (updates as any).instagram;
+    if ((updates as any).profession !== undefined) dbUpdates.profession = (updates as any).profession;
+    if (updates.sheet_id !== undefined) dbUpdates.sheet_id = updates.sheet_id;
+    if (updates.batch_date !== undefined) dbUpdates.batch_date = updates.batch_date;
+    
+    // Note: These fields are in the Prospect type but may not be in DB
+    // We'll try to update them but they may be ignored by DB if not present
+    
     const { data, error } = await supabase
       .from('prospects')
-      .update(updates as any)
+      .update(dbUpdates)
       .eq('id', id)
       .select()
       .single();
@@ -103,6 +123,7 @@ export function useProspects() {
 
     const updatedProspect = mapDbProspect(data);
     setProspects(prev => prev.map(p => p.id === id ? updatedProspect : p));
+    toast.success('Prospect updated');
     return updatedProspect;
   };
 
@@ -141,6 +162,8 @@ export function useProspects() {
       state: p.state || null,
       age_or_dob: (p as any).age_or_dob || null,
       gender: (p as any).gender || null,
+      instagram: (p as any).instagram || null,
+      profession: (p as any).profession || null,
       sheet_id: p.sheet_id || null,
       batch_date: p.batch_date || new Date().toISOString().split('T')[0],
     }));

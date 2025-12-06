@@ -210,8 +210,10 @@ export type Database = {
           date_added: string
           gender: string | null
           id: string
+          instagram: string | null
           name: string
           phone: string
+          profession: string | null
           sheet_id: string | null
           state: string | null
           updated_at: string
@@ -224,8 +226,10 @@ export type Database = {
           date_added?: string
           gender?: string | null
           id?: string
+          instagram?: string | null
           name: string
           phone: string
+          profession?: string | null
           sheet_id?: string | null
           state?: string | null
           updated_at?: string
@@ -238,8 +242,10 @@ export type Database = {
           date_added?: string
           gender?: string | null
           id?: string
+          instagram?: string | null
           name?: string
           phone?: string
+          profession?: string | null
           sheet_id?: string | null
           state?: string | null
           updated_at?: string

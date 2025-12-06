@@ -20,15 +20,19 @@ interface ColumnMapping {
   state: string | null;
   age_or_dob: string | null;
   gender: string | null;
+  instagram: string | null;
+  profession: string | null;
 }
 
 const FIELD_LABELS: Record<keyof ColumnMapping, string> = {
   name: 'Name *',
   phone: 'Phone *',
-  city: 'City',
-  state: 'State',
+  city: 'Address (City)',
+  state: 'Address (State)',
   age_or_dob: 'Age / DOB',
   gender: 'Gender',
+  instagram: 'Instagram',
+  profession: 'Profession',
 };
 
 export function ImportExcelDialog({ onImport }: ImportExcelDialogProps) {
@@ -44,6 +48,8 @@ export function ImportExcelDialog({ onImport }: ImportExcelDialogProps) {
     state: null,
     age_or_dob: null,
     gender: null,
+    instagram: null,
+    profession: null,
   });
   const [isImporting, setIsImporting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -61,6 +67,8 @@ export function ImportExcelDialog({ onImport }: ImportExcelDialogProps) {
       state: null,
       age_or_dob: null,
       gender: null,
+      instagram: null,
+      profession: null,
     });
     setError(null);
     if (fileInputRef.current) {
@@ -76,6 +84,8 @@ export function ImportExcelDialog({ onImport }: ImportExcelDialogProps) {
       state: null,
       age_or_dob: null,
       gender: null,
+      instagram: null,
+      profession: null,
     };
 
     cols.forEach((col) => {
@@ -84,7 +94,7 @@ export function ImportExcelDialog({ onImport }: ImportExcelDialogProps) {
         newMapping.name = col;
       } else if ((lowerCol.includes('phone') || lowerCol.includes('mobile') || lowerCol.includes('cell')) && !newMapping.phone) {
         newMapping.phone = col;
-      } else if (lowerCol.includes('city') && !newMapping.city) {
+      } else if ((lowerCol.includes('city') || lowerCol.includes('address')) && !newMapping.city) {
         newMapping.city = col;
       } else if (lowerCol.includes('state') && !newMapping.state) {
         newMapping.state = col;
@@ -92,6 +102,10 @@ export function ImportExcelDialog({ onImport }: ImportExcelDialogProps) {
         newMapping.age_or_dob = col;
       } else if ((lowerCol.includes('gender') || lowerCol.includes('sex')) && !newMapping.gender) {
         newMapping.gender = col;
+      } else if ((lowerCol.includes('instagram') || lowerCol.includes('insta') || lowerCol === 'ig') && !newMapping.instagram) {
+        newMapping.instagram = col;
+      } else if ((lowerCol.includes('profession') || lowerCol.includes('job') || lowerCol.includes('occupation') || lowerCol.includes('work')) && !newMapping.profession) {
+        newMapping.profession = col;
       }
     });
 
@@ -148,7 +162,7 @@ export function ImportExcelDialog({ onImport }: ImportExcelDialogProps) {
         return;
       }
 
-      const prospect: Partial<Prospect> & { age_or_dob?: string; gender?: string } = {
+      const prospect: Partial<Prospect> & { age_or_dob?: string; gender?: string; instagram?: string; profession?: string } = {
         name: validation.name,
         phone: validation.phone,
       };
@@ -165,6 +179,12 @@ export function ImportExcelDialog({ onImport }: ImportExcelDialogProps) {
       }
       if (mapping.gender && row[mapping.gender]) {
         prospect.gender = sanitizeImportString(row[mapping.gender], 20);
+      }
+      if (mapping.instagram && row[mapping.instagram]) {
+        prospect.instagram = sanitizeImportString(row[mapping.instagram], 100);
+      }
+      if (mapping.profession && row[mapping.profession]) {
+        prospect.profession = sanitizeImportString(row[mapping.profession], 100);
       }
 
       prospects.push(prospect);
