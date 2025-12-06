@@ -81,8 +81,7 @@ export function InlineReportCard({ prospect, onUpdate, onClose, colSpan }: Inlin
     setLocalData({
       name: prospect.name,
       phone: prospect.phone,
-      city: prospect.city || '',
-      state: prospect.state || '',
+      address: prospect.address || '',
       age_or_dob: prospect.age_or_dob || '',
       gender: prospect.gender || '',
       why_need: prospect.why_need || '',
@@ -122,8 +121,7 @@ export function InlineReportCard({ prospect, onUpdate, onClose, colSpan }: Inlin
       
       if (localData.name !== prospect.name) updates.name = localData.name;
       if (localData.phone !== prospect.phone) updates.phone = localData.phone;
-      if ((localData.city || null) !== (prospect.city || null)) updates.city = localData.city || null;
-      if ((localData.state || null) !== (prospect.state || null)) updates.state = localData.state || null;
+      if ((localData.address || null) !== (prospect.address || null)) updates.address = localData.address || null;
       if ((localData.age_or_dob || null) !== (prospect.age_or_dob || null)) updates.age_or_dob = localData.age_or_dob || null;
       if ((localData.gender || null) !== (prospect.gender || null)) updates.gender = localData.gender || null;
       if ((localData.why_need || null) !== (prospect.why_need || null)) updates.why_need = localData.why_need || null;
@@ -244,12 +242,12 @@ export function InlineReportCard({ prospect, onUpdate, onClose, colSpan }: Inlin
                 className="h-7 text-xs"
               />
             </div>
-            {/* Address (combined city & state) */}
+            {/* Address */}
             <div>
               <Label className="text-[10px] text-muted-foreground mb-0.5 block">Address</Label>
               <Input
-                value={[localData.city, localData.state].filter(Boolean).join(', ')}
-                onChange={(e) => handleAddressChange(e.target.value)}
+                value={localData.address || ''}
+                onChange={(e) => handleFieldChange('address', e.target.value)}
                 className="h-7 text-xs"
                 placeholder="City, State"
               />

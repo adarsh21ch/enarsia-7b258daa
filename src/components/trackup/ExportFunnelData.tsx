@@ -87,7 +87,7 @@ export function ExportFunnelData({ prospects, isPro = true }: ExportFunnelDataPr
         'Phone Number': p.phone || '',
         'Age': p.age_or_dob || '',
         'Gender': p.gender || '',
-        'Address': [p.city, p.state].filter(Boolean).join(', ') || '',
+        'Address': p.address || '',
         'Enrollment Status': p.enrollment_status || (p.funnel_stage && p.funnel_stage !== 'Enrollment' ? 'Enrolled' : 'Not Enrolled'),
         'Last Action': p.action_taken || 'No Action',
         'Last Action Date': p.updated_at ? format(new Date(p.updated_at), 'dd/MM/yyyy HH:mm') : '',

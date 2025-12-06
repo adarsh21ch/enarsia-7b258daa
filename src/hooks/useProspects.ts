@@ -78,8 +78,7 @@ export function useProspects() {
         name: prospect.name!,
         phone: encryptedPhone,
         user_id: user.id,
-        city: prospect.city || null,
-        state: prospect.state || null,
+        address: prospect.address || null,
         age_or_dob: (prospect as any).age_or_dob || null,
         gender: (prospect as any).gender || null,
         instagram: (prospect as any).instagram || null,
@@ -121,8 +120,7 @@ export function useProspects() {
         dbUpdates.phone = updates.phone;
       }
     }
-    if (updates.city !== undefined) dbUpdates.city = updates.city;
-    if (updates.state !== undefined) dbUpdates.state = updates.state;
+    if (updates.address !== undefined) dbUpdates.address = updates.address;
     if ((updates as any).age_or_dob !== undefined) dbUpdates.age_or_dob = (updates as any).age_or_dob;
     if ((updates as any).gender !== undefined) dbUpdates.gender = (updates as any).gender;
     if ((updates as any).instagram !== undefined) dbUpdates.instagram = (updates as any).instagram;
@@ -194,8 +192,7 @@ export function useProspects() {
       user_id: user.id,
       name: p.name!,
       phone: p.phone!,
-      city: p.city || null,
-      state: p.state || null,
+      address: p.address || null,
       age_or_dob: (p as any).age_or_dob || null,
       gender: (p as any).gender || null,
       instagram: (p as any).instagram || null,

@@ -25,8 +25,7 @@ export interface Prospect {
   // Database fields
   sheet_id?: string | null;
   batch_date?: string | null;
-  city?: string | null;
-  state?: string | null;
+  address?: string | null;
   age_or_dob?: string | null;
   gender?: string | null;
   why_need?: string | null;

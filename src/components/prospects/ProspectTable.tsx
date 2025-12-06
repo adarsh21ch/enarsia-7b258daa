@@ -199,7 +199,7 @@ export function ProspectTable({
         'Phone Number': p.phone || '',
         'Age': p.age_or_dob || '',
         'Gender': p.gender || '',
-        'Address': [p.city, p.state].filter(Boolean).join(', ') || '',
+        'Address': p.address || '',
         'Enrollment Status': p.enrollment_status || (p.funnel_stage && p.funnel_stage !== 'Enrollment' ? 'Enrolled' : 'Not Enrolled'),
         'Funnel Stage': p.funnel_stage || '',
         'Last Action': p.action_taken || 'No Action',

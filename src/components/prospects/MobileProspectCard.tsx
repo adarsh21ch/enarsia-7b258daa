@@ -27,8 +27,7 @@ export function MobileProspectCard({ prospect, index, isCalling, onUpdate, onDel
   const [localData, setLocalData] = useState({
     name: prospect.name,
     phone: prospect.phone,
-    city: prospect.city || '',
-    state: prospect.state || '',
+    address: prospect.address || '',
     why_need: prospect.why_need || '',
     notes: prospect.notes || '',
   });
@@ -45,8 +44,7 @@ export function MobileProspectCard({ prospect, index, isCalling, onUpdate, onDel
     setLocalData({
       name: prospect.name,
       phone: prospect.phone,
-      city: prospect.city || '',
-      state: prospect.state || '',
+      address: prospect.address || '',
       why_need: prospect.why_need || '',
       notes: prospect.notes || '',
     });
@@ -102,22 +100,14 @@ export function MobileProspectCard({ prospect, index, isCalling, onUpdate, onDel
     }
   };
 
-  // Handle combined city & state field
-  const handleCityStateChange = (value: string) => {
-    const parts = value.split(',').map(p => p.trim());
-    if (parts.length >= 2) {
-      setLocalData(prev => ({ ...prev, city: parts[0], state: parts.slice(1).join(', ') }));
-    } else {
-      setLocalData(prev => ({ ...prev, city: value, state: '' }));
-    }
+  // Handle address field
+  const handleAddressChange = (value: string) => {
+    setLocalData(prev => ({ ...prev, address: value }));
   };
 
-  const handleCityStateBlur = () => {
-    if (localData.city !== prospect.city) {
-      onUpdate(prospect.id, { city: localData.city || null });
-    }
-    if (localData.state !== prospect.state) {
-      onUpdate(prospect.id, { state: localData.state || null });
+  const handleAddressBlur = () => {
+    if (localData.address !== prospect.address) {
+      onUpdate(prospect.id, { address: localData.address || null });
     }
   };
 
@@ -287,9 +277,9 @@ export function MobileProspectCard({ prospect, index, isCalling, onUpdate, onDel
             <div className="flex items-center gap-2">
               <MapPin className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
               <Input
-                value={[localData.city, localData.state].filter(Boolean).join(', ')}
-                onChange={(e) => handleCityStateChange(e.target.value)}
-                onBlur={handleCityStateBlur}
+                value={localData.address}
+                onChange={(e) => handleAddressChange(e.target.value)}
+                onBlur={handleAddressBlur}
                 placeholder="City, State"
                 className="h-8 text-sm"
               />

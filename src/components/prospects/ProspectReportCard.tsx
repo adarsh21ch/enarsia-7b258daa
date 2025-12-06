@@ -32,8 +32,7 @@ export function ProspectReportCard({ prospect, open, onOpenChange, onUpdate }: P
         name: prospect.name,
         phone: prospect.phone,
         email: prospect.email || '',
-        city: prospect.city || '',
-        state: prospect.state || '',
+        address: prospect.address || '',
         age_or_dob: prospect.age_or_dob || '',
         gender: prospect.gender || '',
         why_need: prospect.why_need || '',
@@ -68,8 +67,7 @@ export function ProspectReportCard({ prospect, open, onOpenChange, onUpdate }: P
       if (localData.name !== prospect.name) updates.name = localData.name;
       if (localData.phone !== prospect.phone) updates.phone = localData.phone;
       if ((localData.email || null) !== (prospect.email || null)) updates.email = localData.email || null;
-      if ((localData.city || null) !== (prospect.city || null)) updates.city = localData.city || null;
-      if ((localData.state || null) !== (prospect.state || null)) updates.state = localData.state || null;
+      if ((localData.address || null) !== (prospect.address || null)) updates.address = localData.address || null;
       if ((localData.age_or_dob || null) !== (prospect.age_or_dob || null)) updates.age_or_dob = localData.age_or_dob || null;
       if ((localData.gender || null) !== (prospect.gender || null)) updates.gender = localData.gender || null;
       if ((localData.why_need || null) !== (prospect.why_need || null)) updates.why_need = localData.why_need || null;
@@ -170,25 +168,16 @@ export function ProspectReportCard({ prospect, open, onOpenChange, onUpdate }: P
               />
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 gap-4">
               <div className="space-y-2">
                 <Label className="flex items-center gap-2 text-muted-foreground">
                   <MapPin className="h-4 w-4" />
-                  City
+                  Address
                 </Label>
                 <Input
-                  value={localData.city || ''}
-                  onChange={(e) => handleFieldChange('city', e.target.value)}
-                  placeholder="City"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label className="text-muted-foreground">State</Label>
-                <Input
-                  value={localData.state || ''}
-                  onChange={(e) => handleFieldChange('state', e.target.value)}
-                  placeholder="State"
+                  value={localData.address || ''}
+                  onChange={(e) => handleFieldChange('address', e.target.value)}
+                  placeholder="City, State"
                 />
               </div>
             </div>
