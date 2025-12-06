@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { Toaster } from "sonner";
+import { InstallPromptBanner } from "@/components/pwa/InstallPromptBanner";
 
 // Direct imports
 import Auth from "./pages/Auth";
@@ -66,6 +67,7 @@ function App() {
         <BrowserRouter>
           <AuthProvider>
             <Toaster position="top-center" />
+            <InstallPromptBanner />
             <Routes>
               <Route path="/" element={<Index />} />
               <Route path="/auth" element={<Auth />} />
