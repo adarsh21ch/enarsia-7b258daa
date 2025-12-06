@@ -10,7 +10,6 @@ import { UpgradeCard } from '@/components/subscription/UpgradeCard';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { User, LogOut, ChevronRight, Crown, Phone, Building2, MapPin, Loader2, FileText, Shield, Receipt, Mail, Settings, CheckCircle } from 'lucide-react';
-import { ThemeToggle } from '@/components/ui/theme-toggle';
 import { cn } from '@/lib/utils';
 import nevoraLogo from '@/assets/nevorai-logo.jpeg';
 
@@ -61,7 +60,6 @@ export default function Profile() {
               <p className="text-xs text-muted-foreground font-medium">Your Account & Settings</p>
             </div>
           </div>
-          <ThemeToggle />
         </div>
       </header>
 

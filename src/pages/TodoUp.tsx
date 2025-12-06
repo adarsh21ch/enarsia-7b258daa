@@ -10,7 +10,6 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Loader2, CheckCircle, Lock, Trash2, Edit2, Send, X, Check, Phone, MessageCircle, Plus, GripVertical } from 'lucide-react';
-import { ThemeToggle } from '@/components/ui/theme-toggle';
 import { format, parseISO } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { Prospect, FunnelStage } from '@/types/prospect';
@@ -421,7 +420,7 @@ export default function TodoUp() {
   return (
     <div className="min-h-screen bg-gradient-to-b from-background via-background to-muted/20 flex flex-col">
       <header className="sticky top-0 z-40 bg-card/80 backdrop-blur-xl border-b border-border/50">
-        <div className="flex items-center justify-between px-4 py-3">
+        <div className="flex items-center px-4 py-3">
           <div className="flex items-center gap-3">
             <img 
               src={nevoraLogo} 
@@ -433,7 +432,6 @@ export default function TodoUp() {
               <p className="text-xs text-muted-foreground font-medium">Your To-Do List & Reminders</p>
             </div>
           </div>
-          <ThemeToggle />
         </div>
       </header>
 

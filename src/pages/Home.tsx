@@ -1,10 +1,9 @@
 // Home Dashboard Page
-import { useState, useMemo, useEffect, useCallback } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useProspects } from '@/hooks/useProspects';
 import { useUserTargets } from '@/hooks/useUserTargets';
-import { usePullToRefresh } from '@/hooks/usePullToRefresh';
 
 import { BottomNav } from '@/components/layout/BottomNav';
 import { StageBadge, StatusBadge } from '@/components/prospects/StatusBadge';
@@ -14,8 +13,6 @@ import { Progress } from '@/components/ui/progress';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { Label } from '@/components/ui/label';
-import { ThemeToggle } from '@/components/ui/theme-toggle';
-import { PullToRefreshWrapper } from '@/components/ui/pull-to-refresh';
 import { 
   Loader2, Users, CheckCircle, TrendingUp, Target,
   Settings2, ChevronDown, Clock
@@ -25,23 +22,16 @@ import { cn } from '@/lib/utils';
 import nevoraLogo from '@/assets/nevorai-logo.jpeg';
 import { FUNNEL_STAGES, FunnelStage } from '@/types/prospect';
 
+// Removed Today's Followup section - kept for future use if needed
+
 export default function Home() {
   const navigate = useNavigate();
   const { user, loading: authLoading } = useAuth();
-  const { prospects, loading: prospectsLoading, refetch } = useProspects();
+  const { prospects, loading: prospectsLoading } = useProspects();
   const { targets, loading: targetsLoading, updateTarget } = useUserTargets();
   const [editTargetsOpen, setEditTargetsOpen] = useState(false);
   const [editingTargets, setEditingTargets] = useState<Record<string, number>>({});
   const [targetsExpanded, setTargetsExpanded] = useState(false);
-
-  // Pull to refresh
-  const handleRefresh = useCallback(async () => {
-    await refetch();
-  }, [refetch]);
-
-  const { isRefreshing, pullDistance, shouldRefresh } = usePullToRefresh({
-    onRefresh: handleRefresh,
-  });
 
   useEffect(() => {
     if (!user && !authLoading) {
@@ -90,24 +80,22 @@ export default function Home() {
   if (!user) return null;
 
   return (
-    <PullToRefreshWrapper pullDistance={pullDistance} isRefreshing={isRefreshing} shouldRefresh={shouldRefresh}>
-      <div className="min-h-screen bg-gradient-to-b from-background via-background to-muted/20 pb-24 main-container">
-        <header className="sticky top-0 z-40 bg-card/80 backdrop-blur-xl border-b border-border/50 max-w-full">
-          <div className="flex items-center justify-between px-4 py-3">
-            <div className="flex items-center gap-3">
-              <img 
-                src={nevoraLogo} 
-                alt="NevorAI Logo" 
-                className="h-10 w-10 rounded-xl object-cover shadow-md"
-              />
-              <div>
-                <h1 className="text-xl font-bold tracking-tight">NevorAI</h1>
-                <p className="text-xs text-muted-foreground font-medium">Never miss a follow-up again</p>
-              </div>
+    <div className="min-h-screen bg-gradient-to-b from-background via-background to-muted/20 pb-24 main-container">
+      <header className="sticky top-0 z-40 bg-card/80 backdrop-blur-xl border-b border-border/50 max-w-full">
+        <div className="flex items-center px-4 py-3">
+          <div className="flex items-center gap-3">
+            <img 
+              src={nevoraLogo} 
+              alt="NevorAI Logo" 
+              className="h-10 w-10 rounded-xl object-cover shadow-md"
+            />
+            <div>
+              <h1 className="text-xl font-bold tracking-tight">NevorAI</h1>
+              <p className="text-xs text-muted-foreground font-medium">Never miss a follow-up again</p>
             </div>
-            <ThemeToggle />
           </div>
-        </header>
+        </div>
+      </header>
 
       <main className="container py-3 px-4 space-y-4">
         {/* KPI Cards */}
@@ -280,6 +268,5 @@ export default function Home() {
 
       <BottomNav />
     </div>
-    </PullToRefreshWrapper>
   );
 }

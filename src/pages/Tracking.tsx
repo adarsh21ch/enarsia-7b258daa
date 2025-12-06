@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { BottomNav } from '@/components/layout/BottomNav';
@@ -6,9 +6,6 @@ import { FunnelTracker } from '@/components/trackup/FunnelTracker';
 import { LeadsTracker } from '@/components/trackup/LeadsTracker';
 import { UpgradeBar } from '@/components/subscription/UpgradeBar';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { ThemeToggle } from '@/components/ui/theme-toggle';
-import { PullToRefreshWrapper } from '@/components/ui/pull-to-refresh';
-import { usePullToRefresh } from '@/hooks/usePullToRefresh';
 import { Loader2, TrendingUp, Calendar, Lock } from 'lucide-react';
 import { useProspects } from '@/hooks/useProspects';
 import { useSubscription } from '@/hooks/useSubscription';
@@ -18,18 +15,9 @@ import nevoraLogo from '@/assets/nevorai-logo.jpeg';
 export default function Tracking() {
   const navigate = useNavigate();
   const { user, loading: authLoading } = useAuth();
-  const { prospects, refetch } = useProspects();
+  const { prospects } = useProspects();
   const { isPro, loading: subLoading } = useSubscription();
   const [activeTab, setActiveTab] = useState('funnel');
-
-  // Pull to refresh
-  const handleRefresh = useCallback(async () => {
-    await refetch();
-  }, [refetch]);
-
-  const { isRefreshing, pullDistance, shouldRefresh } = usePullToRefresh({
-    onRefresh: handleRefresh,
-  });
 
   // Calculate Total CC: 2CC counts as 2, Level Up as 1
   const totalCC = prospects.reduce((sum, p) => {
@@ -55,25 +43,23 @@ export default function Tracking() {
   if (!user) return null;
 
   return (
-    <PullToRefreshWrapper pullDistance={pullDistance} isRefreshing={isRefreshing} shouldRefresh={shouldRefresh}>
-      <div className="min-h-screen bg-gradient-to-b from-background via-background to-muted/20 pb-24 main-container">
-        {/* Premium Header */}
-        <header className="sticky top-0 z-40 bg-card/80 backdrop-blur-xl border-b border-border/50 max-w-full">
-          <div className="flex items-center justify-between px-4 py-3">
-            <div className="flex items-center gap-3">
-              <img 
-                src={nevoraLogo} 
-                alt="NevorAI Logo" 
-                className="h-10 w-10 rounded-xl object-cover shadow-md"
-              />
-              <div>
-                <h1 className="text-xl font-bold tracking-tight">Track Up</h1>
-                <p className="text-xs text-muted-foreground font-medium">Track Your Numbers</p>
-              </div>
+    <div className="min-h-screen bg-gradient-to-b from-background via-background to-muted/20 pb-24 main-container">
+      {/* Premium Header */}
+      <header className="sticky top-0 z-40 bg-card/80 backdrop-blur-xl border-b border-border/50 max-w-full">
+        <div className="flex items-center px-4 py-3">
+          <div className="flex items-center gap-3">
+            <img 
+              src={nevoraLogo} 
+              alt="NevorAI Logo" 
+              className="h-10 w-10 rounded-xl object-cover shadow-md"
+            />
+            <div>
+              <h1 className="text-xl font-bold tracking-tight">Track Up</h1>
+              <p className="text-xs text-muted-foreground font-medium">Track Your Numbers</p>
             </div>
-            <ThemeToggle />
           </div>
-        </header>
+        </div>
+      </header>
 
       <main className={cn("container py-3 px-4", !isPro && "pb-32")}>
         {/* Lock overlay for Free users */}
@@ -132,6 +118,5 @@ export default function Tracking() {
 
       <BottomNav />
     </div>
-    </PullToRefreshWrapper>
   );
 }

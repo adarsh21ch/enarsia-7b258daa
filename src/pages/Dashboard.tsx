@@ -7,7 +7,6 @@ import { useSheets } from '@/hooks/useSheets';
 import { BottomNav } from '@/components/layout/BottomNav';
 import { ProspectTable } from '@/components/prospects/ProspectTable';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { ThemeToggle } from '@/components/ui/theme-toggle';
 import { Loader2, Phone, GitBranch } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import nevoraLogo from '@/assets/nevorai-logo.jpeg';
@@ -72,12 +71,9 @@ export default function Dashboard() {
                 <p className="text-xs text-muted-foreground font-medium">Calling & Funnel Follow-ups</p>
               </div>
             </div>
-            <div className="flex items-center gap-2">
-              <div className="bg-gradient-to-br from-primary/10 to-primary/5 rounded-xl px-3 py-1.5 text-right border border-primary/10">
-                <p className="text-[9px] text-muted-foreground font-medium">Min Billing</p>
-                <p className="text-lg font-bold text-primary tracking-tight">{totalCC}</p>
-              </div>
-              <ThemeToggle />
+            <div className="bg-gradient-to-br from-primary/10 to-primary/5 rounded-xl px-4 py-2 text-right border border-primary/10">
+              <p className="text-[10px] text-muted-foreground font-medium">Total Min Billing</p>
+              <p className="text-2xl font-bold text-primary tracking-tight">{totalCC}</p>
             </div>
           </div>
         </header>
