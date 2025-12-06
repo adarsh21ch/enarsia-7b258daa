@@ -9,7 +9,7 @@ import { UpgradeBar } from '@/components/subscription/UpgradeBar';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Loader2, CheckCircle, Lock, Trash2, Edit2, Send, X, Check, Phone, MessageCircle, Plus, GripVertical } from 'lucide-react';
+import { Loader2, CheckCircle, Lock, Trash2, Edit2, Send, X, Check, Phone, MessageCircle, Plus, GripVertical, Sparkles } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { Prospect, FunnelStage } from '@/types/prospect';
@@ -30,6 +30,14 @@ import {
 } from '@dnd-kit/core';
 
 const FUNNEL_COLUMNS: FunnelStage[] = ['Day 1', 'Day 2', 'Minimum Bill', 'Level Up'];
+
+// Stage colors matching TrackUp for consistency
+const STAGE_COLORS: Partial<Record<FunnelStage, { header: string; bg: string; text: string }>> = {
+  'Day 1': { header: 'bg-violet-500', bg: 'bg-violet-50', text: 'text-violet-700' },
+  'Day 2': { header: 'bg-pink-500', bg: 'bg-pink-50', text: 'text-pink-700' },
+  'Minimum Bill': { header: 'bg-emerald-500', bg: 'bg-emerald-50', text: 'text-emerald-700' },
+  'Level Up': { header: 'bg-cyan-500', bg: 'bg-cyan-50', text: 'text-cyan-700' },
+};
 
 interface MiniReportCardProps {
   prospect: Prospect;
@@ -178,25 +186,33 @@ function FunnelColumn({ stage, prospects, isPro, expandedProspectId, onToggleExp
     id: stage,
   });
 
+  const colors = STAGE_COLORS[stage as keyof typeof STAGE_COLORS] || { 
+    header: 'bg-accent', 
+    bg: 'bg-accent/5', 
+    text: 'text-accent' 
+  };
+
   return (
     <div
       ref={setNodeRef}
       className={cn(
-        "bg-accent/5 rounded-xl overflow-hidden border transition-all",
+        "rounded-xl overflow-hidden border transition-all",
+        colors.bg,
         isOver 
           ? "border-accent shadow-lg ring-2 ring-accent/30" 
-          : "border-accent/10 hover:shadow-md"
+          : "border-border/30 hover:shadow-md hover:border-border/50"
       )}
     >
-      {/* Header */}
-      <div className="bg-accent text-accent-foreground px-3 py-2">
-        <p className="text-xs font-semibold truncate">{stage}</p>
-        <p className="text-lg font-bold">{isPro ? prospects.length : '–'}</p>
+      {/* Compact Header with Stage · Count */}
+      <div className={cn(colors.header, "px-3 py-1.5")}>
+        <p className="text-xs font-semibold text-white truncate">
+          {stage} · {isPro ? prospects.length : '–'}
+        </p>
       </div>
       
-      {/* Prospect Names */}
+      {/* Prospect Names with improved styling */}
       <div className={cn(
-        "p-2 max-h-48 overflow-y-auto space-y-1",
+        "p-2 max-h-48 overflow-y-auto space-y-1.5",
         isOver && "bg-accent/10"
       )}>
         {!isPro ? (
@@ -379,6 +395,11 @@ export default function TodoUp() {
               <h1 className="text-lg font-bold tracking-tight">NevorAI</h1>
               <p className="text-[10px] text-muted-foreground font-medium">Never miss a followup Again</p>
             </div>
+          </div>
+          {/* AI Summary Badge */}
+          <div className="flex items-center gap-1.5 bg-accent text-white px-3 py-1.5 rounded-full text-xs font-medium">
+            <Sparkles className="h-3.5 w-3.5" />
+            <span>AI Summary · Coming Soon</span>
           </div>
         </div>
       </header>
