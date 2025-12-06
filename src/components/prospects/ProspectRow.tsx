@@ -139,7 +139,7 @@ export function ProspectRow({
       case 'name':
         return (
           <td key={columnId} className={cellClass} style={style}>
-            <div className="flex flex-col max-w-[140px]">
+            <div className="flex flex-col" style={{ maxWidth: isMobileTable ? '120px' : '180px' }}>
               <button
                 onClick={onToggleExpand}
                 className={cn(
@@ -148,7 +148,7 @@ export function ProspectRow({
                   isExpanded && "text-primary bg-primary/10"
                 )}
               >
-                <span className="truncate max-w-[100px]" title={prospect.name}>{prospect.name}</span>
+                <span className="truncate" style={{ maxWidth: isMobileTable ? '100px' : '150px' }} title={prospect.name}>{prospect.name}</span>
                 <span className={cn("transition-transform duration-200 text-muted-foreground group-hover:text-primary shrink-0", isExpanded && "rotate-180")}>
                   <ChevronDown className={cn("h-3 w-3", isMobileTable && "h-2.5 w-2.5")} />
                 </span>

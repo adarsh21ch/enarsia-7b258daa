@@ -20,7 +20,12 @@ export default function Tracking() {
   const { isPro, loading: subLoading } = useSubscription();
   const [activeTab, setActiveTab] = useState('funnel');
 
-  const totalCC = prospects.filter(p => p.funnel_stage === 'Level Up').length;
+  // Calculate Total CC: 2CC counts as 2, Level Up as 1
+  const totalCC = prospects.reduce((sum, p) => {
+    if (p.funnel_stage === '2CC') return sum + 2;
+    if (p.funnel_stage === 'Level Up') return sum + 1;
+    return sum;
+  }, 0);
 
   useEffect(() => {
     if (!user && !authLoading) {

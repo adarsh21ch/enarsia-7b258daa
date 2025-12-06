@@ -182,36 +182,60 @@ export default function ActionUp() {
           </div>
         )}
 
-        {/* Summary Chips - show dashes for Free users */}
-        <div className="flex flex-wrap gap-2">
-          <Badge variant="outline" className="gap-1.5 py-1.5 px-3 bg-amber-500/10 text-amber-600 border-amber-500/30">
-            <Bell className="h-3.5 w-3.5" />
-            {isPro ? summaryStats.followUpsDueToday : '–'} Follow-ups due
-          </Badge>
-          <Badge variant="outline" className="gap-1.5 py-1.5 px-3 bg-blue-500/10 text-blue-600 border-blue-500/30">
-            <UserPlus className="h-3.5 w-3.5" />
-            {isPro ? summaryStats.newProspectsToday : '–'} New today
-          </Badge>
-          <Badge variant="outline" className="gap-1.5 py-1.5 px-3 bg-green-500/10 text-green-600 border-green-500/30">
-            <CheckCircle className="h-3.5 w-3.5" />
-            {isPro ? summaryStats.enrollmentsToday : '–'} Enrolled
-          </Badge>
+        {/* Top row: Summary Chips + compact AI Summary */}
+        <div className="flex flex-wrap items-start gap-3">
+          {/* Summary Chips */}
+          <div className="flex flex-wrap gap-2 flex-1">
+            <Badge variant="outline" className="gap-1.5 py-1.5 px-3 bg-amber-500/10 text-amber-600 border-amber-500/30">
+              <Bell className="h-3.5 w-3.5" />
+              {isPro ? summaryStats.followUpsDueToday : '–'} Follow-ups due
+            </Badge>
+            <Badge variant="outline" className="gap-1.5 py-1.5 px-3 bg-blue-500/10 text-blue-600 border-blue-500/30">
+              <UserPlus className="h-3.5 w-3.5" />
+              {isPro ? summaryStats.newProspectsToday : '–'} New today
+            </Badge>
+            <Badge variant="outline" className="gap-1.5 py-1.5 px-3 bg-green-500/10 text-green-600 border-green-500/30">
+              <CheckCircle className="h-3.5 w-3.5" />
+              {isPro ? summaryStats.enrollmentsToday : '–'} Enrolled
+            </Badge>
+          </div>
+          
+          {/* Compact AI Summary Card */}
+          <div className="bg-gradient-to-br from-primary/5 to-primary/10 rounded-xl p-2.5 border border-primary/20 min-w-[180px] max-w-[220px]">
+            <div className="flex items-center gap-1.5 mb-1.5">
+              <Sparkles className="h-3.5 w-3.5 text-primary" />
+              <span className="text-xs font-semibold">AI Summary</span>
+            </div>
+            <div className="text-[10px] text-muted-foreground space-y-0.5">
+              <p>📊 <strong>{isPro ? prospects.length : '–'}</strong> prospects</p>
+              <p>🔔 <strong>{isPro ? summaryStats.followUpsDueToday : '–'}</strong> need follow-up</p>
+            </div>
+            <Button variant="outline" size="sm" className="mt-2 w-full h-6 text-[10px]" disabled>
+              <Sparkles className="h-3 w-3 mr-1" />
+              Coming Soon
+            </Button>
+          </div>
         </div>
 
-        {/* To-Do / Reminders - Moved from Home */}
+        {/* To-Do / Reminders */}
         <div className="bg-card rounded-2xl p-4 border border-border/50">
           <div className="flex items-center gap-2 mb-4">
             <CheckCircle className="h-5 w-5 text-primary" />
             <h3 className="font-semibold">To-Do / Reminders</h3>
           </div>
           
-          {/* Add new todo */}
+          {/* Add new todo - Enter to add */}
           <div className="flex gap-2 mb-4">
             <Input
-              placeholder="Add a task..."
+              placeholder="Add a task... (press Enter)"
               value={newTodoTitle}
               onChange={(e) => setNewTodoTitle(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && handleAddTodo()}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && newTodoTitle.trim()) {
+                  e.preventDefault();
+                  handleAddTodo();
+                }
+              }}
               className="flex-1"
               disabled={!isPro}
             />
@@ -286,28 +310,6 @@ export default function ActionUp() {
               ))}
             </div>
           )}
-        </div>
-
-        {/* AI Smart Summary Panel */}
-        <div className="bg-gradient-to-br from-primary/5 to-primary/10 rounded-2xl p-4 border border-primary/20">
-          <div className="flex items-center gap-2 mb-3">
-            <div className="p-2 rounded-xl bg-primary/10">
-              <Sparkles className="h-5 w-5 text-primary" />
-            </div>
-            <div>
-              <h3 className="font-semibold">AI Smart Daily Summary</h3>
-              <p className="text-xs text-muted-foreground">Get insights and recommendations</p>
-            </div>
-          </div>
-          <div className="bg-card/50 rounded-xl p-3 text-sm text-muted-foreground min-h-[80px]">
-            <p>📊 You have <strong>{isPro ? prospects.length : '–'}</strong> total prospects.</p>
-            <p className="mt-1">🔔 <strong>{isPro ? summaryStats.followUpsDueToday : '–'}</strong> prospects need follow-up today.</p>
-            <p className="mt-1">💡 <strong>Tip:</strong> Focus on +VE prospects with pending follow-ups first.</p>
-          </div>
-          <Button variant="outline" size="sm" className="mt-3 w-full" disabled>
-            <Sparkles className="h-4 w-4 mr-2" />
-            Generate AI Summary (Coming Soon)
-          </Button>
         </div>
 
         {/* Filters */}

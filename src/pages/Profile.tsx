@@ -3,12 +3,13 @@ import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useProfile } from '@/hooks/useProfile';
 import { useAdmin } from '@/hooks/useAdmin';
+import { useSubscription } from '@/hooks/useSubscription';
 import { BottomNav } from '@/components/layout/BottomNav';
 import { EditProfileDialog } from '@/components/profile/EditProfileDialog';
 import { UpgradeCard } from '@/components/subscription/UpgradeCard';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { User, LogOut, ChevronRight, Crown, Phone, Building2, MapPin, Loader2, FileText, Shield, Receipt, Mail, Settings } from 'lucide-react';
+import { User, LogOut, ChevronRight, Crown, Phone, Building2, MapPin, Loader2, FileText, Shield, Receipt, Mail, Settings, CheckCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import nevoraLogo from '@/assets/nevorai-logo.jpeg';
 
@@ -17,6 +18,7 @@ export default function Profile() {
   const { user, loading: authLoading, signOut } = useAuth();
   const { profile, loading: profileLoading, updating, updateProfile } = useProfile();
   const { isAdmin } = useAdmin();
+  const { isPro, isAdminOverride, loading: subLoading } = useSubscription();
   const [editOpen, setEditOpen] = useState(false);
 
   useEffect(() => {
@@ -30,7 +32,7 @@ export default function Profile() {
     navigate('/auth');
   };
 
-  if (authLoading || profileLoading) {
+  if (authLoading || profileLoading || subLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -83,11 +85,23 @@ export default function Profile() {
             <div className="flex-1 min-w-0">
               <p className="font-semibold text-lg truncate">{displayName}</p>
               <p className="text-sm text-muted-foreground truncate">{user.email}</p>
-              <div className="flex items-center gap-1 mt-1">
-                <div className="flex items-center gap-1 text-xs bg-amber-500/20 text-amber-600 px-2 py-0.5 rounded-full">
-                  <Crown className="h-3 w-3" />
-                  <span className="font-medium">Free Plan</span>
-                </div>
+              <div className="flex flex-wrap items-center gap-1.5 mt-1.5">
+                {isPro ? (
+                  <>
+                    <div className="flex items-center gap-1 text-xs bg-green-500/20 text-green-600 px-2 py-0.5 rounded-full">
+                      <CheckCircle className="h-3 w-3" />
+                      <span className="font-medium">Pro Plan Active</span>
+                    </div>
+                    {isAdminOverride && (
+                      <span className="text-[10px] text-muted-foreground bg-muted px-1.5 py-0.5 rounded">Admin Override</span>
+                    )}
+                  </>
+                ) : (
+                  <div className="flex items-center gap-1 text-xs bg-amber-500/20 text-amber-600 px-2 py-0.5 rounded-full">
+                    <Crown className="h-3 w-3" />
+                    <span className="font-medium">Free Plan</span>
+                  </div>
+                )}
               </div>
             </div>
           </div>

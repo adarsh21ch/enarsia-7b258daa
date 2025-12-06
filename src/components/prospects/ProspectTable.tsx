@@ -41,14 +41,14 @@ interface ProspectTableProps {
 
 // Column configuration - desktop widths (removed Date column)
 const COLUMNS = [
-  { id: 'index', label: '#', defaultWidth: 50, minWidth: 40, mobileWidth: 36 },
-  { id: 'name', label: 'Name', defaultWidth: 180, minWidth: 120, mobileWidth: 130 },
-  { id: 'phone', label: 'Phone', defaultWidth: 160, minWidth: 120, mobileWidth: 100 },
-  { id: 'contact', label: 'Call', defaultWidth: 70, minWidth: 60, mobileWidth: 60 },
-  { id: 'stage', label: 'Stage', defaultWidth: 120, minWidth: 100, mobileWidth: 80 },
-  { id: 'action', label: 'Action', defaultWidth: 140, minWidth: 100, mobileWidth: 90 },
-  { id: 'quality', label: 'Quality', defaultWidth: 100, minWidth: 80, mobileWidth: 80 },
-  { id: 'actions', label: '', defaultWidth: 90, minWidth: 80, mobileWidth: 50 },
+  { id: 'index', label: '#', defaultWidth: 50, minWidth: 40, mobileWidth: 36, resizable: false },
+  { id: 'name', label: 'Name', defaultWidth: 200, minWidth: 150, mobileWidth: 140, resizable: true },
+  { id: 'phone', label: 'Phone', defaultWidth: 160, minWidth: 120, mobileWidth: 110, resizable: true },
+  { id: 'contact', label: 'Call', defaultWidth: 70, minWidth: 60, mobileWidth: 60, resizable: false },
+  { id: 'stage', label: 'Stage', defaultWidth: 120, minWidth: 100, mobileWidth: 80, resizable: true },
+  { id: 'action', label: 'Action', defaultWidth: 140, minWidth: 100, mobileWidth: 90, resizable: true },
+  { id: 'quality', label: 'Quality', defaultWidth: 100, minWidth: 80, mobileWidth: 80, resizable: true },
+  { id: 'actions', label: '', defaultWidth: 90, minWidth: 80, mobileWidth: 50, resizable: false },
 ];
 
 // Mobile column order (removed Date)
@@ -429,15 +429,15 @@ export function ProspectTable({
                     return (
                       <th
                         key={columnId}
-                        draggable={!isMobile}
-                        onDragStart={() => !isMobile && handleDragStart(columnId)}
+                        draggable={!isMobile && col.resizable !== false}
+                        onDragStart={() => !isMobile && col.resizable !== false && handleDragStart(columnId)}
                         onDragOver={(e) => !isMobile && handleDragOver(e, columnId)}
                         onDragEnd={() => !isMobile && handleDragEnd()}
                         className={cn(
                           "px-2 py-2.5 text-left whitespace-nowrap",
                           isDragging && "opacity-50 bg-primary/10",
                           columnId === 'index' && "text-center",
-                          !isMobile && "hover:bg-muted/50 cursor-grab active:cursor-grabbing px-3 py-3 relative select-none",
+                          !isMobile && "hover:bg-muted/50 cursor-grab active:cursor-grabbing px-3 py-3 relative select-none group",
                           isMobile && "text-[11px]",
                           // Make name column header sticky on mobile (positioned after index)
                           isMobile && isNameColumn && "sticky left-[36px] z-20 bg-muted/50 shadow-[2px_0_4px_-2px_rgba(0,0,0,0.15)]",
@@ -449,11 +449,12 @@ export function ProspectTable({
                           {!isMobile && <GripVertical className="h-3 w-3 text-muted-foreground/50" />}
                           <span>{col?.label || columnId}</span>
                         </div>
-                        {!isMobile && (
+                        {/* Resize handle - only for resizable columns on desktop */}
+                        {!isMobile && col.resizable && (
                           <div
                             className={cn(
-                              "absolute right-0 top-0 bottom-0 w-1 cursor-col-resize hover:bg-primary/50 transition-colors",
-                              isResizing && "bg-primary"
+                              "absolute right-0 top-0 bottom-0 w-1.5 cursor-col-resize opacity-0 group-hover:opacity-100 hover:bg-primary/50 transition-all",
+                              isResizing && "bg-primary opacity-100"
                             )}
                             onMouseDown={(e) => handleResizeStart(e, columnId)}
                           />
