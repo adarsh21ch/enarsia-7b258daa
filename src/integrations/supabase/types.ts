@@ -204,48 +204,60 @@ export type Database = {
       }
       prospects: {
         Row: {
+          action_taken: string | null
           age_or_dob: string | null
           batch_date: string | null
           city: string | null
           date_added: string
+          funnel_stage: string | null
           gender: string | null
           id: string
           instagram: string | null
           name: string
           phone: string
+          priority: string | null
           profession: string | null
+          prospect_status: string | null
           sheet_id: string | null
           state: string | null
           updated_at: string
           user_id: string
         }
         Insert: {
+          action_taken?: string | null
           age_or_dob?: string | null
           batch_date?: string | null
           city?: string | null
           date_added?: string
+          funnel_stage?: string | null
           gender?: string | null
           id?: string
           instagram?: string | null
           name: string
           phone: string
+          priority?: string | null
           profession?: string | null
+          prospect_status?: string | null
           sheet_id?: string | null
           state?: string | null
           updated_at?: string
           user_id: string
         }
         Update: {
+          action_taken?: string | null
           age_or_dob?: string | null
           batch_date?: string | null
           city?: string | null
           date_added?: string
+          funnel_stage?: string | null
           gender?: string | null
           id?: string
           instagram?: string | null
           name?: string
           phone?: string
+          priority?: string | null
           profession?: string | null
+          prospect_status?: string | null
           sheet_id?: string | null
           state?: string | null
           updated_at?: string

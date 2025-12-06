@@ -92,10 +92,10 @@ export function useProspects() {
   const updateProspect = async (id: string, updates: Partial<Prospect>) => {
     if (!user) return null;
 
-    // Only send fields that exist in the database
+    // Build database updates object with all valid fields
     const dbUpdates: Record<string, any> = {};
     
-    // Map only database-compatible fields
+    // Map all database-compatible fields
     if (updates.name !== undefined) dbUpdates.name = updates.name;
     if (updates.phone !== undefined) dbUpdates.phone = updates.phone;
     if (updates.city !== undefined) dbUpdates.city = updates.city;
@@ -106,17 +106,15 @@ export function useProspects() {
     if ((updates as any).profession !== undefined) dbUpdates.profession = (updates as any).profession;
     if (updates.sheet_id !== undefined) dbUpdates.sheet_id = updates.sheet_id;
     if (updates.batch_date !== undefined) dbUpdates.batch_date = updates.batch_date;
+    
+    // NEW: Also save funnel_stage, action_taken, prospect_status, priority to database
+    if (updates.funnel_stage !== undefined) dbUpdates.funnel_stage = updates.funnel_stage;
+    if (updates.action_taken !== undefined) dbUpdates.action_taken = updates.action_taken;
+    if (updates.prospect_status !== undefined) dbUpdates.prospect_status = updates.prospect_status;
+    if (updates.priority !== undefined) dbUpdates.priority = updates.priority;
 
-    // If no database fields to update, just update local state for UI-only fields
+    // If no database fields to update, just return
     if (Object.keys(dbUpdates).length === 0) {
-      // Update local state with UI-only fields (funnel_stage, action_taken, etc.)
-      setProspects(prev => prev.map(p => {
-        if (p.id === id) {
-          return { ...p, ...updates, updated_at: new Date().toISOString() };
-        }
-        return p;
-      }));
-      toast.success('Updated');
       return prospects.find(p => p.id === id) || null;
     }
 
@@ -134,20 +132,9 @@ export function useProspects() {
       return null;
     }
 
-    if (!data) {
-      // No data returned, but update might have succeeded - update local state
-      setProspects(prev => prev.map(p => {
-        if (p.id === id) {
-          return { ...p, ...dbUpdates, ...updates, updated_at: new Date().toISOString() };
-        }
-        return p;
-      }));
-      toast.success('Updated');
-      return prospects.find(p => p.id === id) || null;
-    }
-
-    const updatedProspect = { ...mapDbProspect(data), ...updates };
-    setProspects(prev => prev.map(p => p.id === id ? updatedProspect : p));
+    // Update local state
+    const updatedProspect = data ? mapDbProspect(data) : { ...prospects.find(p => p.id === id), ...dbUpdates };
+    setProspects(prev => prev.map(p => p.id === id ? { ...p, ...updatedProspect } : p));
     toast.success('Updated');
     return updatedProspect;
   };
