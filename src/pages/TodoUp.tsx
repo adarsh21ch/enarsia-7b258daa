@@ -428,8 +428,8 @@ export default function TodoUp() {
               className="h-10 w-10 rounded-xl object-cover shadow-md"
             />
             <div>
-              <h1 className="text-lg font-bold tracking-tight">NevorAI</h1>
-              <p className="text-[10px] text-muted-foreground font-medium">Never miss a followup Again</p>
+              <h1 className="text-xl font-bold tracking-tight">To-Do Up</h1>
+              <p className="text-xs text-muted-foreground font-medium">Your To-Do List & Reminders</p>
             </div>
           </div>
         </div>
