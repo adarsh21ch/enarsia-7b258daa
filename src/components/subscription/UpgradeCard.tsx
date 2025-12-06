@@ -64,7 +64,7 @@ export function UpgradeCard() {
       </div>
 
       <p className="text-sm text-muted-foreground mb-4">
-        Get <span className="font-bold text-foreground">30 days</span> of Pro access for <span className="font-bold text-foreground">₹249</span> to unlock Track Up, Action Up and all premium features.
+        Get <span className="font-bold text-foreground">1 month</span> of Pro access for <span className="font-bold text-foreground">₹249</span> to unlock Track Up, Action Up and all premium features.
       </p>
 
       <div className="space-y-2 mb-5">
@@ -87,7 +87,7 @@ export function UpgradeCard() {
         className="w-full h-12 text-base font-semibold shadow-lg shadow-primary/30"
       >
         <Crown className="h-5 w-5 mr-2" />
-        Unlock Pro – ₹249 / 30 days
+        Unlock Pro – ₹249 / 1 month
       </Button>
     </div>
   );
