@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
 import { StageBadge, StatusBadge, PriorityBadge, EnrollBadge } from './StatusBadge';
-import { Phone, MessageCircle, Calendar as CalendarIcon, Clock, User, MapPin, Cake, Target, Briefcase, Save } from 'lucide-react';
+import { Phone, MessageCircle, Calendar as CalendarIcon, Clock, User, MapPin, Target, Briefcase, Save } from 'lucide-react';
 import { format, parseISO, formatDistanceToNow } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
@@ -34,8 +34,8 @@ export function ProspectReportCard({ prospect, open, onOpenChange, onUpdate }: P
         email: prospect.email || '',
         city: prospect.city || '',
         state: prospect.state || '',
-        age: prospect.age || undefined,
-        date_of_birth: prospect.date_of_birth || '',
+        age_or_dob: prospect.age_or_dob || '',
+        gender: prospect.gender || '',
         why_need: prospect.why_need || '',
         currently_doing: prospect.currently_doing || '',
         notes: prospect.notes || '',
@@ -70,8 +70,8 @@ export function ProspectReportCard({ prospect, open, onOpenChange, onUpdate }: P
       if ((localData.email || null) !== (prospect.email || null)) updates.email = localData.email || null;
       if ((localData.city || null) !== (prospect.city || null)) updates.city = localData.city || null;
       if ((localData.state || null) !== (prospect.state || null)) updates.state = localData.state || null;
-      if ((localData.age || null) !== (prospect.age || null)) updates.age = localData.age || null;
-      if ((localData.date_of_birth || null) !== (prospect.date_of_birth || null)) updates.date_of_birth = localData.date_of_birth || null;
+      if ((localData.age_or_dob || null) !== (prospect.age_or_dob || null)) updates.age_or_dob = localData.age_or_dob || null;
+      if ((localData.gender || null) !== (prospect.gender || null)) updates.gender = localData.gender || null;
       if ((localData.why_need || null) !== (prospect.why_need || null)) updates.why_need = localData.why_need || null;
       if ((localData.currently_doing || null) !== (prospect.currently_doing || null)) updates.currently_doing = localData.currently_doing || null;
       if ((localData.notes || null) !== (prospect.notes || null)) updates.notes = localData.notes || null;
@@ -195,35 +195,29 @@ export function ProspectReportCard({ prospect, open, onOpenChange, onUpdate }: P
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label className="text-muted-foreground">Age</Label>
+                <Label className="text-muted-foreground">Age / DOB</Label>
                 <Input
-                  type="number"
-                  value={localData.age || ''}
-                  onChange={(e) => handleFieldChange('age', e.target.value ? parseInt(e.target.value) : undefined)}
-                  placeholder="Age"
+                  value={localData.age_or_dob || ''}
+                  onChange={(e) => handleFieldChange('age_or_dob', e.target.value)}
+                  placeholder="25 or 1990-05-15"
                 />
               </div>
 
               <div className="space-y-2">
-                <Label className="flex items-center gap-2 text-muted-foreground">
-                  <Cake className="h-4 w-4" />
-                  Date of Birth
-                </Label>
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button variant="outline" className="w-full justify-start text-left font-normal">
-                      <CalendarIcon className="mr-2 h-4 w-4" />
-                      {localData.date_of_birth ? format(parseISO(localData.date_of_birth), 'MMM d, yyyy') : 'Select'}
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0 bg-popover border-border z-50" align="start">
-                    <Calendar
-                      mode="single"
-                      selected={localData.date_of_birth ? parseISO(localData.date_of_birth) : undefined}
-                      onSelect={(date) => handleFieldChange('date_of_birth', date ? format(date, 'yyyy-MM-dd') : null)}
-                    />
-                  </PopoverContent>
-                </Popover>
+                <Label className="text-muted-foreground">Gender</Label>
+                <Select
+                  value={localData.gender || ''}
+                  onValueChange={(value) => handleFieldChange('gender', value || null)}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-popover border-border z-50">
+                    <SelectItem value="Male">Male</SelectItem>
+                    <SelectItem value="Female">Female</SelectItem>
+                    <SelectItem value="Other">Other</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
             </div>
 

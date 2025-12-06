@@ -73,7 +73,7 @@ function EditableTag<T extends string>({
 }
 
 export function InlineReportCard({ prospect, onUpdate, onClose, colSpan }: InlineReportCardProps) {
-  const [localData, setLocalData] = useState<Partial<Prospect> & { instagram?: string; profession?: string }>({});
+  const [localData, setLocalData] = useState<Partial<Prospect>>({});
   const [isSaving, setIsSaving] = useState(false);
   const [hasChanges, setHasChanges] = useState(false);
 
@@ -83,15 +83,16 @@ export function InlineReportCard({ prospect, onUpdate, onClose, colSpan }: Inlin
       phone: prospect.phone,
       city: prospect.city || '',
       state: prospect.state || '',
-      age: prospect.age || undefined,
+      age_or_dob: prospect.age_or_dob || '',
+      gender: prospect.gender || '',
       why_need: prospect.why_need || '',
       currently_doing: prospect.currently_doing || '',
       notes: prospect.notes || '',
       funnel_stage: prospect.funnel_stage,
       action_taken: prospect.action_taken,
       prospect_status: prospect.prospect_status,
-      instagram: (prospect as any).instagram || '',
-      profession: (prospect as any).profession || '',
+      instagram: prospect.instagram || '',
+      profession: prospect.profession || '',
     });
     setHasChanges(false);
   }, [prospect]);
@@ -117,21 +118,22 @@ export function InlineReportCard({ prospect, onUpdate, onClose, colSpan }: Inlin
     
     setIsSaving(true);
     try {
-      const updates: Partial<Prospect> & { instagram?: string; profession?: string } = {};
+      const updates: Partial<Prospect> = {};
       
       if (localData.name !== prospect.name) updates.name = localData.name;
       if (localData.phone !== prospect.phone) updates.phone = localData.phone;
       if ((localData.city || null) !== (prospect.city || null)) updates.city = localData.city || null;
       if ((localData.state || null) !== (prospect.state || null)) updates.state = localData.state || null;
-      if ((localData.age || null) !== (prospect.age || null)) updates.age = localData.age || null;
+      if ((localData.age_or_dob || null) !== (prospect.age_or_dob || null)) updates.age_or_dob = localData.age_or_dob || null;
+      if ((localData.gender || null) !== (prospect.gender || null)) updates.gender = localData.gender || null;
       if ((localData.why_need || null) !== (prospect.why_need || null)) updates.why_need = localData.why_need || null;
       if ((localData.currently_doing || null) !== (prospect.currently_doing || null)) updates.currently_doing = localData.currently_doing || null;
       if ((localData.notes || null) !== (prospect.notes || null)) updates.notes = localData.notes || null;
       if (localData.funnel_stage !== prospect.funnel_stage) updates.funnel_stage = localData.funnel_stage;
       if (localData.action_taken !== prospect.action_taken) updates.action_taken = localData.action_taken;
       if (localData.prospect_status !== prospect.prospect_status) updates.prospect_status = localData.prospect_status;
-      if ((localData.instagram || null) !== ((prospect as any).instagram || null)) updates.instagram = localData.instagram || null;
-      if ((localData.profession || null) !== ((prospect as any).profession || null)) updates.profession = localData.profession || null;
+      if ((localData.instagram || null) !== (prospect.instagram || null)) updates.instagram = localData.instagram || null;
+      if ((localData.profession || null) !== (prospect.profession || null)) updates.profession = localData.profession || null;
 
       if (Object.keys(updates).length > 0) {
         const result = await onUpdate(prospect.id, updates as any);
@@ -252,16 +254,14 @@ export function InlineReportCard({ prospect, onUpdate, onClose, colSpan }: Inlin
                 placeholder="City, State"
               />
             </div>
-            {/* Age - compact */}
+            {/* Age */}
             <div className="w-16">
               <Label className="text-[10px] text-muted-foreground mb-0.5 block">Age</Label>
               <Input
-                type="number"
-                value={localData.age || ''}
-                onChange={(e) => handleFieldChange('age', e.target.value ? parseInt(e.target.value) : undefined)}
+                value={localData.age_or_dob || ''}
+                onChange={(e) => handleFieldChange('age_or_dob', e.target.value)}
                 className="h-7 text-xs w-16"
-                min={1}
-                max={120}
+                placeholder="25"
               />
             </div>
             {/* Profession */}

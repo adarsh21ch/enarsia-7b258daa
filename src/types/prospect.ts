@@ -15,24 +15,23 @@ export interface Prospect {
   phone: string;
   email?: string | null;
   notes?: string | null;
-  funnel_stage: FunnelStage;
+  funnel_stage?: FunnelStage | null;
   action_taken?: ActionTaken | null;
   prospect_status?: ProspectStatus | null;
-  priority: PriorityLevel;
+  priority?: PriorityLevel | null;
   date_added: string;
   last_contact_date?: string | null;
   updated_at: string;
-  // New fields from Phase 1
+  // Database fields
   sheet_id?: string | null;
   batch_date?: string | null;
   city?: string | null;
   state?: string | null;
-  age?: number | null;
-  date_of_birth?: string | null;
+  age_or_dob?: string | null;
+  gender?: string | null;
   why_need?: string | null;
   currently_doing?: string | null;
   enrollment_status?: EnrollmentStatus | null;
-  // Additional fields
   instagram?: string | null;
   profession?: string | null;
 }

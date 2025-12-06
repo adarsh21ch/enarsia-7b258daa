@@ -34,7 +34,9 @@ export function ConversionFunnel({ prospects }: ConversionFunnelProps) {
       '2CC': 0,
     };
     prospects.forEach((p) => {
-      counts[p.funnel_stage]++;
+      if (p.funnel_stage) {
+        counts[p.funnel_stage]++;
+      }
     });
     return counts;
   }, [prospects]);
@@ -48,8 +50,8 @@ export function ConversionFunnel({ prospects }: ConversionFunnelProps) {
       const to = stages[i + 1];
       
       // Count prospects at or past each stage
-      const fromCount = prospects.filter(p => FUNNEL_STAGE_ORDER[p.funnel_stage] >= FUNNEL_STAGE_ORDER[from]).length;
-      const toCount = prospects.filter(p => FUNNEL_STAGE_ORDER[p.funnel_stage] >= FUNNEL_STAGE_ORDER[to]).length;
+      const fromCount = prospects.filter(p => p.funnel_stage && FUNNEL_STAGE_ORDER[p.funnel_stage] >= FUNNEL_STAGE_ORDER[from]).length;
+      const toCount = prospects.filter(p => p.funnel_stage && FUNNEL_STAGE_ORDER[p.funnel_stage] >= FUNNEL_STAGE_ORDER[to]).length;
       
       metrics.push({
         fromStage: from,
@@ -61,7 +63,7 @@ export function ConversionFunnel({ prospects }: ConversionFunnelProps) {
     }
 
     // Overall conversion
-    const enrollmentCount = prospects.filter(p => FUNNEL_STAGE_ORDER[p.funnel_stage] >= FUNNEL_STAGE_ORDER['Enrollment']).length;
+    const enrollmentCount = prospects.filter(p => p.funnel_stage && FUNNEL_STAGE_ORDER[p.funnel_stage] >= FUNNEL_STAGE_ORDER['Enrollment']).length;
     const levelUpCount = prospects.filter(p => p.funnel_stage === 'Level Up').length;
     
     metrics.push({
@@ -83,8 +85,8 @@ export function ConversionFunnel({ prospects }: ConversionFunnelProps) {
   const calculateCustomConversion = () => {
     if (!fromStage || !toStage) return;
 
-    const fromCount = prospects.filter(p => FUNNEL_STAGE_ORDER[p.funnel_stage] >= FUNNEL_STAGE_ORDER[fromStage]).length;
-    const toCount = prospects.filter(p => FUNNEL_STAGE_ORDER[p.funnel_stage] >= FUNNEL_STAGE_ORDER[toStage]).length;
+    const fromCount = prospects.filter(p => p.funnel_stage && FUNNEL_STAGE_ORDER[p.funnel_stage] >= FUNNEL_STAGE_ORDER[fromStage]).length;
+    const toCount = prospects.filter(p => p.funnel_stage && FUNNEL_STAGE_ORDER[p.funnel_stage] >= FUNNEL_STAGE_ORDER[toStage]).length;
 
     setCustomMetric({
       fromStage,
