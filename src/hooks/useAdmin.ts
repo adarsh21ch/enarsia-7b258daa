@@ -56,18 +56,27 @@ export function useAdmin() {
       console.error('Error fetching subscriptions:', subsError);
     }
 
-    // Combine the data - profiles are the source of all users
-    const usersWithSubs: UserWithSubscription[] = (profiles || []).map((profile: any) => {
-      const sub = subscriptions?.find((s: any) => s.user_id === profile.user_id);
-      return {
-        id: profile.user_id,
-        email: profile.display_name || `User ${profile.user_id.slice(0, 8)}`,
-        name: profile.display_name,
-        plan: sub?.plan || 'free',
-        is_admin_override: sub?.is_admin_override || false,
-        subscribed_at: sub?.subscribed_at || null,
-      };
-    });
+    // Fetch emails for each user using security definer function
+    const usersWithSubs: UserWithSubscription[] = await Promise.all(
+      (profiles || []).map(async (profile: any) => {
+        const sub = subscriptions?.find((s: any) => s.user_id === profile.user_id);
+        
+        // Get email via security definer function
+        const { data: emailData } = await supabase
+          .rpc('get_user_email_for_admin', { target_user_id: profile.user_id });
+        
+        const email = emailData || profile.display_name || `User ${profile.user_id.slice(0, 8)}`;
+        
+        return {
+          id: profile.user_id,
+          email,
+          name: profile.display_name,
+          plan: sub?.plan || 'free',
+          is_admin_override: sub?.is_admin_override || false,
+          subscribed_at: sub?.subscribed_at || null,
+        };
+      })
+    );
 
     setUsers(usersWithSubs);
     setLoading(false);
