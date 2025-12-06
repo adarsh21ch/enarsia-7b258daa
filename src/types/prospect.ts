@@ -5,6 +5,9 @@ export type ProspectStatus = 'Good' | 'Medium' | 'Bad';
 export type PriorityLevel = 'High' | 'Medium' | 'Low';
 export type EnrollmentStatus = 'Enrolled' | 'Not Enrolled';
 
+// Quality is the same as ProspectStatus - aliased for UI clarity
+export type ProspectQuality = ProspectStatus;
+
 export interface Prospect {
   id: string;
   user_id: string;
@@ -29,6 +32,9 @@ export interface Prospect {
   why_need?: string | null;
   currently_doing?: string | null;
   enrollment_status?: EnrollmentStatus | null;
+  // Additional fields
+  instagram?: string | null;
+  profession?: string | null;
 }
 
 export interface Sheet {
@@ -65,6 +71,7 @@ export const FUNNEL_TAB_STAGES: FunnelStage[] = ['Day 1', 'Day 2', 'Day 3', 'Min
 export const ACTIONS: ActionTaken[] = ['Video Sent', 'Called', 'Not Picked', 'Busy', 'Follow Up Scheduled'];
 export const EXTENDED_ACTIONS: ExtendedActionTaken[] = ['Video Sent', 'Called', 'Not Picked', 'Busy', 'Follow Up Scheduled', 'Enrolled'];
 export const STATUSES: ProspectStatus[] = ['Good', 'Medium', 'Bad'];
+export const QUALITIES: ProspectQuality[] = ['Good', 'Medium', 'Bad'];
 export const PRIORITIES: PriorityLevel[] = ['High', 'Medium', 'Low'];
 export const ENROLLMENT_STATUSES: EnrollmentStatus[] = ['Enrolled', 'Not Enrolled'];
 

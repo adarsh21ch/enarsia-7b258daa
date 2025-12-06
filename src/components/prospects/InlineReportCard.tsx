@@ -6,8 +6,8 @@ import { Label } from '@/components/ui/label';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Button } from '@/components/ui/button';
 import { StageBadge, StatusBadge, ActionBadge } from './StatusBadge';
-import { Save, X, Phone, MessageCircle, ChevronDown } from 'lucide-react';
-import { formatDistanceToNow, parseISO } from 'date-fns';
+import { Save, X, Phone, MessageCircle, ChevronDown, Instagram, Clock } from 'lucide-react';
+import { formatDistanceToNow, parseISO, format } from 'date-fns';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 
@@ -73,7 +73,7 @@ function EditableTag<T extends string>({
 }
 
 export function InlineReportCard({ prospect, onUpdate, onClose, colSpan }: InlineReportCardProps) {
-  const [localData, setLocalData] = useState<Partial<Prospect>>({});
+  const [localData, setLocalData] = useState<Partial<Prospect> & { instagram?: string; profession?: string }>({});
   const [isSaving, setIsSaving] = useState(false);
   const [hasChanges, setHasChanges] = useState(false);
 
@@ -90,17 +90,19 @@ export function InlineReportCard({ prospect, onUpdate, onClose, colSpan }: Inlin
       funnel_stage: prospect.funnel_stage,
       action_taken: prospect.action_taken,
       prospect_status: prospect.prospect_status,
+      instagram: (prospect as any).instagram || '',
+      profession: (prospect as any).profession || '',
     });
     setHasChanges(false);
   }, [prospect]);
 
-  const handleFieldChange = (field: keyof Prospect, value: any) => {
+  const handleFieldChange = (field: string, value: any) => {
     setLocalData(prev => ({ ...prev, [field]: value }));
     setHasChanges(true);
   };
 
-  // Handle combined city & state field
-  const handleCityStateChange = (value: string) => {
+  // Handle combined address field
+  const handleAddressChange = (value: string) => {
     const parts = value.split(',').map(p => p.trim());
     if (parts.length >= 2) {
       setLocalData(prev => ({ ...prev, city: parts[0], state: parts.slice(1).join(', ') }));
@@ -115,7 +117,7 @@ export function InlineReportCard({ prospect, onUpdate, onClose, colSpan }: Inlin
     
     setIsSaving(true);
     try {
-      const updates: Partial<Prospect> = {};
+      const updates: Partial<Prospect> & { instagram?: string; profession?: string } = {};
       
       if (localData.name !== prospect.name) updates.name = localData.name;
       if (localData.phone !== prospect.phone) updates.phone = localData.phone;
@@ -128,9 +130,11 @@ export function InlineReportCard({ prospect, onUpdate, onClose, colSpan }: Inlin
       if (localData.funnel_stage !== prospect.funnel_stage) updates.funnel_stage = localData.funnel_stage;
       if (localData.action_taken !== prospect.action_taken) updates.action_taken = localData.action_taken;
       if (localData.prospect_status !== prospect.prospect_status) updates.prospect_status = localData.prospect_status;
+      if ((localData.instagram || null) !== ((prospect as any).instagram || null)) updates.instagram = localData.instagram || null;
+      if ((localData.profession || null) !== ((prospect as any).profession || null)) updates.profession = localData.profession || null;
 
       if (Object.keys(updates).length > 0) {
-        const result = await onUpdate(prospect.id, updates);
+        const result = await onUpdate(prospect.id, updates as any);
         if (result) {
           toast.success('Prospect updated');
           setHasChanges(false);
@@ -157,6 +161,15 @@ export function InlineReportCard({ prospect, onUpdate, onClose, colSpan }: Inlin
     window.location.href = `tel:${cleanPhone}`;
   };
 
+  const openInstagram = () => {
+    if (localData.instagram) {
+      const username = localData.instagram.replace('@', '').trim();
+      if (username) {
+        window.open(`https://instagram.com/${username}`, '_blank');
+      }
+    }
+  };
+
   return (
     <tr className="animate-in fade-in-0 slide-in-from-top-2 duration-200">
       <td colSpan={colSpan} className="p-0">
@@ -165,7 +178,7 @@ export function InlineReportCard({ prospect, onUpdate, onClose, colSpan }: Inlin
           <div className="flex items-center justify-between gap-2 flex-wrap mb-2">
             <div className="flex items-center gap-2 flex-wrap">
               <span className="font-semibold text-foreground text-sm">{localData.name}</span>
-              {/* Editable Stage/Status/Action tags */}
+              {/* Editable Stage/Quality/Action tags */}
               <div className="flex items-center gap-1.5 flex-wrap">
                 <EditableTag
                   value={localData.funnel_stage as FunnelStage}
@@ -179,7 +192,7 @@ export function InlineReportCard({ prospect, onUpdate, onClose, colSpan }: Inlin
                   options={STATUSES}
                   onChange={(val) => handleFieldChange('prospect_status', val)}
                   renderBadge={(val) => <StatusBadge status={val} />}
-                  placeholder="Status"
+                  placeholder="Quality"
                 />
                 <EditableTag
                   value={localData.action_taken as ActionTaken}
@@ -191,13 +204,18 @@ export function InlineReportCard({ prospect, onUpdate, onClose, colSpan }: Inlin
               </div>
             </div>
             <div className="flex items-center gap-1">
-              {/* Quick Call/WhatsApp */}
+              {/* Quick Call/WhatsApp/Instagram */}
               <Button variant="ghost" size="icon" className="h-7 w-7 hover:bg-accent/10" onClick={openCall}>
                 <Phone className="h-3.5 w-3.5 text-accent" />
               </Button>
               <Button variant="ghost" size="icon" className="h-7 w-7 text-green-500 hover:text-green-600 hover:bg-green-500/10" onClick={openWhatsApp}>
                 <MessageCircle className="h-3.5 w-3.5" />
               </Button>
+              {localData.instagram && (
+                <Button variant="ghost" size="icon" className="h-7 w-7 text-pink-500 hover:text-pink-600 hover:bg-pink-500/10" onClick={openInstagram}>
+                  <Instagram className="h-3.5 w-3.5" />
+                </Button>
+              )}
               <Button variant="ghost" size="icon" onClick={onClose} className="h-6 w-6 ml-1">
                 <X className="h-3 w-3" />
               </Button>
@@ -205,7 +223,7 @@ export function InlineReportCard({ prospect, onUpdate, onClose, colSpan }: Inlin
           </div>
 
           {/* Row 2: Compact editable fields grid */}
-          <div className="grid grid-cols-3 sm:grid-cols-5 gap-2 mb-2">
+          <div className="grid grid-cols-3 sm:grid-cols-6 gap-2 mb-2">
             {/* Name */}
             <div>
               <Label className="text-[10px] text-muted-foreground mb-0.5 block">Name *</Label>
@@ -224,12 +242,12 @@ export function InlineReportCard({ prospect, onUpdate, onClose, colSpan }: Inlin
                 className="h-7 text-xs"
               />
             </div>
-            {/* City & State (combined) */}
+            {/* Address (combined city & state) */}
             <div>
-              <Label className="text-[10px] text-muted-foreground mb-0.5 block">City & State</Label>
+              <Label className="text-[10px] text-muted-foreground mb-0.5 block">Address</Label>
               <Input
                 value={[localData.city, localData.state].filter(Boolean).join(', ')}
-                onChange={(e) => handleCityStateChange(e.target.value)}
+                onChange={(e) => handleAddressChange(e.target.value)}
                 className="h-7 text-xs"
                 placeholder="City, State"
               />
@@ -250,15 +268,25 @@ export function InlineReportCard({ prospect, onUpdate, onClose, colSpan }: Inlin
             <div>
               <Label className="text-[10px] text-muted-foreground mb-0.5 block">Profession</Label>
               <Input
-                value={localData.currently_doing || ''}
-                onChange={(e) => handleFieldChange('currently_doing', e.target.value)}
+                value={localData.profession || localData.currently_doing || ''}
+                onChange={(e) => handleFieldChange('profession', e.target.value)}
                 className="h-7 text-xs"
                 placeholder="student / job"
               />
             </div>
+            {/* Instagram */}
+            <div>
+              <Label className="text-[10px] text-muted-foreground mb-0.5 block">Instagram</Label>
+              <Input
+                value={localData.instagram || ''}
+                onChange={(e) => handleFieldChange('instagram', e.target.value)}
+                className="h-7 text-xs"
+                placeholder="@username"
+              />
+            </div>
           </div>
 
-          {/* Row 3: Why/Need + Notes + Save */}
+          {/* Row 3: Why/Need + Notes + Date Added + Save */}
           <div className="flex flex-col sm:flex-row gap-2">
             <div className="flex-1 grid grid-cols-2 gap-2">
               <div>
@@ -281,9 +309,15 @@ export function InlineReportCard({ prospect, onUpdate, onClose, colSpan }: Inlin
               </div>
             </div>
             <div className="flex items-end gap-2">
-              <span className="text-[10px] text-muted-foreground hidden sm:inline">
-                Updated {formatDistanceToNow(parseISO(prospect.updated_at), { addSuffix: true })}
-              </span>
+              <div className="flex flex-col text-[10px] text-muted-foreground">
+                <span className="flex items-center gap-1">
+                  <Clock className="h-3 w-3" />
+                  Added {format(parseISO(prospect.date_added), 'MMM d, yyyy')}
+                </span>
+                <span className="hidden sm:inline">
+                  Updated {formatDistanceToNow(parseISO(prospect.updated_at), { addSuffix: true })}
+                </span>
+              </div>
               <Button 
                 onClick={handleSave} 
                 disabled={isSaving || !hasChanges}

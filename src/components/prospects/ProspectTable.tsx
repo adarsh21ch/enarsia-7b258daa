@@ -1,5 +1,5 @@
 import { useState, useMemo, useCallback } from 'react';
-import { Prospect, FunnelStage, ProspectStatus, Sheet, ExtendedActionTaken } from '@/types/prospect';
+import { Prospect, FunnelStage, ProspectQuality, Sheet, ExtendedActionTaken } from '@/types/prospect';
 import { ProspectRow } from './ProspectRow';
 import { MobileProspectCard } from './MobileProspectCard';
 import { ProspectFilters } from './ProspectFilters';
@@ -14,8 +14,8 @@ import { cn } from '@/lib/utils';
 
 interface Filters {
   search: string;
-  stage: FunnelStage | 'all';
-  status: ProspectStatus | 'all';
+  stages: FunnelStage[];
+  qualities: ProspectQuality[];
   actions: ExtendedActionTaken[];
   incompleteOnly: boolean;
 }
@@ -39,7 +39,7 @@ interface ProspectTableProps {
   subFilter: 'all' | 'hot' | 'scheduled' | 'day1' | 'progress';
 }
 
-// Column configuration - desktop widths (removed priority)
+// Column configuration - desktop widths (removed Date column)
 const COLUMNS = [
   { id: 'index', label: '#', defaultWidth: 50, minWidth: 40, mobileWidth: 36 },
   { id: 'name', label: 'Name', defaultWidth: 180, minWidth: 120, mobileWidth: 130 },
@@ -47,13 +47,12 @@ const COLUMNS = [
   { id: 'contact', label: 'Call', defaultWidth: 70, minWidth: 60, mobileWidth: 60 },
   { id: 'stage', label: 'Stage', defaultWidth: 120, minWidth: 100, mobileWidth: 80 },
   { id: 'action', label: 'Action', defaultWidth: 140, minWidth: 100, mobileWidth: 90 },
-  { id: 'status', label: 'Status', defaultWidth: 100, minWidth: 80, mobileWidth: 80 },
-  { id: 'lastContact', label: 'Date', defaultWidth: 110, minWidth: 90, mobileWidth: 70 },
+  { id: 'quality', label: 'Quality', defaultWidth: 100, minWidth: 80, mobileWidth: 80 },
   { id: 'actions', label: '', defaultWidth: 90, minWidth: 80, mobileWidth: 50 },
 ];
 
-// Mobile column order (removed priority)
-const MOBILE_COLUMN_ORDER = ['index', 'name', 'phone', 'contact', 'stage', 'action', 'status', 'lastContact', 'actions'];
+// Mobile column order (removed Date)
+const MOBILE_COLUMN_ORDER = ['index', 'name', 'phone', 'contact', 'stage', 'action', 'quality', 'actions'];
 
 export function ProspectTable({
   prospects,
@@ -73,8 +72,8 @@ export function ProspectTable({
 }: ProspectTableProps) {
   const [filters, setFilters] = useState<Filters>({
     search: '',
-    stage: 'all',
-    status: 'all',
+    stages: [],
+    qualities: [],
     actions: [],
     incompleteOnly: false,
   });
@@ -90,15 +89,16 @@ export function ProspectTable({
   const [draggedColumn, setDraggedColumn] = useState<string | null>(null);
   const [resizingColumn, setResizingColumn] = useState<string | null>(null);
 
-  // Separate prospects into Calling vs Funnel
+  // For DUPLICATING: Show prospects in BOTH tabs if they have funnel stages
+  // Calling tab: ALL prospects (including those with funnel stages)
+  // Funnel tab: Only prospects with funnel stages beyond Enrollment
   const callingProspects = useMemo(() => {
-    return prospects.filter(p => 
-      (!p.enrollment_status || p.enrollment_status === 'Not Enrolled') &&
-      (!p.funnel_stage || p.funnel_stage === 'Enrollment')
-    );
+    // Calling tab shows ALL prospects - they stay here even when enrolled
+    return prospects;
   }, [prospects]);
 
   const funnelProspects = useMemo(() => {
+    // Funnel tab shows prospects that are enrolled OR have a funnel stage beyond Enrollment
     return prospects.filter(p => 
       p.enrollment_status === 'Enrolled' ||
       (p.funnel_stage && p.funnel_stage !== 'Enrollment')
@@ -148,8 +148,13 @@ export function ProspectTable({
         prospect.phone.toLowerCase().includes(searchLower) ||
         (prospect.notes?.toLowerCase().includes(searchLower));
 
-      const matchesStage = filters.stage === 'all' || prospect.funnel_stage === filters.stage;
-      const matchesStatus = filters.status === 'all' || prospect.prospect_status === filters.status;
+      // Multi-select stage filter
+      const matchesStage = filters.stages.length === 0 || 
+        (prospect.funnel_stage && filters.stages.includes(prospect.funnel_stage));
+      
+      // Multi-select quality filter (uses prospect_status)
+      const matchesQuality = filters.qualities.length === 0 || 
+        (prospect.prospect_status && filters.qualities.includes(prospect.prospect_status));
       
       // Multi-select action filter
       const matchesAction = filters.actions.length === 0 || 
@@ -162,12 +167,12 @@ export function ProspectTable({
         !prospect.prospect_status || 
         !prospect.action_taken;
 
-      return matchesSearch && matchesStage && matchesStatus && matchesAction && matchesIncomplete;
+      return matchesSearch && matchesStage && matchesQuality && matchesAction && matchesIncomplete;
     });
   }, [sheetFilteredProspects, filters]);
 
   const exportToCSV = () => {
-    const headers = ['#', 'Name', 'Phone', 'City & State', 'Funnel Stage', 'Action Taken', 'Status', 'Notes', 'Last Contact Date', 'Date Added'];
+    const headers = ['#', 'Name', 'Phone', 'Address', 'Funnel Stage', 'Action Taken', 'Quality', 'Notes', 'Date Added'];
     const csvContent = [
       headers.join(','),
       ...filteredProspects.map((p, i) => [
@@ -175,11 +180,10 @@ export function ProspectTable({
         `"${p.name}"`,
         `"${p.phone}"`,
         `"${[p.city, p.state].filter(Boolean).join(', ')}"`,
-        `"${p.funnel_stage}"`,
+        `"${p.funnel_stage || ''}"`,
         `"${p.action_taken || ''}"`,
         `"${p.prospect_status || ''}"`,
         `"${(p.notes || '').replace(/"/g, '""')}"`,
-        `"${p.last_contact_date || ''}"`,
         `"${p.date_added}"`,
       ].join(','))
     ].join('\n');
@@ -370,7 +374,7 @@ export function ProspectTable({
           <p className="text-sm text-muted-foreground">
             No prospects match your filters.{' '}
             <button
-              onClick={() => setFilters({ search: '', stage: 'all', status: 'all', actions: [], incompleteOnly: false })}
+              onClick={() => setFilters({ search: '', stages: [], qualities: [], actions: [], incompleteOnly: false })}
               className="text-accent hover:underline"
             >
               Clear filters
@@ -409,7 +413,7 @@ export function ProspectTable({
           >
             <table 
               className="text-sm border-collapse"
-              style={{ width: '100%', minWidth: isMobile ? '680px' : '800px' }}
+              style={{ width: '100%', minWidth: isMobile ? '600px' : '750px' }}
             >
               <thead className="bg-muted/50 text-xs font-semibold text-muted-foreground border-b border-border">
                 <tr>
