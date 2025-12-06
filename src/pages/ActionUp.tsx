@@ -171,11 +171,7 @@ export default function ActionUp() {
           {/* AI Summary - inline horizontal pill */}
           <div className="flex items-center gap-2 bg-gradient-to-r from-primary/10 to-primary/5 rounded-full py-1.5 px-3 border border-primary/20 shrink-0">
             <Sparkles className="h-3.5 w-3.5 text-primary" />
-            <span className="text-xs font-medium">
-              <span className="text-primary">{isPro ? prospects.length : '–'}</span> prospects
-            </span>
-            <span className="text-muted-foreground/50">•</span>
-            <span className="text-xs text-muted-foreground">AI Soon</span>
+            <span className="text-xs font-medium text-primary">AI Summary Soon</span>
           </div>
         </div>
 
