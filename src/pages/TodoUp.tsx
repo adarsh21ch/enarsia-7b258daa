@@ -9,7 +9,7 @@ import { UpgradeBar } from '@/components/subscription/UpgradeBar';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Loader2, CheckCircle, Lock, Trash2, Edit2, Send, X, Check, Phone, MessageCircle, Plus, GripVertical, ArrowUp } from 'lucide-react';
+import { Loader2, CheckCircle, Lock, Trash2, Edit2, Send, X, Check, Phone, MessageCircle, Plus, GripVertical } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { Prospect, FunnelStage } from '@/types/prospect';
@@ -628,7 +628,7 @@ export default function TodoUp() {
                 onClick={() => handleAddTodo()}
                 disabled={!newTodoInput.trim()}
               >
-                <ArrowUp className="h-5 w-5" />
+                <Send className="h-4.5 w-4.5" />
               </Button>
             </div>
           </div>
