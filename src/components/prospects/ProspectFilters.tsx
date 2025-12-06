@@ -1,8 +1,9 @@
+import { useState } from 'react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Search, X, Download, ChevronDown } from 'lucide-react';
+import { Search, X, Download, ChevronDown, Loader2 } from 'lucide-react';
 import { FUNNEL_STAGES, QUALITIES, EXTENDED_ACTIONS, FunnelStage, ProspectQuality, ExtendedActionTaken } from '@/types/prospect';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { cn } from '@/lib/utils';
@@ -18,10 +19,12 @@ interface Filters {
 interface ProspectFiltersProps {
   filters: Filters;
   onFiltersChange: (filters: Filters) => void;
-  onExport: () => void;
+  onExport: () => Promise<void>;
+  exporting?: boolean;
+  filteredCount?: number;
 }
 
-export function ProspectFilters({ filters, onFiltersChange, onExport }: ProspectFiltersProps) {
+export function ProspectFilters({ filters, onFiltersChange, onExport, exporting = false, filteredCount = 0 }: ProspectFiltersProps) {
   const hasFilters = filters.search || filters.stages.length > 0 || filters.qualities.length > 0 || filters.actions.length > 0 || filters.incompleteOnly;
   const isMobile = useIsMobile();
 
@@ -250,9 +253,19 @@ export function ProspectFilters({ filters, onFiltersChange, onExport }: Prospect
           </Button>
         )}
 
-        <Button variant="outline" size="sm" onClick={onExport} className="h-10 sm:h-9 gap-1.5 shrink-0">
-          <Download className="h-3.5 w-3.5" />
-          {!isMobile && 'Export'}
+        <Button 
+          variant="outline" 
+          size="sm" 
+          onClick={onExport} 
+          disabled={exporting || filteredCount === 0}
+          className="h-10 sm:h-9 gap-1.5 shrink-0"
+        >
+          {exporting ? (
+            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+          ) : (
+            <Download className="h-3.5 w-3.5" />
+          )}
+          {!isMobile && (exporting ? 'Exporting...' : `Export${filteredCount > 0 ? ` (${filteredCount})` : ''}`)}
         </Button>
       </div>
     </div>
