@@ -31,12 +31,36 @@ import {
 
 const FUNNEL_COLUMNS: FunnelStage[] = ['Day 1', 'Day 2', 'Minimum Bill', 'Level Up'];
 
-// Stage colors matching TrackUp for consistency
-const STAGE_COLORS: Partial<Record<FunnelStage, { header: string; bg: string; text: string }>> = {
-  'Day 1': { header: 'bg-violet-500', bg: 'bg-violet-50', text: 'text-violet-700' },
-  'Day 2': { header: 'bg-pink-500', bg: 'bg-pink-50', text: 'text-pink-700' },
-  'Minimum Bill': { header: 'bg-emerald-500', bg: 'bg-emerald-50', text: 'text-emerald-700' },
-  'Level Up': { header: 'bg-cyan-500', bg: 'bg-cyan-50', text: 'text-cyan-700' },
+// Premium gradient stage colors
+const STAGE_COLORS: Partial<Record<FunnelStage, { header: string; bg: string; text: string; badge: string; border: string }>> = {
+  'Day 1': { 
+    header: 'bg-gradient-to-r from-indigo-600 to-violet-600', 
+    bg: 'bg-gradient-to-br from-indigo-50/80 to-violet-50/80 dark:from-indigo-950/30 dark:to-violet-950/30', 
+    text: 'text-indigo-700 dark:text-indigo-300',
+    badge: 'bg-white/30 text-white',
+    border: 'border-indigo-200/60 dark:border-indigo-800/40'
+  },
+  'Day 2': { 
+    header: 'bg-gradient-to-r from-rose-500 to-pink-600', 
+    bg: 'bg-gradient-to-br from-rose-50/80 to-pink-50/80 dark:from-rose-950/30 dark:to-pink-950/30', 
+    text: 'text-rose-700 dark:text-rose-300',
+    badge: 'bg-white/30 text-white',
+    border: 'border-rose-200/60 dark:border-rose-800/40'
+  },
+  'Minimum Bill': { 
+    header: 'bg-gradient-to-r from-emerald-500 to-teal-600', 
+    bg: 'bg-gradient-to-br from-emerald-50/80 to-teal-50/80 dark:from-emerald-950/30 dark:to-teal-950/30', 
+    text: 'text-emerald-700 dark:text-emerald-300',
+    badge: 'bg-white/30 text-white',
+    border: 'border-emerald-200/60 dark:border-emerald-800/40'
+  },
+  'Level Up': { 
+    header: 'bg-gradient-to-r from-amber-500 to-orange-500', 
+    bg: 'bg-gradient-to-br from-amber-50/80 to-orange-50/80 dark:from-amber-950/30 dark:to-orange-950/30', 
+    text: 'text-amber-700 dark:text-amber-300',
+    badge: 'bg-white/30 text-white',
+    border: 'border-amber-200/60 dark:border-amber-800/40'
+  },
 };
 
 interface MiniReportCardProps {
@@ -124,12 +148,13 @@ function MiniReportCard({ prospect, onAddTodo }: MiniReportCardProps) {
 
 interface DraggableProspectProps {
   prospect: Prospect;
+  index: number;
   isExpanded: boolean;
   onToggleExpand: (prospectId: string) => void;
   onAddTodo: (text: string) => void;
 }
 
-function DraggableProspect({ prospect, isExpanded, onToggleExpand, onAddTodo }: DraggableProspectProps) {
+function DraggableProspect({ prospect, index, isExpanded, onToggleExpand, onAddTodo }: DraggableProspectProps) {
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
     id: prospect.id,
     data: { prospect },
@@ -137,15 +162,19 @@ function DraggableProspect({ prospect, isExpanded, onToggleExpand, onAddTodo }: 
 
   const style = transform ? {
     transform: `translate3d(${transform.x}px, ${transform.y}px, 0)`,
+    transition: 'transform 150ms ease',
   } : undefined;
 
   return (
-    <div ref={setNodeRef} style={style} className={cn(isDragging && "opacity-50")}>
+    <div ref={setNodeRef} style={style} className={cn(
+      "transition-all duration-200",
+      isDragging && "opacity-50 scale-105"
+    )}>
       <div
         className={cn(
-          "flex items-center gap-1 px-2 py-1.5 rounded-lg text-sm font-medium transition-colors",
-          "hover:bg-accent/10 group",
-          isExpanded && "bg-accent/10"
+          "flex items-center gap-1.5 px-2 py-2 rounded-lg text-sm font-medium transition-all duration-200",
+          "hover:bg-white/60 dark:hover:bg-white/10 group border border-transparent",
+          isExpanded && "bg-white/60 dark:bg-white/10 border-border/30"
         )}
       >
         <button
@@ -158,9 +187,10 @@ function DraggableProspect({ prospect, isExpanded, onToggleExpand, onAddTodo }: 
         </button>
         <button
           onClick={() => onToggleExpand(prospect.id)}
-          className="flex-1 text-left truncate"
+          className="flex-1 text-left flex items-center gap-1.5"
         >
-          {prospect.name}
+          <span className="text-muted-foreground font-normal text-xs w-5">{index + 1}.</span>
+          <span className="truncate">{prospect.name}</span>
         </button>
       </div>
       
@@ -189,46 +219,49 @@ function FunnelColumn({ stage, prospects, isPro, expandedProspectId, onToggleExp
   const colors = STAGE_COLORS[stage as keyof typeof STAGE_COLORS] || { 
     header: 'bg-accent', 
     bg: 'bg-accent/5', 
-    text: 'text-accent' 
+    text: 'text-accent',
+    badge: 'bg-white/30 text-white',
+    border: 'border-border/30'
   };
 
   return (
     <div
       ref={setNodeRef}
       className={cn(
-        "rounded-xl overflow-hidden border transition-all",
+        "rounded-xl overflow-hidden border transition-all duration-200 shadow-sm hover:shadow-md",
         colors.bg,
-        isOver 
-          ? "border-accent shadow-lg ring-2 ring-accent/30" 
-          : "border-border/30 hover:shadow-md hover:border-border/50"
+        colors.border,
+        isOver && "shadow-lg ring-2 ring-accent/30 scale-[1.02]"
       )}
     >
-      {/* Compact Header with Stage · Count */}
-      <div className={cn(colors.header, "px-3 py-1.5")}>
-        <p className="text-xs font-semibold text-white truncate">
-          {stage} · {isPro ? prospects.length : '–'}
-        </p>
+      {/* Premium Header with Stage name LEFT, Count badge RIGHT */}
+      <div className={cn(colors.header, "px-3 py-2 flex items-center justify-between")}>
+        <span className="text-xs font-semibold text-white truncate">{stage}</span>
+        <span className={cn("text-[10px] font-bold px-2 py-0.5 rounded-full", colors.badge)}>
+          {isPro ? prospects.length : '–'}
+        </span>
       </div>
       
-      {/* Prospect Names with improved styling */}
+      {/* Prospect Names with numbered list */}
       <div className={cn(
-        "p-2 max-h-48 overflow-y-auto space-y-1.5",
-        isOver && "bg-accent/10"
+        "p-2 max-h-52 overflow-y-auto space-y-1",
+        isOver && "bg-white/30 dark:bg-white/5"
       )}>
         {!isPro ? (
           <p className="text-xs text-muted-foreground text-center py-4">Upgrade to view</p>
         ) : prospects.length === 0 ? (
           <p className={cn(
-            "text-xs text-center py-4",
+            "text-xs text-center py-4 transition-colors",
             isOver ? "text-accent font-medium" : "text-muted-foreground"
           )}>
             {isOver ? "Drop here" : "No prospects"}
           </p>
         ) : (
-          prospects.map((prospect) => (
+          prospects.map((prospect, index) => (
             <DraggableProspect
               key={prospect.id}
               prospect={prospect}
+              index={index}
               isExpanded={expandedProspectId === prospect.id}
               onToggleExpand={onToggleExpand}
               onAddTodo={onAddTodo}
@@ -327,7 +360,7 @@ export default function TodoUp() {
 
     try {
       await updateProspect(prospectId, { funnel_stage: newStage });
-      toast.success(`${prospect.name} moved to ${newStage}`);
+      // Silent update - no toast popup for smooth drag experience
     } catch (error) {
       toast.error('Failed to update prospect stage');
     }
@@ -396,9 +429,9 @@ export default function TodoUp() {
               <p className="text-[10px] text-muted-foreground font-medium">Never miss a followup Again</p>
             </div>
           </div>
-          {/* AI Summary Badge */}
-          <div className="flex items-center gap-1.5 bg-accent text-white px-3 py-1.5 rounded-full text-xs font-medium">
-            <Sparkles className="h-3.5 w-3.5" />
+          {/* AI Summary Badge - Premium Black & Gold */}
+          <div className="flex items-center gap-1.5 bg-gray-900 text-amber-400 px-3 py-1.5 rounded-full text-xs font-medium shadow-lg border border-amber-400/20">
+            <Sparkles className="h-3.5 w-3.5 text-amber-400" />
             <span>AI Summary · Coming Soon</span>
           </div>
         </div>
@@ -460,7 +493,7 @@ export default function TodoUp() {
             
             <DragOverlay>
               {activeProspect && (
-                <div className="px-3 py-2 bg-accent text-accent-foreground rounded-lg shadow-xl text-sm font-medium">
+                <div className="px-4 py-2.5 bg-gradient-to-r from-gray-900 to-gray-800 text-white rounded-xl shadow-2xl text-sm font-medium border border-white/10 backdrop-blur-sm">
                   {activeProspect.name}
                 </div>
               )}
