@@ -9,13 +9,27 @@ import { UpgradeBar } from '@/components/subscription/UpgradeBar';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Loader2, CheckCircle, Lock, Trash2, Edit2, Send, X, Check, Phone, MessageCircle, Plus } from 'lucide-react';
+import { Loader2, CheckCircle, Lock, Trash2, Edit2, Send, X, Check, Phone, MessageCircle, Plus, GripVertical } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 import { cn } from '@/lib/utils';
-import { Prospect } from '@/types/prospect';
+import { Prospect, FunnelStage } from '@/types/prospect';
 import nevoraLogo from '@/assets/nevorai-logo.jpeg';
+import { toast } from 'sonner';
+import {
+  DndContext,
+  DragOverlay,
+  closestCenter,
+  PointerSensor,
+  TouchSensor,
+  useSensor,
+  useSensors,
+  DragStartEvent,
+  DragEndEvent,
+  useDroppable,
+  useDraggable,
+} from '@dnd-kit/core';
 
-const FUNNEL_COLUMNS = ['Day 1', 'Day 2', 'Minimum Bill', 'Level Up'] as const;
+const FUNNEL_COLUMNS: FunnelStage[] = ['Day 1', 'Day 2', 'Minimum Bill', 'Level Up'];
 
 interface MiniReportCardProps {
   prospect: Prospect;
@@ -100,6 +114,55 @@ function MiniReportCard({ prospect, onAddTodo }: MiniReportCardProps) {
   );
 }
 
+interface DraggableProspectProps {
+  prospect: Prospect;
+  isExpanded: boolean;
+  onToggleExpand: (prospectId: string) => void;
+  onAddTodo: (text: string) => void;
+}
+
+function DraggableProspect({ prospect, isExpanded, onToggleExpand, onAddTodo }: DraggableProspectProps) {
+  const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
+    id: prospect.id,
+    data: { prospect },
+  });
+
+  const style = transform ? {
+    transform: `translate3d(${transform.x}px, ${transform.y}px, 0)`,
+  } : undefined;
+
+  return (
+    <div ref={setNodeRef} style={style} className={cn(isDragging && "opacity-50")}>
+      <div
+        className={cn(
+          "flex items-center gap-1 px-2 py-1.5 rounded-lg text-sm font-medium transition-colors",
+          "hover:bg-accent/10 group",
+          isExpanded && "bg-accent/10"
+        )}
+      >
+        <button
+          {...attributes}
+          {...listeners}
+          className="touch-none cursor-grab active:cursor-grabbing opacity-0 group-hover:opacity-100 transition-opacity p-0.5"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <GripVertical className="h-3.5 w-3.5 text-muted-foreground" />
+        </button>
+        <button
+          onClick={() => onToggleExpand(prospect.id)}
+          className="flex-1 text-left truncate"
+        >
+          {prospect.name}
+        </button>
+      </div>
+      
+      {isExpanded && (
+        <MiniReportCard prospect={prospect} onAddTodo={onAddTodo} />
+      )}
+    </div>
+  );
+}
+
 interface FunnelColumnProps {
   stage: string;
   prospects: Prospect[];
@@ -107,11 +170,24 @@ interface FunnelColumnProps {
   expandedProspectId: string | null;
   onToggleExpand: (prospectId: string) => void;
   onAddTodo: (text: string) => void;
+  isOver: boolean;
 }
 
-function FunnelColumn({ stage, prospects, isPro, expandedProspectId, onToggleExpand, onAddTodo }: FunnelColumnProps) {
+function FunnelColumn({ stage, prospects, isPro, expandedProspectId, onToggleExpand, onAddTodo, isOver }: FunnelColumnProps) {
+  const { setNodeRef } = useDroppable({
+    id: stage,
+  });
+
   return (
-    <div className="bg-accent/5 rounded-xl overflow-hidden border border-accent/10 hover:shadow-md transition-shadow">
+    <div
+      ref={setNodeRef}
+      className={cn(
+        "bg-accent/5 rounded-xl overflow-hidden border transition-all",
+        isOver 
+          ? "border-accent shadow-lg ring-2 ring-accent/30" 
+          : "border-accent/10 hover:shadow-md"
+      )}
+    >
       {/* Header */}
       <div className="bg-accent text-accent-foreground px-3 py-2">
         <p className="text-xs font-semibold truncate">{stage}</p>
@@ -119,29 +195,28 @@ function FunnelColumn({ stage, prospects, isPro, expandedProspectId, onToggleExp
       </div>
       
       {/* Prospect Names */}
-      <div className="p-2 max-h-48 overflow-y-auto space-y-1">
+      <div className={cn(
+        "p-2 max-h-48 overflow-y-auto space-y-1",
+        isOver && "bg-accent/10"
+      )}>
         {!isPro ? (
           <p className="text-xs text-muted-foreground text-center py-4">Upgrade to view</p>
         ) : prospects.length === 0 ? (
-          <p className="text-xs text-muted-foreground text-center py-4">No prospects</p>
+          <p className={cn(
+            "text-xs text-center py-4",
+            isOver ? "text-accent font-medium" : "text-muted-foreground"
+          )}>
+            {isOver ? "Drop here" : "No prospects"}
+          </p>
         ) : (
           prospects.map((prospect) => (
-            <div key={prospect.id}>
-              <button
-                onClick={() => onToggleExpand(prospect.id)}
-                className={cn(
-                  "w-full text-left px-2 py-1.5 rounded-lg text-sm font-medium transition-colors",
-                  "hover:bg-accent/10",
-                  expandedProspectId === prospect.id && "bg-accent/10"
-                )}
-              >
-                <span className="block truncate">{prospect.name}</span>
-              </button>
-              
-              {expandedProspectId === prospect.id && (
-                <MiniReportCard prospect={prospect} onAddTodo={onAddTodo} />
-              )}
-            </div>
+            <DraggableProspect
+              key={prospect.id}
+              prospect={prospect}
+              isExpanded={expandedProspectId === prospect.id}
+              onToggleExpand={onToggleExpand}
+              onAddTodo={onAddTodo}
+            />
           ))
         )}
       </div>
@@ -152,13 +227,30 @@ function FunnelColumn({ stage, prospects, isPro, expandedProspectId, onToggleExp
 export default function TodoUp() {
   const navigate = useNavigate();
   const { user, loading: authLoading } = useAuth();
-  const { prospects } = useProspects();
+  const { prospects, updateProspect } = useProspects();
   const { isPro, loading: subLoading } = useSubscription();
   const { todos, loading: todosLoading, addTodo, updateTodo, toggleTodo, deleteTodo } = useTodos();
   const [newTodoInput, setNewTodoInput] = useState('');
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editingTitle, setEditingTitle] = useState('');
   const [expandedProspectId, setExpandedProspectId] = useState<string | null>(null);
+  const [activeProspect, setActiveProspect] = useState<Prospect | null>(null);
+  const [overColumnId, setOverColumnId] = useState<string | null>(null);
+
+  // Configure sensors for drag-and-drop
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 8,
+      },
+    }),
+    useSensor(TouchSensor, {
+      activationConstraint: {
+        delay: 200,
+        tolerance: 5,
+      },
+    })
+  );
 
   useEffect(() => {
     if (!user && !authLoading) {
@@ -183,6 +275,47 @@ export default function TodoUp() {
     
     return groups;
   }, [prospects]);
+
+  const handleDragStart = (event: DragStartEvent) => {
+    const prospect = event.active.data.current?.prospect as Prospect;
+    if (prospect) {
+      setActiveProspect(prospect);
+      setExpandedProspectId(null); // Collapse any expanded card when dragging
+    }
+  };
+
+  const handleDragOver = (event: any) => {
+    const overId = event.over?.id;
+    if (overId && FUNNEL_COLUMNS.includes(overId as any)) {
+      setOverColumnId(overId);
+    } else {
+      setOverColumnId(null);
+    }
+  };
+
+  const handleDragEnd = async (event: DragEndEvent) => {
+    const { active, over } = event;
+    setActiveProspect(null);
+    setOverColumnId(null);
+
+    if (!over) return;
+
+    const prospectId = active.id as string;
+    const newStage = over.id as FunnelStage;
+    const prospect = active.data.current?.prospect as Prospect;
+
+    if (!prospect || !FUNNEL_COLUMNS.includes(newStage)) return;
+
+    // Don't update if dropped in the same column
+    if (prospect.funnel_stage === newStage) return;
+
+    try {
+      await updateProspect(prospectId, { funnel_stage: newStage });
+      toast.success(`${prospect.name} moved to ${newStage}`);
+    } catch (error) {
+      toast.error('Failed to update prospect stage');
+    }
+  };
 
   const handleAddTodo = async (text?: string) => {
     const todoText = text || newTodoInput.trim();
@@ -276,22 +409,42 @@ export default function TodoUp() {
           </div>
         )}
 
-        {/* Funnel Stage Dashboard - 4 columns */}
+        {/* Funnel Stage Dashboard - 4 columns with DnD */}
         <div className="bg-card rounded-2xl p-4 border border-border/50 shadow-sm">
-          <p className="text-xs text-muted-foreground mb-3 font-medium">Funnel Stage Overview</p>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-            {FUNNEL_COLUMNS.map(stage => (
-              <FunnelColumn
-                key={stage}
-                stage={stage}
-                prospects={funnelData[stage]}
-                isPro={isPro}
-                expandedProspectId={expandedProspectId}
-                onToggleExpand={handleToggleExpand}
-                onAddTodo={handlePreFillTodo}
-              />
-            ))}
-          </div>
+          <p className="text-xs text-muted-foreground mb-3 font-medium">
+            Funnel Stage Overview 
+            {isPro && <span className="text-accent ml-1">(drag to move)</span>}
+          </p>
+          <DndContext
+            sensors={sensors}
+            collisionDetection={closestCenter}
+            onDragStart={handleDragStart}
+            onDragOver={handleDragOver}
+            onDragEnd={handleDragEnd}
+          >
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+              {FUNNEL_COLUMNS.map(stage => (
+                <FunnelColumn
+                  key={stage}
+                  stage={stage}
+                  prospects={funnelData[stage]}
+                  isPro={isPro}
+                  expandedProspectId={expandedProspectId}
+                  onToggleExpand={handleToggleExpand}
+                  onAddTodo={handlePreFillTodo}
+                  isOver={overColumnId === stage}
+                />
+              ))}
+            </div>
+            
+            <DragOverlay>
+              {activeProspect && (
+                <div className="px-3 py-2 bg-accent text-accent-foreground rounded-lg shadow-xl text-sm font-medium">
+                  {activeProspect.name}
+                </div>
+              )}
+            </DragOverlay>
+          </DndContext>
         </div>
 
         {/* To-Do List */}
