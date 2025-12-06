@@ -11,6 +11,9 @@ import { Button } from '@/components/ui/button';
 import { Users, GripVertical, LayoutGrid, Table2 } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { cn } from '@/lib/utils';
+import { toast } from 'sonner';
+import * as XLSX from 'xlsx';
+import { format } from 'date-fns';
 
 interface Filters {
   search: string;
@@ -79,6 +82,7 @@ export function ProspectTable({
   });
   const [expandedRowId, setExpandedRowId] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<'card' | 'table'>('table');
+  const [exporting, setExporting] = useState(false);
   const isMobile = useIsMobile();
 
   // Column state for reordering and resizing
@@ -171,28 +175,84 @@ export function ProspectTable({
     });
   }, [sheetFilteredProspects, filters]);
 
-  const exportToCSV = () => {
-    const headers = ['#', 'Name', 'Phone', 'Address', 'Funnel Stage', 'Action Taken', 'Quality', 'Notes', 'Date Added'];
-    const csvContent = [
-      headers.join(','),
-      ...filteredProspects.map((p, i) => [
-        i + 1,
-        `"${p.name}"`,
-        `"${p.phone}"`,
-        `"${[p.city, p.state].filter(Boolean).join(', ')}"`,
-        `"${p.funnel_stage || ''}"`,
-        `"${p.action_taken || ''}"`,
-        `"${p.prospect_status || ''}"`,
-        `"${(p.notes || '').replace(/"/g, '""')}"`,
-        `"${p.date_added}"`,
-      ].join(','))
-    ].join('\n');
+  const getFilterLabel = (): string => {
+    if (filters.stages.length > 0) return filters.stages.join('_').replace(/\s+/g, '');
+    if (filters.actions.length > 0) return filters.actions.join('_').replace(/\s+/g, '');
+    if (filters.qualities.length > 0) return filters.qualities.join('_');
+    if (filters.incompleteOnly) return 'Incomplete';
+    return filterMode === 'calling' ? 'Calling' : 'Funnel';
+  };
 
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const link = document.createElement('a');
-    link.href = URL.createObjectURL(blob);
-    link.download = `prospects_${filterMode}_${new Date().toISOString().split('T')[0]}.csv`;
-    link.click();
+  const exportToExcel = async () => {
+    if (filteredProspects.length === 0) {
+      toast.error('No data to export. Apply filters or add prospects first.');
+      return;
+    }
+
+    setExporting(true);
+
+    try {
+      // Prepare data for Excel
+      const exportData = filteredProspects.map((p, i) => ({
+        '#': i + 1,
+        'Name': p.name || '',
+        'Phone Number': p.phone || '',
+        'Age': p.age_or_dob || '',
+        'Gender': p.gender || '',
+        'Address': [p.city, p.state].filter(Boolean).join(', ') || '',
+        'Enrollment Status': p.enrollment_status || (p.funnel_stage && p.funnel_stage !== 'Enrollment' ? 'Enrolled' : 'Not Enrolled'),
+        'Funnel Stage': p.funnel_stage || '',
+        'Last Action': p.action_taken || 'No Action',
+        'Last Action Date': p.updated_at ? format(new Date(p.updated_at), 'dd/MM/yyyy HH:mm') : '',
+        'Quality': p.prospect_status || '',
+        'Priority': p.priority || '',
+        'Notes': p.notes || '',
+        'Profession': p.profession || '',
+        'Instagram': p.instagram || '',
+        'Date Added': p.date_added ? format(new Date(p.date_added), 'dd/MM/yyyy') : '',
+      }));
+
+      // Create workbook and worksheet
+      const wb = XLSX.utils.book_new();
+      const ws = XLSX.utils.json_to_sheet(exportData);
+
+      // Set column widths
+      ws['!cols'] = [
+        { wch: 5 },   // #
+        { wch: 25 },  // Name
+        { wch: 15 },  // Phone
+        { wch: 10 },  // Age
+        { wch: 10 },  // Gender
+        { wch: 30 },  // Address
+        { wch: 15 },  // Enrollment Status
+        { wch: 12 },  // Funnel Stage
+        { wch: 18 },  // Last Action
+        { wch: 18 },  // Last Action Date
+        { wch: 10 },  // Quality
+        { wch: 10 },  // Priority
+        { wch: 40 },  // Notes
+        { wch: 20 },  // Profession
+        { wch: 20 },  // Instagram
+        { wch: 12 },  // Date Added
+      ];
+
+      XLSX.utils.book_append_sheet(wb, ws, 'Prospects');
+
+      // Generate filename
+      const dateStr = format(new Date(), 'yyyy-MM-dd');
+      const filterLabel = getFilterLabel();
+      const filename = `NevorAI_Prospects_${dateStr}_${filterLabel}.xlsx`;
+
+      // Trigger download
+      XLSX.writeFile(wb, filename);
+
+      toast.success(`Exported ${filteredProspects.length} prospects successfully!`);
+    } catch (err) {
+      console.error('Export error:', err);
+      toast.error('Failed to export data. Please try again.');
+    } finally {
+      setExporting(false);
+    }
   };
 
   const handleAddProspect = async (prospect: Partial<Prospect>) => {
@@ -325,7 +385,13 @@ export function ProspectTable({
       {/* Toolbar: Filters + Actions */}
       <div className="bg-card/50 rounded-xl border border-border/50 p-2 sm:p-3 space-y-2 sm:space-y-3">
         <div className="flex flex-col gap-2 sm:gap-3">
-          <ProspectFilters filters={filters} onFiltersChange={setFilters} onExport={exportToCSV} />
+          <ProspectFilters 
+            filters={filters} 
+            onFiltersChange={setFilters} 
+            onExport={exportToExcel}
+            exporting={exporting}
+            filteredCount={filteredProspects.length}
+          />
           <div className="flex gap-2 items-center justify-between">
             {/* View Toggle - Available on all screen sizes */}
             <div className="flex items-center bg-muted rounded-lg p-0.5">
