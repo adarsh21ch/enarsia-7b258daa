@@ -64,14 +64,13 @@ export function useProspects() {
       .insert({
         name: prospect.name!,
         phone: prospect.phone!,
-        email: prospect.email || null,
-        notes: prospect.notes || null,
         user_id: user.id,
-        funnel_stage: prospect.funnel_stage || null,
-        priority: prospect.priority || null,
+        city: prospect.city || null,
+        state: prospect.state || null,
+        age_or_dob: (prospect as any).age_or_dob || null,
+        gender: (prospect as any).gender || null,
         sheet_id: prospect.sheet_id || null,
         batch_date: prospect.batch_date || new Date().toISOString().split('T')[0],
-        enrollment_status: (prospect.enrollment_status || 'Not Enrolled') as any,
       })
       .select()
       .single();
@@ -138,16 +137,12 @@ export function useProspects() {
       user_id: user.id,
       name: p.name!,
       phone: p.phone!,
-      email: p.email || null,
-      notes: p.notes || null,
-      funnel_stage: p.funnel_stage || null,
-      action_taken: p.action_taken || null,
-      prospect_status: p.prospect_status || null,
-      priority: p.priority || null,
-      last_contact_date: p.last_contact_date || null,
+      city: p.city || null,
+      state: p.state || null,
+      age_or_dob: (p as any).age_or_dob || null,
+      gender: (p as any).gender || null,
       sheet_id: p.sheet_id || null,
       batch_date: p.batch_date || new Date().toISOString().split('T')[0],
-      enrollment_status: (p.enrollment_status || 'Not Enrolled') as any,
     }));
 
     const { data, error } = await supabase

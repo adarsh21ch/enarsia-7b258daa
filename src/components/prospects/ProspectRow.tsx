@@ -158,24 +158,30 @@ export function ProspectRow({
       case 'name':
         return (
           <td key={columnId} className={cellClass} style={style}>
-            <button
-              onClick={onToggleExpand}
-              className={cn(
-                "group flex items-center gap-1 text-left font-semibold text-foreground hover:text-primary transition-all duration-200 cursor-pointer bg-transparent border-0 py-1 px-1.5 -ml-1.5 rounded-md truncate max-w-full",
-                "hover:bg-primary/5 active:scale-[0.98]",
-                isMobileTable && "text-xs py-0.5",
-                isExpanded && "text-primary bg-primary/10"
-              )}
-              title={isExpanded ? "Click to collapse" : "Click to expand details"}
-            >
-              <span className="truncate">{prospect.name}</span>
-              <span className={cn(
-                "transition-transform duration-200 text-muted-foreground group-hover:text-primary",
-                isExpanded && "rotate-180"
-              )}>
-                <ChevronDown className={cn("h-3 w-3", isMobileTable && "h-2.5 w-2.5")} />
-              </span>
-            </button>
+            <div className="flex flex-col">
+              <button
+                onClick={onToggleExpand}
+                className={cn(
+                  "group flex items-center gap-1 text-left font-semibold text-foreground hover:text-primary transition-all duration-200 cursor-pointer bg-transparent border-0 py-1 px-1.5 -ml-1.5 rounded-md truncate max-w-full",
+                  "hover:bg-primary/5 active:scale-[0.98]",
+                  isMobileTable && "text-xs py-0.5",
+                  isExpanded && "text-primary bg-primary/10"
+                )}
+                title={isExpanded ? "Click to collapse" : "Click to expand details"}
+              >
+                <span className="truncate">{prospect.name}</span>
+                <span className={cn(
+                  "transition-transform duration-200 text-muted-foreground group-hover:text-primary",
+                  isExpanded && "rotate-180"
+                )}>
+                  <ChevronDown className={cn("h-3 w-3", isMobileTable && "h-2.5 w-2.5")} />
+                </span>
+              </button>
+              <div className={cn("flex items-center gap-2 text-muted-foreground ml-1.5", isMobileTable ? "text-[9px]" : "text-[10px]")}>
+                <span>Age: {(prospect as any).age_or_dob || '–'}</span>
+                <span>Gender: {(prospect as any).gender || '–'}</span>
+              </div>
+            </div>
           </td>
         );
       case 'phone':

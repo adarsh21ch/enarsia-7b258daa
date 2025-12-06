@@ -123,7 +123,7 @@ export function MobileProspectCard({ prospect, index, isCalling, onUpdate, onDel
 
   return (
     <div className="bg-card rounded-xl border border-border/50 shadow-sm overflow-hidden">
-      {/* Header: Name + Phone + Quick Actions */}
+      {/* Header: Name + Phone + Age/Gender + Quick Actions */}
       <div className="p-4 border-b border-border/30">
         <div className="flex items-start justify-between gap-3">
           <div className="flex-1 min-w-0">
@@ -146,12 +146,20 @@ export function MobileProspectCard({ prospect, index, isCalling, onUpdate, onDel
                 )} />
               </button>
             </div>
-            <a 
-              href={`tel:${cleanPhoneNumber(prospect.phone)}`}
-              className="text-sm text-muted-foreground font-medium hover:text-accent transition-colors"
-            >
-              {localData.phone}
-            </a>
+            <div className="flex items-center gap-2 flex-wrap">
+              <a 
+                href={`tel:${cleanPhoneNumber(prospect.phone)}`}
+                className="text-sm text-muted-foreground font-medium hover:text-accent transition-colors"
+              >
+                {localData.phone}
+              </a>
+              <span className="text-xs text-muted-foreground">
+                Age: {(prospect as any).age_or_dob || '–'}
+              </span>
+              <span className="text-xs text-muted-foreground">
+                Gender: {(prospect as any).gender || '–'}
+              </span>
+            </div>
           </div>
           <div className="flex items-center gap-1">
             <Button variant="outline" size="icon" className="h-10 w-10" onClick={openCall}>
