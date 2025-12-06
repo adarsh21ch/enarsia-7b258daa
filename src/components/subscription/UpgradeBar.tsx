@@ -1,7 +1,7 @@
 import { Lock, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useSubscription } from '@/hooks/useSubscription';
-import { useNavigate } from 'react-router-dom';
+import { useToast } from '@/hooks/use-toast';
 
 interface UpgradeBarProps {
   onUpgrade?: () => void;
@@ -9,10 +9,14 @@ interface UpgradeBarProps {
 
 export function UpgradeBar({ onUpgrade }: UpgradeBarProps) {
   const { isPro, loading } = useSubscription();
-  const navigate = useNavigate();
+  const { toast } = useToast();
 
-  const handleNavigateToProfile = () => {
-    navigate('/profile');
+  const handleSubscribe = () => {
+    toast({
+      title: "Opening Payment Gateway",
+      description: "Redirecting to Razorpay for ₹249 subscription...",
+    });
+    window.open('https://rzp.io/rzp/uuE0lO96', '_blank');
     if (onUpgrade) onUpgrade();
   };
 
@@ -36,7 +40,7 @@ export function UpgradeBar({ onUpgrade }: UpgradeBarProps) {
             </div>
           </div>
           <Button 
-            onClick={handleNavigateToProfile}
+            onClick={handleSubscribe}
             variant="secondary"
             size="sm"
             className="shrink-0 font-semibold"
