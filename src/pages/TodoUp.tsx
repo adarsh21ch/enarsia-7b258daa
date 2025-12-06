@@ -9,7 +9,7 @@ import { UpgradeBar } from '@/components/subscription/UpgradeBar';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Loader2, CheckCircle, Lock, Trash2, Edit2, Send, X, Check, Phone, MessageCircle, Plus, GripVertical, Sparkles } from 'lucide-react';
+import { Loader2, CheckCircle, Lock, Trash2, Edit2, Send, X, Check, Phone, MessageCircle, Plus, GripVertical, ArrowUp } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { Prospect, FunnelStage } from '@/types/prospect';
@@ -31,35 +31,35 @@ import {
 
 const FUNNEL_COLUMNS: FunnelStage[] = ['Day 1', 'Day 2', 'Minimum Bill', 'Level Up'];
 
-// Premium gradient stage colors
+// Premium soft stage colors - reusing brand colors
 const STAGE_COLORS: Partial<Record<FunnelStage, { header: string; bg: string; text: string; badge: string; border: string }>> = {
   'Day 1': { 
-    header: 'bg-gradient-to-r from-indigo-600 to-violet-600', 
-    bg: 'bg-gradient-to-br from-indigo-50/80 to-violet-50/80 dark:from-indigo-950/30 dark:to-violet-950/30', 
-    text: 'text-indigo-700 dark:text-indigo-300',
-    badge: 'bg-white/30 text-white',
-    border: 'border-indigo-200/60 dark:border-indigo-800/40'
+    header: 'bg-gradient-to-r from-indigo-500 to-violet-500', 
+    bg: 'bg-indigo-50/60 dark:bg-indigo-950/20', 
+    text: 'text-indigo-800 dark:text-indigo-200',
+    badge: 'bg-white/90 text-indigo-700 dark:bg-indigo-900 dark:text-indigo-100',
+    border: 'border-indigo-100 dark:border-indigo-800/30'
   },
   'Day 2': { 
-    header: 'bg-gradient-to-r from-rose-500 to-pink-600', 
-    bg: 'bg-gradient-to-br from-rose-50/80 to-pink-50/80 dark:from-rose-950/30 dark:to-pink-950/30', 
-    text: 'text-rose-700 dark:text-rose-300',
-    badge: 'bg-white/30 text-white',
-    border: 'border-rose-200/60 dark:border-rose-800/40'
+    header: 'bg-gradient-to-r from-rose-400 to-pink-500', 
+    bg: 'bg-rose-50/60 dark:bg-rose-950/20', 
+    text: 'text-rose-800 dark:text-rose-200',
+    badge: 'bg-white/90 text-rose-700 dark:bg-rose-900 dark:text-rose-100',
+    border: 'border-rose-100 dark:border-rose-800/30'
   },
   'Minimum Bill': { 
-    header: 'bg-gradient-to-r from-emerald-500 to-teal-600', 
-    bg: 'bg-gradient-to-br from-emerald-50/80 to-teal-50/80 dark:from-emerald-950/30 dark:to-teal-950/30', 
-    text: 'text-emerald-700 dark:text-emerald-300',
-    badge: 'bg-white/30 text-white',
-    border: 'border-emerald-200/60 dark:border-emerald-800/40'
+    header: 'bg-gradient-to-r from-emerald-400 to-teal-500', 
+    bg: 'bg-emerald-50/60 dark:bg-emerald-950/20', 
+    text: 'text-emerald-800 dark:text-emerald-200',
+    badge: 'bg-white/90 text-emerald-700 dark:bg-emerald-900 dark:text-emerald-100',
+    border: 'border-emerald-100 dark:border-emerald-800/30'
   },
   'Level Up': { 
-    header: 'bg-gradient-to-r from-amber-500 to-orange-500', 
-    bg: 'bg-gradient-to-br from-amber-50/80 to-orange-50/80 dark:from-amber-950/30 dark:to-orange-950/30', 
-    text: 'text-amber-700 dark:text-amber-300',
-    badge: 'bg-white/30 text-white',
-    border: 'border-amber-200/60 dark:border-amber-800/40'
+    header: 'bg-gradient-to-r from-amber-400 to-orange-400', 
+    bg: 'bg-amber-50/60 dark:bg-amber-950/20', 
+    text: 'text-amber-800 dark:text-amber-200',
+    badge: 'bg-white/90 text-amber-700 dark:bg-amber-900 dark:text-amber-100',
+    border: 'border-amber-100 dark:border-amber-800/30'
   },
 };
 
@@ -180,17 +180,17 @@ function DraggableProspect({ prospect, index, isExpanded, onToggleExpand, onAddT
         <button
           {...attributes}
           {...listeners}
-          className="touch-none cursor-grab active:cursor-grabbing opacity-0 group-hover:opacity-100 transition-opacity p-0.5"
+          className="touch-none cursor-grab active:cursor-grabbing opacity-0 group-hover:opacity-100 transition-opacity p-0.5 shrink-0"
           onClick={(e) => e.stopPropagation()}
         >
           <GripVertical className="h-3.5 w-3.5 text-muted-foreground" />
         </button>
         <button
           onClick={() => onToggleExpand(prospect.id)}
-          className="flex-1 text-left flex items-center gap-1.5"
+          className="flex-1 text-left flex items-start gap-1.5 min-w-0"
         >
-          <span className="text-muted-foreground font-normal text-xs w-5">{index + 1}.</span>
-          <span className="truncate">{prospect.name}</span>
+          <span className="text-muted-foreground/70 font-normal text-xs shrink-0">{index + 1}.</span>
+          <span className="text-sm font-medium leading-snug break-words whitespace-normal">{prospect.name}</span>
         </button>
       </div>
       
@@ -228,24 +228,27 @@ function FunnelColumn({ stage, prospects, isPro, expandedProspectId, onToggleExp
     <div
       ref={setNodeRef}
       className={cn(
-        "rounded-xl overflow-hidden border transition-all duration-200 shadow-sm hover:shadow-md",
+        "rounded-2xl overflow-hidden border transition-all duration-200 shadow-sm hover:shadow-md min-w-0",
         colors.bg,
         colors.border,
-        isOver && "shadow-lg ring-2 ring-accent/30 scale-[1.02]"
+        isOver && "shadow-lg ring-2 ring-accent/30 scale-[1.01]"
       )}
     >
       {/* Premium Header with Stage name LEFT, Count badge RIGHT */}
-      <div className={cn(colors.header, "px-3 py-2 flex items-center justify-between")}>
+      <div className={cn(colors.header, "px-3 py-2.5 flex items-center justify-between gap-2")}>
         <span className="text-xs font-semibold text-white truncate">{stage}</span>
-        <span className={cn("text-[10px] font-bold px-2 py-0.5 rounded-full", colors.badge)}>
+        <span className={cn(
+          "text-sm font-bold min-w-[28px] h-7 flex items-center justify-center rounded-full shadow-sm",
+          colors.badge
+        )}>
           {isPro ? prospects.length : '–'}
         </span>
       </div>
       
-      {/* Prospect Names with numbered list */}
+      {/* Prospect Names - wrapping text, no horizontal scroll */}
       <div className={cn(
-        "p-2 max-h-52 overflow-y-auto space-y-1",
-        isOver && "bg-white/30 dark:bg-white/5"
+        "p-3 max-h-56 overflow-y-auto space-y-1.5 overflow-x-hidden",
+        isOver && "bg-white/40 dark:bg-white/5"
       )}>
         {!isPro ? (
           <p className="text-xs text-muted-foreground text-center py-4">Upgrade to view</p>
@@ -417,7 +420,7 @@ export default function TodoUp() {
   return (
     <div className="min-h-screen bg-gradient-to-b from-background via-background to-muted/20 flex flex-col">
       <header className="sticky top-0 z-40 bg-card/80 backdrop-blur-xl border-b border-border/50">
-        <div className="flex items-center justify-between px-4 py-3">
+        <div className="flex items-center px-4 py-3">
           <div className="flex items-center gap-3">
             <img 
               src={nevoraLogo} 
@@ -428,11 +431,6 @@ export default function TodoUp() {
               <h1 className="text-lg font-bold tracking-tight">NevorAI</h1>
               <p className="text-[10px] text-muted-foreground font-medium">Never miss a followup Again</p>
             </div>
-          </div>
-          {/* AI Summary Badge - Premium Black & Gold */}
-          <div className="flex items-center gap-1.5 bg-gray-900 text-amber-400 px-3 py-1.5 rounded-full text-xs font-medium shadow-lg border border-amber-400/20">
-            <Sparkles className="h-3.5 w-3.5 text-amber-400" />
-            <span>AI Summary · Coming Soon</span>
           </div>
         </div>
       </header>
@@ -603,11 +601,11 @@ export default function TodoUp() {
         </div>
       </main>
 
-      {/* AI-style input bar at bottom */}
+      {/* Premium AI-style input bar at bottom */}
       {isPro && (
-        <div className="fixed bottom-20 left-0 right-0 z-30 px-4 pb-2 bg-gradient-to-t from-background via-background to-transparent pt-4">
+        <div className="fixed bottom-20 left-0 right-0 z-30 px-4 pb-3 bg-gradient-to-t from-background via-background/95 to-transparent pt-6">
           <div className="max-w-lg mx-auto">
-            <div className="flex items-center gap-2 bg-card border border-accent/30 rounded-2xl p-2 shadow-lg">
+            <div className="flex items-center gap-2 bg-card/95 backdrop-blur-sm border border-border/60 rounded-full px-4 py-2 shadow-xl ring-1 ring-black/5 dark:ring-white/5">
               <Input
                 placeholder="Add a to-do task or reminder…"
                 value={newTodoInput}
@@ -618,15 +616,19 @@ export default function TodoUp() {
                     handleAddTodo();
                   }
                 }}
-                className="flex-1 border-0 bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0 placeholder:text-muted-foreground/60"
+                className="flex-1 border-0 bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0 placeholder:text-muted-foreground/50 text-sm h-9"
               />
               <Button
                 size="icon"
-                className="h-9 w-9 rounded-xl shrink-0 bg-accent hover:bg-accent/90"
+                className={cn(
+                  "h-10 w-10 rounded-full shrink-0 bg-accent hover:bg-accent/90 shadow-md transition-all duration-150",
+                  "active:scale-95 hover:shadow-lg hover:shadow-accent/25",
+                  !newTodoInput.trim() && "opacity-60"
+                )}
                 onClick={() => handleAddTodo()}
                 disabled={!newTodoInput.trim()}
               >
-                <Send className="h-4 w-4" />
+                <ArrowUp className="h-5 w-5" />
               </Button>
             </div>
           </div>
