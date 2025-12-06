@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useProspects } from '@/hooks/useProspects';
 import { useUserTargets } from '@/hooks/useUserTargets';
-import { useActivityLogs } from '@/hooks/useActivityLogs';
+
 import { BottomNav } from '@/components/layout/BottomNav';
 import { StageBadge, StatusBadge } from '@/components/prospects/StatusBadge';
 import { Button } from '@/components/ui/button';
@@ -15,22 +15,20 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/component
 import { Label } from '@/components/ui/label';
 import { 
   Loader2, Users, CheckCircle, TrendingUp, Target,
-  Settings2, ChevronDown, Activity, Clock
+  Settings2, ChevronDown, Clock
 } from 'lucide-react';
-import { format, parseISO, startOfDay, formatDistanceToNow } from 'date-fns';
+import { parseISO, formatDistanceToNow } from 'date-fns';
 import { cn } from '@/lib/utils';
 import nevoraLogo from '@/assets/nevorai-logo.jpeg';
 import { FUNNEL_STAGES, FunnelStage } from '@/types/prospect';
 
-// Activity types to show (only meaningful post-enrollment activities)
-const MEANINGFUL_ACTIVITY_TYPES = ['stage_change', 'enrollment', 'action_change', 'funnel_progress'];
+// Removed Today's Followup section - kept for future use if needed
 
 export default function Home() {
   const navigate = useNavigate();
   const { user, loading: authLoading } = useAuth();
   const { prospects, loading: prospectsLoading } = useProspects();
   const { targets, loading: targetsLoading, updateTarget } = useUserTargets();
-  const { activities, loading: activitiesLoading } = useActivityLogs(100);
   const [editTargetsOpen, setEditTargetsOpen] = useState(false);
   const [editingTargets, setEditingTargets] = useState<Record<string, number>>({});
   const [targetsExpanded, setTargetsExpanded] = useState(false);
@@ -69,78 +67,7 @@ export default function Home() {
     };
   }, [prospects]);
 
-  // Today's follow-ups based on activity (meaningful activities only, today)
-  const todaysFollowups = useMemo(() => {
-    const today = startOfDay(new Date());
-    
-    // Filter activities to today only and meaningful types
-    const todayActivities = activities.filter(a => {
-      const activityDate = startOfDay(parseISO(a.created_at));
-      return activityDate.getTime() === today.getTime() && 
-             MEANINGFUL_ACTIVITY_TYPES.includes(a.activity_type);
-    });
-
-    // Group by activity type and count
-    const grouped: Record<string, { count: number; items: typeof todayActivities }> = {};
-    
-    todayActivities.forEach(a => {
-      const key = `${a.activity_type}_${a.new_value || 'general'}`;
-      if (!grouped[key]) {
-        grouped[key] = { count: 0, items: [] };
-      }
-      grouped[key].count++;
-      grouped[key].items.push(a);
-    });
-
-    // Convert to summary entries
-    const summaries = Object.entries(grouped).map(([key, data]) => {
-      const [type, value] = key.split('_');
-      let description = '';
-      
-      if (type === 'stage_change') {
-        description = data.count === 1 
-          ? `1 prospect moved to ${value}`
-          : `${data.count} prospects moved to ${value}`;
-      } else if (type === 'enrollment') {
-        description = data.count === 1 
-          ? 'New prospect enrolled'
-          : `${data.count} prospects enrolled`;
-      } else if (type === 'action_change') {
-        description = data.count === 1 
-          ? `1 prospect updated to '${value}'`
-          : `${data.count} prospects updated to '${value}'`;
-      } else if (type === 'funnel_progress') {
-        description = data.count === 1 
-          ? '1 prospect progressed in funnel'
-          : `${data.count} prospects progressed in funnel`;
-      }
-
-      // Get the latest timestamp from items
-      const latestItem = data.items.reduce((latest, item) => 
-        new Date(item.created_at) > new Date(latest.created_at) ? item : latest
-      , data.items[0]);
-
-      return {
-        id: key,
-        description,
-        timestamp: latestItem.created_at,
-        count: data.count,
-        type,
-      };
-    });
-
-    // Sort by timestamp descending
-    return summaries.sort((a, b) => 
-      new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
-    ).slice(0, 10);
-  }, [activities]);
-
   const cleanPhoneNumber = (phone: string) => phone.replace(/[^0-9+]/g, '');
-
-  // Format timestamp as exact date/time
-  const formatExactTime = (timestamp: string) => {
-    return format(parseISO(timestamp), 'dd MMM yyyy, hh:mm a');
-  };
 
   if (authLoading || prospectsLoading) {
     return (
@@ -153,8 +80,8 @@ export default function Home() {
   if (!user) return null;
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-background via-background to-muted/20 pb-24">
-      <header className="sticky top-0 z-40 bg-card/80 backdrop-blur-xl border-b border-border/50">
+    <div className="min-h-screen bg-gradient-to-b from-background via-background to-muted/20 pb-24 main-container">
+      <header className="sticky top-0 z-40 bg-card/80 backdrop-blur-xl border-b border-border/50 max-w-full">
         <div className="flex items-center justify-between px-4 py-3">
           <div className="flex items-center gap-3">
             <img 
@@ -312,45 +239,6 @@ export default function Home() {
               </div>
             </CollapsibleContent>
           </Collapsible>
-        </div>
-
-        {/* Today's Followup - Activity-based */}
-        <div className="bg-card rounded-2xl p-4 border border-border/50">
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-2">
-              <Activity className="h-5 w-5 text-primary" />
-              <h3 className="font-semibold">Today's Followup</h3>
-            </div>
-            <span className="text-xs bg-primary/10 text-primary px-2 py-1 rounded-full font-medium">
-              {todaysFollowups.length}
-            </span>
-          </div>
-          
-          {activitiesLoading ? (
-            <div className="flex justify-center py-4">
-              <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
-            </div>
-          ) : todaysFollowups.length === 0 ? (
-            <p className="text-sm text-muted-foreground text-center py-4">
-              No activities today yet
-            </p>
-          ) : (
-            <div className="space-y-2">
-              {todaysFollowups.map(entry => (
-                <div
-                  key={entry.id}
-                  className="flex items-start justify-between gap-3 p-3 rounded-xl bg-muted/30 hover:bg-muted/50 transition-colors"
-                >
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium">{entry.description}</p>
-                  </div>
-                  <span className="text-[10px] text-muted-foreground shrink-0 whitespace-nowrap">
-                    {formatExactTime(entry.timestamp)}
-                  </span>
-                </div>
-              ))}
-            </div>
-          )}
         </div>
 
         {/* Recent Activity - from prospects */}
