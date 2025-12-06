@@ -35,7 +35,7 @@ export function UpgradeBar({ onUpgrade }: UpgradeBarProps) {
                 🔒 Upgrade to unlock this feature
               </p>
               <p className="text-xs text-primary-foreground/80">
-                ₹249 for 1 month
+                ₹249 for 1 Month
               </p>
             </div>
           </div>
