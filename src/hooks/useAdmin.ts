@@ -36,7 +36,7 @@ export function useAdmin() {
 
     setLoading(true);
     
-    // Fetch all profiles (all users have a profile via trigger)
+    // Fetch all profiles (admin can see all via RLS policy)
     const { data: profiles, error: profilesError } = await supabase
       .from('profiles')
       .select('user_id, display_name');
@@ -47,7 +47,7 @@ export function useAdmin() {
       return;
     }
 
-    // Fetch all subscriptions
+    // Fetch all subscriptions (admin can see all via RLS policy)
     const { data: subscriptions, error: subsError } = await supabase
       .from('user_subscriptions')
       .select('*');
@@ -61,7 +61,7 @@ export function useAdmin() {
       const sub = subscriptions?.find((s: any) => s.user_id === profile.user_id);
       return {
         id: profile.user_id,
-        email: profile.display_name || profile.user_id.slice(0, 8),
+        email: profile.display_name || `User ${profile.user_id.slice(0, 8)}`,
         name: profile.display_name,
         plan: sub?.plan || 'free',
         is_admin_override: sub?.is_admin_override || false,
