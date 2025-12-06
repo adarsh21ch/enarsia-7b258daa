@@ -435,17 +435,7 @@ export default function TodoUp() {
         </div>
       </header>
 
-      <main className={cn("flex-1 container py-4 px-4 space-y-5 pb-40", !isPro && "pb-48")}>
-        <div className="mb-2">
-          <h2 className="text-2xl font-bold tracking-tight">Todo Up</h2>
-          <p className="text-sm text-muted-foreground">Your Tasks & Funnel Overview</p>
-          <div className="flex items-center gap-1 mt-2">
-            <div className="w-8 h-1 bg-accent rounded-full" />
-            <div className="w-2 h-1 bg-accent/50 rounded-full" />
-            <div className="w-1 h-1 bg-accent/30 rounded-full" />
-          </div>
-        </div>
-
+      <main className={cn("flex-1 container py-3 px-4 space-y-4 pb-28", !isPro && "pb-36")}>
         {/* Lock overlay for Free users */}
         {!isPro && (
           <div className="relative mb-6">

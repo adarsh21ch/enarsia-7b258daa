@@ -72,26 +72,13 @@ export default function Dashboard() {
               </div>
             </div>
             <div className="bg-gradient-to-br from-primary/10 to-primary/5 rounded-xl px-4 py-2 text-right border border-primary/10">
-              <p className="text-[10px] text-muted-foreground font-medium">Total CC</p>
+              <p className="text-[10px] text-muted-foreground font-medium">Total Min Billing</p>
               <p className="text-2xl font-bold text-primary tracking-tight">{totalCC}</p>
             </div>
           </div>
         </header>
 
-      <main className="container py-4 px-4">
-        {/* Page Title */}
-        <div className="mb-3">
-          <h2 className="text-2xl font-bold tracking-tight">Follow-Up List</h2>
-          <p className="text-sm text-muted-foreground">
-            Manage and track your sales prospects
-          </p>
-          <div className="flex items-center gap-1 mt-2">
-            <div className="w-8 h-1 bg-primary rounded-full" />
-            <div className="w-2 h-1 bg-primary/50 rounded-full" />
-            <div className="w-1 h-1 bg-primary/30 rounded-full" />
-          </div>
-        </div>
-
+      <main className="container py-3 px-4">
         {/* Funnel Summary Bar - Cleaner Format */}
         <div className="text-xs text-muted-foreground bg-muted/30 rounded-lg px-3 py-2 mb-4">
           <div className="flex flex-wrap items-center gap-x-1 gap-y-1">

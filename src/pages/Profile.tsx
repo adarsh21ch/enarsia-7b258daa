@@ -63,17 +63,7 @@ export default function Profile() {
         </div>
       </header>
 
-      <main className="container py-4 px-4 space-y-4">
-        <div className="mb-5">
-          <h2 className="text-2xl font-bold tracking-tight">Profile</h2>
-          <p className="text-sm text-muted-foreground">Manage your account</p>
-          <div className="flex items-center gap-1 mt-2">
-            <div className="w-8 h-1 bg-primary rounded-full" />
-            <div className="w-2 h-1 bg-primary/50 rounded-full" />
-            <div className="w-1 h-1 bg-primary/30 rounded-full" />
-          </div>
-        </div>
-
+      <main className="container py-3 px-4 space-y-4">
         {/* User Card */}
         <div className="relative overflow-hidden rounded-2xl p-5 bg-gradient-to-br from-primary/10 via-primary/5 to-transparent border border-primary/10 shadow-lg">
           <div className="flex items-center gap-4">

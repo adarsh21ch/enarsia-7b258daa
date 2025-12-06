@@ -61,18 +61,7 @@ export default function Tracking() {
         </div>
       </header>
 
-      <main className={cn("container py-4 px-4", !isPro && "pb-32")}>
-        {/* Page Title with decorative element */}
-        <div className="mb-5">
-          <h2 className="text-2xl font-bold tracking-tight">TrackUp System</h2>
-          <p className="text-sm text-muted-foreground">Track prospect progress and engagement</p>
-          <div className="flex items-center gap-1 mt-2">
-            <div className="w-8 h-1 bg-primary rounded-full" />
-            <div className="w-2 h-1 bg-primary/50 rounded-full" />
-            <div className="w-1 h-1 bg-primary/30 rounded-full" />
-          </div>
-        </div>
-
+      <main className={cn("container py-3 px-4", !isPro && "pb-32")}>
         {/* Lock overlay for Free users */}
         {!isPro && (
           <div className="relative mb-6">

@@ -97,24 +97,14 @@ export default function Home() {
         </div>
       </header>
 
-      <main className="container py-4 px-4 space-y-5">
-        <div className="mb-2">
-          <h2 className="text-2xl font-bold tracking-tight">Dashboard</h2>
-          <p className="text-sm text-muted-foreground">Your daily overview</p>
-          <div className="flex items-center gap-1 mt-2">
-            <div className="w-8 h-1 bg-primary rounded-full" />
-            <div className="w-2 h-1 bg-primary/50 rounded-full" />
-            <div className="w-1 h-1 bg-primary/30 rounded-full" />
-          </div>
-        </div>
-
+      <main className="container py-3 px-4 space-y-4">
         {/* KPI Cards */}
         <div className="grid grid-cols-2 gap-3">
           {[
             { title: 'Total Leads', value: kpis.totalLeads, icon: Users, gradient: 'from-blue-500/20 to-blue-600/10', iconColor: 'text-blue-500' },
             { title: 'Enrolled', value: kpis.totalEnrolled, icon: CheckCircle, gradient: 'from-green-500/20 to-green-600/10', iconColor: 'text-green-500' },
             { title: 'Day 1', value: kpis.stageCounts['Day 1'], icon: TrendingUp, gradient: 'from-purple-500/20 to-purple-600/10', iconColor: 'text-purple-500' },
-            { title: 'Total CC', value: kpis.totalCC, icon: Target, gradient: 'from-amber-500/20 to-amber-600/10', iconColor: 'text-amber-500' },
+            { title: 'Total Min Billing', value: kpis.totalCC, icon: Target, gradient: 'from-amber-500/20 to-amber-600/10', iconColor: 'text-amber-500' },
           ].map((stat) => {
             const Icon = stat.icon;
             return (
