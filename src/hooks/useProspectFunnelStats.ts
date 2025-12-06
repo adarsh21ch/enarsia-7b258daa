@@ -12,33 +12,21 @@ export interface FunnelStats {
   two_cc: number;
 }
 
-// Note: funnel_stage was removed from prospects table in simplified model
-// This hook now returns total prospect count only
+// Map database funnel_stage values to stat keys
+const STAGE_MAP: Record<string, keyof FunnelStats> = {
+  'Enrollment': 'enrollment',
+  'Day 1': 'day_1',
+  'Day 2': 'day_2',
+  'Day 3': 'day_3',
+  'Minimum Bill': 'minimum_bill',
+  'Level Up': 'level_up',
+  '2CC': 'two_cc',
+};
+
 export function useProspectFunnelStats() {
   const [loading, setLoading] = useState(true);
   const [totalProspects, setTotalProspects] = useState(0);
-  const { user } = useAuth();
-
-  const fetchData = useCallback(async () => {
-    if (!user) return;
-    
-    setLoading(true);
-    const { count, error } = await supabase
-      .from('prospects')
-      .select('*', { count: 'exact', head: true })
-      .eq('user_id', user.id);
-
-    if (!error && count !== null) {
-      setTotalProspects(count);
-    }
-    setLoading(false);
-  }, [user]);
-
-  useEffect(() => {
-    fetchData();
-  }, [fetchData]);
-
-  const totals = useMemo<FunnelStats>(() => ({
+  const [totals, setTotals] = useState<FunnelStats>({
     enrollment: 0,
     day_1: 0,
     day_2: 0,
@@ -46,7 +34,58 @@ export function useProspectFunnelStats() {
     minimum_bill: 0,
     level_up: 0,
     two_cc: 0,
-  }), []);
+  });
+  const { user } = useAuth();
+
+  const fetchData = useCallback(async () => {
+    if (!user) return;
+    
+    setLoading(true);
+    try {
+      // Fetch all prospects with their funnel_stage
+      const { data, error } = await supabase
+        .from('prospects')
+        .select('funnel_stage')
+        .eq('user_id', user.id);
+
+      if (error) {
+        console.error('Error fetching funnel stats:', error);
+        setLoading(false);
+        return;
+      }
+
+      const prospects = data || [];
+      setTotalProspects(prospects.length);
+
+      // Count prospects per funnel stage
+      const stats: FunnelStats = {
+        enrollment: 0,
+        day_1: 0,
+        day_2: 0,
+        day_3: 0,
+        minimum_bill: 0,
+        level_up: 0,
+        two_cc: 0,
+      };
+
+      prospects.forEach((p) => {
+        const stage = p.funnel_stage;
+        if (stage && STAGE_MAP[stage]) {
+          stats[STAGE_MAP[stage]]++;
+        }
+      });
+
+      setTotals(stats);
+    } catch (err) {
+      console.error('Error in fetchData:', err);
+    } finally {
+      setLoading(false);
+    }
+  }, [user]);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
 
   return { totals, loading, totalProspects, refetch: fetchData };
 }
