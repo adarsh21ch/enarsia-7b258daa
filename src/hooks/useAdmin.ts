@@ -2,8 +2,6 @@ import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 
-const ADMIN_EMAIL = 'teamnevorai@gmail.com';
-
 interface UserWithSubscription {
   id: string;
   email: string;
@@ -19,16 +17,37 @@ export function useAdmin() {
   const [users, setUsers] = useState<UserWithSubscription[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // Check if current user is admin by email
-  const checkIsAdmin = useCallback(() => {
-    const adminStatus = user?.email === ADMIN_EMAIL;
-    setIsAdmin(adminStatus);
-    return adminStatus;
-  }, [user]);
+  // Check if current user is admin using server-side has_role() function
+  const checkIsAdmin = useCallback(async () => {
+    if (!user) {
+      setIsAdmin(false);
+      setLoading(false);
+      return false;
+    }
+    
+    try {
+      const { data, error } = await supabase.rpc('has_role', {
+        _user_id: user.id,
+        _role: 'admin'
+      });
+      
+      if (error) {
+        console.error('Error checking admin role:', error);
+        setIsAdmin(false);
+      } else {
+        setIsAdmin(data === true);
+      }
+    } catch (err) {
+      console.error('Failed to check admin status:', err);
+      setIsAdmin(false);
+    }
+    
+    setLoading(false);
+    return isAdmin;
+  }, [user, isAdmin]);
 
   useEffect(() => {
     checkIsAdmin();
-    setLoading(false);
   }, [checkIsAdmin]);
 
   const fetchAllUsers = useCallback(async () => {

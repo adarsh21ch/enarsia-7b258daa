@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
+import { useEncryption } from '@/hooks/useEncryption';
 
 export interface Profile {
   id: string;
@@ -31,6 +32,7 @@ export function useProfile() {
   const [updating, setUpdating] = useState(false);
   const { user } = useAuth();
   const { toast } = useToast();
+  const { encryptFields, decryptFields } = useEncryption();
 
   const fetchProfile = useCallback(async () => {
     if (!user) {
@@ -63,10 +65,19 @@ export function useProfile() {
         setProfile(newProfile as Profile);
       }
     } else {
+      // Decrypt phone if it exists
+      if (data.phone) {
+        try {
+          const decrypted = await decryptFields({ phone: data.phone });
+          data.phone = decrypted.phone || data.phone;
+        } catch {
+          // If decryption fails, phone might be unencrypted (legacy data)
+        }
+      }
       setProfile(data as Profile);
     }
     setLoading(false);
-  }, [user, toast]);
+  }, [user, toast, decryptFields]);
 
   useEffect(() => {
     fetchProfile();
@@ -76,9 +87,21 @@ export function useProfile() {
     if (!user || !profile) return { error: 'No user or profile' };
 
     setUpdating(true);
+    
+    // Encrypt phone if provided
+    let encryptedUpdates = { ...updates };
+    if (updates.phone) {
+      try {
+        const encrypted = await encryptFields({ phone: updates.phone });
+        encryptedUpdates.phone = encrypted.phone || updates.phone;
+      } catch {
+        // Continue with unencrypted if encryption fails
+      }
+    }
+    
     const { error } = await supabase
       .from('profiles')
-      .update(updates)
+      .update(encryptedUpdates)
       .eq('user_id', user.id);
 
     if (error) {
@@ -87,6 +110,7 @@ export function useProfile() {
       return { error };
     }
 
+    // Store decrypted version in state for display
     setProfile(prev => prev ? { ...prev, ...updates } : null);
     toast({ title: 'Profile updated successfully' });
     setUpdating(false);
