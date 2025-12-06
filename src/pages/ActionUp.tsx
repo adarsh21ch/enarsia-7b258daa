@@ -153,156 +153,161 @@ export default function ActionUp() {
           </div>
         </div>
 
-        {!isPro ? (
-          <div className="flex flex-col items-center justify-center py-16 text-center">
-            <div className="p-4 rounded-full bg-muted mb-4">
-              <Lock className="h-12 w-12 text-muted-foreground" />
+        {/* Lock overlay for Free users */}
+        {!isPro && (
+          <div className="relative mb-6">
+            <div className="absolute inset-0 flex flex-col items-center justify-center z-10 bg-background/80 backdrop-blur-sm rounded-2xl py-16">
+              <div className="p-4 rounded-full bg-muted mb-4">
+                <Lock className="h-12 w-12 text-muted-foreground" />
+              </div>
+              <h3 className="text-xl font-semibold mb-2">Pro Feature</h3>
+              <p className="text-muted-foreground max-w-sm text-center">
+                Subscribe for ₹249 to unlock ActionUp and all premium features.
+              </p>
             </div>
-            <h3 className="text-xl font-semibold mb-2">Pro Feature</h3>
-            <p className="text-muted-foreground max-w-sm">
-              Data will appear here after you upgrade to Pro.
-            </p>
-            <p className="text-sm text-muted-foreground mt-2">
-              Subscribe for ₹249 to unlock ActionUp and all premium features.
-            </p>
           </div>
-        ) : (
-          <>
-            {/* Summary Chips */}
-            <div className="flex flex-wrap gap-2">
-              <Badge variant="outline" className="gap-1.5 py-1.5 px-3 bg-amber-500/10 text-amber-600 border-amber-500/30">
-                <Bell className="h-3.5 w-3.5" />
-                {summaryStats.followUpsDueToday} Follow-ups due
-              </Badge>
-              <Badge variant="outline" className="gap-1.5 py-1.5 px-3 bg-blue-500/10 text-blue-600 border-blue-500/30">
-                <UserPlus className="h-3.5 w-3.5" />
-                {summaryStats.newProspectsToday} New today
-              </Badge>
-              <Badge variant="outline" className="gap-1.5 py-1.5 px-3 bg-green-500/10 text-green-600 border-green-500/30">
-                <CheckCircle className="h-3.5 w-3.5" />
-                {summaryStats.enrollmentsToday} Enrolled
-              </Badge>
-            </div>
-
-            {/* AI Smart Summary Panel */}
-            <div className="bg-gradient-to-br from-primary/5 to-primary/10 rounded-2xl p-4 border border-primary/20">
-              <div className="flex items-center gap-2 mb-3">
-                <div className="p-2 rounded-xl bg-primary/10">
-                  <Sparkles className="h-5 w-5 text-primary" />
-                </div>
-                <div>
-                  <h3 className="font-semibold">AI Smart Daily Summary</h3>
-                  <p className="text-xs text-muted-foreground">Get insights and recommendations</p>
-                </div>
-              </div>
-              <div className="bg-card/50 rounded-xl p-3 text-sm text-muted-foreground min-h-[80px]">
-                <p>📊 You have <strong>{prospects.length}</strong> total prospects.</p>
-                <p className="mt-1">🔔 <strong>{summaryStats.followUpsDueToday}</strong> prospects need follow-up today.</p>
-                <p className="mt-1">💡 <strong>Tip:</strong> Focus on +VE prospects with pending follow-ups first.</p>
-              </div>
-              <Button variant="outline" size="sm" className="mt-3 w-full" disabled>
-                <Sparkles className="h-4 w-4 mr-2" />
-                Generate AI Summary (Coming Soon)
-              </Button>
-            </div>
-
-            {/* Filters */}
-            <div className="space-y-3">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  placeholder="Search activity..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-10"
-                />
-              </div>
-              <div className="flex gap-1.5 overflow-x-auto pb-1">
-                {filterOptions.map(option => (
-                  <Button
-                    key={option.value}
-                    variant={activeFilter === option.value ? 'default' : 'outline'}
-                    size="sm"
-                    onClick={() => setActiveFilter(option.value)}
-                    className="shrink-0 text-xs h-8"
-                  >
-                    {option.label}
-                  </Button>
-                ))}
-              </div>
-            </div>
-
-            {/* Activity Feed */}
-            <div className="space-y-2">
-              <div className="flex items-center gap-2 mb-3">
-                <Activity className="h-5 w-5 text-primary" />
-                <h3 className="font-semibold">Recent Activity</h3>
-              </div>
-              
-              {activitiesLoading ? (
-                <div className="flex justify-center py-8">
-                  <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-                </div>
-              ) : filteredActivities.length > 0 ? (
-                <div className="space-y-2">
-                  {filteredActivities.map((activity) => {
-                    const Icon = getActivityIcon(activity.activity_type);
-                    return (
-                      <div
-                        key={activity.id}
-                        className="flex items-start gap-3 p-3 rounded-xl bg-card border border-border/50 hover:bg-muted/30 transition-colors"
-                      >
-                        <div className={cn("p-2 rounded-lg shrink-0", getActivityColor(activity.activity_type))}>
-                          <Icon className="h-4 w-4" />
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium">{activity.description}</p>
-                          {activity.old_value && activity.new_value && (
-                            <p className="text-xs text-muted-foreground mt-0.5">
-                              {activity.old_value} → {activity.new_value}
-                            </p>
-                          )}
-                        </div>
-                        <span className="text-xs text-muted-foreground shrink-0">
-                          {formatDistanceToNow(parseISO(activity.created_at), { addSuffix: true })}
-                        </span>
-                      </div>
-                    );
-                  })}
-                </div>
-              ) : recentProspectActivity.length > 0 ? (
-                <div className="space-y-2">
-                  {recentProspectActivity.map((activity) => (
-                    <div
-                      key={activity.id}
-                      className="flex items-start gap-3 p-3 rounded-xl bg-card border border-border/50 hover:bg-muted/30 transition-colors"
-                    >
-                      <div className="p-2 rounded-lg bg-muted shrink-0">
-                        <Clock className="h-4 w-4 text-muted-foreground" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium">{activity.prospect_name}</p>
-                        <div className="flex items-center gap-2 mt-1">
-                          <StageBadge stage={activity.funnel_stage} />
-                          {activity.prospect_status && <StatusBadge status={activity.prospect_status} />}
-                        </div>
-                      </div>
-                      <span className="text-xs text-muted-foreground shrink-0">
-                        {formatDistanceToNow(parseISO(activity.created_at), { addSuffix: true })}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="text-center py-8 text-muted-foreground">
-                  <Activity className="h-12 w-12 mx-auto mb-3 opacity-30" />
-                  <p className="text-sm">No activity yet</p>
-                  <p className="text-xs mt-1">Start adding prospects to see activity here</p>
-                </div>
-              )}
-            </div>
-          </>
         )}
+
+        {/* Summary Chips - show dashes for Free users */}
+        <div className="flex flex-wrap gap-2">
+          <Badge variant="outline" className="gap-1.5 py-1.5 px-3 bg-amber-500/10 text-amber-600 border-amber-500/30">
+            <Bell className="h-3.5 w-3.5" />
+            {isPro ? summaryStats.followUpsDueToday : '–'} Follow-ups due
+          </Badge>
+          <Badge variant="outline" className="gap-1.5 py-1.5 px-3 bg-blue-500/10 text-blue-600 border-blue-500/30">
+            <UserPlus className="h-3.5 w-3.5" />
+            {isPro ? summaryStats.newProspectsToday : '–'} New today
+          </Badge>
+          <Badge variant="outline" className="gap-1.5 py-1.5 px-3 bg-green-500/10 text-green-600 border-green-500/30">
+            <CheckCircle className="h-3.5 w-3.5" />
+            {isPro ? summaryStats.enrollmentsToday : '–'} Enrolled
+          </Badge>
+        </div>
+
+        {/* AI Smart Summary Panel */}
+        <div className="bg-gradient-to-br from-primary/5 to-primary/10 rounded-2xl p-4 border border-primary/20">
+          <div className="flex items-center gap-2 mb-3">
+            <div className="p-2 rounded-xl bg-primary/10">
+              <Sparkles className="h-5 w-5 text-primary" />
+            </div>
+            <div>
+              <h3 className="font-semibold">AI Smart Daily Summary</h3>
+              <p className="text-xs text-muted-foreground">Get insights and recommendations</p>
+            </div>
+          </div>
+          <div className="bg-card/50 rounded-xl p-3 text-sm text-muted-foreground min-h-[80px]">
+            <p>📊 You have <strong>{isPro ? prospects.length : '–'}</strong> total prospects.</p>
+            <p className="mt-1">🔔 <strong>{isPro ? summaryStats.followUpsDueToday : '–'}</strong> prospects need follow-up today.</p>
+            <p className="mt-1">💡 <strong>Tip:</strong> Focus on +VE prospects with pending follow-ups first.</p>
+          </div>
+          <Button variant="outline" size="sm" className="mt-3 w-full" disabled>
+            <Sparkles className="h-4 w-4 mr-2" />
+            Generate AI Summary (Coming Soon)
+          </Button>
+        </div>
+
+        {/* Filters */}
+        <div className="space-y-3">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Search activity..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-10"
+              disabled={!isPro}
+            />
+          </div>
+          <div className="flex gap-1.5 overflow-x-auto pb-1">
+            {filterOptions.map(option => (
+              <Button
+                key={option.value}
+                variant={activeFilter === option.value ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setActiveFilter(option.value)}
+                className="shrink-0 text-xs h-8"
+                disabled={!isPro}
+              >
+                {option.label}
+              </Button>
+            ))}
+          </div>
+        </div>
+
+        {/* Activity Feed */}
+        <div className="space-y-2">
+          <div className="flex items-center gap-2 mb-3">
+            <Activity className="h-5 w-5 text-primary" />
+            <h3 className="font-semibold">Recent Activity</h3>
+          </div>
+          
+          {!isPro ? (
+            <div className="text-center py-8 text-muted-foreground">
+              <Activity className="h-12 w-12 mx-auto mb-3 opacity-30" />
+              <p className="text-sm">Activity data will appear after upgrade</p>
+            </div>
+          ) : activitiesLoading ? (
+            <div className="flex justify-center py-8">
+              <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+            </div>
+          ) : filteredActivities.length > 0 ? (
+            <div className="space-y-2">
+              {filteredActivities.map((activity) => {
+                const Icon = getActivityIcon(activity.activity_type);
+                return (
+                  <div
+                    key={activity.id}
+                    className="flex items-start gap-3 p-3 rounded-xl bg-card border border-border/50 hover:bg-muted/30 transition-colors"
+                  >
+                    <div className={cn("p-2 rounded-lg shrink-0", getActivityColor(activity.activity_type))}>
+                      <Icon className="h-4 w-4" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium">{activity.description}</p>
+                      {activity.old_value && activity.new_value && (
+                        <p className="text-xs text-muted-foreground mt-0.5">
+                          {activity.old_value} → {activity.new_value}
+                        </p>
+                      )}
+                    </div>
+                    <span className="text-xs text-muted-foreground shrink-0">
+                      {formatDistanceToNow(parseISO(activity.created_at), { addSuffix: true })}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+          ) : recentProspectActivity.length > 0 ? (
+            <div className="space-y-2">
+              {recentProspectActivity.map((activity) => (
+                <div
+                  key={activity.id}
+                  className="flex items-start gap-3 p-3 rounded-xl bg-card border border-border/50 hover:bg-muted/30 transition-colors"
+                >
+                  <div className="p-2 rounded-lg bg-muted shrink-0">
+                    <Clock className="h-4 w-4 text-muted-foreground" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium">{activity.prospect_name}</p>
+                    <div className="flex items-center gap-2 mt-1">
+                      <StageBadge stage={activity.funnel_stage} />
+                      {activity.prospect_status && <StatusBadge status={activity.prospect_status} />}
+                    </div>
+                  </div>
+                  <span className="text-xs text-muted-foreground shrink-0">
+                    {formatDistanceToNow(parseISO(activity.created_at), { addSuffix: true })}
+                  </span>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-8 text-muted-foreground">
+              <Activity className="h-12 w-12 mx-auto mb-3 opacity-30" />
+              <p className="text-sm">No activity yet</p>
+              <p className="text-xs mt-1">Start adding prospects to see activity here</p>
+            </div>
+          )}
+        </div>
       </main>
 
       {/* Upgrade Bar for Free Users */}

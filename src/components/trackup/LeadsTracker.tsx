@@ -24,7 +24,11 @@ function getProgressColor(current: number, goal: number) {
   return 'from-red-400 to-red-500';
 }
 
-export function LeadsTracker() {
+interface LeadsTrackerProps {
+  isPro?: boolean;
+}
+
+export function LeadsTracker({ isPro = true }: LeadsTrackerProps) {
   const { rows, loading, updateCell, totals, monthYear, changeMonth, daysInMonth, daysRemaining } = useDailyLeads();
 
   const handleCellChange = (dayNumber: number, field: keyof DailyLeadRow, value: number) => {
@@ -75,12 +79,12 @@ export function LeadsTracker() {
                   <span>{goal}</span>
                 </div>
               </div>
-              <p className="text-3xl font-bold tracking-tight">{value}</p>
+              <p className="text-3xl font-bold tracking-tight">{isPro ? value : '–'}</p>
               <p className="text-xs text-muted-foreground mt-0.5">{config.label}</p>
               <div className="mt-3 h-1.5 w-full overflow-hidden rounded-full bg-black/10">
                 <div
                   className={cn("h-full rounded-full transition-all duration-700 bg-gradient-to-r", getProgressColor(value, goal))}
-                  style={{ width: `${percentage}%` }}
+                  style={{ width: isPro ? `${percentage}%` : '0%' }}
                 />
               </div>
               {/* Decorative circle */}
@@ -140,8 +144,10 @@ export function LeadsTracker() {
                   {METRICS.map(metric => (
                     <td key={metric} className="py-2 px-2">
                       <EditableCell
-                        value={row[metric]}
+                        value={isPro ? row[metric] : null}
                         onChange={(value) => handleCellChange(row.day_number, metric, value)}
+                        disabled={!isPro}
+                        placeholder="–"
                       />
                     </td>
                   ))}
@@ -154,7 +160,7 @@ export function LeadsTracker() {
                 {METRICS.map(metric => (
                   <td key={metric} className="py-3 px-2">
                     <div className="h-9 flex items-center justify-center text-base font-bold rounded-lg bg-background/80 backdrop-blur-sm shadow-sm">
-                      {totals[metric]}
+                      {isPro ? totals[metric] : '–'}
                     </div>
                   </td>
                 ))}

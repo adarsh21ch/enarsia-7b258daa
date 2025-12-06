@@ -7,6 +7,7 @@ const ADMIN_EMAIL = 'teamnevorai@gmail.com';
 interface UserWithSubscription {
   id: string;
   email: string;
+  name: string | null;
   plan: 'free' | 'pro';
   is_admin_override: boolean;
   subscribed_at: string | null;
@@ -34,31 +35,37 @@ export function useAdmin() {
     if (!isAdmin) return;
 
     setLoading(true);
-    // Fetch all subscriptions with profile info
-    const { data: subscriptions, error } = await supabase
-      .from('user_subscriptions')
-      .select('*');
+    
+    // Fetch all profiles (all users have a profile via trigger)
+    const { data: profiles, error: profilesError } = await supabase
+      .from('profiles')
+      .select('user_id, display_name');
 
-    if (error) {
-      console.error('Error fetching users:', error);
+    if (profilesError) {
+      console.error('Error fetching profiles:', profilesError);
       setLoading(false);
       return;
     }
 
-    // Get profiles for these users
-    const { data: profiles } = await supabase
-      .from('profiles')
-      .select('user_id, display_name');
+    // Fetch all subscriptions
+    const { data: subscriptions, error: subsError } = await supabase
+      .from('user_subscriptions')
+      .select('*');
 
-    // Combine the data
-    const usersWithSubs: UserWithSubscription[] = (subscriptions || []).map((sub: any) => {
-      const profile = profiles?.find((p: any) => p.user_id === sub.user_id);
+    if (subsError) {
+      console.error('Error fetching subscriptions:', subsError);
+    }
+
+    // Combine the data - profiles are the source of all users
+    const usersWithSubs: UserWithSubscription[] = (profiles || []).map((profile: any) => {
+      const sub = subscriptions?.find((s: any) => s.user_id === profile.user_id);
       return {
-        id: sub.user_id,
-        email: profile?.display_name || sub.user_id.slice(0, 8),
-        plan: sub.plan,
-        is_admin_override: sub.is_admin_override,
-        subscribed_at: sub.subscribed_at,
+        id: profile.user_id,
+        email: profile.display_name || profile.user_id.slice(0, 8),
+        name: profile.display_name,
+        plan: sub?.plan || 'free',
+        is_admin_override: sub?.is_admin_override || false,
+        subscribed_at: sub?.subscribed_at || null,
       };
     });
 
@@ -67,18 +74,42 @@ export function useAdmin() {
   }, [isAdmin]);
 
   const toggleUserAccess = async (userId: string, grantPro: boolean) => {
-    const { error } = await supabase
+    // First check if subscription exists
+    const { data: existing } = await supabase
       .from('user_subscriptions')
-      .update({
-        plan: grantPro ? 'pro' : 'free',
-        is_admin_override: grantPro,
-      })
-      .eq('user_id', userId);
+      .select('id')
+      .eq('user_id', userId)
+      .maybeSingle();
 
-    if (!error) {
-      await fetchAllUsers();
+    if (existing) {
+      // Update existing
+      const { error } = await supabase
+        .from('user_subscriptions')
+        .update({
+          plan: grantPro ? 'pro' : 'free',
+          is_admin_override: grantPro,
+        })
+        .eq('user_id', userId);
+
+      if (!error) {
+        await fetchAllUsers();
+      }
+      return { error };
+    } else {
+      // Create new subscription
+      const { error } = await supabase
+        .from('user_subscriptions')
+        .insert({
+          user_id: userId,
+          plan: grantPro ? 'pro' : 'free',
+          is_admin_override: grantPro,
+        });
+
+      if (!error) {
+        await fetchAllUsers();
+      }
+      return { error };
     }
-    return { error };
   };
 
   return { isAdmin, users, loading, fetchAllUsers, toggleUserAccess };

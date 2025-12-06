@@ -7,9 +7,10 @@ import { Users, UserCheck, AlertTriangle, TrendingUp, Clock, Activity } from 'lu
 
 interface ProspectAnalyticsProps {
   prospects: Prospect[];
+  isPro?: boolean;
 }
 
-export function ProspectAnalytics({ prospects }: ProspectAnalyticsProps) {
+export function ProspectAnalytics({ prospects, isPro = true }: ProspectAnalyticsProps) {
   const stats = useMemo(() => {
     const totalProspects = prospects.length;
     const positiveCount = prospects.filter(p => p.prospect_status === 'Good').length;
@@ -47,10 +48,10 @@ export function ProspectAnalytics({ prospects }: ProspectAnalyticsProps) {
   const total = prospects.length || 1;
 
   const statCards = [
-    { title: 'Total Prospects', value: stats.totalProspects, icon: Users, gradient: 'from-blue-500/20 to-blue-600/10', iconColor: 'text-blue-500' },
-    { title: 'Good Prospects', value: stats.positiveCount, icon: UserCheck, gradient: 'from-green-500/20 to-green-600/10', iconColor: 'text-green-500' },
-    { title: 'High Priority', value: stats.highPriorityCount, icon: AlertTriangle, gradient: 'from-red-500/20 to-red-600/10', iconColor: 'text-red-500' },
-    { title: 'Level Up', value: stats.levelUpCount, icon: TrendingUp, gradient: 'from-purple-500/20 to-purple-600/10', iconColor: 'text-purple-500' },
+    { title: 'Total Prospects', value: isPro ? stats.totalProspects : '–', icon: Users, gradient: 'from-blue-500/20 to-blue-600/10', iconColor: 'text-blue-500' },
+    { title: 'Good Prospects', value: isPro ? stats.positiveCount : '–', icon: UserCheck, gradient: 'from-green-500/20 to-green-600/10', iconColor: 'text-green-500' },
+    { title: 'High Priority', value: isPro ? stats.highPriorityCount : '–', icon: AlertTriangle, gradient: 'from-red-500/20 to-red-600/10', iconColor: 'text-red-500' },
+    { title: 'Level Up', value: isPro ? stats.levelUpCount : '–', icon: TrendingUp, gradient: 'from-purple-500/20 to-purple-600/10', iconColor: 'text-purple-500' },
   ];
 
   return (
@@ -92,13 +93,13 @@ export function ProspectAnalytics({ prospects }: ProspectAnalyticsProps) {
         </div>
         <div className="space-y-3">
           {FUNNEL_STAGES.map((stage, i) => {
-            const count = stageCounts[stage];
-            const percentage = (count / maxStageCount) * 100;
+            const count = isPro ? stageCounts[stage] : 0;
+            const percentage = isPro ? (count / maxStageCount) * 100 : 0;
             return (
               <div key={stage} className="space-y-1.5" style={{ animationDelay: `${i * 30}ms` }}>
                 <div className="flex items-center justify-between">
                   <StageBadge stage={stage} />
-                  <span className="text-sm font-semibold">{count}</span>
+                  <span className="text-sm font-semibold">{isPro ? count : '–'}</span>
                 </div>
                 <div className="h-2.5 bg-muted/50 rounded-full overflow-hidden">
                   <div
@@ -129,8 +130,8 @@ export function ProspectAnalytics({ prospects }: ProspectAnalyticsProps) {
         </div>
         <div className="grid grid-cols-2 gap-3">
           {STATUSES.map((status) => {
-            const count = statusCounts[status];
-            const percentage = (count / total) * 100;
+            const count = isPro ? statusCounts[status] : 0;
+            const percentage = isPro ? (count / total) * 100 : 0;
             return (
               <div
                 key={status}
@@ -141,7 +142,7 @@ export function ProspectAnalytics({ prospects }: ProspectAnalyticsProps) {
               >
                 <div className="flex items-center justify-between mb-2">
                   <StatusBadge status={status} />
-                  <span className="text-lg font-bold">{count}</span>
+                  <span className="text-lg font-bold">{isPro ? count : '–'}</span>
                 </div>
                 <div className="h-1.5 bg-muted rounded-full overflow-hidden">
                   <div
@@ -151,10 +152,10 @@ export function ProspectAnalytics({ prospects }: ProspectAnalyticsProps) {
                       status === 'Bad' && 'bg-red-500',
                       status === 'Medium' && 'bg-amber-500',
                     )}
-                    style={{ width: `${percentage}%` }}
+                    style={{ width: isPro ? `${percentage}%` : '0%' }}
                   />
                 </div>
-                <p className="text-xs text-muted-foreground mt-1">{percentage.toFixed(0)}% of total</p>
+                <p className="text-xs text-muted-foreground mt-1">{isPro ? `${percentage.toFixed(0)}%` : '–'} of total</p>
               </div>
             );
           })}

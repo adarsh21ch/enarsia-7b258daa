@@ -62,7 +62,11 @@ function getConversionTextColor(percentage: number) {
   return 'text-red-500';
 }
 
-export function FunnelTracker() {
+interface FunnelTrackerProps {
+  isPro?: boolean;
+}
+
+export function FunnelTracker({ isPro = true }: FunnelTrackerProps) {
   const { totals, loading, totalProspects } = useProspectFunnelStats();
   const { rows, loading: funnelLoading, updateCell, addRow, totals: funnelTotals } = useFunnelTracking();
   const [fromStage, setFromStage] = useState<StageKey>('enrollment');
@@ -102,7 +106,7 @@ export function FunnelTracker() {
             </div>
             <div>
               <p className="text-sm text-muted-foreground">Total Prospects</p>
-              <p className="text-3xl font-bold">{totalProspects}</p>
+              <p className="text-3xl font-bold">{isPro ? totalProspects : '–'}</p>
             </div>
           </div>
           <p className="text-xs text-muted-foreground">Auto-synced from FollowUp</p>
@@ -137,32 +141,42 @@ export function FunnelTracker() {
                   <td className="px-3 py-2 font-semibold text-muted-foreground">{row.funnel_number}</td>
                   <td className="px-2 py-1">
                     <EditableCell
-                      value={row.day_1}
+                      value={isPro ? row.day_1 : null}
                       onChange={(v) => updateCell(row.funnel_number, 'day_1', v)}
+                      disabled={!isPro}
+                      placeholder="–"
                     />
                   </td>
                   <td className="px-2 py-1">
                     <EditableCell
-                      value={row.day_2}
+                      value={isPro ? row.day_2 : null}
                       onChange={(v) => updateCell(row.funnel_number, 'day_2', v)}
+                      disabled={!isPro}
+                      placeholder="–"
                     />
                   </td>
                   <td className="px-2 py-1">
                     <EditableCell
-                      value={row.minimum_billing}
+                      value={isPro ? row.minimum_billing : null}
                       onChange={(v) => updateCell(row.funnel_number, 'minimum_billing', v)}
+                      disabled={!isPro}
+                      placeholder="–"
                     />
                   </td>
                   <td className="px-2 py-1">
                     <EditableCell
-                      value={row.level_up}
+                      value={isPro ? row.level_up : null}
                       onChange={(v) => updateCell(row.funnel_number, 'level_up', v)}
+                      disabled={!isPro}
+                      placeholder="–"
                     />
                   </td>
                   <td className="px-2 py-1">
                     <EditableCell
-                      value={row.two_cc}
+                      value={isPro ? row.two_cc : null}
                       onChange={(v) => updateCell(row.funnel_number, 'two_cc', v)}
+                      disabled={!isPro}
+                      placeholder="–"
                     />
                   </td>
                 </tr>
@@ -185,11 +199,11 @@ export function FunnelTracker() {
               </tr>
               <tr className="bg-muted/40 font-semibold">
                 <td className="px-3 py-3 text-muted-foreground">TOTAL</td>
-                <td className="px-3 py-3 text-center">{funnelTotals.day_1}</td>
-                <td className="px-3 py-3 text-center">{funnelTotals.day_2}</td>
-                <td className="px-3 py-3 text-center">{funnelTotals.minimum_billing}</td>
-                <td className="px-3 py-3 text-center">{funnelTotals.level_up}</td>
-                <td className="px-3 py-3 text-center">{funnelTotals.two_cc}</td>
+                <td className="px-3 py-3 text-center">{isPro ? funnelTotals.day_1 : '–'}</td>
+                <td className="px-3 py-3 text-center">{isPro ? funnelTotals.day_2 : '–'}</td>
+                <td className="px-3 py-3 text-center">{isPro ? funnelTotals.minimum_billing : '–'}</td>
+                <td className="px-3 py-3 text-center">{isPro ? funnelTotals.level_up : '–'}</td>
+                <td className="px-3 py-3 text-center">{isPro ? funnelTotals.two_cc : '–'}</td>
               </tr>
             </tfoot>
           </table>
@@ -208,8 +222,8 @@ export function FunnelTracker() {
         
         <div className="p-4 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
           {STAGES.map((stage, idx) => {
-            const count = totals[stage];
-            const percentage = (count / maxCount) * 100;
+            const count = isPro ? totals[stage] : 0;
+            const percentage = isPro ? (count / maxCount) * 100 : 0;
             return (
               <div
                 key={stage}
@@ -221,7 +235,7 @@ export function FunnelTracker() {
               >
                 <div className="flex items-start justify-between mb-2">
                   <div className={cn("w-3 h-3 rounded-full", STAGE_ICONS_COLORS[stage])} />
-                  <span className="text-2xl font-bold">{count}</span>
+                  <span className="text-2xl font-bold">{isPro ? count : '–'}</span>
                 </div>
                 <p className="text-xs font-medium text-muted-foreground">{STAGE_LABELS[stage]}</p>
                 <div className="mt-2 h-1.5 bg-background/50 rounded-full overflow-hidden">
@@ -273,19 +287,19 @@ export function FunnelTracker() {
           <div className="flex items-end justify-between">
             <div>
               <p className="text-sm text-muted-foreground">{STAGE_LABELS[fromStage]} → {STAGE_LABELS[toStage]}</p>
-              <p className={cn("text-sm mt-1", getConversionTextColor(conversionPercentage))}>
-                {toValue} of {fromValue} converted
+              <p className={cn("text-sm mt-1", isPro ? getConversionTextColor(conversionPercentage) : 'text-muted-foreground')}>
+                {isPro ? `${toValue} of ${fromValue} converted` : '– of – converted'}
               </p>
             </div>
-            <span className={cn("text-4xl font-bold tracking-tight", getConversionTextColor(conversionPercentage))}>
-              {conversionPercentage}%
+            <span className={cn("text-4xl font-bold tracking-tight", isPro ? getConversionTextColor(conversionPercentage) : 'text-muted-foreground')}>
+              {isPro ? `${conversionPercentage}%` : '–%'}
             </span>
           </div>
           
           <div className="relative h-4 w-full overflow-hidden rounded-full bg-muted/50">
             <div
               className={cn("h-full transition-all duration-700 ease-out", getConversionColor(conversionPercentage))}
-              style={{ width: `${Math.min(conversionPercentage, 100)}%` }}
+              style={{ width: isPro ? `${Math.min(conversionPercentage, 100)}%` : '0%' }}
             />
           </div>
 
@@ -300,6 +314,7 @@ export function FunnelTracker() {
             <CollapsibleContent className="space-y-3 pt-2">
               {STEP_CONVERSIONS.map((step, i) => {
                 const conv = getStepConversion(step.from as StageKey, step.to as StageKey);
+                const displayPercentage = isPro ? conv.percentage : 0;
                 return (
                   <div
                     key={step.label}
@@ -309,25 +324,29 @@ export function FunnelTracker() {
                     <div className="flex items-center justify-between">
                       <span className="text-sm font-medium">{step.label}</span>
                       <div className="flex items-center gap-2">
-                        <span className={cn("text-lg font-bold", getConversionTextColor(conv.percentage))}>
-                          {conv.percentage}%
+                        <span className={cn("text-lg font-bold", isPro ? getConversionTextColor(conv.percentage) : 'text-muted-foreground')}>
+                          {isPro ? `${conv.percentage}%` : '–%'}
                         </span>
                         <span className="text-xs text-muted-foreground bg-muted px-1.5 py-0.5 rounded">
-                          {conv.to}/{conv.from}
+                          {isPro ? `${conv.to}/${conv.from}` : '–/–'}
                         </span>
-                        {conv.percentage >= 70 ? (
-                          <TrendingUp className="h-4 w-4 text-green-500" />
-                        ) : conv.percentage >= 40 ? (
-                          <Minus className="h-4 w-4 text-amber-500" />
+                        {isPro ? (
+                          conv.percentage >= 70 ? (
+                            <TrendingUp className="h-4 w-4 text-green-500" />
+                          ) : conv.percentage >= 40 ? (
+                            <Minus className="h-4 w-4 text-amber-500" />
+                          ) : (
+                            <TrendingDown className="h-4 w-4 text-red-500" />
+                          )
                         ) : (
-                          <TrendingDown className="h-4 w-4 text-red-500" />
+                          <Minus className="h-4 w-4 text-muted-foreground" />
                         )}
                       </div>
                     </div>
                     <div className="relative h-2 w-full overflow-hidden rounded-full bg-muted/50">
                       <div
-                        className={cn("h-full transition-all duration-500", getConversionColor(conv.percentage))}
-                        style={{ width: `${Math.min(conv.percentage, 100)}%` }}
+                        className={cn("h-full transition-all duration-500", getConversionColor(displayPercentage))}
+                        style={{ width: isPro ? `${Math.min(conv.percentage, 100)}%` : '0%' }}
                       />
                     </div>
                   </div>

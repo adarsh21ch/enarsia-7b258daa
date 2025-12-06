@@ -73,70 +73,70 @@ export default function Tracking() {
           </div>
         </div>
 
-        {!isPro ? (
-          <div className="flex flex-col items-center justify-center py-16 text-center">
-            <div className="p-4 rounded-full bg-muted mb-4">
-              <Lock className="h-12 w-12 text-muted-foreground" />
+        {/* Lock overlay for Free users */}
+        {!isPro && (
+          <div className="relative mb-6">
+            <div className="absolute inset-0 flex flex-col items-center justify-center z-10 bg-background/80 backdrop-blur-sm rounded-2xl">
+              <div className="p-4 rounded-full bg-muted mb-4">
+                <Lock className="h-12 w-12 text-muted-foreground" />
+              </div>
+              <h3 className="text-xl font-semibold mb-2">Pro Feature</h3>
+              <p className="text-muted-foreground max-w-sm text-center">
+                Subscribe for ₹249 to unlock TrackUp and all premium features.
+              </p>
             </div>
-            <h3 className="text-xl font-semibold mb-2">Pro Feature</h3>
-            <p className="text-muted-foreground max-w-sm">
-              Data will appear here after you upgrade to Pro.
-            </p>
-            <p className="text-sm text-muted-foreground mt-2">
-              Subscribe for ₹249 to unlock TrackUp and all premium features.
-            </p>
           </div>
-        ) : (
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-            <TabsList className="w-full grid grid-cols-3 mb-5 h-14 p-1.5 bg-muted/50 rounded-2xl gap-1">
-              <TabsTrigger 
-                value="funnel" 
-                className={cn(
-                  "rounded-xl flex flex-col items-center justify-center gap-0.5 h-full transition-all duration-300",
-                  "data-[state=active]:bg-card data-[state=active]:shadow-lg data-[state=active]:shadow-primary/10",
-                  "data-[state=active]:text-primary"
-                )}
-              >
-                <TrendingUp className="h-4 w-4" />
-                <span className="text-[10px] font-semibold">Funnel</span>
-              </TabsTrigger>
-              <TabsTrigger 
-                value="leads" 
-                className={cn(
-                  "rounded-xl flex flex-col items-center justify-center gap-0.5 h-full transition-all duration-300",
-                  "data-[state=active]:bg-card data-[state=active]:shadow-lg data-[state=active]:shadow-primary/10",
-                  "data-[state=active]:text-primary"
-                )}
-              >
-                <Calendar className="h-4 w-4" />
-                <span className="text-[10px] font-semibold">Leads</span>
-              </TabsTrigger>
-              <TabsTrigger 
-                value="analytics" 
-                className={cn(
-                  "rounded-xl flex flex-col items-center justify-center gap-0.5 h-full transition-all duration-300",
-                  "data-[state=active]:bg-card data-[state=active]:shadow-lg data-[state=active]:shadow-primary/10",
-                  "data-[state=active]:text-primary"
-                )}
-              >
-                <BarChart3 className="h-4 w-4" />
-                <span className="text-[10px] font-semibold">Analytics</span>
-              </TabsTrigger>
-            </TabsList>
-
-            <TabsContent value="funnel" className="mt-0 focus-visible:outline-none focus-visible:ring-0">
-              <FunnelTracker />
-            </TabsContent>
-
-            <TabsContent value="leads" className="mt-0 focus-visible:outline-none focus-visible:ring-0">
-              <LeadsTracker />
-            </TabsContent>
-
-            <TabsContent value="analytics" className="mt-0 focus-visible:outline-none focus-visible:ring-0">
-              <ProspectAnalytics prospects={prospects} />
-            </TabsContent>
-          </Tabs>
         )}
+
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+          <TabsList className="w-full grid grid-cols-3 mb-5 h-14 p-1.5 bg-muted/50 rounded-2xl gap-1">
+            <TabsTrigger 
+              value="funnel" 
+              className={cn(
+                "rounded-xl flex flex-col items-center justify-center gap-0.5 h-full transition-all duration-300",
+                "data-[state=active]:bg-card data-[state=active]:shadow-lg data-[state=active]:shadow-primary/10",
+                "data-[state=active]:text-primary"
+              )}
+            >
+              <TrendingUp className="h-4 w-4" />
+              <span className="text-[10px] font-semibold">Funnel</span>
+            </TabsTrigger>
+            <TabsTrigger 
+              value="leads" 
+              className={cn(
+                "rounded-xl flex flex-col items-center justify-center gap-0.5 h-full transition-all duration-300",
+                "data-[state=active]:bg-card data-[state=active]:shadow-lg data-[state=active]:shadow-primary/10",
+                "data-[state=active]:text-primary"
+              )}
+            >
+              <Calendar className="h-4 w-4" />
+              <span className="text-[10px] font-semibold">Leads</span>
+            </TabsTrigger>
+            <TabsTrigger 
+              value="analytics" 
+              className={cn(
+                "rounded-xl flex flex-col items-center justify-center gap-0.5 h-full transition-all duration-300",
+                "data-[state=active]:bg-card data-[state=active]:shadow-lg data-[state=active]:shadow-primary/10",
+                "data-[state=active]:text-primary"
+              )}
+            >
+              <BarChart3 className="h-4 w-4" />
+              <span className="text-[10px] font-semibold">Analytics</span>
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="funnel" className="mt-0 focus-visible:outline-none focus-visible:ring-0">
+            <FunnelTracker isPro={isPro} />
+          </TabsContent>
+
+          <TabsContent value="leads" className="mt-0 focus-visible:outline-none focus-visible:ring-0">
+            <LeadsTracker isPro={isPro} />
+          </TabsContent>
+
+          <TabsContent value="analytics" className="mt-0 focus-visible:outline-none focus-visible:ring-0">
+            <ProspectAnalytics prospects={prospects} isPro={isPro} />
+          </TabsContent>
+        </Tabs>
       </main>
 
       {/* Upgrade Bar for Free Users */}
