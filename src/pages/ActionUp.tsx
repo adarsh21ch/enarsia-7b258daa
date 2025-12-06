@@ -182,38 +182,29 @@ export default function ActionUp() {
           </div>
         )}
 
-        {/* Top row: Summary Chips + compact AI Summary */}
-        <div className="flex flex-wrap items-start gap-3">
-          {/* Summary Chips */}
-          <div className="flex flex-wrap gap-2 flex-1">
-            <Badge variant="outline" className="gap-1.5 py-1.5 px-3 bg-amber-500/10 text-amber-600 border-amber-500/30">
-              <Bell className="h-3.5 w-3.5" />
-              {isPro ? summaryStats.followUpsDueToday : '–'} Follow-ups due
-            </Badge>
-            <Badge variant="outline" className="gap-1.5 py-1.5 px-3 bg-blue-500/10 text-blue-600 border-blue-500/30">
-              <UserPlus className="h-3.5 w-3.5" />
-              {isPro ? summaryStats.newProspectsToday : '–'} New today
-            </Badge>
-            <Badge variant="outline" className="gap-1.5 py-1.5 px-3 bg-green-500/10 text-green-600 border-green-500/30">
-              <CheckCircle className="h-3.5 w-3.5" />
-              {isPro ? summaryStats.enrollmentsToday : '–'} Enrolled
-            </Badge>
-          </div>
+        {/* Top row: Summary Chips + AI Summary inline */}
+        <div className="flex flex-wrap items-center gap-2">
+          <Badge variant="outline" className="gap-1.5 py-1.5 px-3 bg-amber-500/10 text-amber-600 border-amber-500/30">
+            <Bell className="h-3.5 w-3.5" />
+            {isPro ? summaryStats.followUpsDueToday : '–'} Follow-ups
+          </Badge>
+          <Badge variant="outline" className="gap-1.5 py-1.5 px-3 bg-blue-500/10 text-blue-600 border-blue-500/30">
+            <UserPlus className="h-3.5 w-3.5" />
+            {isPro ? summaryStats.newProspectsToday : '–'} New
+          </Badge>
+          <Badge variant="outline" className="gap-1.5 py-1.5 px-3 bg-green-500/10 text-green-600 border-green-500/30">
+            <CheckCircle className="h-3.5 w-3.5" />
+            {isPro ? summaryStats.enrollmentsToday : '–'} Enrolled
+          </Badge>
           
-          {/* Compact AI Summary Card */}
-          <div className="bg-gradient-to-br from-primary/5 to-primary/10 rounded-xl p-2.5 border border-primary/20 min-w-[180px] max-w-[220px]">
-            <div className="flex items-center gap-1.5 mb-1.5">
-              <Sparkles className="h-3.5 w-3.5 text-primary" />
-              <span className="text-xs font-semibold">AI Summary</span>
-            </div>
-            <div className="text-[10px] text-muted-foreground space-y-0.5">
-              <p>📊 <strong>{isPro ? prospects.length : '–'}</strong> prospects</p>
-              <p>🔔 <strong>{isPro ? summaryStats.followUpsDueToday : '–'}</strong> need follow-up</p>
-            </div>
-            <Button variant="outline" size="sm" className="mt-2 w-full h-6 text-[10px]" disabled>
-              <Sparkles className="h-3 w-3 mr-1" />
-              Coming Soon
-            </Button>
+          {/* AI Summary - inline horizontal pill */}
+          <div className="flex items-center gap-2 bg-gradient-to-r from-primary/10 to-primary/5 rounded-full py-1.5 px-3 border border-primary/20">
+            <Sparkles className="h-3.5 w-3.5 text-primary" />
+            <span className="text-xs font-medium">
+              <span className="text-primary">{isPro ? prospects.length : '–'}</span> prospects
+            </span>
+            <span className="text-muted-foreground/50">•</span>
+            <span className="text-xs text-muted-foreground">AI Summary Soon</span>
           </div>
         </div>
 
