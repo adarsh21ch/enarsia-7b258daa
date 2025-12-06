@@ -111,7 +111,7 @@ export default function Terms() {
           <section>
             <h2 className="text-xl font-semibold mb-3">10. Governing Law & Disputes</h2>
             <p className="text-muted-foreground leading-relaxed">
-              These Terms & Conditions are governed by and construed in accordance with the laws of India. Any disputes arising from these terms or your use of NevorAI shall be subject to the exclusive jurisdiction of the courts in [City, State], India.
+              These Terms & Conditions are governed by and construed in accordance with the laws of India. Any disputes arising from these terms or your use of NevorAI shall be subject to the exclusive jurisdiction of the courts in Chhatarpur, Madhya Pradesh, India.
             </p>
           </section>
 
@@ -121,8 +121,8 @@ export default function Terms() {
               If you have any questions about these Terms & Conditions, please contact us at:
             </p>
             <ul className="list-none space-y-1 text-muted-foreground mt-2">
-              <li><strong className="text-foreground">Email:</strong> support@neverai.com</li>
-              <li><strong className="text-foreground">Address:</strong> [City, State], India</li>
+              <li><strong className="text-foreground">Email:</strong> teamnevorai@gmail.com</li>
+              <li><strong className="text-foreground">Address:</strong> Chhatarpur, MP, India</li>
             </ul>
           </section>
         </div>

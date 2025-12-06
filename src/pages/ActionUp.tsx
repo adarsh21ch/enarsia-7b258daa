@@ -3,7 +3,9 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useProspects } from '@/hooks/useProspects';
 import { useActivityLogs } from '@/hooks/useActivityLogs';
+import { useSubscription } from '@/hooks/useSubscription';
 import { BottomNav } from '@/components/layout/BottomNav';
+import { UpgradeBar } from '@/components/subscription/UpgradeBar';
 import { StageBadge, StatusBadge } from '@/components/prospects/StatusBadge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -20,6 +22,7 @@ export default function ActionUp() {
   const { user, loading: authLoading } = useAuth();
   const { prospects } = useProspects();
   const { activities, loading: activitiesLoading } = useActivityLogs(100);
+  const { isPro, loading: subLoading } = useSubscription();
   const [searchQuery, setSearchQuery] = useState('');
   const [activeFilter, setActiveFilter] = useState<ActivityFilter>('all');
 
@@ -111,7 +114,7 @@ export default function ActionUp() {
     { value: 'action_change', label: 'Actions' },
   ];
 
-  if (authLoading) {
+  if (authLoading || subLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -139,7 +142,7 @@ export default function ActionUp() {
         </div>
       </header>
 
-      <main className="container py-4 px-4 space-y-5">
+      <main className={cn("container py-4 px-4 space-y-5", !isPro && "pb-32")}>
         <div className="mb-2">
           <h2 className="text-2xl font-bold tracking-tight">ActionUp</h2>
           <p className="text-sm text-muted-foreground">Your Action Center</p>
@@ -284,6 +287,9 @@ export default function ActionUp() {
           )}
         </div>
       </main>
+
+      {/* Upgrade Bar for Free Users */}
+      <UpgradeBar />
 
       <BottomNav />
     </div>

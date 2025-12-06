@@ -5,9 +5,11 @@ import { BottomNav } from '@/components/layout/BottomNav';
 import { FunnelTracker } from '@/components/trackup/FunnelTracker';
 import { LeadsTracker } from '@/components/trackup/LeadsTracker';
 import { ProspectAnalytics } from '@/components/trackup/ProspectAnalytics';
+import { UpgradeBar } from '@/components/subscription/UpgradeBar';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Loader2, TrendingUp, BarChart3, Calendar } from 'lucide-react';
 import { useProspects } from '@/hooks/useProspects';
+import { useSubscription } from '@/hooks/useSubscription';
 import { cn } from '@/lib/utils';
 import nevoraLogo from '@/assets/nevorai-logo.jpeg';
 
@@ -15,6 +17,7 @@ export default function Tracking() {
   const navigate = useNavigate();
   const { user, loading: authLoading } = useAuth();
   const { prospects } = useProspects();
+  const { isPro, loading: subLoading } = useSubscription();
   const [activeTab, setActiveTab] = useState('funnel');
 
   const totalCC = prospects.filter(p => p.funnel_stage === 'Level Up').length;
@@ -25,7 +28,7 @@ export default function Tracking() {
     }
   }, [user, authLoading, navigate]);
 
-  if (authLoading) {
+  if (authLoading || subLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -58,7 +61,7 @@ export default function Tracking() {
         </div>
       </header>
 
-      <main className="container py-4 px-4">
+      <main className={cn("container py-4 px-4", !isPro && "pb-32")}>
         {/* Page Title with decorative element */}
         <div className="mb-5">
           <h2 className="text-2xl font-bold tracking-tight">TrackUp System</h2>
@@ -121,6 +124,9 @@ export default function Tracking() {
           </TabsContent>
         </Tabs>
       </main>
+
+      {/* Upgrade Bar for Free Users */}
+      <UpgradeBar />
 
       <BottomNav />
     </div>

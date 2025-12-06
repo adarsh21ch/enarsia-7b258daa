@@ -2,11 +2,13 @@ import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useProfile } from '@/hooks/useProfile';
+import { useAdmin } from '@/hooks/useAdmin';
 import { BottomNav } from '@/components/layout/BottomNav';
 import { EditProfileDialog } from '@/components/profile/EditProfileDialog';
+import { UpgradeCard } from '@/components/subscription/UpgradeCard';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { User, LogOut, ChevronRight, Crown, Phone, Building2, MapPin, Loader2, FileText, Shield, Receipt } from 'lucide-react';
+import { User, LogOut, ChevronRight, Crown, Phone, Building2, MapPin, Loader2, FileText, Shield, Receipt, Mail, Settings } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import nevoraLogo from '@/assets/nevorai-logo.jpeg';
 
@@ -14,6 +16,7 @@ export default function Profile() {
   const navigate = useNavigate();
   const { user, loading: authLoading, signOut } = useAuth();
   const { profile, loading: profileLoading, updating, updateProfile } = useProfile();
+  const { isAdmin } = useAdmin();
   const [editOpen, setEditOpen] = useState(false);
 
   useEffect(() => {
@@ -93,6 +96,9 @@ export default function Profile() {
           <div className="absolute -right-4 -top-4 w-16 h-16 rounded-full bg-primary/5" />
         </div>
 
+        {/* Upgrade Card */}
+        <UpgradeCard />
+
         {/* Profile Details */}
         {(profile?.phone || profile?.company_name || profile?.city || profile?.bio) && (
           <div className="rounded-2xl p-4 bg-card border border-border/50 space-y-3">
@@ -159,6 +165,47 @@ export default function Profile() {
             </div>
             <ChevronRight className="h-5 w-5 text-muted-foreground" />
           </button>
+
+          {/* Admin Panel Link - Only visible to admin */}
+          {isAdmin && (
+            <Link
+              to="/admin"
+              className={cn(
+                "w-full relative overflow-hidden rounded-xl p-4",
+                "bg-gradient-to-r backdrop-blur-sm",
+                "border border-destructive/30 shadow-sm",
+                "flex items-center justify-between",
+                "transition-all duration-300 hover:shadow-md hover:scale-[1.01]",
+                "from-destructive/20 to-destructive/5"
+              )}
+            >
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-lg bg-destructive/10">
+                  <Settings className="h-5 w-5 text-destructive" />
+                </div>
+                <span className="font-medium">Admin Panel</span>
+              </div>
+              <ChevronRight className="h-5 w-5 text-muted-foreground" />
+            </Link>
+          )}
+        </div>
+
+        {/* Contact Us */}
+        <div className="rounded-2xl p-4 bg-card border border-border/50">
+          <h3 className="text-sm font-semibold text-foreground mb-3">Contact Us</h3>
+          <a
+            href="mailto:teamnevorai@gmail.com"
+            className="flex items-center justify-between p-3 rounded-lg hover:bg-muted/50 transition-colors"
+          >
+            <div className="flex items-center gap-3">
+              <Mail className="h-4 w-4 text-primary" />
+              <div>
+                <span className="text-sm">Email us at:</span>
+                <p className="text-sm font-medium text-primary">teamnevorai@gmail.com</p>
+              </div>
+            </div>
+            <ChevronRight className="h-4 w-4 text-muted-foreground" />
+          </a>
         </div>
 
         {/* Legal & Policies */}

@@ -107,7 +107,7 @@ export default function Privacy() {
               <li>Withdraw consent for certain data processing activities.</li>
             </ul>
             <p className="text-muted-foreground mt-2">
-              To exercise these rights, please contact us at support@neverai.com. We will respond to your request within a reasonable timeframe.
+              To exercise these rights, please contact us at teamnevorai@gmail.com. We will respond to your request within a reasonable timeframe.
             </p>
           </section>
 
@@ -131,9 +131,12 @@ export default function Privacy() {
               If you have any questions or concerns about this Privacy Policy or how we handle your data, please contact us at:
             </p>
             <ul className="list-none space-y-1 text-muted-foreground mt-2">
-              <li><strong className="text-foreground">Email:</strong> support@neverai.com</li>
-              <li><strong className="text-foreground">Address:</strong> [City, State], India</li>
+              <li><strong className="text-foreground">Email:</strong> teamnevorai@gmail.com</li>
+              <li><strong className="text-foreground">Address:</strong> Chhatarpur, MP, India</li>
             </ul>
+            <p className="text-muted-foreground mt-4 text-sm italic">
+              This website is managed by Adarsh Chaturvedi.
+            </p>
           </section>
         </div>
 

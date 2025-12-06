@@ -306,6 +306,63 @@ export type Database = {
         }
         Relationships: []
       }
+      user_roles: {
+        Row: {
+          created_at: string
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_subscriptions: {
+        Row: {
+          created_at: string
+          expires_at: string | null
+          id: string
+          is_admin_override: boolean
+          payment_id: string | null
+          plan: Database["public"]["Enums"]["user_plan"]
+          subscribed_at: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          is_admin_override?: boolean
+          payment_id?: string | null
+          plan?: Database["public"]["Enums"]["user_plan"]
+          subscribed_at?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          is_admin_override?: boolean
+          payment_id?: string | null
+          plan?: Database["public"]["Enums"]["user_plan"]
+          subscribed_at?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_targets: {
         Row: {
           created_at: string
@@ -338,7 +395,13 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
     }
     Enums: {
       action_taken:
@@ -347,6 +410,7 @@ export type Database = {
         | "Not Picked"
         | "Busy"
         | "Follow Up Scheduled"
+      app_role: "admin" | "user"
       funnel_stage:
         | "Enrollment"
         | "Day 1"
@@ -357,6 +421,7 @@ export type Database = {
         | "2CC"
       priority_level: "High" | "Medium" | "Low"
       prospect_status: "+VE" | "-VE" | "50-50" | "30-70"
+      user_plan: "free" | "pro"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -491,6 +556,7 @@ export const Constants = {
         "Busy",
         "Follow Up Scheduled",
       ],
+      app_role: ["admin", "user"],
       funnel_stage: [
         "Enrollment",
         "Day 1",
@@ -502,6 +568,7 @@ export const Constants = {
       ],
       priority_level: ["High", "Medium", "Low"],
       prospect_status: ["+VE", "-VE", "50-50", "30-70"],
+      user_plan: ["free", "pro"],
     },
   },
 } as const

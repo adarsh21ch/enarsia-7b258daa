@@ -63,7 +63,7 @@ export default function Refund() {
             <h2 className="text-xl font-semibold mb-3">5. Refund Process & Timelines</h2>
             <p className="text-muted-foreground mb-2">To request a refund:</p>
             <ol className="list-decimal pl-5 space-y-2 text-muted-foreground">
-              <li>Email us at <strong className="text-foreground">support@neverai.com</strong> with the following information:
+              <li>Email us at <strong className="text-foreground">teamnevorai@gmail.com</strong> with the following information:
                 <ul className="list-disc pl-5 mt-1 space-y-1">
                   <li>Your full name</li>
                   <li>Registered email address</li>
@@ -80,7 +80,7 @@ export default function Refund() {
           <section>
             <h2 className="text-xl font-semibold mb-3">6. No Chargeback Abuse</h2>
             <p className="text-muted-foreground leading-relaxed">
-              We take chargebacks and fraudulent disputes seriously. If you have a billing issue, please contact our support team first at support@neverai.com. Initiating a chargeback without first attempting to resolve the issue with us may result in account suspension and potential legal action. Abuse of the chargeback process is prohibited.
+              We take chargebacks and fraudulent disputes seriously. If you have a billing issue, please contact our support team first at teamnevorai@gmail.com. Initiating a chargeback without first attempting to resolve the issue with us may result in account suspension and potential legal action. Abuse of the chargeback process is prohibited.
             </p>
           </section>
 
@@ -97,8 +97,8 @@ export default function Refund() {
               If you have any questions about this Refund Policy or need assistance with a refund request, please contact us at:
             </p>
             <ul className="list-none space-y-1 text-muted-foreground mt-2">
-              <li><strong className="text-foreground">Email:</strong> support@neverai.com</li>
-              <li><strong className="text-foreground">Address:</strong> [City, State], India</li>
+              <li><strong className="text-foreground">Email:</strong> teamnevorai@gmail.com</li>
+              <li><strong className="text-foreground">Address:</strong> Chhatarpur, MP, India</li>
             </ul>
           </section>
         </div>
