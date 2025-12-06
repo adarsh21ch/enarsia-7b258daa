@@ -147,82 +147,87 @@ export default function Home() {
           })}
         </div>
 
-        {/* Monthly Targets - Collapsible */}
+        {/* Monthly Targets - Enrollment always visible */}
         <div className="bg-card rounded-2xl p-4 border border-border/50">
-          <Collapsible open={targetsExpanded} onOpenChange={setTargetsExpanded}>
-            <div className="flex items-center justify-between gap-2">
-              <CollapsibleTrigger className="flex items-center gap-2 hover:opacity-80 transition-opacity flex-shrink-0">
-                <Target className="h-5 w-5 text-primary" />
-                <h3 className="font-semibold">Monthly Targets</h3>
-                <ChevronDown className={cn("h-4 w-4 text-muted-foreground transition-transform", targetsExpanded && "rotate-180")} />
-              </CollapsibleTrigger>
-              
-              {/* Enrollment summary - always visible */}
-              {!targetsExpanded && (
-                <div className="flex items-center gap-2 flex-1 max-w-[160px]">
-                  <span className="text-xs text-muted-foreground whitespace-nowrap">
-                    Enroll: <span className="font-semibold text-foreground">{kpis.stageCounts['Enrollment']}</span>/{targets['Enrollment'] || 0}
-                  </span>
-                  <Progress 
-                    value={targets['Enrollment'] ? Math.min((kpis.stageCounts['Enrollment'] / targets['Enrollment']) * 100, 100) : 0} 
-                    className="h-1.5 flex-1" 
-                  />
-                </div>
-              )}
-              <Dialog open={editTargetsOpen} onOpenChange={setEditTargetsOpen}>
-                <DialogTrigger asChild>
-                  <Button 
-                    variant="ghost" 
-                    size="sm" 
-                    className="h-8 text-xs"
-                    onClick={() => setEditingTargets({ ...targets })}
-                  >
-                    <Settings2 className="h-3.5 w-3.5 mr-1" />
-                    Edit
-                  </Button>
-                </DialogTrigger>
-                <DialogContent className="sm:max-w-md">
-                  <DialogHeader>
-                    <DialogTitle>Edit Monthly Targets</DialogTitle>
-                  </DialogHeader>
-                  <div className="space-y-4 py-4 max-h-[60vh] overflow-y-auto">
-                    {FUNNEL_STAGES.map(stage => (
-                      <div key={stage} className="flex items-center justify-between gap-4">
-                        <Label className="text-sm font-medium flex-1">{stage}</Label>
-                        <Input
-                          type="number"
-                          min="0"
-                          value={editingTargets[stage] || 0}
-                          onChange={(e) => setEditingTargets(prev => ({
-                            ...prev,
-                            [stage]: parseInt(e.target.value) || 0
-                          }))}
-                          className="w-24 text-right"
-                        />
-                      </div>
-                    ))}
-                  </div>
-                  <div className="flex justify-end gap-2">
-                    <Button variant="outline" onClick={() => setEditTargetsOpen(false)}>
-                      Cancel
-                    </Button>
-                    <Button onClick={async () => {
-                      for (const stage of FUNNEL_STAGES) {
-                        if (editingTargets[stage] !== targets[stage]) {
-                          await updateTarget(stage, editingTargets[stage]);
-                        }
-                      }
-                      setEditTargetsOpen(false);
-                    }}>
-                      Save Targets
-                    </Button>
-                  </div>
-                </DialogContent>
-              </Dialog>
+          {/* Header with Edit button */}
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-2">
+              <Target className="h-5 w-5 text-primary" />
+              <h3 className="font-semibold">Monthly Targets</h3>
             </div>
-            <CollapsibleContent className="mt-4">
+            <Dialog open={editTargetsOpen} onOpenChange={setEditTargetsOpen}>
+              <DialogTrigger asChild>
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  className="h-8 text-xs"
+                  onClick={() => setEditingTargets({ ...targets })}
+                >
+                  <Settings2 className="h-3.5 w-3.5 mr-1" />
+                  Edit
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-md">
+                <DialogHeader>
+                  <DialogTitle>Edit Monthly Targets</DialogTitle>
+                </DialogHeader>
+                <div className="space-y-4 py-4 max-h-[60vh] overflow-y-auto">
+                  {FUNNEL_STAGES.map(stage => (
+                    <div key={stage} className="flex items-center justify-between gap-4">
+                      <Label className="text-sm font-medium flex-1">{stage}</Label>
+                      <Input
+                        type="number"
+                        min="0"
+                        value={editingTargets[stage] || 0}
+                        onChange={(e) => setEditingTargets(prev => ({
+                          ...prev,
+                          [stage]: parseInt(e.target.value) || 0
+                        }))}
+                        className="w-24 text-right"
+                      />
+                    </div>
+                  ))}
+                </div>
+                <div className="flex justify-end gap-2">
+                  <Button variant="outline" onClick={() => setEditTargetsOpen(false)}>
+                    Cancel
+                  </Button>
+                  <Button onClick={async () => {
+                    for (const stage of FUNNEL_STAGES) {
+                      if (editingTargets[stage] !== targets[stage]) {
+                        await updateTarget(stage, editingTargets[stage]);
+                      }
+                    }
+                    setEditTargetsOpen(false);
+                  }}>
+                    Save Targets
+                  </Button>
+                </div>
+              </DialogContent>
+            </Dialog>
+          </div>
+
+          {/* Enrollment Row - Always Visible */}
+          <div className="space-y-1.5 pb-3 border-b border-border/50">
+            <div className="flex items-center justify-between text-sm">
+              <span className="font-medium text-foreground">Enrollment</span>
+              <span className="font-semibold">{kpis.stageCounts['Enrollment']} / {targets['Enrollment'] || 0}</span>
+            </div>
+            <Progress 
+              value={targets['Enrollment'] ? Math.min((kpis.stageCounts['Enrollment'] / targets['Enrollment']) * 100, 100) : 0} 
+              className="h-2.5" 
+            />
+          </div>
+
+          {/* Other Stages - Collapsible */}
+          <Collapsible open={targetsExpanded} onOpenChange={setTargetsExpanded}>
+            <CollapsibleTrigger className="flex items-center gap-2 w-full py-2 mt-1 text-xs text-muted-foreground hover:text-foreground transition-colors">
+              <ChevronDown className={cn("h-3.5 w-3.5 transition-transform", targetsExpanded && "rotate-180")} />
+              <span>{targetsExpanded ? 'Hide details' : 'More details'}</span>
+            </CollapsibleTrigger>
+            <CollapsibleContent className="mt-2">
               <div className="space-y-3">
-                {FUNNEL_STAGES.map(stage => {
+                {FUNNEL_STAGES.filter(stage => stage !== 'Enrollment').map(stage => {
                   const current = kpis.stageCounts[stage];
                   const target = targets[stage] || 0;
                   const progress = target > 0 ? Math.min((current / target) * 100, 100) : 0;

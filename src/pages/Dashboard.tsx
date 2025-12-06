@@ -92,15 +92,23 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* Compact Funnel Summary Bar */}
-        <div className="flex flex-wrap gap-x-3 gap-y-1 text-xs text-muted-foreground bg-muted/30 rounded-lg px-3 py-2 mb-4">
-          <span><strong className="text-foreground">{funnelCounts.enrollment}</strong> Enroll</span>
-          <span><strong className="text-foreground">{funnelCounts.day1}</strong> Day1</span>
-          <span><strong className="text-foreground">{funnelCounts.day2}</strong> Day2</span>
-          <span><strong className="text-foreground">{funnelCounts.day3}</strong> Day3</span>
-          <span><strong className="text-foreground">{funnelCounts.minBill}</strong> MinBill</span>
-          <span><strong className="text-foreground">{funnelCounts.levelUp}</strong> LevelUp</span>
-          <span><strong className="text-foreground">{funnelCounts.twoCC}</strong> 2CC</span>
+        {/* Funnel Summary Bar - Cleaner Format */}
+        <div className="text-xs text-muted-foreground bg-muted/30 rounded-lg px-3 py-2 mb-4">
+          <div className="flex flex-wrap items-center gap-x-1 gap-y-1">
+            <span>Enrol: <strong className="text-foreground">{funnelCounts.enrollment}</strong></span>
+            <span className="text-muted-foreground/50">·</span>
+            <span>Day 1: <strong className="text-foreground">{funnelCounts.day1}</strong></span>
+            <span className="text-muted-foreground/50">·</span>
+            <span>Day 2: <strong className="text-foreground">{funnelCounts.day2}</strong></span>
+            <span className="text-muted-foreground/50">·</span>
+            <span>Day 3: <strong className="text-foreground">{funnelCounts.day3}</strong></span>
+            <span className="text-muted-foreground/50">·</span>
+            <span>Min Bill: <strong className="text-foreground">{funnelCounts.minBill}</strong></span>
+            <span className="text-muted-foreground/50">·</span>
+            <span>Level Up: <strong className="text-foreground">{funnelCounts.levelUp}</strong></span>
+            <span className="text-muted-foreground/50">·</span>
+            <span>2CC: <strong className="text-foreground">{funnelCounts.twoCC}</strong></span>
+          </div>
         </div>
 
         {/* Premium Segmented Control: Calling / Funnel */}

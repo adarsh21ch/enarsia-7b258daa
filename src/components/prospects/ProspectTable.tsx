@@ -39,19 +39,19 @@ interface ProspectTableProps {
   subFilter: 'all' | 'hot' | 'scheduled' | 'day1' | 'progress';
 }
 
-// Column configuration - desktop widths (removed Date column)
+// Column configuration - wider desktop widths for better visibility
 const COLUMNS = [
   { id: 'index', label: '#', defaultWidth: 50, minWidth: 40, mobileWidth: 36, resizable: false },
-  { id: 'name', label: 'Name', defaultWidth: 200, minWidth: 150, mobileWidth: 140, resizable: true },
-  { id: 'phone', label: 'Phone', defaultWidth: 160, minWidth: 120, mobileWidth: 110, resizable: true },
+  { id: 'name', label: 'Name', defaultWidth: 180, minWidth: 140, mobileWidth: 130, resizable: true },
+  { id: 'phone', label: 'Phone', defaultWidth: 140, minWidth: 120, mobileWidth: 100, resizable: true },
   { id: 'contact', label: 'Call', defaultWidth: 70, minWidth: 60, mobileWidth: 60, resizable: false },
-  { id: 'stage', label: 'Stage', defaultWidth: 120, minWidth: 100, mobileWidth: 80, resizable: true },
-  { id: 'action', label: 'Action', defaultWidth: 140, minWidth: 100, mobileWidth: 90, resizable: true },
-  { id: 'quality', label: 'Quality', defaultWidth: 100, minWidth: 80, mobileWidth: 80, resizable: true },
-  { id: 'actions', label: '', defaultWidth: 90, minWidth: 80, mobileWidth: 50, resizable: false },
+  { id: 'stage', label: 'Stage', defaultWidth: 130, minWidth: 110, mobileWidth: 85, resizable: true },
+  { id: 'action', label: 'Action', defaultWidth: 130, minWidth: 100, mobileWidth: 85, resizable: true },
+  { id: 'quality', label: 'Quality', defaultWidth: 100, minWidth: 85, mobileWidth: 75, resizable: true },
+  { id: 'actions', label: '', defaultWidth: 80, minWidth: 70, mobileWidth: 50, resizable: false },
 ];
 
-// Mobile column order (removed Date)
+// Mobile column order
 const MOBILE_COLUMN_ORDER = ['index', 'name', 'phone', 'contact', 'stage', 'action', 'quality', 'actions'];
 
 export function ProspectTable({
@@ -78,7 +78,7 @@ export function ProspectTable({
     incompleteOnly: false,
   });
   const [expandedRowId, setExpandedRowId] = useState<string | null>(null);
-  const [mobileViewMode, setMobileViewMode] = useState<'card' | 'table'>('table');
+  const [viewMode, setViewMode] = useState<'card' | 'table'>('table');
   const isMobile = useIsMobile();
 
   // Column state for reordering and resizing
@@ -326,28 +326,28 @@ export function ProspectTable({
       <div className="bg-card/50 rounded-xl border border-border/50 p-2 sm:p-3 space-y-2 sm:space-y-3">
         <div className="flex flex-col gap-2 sm:gap-3">
           <ProspectFilters filters={filters} onFiltersChange={setFilters} onExport={exportToCSV} />
-          <div className="flex gap-2 items-center justify-between sm:justify-end">
-            {/* Mobile View Toggle */}
-            {isMobile && (
-              <div className="flex items-center bg-muted rounded-lg p-0.5">
-                <Button
-                  variant={mobileViewMode === 'card' ? 'secondary' : 'ghost'}
-                  size="sm"
-                  className="h-9 px-3"
-                  onClick={() => setMobileViewMode('card')}
-                >
-                  <LayoutGrid className="h-4 w-4" />
-                </Button>
-                <Button
-                  variant={mobileViewMode === 'table' ? 'secondary' : 'ghost'}
-                  size="sm"
-                  className="h-9 px-3"
-                  onClick={() => setMobileViewMode('table')}
-                >
-                  <Table2 className="h-4 w-4" />
-                </Button>
-              </div>
-            )}
+          <div className="flex gap-2 items-center justify-between">
+            {/* View Toggle - Available on all screen sizes */}
+            <div className="flex items-center bg-muted rounded-lg p-0.5">
+              <Button
+                variant={viewMode === 'table' ? 'secondary' : 'ghost'}
+                size="sm"
+                className="h-8 px-2.5 gap-1.5"
+                onClick={() => setViewMode('table')}
+              >
+                <Table2 className="h-4 w-4" />
+                <span className="text-xs hidden sm:inline">Table</span>
+              </Button>
+              <Button
+                variant={viewMode === 'card' ? 'secondary' : 'ghost'}
+                size="sm"
+                className="h-8 px-2.5 gap-1.5"
+                onClick={() => setViewMode('card')}
+              >
+                <LayoutGrid className="h-4 w-4" />
+                <span className="text-xs hidden sm:inline">Cards</span>
+              </Button>
+            </div>
             <div className="flex gap-2">
               <ImportExcelDialog onImport={handleImportProspects} />
               <AddProspectDialog onAdd={handleAddProspect} />
@@ -381,9 +381,9 @@ export function ProspectTable({
             </button>
           </p>
         </div>
-      ) : isMobile && mobileViewMode === 'card' ? (
-        // Mobile Card Layout
-        <div className="space-y-3">
+      ) : viewMode === 'card' ? (
+        // Card Layout - Works on all screen sizes
+        <div className={cn("grid gap-3", isMobile ? "grid-cols-1" : "grid-cols-1 md:grid-cols-2 lg:grid-cols-3")}>
           {filteredProspects.map((prospect, index) => (
             <MobileProspectCard
               key={prospect.id}
@@ -394,9 +394,6 @@ export function ProspectTable({
               onDelete={onDelete}
             />
           ))}
-          <div className="text-center text-xs text-muted-foreground py-2">
-            Showing {filteredProspects.length} of {baseProspects.length} prospects
-          </div>
         </div>
       ) : (
         // Table Layout (Desktop or Mobile Table View)
@@ -412,8 +409,8 @@ export function ProspectTable({
             style={{ WebkitOverflowScrolling: 'touch' }}
           >
             <table 
-              className="text-sm border-collapse"
-              style={{ width: '100%', minWidth: isMobile ? '600px' : '750px' }}
+              className="text-sm border-collapse w-full"
+              style={{ minWidth: isMobile ? '580px' : '880px' }}
             >
               <thead className="bg-muted/50 text-xs font-semibold text-muted-foreground border-b border-border">
                 <tr>
