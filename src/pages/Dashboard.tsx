@@ -67,8 +67,8 @@ export default function Dashboard() {
                 className="h-10 w-10 rounded-xl object-cover shadow-md"
               />
               <div>
-                <h1 className="text-lg font-bold tracking-tight">NevorAI</h1>
-                <p className="text-[10px] text-muted-foreground font-medium">Never miss a followup Again</p>
+                <h1 className="text-xl font-bold tracking-tight">Follow Up</h1>
+                <p className="text-xs text-muted-foreground font-medium">Calling & Funnel Follow-ups</p>
               </div>
             </div>
             <div className="bg-gradient-to-br from-primary/10 to-primary/5 rounded-xl px-4 py-2 text-right border border-primary/10">

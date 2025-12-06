@@ -46,7 +46,7 @@ export default function Tracking() {
     <div className="min-h-screen bg-gradient-to-b from-background via-background to-muted/20 pb-24 main-container">
       {/* Premium Header */}
       <header className="sticky top-0 z-40 bg-card/80 backdrop-blur-xl border-b border-border/50 max-w-full">
-        <div className="flex items-center justify-between px-4 py-3">
+        <div className="flex items-center px-4 py-3">
           <div className="flex items-center gap-3">
             <img 
               src={nevoraLogo} 
@@ -54,13 +54,9 @@ export default function Tracking() {
               className="h-10 w-10 rounded-xl object-cover shadow-md"
             />
             <div>
-              <h1 className="text-lg font-bold tracking-tight">NevorAI</h1>
-              <p className="text-[10px] text-muted-foreground font-medium">Never miss a followup Again</p>
+              <h1 className="text-xl font-bold tracking-tight">Track Up</h1>
+              <p className="text-xs text-muted-foreground font-medium">Track Your Numbers</p>
             </div>
-          </div>
-          <div className="bg-gradient-to-br from-primary/10 to-primary/5 rounded-xl px-4 py-2 text-right border border-primary/10">
-            <p className="text-[10px] text-muted-foreground font-medium">Total CC</p>
-            <p className="text-2xl font-bold text-primary tracking-tight">{totalCC}</p>
           </div>
         </div>
       </header>
