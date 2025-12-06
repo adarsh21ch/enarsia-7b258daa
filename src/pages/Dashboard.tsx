@@ -56,9 +56,9 @@ export default function Dashboard() {
 
   return (
     <CustomOptionsProvider>
-      <div className="min-h-screen bg-gradient-to-b from-background via-background to-muted/20 pb-24">
+      <div className="app-layout bg-gradient-to-b from-background via-background to-muted/20">
         {/* Premium Header */}
-        <header className="sticky top-0 z-40 bg-card/80 backdrop-blur-xl border-b border-border/50">
+        <header className="fixed-header z-40 bg-card/80 backdrop-blur-xl border-b border-border/50">
           <div className="flex items-center justify-between px-4 py-3">
             <div className="flex items-center gap-3">
               <img 
@@ -78,95 +78,97 @@ export default function Dashboard() {
           </div>
         </header>
 
-      <main className="container py-3 px-4">
-        {/* Funnel Summary Bar - Cleaner Format */}
-        <div className="text-xs text-muted-foreground bg-muted/30 rounded-lg px-3 py-2 mb-4">
-          <div className="flex flex-wrap items-center gap-x-1 gap-y-1">
-            <span>Enrol: <strong className="text-foreground">{funnelCounts.enrollment}</strong></span>
-            <span className="text-muted-foreground/50">·</span>
-            <span>Day 1: <strong className="text-foreground">{funnelCounts.day1}</strong></span>
-            <span className="text-muted-foreground/50">·</span>
-            <span>Day 2: <strong className="text-foreground">{funnelCounts.day2}</strong></span>
-            <span className="text-muted-foreground/50">·</span>
-            <span>Day 3: <strong className="text-foreground">{funnelCounts.day3}</strong></span>
-            <span className="text-muted-foreground/50">·</span>
-            <span>Min Bill: <strong className="text-foreground">{funnelCounts.minBill}</strong></span>
-            <span className="text-muted-foreground/50">·</span>
-            <span>Level Up: <strong className="text-foreground">{funnelCounts.levelUp}</strong></span>
-            <span className="text-muted-foreground/50">·</span>
-            <span>2CC: <strong className="text-foreground">{funnelCounts.twoCC}</strong></span>
+        <main className="scrollable-content">
+          <div className="container py-3 px-4 pb-20">
+            {/* Funnel Summary Bar - Cleaner Format */}
+            <div className="text-xs text-muted-foreground bg-muted/30 rounded-lg px-3 py-2 mb-4">
+              <div className="flex flex-wrap items-center gap-x-1 gap-y-1">
+                <span>Enrol: <strong className="text-foreground">{funnelCounts.enrollment}</strong></span>
+                <span className="text-muted-foreground/50">·</span>
+                <span>Day 1: <strong className="text-foreground">{funnelCounts.day1}</strong></span>
+                <span className="text-muted-foreground/50">·</span>
+                <span>Day 2: <strong className="text-foreground">{funnelCounts.day2}</strong></span>
+                <span className="text-muted-foreground/50">·</span>
+                <span>Day 3: <strong className="text-foreground">{funnelCounts.day3}</strong></span>
+                <span className="text-muted-foreground/50">·</span>
+                <span>Min Bill: <strong className="text-foreground">{funnelCounts.minBill}</strong></span>
+                <span className="text-muted-foreground/50">·</span>
+                <span>Level Up: <strong className="text-foreground">{funnelCounts.levelUp}</strong></span>
+                <span className="text-muted-foreground/50">·</span>
+                <span>2CC: <strong className="text-foreground">{funnelCounts.twoCC}</strong></span>
+              </div>
+            </div>
+
+            {/* Premium Segmented Control: Calling / Funnel */}
+            <Tabs value={mainTab} onValueChange={(v) => setMainTab(v as 'calling' | 'funnel')} className="w-full">
+              <TabsList className="w-full grid grid-cols-2 mb-5 h-14 p-1.5 bg-muted/50 rounded-2xl gap-1">
+                <TabsTrigger 
+                  value="calling" 
+                  className={cn(
+                    "rounded-xl flex flex-col items-center justify-center gap-0.5 h-full transition-all duration-300",
+                    "data-[state=active]:bg-card data-[state=active]:shadow-lg data-[state=active]:shadow-primary/10",
+                    "data-[state=active]:text-primary"
+                  )}
+                >
+                  <Phone className="h-4 w-4" />
+                  <span className="text-[10px] font-semibold">Calling</span>
+                </TabsTrigger>
+                <TabsTrigger 
+                  value="funnel" 
+                  className={cn(
+                    "rounded-xl flex flex-col items-center justify-center gap-0.5 h-full transition-all duration-300",
+                    "data-[state=active]:bg-card data-[state=active]:shadow-lg data-[state=active]:shadow-primary/10",
+                    "data-[state=active]:text-primary"
+                  )}
+                >
+                  <GitBranch className="h-4 w-4" />
+                  <span className="text-[10px] font-semibold">Funnel</span>
+                </TabsTrigger>
+              </TabsList>
+
+              <TabsContent value="calling" className="mt-0 focus-visible:outline-none focus-visible:ring-0">
+                <ProspectTable
+                  prospects={prospects}
+                  loading={loading}
+                  onAdd={addProspect}
+                  onUpdate={updateProspect}
+                  onDelete={deleteProspect}
+                  onImport={importProspects}
+                  sheets={sheets}
+                  selectedSheetId={selectedSheetId}
+                  onSelectSheet={setSelectedSheetId}
+                  onAddSheet={addSheet}
+                  onUpdateSheet={updateSheet}
+                  onDeleteSheet={deleteSheet}
+                  filterMode="calling"
+                  subFilter="all"
+                />
+              </TabsContent>
+
+              <TabsContent value="funnel" className="mt-0 focus-visible:outline-none focus-visible:ring-0">
+                <ProspectTable
+                  prospects={prospects}
+                  loading={loading}
+                  onAdd={addProspect}
+                  onUpdate={updateProspect}
+                  onDelete={deleteProspect}
+                  onImport={importProspects}
+                  sheets={sheets}
+                  selectedSheetId={selectedSheetId}
+                  onSelectSheet={setSelectedSheetId}
+                  onAddSheet={addSheet}
+                  onUpdateSheet={updateSheet}
+                  onDeleteSheet={deleteSheet}
+                  filterMode="funnel"
+                  subFilter="all"
+                />
+              </TabsContent>
+            </Tabs>
           </div>
-        </div>
+        </main>
 
-        {/* Premium Segmented Control: Calling / Funnel */}
-        <Tabs value={mainTab} onValueChange={(v) => setMainTab(v as 'calling' | 'funnel')} className="w-full">
-          <TabsList className="w-full grid grid-cols-2 mb-5 h-14 p-1.5 bg-muted/50 rounded-2xl gap-1">
-            <TabsTrigger 
-              value="calling" 
-              className={cn(
-                "rounded-xl flex flex-col items-center justify-center gap-0.5 h-full transition-all duration-300",
-                "data-[state=active]:bg-card data-[state=active]:shadow-lg data-[state=active]:shadow-primary/10",
-                "data-[state=active]:text-primary"
-              )}
-            >
-              <Phone className="h-4 w-4" />
-              <span className="text-[10px] font-semibold">Calling</span>
-            </TabsTrigger>
-            <TabsTrigger 
-              value="funnel" 
-              className={cn(
-                "rounded-xl flex flex-col items-center justify-center gap-0.5 h-full transition-all duration-300",
-                "data-[state=active]:bg-card data-[state=active]:shadow-lg data-[state=active]:shadow-primary/10",
-                "data-[state=active]:text-primary"
-              )}
-            >
-              <GitBranch className="h-4 w-4" />
-              <span className="text-[10px] font-semibold">Funnel</span>
-            </TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="calling" className="mt-0 focus-visible:outline-none focus-visible:ring-0">
-            <ProspectTable
-              prospects={prospects}
-              loading={loading}
-              onAdd={addProspect}
-              onUpdate={updateProspect}
-              onDelete={deleteProspect}
-              onImport={importProspects}
-              sheets={sheets}
-              selectedSheetId={selectedSheetId}
-              onSelectSheet={setSelectedSheetId}
-              onAddSheet={addSheet}
-              onUpdateSheet={updateSheet}
-              onDeleteSheet={deleteSheet}
-              filterMode="calling"
-              subFilter="all"
-            />
-          </TabsContent>
-
-          <TabsContent value="funnel" className="mt-0 focus-visible:outline-none focus-visible:ring-0">
-            <ProspectTable
-              prospects={prospects}
-              loading={loading}
-              onAdd={addProspect}
-              onUpdate={updateProspect}
-              onDelete={deleteProspect}
-              onImport={importProspects}
-              sheets={sheets}
-              selectedSheetId={selectedSheetId}
-              onSelectSheet={setSelectedSheetId}
-              onAddSheet={addSheet}
-              onUpdateSheet={updateSheet}
-              onDeleteSheet={deleteSheet}
-              filterMode="funnel"
-              subFilter="all"
-            />
-          </TabsContent>
-        </Tabs>
-      </main>
-
-      <BottomNav />
-    </div>
+        <BottomNav />
+      </div>
     </CustomOptionsProvider>
   );
 }

@@ -43,9 +43,9 @@ export default function Tracking() {
   if (!user) return null;
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-background via-background to-muted/20 pb-24 main-container">
+    <div className="app-layout bg-gradient-to-b from-background via-background to-muted/20">
       {/* Premium Header */}
-      <header className="sticky top-0 z-40 bg-card/80 backdrop-blur-xl border-b border-border/50 max-w-full">
+      <header className="fixed-header z-40 bg-card/80 backdrop-blur-xl border-b border-border/50">
         <div className="flex items-center px-4 py-3">
           <div className="flex items-center gap-3">
             <img 
@@ -61,56 +61,58 @@ export default function Tracking() {
         </div>
       </header>
 
-      <main className={cn("container py-3 px-4", !isPro && "pb-32")}>
-        {/* Lock overlay for Free users */}
-        {!isPro && (
-          <div className="relative mb-6">
-            <div className="absolute inset-0 flex flex-col items-center justify-center z-10 bg-background/80 backdrop-blur-sm rounded-2xl">
-              <div className="p-4 rounded-full bg-muted mb-4">
-                <Lock className="h-12 w-12 text-muted-foreground" />
+      <main className="scrollable-content">
+        <div className={cn("container py-3 px-4", !isPro ? "pb-36" : "pb-20")}>
+          {/* Lock overlay for Free users */}
+          {!isPro && (
+            <div className="relative mb-6">
+              <div className="absolute inset-0 flex flex-col items-center justify-center z-10 bg-background/80 backdrop-blur-sm rounded-2xl">
+                <div className="p-4 rounded-full bg-muted mb-4">
+                  <Lock className="h-12 w-12 text-muted-foreground" />
+                </div>
+                <h3 className="text-xl font-semibold mb-2">Pro Feature</h3>
+                <p className="text-muted-foreground max-w-sm text-center">
+                  Subscribe for ₹249 to unlock TrackUp and all premium features.
+                </p>
               </div>
-              <h3 className="text-xl font-semibold mb-2">Pro Feature</h3>
-              <p className="text-muted-foreground max-w-sm text-center">
-                Subscribe for ₹249 to unlock TrackUp and all premium features.
-              </p>
             </div>
-          </div>
-        )}
+          )}
 
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="w-full grid grid-cols-2 mb-5 h-14 p-1.5 bg-muted/50 rounded-2xl gap-1">
-            <TabsTrigger 
-              value="funnel" 
-              className={cn(
-                "rounded-xl flex flex-col items-center justify-center gap-0.5 h-full transition-all duration-300",
-                "data-[state=active]:bg-card data-[state=active]:shadow-lg data-[state=active]:shadow-primary/10",
-                "data-[state=active]:text-primary"
-              )}
-            >
-              <TrendingUp className="h-4 w-4" />
-              <span className="text-[10px] font-semibold">Funnel</span>
-            </TabsTrigger>
-            <TabsTrigger 
-              value="leads" 
-              className={cn(
-                "rounded-xl flex flex-col items-center justify-center gap-0.5 h-full transition-all duration-300",
-                "data-[state=active]:bg-card data-[state=active]:shadow-lg data-[state=active]:shadow-primary/10",
-                "data-[state=active]:text-primary"
-              )}
-            >
-              <Calendar className="h-4 w-4" />
-              <span className="text-[10px] font-semibold">Leads</span>
-            </TabsTrigger>
-          </TabsList>
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+            <TabsList className="w-full grid grid-cols-2 mb-5 h-14 p-1.5 bg-muted/50 rounded-2xl gap-1">
+              <TabsTrigger 
+                value="funnel" 
+                className={cn(
+                  "rounded-xl flex flex-col items-center justify-center gap-0.5 h-full transition-all duration-300",
+                  "data-[state=active]:bg-card data-[state=active]:shadow-lg data-[state=active]:shadow-primary/10",
+                  "data-[state=active]:text-primary"
+                )}
+              >
+                <TrendingUp className="h-4 w-4" />
+                <span className="text-[10px] font-semibold">Funnel</span>
+              </TabsTrigger>
+              <TabsTrigger 
+                value="leads" 
+                className={cn(
+                  "rounded-xl flex flex-col items-center justify-center gap-0.5 h-full transition-all duration-300",
+                  "data-[state=active]:bg-card data-[state=active]:shadow-lg data-[state=active]:shadow-primary/10",
+                  "data-[state=active]:text-primary"
+                )}
+              >
+                <Calendar className="h-4 w-4" />
+                <span className="text-[10px] font-semibold">Leads</span>
+              </TabsTrigger>
+            </TabsList>
 
-          <TabsContent value="funnel" className="mt-0 focus-visible:outline-none focus-visible:ring-0">
-            <FunnelTracker isPro={isPro} />
-          </TabsContent>
+            <TabsContent value="funnel" className="mt-0 focus-visible:outline-none focus-visible:ring-0">
+              <FunnelTracker isPro={isPro} />
+            </TabsContent>
 
-          <TabsContent value="leads" className="mt-0 focus-visible:outline-none focus-visible:ring-0">
-            <LeadsTracker isPro={isPro} />
-          </TabsContent>
-        </Tabs>
+            <TabsContent value="leads" className="mt-0 focus-visible:outline-none focus-visible:ring-0">
+              <LeadsTracker isPro={isPro} />
+            </TabsContent>
+          </Tabs>
+        </div>
       </main>
 
       {/* Upgrade Bar for Free Users */}

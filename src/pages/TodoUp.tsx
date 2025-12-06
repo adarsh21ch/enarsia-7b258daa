@@ -418,8 +418,8 @@ export default function TodoUp() {
   if (!user) return null;
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-background via-background to-muted/20 flex flex-col">
-      <header className="sticky top-0 z-40 bg-card/80 backdrop-blur-xl border-b border-border/50">
+    <div className="app-layout bg-gradient-to-b from-background via-background to-muted/20">
+      <header className="fixed-header z-40 bg-card/80 backdrop-blur-xl border-b border-border/50">
         <div className="flex items-center px-4 py-3">
           <div className="flex items-center gap-3">
             <img 
@@ -435,195 +435,197 @@ export default function TodoUp() {
         </div>
       </header>
 
-      <main className={cn("flex-1 container py-3 px-4 space-y-4 pb-28", !isPro && "pb-36")}>
-        {/* Lock overlay for Free users */}
-        {!isPro && (
-          <div className="relative mb-6">
-            <div className="absolute inset-0 flex flex-col items-center justify-center z-10 bg-background/80 backdrop-blur-sm rounded-2xl py-16">
-              <div className="p-4 rounded-full bg-muted mb-4">
-                <Lock className="h-12 w-12 text-muted-foreground" />
+      <main className="scrollable-content">
+        <div className={cn("container py-3 px-4 space-y-4", !isPro ? "pb-36" : isPro ? "pb-32" : "pb-20")}>
+          {/* Lock overlay for Free users */}
+          {!isPro && (
+            <div className="relative mb-6">
+              <div className="absolute inset-0 flex flex-col items-center justify-center z-10 bg-background/80 backdrop-blur-sm rounded-2xl py-16">
+                <div className="p-4 rounded-full bg-muted mb-4">
+                  <Lock className="h-12 w-12 text-muted-foreground" />
+                </div>
+                <h3 className="text-xl font-semibold mb-2">Pro Feature</h3>
+                <p className="text-muted-foreground max-w-sm text-center">
+                  Subscribe for ₹249 to unlock Todo Up and all premium features.
+                </p>
               </div>
-              <h3 className="text-xl font-semibold mb-2">Pro Feature</h3>
-              <p className="text-muted-foreground max-w-sm text-center">
-                Subscribe for ₹249 to unlock Todo Up and all premium features.
-              </p>
             </div>
-          </div>
-        )}
+          )}
 
-        {/* Funnel Stage Dashboard - 4 columns with DnD */}
-        <div className="bg-card rounded-2xl p-4 border border-border/50 shadow-sm">
-          <p className="text-xs text-muted-foreground mb-3 font-medium">
-            Funnel Stage Overview 
-            {isPro && <span className="text-accent ml-1">(drag to move)</span>}
-          </p>
-          <DndContext
-            sensors={sensors}
-            collisionDetection={closestCenter}
-            onDragStart={handleDragStart}
-            onDragOver={handleDragOver}
-            onDragEnd={handleDragEnd}
-          >
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-              {FUNNEL_COLUMNS.map(stage => (
-                <FunnelColumn
-                  key={stage}
-                  stage={stage}
-                  prospects={funnelData[stage]}
-                  isPro={isPro}
-                  expandedProspectId={expandedProspectId}
-                  onToggleExpand={handleToggleExpand}
-                  onAddTodo={handlePreFillTodo}
-                  isOver={overColumnId === stage}
-                />
-              ))}
-            </div>
-            
-            <DragOverlay>
-              {activeProspect && (
-                <div className="px-4 py-2.5 bg-gradient-to-r from-gray-900 to-gray-800 text-white rounded-xl shadow-2xl text-sm font-medium border border-white/10 backdrop-blur-sm">
-                  {activeProspect.name}
-                </div>
-              )}
-            </DragOverlay>
-          </DndContext>
-        </div>
-
-        {/* To-Do List */}
-        <div className="bg-card rounded-2xl p-4 border border-border/50 shadow-sm flex-1">
-          <div className="flex items-center gap-2 mb-4">
-            <CheckCircle className="h-5 w-5 text-accent" />
-            <h3 className="font-semibold">My To-Do List</h3>
-          </div>
-
-          {!isPro ? (
-            <div className="bg-accent/5 rounded-xl py-8">
-              <p className="text-sm text-muted-foreground text-center">
-                Upgrade to Pro to manage tasks
-              </p>
-            </div>
-          ) : todosLoading ? (
-            <div className="flex justify-center py-8">
-              <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
-            </div>
-          ) : todos.length === 0 ? (
-            <div className="bg-accent/5 rounded-xl py-8">
-              <p className="text-sm text-muted-foreground text-center">
-                No tasks yet. Add one below!
-              </p>
-            </div>
-          ) : (
-            <div className="space-y-2 max-h-[40vh] overflow-y-auto">
-              {todos.map(todo => (
-                <div
-                  key={todo.id}
-                  className={cn(
-                    "flex items-center gap-3 p-3 rounded-xl transition-all group",
-                    todo.completed 
-                      ? "bg-muted/20" 
-                      : "bg-accent/5 hover:bg-accent/10"
-                  )}
-                >
-                  <Checkbox
-                    checked={todo.completed}
-                    onCheckedChange={(checked) => toggleTodo(todo.id, !!checked)}
-                    className="data-[state=checked]:bg-accent data-[state=checked]:border-accent"
+          {/* Funnel Stage Dashboard - 4 columns with DnD */}
+          <div className="bg-card rounded-2xl p-4 border border-border/50 shadow-sm">
+            <p className="text-xs text-muted-foreground mb-3 font-medium">
+              Funnel Stage Overview 
+              {isPro && <span className="text-accent ml-1">(drag to move)</span>}
+            </p>
+            <DndContext
+              sensors={sensors}
+              collisionDetection={closestCenter}
+              onDragStart={handleDragStart}
+              onDragOver={handleDragOver}
+              onDragEnd={handleDragEnd}
+            >
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                {FUNNEL_COLUMNS.map(stage => (
+                  <FunnelColumn
+                    key={stage}
+                    stage={stage}
+                    prospects={funnelData[stage]}
+                    isPro={isPro}
+                    expandedProspectId={expandedProspectId}
+                    onToggleExpand={handleToggleExpand}
+                    onAddTodo={handlePreFillTodo}
+                    isOver={overColumnId === stage}
                   />
-                  
-                  {editingId === todo.id ? (
-                    <div className="flex-1 flex items-center gap-2">
-                      <Input
-                        value={editingTitle}
-                        onChange={(e) => setEditingTitle(e.target.value)}
-                        className="h-8 text-sm"
-                        autoFocus
-                        onKeyDown={(e) => {
-                          if (e.key === 'Enter') handleSaveEdit();
-                          if (e.key === 'Escape') handleCancelEdit();
-                        }}
-                      />
-                      <Button variant="ghost" size="icon" className="h-7 w-7" onClick={handleSaveEdit}>
-                        <Check className="h-4 w-4 text-green-500" />
-                      </Button>
-                      <Button variant="ghost" size="icon" className="h-7 w-7" onClick={handleCancelEdit}>
-                        <X className="h-4 w-4 text-muted-foreground" />
-                      </Button>
-                    </div>
-                  ) : (
-                    <>
-                      <div className="flex-1 min-w-0">
-                        <p className={cn(
-                          "text-sm",
-                          todo.completed && "line-through text-muted-foreground"
-                        )}>
-                          {todo.title}
-                        </p>
-                        {todo.due_date && (
-                          <p className="text-xs text-muted-foreground mt-0.5">
-                            Due: {format(parseISO(todo.due_date), 'dd MMM yyyy')}
+                ))}
+              </div>
+              
+              <DragOverlay>
+                {activeProspect && (
+                  <div className="px-4 py-2.5 bg-gradient-to-r from-gray-900 to-gray-800 text-white rounded-xl shadow-2xl text-sm font-medium border border-white/10 backdrop-blur-sm">
+                    {activeProspect.name}
+                  </div>
+                )}
+              </DragOverlay>
+            </DndContext>
+          </div>
+
+          {/* To-Do List */}
+          <div className="bg-card rounded-2xl p-4 border border-border/50 shadow-sm flex-1">
+            <div className="flex items-center gap-2 mb-4">
+              <CheckCircle className="h-5 w-5 text-accent" />
+              <h3 className="font-semibold">My To-Do List</h3>
+            </div>
+
+            {!isPro ? (
+              <div className="bg-accent/5 rounded-xl py-8">
+                <p className="text-sm text-muted-foreground text-center">
+                  Upgrade to Pro to manage tasks
+                </p>
+              </div>
+            ) : todosLoading ? (
+              <div className="flex justify-center py-8">
+                <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+              </div>
+            ) : todos.length === 0 ? (
+              <div className="bg-accent/5 rounded-xl py-8">
+                <p className="text-sm text-muted-foreground text-center">
+                  No tasks yet. Add one below!
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-2 max-h-[40vh] overflow-y-auto">
+                {todos.map(todo => (
+                  <div
+                    key={todo.id}
+                    className={cn(
+                      "flex items-center gap-3 p-3 rounded-xl transition-all group",
+                      todo.completed 
+                        ? "bg-muted/20" 
+                        : "bg-accent/5 hover:bg-accent/10"
+                    )}
+                  >
+                    <Checkbox
+                      checked={todo.completed}
+                      onCheckedChange={(checked) => toggleTodo(todo.id, !!checked)}
+                      className="data-[state=checked]:bg-accent data-[state=checked]:border-accent"
+                    />
+                    
+                    {editingId === todo.id ? (
+                      <div className="flex-1 flex items-center gap-2">
+                        <Input
+                          value={editingTitle}
+                          onChange={(e) => setEditingTitle(e.target.value)}
+                          className="h-8 text-sm"
+                          autoFocus
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') handleSaveEdit();
+                            if (e.key === 'Escape') handleCancelEdit();
+                          }}
+                        />
+                        <Button variant="ghost" size="icon" className="h-7 w-7" onClick={handleSaveEdit}>
+                          <Check className="h-4 w-4 text-green-500" />
+                        </Button>
+                        <Button variant="ghost" size="icon" className="h-7 w-7" onClick={handleCancelEdit}>
+                          <X className="h-4 w-4 text-muted-foreground" />
+                        </Button>
+                      </div>
+                    ) : (
+                      <>
+                        <div className="flex-1 min-w-0">
+                          <p className={cn(
+                            "text-sm",
+                            todo.completed && "line-through text-muted-foreground"
+                          )}>
+                            {todo.title}
                           </p>
-                        )}
-                      </div>
-                      <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-7 w-7 text-muted-foreground hover:text-foreground"
-                          onClick={() => handleStartEdit(todo.id, todo.title)}
-                        >
-                          <Edit2 className="h-3.5 w-3.5" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-7 w-7 text-muted-foreground hover:text-destructive"
-                          onClick={() => deleteTodo(todo.id)}
-                        >
-                          <Trash2 className="h-3.5 w-3.5" />
-                        </Button>
-                      </div>
-                    </>
-                  )}
+                          {todo.due_date && (
+                            <p className="text-xs text-muted-foreground mt-0.5">
+                              Due: {format(parseISO(todo.due_date), 'dd MMM yyyy')}
+                            </p>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-7 w-7 text-muted-foreground hover:text-foreground"
+                            onClick={() => handleStartEdit(todo.id, todo.title)}
+                          >
+                            <Edit2 className="h-3.5 w-3.5" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-7 w-7 text-muted-foreground hover:text-destructive"
+                            onClick={() => deleteTodo(todo.id)}
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </Button>
+                        </div>
+                      </>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Premium AI-style input bar */}
+          {isPro && (
+            <div className="sticky bottom-0 left-0 right-0 z-30 bg-gradient-to-t from-background via-background/95 to-transparent pt-4 pb-2 -mx-4 px-4">
+              <div className="max-w-lg mx-auto">
+                <div className="flex items-center gap-2 bg-card/95 backdrop-blur-sm border border-border/60 rounded-full px-4 py-2 shadow-xl ring-1 ring-black/5 dark:ring-white/5">
+                  <Input
+                    placeholder="Add a to-do task or reminder…"
+                    value={newTodoInput}
+                    onChange={(e) => setNewTodoInput(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' && newTodoInput.trim()) {
+                        e.preventDefault();
+                        handleAddTodo();
+                      }
+                    }}
+                    className="flex-1 border-0 bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0 placeholder:text-muted-foreground/50 text-sm h-9"
+                  />
+                  <Button
+                    size="icon"
+                    className={cn(
+                      "h-10 w-10 rounded-full shrink-0 bg-accent hover:bg-accent/90 shadow-md transition-all duration-150",
+                      "active:scale-95 hover:shadow-lg hover:shadow-accent/25",
+                      !newTodoInput.trim() && "opacity-60"
+                    )}
+                    onClick={() => handleAddTodo()}
+                    disabled={!newTodoInput.trim()}
+                  >
+                    <Send className="h-4.5 w-4.5" />
+                  </Button>
                 </div>
-              ))}
+              </div>
             </div>
           )}
         </div>
       </main>
-
-      {/* Premium AI-style input bar at bottom */}
-      {isPro && (
-        <div className="fixed bottom-20 left-0 right-0 z-30 px-4 pb-3 bg-gradient-to-t from-background via-background/95 to-transparent pt-6">
-          <div className="max-w-lg mx-auto">
-            <div className="flex items-center gap-2 bg-card/95 backdrop-blur-sm border border-border/60 rounded-full px-4 py-2 shadow-xl ring-1 ring-black/5 dark:ring-white/5">
-              <Input
-                placeholder="Add a to-do task or reminder…"
-                value={newTodoInput}
-                onChange={(e) => setNewTodoInput(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' && newTodoInput.trim()) {
-                    e.preventDefault();
-                    handleAddTodo();
-                  }
-                }}
-                className="flex-1 border-0 bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0 placeholder:text-muted-foreground/50 text-sm h-9"
-              />
-              <Button
-                size="icon"
-                className={cn(
-                  "h-10 w-10 rounded-full shrink-0 bg-accent hover:bg-accent/90 shadow-md transition-all duration-150",
-                  "active:scale-95 hover:shadow-lg hover:shadow-accent/25",
-                  !newTodoInput.trim() && "opacity-60"
-                )}
-                onClick={() => handleAddTodo()}
-                disabled={!newTodoInput.trim()}
-              >
-                <Send className="h-4.5 w-4.5" />
-              </Button>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* Upgrade Bar for Free Users */}
       <UpgradeBar />

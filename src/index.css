@@ -132,21 +132,45 @@
     padding: 0;
     max-width: 100vw;
     overflow-x: hidden;
+    overscroll-behavior: none;
   }
 
   html {
     font-family: 'Inter', system-ui, sans-serif;
+    height: 100%;
   }
 
-  .main-container {
-    max-width: 100vw;
-    overflow-x: hidden;
-    min-height: 100vh;
+  body {
+    height: 100%;
+    overflow: hidden;
   }
-  
-  /* Fix extra blue/background space at bottom on mobile */
-  [class*="pb-24"] {
-    padding-bottom: 5.5rem;
+
+  #root {
+    height: 100%;
+  }
+
+  /* App layout for fixed header/content/nav pattern */
+  .app-layout {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    height: 100dvh; /* Dynamic viewport height for mobile */
+    overflow: hidden;
+    max-width: 100vw;
+  }
+
+  /* Scrollable content area between header and bottom nav */
+  .scrollable-content {
+    flex: 1;
+    overflow-y: auto;
+    overflow-x: hidden;
+    overscroll-behavior-y: contain;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* Fixed header that doesn't shrink */
+  .fixed-header {
+    flex-shrink: 0;
   }
 }
 
