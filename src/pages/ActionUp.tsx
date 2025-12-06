@@ -157,13 +157,25 @@ export default function ActionUp() {
       </header>
 
       <main className={cn("container py-4 px-4 space-y-5", !isPro && "pb-32")}>
-        <div className="mb-2">
-          <h2 className="text-2xl font-bold tracking-tight">ActionUp</h2>
-          <p className="text-sm text-muted-foreground">Your Action Center</p>
-          <div className="flex items-center gap-1 mt-2">
-            <div className="w-8 h-1 bg-primary rounded-full" />
-            <div className="w-2 h-1 bg-primary/50 rounded-full" />
-            <div className="w-1 h-1 bg-primary/30 rounded-full" />
+        <div className="flex items-start justify-between gap-3 mb-2">
+          <div>
+            <h2 className="text-2xl font-bold tracking-tight">ActionUp</h2>
+            <p className="text-sm text-muted-foreground">Your Action Center</p>
+            <div className="flex items-center gap-1 mt-2">
+              <div className="w-8 h-1 bg-primary rounded-full" />
+              <div className="w-2 h-1 bg-primary/50 rounded-full" />
+              <div className="w-1 h-1 bg-primary/30 rounded-full" />
+            </div>
+          </div>
+          
+          {/* AI Summary - inline horizontal pill */}
+          <div className="flex items-center gap-2 bg-gradient-to-r from-primary/10 to-primary/5 rounded-full py-1.5 px-3 border border-primary/20 shrink-0">
+            <Sparkles className="h-3.5 w-3.5 text-primary" />
+            <span className="text-xs font-medium">
+              <span className="text-primary">{isPro ? prospects.length : '–'}</span> prospects
+            </span>
+            <span className="text-muted-foreground/50">•</span>
+            <span className="text-xs text-muted-foreground">AI Soon</span>
           </div>
         </div>
 
@@ -182,7 +194,7 @@ export default function ActionUp() {
           </div>
         )}
 
-        {/* Top row: Summary Chips + AI Summary inline */}
+        {/* Summary Chips */}
         <div className="flex flex-wrap items-center gap-2">
           <Badge variant="outline" className="gap-1.5 py-1.5 px-3 bg-amber-500/10 text-amber-600 border-amber-500/30">
             <Bell className="h-3.5 w-3.5" />
@@ -196,16 +208,6 @@ export default function ActionUp() {
             <CheckCircle className="h-3.5 w-3.5" />
             {isPro ? summaryStats.enrollmentsToday : '–'} Enrolled
           </Badge>
-          
-          {/* AI Summary - inline horizontal pill */}
-          <div className="flex items-center gap-2 bg-gradient-to-r from-primary/10 to-primary/5 rounded-full py-1.5 px-3 border border-primary/20">
-            <Sparkles className="h-3.5 w-3.5 text-primary" />
-            <span className="text-xs font-medium">
-              <span className="text-primary">{isPro ? prospects.length : '–'}</span> prospects
-            </span>
-            <span className="text-muted-foreground/50">•</span>
-            <span className="text-xs text-muted-foreground">AI Summary Soon</span>
-          </div>
         </div>
 
         {/* To-Do / Reminders */}
