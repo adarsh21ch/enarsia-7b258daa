@@ -17,8 +17,6 @@ interface ColumnMapping {
   name: string | null;
   phone: string | null;
   address: string | null;
-  address_city: string | null;  // For combining city + state from separate columns
-  address_state: string | null; // For combining city + state from separate columns
   age_or_dob: string | null;
   gender: string | null;
   instagram: string | null;
@@ -28,9 +26,7 @@ interface ColumnMapping {
 const FIELD_LABELS: Record<keyof ColumnMapping, string> = {
   name: 'Name *',
   phone: 'Phone *',
-  address: 'Address',
-  address_city: 'Address (City)',
-  address_state: 'Address (State)',
+  address: 'Address (City/State)',
   age_or_dob: 'Age / DOB',
   gender: 'Gender',
   instagram: 'Instagram',
@@ -47,8 +43,6 @@ export function ImportExcelDialog({ onImport }: ImportExcelDialogProps) {
     name: null,
     phone: null,
     address: null,
-    address_city: null,
-    address_state: null,
     age_or_dob: null,
     gender: null,
     instagram: null,
@@ -67,8 +61,6 @@ export function ImportExcelDialog({ onImport }: ImportExcelDialogProps) {
       name: null,
       phone: null,
       address: null,
-      address_city: null,
-      address_state: null,
       age_or_dob: null,
       gender: null,
       instagram: null,
@@ -85,8 +77,6 @@ export function ImportExcelDialog({ onImport }: ImportExcelDialogProps) {
       name: null,
       phone: null,
       address: null,
-      address_city: null,
-      address_state: null,
       age_or_dob: null,
       gender: null,
       instagram: null,
@@ -99,12 +89,8 @@ export function ImportExcelDialog({ onImport }: ImportExcelDialogProps) {
         newMapping.name = col;
       } else if ((lowerCol.includes('phone') || lowerCol.includes('mobile') || lowerCol.includes('cell')) && !newMapping.phone) {
         newMapping.phone = col;
-      } else if ((lowerCol === 'address' || lowerCol.includes('full address') || lowerCol.includes('location')) && !newMapping.address) {
+      } else if ((lowerCol.includes('address') || lowerCol.includes('location') || lowerCol.includes('city') || lowerCol.includes('state')) && !newMapping.address) {
         newMapping.address = col;
-      } else if (lowerCol.includes('city') && !newMapping.address_city) {
-        newMapping.address_city = col;
-      } else if (lowerCol.includes('state') && !newMapping.address_state) {
-        newMapping.address_state = col;
       } else if ((lowerCol.includes('age') || lowerCol.includes('dob') || lowerCol.includes('birth')) && !newMapping.age_or_dob) {
         newMapping.age_or_dob = col;
       } else if ((lowerCol.includes('gender') || lowerCol.includes('sex')) && !newMapping.gender) {
@@ -174,16 +160,9 @@ export function ImportExcelDialog({ onImport }: ImportExcelDialogProps) {
         phone: validation.phone,
       };
 
-      // Handle address - either from single column or combine city + state
+      // Handle address from single column
       if (mapping.address && row[mapping.address]) {
         prospect.address = sanitizeImportString(row[mapping.address], 200);
-      } else {
-        // Combine city + state into single address field
-        const cityVal = mapping.address_city && row[mapping.address_city] ? sanitizeImportString(row[mapping.address_city], 100) : '';
-        const stateVal = mapping.address_state && row[mapping.address_state] ? sanitizeImportString(row[mapping.address_state], 100) : '';
-        if (cityVal || stateVal) {
-          prospect.address = [cityVal, stateVal].filter(Boolean).join(', ');
-        }
       }
       if (mapping.age_or_dob && row[mapping.age_or_dob]) {
         prospect.age_or_dob = sanitizeImportString(row[mapping.age_or_dob], 50);
