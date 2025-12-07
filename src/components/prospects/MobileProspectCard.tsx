@@ -137,12 +137,12 @@ export function MobileProspectCard({ prospect, index, isCalling, onUpdate, onDel
               </button>
             </div>
             <div className="flex items-center gap-2 flex-wrap">
-              <a 
-                href={`tel:${cleanPhoneNumber(prospect.phone)}`}
-                className="text-sm text-muted-foreground font-medium hover:text-accent transition-colors"
+              <button 
+                onClick={openCall}
+                className="text-sm text-muted-foreground font-medium hover:text-accent transition-colors text-left"
               >
                 {localData.phone}
-              </a>
+              </button>
               <span className="text-xs text-muted-foreground">
                 Age: {(prospect as any).age_or_dob || '–'}
               </span>
