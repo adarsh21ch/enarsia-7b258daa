@@ -14,7 +14,7 @@ export function StatusBadge({ status }: StatusBadgeProps) {
 
   return (
     <span className={cn(
-      'inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium border whitespace-nowrap',
+      'inline-flex items-center px-2 py-1 rounded-full text-xs font-medium border whitespace-nowrap',
       colorClasses[status]
     )}>
       {status}
@@ -35,7 +35,7 @@ export function PriorityBadge({ priority }: PriorityBadgeProps) {
 
   return (
     <span className={cn(
-      'inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium border whitespace-nowrap',
+      'inline-flex items-center px-2 py-1 rounded-full text-xs font-medium border whitespace-nowrap',
       colorClasses[priority]
     )}>
       {priority}
@@ -59,7 +59,7 @@ export function StageBadge({ stage }: StageBadgeProps) {
 
   return (
     <span className={cn(
-      'inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium border whitespace-nowrap',
+      'inline-flex items-center px-2 py-1 rounded-full text-xs font-medium border whitespace-nowrap',
       colorClasses[stage]
     )}>
       {stage}
@@ -79,7 +79,7 @@ export function EnrollBadge({ status }: EnrollBadgeProps) {
 
   return (
     <span className={cn(
-      'inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium border whitespace-nowrap',
+      'inline-flex items-center px-2 py-1 rounded-full text-xs font-medium border whitespace-nowrap',
       colorClasses[status]
     )}>
       {status}
@@ -107,7 +107,7 @@ export function ActionBadge({ action }: ActionBadgeProps) {
 
   return (
     <span className={cn(
-      'inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium border whitespace-nowrap',
+      'inline-flex items-center px-2 py-1 rounded-full text-xs font-medium border whitespace-nowrap',
       colorClasses[action]
     )}>
       {action}
