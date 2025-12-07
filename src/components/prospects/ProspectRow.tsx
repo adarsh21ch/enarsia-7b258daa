@@ -5,6 +5,7 @@ import { StatusBadge, StageBadge, ActionBadge } from './StatusBadge';
 import { InlineReportCard } from './InlineReportCard';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Checkbox } from '@/components/ui/checkbox';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { MessageCircle, Phone, Trash2, ChevronDown, GripVertical } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -31,6 +32,8 @@ interface ProspectRowProps {
   columnWidths: Record<string, number>;
   isMobileTable?: boolean;
   dragHandleProps?: DragHandleProps;
+  isSelected?: boolean;
+  onSelect?: () => void;
 }
 
 export function ProspectRow({ 
@@ -46,6 +49,8 @@ export function ProspectRow({
   columnWidths,
   isMobileTable = false,
   dragHandleProps,
+  isSelected = false,
+  onSelect,
 }: ProspectRowProps) {
   const [localPhone, setLocalPhone] = useState(prospect.phone);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -253,6 +258,13 @@ export function ProspectRow({
           dragHandleProps?.isDragging && "shadow-lg"
         )}
       >
+        {/* Checkbox cell */}
+        <td className="px-2 py-2">
+          <Checkbox 
+            checked={isSelected}
+            onCheckedChange={onSelect}
+          />
+        </td>
         {/* Drag handle cell */}
         <td 
           className="px-1 py-2 cursor-grab active:cursor-grabbing touch-none"
@@ -262,7 +274,7 @@ export function ProspectRow({
         </td>
         {columnOrder.map(renderCell)}
       </tr>
-      {isExpanded && <InlineReportCard prospect={prospect} onUpdate={onUpdate} onClose={onToggleExpand} colSpan={columnOrder.length + 1} />}
+      {isExpanded && <InlineReportCard prospect={prospect} onUpdate={onUpdate} onClose={onToggleExpand} colSpan={columnOrder.length + 2} />}
     </>
   );
 }

@@ -63,7 +63,7 @@ function usePullToRefresh(onRefresh: () => Promise<void>, threshold = 80) {
 export default function Dashboard() {
   const navigate = useNavigate();
   const { user, loading: authLoading } = useAuth();
-  const { prospects, loading, addProspect, updateProspect, deleteProspect, importProspects, reorderProspects, refetch } = useProspects();
+  const { prospects, loading, addProspect, updateProspect, deleteProspect, importProspects, reorderProspects, deleteProspectsBySheet, refetch } = useProspects();
   const { sheets, selectedSheetId, setSelectedSheetId, addSheet, updateSheet, deleteSheet, refetch: refetchSheets } = useSheets();
   
   const [mainTab, setMainTab] = useState<'calling' | 'funnel'>('calling');
@@ -212,6 +212,7 @@ export default function Dashboard() {
                   onAddSheet={addSheet}
                   onUpdateSheet={updateSheet}
                   onDeleteSheet={deleteSheet}
+                  onDeleteSheetProspects={deleteProspectsBySheet}
                   filterMode="calling"
                   subFilter="all"
                 />
@@ -232,6 +233,7 @@ export default function Dashboard() {
                   onAddSheet={addSheet}
                   onUpdateSheet={updateSheet}
                   onDeleteSheet={deleteSheet}
+                  onDeleteSheetProspects={deleteProspectsBySheet}
                   filterMode="funnel"
                   subFilter="all"
                 />

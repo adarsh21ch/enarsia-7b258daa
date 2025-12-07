@@ -275,6 +275,39 @@ export function useProspects() {
     }
   };
 
+  const deleteProspectsBySheet = async (sheetId: string): Promise<number> => {
+    if (!user) return 0;
+    
+    try {
+      // Get all prospect IDs for this sheet
+      const { data: sheetProspects, error: fetchError } = await supabase
+        .from('prospects')
+        .select('id')
+        .eq('user_id', user.id)
+        .eq('sheet_id', sheetId);
+      
+      if (fetchError) throw fetchError;
+      if (!sheetProspects || sheetProspects.length === 0) return 0;
+
+      const idsToDelete = sheetProspects.map(p => p.id);
+      
+      const { error: deleteError } = await supabase
+        .from('prospects')
+        .delete()
+        .in('id', idsToDelete);
+      
+      if (deleteError) throw deleteError;
+      
+      setProspects(prev => prev.filter(p => !idsToDelete.includes(p.id)));
+      toast.success(`Deleted ${idsToDelete.length} prospect${idsToDelete.length > 1 ? 's' : ''} from sheet`);
+      return idsToDelete.length;
+    } catch (err) {
+      console.error('Error deleting sheet prospects:', err);
+      toast.error('Failed to delete prospects');
+      return 0;
+    }
+  };
+
   return {
     prospects,
     loading,
@@ -283,6 +316,7 @@ export function useProspects() {
     deleteProspect,
     importProspects,
     reorderProspects,
+    deleteProspectsBySheet,
     refetch: fetchProspects,
   };
 }

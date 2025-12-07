@@ -15,6 +15,7 @@ interface SheetTabsProps {
   onAddSheet: (name: string) => Promise<Sheet | null>;
   onUpdateSheet: (id: string, name: string) => Promise<Sheet | null>;
   onDeleteSheet: (id: string) => Promise<boolean>;
+  onDeleteSheetProspects?: (sheetId: string) => Promise<number>;
 }
 
 export function SheetTabs({
@@ -24,6 +25,7 @@ export function SheetTabs({
   onAddSheet,
   onUpdateSheet,
   onDeleteSheet,
+  onDeleteSheetProspects,
 }: SheetTabsProps) {
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [isEditOpen, setIsEditOpen] = useState(false);
@@ -51,6 +53,16 @@ export function SheetTabs({
   const handleDeleteSheet = async (sheet: Sheet) => {
     if (confirm(`Delete "${sheet.name}"? Prospects will be unassigned from this sheet.`)) {
       await onDeleteSheet(sheet.id);
+    }
+  };
+
+  const handleDeleteSheetProspects = async (sheet: Sheet) => {
+    if (!onDeleteSheetProspects) return;
+    if (confirm(`Delete ALL prospects in "${sheet.name}"? This cannot be undone.`)) {
+      const deleted = await onDeleteSheetProspects(sheet.id);
+      if (deleted > 0) {
+        // Success handled by parent
+      }
     }
   };
 
@@ -105,12 +117,21 @@ export function SheetTabs({
                     <Pencil className="h-3.5 w-3.5 mr-2" />
                     Rename
                   </DropdownMenuItem>
+                  {onDeleteSheetProspects && (
+                    <DropdownMenuItem
+                      onClick={() => handleDeleteSheetProspects(sheet)}
+                      className="text-destructive focus:text-destructive"
+                    >
+                      <Trash2 className="h-3.5 w-3.5 mr-2" />
+                      Delete All Data
+                    </DropdownMenuItem>
+                  )}
                   <DropdownMenuItem
                     onClick={() => handleDeleteSheet(sheet)}
                     className="text-destructive focus:text-destructive"
                   >
                     <Trash2 className="h-3.5 w-3.5 mr-2" />
-                    Delete
+                    Delete Sheet
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
