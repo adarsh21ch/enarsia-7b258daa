@@ -1,6 +1,7 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
+import { differenceInDays, parseISO, format } from 'date-fns';
 
 export interface FunnelStats {
   enrollment: number;
@@ -10,6 +11,10 @@ export interface FunnelStats {
   minimum_bill: number;
   level_up: number;
   two_cc: number;
+}
+
+export interface FunnelRowStats extends FunnelStats {
+  funnel_number: number;
 }
 
 // Map database funnel_stage values to stat keys
@@ -37,7 +42,12 @@ function getCumulativeStages(stage: keyof FunnelStats): (keyof FunnelStats)[] {
   return STAGE_ORDER.slice(0, stageIndex + 1);
 }
 
-export function useProspectFunnelStats() {
+interface FunnelConfig {
+  day_1_start: string;
+  funnel_length: number;
+}
+
+export function useProspectFunnelStats(funnelConfig?: FunnelConfig | null) {
   const [loading, setLoading] = useState(true);
   const [totalProspects, setTotalProspects] = useState(0);
   const [totals, setTotals] = useState<FunnelStats>({
@@ -49,6 +59,7 @@ export function useProspectFunnelStats() {
     level_up: 0,
     two_cc: 0,
   });
+  const [funnelRows, setFunnelRows] = useState<FunnelRowStats[]>([]);
   const { user } = useAuth();
 
   const fetchData = useCallback(async () => {
@@ -59,7 +70,7 @@ export function useProspectFunnelStats() {
       // Fetch all prospects with their funnel_stage and timestamp
       const { data, error } = await supabase
         .from('prospects')
-        .select('funnel_stage, funnel_stage_at')
+        .select('id, funnel_stage, funnel_stage_at, date_added')
         .eq('user_id', user.id);
 
       if (error) {
@@ -72,7 +83,7 @@ export function useProspectFunnelStats() {
       setTotalProspects(prospects.length);
       const now = new Date();
 
-      // Count prospects per funnel stage (only if confirmed after 5 minutes)
+      // Overall totals with cumulative counting
       const stats: FunnelStats = {
         enrollment: 0,
         day_1: 0,
@@ -83,6 +94,9 @@ export function useProspectFunnelStats() {
         two_cc: 0,
       };
 
+      // Auto-generate funnel rows based on config
+      const funnelRowsMap: Record<number, FunnelStats> = {};
+      
       prospects.forEach((p) => {
         const stage = p.funnel_stage;
         if (stage && STAGE_MAP[stage]) {
@@ -97,21 +111,59 @@ export function useProspectFunnelStats() {
             cumulativeStages.forEach((stageKey) => {
               stats[stageKey]++;
             });
+
+            // Calculate funnel number based on config if provided
+            if (funnelConfig && funnelConfig.day_1_start && p.date_added) {
+              const startDate = parseISO(funnelConfig.day_1_start);
+              const prospectDate = parseISO(p.date_added.split('T')[0]);
+              const daysDiff = differenceInDays(prospectDate, startDate);
+              
+              if (daysDiff >= 0) {
+                const funnelNumber = Math.floor(daysDiff / funnelConfig.funnel_length) + 1;
+                
+                if (!funnelRowsMap[funnelNumber]) {
+                  funnelRowsMap[funnelNumber] = {
+                    enrollment: 0,
+                    day_1: 0,
+                    day_2: 0,
+                    day_3: 0,
+                    minimum_bill: 0,
+                    level_up: 0,
+                    two_cc: 0,
+                  };
+                }
+                
+                // Add to funnel row with cumulative counting
+                cumulativeStages.forEach((stageKey) => {
+                  funnelRowsMap[funnelNumber][stageKey]++;
+                });
+              }
+            }
           }
         }
       });
 
       setTotals(stats);
+
+      // Convert funnel rows map to array sorted by funnel number
+      const sortedFunnelRows: FunnelRowStats[] = Object.entries(funnelRowsMap)
+        .map(([num, rowStats]) => ({
+          funnel_number: parseInt(num),
+          ...rowStats,
+        }))
+        .sort((a, b) => a.funnel_number - b.funnel_number);
+
+      setFunnelRows(sortedFunnelRows);
     } catch (err) {
       console.error('Error in fetchData:', err);
     } finally {
       setLoading(false);
     }
-  }, [user]);
+  }, [user, funnelConfig]);
 
   useEffect(() => {
     fetchData();
   }, [fetchData]);
 
-  return { totals, loading, totalProspects, refetch: fetchData };
+  return { totals, loading, totalProspects, funnelRows, refetch: fetchData };
 }

@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
-import { format, getDaysInMonth, parse, startOfMonth, endOfMonth, differenceInDays } from 'date-fns';
+import { format, getDaysInMonth, parse, startOfMonth, endOfMonth } from 'date-fns';
 
 export interface DailyLeadMetrics {
   date: string; // "1 December", "2 December", etc.
@@ -19,7 +19,8 @@ export interface MonthlyTotals {
   enrollments: number;
 }
 
-const FIVE_MINUTES_MS = 5 * 60 * 1000;
+// 5-second confirmation window
+const FIVE_SECONDS_MS = 5 * 1000;
 
 export function useLeadsFromProspects() {
   const { user } = useAuth();
@@ -52,10 +53,10 @@ export function useLeadsFromProspects() {
       const monthStart = startOfMonth(monthDate);
       const monthEnd = endOfMonth(monthDate);
 
-      // Fetch all prospects created in this month
+      // Fetch all prospects created in this month with action_taken and funnel_stage
       const { data, error } = await supabase
         .from('prospects')
-        .select('id, date_added, action_taken, action_taken_at')
+        .select('id, date_added, action_taken, action_taken_at, funnel_stage, funnel_stage_at')
         .eq('user_id', user.id)
         .gte('date_added', monthStart.toISOString())
         .lte('date_added', monthEnd.toISOString());
@@ -89,20 +90,28 @@ export function useLeadsFromProspects() {
         const dayIndex = addedDate.getDate() - 1;
         
         if (dayIndex >= 0 && dayIndex < metrics.length) {
+          // Count as lead
           metrics[dayIndex].leads++;
 
-          // Check if response is confirmed (5-minute rule)
-          const actionTakenAt = p.action_taken_at ? new Date(p.action_taken_at) : null;
-          const isConfirmed = actionTakenAt && (now.getTime() - actionTakenAt.getTime() >= FIVE_MINUTES_MS);
+          // Check if action/response has a value
+          if (p.action_taken) {
+            // Apply 5-second confirmation: if action_taken_at exists, check time elapsed
+            // If no timestamp, count it (legacy data)
+            const actionAt = p.action_taken_at ? new Date(p.action_taken_at) : null;
+            const isConfirmed = !actionAt || (now.getTime() - actionAt.getTime() >= FIVE_SECONDS_MS);
 
-          if (p.action_taken && isConfirmed) {
-            metrics[dayIndex].responses++;
+            if (isConfirmed) {
+              // Count as response (any non-empty action_taken)
+              metrics[dayIndex].responses++;
 
-            if (p.action_taken === 'Video Sent') {
-              metrics[dayIndex].videoSent++;
-            }
-            if (p.action_taken === 'Enrollment') {
-              metrics[dayIndex].enrollments++;
+              // Check specific response types
+              if (p.action_taken === 'Video Sent') {
+                metrics[dayIndex].videoSent++;
+              }
+              // "Enrollment" is a response option
+              if (p.action_taken === 'Enrollment') {
+                metrics[dayIndex].enrollments++;
+              }
             }
           }
         }

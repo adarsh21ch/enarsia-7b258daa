@@ -1,16 +1,14 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { format } from 'date-fns';
 import { useProspectFunnelStats, FunnelStats } from '@/hooks/useProspectFunnelStats';
-import { useFunnelTracking } from '@/hooks/useFunnelTracking';
 import { useFunnelConfig } from '@/hooks/useFunnelConfig';
 import { useProspects } from '@/hooks/useProspects';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
-import { ChevronDown, ChevronUp, Flame, TrendingUp, TrendingDown, Minus, Sparkles, Users, Plus, Grid3X3, Settings2, CalendarDays } from 'lucide-react';
+import { ChevronDown, ChevronUp, Flame, TrendingUp, TrendingDown, Minus, Sparkles, Users, Grid3X3, Settings2, CalendarDays } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { Button } from '@/components/ui/button';
-import { EditableCell } from './EditableCell';
 import { ExportFunnelData } from './ExportFunnelData';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
@@ -74,8 +72,6 @@ interface FunnelTrackerProps {
 }
 
 export function FunnelTracker({ isPro = true }: FunnelTrackerProps) {
-  const { totals, loading, totalProspects } = useProspectFunnelStats();
-  const { rows, loading: funnelLoading, updateCell, addRow, totals: funnelTotals } = useFunnelTracking();
   const { prospects, loading: prospectsLoading } = useProspects();
   const { config, loading: configLoading, saveConfig } = useFunnelConfig();
   
@@ -95,6 +91,18 @@ export function FunnelTracker({ isPro = true }: FunnelTrackerProps) {
       setFunnelDays(config.funnel_length.toString());
     }
   }, [config]);
+
+  // Build funnel config for the hook
+  const funnelConfigForStats = useMemo(() => {
+    if (!selectedDate) return null;
+    return {
+      day_1_start: format(selectedDate, 'yyyy-MM-dd'),
+      funnel_length: parseInt(funnelDays) || 3,
+    };
+  }, [selectedDate, funnelDays]);
+
+  // Pass config to hook for auto-calculated funnel rows
+  const { totals, loading, totalProspects, funnelRows } = useProspectFunnelStats(funnelConfigForStats);
 
   // Save config when values change
   const handleDateSelect = async (date: Date | undefined) => {
@@ -133,7 +141,7 @@ export function FunnelTracker({ isPro = true }: FunnelTrackerProps) {
     return { from: fromVal, to: toVal, percentage };
   };
 
-  if (loading || funnelLoading || prospectsLoading || configLoading) {
+  if (loading || configLoading || prospectsLoading) {
     return (
       <div className="space-y-4">
         <Skeleton className="h-64 w-full rounded-2xl" />
@@ -211,7 +219,7 @@ export function FunnelTracker({ isPro = true }: FunnelTrackerProps) {
               </Select>
             </div>
           </div>
-          <p className="text-xs text-muted-foreground mt-1">Click any cell to edit. Changes save automatically.</p>
+          <p className="text-xs text-muted-foreground mt-1">Auto-calculated from Follow Up. Set Day 1 date above.</p>
         </div>
         
         <div className="overflow-x-auto">
@@ -236,76 +244,35 @@ export function FunnelTracker({ isPro = true }: FunnelTrackerProps) {
               </tr>
             </thead>
             <tbody>
-              {rows.map((row) => (
-                <tr key={row.funnel_number} className="border-b border-border/30 hover:bg-muted/20 transition-colors">
-                  <td className="px-3 py-2 font-semibold text-muted-foreground">{row.funnel_number}</td>
-                  <td className="px-2 py-1">
-                    <EditableCell
-                      value={isPro ? row.day_1 : null}
-                      onChange={(v) => updateCell(row.funnel_number, 'day_1', v)}
-                      disabled={!isPro}
-                      placeholder="–"
-                    />
-                  </td>
-                  <td className="px-2 py-1">
-                    <EditableCell
-                      value={isPro ? row.day_2 : null}
-                      onChange={(v) => updateCell(row.funnel_number, 'day_2', v)}
-                      disabled={!isPro}
-                      placeholder="–"
-                    />
-                  </td>
-                  {visibleDayStages >= 3 && (
-                    <td className="px-2 py-1 text-center text-muted-foreground">–</td>
-                  )}
-                  {visibleDayStages >= 4 && (
-                    <td className="px-2 py-1 text-center text-muted-foreground">–</td>
-                  )}
-                  {visibleDayStages >= 5 && (
-                    <td className="px-2 py-1 text-center text-muted-foreground">–</td>
-                  )}
-                  <td className="px-2 py-1">
-                    <EditableCell
-                      value={isPro ? row.minimum_billing : null}
-                      onChange={(v) => updateCell(row.funnel_number, 'minimum_billing', v)}
-                      disabled={!isPro}
-                      placeholder="–"
-                    />
-                  </td>
-                  <td className="px-2 py-1">
-                    <EditableCell
-                      value={isPro ? row.level_up : null}
-                      onChange={(v) => updateCell(row.funnel_number, 'level_up', v)}
-                      disabled={!isPro}
-                      placeholder="–"
-                    />
-                  </td>
-                  <td className="px-2 py-1">
-                    <EditableCell
-                      value={isPro ? row.two_cc : null}
-                      onChange={(v) => updateCell(row.funnel_number, 'two_cc', v)}
-                      disabled={!isPro}
-                      placeholder="–"
-                    />
+              {funnelRows.length > 0 ? (
+                funnelRows.map((row) => (
+                  <tr key={row.funnel_number} className="border-b border-border/30 hover:bg-muted/20 transition-colors">
+                    <td className="px-3 py-2 font-semibold text-muted-foreground">{row.funnel_number}</td>
+                    <td className="px-2 py-2 text-center">{isPro ? row.day_1 : '–'}</td>
+                    <td className="px-2 py-2 text-center">{isPro ? row.day_2 : '–'}</td>
+                    {visibleDayStages >= 3 && (
+                      <td className="px-2 py-2 text-center">{isPro ? row.day_3 : '–'}</td>
+                    )}
+                    {visibleDayStages >= 4 && (
+                      <td className="px-2 py-2 text-center text-muted-foreground">–</td>
+                    )}
+                    {visibleDayStages >= 5 && (
+                      <td className="px-2 py-2 text-center text-muted-foreground">–</td>
+                    )}
+                    <td className="px-2 py-2 text-center">{isPro ? row.minimum_bill : '–'}</td>
+                    <td className="px-2 py-2 text-center">{isPro ? row.level_up : '–'}</td>
+                    <td className="px-2 py-2 text-center">{isPro ? row.two_cc : '–'}</td>
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td colSpan={6 + Math.max(visibleDayStages - 2, 0)} className="px-3 py-8 text-center text-muted-foreground">
+                    {selectedDate ? 'No prospects in funnel yet. Add prospects in Follow Up.' : 'Set a Day 1 date above to start tracking funnels.'}
                   </td>
                 </tr>
-              ))}
+              )}
             </tbody>
             <tfoot>
-              <tr className="border-t-2 border-border/50">
-                <td className="px-3 py-2">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={addRow}
-                    className="h-8 px-2 text-xs text-muted-foreground hover:text-foreground"
-                  >
-                    <Plus className="h-3 w-3 mr-1" />
-                    Add row
-                  </Button>
-                </td>
-                <td colSpan={5 + Math.max(visibleDayStages - 2, 0)}></td>
-              </tr>
               <tr className="bg-muted/40 font-semibold">
                 <td className="px-3 py-3 text-muted-foreground">TOTAL</td>
                 <td className="px-3 py-3 text-center">{isPro ? totals.day_1 : '–'}</td>
