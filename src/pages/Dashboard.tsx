@@ -7,7 +7,7 @@ import { useSheets } from '@/hooks/useSheets';
 import { BottomNav } from '@/components/layout/BottomNav';
 import { ProspectTable } from '@/components/prospects/ProspectTable';
 import { PullToRefreshIndicator } from '@/components/PullToRefreshIndicator';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { BottomViewToggle } from '@/components/ui/BottomViewToggle';
 import { Loader2, Phone, GitBranch } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import nevoraLogo from '@/assets/nevorai-logo.jpeg';
@@ -109,6 +109,11 @@ export default function Dashboard() {
 
   if (!user) return null;
 
+  const toggleOptions: [{ value: string; label: string; icon: typeof Phone }, { value: string; label: string; icon: typeof GitBranch }] = [
+    { value: 'calling', label: 'Calling', icon: Phone },
+    { value: 'funnel', label: 'Funnel', icon: GitBranch },
+  ];
+
   return (
     <CustomOptionsProvider>
       <div className="app-layout bg-gradient-to-b from-background via-background to-muted/20">
@@ -135,7 +140,7 @@ export default function Dashboard() {
 
         <main ref={containerRef} className="scrollable-content relative">
           <PullToRefreshIndicator isRefreshing={isRefreshing} pullDistance={pullDistance} showIndicator={showIndicator} />
-          <div className="container py-3 px-4 pb-20">
+          <div className="container py-3 px-4 pb-28">
             {/* Funnel Summary Bar - Cleaner Format */}
             <div className="text-xs text-muted-foreground bg-muted/30 rounded-lg px-3 py-2 mb-4">
               <div className="flex flex-wrap items-center gap-x-1 gap-y-1">
@@ -155,83 +160,59 @@ export default function Dashboard() {
               </div>
             </div>
 
-            {/* Premium Segmented Control: Calling / Funnel - STICKY */}
-            <Tabs value={mainTab} onValueChange={(v) => setMainTab(v as 'calling' | 'funnel')} className="w-full">
-              <div className="sticky top-0 z-20 bg-gradient-to-b from-background via-background to-background/95 pb-2 -mx-4 px-4 pt-1">
-                <TabsList className="w-full grid grid-cols-2 h-14 p-1.5 bg-muted/50 rounded-2xl gap-1">
-                  <TabsTrigger 
-                    value="calling" 
-                    className={cn(
-                      "rounded-xl flex flex-col items-center justify-center gap-0.5 h-full transition-all duration-300",
-                      "data-[state=active]:bg-card data-[state=active]:shadow-lg data-[state=active]:shadow-primary/10",
-                      "data-[state=active]:text-primary"
-                    )}
-                  >
-                    <Phone className="h-4 w-4" />
-                    <span className="text-[10px] font-semibold">Calling</span>
-                  </TabsTrigger>
-                  <TabsTrigger 
-                    value="funnel" 
-                    className={cn(
-                      "rounded-xl flex flex-col items-center justify-center gap-0.5 h-full transition-all duration-300",
-                      "data-[state=active]:bg-card data-[state=active]:shadow-lg data-[state=active]:shadow-primary/10",
-                      "data-[state=active]:text-primary"
-                    )}
-                  >
-                    <GitBranch className="h-4 w-4" />
-                    <span className="text-[10px] font-semibold">Funnel</span>
-                  </TabsTrigger>
-                </TabsList>
-              </div>
-
-              <TabsContent value="calling" className="mt-0 focus-visible:outline-none focus-visible:ring-0">
-                <ProspectTable
-                  prospects={prospects}
-                  loading={loading}
-                  onAdd={addProspect}
-                  onUpdate={updateProspect}
-                  onDelete={deleteProspect}
-                  onBulkDelete={bulkDeleteProspects}
-                  onRestoreProspect={restoreProspect}
-                  onRestoreProspects={restoreProspects}
-                  onImport={importProspects}
-                  onReorderProspects={reorderProspects}
-                  sheets={sheets}
-                  selectedSheetId={selectedSheetId}
-                  onSelectSheet={setSelectedSheetId}
-                  onAddSheet={addSheet}
-                  onUpdateSheet={updateSheet}
-                  onDeleteSheet={deleteSheet}
-                  filterMode="calling"
-                  subFilter="all"
-                />
-              </TabsContent>
-
-              <TabsContent value="funnel" className="mt-0 focus-visible:outline-none focus-visible:ring-0">
-                <ProspectTable
-                  prospects={prospects}
-                  loading={loading}
-                  onAdd={addProspect}
-                  onUpdate={updateProspect}
-                  onDelete={deleteProspect}
-                  onBulkDelete={bulkDeleteProspects}
-                  onRestoreProspect={restoreProspect}
-                  onRestoreProspects={restoreProspects}
-                  onImport={importProspects}
-                  onReorderProspects={reorderProspects}
-                  sheets={sheets}
-                  selectedSheetId={selectedSheetId}
-                  onSelectSheet={setSelectedSheetId}
-                  onAddSheet={addSheet}
-                  onUpdateSheet={updateSheet}
-                  onDeleteSheet={deleteSheet}
-                  filterMode="funnel"
-                  subFilter="all"
-                />
-              </TabsContent>
-            </Tabs>
+            {/* Content based on active tab */}
+            {mainTab === 'calling' ? (
+              <ProspectTable
+                prospects={prospects}
+                loading={loading}
+                onAdd={addProspect}
+                onUpdate={updateProspect}
+                onDelete={deleteProspect}
+                onBulkDelete={bulkDeleteProspects}
+                onRestoreProspect={restoreProspect}
+                onRestoreProspects={restoreProspects}
+                onImport={importProspects}
+                onReorderProspects={reorderProspects}
+                sheets={sheets}
+                selectedSheetId={selectedSheetId}
+                onSelectSheet={setSelectedSheetId}
+                onAddSheet={addSheet}
+                onUpdateSheet={updateSheet}
+                onDeleteSheet={deleteSheet}
+                filterMode="calling"
+                subFilter="all"
+              />
+            ) : (
+              <ProspectTable
+                prospects={prospects}
+                loading={loading}
+                onAdd={addProspect}
+                onUpdate={updateProspect}
+                onDelete={deleteProspect}
+                onBulkDelete={bulkDeleteProspects}
+                onRestoreProspect={restoreProspect}
+                onRestoreProspects={restoreProspects}
+                onImport={importProspects}
+                onReorderProspects={reorderProspects}
+                sheets={sheets}
+                selectedSheetId={selectedSheetId}
+                onSelectSheet={setSelectedSheetId}
+                onAddSheet={addSheet}
+                onUpdateSheet={updateSheet}
+                onDeleteSheet={deleteSheet}
+                filterMode="funnel"
+                subFilter="all"
+              />
+            )}
           </div>
         </main>
+
+        {/* Fixed Bottom View Toggle */}
+        <BottomViewToggle
+          options={toggleOptions}
+          value={mainTab}
+          onChange={(v) => setMainTab(v as 'calling' | 'funnel')}
+        />
 
         <BottomNav />
       </div>

@@ -6,7 +6,7 @@ import { FunnelTracker } from '@/components/trackup/FunnelTracker';
 import { LeadsTracker } from '@/components/trackup/LeadsTracker';
 import { UpgradeBar } from '@/components/subscription/UpgradeBar';
 import { PullToRefreshIndicator } from '@/components/PullToRefreshIndicator';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { BottomViewToggle } from '@/components/ui/BottomViewToggle';
 import { Loader2, TrendingUp, Calendar, Lock } from 'lucide-react';
 import { useProspects } from '@/hooks/useProspects';
 import { useSubscription } from '@/hooks/useSubscription';
@@ -96,6 +96,11 @@ export default function Tracking() {
 
   if (!user) return null;
 
+  const toggleOptions: [{ value: string; label: string; icon: typeof TrendingUp }, { value: string; label: string; icon: typeof Calendar }] = [
+    { value: 'funnel', label: 'Funnel', icon: TrendingUp },
+    { value: 'leads', label: 'Leads', icon: Calendar },
+  ];
+
   return (
     <div className="app-layout bg-gradient-to-b from-background via-background to-muted/20">
       {/* Premium Header */}
@@ -117,7 +122,7 @@ export default function Tracking() {
 
       <main ref={containerRef} className="scrollable-content relative">
         <PullToRefreshIndicator isRefreshing={isRefreshing} pullDistance={pullDistance} showIndicator={showIndicator} />
-        <div className={cn("container py-3 px-4", !isPro ? "pb-36" : "pb-20")}>
+        <div className={cn("container py-3 px-4", !isPro ? "pb-36" : "pb-28")}>
           {/* Lock overlay for Free users */}
           {!isPro && (
             <div className="relative mb-6">
@@ -133,45 +138,21 @@ export default function Tracking() {
             </div>
           )}
 
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-            {/* Sticky Tab Switcher */}
-            <div className="sticky top-0 z-20 bg-gradient-to-b from-background via-background to-background/95 pb-2 -mx-4 px-4 pt-1">
-              <TabsList className="w-full grid grid-cols-2 h-14 p-1.5 bg-muted/50 rounded-2xl gap-1">
-                <TabsTrigger 
-                  value="funnel" 
-                  className={cn(
-                    "rounded-xl flex flex-col items-center justify-center gap-0.5 h-full transition-all duration-300",
-                    "data-[state=active]:bg-card data-[state=active]:shadow-lg data-[state=active]:shadow-primary/10",
-                    "data-[state=active]:text-primary"
-                  )}
-                >
-                  <TrendingUp className="h-4 w-4" />
-                  <span className="text-[10px] font-semibold">Funnel</span>
-                </TabsTrigger>
-                <TabsTrigger 
-                  value="leads" 
-                  className={cn(
-                    "rounded-xl flex flex-col items-center justify-center gap-0.5 h-full transition-all duration-300",
-                    "data-[state=active]:bg-card data-[state=active]:shadow-lg data-[state=active]:shadow-primary/10",
-                    "data-[state=active]:text-primary"
-                  )}
-                >
-                  <Calendar className="h-4 w-4" />
-                  <span className="text-[10px] font-semibold">Leads</span>
-                </TabsTrigger>
-              </TabsList>
-            </div>
-
-            <TabsContent value="funnel" className="mt-2 focus-visible:outline-none focus-visible:ring-0">
-              <FunnelTracker isPro={isPro} />
-            </TabsContent>
-
-            <TabsContent value="leads" className="mt-2 focus-visible:outline-none focus-visible:ring-0">
-              <LeadsTracker isPro={isPro} />
-            </TabsContent>
-          </Tabs>
+          {/* Content based on active tab */}
+          {activeTab === 'funnel' ? (
+            <FunnelTracker isPro={isPro} />
+          ) : (
+            <LeadsTracker isPro={isPro} />
+          )}
         </div>
       </main>
+
+      {/* Fixed Bottom View Toggle */}
+      <BottomViewToggle
+        options={toggleOptions}
+        value={activeTab}
+        onChange={setActiveTab}
+      />
 
       {/* Upgrade Bar for Free Users */}
       <UpgradeBar />
