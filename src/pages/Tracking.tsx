@@ -1,5 +1,6 @@
 import { useEffect, useState, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { format } from 'date-fns';
 import { useAuth } from '@/contexts/AuthContext';
 import { BottomNav } from '@/components/layout/BottomNav';
 import { FunnelTracker } from '@/components/trackup/FunnelTracker';
@@ -7,10 +8,12 @@ import { LeadsTracker } from '@/components/trackup/LeadsTracker';
 import { UpgradeBar } from '@/components/subscription/UpgradeBar';
 import { PullToRefreshIndicator } from '@/components/PullToRefreshIndicator';
 import { BottomViewToggle } from '@/components/ui/BottomViewToggle';
+import { Day1SetupDialog } from '@/components/trackup/Day1SetupDialog';
 import { Loader2, TrendingUp, Calendar, Lock } from 'lucide-react';
 import { useProspects } from '@/hooks/useProspects';
 import { useSubscription } from '@/hooks/useSubscription';
 import { useProspectLimit } from '@/hooks/useProspectLimit';
+import { useFunnelConfig } from '@/hooks/useFunnelConfig';
 import { cn } from '@/lib/utils';
 import nevoraLogo from '@/assets/nevorai-logo.jpeg';
 
@@ -67,7 +70,27 @@ export default function Tracking() {
   const { prospects, refetch } = useProspects();
   const { isPro, loading: subLoading } = useSubscription();
   const prospectLimit = useProspectLimit(prospects, isPro);
+  const { config, loading: configLoading, saveConfig } = useFunnelConfig();
   const [activeTab, setActiveTab] = useState('leads');
+  const [showDay1Setup, setShowDay1Setup] = useState(false);
+
+  // Handle tab change - show Day 1 setup if switching to funnel with no config
+  const handleTabChange = (newTab: string) => {
+    if (newTab === 'funnel' && !config && !configLoading) {
+      setShowDay1Setup(true);
+    }
+    setActiveTab(newTab);
+  };
+
+  // Save Day 1 date from setup dialog
+  const handleDay1Save = async (date: Date) => {
+    await saveConfig({
+      funnel_name: 'Default Funnel',
+      funnel_length: 3, // Fixed 3-day funnel
+      day_1_start: format(date, 'yyyy-MM-dd'),
+    });
+    setShowDay1Setup(false);
+  };
 
   // Show lock only if Free AND at/over limit
   const showLock = !isPro && prospectLimit.isAtLimit;
@@ -91,7 +114,7 @@ export default function Tracking() {
     }
   }, [user, authLoading, navigate]);
 
-  if (authLoading || subLoading) {
+  if (authLoading || subLoading || configLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -152,11 +175,17 @@ export default function Tracking() {
         </div>
       </main>
 
+      {/* Day 1 Setup Dialog */}
+      <Day1SetupDialog 
+        open={showDay1Setup} 
+        onSave={handleDay1Save} 
+      />
+
       {/* Fixed Bottom View Toggle */}
       <BottomViewToggle
         options={toggleOptions}
         value={activeTab}
-        onChange={setActiveTab}
+        onChange={handleTabChange}
       />
 
       {/* Upgrade Bar only for Free Users at/over limit */}
