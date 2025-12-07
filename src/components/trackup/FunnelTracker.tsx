@@ -79,56 +79,40 @@ export function FunnelTracker({ isPro = true }: FunnelTrackerProps) {
   const [toStage, setToStage] = useState<StageKey>('day_1');
   const [stepConversionOpen, setStepConversionOpen] = useState(true);
   
-  // Funnel setup state
+  // Funnel setup state - always use 3-day funnel
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
-  const [funnelDays, setFunnelDays] = useState<string>('3');
   const [datePickerOpen, setDatePickerOpen] = useState(false);
 
   // Initialize from saved config
   useEffect(() => {
     if (config) {
       setSelectedDate(new Date(config.day_1_start));
-      setFunnelDays(config.funnel_length.toString());
     }
   }, [config]);
 
-  // Build funnel config for the hook
+  // Build funnel config for the hook - fixed 3-day funnel
   const funnelConfigForStats = useMemo(() => {
     if (!selectedDate) return null;
     return {
       day_1_start: format(selectedDate, 'yyyy-MM-dd'),
-      funnel_length: parseInt(funnelDays) || 3,
+      funnel_length: 3, // Fixed 3-day funnel
     };
-  }, [selectedDate, funnelDays]);
+  }, [selectedDate]);
 
   // Pass config to hook for auto-calculated funnel rows
   const { totals, loading, totalProspects, funnelRows } = useProspectFunnelStats(funnelConfigForStats);
 
-  // Save config when values change
+  // Save config when Day 1 date changes
   const handleDateSelect = async (date: Date | undefined) => {
     if (!date) return;
     setSelectedDate(date);
     setDatePickerOpen(false);
     await saveConfig({
       funnel_name: 'Default Funnel',
-      funnel_length: parseInt(funnelDays),
+      funnel_length: 3, // Fixed 3-day funnel
       day_1_start: format(date, 'yyyy-MM-dd'),
     });
   };
-
-  const handleFunnelDaysChange = async (value: string) => {
-    setFunnelDays(value);
-    if (selectedDate) {
-      await saveConfig({
-        funnel_name: 'Default Funnel',
-        funnel_length: parseInt(value),
-        day_1_start: format(selectedDate, 'yyyy-MM-dd'),
-      });
-    }
-  };
-
-  // Get visible stages based on funnel length
-  const visibleDayStages = parseInt(funnelDays) || 3;
 
   const fromValue = totals[fromStage] || 0;
   const toValue = totals[toStage] || 0;
@@ -179,7 +163,7 @@ export function FunnelTracker({ isPro = true }: FunnelTrackerProps) {
               <h3 className="font-semibold">Funnel Tracker</h3>
             </div>
             
-            {/* Inline Funnel Setup */}
+            {/* Inline Funnel Setup - Day 1 Date Only */}
             <div className="flex items-center gap-2 bg-muted/40 rounded-xl px-3 py-1.5">
               <Settings2 className="h-4 w-4 text-muted-foreground" />
               
@@ -192,7 +176,7 @@ export function FunnelTracker({ isPro = true }: FunnelTrackerProps) {
                     className="h-7 px-2 text-xs font-medium bg-background/60 hover:bg-background gap-1.5"
                   >
                     <CalendarDays className="h-3.5 w-3.5" />
-                    {selectedDate ? format(selectedDate, 'MMM d') : 'Day 1'}
+                    {selectedDate ? `Day 1: ${format(selectedDate, 'MMM d')}` : 'Set Day 1'}
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-auto p-0 z-50" align="end">
@@ -205,21 +189,9 @@ export function FunnelTracker({ isPro = true }: FunnelTrackerProps) {
                   />
                 </PopoverContent>
               </Popover>
-              
-              {/* Funnel Days Dropdown */}
-              <Select value={funnelDays} onValueChange={handleFunnelDaysChange}>
-                <SelectTrigger className="h-7 w-20 text-xs bg-background/60 border-0">
-                  <SelectValue placeholder="Days" />
-                </SelectTrigger>
-                <SelectContent className="bg-popover border border-border z-50">
-                  <SelectItem value="2" className="text-xs">2 days</SelectItem>
-                  <SelectItem value="3" className="text-xs">3 days</SelectItem>
-                  <SelectItem value="5" className="text-xs">5 days</SelectItem>
-                </SelectContent>
-              </Select>
             </div>
           </div>
-          <p className="text-xs text-muted-foreground mt-1">Auto-calculated from Follow Up. Set Day 1 date above.</p>
+          <p className="text-xs text-muted-foreground mt-1">3-day funnel auto-calculated from Follow Up.</p>
         </div>
         
         <div className="overflow-x-auto">
@@ -229,15 +201,7 @@ export function FunnelTracker({ isPro = true }: FunnelTrackerProps) {
                 <th className="px-3 py-3 text-left font-medium text-muted-foreground w-20">Funnel</th>
                 <th className="px-3 py-3 text-center font-medium text-muted-foreground">Day 1</th>
                 <th className="px-3 py-3 text-center font-medium text-muted-foreground">Day 2</th>
-                {visibleDayStages >= 3 && (
-                  <th className="px-3 py-3 text-center font-medium text-muted-foreground">Day 3</th>
-                )}
-                {visibleDayStages >= 4 && (
-                  <th className="px-3 py-3 text-center font-medium text-muted-foreground">Day 4</th>
-                )}
-                {visibleDayStages >= 5 && (
-                  <th className="px-3 py-3 text-center font-medium text-muted-foreground">Day 5</th>
-                )}
+                <th className="px-3 py-3 text-center font-medium text-muted-foreground">Day 3</th>
                 <th className="px-3 py-3 text-center font-medium text-muted-foreground">Min Billing</th>
                 <th className="px-3 py-3 text-center font-medium text-muted-foreground">Level Up</th>
                 <th className="px-3 py-3 text-center font-medium text-muted-foreground">2CC</th>
@@ -250,15 +214,7 @@ export function FunnelTracker({ isPro = true }: FunnelTrackerProps) {
                     <td className="px-3 py-2 font-semibold text-muted-foreground">{row.funnel_number}</td>
                     <td className="px-2 py-2 text-center">{isPro ? row.day_1 : '–'}</td>
                     <td className="px-2 py-2 text-center">{isPro ? row.day_2 : '–'}</td>
-                    {visibleDayStages >= 3 && (
-                      <td className="px-2 py-2 text-center">{isPro ? row.day_3 : '–'}</td>
-                    )}
-                    {visibleDayStages >= 4 && (
-                      <td className="px-2 py-2 text-center text-muted-foreground">–</td>
-                    )}
-                    {visibleDayStages >= 5 && (
-                      <td className="px-2 py-2 text-center text-muted-foreground">–</td>
-                    )}
+                    <td className="px-2 py-2 text-center">{isPro ? row.day_3 : '–'}</td>
                     <td className="px-2 py-2 text-center">{isPro ? row.minimum_bill : '–'}</td>
                     <td className="px-2 py-2 text-center">{isPro ? row.level_up : '–'}</td>
                     <td className="px-2 py-2 text-center">{isPro ? row.two_cc : '–'}</td>
@@ -266,7 +222,7 @@ export function FunnelTracker({ isPro = true }: FunnelTrackerProps) {
                 ))
               ) : (
                 <tr>
-                  <td colSpan={6 + Math.max(visibleDayStages - 2, 0)} className="px-3 py-8 text-center text-muted-foreground">
+                  <td colSpan={7} className="px-3 py-8 text-center text-muted-foreground">
                     {selectedDate ? 'No prospects in funnel yet. Add prospects in Follow Up.' : 'Set a Day 1 date above to start tracking funnels.'}
                   </td>
                 </tr>
@@ -277,15 +233,7 @@ export function FunnelTracker({ isPro = true }: FunnelTrackerProps) {
                 <td className="px-3 py-3 text-muted-foreground">TOTAL</td>
                 <td className="px-3 py-3 text-center">{isPro ? totals.day_1 : '–'}</td>
                 <td className="px-3 py-3 text-center">{isPro ? totals.day_2 : '–'}</td>
-                {visibleDayStages >= 3 && (
-                  <td className="px-3 py-3 text-center">{isPro ? totals.day_3 : '–'}</td>
-                )}
-                {visibleDayStages >= 4 && (
-                  <td className="px-3 py-3 text-center text-muted-foreground">–</td>
-                )}
-                {visibleDayStages >= 5 && (
-                  <td className="px-3 py-3 text-center text-muted-foreground">–</td>
-                )}
+                <td className="px-3 py-3 text-center">{isPro ? totals.day_3 : '–'}</td>
                 <td className="px-3 py-3 text-center">{isPro ? totals.minimum_bill : '–'}</td>
                 <td className="px-3 py-3 text-center">{isPro ? totals.level_up : '–'}</td>
                 <td className="px-3 py-3 text-center">{isPro ? totals.two_cc : '–'}</td>
