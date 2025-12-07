@@ -79,36 +79,39 @@ export default function Tracking() {
           )}
 
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-            <TabsList className="w-full grid grid-cols-2 mb-5 h-14 p-1.5 bg-muted/50 rounded-2xl gap-1">
-              <TabsTrigger 
-                value="funnel" 
-                className={cn(
-                  "rounded-xl flex flex-col items-center justify-center gap-0.5 h-full transition-all duration-300",
-                  "data-[state=active]:bg-card data-[state=active]:shadow-lg data-[state=active]:shadow-primary/10",
-                  "data-[state=active]:text-primary"
-                )}
-              >
-                <TrendingUp className="h-4 w-4" />
-                <span className="text-[10px] font-semibold">Funnel</span>
-              </TabsTrigger>
-              <TabsTrigger 
-                value="leads" 
-                className={cn(
-                  "rounded-xl flex flex-col items-center justify-center gap-0.5 h-full transition-all duration-300",
-                  "data-[state=active]:bg-card data-[state=active]:shadow-lg data-[state=active]:shadow-primary/10",
-                  "data-[state=active]:text-primary"
-                )}
-              >
-                <Calendar className="h-4 w-4" />
-                <span className="text-[10px] font-semibold">Leads</span>
-              </TabsTrigger>
-            </TabsList>
+            {/* Sticky Tab Switcher */}
+            <div className="sticky top-0 z-20 bg-gradient-to-b from-background via-background to-background/95 pb-2 -mx-4 px-4 pt-1">
+              <TabsList className="w-full grid grid-cols-2 h-14 p-1.5 bg-muted/50 rounded-2xl gap-1">
+                <TabsTrigger 
+                  value="funnel" 
+                  className={cn(
+                    "rounded-xl flex flex-col items-center justify-center gap-0.5 h-full transition-all duration-300",
+                    "data-[state=active]:bg-card data-[state=active]:shadow-lg data-[state=active]:shadow-primary/10",
+                    "data-[state=active]:text-primary"
+                  )}
+                >
+                  <TrendingUp className="h-4 w-4" />
+                  <span className="text-[10px] font-semibold">Funnel</span>
+                </TabsTrigger>
+                <TabsTrigger 
+                  value="leads" 
+                  className={cn(
+                    "rounded-xl flex flex-col items-center justify-center gap-0.5 h-full transition-all duration-300",
+                    "data-[state=active]:bg-card data-[state=active]:shadow-lg data-[state=active]:shadow-primary/10",
+                    "data-[state=active]:text-primary"
+                  )}
+                >
+                  <Calendar className="h-4 w-4" />
+                  <span className="text-[10px] font-semibold">Leads</span>
+                </TabsTrigger>
+              </TabsList>
+            </div>
 
-            <TabsContent value="funnel" className="mt-0 focus-visible:outline-none focus-visible:ring-0">
+            <TabsContent value="funnel" className="mt-2 focus-visible:outline-none focus-visible:ring-0">
               <FunnelTracker isPro={isPro} />
             </TabsContent>
 
-            <TabsContent value="leads" className="mt-0 focus-visible:outline-none focus-visible:ring-0">
+            <TabsContent value="leads" className="mt-2 focus-visible:outline-none focus-visible:ring-0">
               <LeadsTracker isPro={isPro} />
             </TabsContent>
           </Tabs>

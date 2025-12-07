@@ -99,32 +99,34 @@ export default function Dashboard() {
               </div>
             </div>
 
-            {/* Premium Segmented Control: Calling / Funnel */}
+            {/* Premium Segmented Control: Calling / Funnel - STICKY */}
             <Tabs value={mainTab} onValueChange={(v) => setMainTab(v as 'calling' | 'funnel')} className="w-full">
-              <TabsList className="w-full grid grid-cols-2 mb-5 h-14 p-1.5 bg-muted/50 rounded-2xl gap-1">
-                <TabsTrigger 
-                  value="calling" 
-                  className={cn(
-                    "rounded-xl flex flex-col items-center justify-center gap-0.5 h-full transition-all duration-300",
-                    "data-[state=active]:bg-card data-[state=active]:shadow-lg data-[state=active]:shadow-primary/10",
-                    "data-[state=active]:text-primary"
-                  )}
-                >
-                  <Phone className="h-4 w-4" />
-                  <span className="text-[10px] font-semibold">Calling</span>
-                </TabsTrigger>
-                <TabsTrigger 
-                  value="funnel" 
-                  className={cn(
-                    "rounded-xl flex flex-col items-center justify-center gap-0.5 h-full transition-all duration-300",
-                    "data-[state=active]:bg-card data-[state=active]:shadow-lg data-[state=active]:shadow-primary/10",
-                    "data-[state=active]:text-primary"
-                  )}
-                >
-                  <GitBranch className="h-4 w-4" />
-                  <span className="text-[10px] font-semibold">Funnel</span>
-                </TabsTrigger>
-              </TabsList>
+              <div className="sticky top-0 z-20 bg-gradient-to-b from-background via-background to-background/95 pb-2 -mx-4 px-4 pt-1">
+                <TabsList className="w-full grid grid-cols-2 h-14 p-1.5 bg-muted/50 rounded-2xl gap-1">
+                  <TabsTrigger 
+                    value="calling" 
+                    className={cn(
+                      "rounded-xl flex flex-col items-center justify-center gap-0.5 h-full transition-all duration-300",
+                      "data-[state=active]:bg-card data-[state=active]:shadow-lg data-[state=active]:shadow-primary/10",
+                      "data-[state=active]:text-primary"
+                    )}
+                  >
+                    <Phone className="h-4 w-4" />
+                    <span className="text-[10px] font-semibold">Calling</span>
+                  </TabsTrigger>
+                  <TabsTrigger 
+                    value="funnel" 
+                    className={cn(
+                      "rounded-xl flex flex-col items-center justify-center gap-0.5 h-full transition-all duration-300",
+                      "data-[state=active]:bg-card data-[state=active]:shadow-lg data-[state=active]:shadow-primary/10",
+                      "data-[state=active]:text-primary"
+                    )}
+                  >
+                    <GitBranch className="h-4 w-4" />
+                    <span className="text-[10px] font-semibold">Funnel</span>
+                  </TabsTrigger>
+                </TabsList>
+              </div>
 
               <TabsContent value="calling" className="mt-0 focus-visible:outline-none focus-visible:ring-0">
                 <ProspectTable
