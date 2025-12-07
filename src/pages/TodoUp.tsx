@@ -267,44 +267,44 @@ function FunnelColumn({ stage, prospects, isPro, expandedProspectId, onToggleExp
 
   const colors = STAGE_COLORS[stage as keyof typeof STAGE_COLORS] || { 
     header: 'bg-accent', 
-    bg: 'bg-accent/5', 
+    bg: 'bg-white dark:bg-card', 
     text: 'text-accent',
-    badge: 'bg-white/30 text-white',
-    border: 'border-border/30'
+    badge: 'bg-white/90 text-gray-700',
+    border: 'border-border/40'
   };
 
   return (
     <div
       ref={setNodeRef}
       className={cn(
-        "rounded-2xl overflow-hidden border transition-all duration-200 shadow-sm hover:shadow-md min-w-0",
-        colors.bg,
+        "rounded-xl overflow-hidden border transition-all duration-200 shadow-sm hover:shadow-md min-w-0 flex flex-col",
+        "bg-white dark:bg-card",
         colors.border,
-        isOver && "shadow-lg ring-2 ring-accent/30 scale-[1.01]"
+        isOver && "shadow-lg ring-2 ring-gray-400/30 scale-[1.01]"
       )}
     >
-      {/* Premium Header with Stage name LEFT, Count badge RIGHT */}
-      <div className={cn(colors.header, "px-3 py-2.5 flex items-center justify-between gap-2")}>
+      {/* Compact Header with Stage name LEFT, Count badge RIGHT */}
+      <div className={cn(colors.header, "px-3 py-2 flex items-center justify-between gap-2 shadow-sm")}>
         <span className="text-xs font-semibold text-white truncate">{stage}</span>
         <span className={cn(
-          "text-sm font-bold min-w-[28px] h-7 flex items-center justify-center rounded-full shadow-sm",
+          "text-xs font-bold min-w-[24px] h-6 flex items-center justify-center rounded-full",
           colors.badge
         )}>
           {isPro ? prospects.length : '–'}
         </span>
       </div>
       
-      {/* Prospect Names - wrapping text, no horizontal scroll */}
+      {/* Compact Prospect Names List */}
       <div className={cn(
-        "p-3 max-h-56 overflow-y-auto space-y-1.5 overflow-x-hidden",
-        isOver && "bg-white/40 dark:bg-white/5"
+        "p-2 max-h-40 overflow-y-auto space-y-0.5 overflow-x-hidden bg-white dark:bg-card",
+        isOver && "bg-gray-50 dark:bg-gray-900/20"
       )}>
         {!isPro ? (
-          <p className="text-xs text-muted-foreground text-center py-4">Upgrade to view</p>
+          <p className="text-xs text-muted-foreground text-center py-3">Upgrade to view</p>
         ) : prospects.length === 0 ? (
           <p className={cn(
-            "text-xs text-center py-4 transition-colors",
-            isOver ? "text-accent font-medium" : "text-muted-foreground"
+            "text-xs text-center py-3 transition-colors",
+            isOver ? "text-gray-700 font-medium" : "text-muted-foreground"
           )}>
             {isOver ? "Drop here" : "No prospects"}
           </p>
@@ -512,11 +512,11 @@ export default function TodoUp() {
             </div>
           )}
 
-          {/* Funnel Stage Dashboard - 4 columns with DnD - always show real data */}
-          <div className="bg-card rounded-2xl p-4 border border-border/50 shadow-sm">
-            <p className="text-xs text-muted-foreground mb-3 font-medium">
+          {/* Funnel Stage Overview - Horizontal 4 cards matching Track Up style */}
+          <div className="space-y-2">
+            <p className="text-xs text-muted-foreground font-medium px-1">
               Funnel Stage Overview 
-              <span className="text-accent ml-1">(drag to move)</span>
+              <span className="text-gray-500 ml-1">(drag to move)</span>
             </p>
             <DndContext
               sensors={sensors}
@@ -525,7 +525,7 @@ export default function TodoUp() {
               onDragOver={handleDragOver}
               onDragEnd={handleDragEnd}
             >
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+              <div className="grid grid-cols-4 gap-2">
                 {FUNNEL_COLUMNS.map(stage => (
                   <FunnelColumn
                     key={stage}
@@ -542,7 +542,7 @@ export default function TodoUp() {
               
               <DragOverlay>
                 {activeProspect && (
-                  <div className="px-4 py-2.5 bg-gradient-to-r from-gray-900 to-gray-800 text-white rounded-xl shadow-2xl text-sm font-medium border border-white/10 backdrop-blur-sm">
+                  <div className="px-3 py-2 bg-gray-900 text-white rounded-lg shadow-2xl text-sm font-medium border border-white/10">
                     {activeProspect.name}
                   </div>
                 )}
@@ -550,15 +550,16 @@ export default function TodoUp() {
             </DndContext>
           </div>
 
-          {/* To-Do List */}
-          <div className="bg-card rounded-2xl p-4 border border-border/50 shadow-sm flex-1">
-            <div className="flex items-center gap-2 mb-4">
-              <CheckCircle className="h-5 w-5 text-accent" />
-              <h3 className="font-semibold">My To-Do List</h3>
+          {/* To-Do List - Track Up table style */}
+          <div className="bg-white dark:bg-card rounded-xl border border-border/40 shadow-sm overflow-hidden flex-1">
+            {/* Header row like Track Up */}
+            <div className="flex items-center gap-2 px-4 py-3 bg-gray-50 dark:bg-muted/30 border-b border-border/30">
+              <CheckCircle className="h-4 w-4 text-gray-600 dark:text-gray-400" />
+              <h3 className="font-semibold text-sm text-gray-800 dark:text-gray-200">My To-Do List</h3>
             </div>
 
             {!isPro ? (
-              <div className="bg-accent/5 rounded-xl py-8">
+              <div className="py-8 px-4">
                 <p className="text-sm text-muted-foreground text-center">
                   Upgrade to Pro to manage tasks
                 </p>
@@ -568,27 +569,28 @@ export default function TodoUp() {
                 <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
               </div>
             ) : todos.length === 0 ? (
-              <div className="bg-accent/5 rounded-xl py-8">
+              <div className="py-8 px-4">
                 <p className="text-sm text-muted-foreground text-center">
                   No tasks yet. Add one below!
                 </p>
               </div>
             ) : (
-              <div className="space-y-2 max-h-[40vh] overflow-y-auto">
-                {todos.map(todo => (
+              <div className="max-h-[40vh] overflow-y-auto divide-y divide-border/20">
+                {todos.map((todo, index) => (
                   <div
                     key={todo.id}
                     className={cn(
-                      "flex items-center gap-3 p-3 rounded-xl transition-all group",
-                      todo.completed 
-                        ? "bg-muted/20" 
-                        : "bg-accent/5 hover:bg-accent/10"
+                      "flex items-center gap-3 px-4 py-3 transition-all group",
+                      index % 2 === 0 
+                        ? "bg-white dark:bg-card" 
+                        : "bg-gray-50/50 dark:bg-muted/10",
+                      todo.completed && "opacity-60"
                     )}
                   >
                     <Checkbox
                       checked={todo.completed}
                       onCheckedChange={(checked) => toggleTodo(todo.id, !!checked)}
-                      className="data-[state=checked]:bg-accent data-[state=checked]:border-accent"
+                      className="data-[state=checked]:bg-gray-800 data-[state=checked]:border-gray-800 border-gray-400"
                     />
                     
                     {editingId === todo.id ? (
@@ -596,7 +598,7 @@ export default function TodoUp() {
                         <Input
                           value={editingTitle}
                           onChange={(e) => setEditingTitle(e.target.value)}
-                          className="h-8 text-sm"
+                          className="h-8 text-sm border-gray-300"
                           autoFocus
                           onKeyDown={(e) => {
                             if (e.key === 'Enter') handleSaveEdit();
@@ -604,23 +606,23 @@ export default function TodoUp() {
                           }}
                         />
                         <Button variant="ghost" size="icon" className="h-7 w-7" onClick={handleSaveEdit}>
-                          <Check className="h-4 w-4 text-green-500" />
+                          <Check className="h-4 w-4 text-green-600" />
                         </Button>
                         <Button variant="ghost" size="icon" className="h-7 w-7" onClick={handleCancelEdit}>
-                          <X className="h-4 w-4 text-muted-foreground" />
+                          <X className="h-4 w-4 text-gray-500" />
                         </Button>
                       </div>
                     ) : (
                       <>
                         <div className="flex-1 min-w-0">
                           <p className={cn(
-                            "text-sm",
-                            todo.completed && "line-through text-muted-foreground"
+                            "text-sm text-gray-800 dark:text-gray-200",
+                            todo.completed && "line-through text-gray-400 dark:text-gray-500"
                           )}>
                             {todo.title}
                           </p>
                           {todo.due_date && (
-                            <p className="text-xs text-muted-foreground mt-0.5">
+                            <p className="text-xs text-gray-500 mt-0.5">
                               Due: {format(parseISO(todo.due_date), 'dd MMM yyyy')}
                             </p>
                           )}
@@ -629,7 +631,7 @@ export default function TodoUp() {
                           <Button
                             variant="ghost"
                             size="icon"
-                            className="h-7 w-7 text-muted-foreground hover:text-foreground"
+                            className="h-7 w-7 text-gray-500 hover:text-gray-800"
                             onClick={() => handleStartEdit(todo.id, todo.title)}
                           >
                             <Edit2 className="h-3.5 w-3.5" />
@@ -637,7 +639,7 @@ export default function TodoUp() {
                           <Button
                             variant="ghost"
                             size="icon"
-                            className="h-7 w-7 text-muted-foreground hover:text-destructive"
+                            className="h-7 w-7 text-gray-500 hover:text-red-600"
                             onClick={() => deleteTodo(todo.id)}
                           >
                             <Trash2 className="h-3.5 w-3.5" />
@@ -654,39 +656,43 @@ export default function TodoUp() {
         </div>
       </main>
 
-      {/* Fixed Bottom Input Bar for Pro Users */}
-      {isPro && (
-        <div className="fixed bottom-16 left-0 right-0 z-30 bg-gradient-to-t from-background via-background/98 to-transparent pt-3 pb-2 px-4">
-          <div className="max-w-lg mx-auto">
-            <div className="flex items-center gap-2 bg-card/95 backdrop-blur-sm border border-border/60 rounded-full px-4 py-2 shadow-xl ring-1 ring-black/5 dark:ring-white/5">
-              <Input
-                placeholder="Add a to-do task or reminder…"
-                value={newTodoInput}
-                onChange={(e) => setNewTodoInput(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' && newTodoInput.trim()) {
-                    e.preventDefault();
-                    handleAddTodo();
-                  }
-                }}
-                className="flex-1 border-0 bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0 placeholder:text-muted-foreground/50 text-sm h-9"
-              />
-              <Button
-                size="icon"
-                className={cn(
-                  "h-10 w-10 rounded-full shrink-0 bg-accent hover:bg-accent/90 shadow-md transition-all duration-150",
-                  "active:scale-95 hover:shadow-lg hover:shadow-accent/25",
-                  !newTodoInput.trim() && "opacity-60"
-                )}
-                onClick={() => handleAddTodo()}
-                disabled={!newTodoInput.trim()}
-              >
-                <Send className="h-4.5 w-4.5" />
-              </Button>
-            </div>
+      {/* Fixed Bottom Input Bar - Black/White style matching Track Up toggle */}
+      <div className="fixed bottom-16 left-0 right-0 z-30 bg-gradient-to-t from-background via-background/98 to-transparent pt-3 pb-2 px-4">
+        <div className="max-w-lg mx-auto">
+          <div className="flex items-center gap-2 bg-white dark:bg-card border border-gray-300 dark:border-gray-600 rounded-full px-4 py-2 shadow-lg">
+            <Input
+              placeholder="Add a task or describe what you want to do…"
+              value={newTodoInput}
+              onChange={(e) => setNewTodoInput(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && newTodoInput.trim()) {
+                  e.preventDefault();
+                  handleAddTodo();
+                }
+              }}
+              disabled={!isPro && prospectLimit.isAtLimit}
+              className="flex-1 border-0 bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0 placeholder:text-gray-400 text-sm h-9"
+            />
+            <Button
+              size="icon"
+              className={cn(
+                "h-10 w-10 rounded-full shrink-0 bg-gray-900 hover:bg-gray-800 text-white shadow-md transition-all duration-150",
+                "active:scale-95",
+                (!newTodoInput.trim() || (!isPro && prospectLimit.isAtLimit)) && "opacity-50"
+              )}
+              onClick={() => handleAddTodo()}
+              disabled={!newTodoInput.trim() || (!isPro && prospectLimit.isAtLimit)}
+            >
+              <Send className="h-4 w-4" />
+            </Button>
           </div>
+          {!isPro && prospectLimit.isAtLimit && (
+            <p className="text-xs text-center text-muted-foreground mt-2">
+              Upgrade to Pro to add tasks
+            </p>
+          )}
         </div>
-      )}
+      </div>
 
       {/* Upgrade Bar only for Free Users at/over limit */}
       {showLock && <UpgradeBar />}
