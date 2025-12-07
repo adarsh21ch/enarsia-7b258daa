@@ -535,7 +535,7 @@ export function ProspectTable({
               className="text-sm border-collapse w-full"
               style={{ minWidth: isMobile ? '580px' : '880px' }}
             >
-              <thead className="bg-muted/50 text-xs font-semibold text-muted-foreground border-b border-border">
+              <thead className="bg-muted text-xs font-semibold text-muted-foreground border-b border-border sticky top-0 z-30">
                 <tr>
                   {/* Drag handle header */}
                   <th className="px-1 py-2.5 w-8 min-w-8"></th>
