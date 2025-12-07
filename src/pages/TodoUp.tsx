@@ -366,41 +366,46 @@ export default function TodoUp() {
         </div>
       </main>
 
-      {/* Fixed Bottom Input Bar - Always visible, disabled when at limit */}
-      <div className="fixed bottom-16 left-0 right-0 z-30 bg-gradient-to-t from-background via-background/98 to-transparent pt-3 pb-2 px-4">
-        <div className="max-w-lg mx-auto">
-          <div className="flex items-center gap-2 bg-white dark:bg-card border border-gray-300 dark:border-gray-600 rounded-full px-4 py-2 shadow-lg">
-            <Input
-              placeholder="Add a task or describe what you want to do…"
-              value={newTodoInput}
-              onChange={(e) => setNewTodoInput(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' && newTodoInput.trim() && !showLock) {
-                  e.preventDefault();
-                  handleAddTodo();
-                }
-              }}
-              disabled={showLock}
-              className="flex-1 border-0 bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0 placeholder:text-gray-400 text-sm h-9"
-            />
-            <Button
-              size="icon"
-              className={cn(
-                "h-10 w-10 rounded-full shrink-0 bg-gray-900 hover:bg-gray-800 text-white shadow-md transition-all duration-150",
-                "active:scale-95",
-                (!newTodoInput.trim() || showLock) && "opacity-50"
-              )}
-              onClick={handleAddTodo}
-              disabled={!newTodoInput.trim() || showLock}
-            >
-              <Send className="h-4 w-4" />
-            </Button>
+      {/* Fixed AI To-Do Input Bar - Permanently fixed above bottom navigation, not draggable */}
+      <div 
+        className="fixed left-0 right-0 z-40 pointer-events-none"
+        style={{ bottom: '64px' }}
+      >
+        <div className="pointer-events-auto bg-background/95 backdrop-blur-sm border-t border-border/30 px-4 py-3">
+          <div className="max-w-lg mx-auto">
+            <div className="flex items-center gap-2 bg-white dark:bg-card border border-gray-300 dark:border-gray-600 rounded-full px-4 py-2 shadow-lg">
+              <Input
+                placeholder="Add a task or describe what you want to do…"
+                value={newTodoInput}
+                onChange={(e) => setNewTodoInput(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && newTodoInput.trim() && !showLock) {
+                    e.preventDefault();
+                    handleAddTodo();
+                  }
+                }}
+                disabled={showLock}
+                className="flex-1 border-0 bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0 placeholder:text-gray-400 text-sm h-9"
+              />
+              <Button
+                size="icon"
+                className={cn(
+                  "h-10 w-10 rounded-full shrink-0 bg-gray-900 hover:bg-gray-800 text-white shadow-md transition-all duration-150",
+                  "active:scale-95",
+                  (!newTodoInput.trim() || showLock) && "opacity-50"
+                )}
+                onClick={handleAddTodo}
+                disabled={!newTodoInput.trim() || showLock}
+              >
+                <Send className="h-4 w-4" />
+              </Button>
+            </div>
+            {showLock && (
+              <p className="text-xs text-center text-muted-foreground mt-2">
+                Upgrade to Pro to add tasks
+              </p>
+            )}
           </div>
-          {showLock && (
-            <p className="text-xs text-center text-muted-foreground mt-2">
-              Upgrade to Pro to add tasks
-            </p>
-          )}
         </div>
       </div>
 
