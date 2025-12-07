@@ -11,25 +11,12 @@ import { PullToRefreshIndicator } from '@/components/PullToRefreshIndicator';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Loader2, CheckCircle, Lock, Trash2, Edit2, Send, X, Check, Phone, MessageCircle, Plus, GripVertical } from 'lucide-react';
+import { Loader2, CheckCircle, Lock, Trash2, Edit2, Send, X, Check } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { Prospect, FunnelStage } from '@/types/prospect';
 import nevoraLogo from '@/assets/nevorai-logo.jpeg';
 import { toast } from 'sonner';
-import {
-  DndContext,
-  DragOverlay,
-  closestCenter,
-  PointerSensor,
-  TouchSensor,
-  useSensor,
-  useSensors,
-  DragStartEvent,
-  DragEndEvent,
-  useDroppable,
-  useDraggable,
-} from '@dnd-kit/core';
 
 // Pull-to-refresh hook
 function usePullToRefresh(onRefresh: () => Promise<void>, threshold = 80) {
@@ -78,268 +65,28 @@ function usePullToRefresh(onRefresh: () => Promise<void>, threshold = 80) {
   return { containerRef, isRefreshing, pullDistance, showIndicator: pullDistance > 20 || isRefreshing };
 }
 
-const FUNNEL_COLUMNS: FunnelStage[] = ['Day 1', 'Day 2', 'Minimum Bill', 'Level Up'];
+// Only 3 stages now (Level Up removed)
+const FUNNEL_STAGES: FunnelStage[] = ['Day 1', 'Day 2', 'Minimum Bill'];
 
-// Premium soft stage colors - reusing brand colors
-const STAGE_COLORS: Partial<Record<FunnelStage, { header: string; bg: string; text: string; badge: string; border: string }>> = {
-  'Day 1': { 
-    header: 'bg-gradient-to-r from-indigo-500 to-violet-500', 
-    bg: 'bg-indigo-50/60 dark:bg-indigo-950/20', 
-    text: 'text-indigo-800 dark:text-indigo-200',
-    badge: 'bg-white/90 text-indigo-700 dark:bg-indigo-900 dark:text-indigo-100',
-    border: 'border-indigo-100 dark:border-indigo-800/30'
-  },
-  'Day 2': { 
-    header: 'bg-gradient-to-r from-rose-400 to-pink-500', 
-    bg: 'bg-rose-50/60 dark:bg-rose-950/20', 
-    text: 'text-rose-800 dark:text-rose-200',
-    badge: 'bg-white/90 text-rose-700 dark:bg-rose-900 dark:text-rose-100',
-    border: 'border-rose-100 dark:border-rose-800/30'
-  },
-  'Minimum Bill': { 
-    header: 'bg-gradient-to-r from-emerald-400 to-teal-500', 
-    bg: 'bg-emerald-50/60 dark:bg-emerald-950/20', 
-    text: 'text-emerald-800 dark:text-emerald-200',
-    badge: 'bg-white/90 text-emerald-700 dark:bg-emerald-900 dark:text-emerald-100',
-    border: 'border-emerald-100 dark:border-emerald-800/30'
-  },
-  'Level Up': { 
-    header: 'bg-gradient-to-r from-amber-400 to-orange-400', 
-    bg: 'bg-amber-50/60 dark:bg-amber-950/20', 
-    text: 'text-amber-800 dark:text-amber-200',
-    badge: 'bg-white/90 text-amber-700 dark:bg-amber-900 dark:text-amber-100',
-    border: 'border-amber-100 dark:border-amber-800/30'
-  },
+// Stage colors for the horizontal bar segments
+const STAGE_COLORS: Record<string, string> = {
+  'Day 1': 'bg-gradient-to-r from-indigo-500 to-violet-500',
+  'Day 2': 'bg-gradient-to-r from-rose-400 to-pink-500',
+  'Minimum Bill': 'bg-gradient-to-r from-emerald-400 to-teal-500',
 };
-
-interface MiniReportCardProps {
-  prospect: Prospect;
-  onAddTodo: (text: string) => void;
-}
-
-function MiniReportCard({ prospect, onAddTodo }: MiniReportCardProps) {
-  const handleCall = () => {
-    window.location.href = `tel:${prospect.phone}`;
-  };
-
-  const handleWhatsApp = () => {
-    const phone = prospect.phone.replace(/\D/g, '');
-    window.location.href = `whatsapp://send?phone=${phone}`;
-  };
-
-  const handleAddTodoClick = () => {
-    onAddTodo(`Follow up with ${prospect.name} (Stage: ${prospect.funnel_stage || 'N/A'})...`);
-  };
-
-  return (
-    <div className="mt-2 p-3 bg-accent/5 rounded-lg border border-accent/20 animate-in fade-in slide-in-from-top-2 duration-200">
-      <div className="space-y-2">
-        <div className="flex items-center justify-between">
-          <h4 className="font-semibold text-sm text-foreground">{prospect.name}</h4>
-          <div className="flex gap-1">
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-7 w-7 text-green-600 hover:text-green-700 hover:bg-green-50"
-              onClick={handleCall}
-            >
-              <Phone className="h-3.5 w-3.5" />
-            </Button>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-7 w-7 text-green-600 hover:text-green-700 hover:bg-green-50"
-              onClick={handleWhatsApp}
-            >
-              <MessageCircle className="h-3.5 w-3.5" />
-            </Button>
-          </div>
-        </div>
-        
-        <div className="grid grid-cols-2 gap-x-3 gap-y-1 text-xs">
-          <div>
-            <span className="text-muted-foreground">Phone:</span>
-            <span className="ml-1 font-medium">{prospect.phone || '–'}</span>
-          </div>
-          <div>
-            <span className="text-muted-foreground">Age/Gender:</span>
-            <span className="ml-1 font-medium">
-              {prospect.age_or_dob || '–'} / {prospect.gender || '–'}
-            </span>
-          </div>
-          <div className="col-span-2">
-            <span className="text-muted-foreground">Address:</span>
-            <span className="ml-1 font-medium">{prospect.address || '–'}</span>
-          </div>
-          <div>
-            <span className="text-muted-foreground">Stage:</span>
-            <span className="ml-1 font-medium text-accent">{prospect.funnel_stage || '–'}</span>
-          </div>
-          <div>
-            <span className="text-muted-foreground">Action:</span>
-            <span className="ml-1 font-medium">{prospect.action_taken || '–'}</span>
-          </div>
-        </div>
-
-        <Button
-          variant="outline"
-          size="sm"
-          className="w-full mt-2 h-7 text-xs border-accent/30 text-accent hover:bg-accent/10"
-          onClick={handleAddTodoClick}
-        >
-          <Plus className="h-3 w-3 mr-1" />
-          Add To-Do for this prospect
-        </Button>
-      </div>
-    </div>
-  );
-}
-
-interface DraggableProspectProps {
-  prospect: Prospect;
-  index: number;
-  isExpanded: boolean;
-  onToggleExpand: (prospectId: string) => void;
-  onAddTodo: (text: string) => void;
-}
-
-function DraggableProspect({ prospect, index, isExpanded, onToggleExpand, onAddTodo }: DraggableProspectProps) {
-  const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
-    id: prospect.id,
-    data: { prospect },
-  });
-
-  const style = transform ? {
-    transform: `translate3d(${transform.x}px, ${transform.y}px, 0)`,
-    transition: 'transform 150ms ease',
-  } : undefined;
-
-  return (
-    <div ref={setNodeRef} style={style} className={cn(
-      "transition-all duration-200",
-      isDragging && "opacity-50 scale-105"
-    )}>
-      <div
-        className={cn(
-          "flex items-center gap-1.5 px-2 py-2 rounded-lg text-sm font-medium transition-all duration-200",
-          "hover:bg-white/60 dark:hover:bg-white/10 group border border-transparent",
-          isExpanded && "bg-white/60 dark:bg-white/10 border-border/30"
-        )}
-      >
-        <button
-          {...attributes}
-          {...listeners}
-          className="touch-none cursor-grab active:cursor-grabbing opacity-0 group-hover:opacity-100 transition-opacity p-0.5 shrink-0"
-          onClick={(e) => e.stopPropagation()}
-        >
-          <GripVertical className="h-3.5 w-3.5 text-muted-foreground" />
-        </button>
-        <button
-          onClick={() => onToggleExpand(prospect.id)}
-          className="flex-1 text-left flex items-start gap-1.5 min-w-0"
-        >
-          <span className="text-muted-foreground/70 font-normal text-xs shrink-0">{index + 1}.</span>
-          <span className="text-sm font-medium leading-snug break-words whitespace-normal">{prospect.name}</span>
-        </button>
-      </div>
-      
-      {isExpanded && (
-        <MiniReportCard prospect={prospect} onAddTodo={onAddTodo} />
-      )}
-    </div>
-  );
-}
-
-interface FunnelColumnProps {
-  stage: string;
-  prospects: Prospect[];
-  isPro: boolean;
-  expandedProspectId: string | null;
-  onToggleExpand: (prospectId: string) => void;
-  onAddTodo: (text: string) => void;
-  isOver: boolean;
-}
-
-function FunnelColumn({ stage, prospects, isPro, expandedProspectId, onToggleExpand, onAddTodo, isOver }: FunnelColumnProps) {
-  const { setNodeRef } = useDroppable({
-    id: stage,
-  });
-
-  const colors = STAGE_COLORS[stage as keyof typeof STAGE_COLORS] || { 
-    header: 'bg-accent', 
-    bg: 'bg-white dark:bg-card', 
-    text: 'text-accent',
-    badge: 'bg-white/90 text-gray-700',
-    border: 'border-border/40'
-  };
-
-  return (
-    <div
-      ref={setNodeRef}
-      className={cn(
-        "rounded-xl overflow-hidden border transition-all duration-200 shadow-sm hover:shadow-md min-w-0 flex flex-col",
-        "bg-white dark:bg-card",
-        colors.border,
-        isOver && "shadow-lg ring-2 ring-gray-400/30 scale-[1.01]"
-      )}
-    >
-      {/* Compact Header with Stage name LEFT, Count badge RIGHT */}
-      <div className={cn(colors.header, "px-3 py-2 flex items-center justify-between gap-2 shadow-sm")}>
-        <span className="text-xs font-semibold text-white truncate">{stage}</span>
-        <span className={cn(
-          "text-xs font-bold min-w-[24px] h-6 flex items-center justify-center rounded-full",
-          colors.badge
-        )}>
-          {isPro ? prospects.length : '–'}
-        </span>
-      </div>
-      
-      {/* Compact Prospect Names List */}
-      <div className={cn(
-        "p-2 max-h-40 overflow-y-auto space-y-0.5 overflow-x-hidden bg-white dark:bg-card",
-        isOver && "bg-gray-50 dark:bg-gray-900/20"
-      )}>
-        {!isPro ? (
-          <p className="text-xs text-muted-foreground text-center py-3">Upgrade to view</p>
-        ) : prospects.length === 0 ? (
-          <p className={cn(
-            "text-xs text-center py-3 transition-colors",
-            isOver ? "text-gray-700 font-medium" : "text-muted-foreground"
-          )}>
-            {isOver ? "Drop here" : "No prospects"}
-          </p>
-        ) : (
-          prospects.map((prospect, index) => (
-            <DraggableProspect
-              key={prospect.id}
-              prospect={prospect}
-              index={index}
-              isExpanded={expandedProspectId === prospect.id}
-              onToggleExpand={onToggleExpand}
-              onAddTodo={onAddTodo}
-            />
-          ))
-        )}
-      </div>
-    </div>
-  );
-}
 
 export default function TodoUp() {
   const navigate = useNavigate();
   const { user, loading: authLoading } = useAuth();
-  const { prospects, updateProspect, refetch } = useProspects();
+  const { prospects, refetch } = useProspects();
   const { isPro, loading: subLoading } = useSubscription();
   const prospectLimit = useProspectLimit(prospects, isPro);
   const { todos, loading: todosLoading, addTodo, updateTodo, toggleTodo, deleteTodo, refetch: refetchTodos } = useTodos();
   const [newTodoInput, setNewTodoInput] = useState('');
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editingTitle, setEditingTitle] = useState('');
-  const [expandedProspectId, setExpandedProspectId] = useState<string | null>(null);
-  const [activeProspect, setActiveProspect] = useState<Prospect | null>(null);
-  const [overColumnId, setOverColumnId] = useState<string | null>(null);
 
-  // Show lock only if Free AND at/over limit
+  // Show lock only if Free AND at/over 50-prospect limit
   const showLock = !isPro && prospectLimit.isAtLimit;
 
   // Pull-to-refresh
@@ -348,100 +95,51 @@ export default function TodoUp() {
   }, [refetch, refetchTodos]);
   const { containerRef, isRefreshing, pullDistance, showIndicator } = usePullToRefresh(handleRefresh);
 
-  // Configure sensors for drag-and-drop
-  const sensors = useSensors(
-    useSensor(PointerSensor, {
-      activationConstraint: {
-        distance: 8,
-      },
-    }),
-    useSensor(TouchSensor, {
-      activationConstraint: {
-        delay: 200,
-        tolerance: 5,
-      },
-    })
-  );
-
   useEffect(() => {
     if (!user && !authLoading) {
       navigate('/auth');
     }
   }, [user, authLoading, navigate]);
 
-  // Group prospects by funnel stage - now stores full Prospect objects
-  const funnelData = useMemo(() => {
-    const groups: Record<string, Prospect[]> = {
-      'Day 1': [],
-      'Day 2': [],
-      'Minimum Bill': [],
-      'Level Up': [],
-    };
+  // Get prospects grouped by the 3 funnel stages we care about
+  const funnelProspects = useMemo(() => {
+    const result: { prospect: Prospect; stage: FunnelStage }[] = [];
     
     prospects.forEach(p => {
-      if (p.funnel_stage && groups[p.funnel_stage] !== undefined) {
-        groups[p.funnel_stage].push(p);
+      if (p.funnel_stage && FUNNEL_STAGES.includes(p.funnel_stage as FunnelStage)) {
+        result.push({ prospect: p, stage: p.funnel_stage as FunnelStage });
       }
     });
     
-    return groups;
+    // Sort by stage order
+    const stageOrder: Record<string, number> = { 'Day 1': 0, 'Day 2': 1, 'Minimum Bill': 2 };
+    result.sort((a, b) => stageOrder[a.stage] - stageOrder[b.stage]);
+    
+    return result;
   }, [prospects]);
 
-  const handleDragStart = (event: DragStartEvent) => {
-    const prospect = event.active.data.current?.prospect as Prospect;
-    if (prospect) {
-      setActiveProspect(prospect);
-      setExpandedProspectId(null); // Collapse any expanded card when dragging
-    }
-  };
+  // Count per stage for badges
+  const stageCounts = useMemo(() => {
+    const counts: Record<string, number> = { 'Day 1': 0, 'Day 2': 0, 'Minimum Bill': 0 };
+    funnelProspects.forEach(({ stage }) => {
+      counts[stage] = (counts[stage] || 0) + 1;
+    });
+    return counts;
+  }, [funnelProspects]);
 
-  const handleDragOver = (event: any) => {
-    const overId = event.over?.id;
-    if (overId && FUNNEL_COLUMNS.includes(overId as any)) {
-      setOverColumnId(overId);
-    } else {
-      setOverColumnId(null);
-    }
-  };
-
-  const handleDragEnd = async (event: DragEndEvent) => {
-    const { active, over } = event;
-    setActiveProspect(null);
-    setOverColumnId(null);
-
-    if (!over) return;
-
-    const prospectId = active.id as string;
-    const newStage = over.id as FunnelStage;
-    const prospect = active.data.current?.prospect as Prospect;
-
-    if (!prospect || !FUNNEL_COLUMNS.includes(newStage)) return;
-
-    // Don't update if dropped in the same column
-    if (prospect.funnel_stage === newStage) return;
-
-    try {
-      await updateProspect(prospectId, { funnel_stage: newStage });
-      // Silent update - no toast popup for smooth drag experience
-    } catch (error) {
-      toast.error('Failed to update prospect stage');
-    }
-  };
-
-  const handleAddTodo = async (text?: string) => {
-    const todoText = text || newTodoInput.trim();
+  const handleAddTodo = async () => {
+    const todoText = newTodoInput.trim();
     if (!todoText) return;
-    await addTodo(todoText);
-    setNewTodoInput('');
-  };
-
-  const handlePreFillTodo = (text: string) => {
-    setNewTodoInput(text);
-    // Focus the input
-    const input = document.querySelector('input[placeholder="Add a to-do task or reminder…"]') as HTMLInputElement;
-    if (input) {
-      input.focus();
-      input.scrollIntoView({ behavior: 'smooth' });
+    
+    // Only add if not blocked
+    if (showLock) {
+      toast.error('Upgrade to Pro to add tasks');
+      return;
+    }
+    
+    const result = await addTodo(todoText);
+    if (result) {
+      setNewTodoInput('');
     }
   };
 
@@ -460,10 +158,6 @@ export default function TodoUp() {
   const handleCancelEdit = () => {
     setEditingId(null);
     setEditingTitle('');
-  };
-
-  const handleToggleExpand = (prospectId: string) => {
-    setExpandedProspectId(prev => prev === prospectId ? null : prospectId);
   };
 
   if (authLoading || subLoading) {
@@ -494,77 +188,93 @@ export default function TodoUp() {
         </div>
       </header>
 
-      <main ref={containerRef} className="scrollable-content relative pb-0">
+      <main ref={containerRef} className="scrollable-content relative pb-36">
         <PullToRefreshIndicator isRefreshing={isRefreshing} pullDistance={pullDistance} showIndicator={showIndicator} />
-        <div className={cn("container py-3 px-4 space-y-4", showLock ? "pb-36" : "pb-28")}>
-          {/* Lock overlay only shows when Free AND at/over limit */}
+        <div className="container py-3 px-4 space-y-4">
+          {/* Lock overlay only shows when Free AND at/over 50-prospect limit */}
           {showLock && (
-            <div className="relative mb-6">
-              <div className="absolute inset-0 flex flex-col items-center justify-center z-10 bg-background/80 backdrop-blur-sm rounded-2xl py-16">
+            <div className="relative mb-4">
+              <div className="flex flex-col items-center justify-center bg-background/80 backdrop-blur-sm rounded-2xl py-12 border border-border/30">
                 <div className="p-4 rounded-full bg-muted mb-4">
-                  <Lock className="h-12 w-12 text-muted-foreground" />
+                  <Lock className="h-10 w-10 text-muted-foreground" />
                 </div>
-                <h3 className="text-xl font-semibold mb-2">Pro Feature</h3>
-                <p className="text-muted-foreground max-w-sm text-center">
-                  You've reached the free limit of {prospectLimit.limit} prospects. Subscribe for ₹249 to unlock Todo Up and all premium features.
+                <h3 className="text-lg font-semibold mb-2">Pro Feature</h3>
+                <p className="text-sm text-muted-foreground max-w-xs text-center px-4">
+                  You've reached the free limit of {prospectLimit.limit} prospects. Subscribe for ₹249 to unlock all features.
                 </p>
               </div>
             </div>
           )}
 
-          {/* Funnel Stage Overview - Horizontal 4 cards matching Track Up style */}
+          {/* Funnel Stage Overview - Single horizontal bar with 3 segments */}
           <div className="space-y-2">
             <p className="text-xs text-muted-foreground font-medium px-1">
-              Funnel Stage Overview 
-              <span className="text-gray-500 ml-1">(drag to move)</span>
+              Funnel Stage Overview
             </p>
-            <DndContext
-              sensors={sensors}
-              collisionDetection={closestCenter}
-              onDragStart={handleDragStart}
-              onDragOver={handleDragOver}
-              onDragEnd={handleDragEnd}
-            >
-              <div className="grid grid-cols-4 gap-2">
-                {FUNNEL_COLUMNS.map(stage => (
-                  <FunnelColumn
+            
+            {/* Horizontal bar with 3 colored segments */}
+            <div className="rounded-xl overflow-hidden border border-border/40 shadow-sm bg-white dark:bg-card">
+              {/* Header bar with 3 segments */}
+              <div className="flex">
+                {FUNNEL_STAGES.map((stage, index) => (
+                  <div
                     key={stage}
-                    stage={stage}
-                    prospects={funnelData[stage]}
-                    isPro={true}
-                    expandedProspectId={expandedProspectId}
-                    onToggleExpand={handleToggleExpand}
-                    onAddTodo={handlePreFillTodo}
-                    isOver={overColumnId === stage}
-                  />
+                    className={cn(
+                      "flex-1 px-3 py-2 flex items-center justify-between gap-1",
+                      STAGE_COLORS[stage],
+                      index < FUNNEL_STAGES.length - 1 && "border-r border-white/20"
+                    )}
+                  >
+                    <span className="text-xs font-semibold text-white truncate">
+                      {stage === 'Minimum Bill' ? 'Min Bill' : stage}
+                    </span>
+                    <span className="text-xs font-bold bg-white/90 text-gray-700 min-w-[20px] h-5 flex items-center justify-center rounded-full px-1.5">
+                      {stageCounts[stage]}
+                    </span>
+                  </div>
                 ))}
               </div>
               
-              <DragOverlay>
-                {activeProspect && (
-                  <div className="px-3 py-2 bg-gray-900 text-white rounded-lg shadow-2xl text-sm font-medium border border-white/10">
-                    {activeProspect.name}
+              {/* Compact prospect list - one line per prospect */}
+              <div className="p-3 max-h-48 overflow-y-auto">
+                {funnelProspects.length === 0 ? (
+                  <p className="text-xs text-muted-foreground text-center py-4">
+                    No prospects yet
+                  </p>
+                ) : (
+                  <div className="space-y-1">
+                    {funnelProspects.map(({ prospect, stage }, index) => (
+                      <div
+                        key={prospect.id}
+                        className="flex items-center gap-2 text-sm py-1 px-1 rounded hover:bg-muted/30 transition-colors"
+                      >
+                        <span className="text-muted-foreground/70 text-xs w-5 shrink-0">{index + 1}.</span>
+                        <span className="font-medium text-foreground truncate flex-1">{prospect.name}</span>
+                        <span className={cn(
+                          "text-xs px-2 py-0.5 rounded-full shrink-0",
+                          stage === 'Day 1' && "bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300",
+                          stage === 'Day 2' && "bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-300",
+                          stage === 'Minimum Bill' && "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300"
+                        )}>
+                          {stage === 'Minimum Bill' ? 'Min Bill' : stage}
+                        </span>
+                      </div>
+                    ))}
                   </div>
                 )}
-              </DragOverlay>
-            </DndContext>
+              </div>
+            </div>
           </div>
 
           {/* To-Do List - Track Up table style */}
-          <div className="bg-white dark:bg-card rounded-xl border border-border/40 shadow-sm overflow-hidden flex-1">
+          <div className="bg-white dark:bg-card rounded-xl border border-border/40 shadow-sm overflow-hidden">
             {/* Header row like Track Up */}
             <div className="flex items-center gap-2 px-4 py-3 bg-gray-50 dark:bg-muted/30 border-b border-border/30">
               <CheckCircle className="h-4 w-4 text-gray-600 dark:text-gray-400" />
               <h3 className="font-semibold text-sm text-gray-800 dark:text-gray-200">My To-Do List</h3>
             </div>
 
-            {!isPro ? (
-              <div className="py-8 px-4">
-                <p className="text-sm text-muted-foreground text-center">
-                  Upgrade to Pro to manage tasks
-                </p>
-              </div>
-            ) : todosLoading ? (
+            {todosLoading ? (
               <div className="flex justify-center py-8">
                 <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
               </div>
@@ -656,7 +366,7 @@ export default function TodoUp() {
         </div>
       </main>
 
-      {/* Fixed Bottom Input Bar - Black/White style matching Track Up toggle */}
+      {/* Fixed Bottom Input Bar - Always visible, disabled when at limit */}
       <div className="fixed bottom-16 left-0 right-0 z-30 bg-gradient-to-t from-background via-background/98 to-transparent pt-3 pb-2 px-4">
         <div className="max-w-lg mx-auto">
           <div className="flex items-center gap-2 bg-white dark:bg-card border border-gray-300 dark:border-gray-600 rounded-full px-4 py-2 shadow-lg">
@@ -665,12 +375,12 @@ export default function TodoUp() {
               value={newTodoInput}
               onChange={(e) => setNewTodoInput(e.target.value)}
               onKeyDown={(e) => {
-                if (e.key === 'Enter' && newTodoInput.trim()) {
+                if (e.key === 'Enter' && newTodoInput.trim() && !showLock) {
                   e.preventDefault();
                   handleAddTodo();
                 }
               }}
-              disabled={!isPro && prospectLimit.isAtLimit}
+              disabled={showLock}
               className="flex-1 border-0 bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0 placeholder:text-gray-400 text-sm h-9"
             />
             <Button
@@ -678,15 +388,15 @@ export default function TodoUp() {
               className={cn(
                 "h-10 w-10 rounded-full shrink-0 bg-gray-900 hover:bg-gray-800 text-white shadow-md transition-all duration-150",
                 "active:scale-95",
-                (!newTodoInput.trim() || (!isPro && prospectLimit.isAtLimit)) && "opacity-50"
+                (!newTodoInput.trim() || showLock) && "opacity-50"
               )}
-              onClick={() => handleAddTodo()}
-              disabled={!newTodoInput.trim() || (!isPro && prospectLimit.isAtLimit)}
+              onClick={handleAddTodo}
+              disabled={!newTodoInput.trim() || showLock}
             >
               <Send className="h-4 w-4" />
             </Button>
           </div>
-          {!isPro && prospectLimit.isAtLimit && (
+          {showLock && (
             <p className="text-xs text-center text-muted-foreground mt-2">
               Upgrade to Pro to add tasks
             </p>
