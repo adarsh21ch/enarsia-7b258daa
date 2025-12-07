@@ -124,36 +124,6 @@ export type Database = {
         }
         Relationships: []
       }
-      funnel_configs: {
-        Row: {
-          created_at: string
-          day_1_start: string
-          funnel_length: number
-          funnel_name: string
-          id: string
-          updated_at: string
-          user_id: string
-        }
-        Insert: {
-          created_at?: string
-          day_1_start?: string
-          funnel_length?: number
-          funnel_name: string
-          id?: string
-          updated_at?: string
-          user_id: string
-        }
-        Update: {
-          created_at?: string
-          day_1_start?: string
-          funnel_length?: number
-          funnel_name?: string
-          id?: string
-          updated_at?: string
-          user_id?: string
-        }
-        Relationships: []
-      }
       funnel_tracking: {
         Row: {
           created_at: string
