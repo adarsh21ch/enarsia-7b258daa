@@ -11,7 +11,7 @@ import { PullToRefreshIndicator } from '@/components/PullToRefreshIndicator';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Loader2, CheckCircle, Lock, Trash2, Edit2, Send, X, Check } from 'lucide-react';
+import { Loader2, CheckCircle, Lock, Trash2, Edit2, Send, X, Check, Phone, MessageCircle, ChevronDown, ChevronUp } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { Prospect, FunnelStage } from '@/types/prospect';
@@ -85,6 +85,7 @@ export default function TodoUp() {
   const [newTodoInput, setNewTodoInput] = useState('');
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editingTitle, setEditingTitle] = useState('');
+  const [expandedProspectId, setExpandedProspectId] = useState<string | null>(null);
 
   // Show lock only if Free AND at/over 50-prospect limit
   const showLock = !isPro && prospectLimit.isAtLimit;
@@ -101,31 +102,54 @@ export default function TodoUp() {
     }
   }, [user, authLoading, navigate]);
 
-  // Get prospects grouped by the 3 funnel stages we care about
-  const funnelProspects = useMemo(() => {
-    const result: { prospect: Prospect; stage: FunnelStage }[] = [];
+  // Get prospects grouped by each funnel stage (separate arrays)
+  const prospectsByStage = useMemo(() => {
+    const grouped: Record<FunnelStage, Prospect[]> = {
+      'Day 1': [],
+      'Day 2': [],
+      'Minimum Bill': [],
+      'Day 3': [],
+      'Level Up': [],
+      '2CC': []
+    };
     
     prospects.forEach(p => {
       if (p.funnel_stage && FUNNEL_STAGES.includes(p.funnel_stage as FunnelStage)) {
-        result.push({ prospect: p, stage: p.funnel_stage as FunnelStage });
+        grouped[p.funnel_stage as FunnelStage].push(p);
       }
     });
     
-    // Sort by stage order
-    const stageOrder: Record<string, number> = { 'Day 1': 0, 'Day 2': 1, 'Minimum Bill': 2 };
-    result.sort((a, b) => stageOrder[a.stage] - stageOrder[b.stage]);
-    
-    return result;
+    return grouped;
   }, [prospects]);
+
+  // Helper to get first name
+  const getFirstName = (fullName: string) => {
+    return fullName.split(' ')[0];
+  };
+
+  // Toggle expanded prospect
+  const toggleProspectExpand = (id: string) => {
+    setExpandedProspectId(prev => prev === id ? null : id);
+  };
+
+  // WhatsApp and Call handlers
+  const handleWhatsApp = (phone: string) => {
+    const cleanPhone = phone.replace(/\D/g, '');
+    window.location.href = `whatsapp://send?phone=${cleanPhone}`;
+  };
+
+  const handleCall = (phone: string) => {
+    window.location.href = `tel:${phone}`;
+  };
 
   // Count per stage for badges
   const stageCounts = useMemo(() => {
-    const counts: Record<string, number> = { 'Day 1': 0, 'Day 2': 0, 'Minimum Bill': 0 };
-    funnelProspects.forEach(({ stage }) => {
-      counts[stage] = (counts[stage] || 0) + 1;
-    });
-    return counts;
-  }, [funnelProspects]);
+    return {
+      'Day 1': prospectsByStage['Day 1'].length,
+      'Day 2': prospectsByStage['Day 2'].length,
+      'Minimum Bill': prospectsByStage['Minimum Bill'].length
+    };
+  }, [prospectsByStage]);
 
   const handleAddTodo = async () => {
     const todoText = newTodoInput.trim();
@@ -206,13 +230,13 @@ export default function TodoUp() {
             </div>
           )}
 
-          {/* Funnel Stage Overview - Single horizontal bar with 3 segments */}
+          {/* Funnel Stage Overview - Three vertical columns */}
           <div className="space-y-2">
             <p className="text-xs text-muted-foreground font-medium px-1">
               Funnel Stage Overview
             </p>
             
-            {/* Horizontal bar with 3 colored segments */}
+            {/* Container with 3 columns */}
             <div className="rounded-xl overflow-hidden border border-border/40 shadow-sm bg-white dark:bg-card">
               {/* Header bar with 3 segments */}
               <div className="flex">
@@ -235,33 +259,80 @@ export default function TodoUp() {
                 ))}
               </div>
               
-              {/* Compact prospect list - one line per prospect */}
-              <div className="p-3 max-h-48 overflow-y-auto">
-                {funnelProspects.length === 0 ? (
-                  <p className="text-xs text-muted-foreground text-center py-4">
-                    No prospects yet
-                  </p>
-                ) : (
-                  <div className="space-y-1">
-                    {funnelProspects.map(({ prospect, stage }, index) => (
-                      <div
-                        key={prospect.id}
-                        className="flex items-center gap-2 text-sm py-1 px-1 rounded hover:bg-muted/30 transition-colors"
-                      >
-                        <span className="text-muted-foreground/70 text-xs w-5 shrink-0">{index + 1}.</span>
-                        <span className="font-medium text-foreground truncate flex-1">{prospect.name}</span>
-                        <span className={cn(
-                          "text-xs px-2 py-0.5 rounded-full shrink-0",
-                          stage === 'Day 1' && "bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300",
-                          stage === 'Day 2' && "bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-300",
-                          stage === 'Minimum Bill' && "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300"
-                        )}>
-                          {stage === 'Minimum Bill' ? 'Min Bill' : stage}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                )}
+              {/* Three vertical columns under header */}
+              <div className="flex divide-x divide-border/30">
+                {FUNNEL_STAGES.map((stage) => {
+                  const stageProspects = prospectsByStage[stage];
+                  return (
+                    <div key={stage} className="flex-1 min-w-0 p-2 max-h-56 overflow-y-auto">
+                      {stageProspects.length === 0 ? (
+                        <p className="text-xs text-muted-foreground text-center py-4">
+                          No prospects
+                        </p>
+                      ) : (
+                        <div className="space-y-1">
+                          {stageProspects.map((prospect, index) => {
+                            const isExpanded = expandedProspectId === prospect.id;
+                            return (
+                              <div key={prospect.id} className="space-y-1">
+                                {/* Clickable first name row */}
+                                <button
+                                  onClick={() => toggleProspectExpand(prospect.id)}
+                                  className="w-full flex items-center gap-1 text-left py-1 px-1.5 rounded hover:bg-muted/40 transition-colors"
+                                >
+                                  <span className="text-muted-foreground/70 text-xs shrink-0">{index + 1}.</span>
+                                  <span className="text-sm font-medium text-foreground truncate flex-1">
+                                    {getFirstName(prospect.name)}
+                                  </span>
+                                  {isExpanded ? (
+                                    <ChevronUp className="h-3 w-3 text-muted-foreground shrink-0" />
+                                  ) : (
+                                    <ChevronDown className="h-3 w-3 text-muted-foreground shrink-0" />
+                                  )}
+                                </button>
+                                
+                                {/* Expandable mini report card */}
+                                {isExpanded && (
+                                  <div className="ml-4 p-2 rounded-lg bg-muted/30 border border-border/40 space-y-1.5 text-xs">
+                                    <p className="font-medium text-foreground">{prospect.name}</p>
+                                    {prospect.address && (
+                                      <p className="text-muted-foreground">{prospect.address}</p>
+                                    )}
+                                    {prospect.age_or_dob && (
+                                      <p className="text-muted-foreground">Age: {prospect.age_or_dob}</p>
+                                    )}
+                                    <div className="flex items-center gap-2 pt-1">
+                                      <button
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          handleCall(prospect.phone);
+                                        }}
+                                        className="flex items-center gap-1 px-2 py-1 rounded-md bg-gray-900 text-white hover:bg-gray-800 transition-colors"
+                                      >
+                                        <Phone className="h-3 w-3" />
+                                        <span>Call</span>
+                                      </button>
+                                      <button
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          handleWhatsApp(prospect.phone);
+                                        }}
+                                        className="flex items-center gap-1 px-2 py-1 rounded-md bg-green-600 text-white hover:bg-green-700 transition-colors"
+                                      >
+                                        <MessageCircle className="h-3 w-3" />
+                                        <span>WhatsApp</span>
+                                      </button>
+                                    </div>
+                                  </div>
+                                )}
+                              </div>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
               </div>
             </div>
           </div>
