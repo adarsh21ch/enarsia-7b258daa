@@ -520,22 +520,24 @@ export function ProspectTable({
         </div>
       ) : (
         // Table Layout (Desktop or Mobile Table View)
-        <div className="bg-card rounded-xl border border-border overflow-hidden shadow-sm">
+        <div className="bg-card rounded-xl border border-border overflow-hidden shadow-sm flex flex-col">
           {/* Mobile scroll hint */}
           {isMobile && (
-            <div className="px-3 py-1.5 bg-muted/30 text-[10px] text-muted-foreground text-center border-b border-border">
+            <div className="px-3 py-1.5 bg-muted/30 text-[10px] text-muted-foreground text-center border-b border-border flex-shrink-0">
               ← Swipe to see more columns →
             </div>
           )}
+          
+          {/* Sticky Table Header - Always visible */}
           <div 
-            className="overflow-x-auto"
+            className="overflow-x-auto flex-shrink-0 bg-muted border-b border-border"
             style={{ WebkitOverflowScrolling: 'touch' }}
           >
             <table 
               className="text-sm border-collapse w-full"
               style={{ minWidth: isMobile ? '580px' : '880px' }}
             >
-              <thead className="bg-muted text-xs font-semibold text-muted-foreground border-b border-border sticky top-[72px] z-30 shadow-sm">
+              <thead className="text-xs font-semibold text-muted-foreground">
                 <tr>
                   {/* Drag handle header */}
                   <th className="px-1 py-2.5 w-8 min-w-8"></th>
@@ -558,14 +560,13 @@ export function ProspectTable({
                         onTouchStart={() => col.resizable !== false && handleDragStart(columnId)}
                         onTouchEnd={() => handleDragEnd()}
                         className={cn(
-                          "px-2 py-2.5 text-left whitespace-nowrap",
+                          "px-2 py-2.5 text-left whitespace-nowrap bg-muted",
                           isDragging && "opacity-50 bg-primary/10",
                           columnId === 'index' && "text-center",
-                          "hover:bg-muted/50 cursor-grab active:cursor-grabbing px-3 py-3 relative select-none group",
+                          "hover:bg-muted/80 cursor-grab active:cursor-grabbing px-3 py-3 relative select-none group",
                           isMobile && "text-[11px]",
-                          // Make name column header sticky on mobile (positioned after index + drag handle)
-                          isMobile && isNameColumn && "sticky left-[68px] z-20 bg-muted/50 shadow-[2px_0_4px_-2px_rgba(0,0,0,0.15)]",
-                          isMobile && isIndexColumn && "sticky left-[32px] z-20 bg-muted/50"
+                          isMobile && isNameColumn && "sticky left-[68px] z-20 bg-muted shadow-[2px_0_4px_-2px_rgba(0,0,0,0.15)]",
+                          isMobile && isIndexColumn && "sticky left-[32px] z-20 bg-muted"
                         )}
                         style={{ width: `${width}px`, minWidth: `${width}px` }}
                       >
@@ -588,6 +589,21 @@ export function ProspectTable({
                   })}
                 </tr>
               </thead>
+            </table>
+          </div>
+          
+          {/* Scrollable Table Body */}
+          <div 
+            className="overflow-x-auto overflow-y-auto flex-1"
+            style={{ 
+              WebkitOverflowScrolling: 'touch',
+              maxHeight: isMobile ? 'calc(100vh - 340px)' : 'calc(100vh - 380px)'
+            }}
+          >
+            <table 
+              className="text-sm border-collapse w-full"
+              style={{ minWidth: isMobile ? '580px' : '880px' }}
+            >
               <DndContext
                 sensors={sensors}
                 collisionDetection={closestCenter}
@@ -619,7 +635,8 @@ export function ProspectTable({
               </DndContext>
             </table>
           </div>
-          <div className="px-4 py-3 border-t border-border bg-muted/20 text-xs text-muted-foreground flex items-center justify-between">
+          
+          <div className="px-4 py-3 border-t border-border bg-muted/20 text-xs text-muted-foreground flex items-center justify-between flex-shrink-0">
             <span>Showing {filteredProspects.length} of {baseProspects.length} prospects</span>
           </div>
         </div>
