@@ -70,13 +70,13 @@ export function MobileProspectCard({ prospect, index, isCalling, onUpdate, onDel
     setIsDeleting(false);
   };
 
-  // Handle action change - if "Enrolled" is selected, also update enrollment_status
+  // Handle action change - if "Enrollment" is selected, also update enrollment_status
   const handleActionChange = (value: ExtendedActionTaken) => {
     const updates: Partial<Prospect> = {};
     
-    if (value === 'Enrolled') {
+    if (value === 'Enrollment') {
       updates.enrollment_status = 'Enrolled';
-      if (!prospect.funnel_stage || prospect.funnel_stage === 'Enrollment') {
+      if (!prospect.funnel_stage) {
         updates.funnel_stage = 'Day 1';
       }
       updates.action_taken = prospect.action_taken;
@@ -89,7 +89,7 @@ export function MobileProspectCard({ prospect, index, isCalling, onUpdate, onDel
 
   const getActionDisplayValue = (): ExtendedActionTaken | null => {
     if (prospect.enrollment_status === 'Enrolled') {
-      return 'Enrolled';
+      return 'Enrollment';
     }
     return prospect.action_taken || null;
   };
@@ -180,10 +180,10 @@ export function MobileProspectCard({ prospect, index, isCalling, onUpdate, onDel
         )}
         <InlineSelect<ExtendedActionTaken>
           value={getActionDisplayValue()}
-          options={(isCalling ? actionOptions : actionOptions.filter(a => a !== 'Enrolled')) as ExtendedActionTaken[]}
+          options={(isCalling ? actionOptions : actionOptions.filter(a => a !== 'Enrollment')) as ExtendedActionTaken[]}
           onChange={handleActionChange}
-          placeholder="Action"
-          renderValue={(value) => <ActionBadge action={value} />}
+          placeholder="Response"
+          renderValue={(value) => <ActionBadge action={value as any} />}
           optionType="action_taken"
           customOptions={getCustomOptionsForType('action_taken')}
           onAddOption={addOption}

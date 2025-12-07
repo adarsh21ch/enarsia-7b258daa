@@ -42,20 +42,20 @@ interface ProspectTableProps {
   subFilter: 'all' | 'hot' | 'scheduled' | 'day1' | 'progress';
 }
 
-// Column configuration - wider desktop widths for better visibility
+// Column configuration - Response before Funnel
 const COLUMNS = [
   { id: 'index', label: '#', defaultWidth: 50, minWidth: 40, mobileWidth: 36, resizable: false },
   { id: 'name', label: 'Name', defaultWidth: 180, minWidth: 140, mobileWidth: 130, resizable: true },
   { id: 'phone', label: 'Phone', defaultWidth: 140, minWidth: 120, mobileWidth: 100, resizable: true },
   { id: 'contact', label: 'Call', defaultWidth: 70, minWidth: 60, mobileWidth: 60, resizable: false },
-  { id: 'stage', label: 'Stage', defaultWidth: 130, minWidth: 110, mobileWidth: 85, resizable: true },
-  { id: 'action', label: 'Action', defaultWidth: 130, minWidth: 100, mobileWidth: 85, resizable: true },
+  { id: 'action', label: 'Response', defaultWidth: 130, minWidth: 100, mobileWidth: 85, resizable: true },
+  { id: 'stage', label: 'Funnel', defaultWidth: 130, minWidth: 110, mobileWidth: 85, resizable: true },
   { id: 'quality', label: 'Quality', defaultWidth: 100, minWidth: 85, mobileWidth: 75, resizable: true },
   { id: 'actions', label: '', defaultWidth: 80, minWidth: 70, mobileWidth: 50, resizable: false },
 ];
 
-// Mobile column order
-const MOBILE_COLUMN_ORDER = ['index', 'name', 'phone', 'contact', 'stage', 'action', 'quality', 'actions'];
+// Mobile column order - Response before Funnel
+const MOBILE_COLUMN_ORDER = ['index', 'name', 'phone', 'contact', 'action', 'stage', 'quality', 'actions'];
 
 export function ProspectTable({
   prospects,
@@ -102,10 +102,9 @@ export function ProspectTable({
   }, [prospects]);
 
   const funnelProspects = useMemo(() => {
-    // Funnel tab shows prospects that are enrolled OR have a funnel stage beyond Enrollment
+    // Funnel tab shows prospects that are enrolled OR have a funnel stage
     return prospects.filter(p => 
-      p.enrollment_status === 'Enrolled' ||
-      (p.funnel_stage && p.funnel_stage !== 'Enrollment')
+      p.enrollment_status === 'Enrolled' || p.funnel_stage
     );
   }, [prospects]);
 
@@ -163,7 +162,7 @@ export function ProspectTable({
       // Multi-select action filter
       const matchesAction = filters.actions.length === 0 || 
         filters.actions.includes(prospect.action_taken as ExtendedActionTaken) ||
-        (filters.actions.includes('Enrolled') && prospect.enrollment_status === 'Enrolled');
+        (filters.actions.includes('Enrollment') && prospect.enrollment_status === 'Enrolled');
 
       // Incomplete filter - show only prospects missing stage, status, or action
       const matchesIncomplete = !filters.incompleteOnly || 
@@ -200,7 +199,7 @@ export function ProspectTable({
         'Age': p.age_or_dob || '',
         'Gender': p.gender || '',
         'Address': p.address || '',
-        'Enrollment Status': p.enrollment_status || (p.funnel_stage && p.funnel_stage !== 'Enrollment' ? 'Enrolled' : 'Not Enrolled'),
+        'Enrollment Status': p.enrollment_status || (p.funnel_stage ? 'Enrolled' : 'Not Enrolled'),
         'Funnel Stage': p.funnel_stage || '',
         'Last Action': p.action_taken || 'No Action',
         'Last Action Date': p.updated_at ? format(new Date(p.updated_at), 'dd/MM/yyyy HH:mm') : '',

@@ -10,7 +10,6 @@ interface StageDistributionProps {
 export function StageDistribution({ prospects }: StageDistributionProps) {
   const stageCounts = useMemo(() => {
     const counts: Record<FunnelStage, number> = {
-      'Enrollment': 0,
       'Day 1': 0,
       'Day 2': 0,
       'Day 3': 0,
@@ -19,7 +18,9 @@ export function StageDistribution({ prospects }: StageDistributionProps) {
       '2CC': 0,
     };
     prospects.forEach((p) => {
-      counts[p.funnel_stage]++;
+      if (p.funnel_stage && counts[p.funnel_stage] !== undefined) {
+        counts[p.funnel_stage]++;
+      }
     });
     return counts;
   }, [prospects]);
@@ -44,7 +45,6 @@ export function StageDistribution({ prospects }: StageDistributionProps) {
                 <div
                   className={cn(
                     'h-full rounded-full transition-all duration-500',
-                    stage === 'Enrollment' && 'bg-stage-enrollment',
                     stage === 'Day 1' && 'bg-stage-day1',
                     stage === 'Day 2' && 'bg-stage-day2',
                     stage === 'Day 3' && 'bg-stage-day3',

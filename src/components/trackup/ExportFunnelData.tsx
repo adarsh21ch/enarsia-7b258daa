@@ -31,8 +31,7 @@ export function ExportFunnelData({ prospects, isPro = true }: ExportFunnelDataPr
     
     if (filter === 'enrolled') {
       return prospects.filter(p => 
-        p.enrollment_status === 'Enrolled' || 
-        (p.funnel_stage && p.funnel_stage !== 'Enrollment')
+        p.enrollment_status === 'Enrolled' || p.funnel_stage
       );
     }
     
@@ -40,8 +39,7 @@ export function ExportFunnelData({ prospects, isPro = true }: ExportFunnelDataPr
       return prospects.filter(p => 
         !p.enrollment_status || 
         p.enrollment_status === 'Not Enrolled' ||
-        !p.funnel_stage || 
-        p.funnel_stage === 'Enrollment'
+        !p.funnel_stage
       );
     }
 
@@ -88,7 +86,7 @@ export function ExportFunnelData({ prospects, isPro = true }: ExportFunnelDataPr
         'Age': p.age_or_dob || '',
         'Gender': p.gender || '',
         'Address': p.address || '',
-        'Enrollment Status': p.enrollment_status || (p.funnel_stage && p.funnel_stage !== 'Enrollment' ? 'Enrolled' : 'Not Enrolled'),
+        'Enrollment Status': p.enrollment_status || (p.funnel_stage ? 'Enrolled' : 'Not Enrolled'),
         'Last Action': p.action_taken || 'No Action',
         'Last Action Date': p.updated_at ? format(new Date(p.updated_at), 'dd/MM/yyyy HH:mm') : '',
         'Call Status / Stage': p.funnel_stage || '',

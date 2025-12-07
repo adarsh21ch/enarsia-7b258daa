@@ -86,9 +86,9 @@ export function ProspectRow({
   const handleActionChange = (value: ExtendedActionTaken) => {
     const updates: Partial<Prospect> = {};
     
-    if (value === 'Enrolled') {
+    if (value === 'Enrollment') {
       updates.enrollment_status = 'Enrolled';
-      if (!prospect.funnel_stage || prospect.funnel_stage === 'Enrollment') {
+      if (!prospect.funnel_stage) {
         updates.funnel_stage = 'Day 1';
       }
       updates.action_taken = prospect.action_taken;
@@ -110,7 +110,7 @@ export function ProspectRow({
   };
 
   const getActionDisplayValue = (): ExtendedActionTaken | null => {
-    if (prospect.enrollment_status === 'Enrolled') return 'Enrolled';
+    if (prospect.enrollment_status === 'Enrolled') return 'Enrollment';
     return prospect.action_taken || null;
   };
 
@@ -188,7 +188,7 @@ export function ProspectRow({
       case 'action':
         return (
           <td key={columnId} className={cellClass} style={style}>
-            <InlineSelect value={getActionDisplayValue()} options={isCalling ? actionOptions : actionOptions.filter(a => a !== 'Enrolled')} onChange={handleActionChange} placeholder="Select..." renderValue={(value) => <ActionBadge action={value} />} optionType="action_taken" customOptions={getCustomOptionsForType('action_taken')} onAddOption={addOption} onDeleteOption={deleteOption} defaultOptions={EXTENDED_ACTIONS} />
+            <InlineSelect value={getActionDisplayValue()} options={isCalling ? actionOptions : actionOptions.filter(a => a !== 'Enrollment')} onChange={handleActionChange} placeholder="Select..." renderValue={(value) => <ActionBadge action={value} />} optionType="action_taken" customOptions={getCustomOptionsForType('action_taken')} onAddOption={addOption} onDeleteOption={deleteOption} defaultOptions={EXTENDED_ACTIONS} />
           </td>
         );
       case 'quality':

@@ -20,9 +20,9 @@ export function ProspectAnalytics({ prospects, isPro = true }: ProspectAnalytics
 
   const stageCounts = useMemo(() => {
     const counts: Record<FunnelStage, number> = {
-      'Enrollment': 0, 'Day 1': 0, 'Day 2': 0, 'Day 3': 0, 'Minimum Bill': 0, 'Level Up': 0, '2CC': 0,
+      'Day 1': 0, 'Day 2': 0, 'Day 3': 0, 'Minimum Bill': 0, 'Level Up': 0, '2CC': 0,
     };
-    prospects.forEach((p) => { counts[p.funnel_stage]++; });
+    prospects.forEach((p) => { if (p.funnel_stage && counts[p.funnel_stage] !== undefined) counts[p.funnel_stage]++; });
     return counts;
   }, [prospects]);
 
@@ -99,7 +99,6 @@ export function ProspectAnalytics({ prospects, isPro = true }: ProspectAnalytics
                   <div
                     className={cn(
                       'h-full rounded-full transition-all duration-700 ease-out',
-                      stage === 'Enrollment' && 'bg-gradient-to-r from-blue-400 to-blue-500',
                       stage === 'Day 1' && 'bg-gradient-to-r from-violet-400 to-violet-500',
                       stage === 'Day 2' && 'bg-gradient-to-r from-pink-400 to-pink-500',
                       stage === 'Day 3' && 'bg-gradient-to-r from-amber-400 to-amber-500',

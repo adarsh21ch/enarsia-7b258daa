@@ -60,9 +60,9 @@ export function ProspectFilters({ filters, onFiltersChange, onExport, exporting 
   };
 
   const getStagesLabel = () => {
-    if (filters.stages.length === 0) return 'All Stages';
+    if (filters.stages.length === 0) return 'All Funnels';
     if (filters.stages.length === 1) return filters.stages[0];
-    return `${filters.stages.length} Stages`;
+    return `${filters.stages.length} Funnels`;
   };
 
   const getQualitiesLabel = () => {
@@ -72,9 +72,9 @@ export function ProspectFilters({ filters, onFiltersChange, onExport, exporting 
   };
 
   const getActionsLabel = () => {
-    if (filters.actions.length === 0) return 'All Actions';
+    if (filters.actions.length === 0) return 'All Responses';
     if (filters.actions.length === 1) return filters.actions[0];
-    return `${filters.actions.length} Actions`;
+    return `${filters.actions.length} Responses`;
   };
 
   return (
@@ -133,7 +133,7 @@ export function ProspectFilters({ filters, onFiltersChange, onExport, exporting 
                 className="w-full mt-2 h-8 text-xs"
                 onClick={() => onFiltersChange({ ...filters, stages: [] })}
               >
-                Clear Stages
+                Clear Funnels
               </Button>
             )}
           </PopoverContent>
@@ -227,7 +227,7 @@ export function ProspectFilters({ filters, onFiltersChange, onExport, exporting 
                 className="w-full mt-2 h-8 text-xs"
                 onClick={() => onFiltersChange({ ...filters, actions: [] })}
               >
-                Clear Actions
+                Clear Responses
               </Button>
             )}
           </PopoverContent>

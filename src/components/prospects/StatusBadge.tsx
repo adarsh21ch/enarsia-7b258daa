@@ -49,7 +49,6 @@ interface StageBadgeProps {
 
 export function StageBadge({ stage }: StageBadgeProps) {
   const colorClasses: Record<FunnelStage, string> = {
-    'Enrollment': 'bg-purple-500/15 text-purple-600 border-purple-500/30',
     'Day 1': 'bg-blue-500/15 text-blue-600 border-blue-500/30',
     'Day 2': 'bg-cyan-500/15 text-cyan-600 border-cyan-500/30',
     'Day 3': 'bg-teal-500/15 text-teal-600 border-teal-500/30',
@@ -88,8 +87,8 @@ export function EnrollBadge({ status }: EnrollBadgeProps) {
   );
 }
 
-// Extended action type that includes "Enrolled"
-export type ExtendedAction = ActionTaken | 'Enrolled';
+// Extended action type that includes "Enrollment"
+export type ExtendedAction = ActionTaken | 'Enrollment';
 
 interface ActionBadgeProps {
   action: ExtendedAction | null | undefined;
@@ -99,7 +98,7 @@ export function ActionBadge({ action }: ActionBadgeProps) {
   if (!action) return null;
 
   const colorClasses: Record<ExtendedAction, string> = {
-    'Enrolled': 'bg-status-positive/15 text-status-positive border-status-positive/30',
+    'Enrollment': 'bg-purple-500/15 text-purple-600 border-purple-500/30',
     'Video Sent': 'bg-blue-500/15 text-blue-600 border-blue-500/30',
     'Called': 'bg-purple-500/15 text-purple-600 border-purple-500/30',
     'Not Picked': 'bg-orange-500/15 text-orange-600 border-orange-500/30',

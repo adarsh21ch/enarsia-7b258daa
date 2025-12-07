@@ -94,12 +94,12 @@ export default function Home() {
   // Calculate KPIs - 2CC counts as 2 in Total CC
   const kpis = useMemo(() => {
     const stageCounts: Record<FunnelStage, number> = {
-      'Enrollment': 0, 'Day 1': 0, 'Day 2': 0, 'Day 3': 0,
+      'Day 1': 0, 'Day 2': 0, 'Day 3': 0,
       'Minimum Bill': 0, 'Level Up': 0, '2CC': 0,
     };
     
     prospects.forEach(p => {
-      if (p.funnel_stage) stageCounts[p.funnel_stage]++;
+      if (p.funnel_stage && stageCounts[p.funnel_stage] !== undefined) stageCounts[p.funnel_stage]++;
     });
 
     const enrolled = prospects.filter(p => p.enrollment_status === 'Enrolled').length;
@@ -265,7 +265,7 @@ export default function Home() {
               </CollapsibleTrigger>
               <CollapsibleContent className="mt-2">
                 <div className="space-y-3">
-                  {FUNNEL_STAGES.filter(stage => stage !== 'Enrollment').map(stage => {
+                  {FUNNEL_STAGES.map(stage => {
                     const current = kpis.stageCounts[stage];
                     const target = targets[stage] || 0;
                     const progress = target > 0 ? Math.min((current / target) * 100, 100) : 0;
