@@ -455,7 +455,7 @@ export default function TodoUp() {
           <div className="max-w-lg mx-auto">
             <div className="flex items-center gap-2 bg-white dark:bg-card border border-gray-300 dark:border-gray-600 rounded-full px-4 py-2 shadow-lg">
               <Input
-                placeholder="Add a task or describe what you want to do…"
+                placeholder="Add a task or reminder"
                 value={newTodoInput}
                 onChange={(e) => setNewTodoInput(e.target.value)}
                 onKeyDown={(e) => {
@@ -469,11 +469,7 @@ export default function TodoUp() {
               />
               <Button
                 size="icon"
-                className={cn(
-                  "h-10 w-10 rounded-full shrink-0 bg-gray-900 hover:bg-gray-800 text-white shadow-md transition-all duration-150",
-                  "active:scale-95",
-                  (!newTodoInput.trim() || showLock) && "opacity-50"
-                )}
+                className="h-10 w-10 rounded-full shrink-0 bg-gray-900 hover:bg-gray-800 text-white shadow-md transition-all duration-150 active:scale-95"
                 onClick={handleAddTodo}
                 disabled={!newTodoInput.trim() || showLock}
               >
