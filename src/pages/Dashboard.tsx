@@ -84,11 +84,7 @@ export default function Dashboard() {
 
   // Calculate funnel counts for summary bar
   const funnelCounts = {
-    // Count "Enrollment" response or "Enrolled" enrollment_status
-    enrolled: prospects.filter(p => 
-      p.action_taken === 'Enrollment' || 
-      p.enrollment_status === 'Enrolled'
-    ).length,
+    enrolled: prospects.filter(p => p.enrollment_status === 'Enrolled').length,
     day1: prospects.filter(p => p.funnel_stage === 'Day 1').length,
     day2: prospects.filter(p => p.funnel_stage === 'Day 2').length,
     day3: prospects.filter(p => p.funnel_stage === 'Day 3').length,
@@ -142,7 +138,6 @@ export default function Dashboard() {
           <div className="container py-3 px-4 pb-20">
             {/* Funnel Summary Bar - Cleaner Format */}
             <div className="text-xs text-muted-foreground bg-muted/30 rounded-lg px-3 py-2 mb-4">
-              <p className="text-[10px] text-muted-foreground/70 font-medium mb-1">Current Follow-Up Numbers</p>
               <div className="flex flex-wrap items-center gap-x-1 gap-y-1">
                 <span>Enrolled: <strong className="text-foreground">{funnelCounts.enrolled}</strong></span>
                 <span className="text-muted-foreground/50">·</span>

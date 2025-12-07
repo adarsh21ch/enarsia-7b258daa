@@ -23,7 +23,7 @@ const STAGE_MAP: Record<string, keyof FunnelStats> = {
   '2CC': 'two_cc',
 };
 
-const THIRTY_SECONDS_MS = 30 * 1000;
+const FIVE_MINUTES_MS = 5 * 60 * 1000;
 
 export function useProspectFunnelStats() {
   const [loading, setLoading] = useState(true);
@@ -60,7 +60,7 @@ export function useProspectFunnelStats() {
       setTotalProspects(prospects.length);
       const now = new Date();
 
-      // Count prospects per funnel stage (only if confirmed after 30 seconds)
+      // Count prospects per funnel stage (only if confirmed after 5 minutes)
       const stats: FunnelStats = {
         enrollment: 0,
         day_1: 0,
@@ -74,9 +74,9 @@ export function useProspectFunnelStats() {
       prospects.forEach((p) => {
         const stage = p.funnel_stage;
         if (stage && STAGE_MAP[stage]) {
-          // Apply 30-second confirmation rule
+          // Apply 5-minute confirmation rule
           const stageAt = p.funnel_stage_at ? new Date(p.funnel_stage_at) : null;
-          const isConfirmed = !stageAt || (now.getTime() - stageAt.getTime() >= THIRTY_SECONDS_MS);
+          const isConfirmed = !stageAt || (now.getTime() - stageAt.getTime() >= FIVE_MINUTES_MS);
           
           if (isConfirmed) {
             stats[STAGE_MAP[stage]]++;
