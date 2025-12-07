@@ -1,6 +1,6 @@
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback, useEffect } from 'react';
 import { Prospect, FunnelStage, ProspectQuality, Sheet, ExtendedActionTaken } from '@/types/prospect';
-import { ProspectRow } from './ProspectRow';
+import { SortableProspectRow } from './SortableProspectRow';
 import { MobileProspectCard } from './MobileProspectCard';
 import { ProspectFilters } from './ProspectFilters';
 import { AddProspectDialog } from './AddProspectDialog';
@@ -14,6 +14,22 @@ import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import * as XLSX from 'xlsx';
 import { format } from 'date-fns';
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  TouchSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+} from '@dnd-kit/core';
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable';
 
 interface Filters {
   search: string;
@@ -30,6 +46,7 @@ interface ProspectTableProps {
   onUpdate: (id: string, updates: Partial<Prospect>) => Promise<Prospect | null>;
   onDelete: (id: string) => Promise<boolean>;
   onImport: (prospects: Partial<Prospect>[]) => Promise<{ imported: number; skipped: number }>;
+  onReorderProspects?: (prospectIds: string[]) => Promise<boolean>;
   // Sheet props
   sheets: Sheet[];
   selectedSheetId: string | null;
@@ -64,6 +81,7 @@ export function ProspectTable({
   onUpdate,
   onDelete,
   onImport,
+  onReorderProspects,
   sheets,
   selectedSheetId,
   onSelectSheet,
@@ -85,13 +103,53 @@ export function ProspectTable({
   const [exporting, setExporting] = useState(false);
   const isMobile = useIsMobile();
 
-  // Column state for reordering and resizing
-  const [columnOrder, setColumnOrder] = useState<string[]>(COLUMNS.map(c => c.id));
+  // Column state for reordering and resizing - load from localStorage
+  const [columnOrder, setColumnOrder] = useState<string[]>(() => {
+    const saved = localStorage.getItem('prospectColumnOrder');
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        // Validate that all columns exist
+        if (Array.isArray(parsed) && parsed.every(id => COLUMNS.some(c => c.id === id))) {
+          return parsed;
+        }
+      } catch {}
+    }
+    return COLUMNS.map(c => c.id);
+  });
   const [columnWidths, setColumnWidths] = useState<Record<string, number>>(
     Object.fromEntries(COLUMNS.map(c => [c.id, c.defaultWidth]))
   );
   const [draggedColumn, setDraggedColumn] = useState<string | null>(null);
   const [resizingColumn, setResizingColumn] = useState<string | null>(null);
+
+  // Save column order to localStorage
+  useEffect(() => {
+    localStorage.setItem('prospectColumnOrder', JSON.stringify(columnOrder));
+  }, [columnOrder]);
+
+  // Row drag-and-drop sensors
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: { distance: 8 },
+    }),
+    useSensor(TouchSensor, {
+      activationConstraint: { delay: 200, tolerance: 5 },
+    }),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
+
+  const handleRowDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (over && active.id !== over.id && onReorderProspects) {
+      const oldIndex = filteredProspects.findIndex(p => p.id === active.id);
+      const newIndex = filteredProspects.findIndex(p => p.id === over.id);
+      const newOrder = arrayMove(filteredProspects, oldIndex, newIndex);
+      onReorderProspects(newOrder.map(p => p.id));
+    }
+  };
 
   // For DUPLICATING: Show prospects in BOTH tabs if they have funnel stages
   // Calling tab: ALL prospects (including those with funnel stages)
@@ -479,6 +537,8 @@ export function ProspectTable({
             >
               <thead className="bg-muted/50 text-xs font-semibold text-muted-foreground border-b border-border">
                 <tr>
+                  {/* Drag handle header */}
+                  <th className="px-1 py-2.5 w-8 min-w-8"></th>
                   {(isMobile ? MOBILE_COLUMN_ORDER : columnOrder).map((columnId) => {
                     const col = COLUMNS.find(c => c.id === columnId);
                     if (!col) return null;
@@ -491,24 +551,26 @@ export function ProspectTable({
                     return (
                       <th
                         key={columnId}
-                        draggable={!isMobile && col.resizable !== false}
-                        onDragStart={() => !isMobile && col.resizable !== false && handleDragStart(columnId)}
-                        onDragOver={(e) => !isMobile && handleDragOver(e, columnId)}
-                        onDragEnd={() => !isMobile && handleDragEnd()}
+                        draggable={col.resizable !== false}
+                        onDragStart={() => col.resizable !== false && handleDragStart(columnId)}
+                        onDragOver={(e) => handleDragOver(e, columnId)}
+                        onDragEnd={() => handleDragEnd()}
+                        onTouchStart={() => col.resizable !== false && handleDragStart(columnId)}
+                        onTouchEnd={() => handleDragEnd()}
                         className={cn(
                           "px-2 py-2.5 text-left whitespace-nowrap",
                           isDragging && "opacity-50 bg-primary/10",
                           columnId === 'index' && "text-center",
-                          !isMobile && "hover:bg-muted/50 cursor-grab active:cursor-grabbing px-3 py-3 relative select-none group",
+                          "hover:bg-muted/50 cursor-grab active:cursor-grabbing px-3 py-3 relative select-none group",
                           isMobile && "text-[11px]",
-                          // Make name column header sticky on mobile (positioned after index)
-                          isMobile && isNameColumn && "sticky left-[36px] z-20 bg-muted/50 shadow-[2px_0_4px_-2px_rgba(0,0,0,0.15)]",
-                          isMobile && isIndexColumn && "sticky left-0 z-20 bg-muted/50"
+                          // Make name column header sticky on mobile (positioned after index + drag handle)
+                          isMobile && isNameColumn && "sticky left-[68px] z-20 bg-muted/50 shadow-[2px_0_4px_-2px_rgba(0,0,0,0.15)]",
+                          isMobile && isIndexColumn && "sticky left-[32px] z-20 bg-muted/50"
                         )}
                         style={{ width: `${width}px`, minWidth: `${width}px` }}
                       >
                         <div className="flex items-center gap-1">
-                          {!isMobile && <GripVertical className="h-3 w-3 text-muted-foreground/50" />}
+                          <GripVertical className="h-3 w-3 text-muted-foreground/50" />
                           <span>{col?.label || columnId}</span>
                         </div>
                         {/* Resize handle - only for resizable columns on desktop */}
@@ -526,24 +588,35 @@ export function ProspectTable({
                   })}
                 </tr>
               </thead>
-              <tbody>
-                {filteredProspects.map((prospect, index) => (
-                  <ProspectRow
-                    key={prospect.id}
-                    prospect={prospect}
-                    index={index + 1}
-                    isCalling={isCalling}
-                    isExpanded={expandedRowId === prospect.id}
-                    onToggleExpand={() => handleToggleExpand(prospect.id)}
-                    onUpdate={onUpdate}
-                    onDelete={onDelete}
-                    isEven={index % 2 === 0}
-                    columnOrder={isMobile ? MOBILE_COLUMN_ORDER : columnOrder}
-                    columnWidths={isMobile ? Object.fromEntries(COLUMNS.map(c => [c.id, c.mobileWidth])) : columnWidths}
-                    isMobileTable={isMobile}
-                  />
-                ))}
-              </tbody>
+              <DndContext
+                sensors={sensors}
+                collisionDetection={closestCenter}
+                onDragEnd={handleRowDragEnd}
+              >
+                <SortableContext
+                  items={filteredProspects.map(p => p.id)}
+                  strategy={verticalListSortingStrategy}
+                >
+                  <tbody>
+                    {filteredProspects.map((prospect, index) => (
+                      <SortableProspectRow
+                        key={prospect.id}
+                        prospect={prospect}
+                        index={index + 1}
+                        isCalling={isCalling}
+                        isExpanded={expandedRowId === prospect.id}
+                        onToggleExpand={() => handleToggleExpand(prospect.id)}
+                        onUpdate={onUpdate}
+                        onDelete={onDelete}
+                        isEven={index % 2 === 0}
+                        columnOrder={isMobile ? MOBILE_COLUMN_ORDER : columnOrder}
+                        columnWidths={isMobile ? Object.fromEntries(COLUMNS.map(c => [c.id, c.mobileWidth])) : columnWidths}
+                        isMobileTable={isMobile}
+                      />
+                    ))}
+                  </tbody>
+                </SortableContext>
+              </DndContext>
             </table>
           </div>
           <div className="px-4 py-3 border-t border-border bg-muted/20 text-xs text-muted-foreground flex items-center justify-between">

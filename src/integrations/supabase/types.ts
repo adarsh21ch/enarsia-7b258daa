@@ -219,6 +219,7 @@ export type Database = {
           profession: string | null
           prospect_status: string | null
           sheet_id: string | null
+          sort_order: number | null
           updated_at: string
           user_id: string
         }
@@ -238,6 +239,7 @@ export type Database = {
           profession?: string | null
           prospect_status?: string | null
           sheet_id?: string | null
+          sort_order?: number | null
           updated_at?: string
           user_id: string
         }
@@ -257,6 +259,7 @@ export type Database = {
           profession?: string | null
           prospect_status?: string | null
           sheet_id?: string | null
+          sort_order?: number | null
           updated_at?: string
           user_id?: string
         }

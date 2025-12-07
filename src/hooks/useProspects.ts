@@ -30,6 +30,7 @@ export function useProspects() {
         .from('prospects')
         .select('*')
         .eq('user_id', user.id)
+        .order('sort_order', { ascending: true, nullsFirst: false })
         .order('date_added', { ascending: false });
 
       if (error) {
@@ -230,6 +231,43 @@ export function useProspects() {
     return { imported: data?.length || 0, skipped };
   };
 
+  const reorderProspects = async (prospectIds: string[]) => {
+    if (!user) return false;
+
+    // Update sort_order for each prospect
+    const updates = prospectIds.map((id, index) => ({
+      id,
+      sort_order: index + 1,
+    }));
+
+    try {
+      for (const update of updates) {
+        await supabase
+          .from('prospects')
+          .update({ sort_order: update.sort_order })
+          .eq('id', update.id)
+          .eq('user_id', user.id);
+      }
+
+      // Update local state to reflect new order
+      setProspects(prev => {
+        const ordered = [...prev].sort((a, b) => {
+          const aIdx = prospectIds.indexOf(a.id);
+          const bIdx = prospectIds.indexOf(b.id);
+          if (aIdx === -1 && bIdx === -1) return 0;
+          if (aIdx === -1) return 1;
+          if (bIdx === -1) return -1;
+          return aIdx - bIdx;
+        });
+        return ordered;
+      });
+      return true;
+    } catch (err) {
+      console.error('Error reordering prospects:', err);
+      return false;
+    }
+  };
+
   return {
     prospects,
     loading,
@@ -237,6 +275,7 @@ export function useProspects() {
     updateProspect,
     deleteProspect,
     importProspects,
+    reorderProspects,
     refetch: fetchProspects,
   };
 }

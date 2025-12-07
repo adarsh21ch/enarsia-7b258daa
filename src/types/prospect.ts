@@ -1,5 +1,5 @@
 export type FunnelStage = 'Day 1' | 'Day 2' | 'Day 3' | 'Minimum Bill' | 'Level Up' | '2CC';
-export type ActionTaken = 'Video Sent' | 'Called' | 'Not Picked' | 'Busy' | 'Follow Up Scheduled';
+export type ActionTaken = 'Video Sent' | 'Not Picked' | 'Call Back' | 'Call Cut';
 export type ExtendedActionTaken = ActionTaken | 'Enrollment';
 export type ProspectStatus = 'Good' | 'Medium' | 'Bad';
 export type PriorityLevel = 'High' | 'Medium' | 'Low';
@@ -66,8 +66,8 @@ export interface ActivityLog {
 export const FUNNEL_STAGES: FunnelStage[] = ['Day 1', 'Day 2', 'Day 3', 'Minimum Bill', 'Level Up', '2CC'];
 export const CALLING_STAGES: FunnelStage[] = [];
 export const FUNNEL_TAB_STAGES: FunnelStage[] = ['Day 1', 'Day 2', 'Day 3', 'Minimum Bill', 'Level Up', '2CC'];
-export const ACTIONS: ActionTaken[] = ['Video Sent', 'Called', 'Not Picked', 'Busy', 'Follow Up Scheduled'];
-export const EXTENDED_ACTIONS: ExtendedActionTaken[] = ['Video Sent', 'Called', 'Not Picked', 'Busy', 'Follow Up Scheduled', 'Enrollment'];
+export const ACTIONS: ActionTaken[] = ['Video Sent', 'Not Picked', 'Call Back', 'Call Cut'];
+export const EXTENDED_ACTIONS: ExtendedActionTaken[] = ['Video Sent', 'Enrollment', 'Not Picked', 'Call Back', 'Call Cut'];
 export const STATUSES: ProspectStatus[] = ['Good', 'Medium', 'Bad'];
 export const QUALITIES: ProspectQuality[] = ['Good', 'Medium', 'Bad'];
 export const PRIORITIES: PriorityLevel[] = ['High', 'Medium', 'Low'];

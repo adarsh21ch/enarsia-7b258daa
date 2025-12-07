@@ -6,9 +6,17 @@ import { InlineReportCard } from './InlineReportCard';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
-import { MessageCircle, Phone, Trash2, ChevronDown } from 'lucide-react';
+import { MessageCircle, Phone, Trash2, ChevronDown, GripVertical } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useCustomOptionsContext } from '@/contexts/CustomOptionsContext';
+
+interface DragHandleProps {
+  ref: (node: HTMLElement | null) => void;
+  style: React.CSSProperties;
+  attributes: Record<string, any>;
+  listeners: Record<string, any> | undefined;
+  isDragging: boolean;
+}
 
 interface ProspectRowProps {
   prospect: Prospect;
@@ -22,6 +30,7 @@ interface ProspectRowProps {
   columnOrder: string[];
   columnWidths: Record<string, number>;
   isMobileTable?: boolean;
+  dragHandleProps?: DragHandleProps;
 }
 
 export function ProspectRow({ 
@@ -36,6 +45,7 @@ export function ProspectRow({
   columnOrder,
   columnWidths,
   isMobileTable = false,
+  dragHandleProps,
 }: ProspectRowProps) {
   const [localPhone, setLocalPhone] = useState(prospect.phone);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -226,12 +236,33 @@ export function ProspectRow({
     }
   };
 
+  const rowStyle = dragHandleProps?.style || {};
+  const rowRef = dragHandleProps?.ref;
+
   return (
     <>
-      <tr className={cn("group transition-colors duration-100 border-b border-border/30", isEven ? "bg-muted/20" : "bg-transparent", "hover:bg-muted/40", isExpanded && "bg-primary/5 hover:bg-primary/5")}>
+      <tr 
+        ref={rowRef}
+        style={rowStyle}
+        {...(dragHandleProps?.attributes || {})}
+        className={cn(
+          "group transition-colors duration-100 border-b border-border/30", 
+          isEven ? "bg-muted/20" : "bg-transparent", 
+          "hover:bg-muted/40", 
+          isExpanded && "bg-primary/5 hover:bg-primary/5",
+          dragHandleProps?.isDragging && "shadow-lg"
+        )}
+      >
+        {/* Drag handle cell */}
+        <td 
+          className="px-1 py-2 cursor-grab active:cursor-grabbing touch-none"
+          {...(dragHandleProps?.listeners || {})}
+        >
+          <GripVertical className="h-4 w-4 text-muted-foreground/50 hover:text-muted-foreground" />
+        </td>
         {columnOrder.map(renderCell)}
       </tr>
-      {isExpanded && <InlineReportCard prospect={prospect} onUpdate={onUpdate} onClose={onToggleExpand} colSpan={columnOrder.length} />}
+      {isExpanded && <InlineReportCard prospect={prospect} onUpdate={onUpdate} onClose={onToggleExpand} colSpan={columnOrder.length + 1} />}
     </>
   );
 }
