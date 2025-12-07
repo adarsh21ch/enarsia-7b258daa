@@ -102,16 +102,49 @@ export function useFunnelConfigs() {
   // Get valid stages based on funnel length
   const getValidStages = (length: number) => {
     const allStages = ['day_1', 'day_2', 'day_3', 'day_4', 'day_5', 'minimum_bill', 'level_up', 'two_cc'];
-    const dayStages = allStages.slice(0, length); // Get Day 1 to Day N
+    const dayStages = allStages.slice(0, length);
     return [...dayStages, 'minimum_bill', 'level_up', 'two_cc'];
   };
 
-  // Calculate which cycle a date falls into
+  // Calculate which cycle a date falls into (1-indexed)
   const getCycleForDate = (config: FunnelConfig, date: Date) => {
-    const startDate = new Date(config.day_1_start);
+    const startDate = new Date(config.day_1_start + 'T00:00:00');
     const diffDays = Math.floor((date.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24));
     if (diffDays < 0) return null;
     return Math.floor(diffDays / config.funnel_length) + 1;
+  };
+
+  // Get current cycle number based on today
+  const getCurrentCycle = (config: FunnelConfig) => {
+    return getCycleForDate(config, new Date());
+  };
+
+  // Get start and end dates for a specific cycle
+  const getCycleDates = (config: FunnelConfig, cycleNumber: number) => {
+    const startDate = new Date(config.day_1_start + 'T00:00:00');
+    const cycleStartOffset = (cycleNumber - 1) * config.funnel_length;
+    const cycleStart = new Date(startDate);
+    cycleStart.setDate(cycleStart.getDate() + cycleStartOffset);
+    
+    const cycleEnd = new Date(cycleStart);
+    cycleEnd.setDate(cycleEnd.getDate() + config.funnel_length - 1);
+    
+    return { start: cycleStart, end: cycleEnd };
+  };
+
+  // Get prospects that belong to a specific funnel and optionally a specific cycle
+  const getProspectsForFunnel = (
+    config: FunnelConfig,
+    prospects: { funnel_stage: string | null; date_added: string }[],
+    cycleNumber?: number
+  ) => {
+    return prospects.filter(p => {
+      const prospectDate = new Date(p.date_added);
+      const cycle = getCycleForDate(config, prospectDate);
+      if (cycle === null) return false;
+      if (cycleNumber !== undefined) return cycle === cycleNumber;
+      return true; // All cycles if no specific cycle requested
+    });
   };
 
   return {
@@ -122,6 +155,9 @@ export function useFunnelConfigs() {
     deleteConfig,
     getValidStages,
     getCycleForDate,
+    getCurrentCycle,
+    getCycleDates,
+    getProspectsForFunnel,
     refetch: fetchConfigs,
   };
 }

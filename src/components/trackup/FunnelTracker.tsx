@@ -1,17 +1,18 @@
-import { useState } from 'react';
-import { useProspectFunnelStats, FunnelStats } from '@/hooks/useProspectFunnelStats';
+import { useState, useMemo } from 'react';
+import { useProspectFunnelStats, FunnelStats, ProspectWithDate } from '@/hooks/useProspectFunnelStats';
 import { useFunnelTracking } from '@/hooks/useFunnelTracking';
 import { useProspects } from '@/hooks/useProspects';
-import { useFunnelConfigs } from '@/hooks/useFunnelConfigs';
+import { useFunnelConfigs, FunnelConfig } from '@/hooks/useFunnelConfigs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
-import { ChevronDown, ChevronUp, Flame, TrendingUp, TrendingDown, Minus, Sparkles, Users, Settings2 } from 'lucide-react';
+import { ChevronDown, ChevronUp, Flame, TrendingUp, Sparkles, Users, Settings2, CalendarDays } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { Button } from '@/components/ui/button';
 import { ExportFunnelData } from './ExportFunnelData';
 import { AddFunnelDialog } from './AddFunnelDialog';
 import { FunnelConfigList } from './FunnelConfigList';
+import { format } from 'date-fns';
 
 const STAGES = ['day_1', 'day_2', 'day_3', 'minimum_bill', 'level_up', 'two_cc'] as const;
 type StageKey = typeof STAGES[number];
@@ -74,30 +75,124 @@ interface FunnelTrackerProps {
   isPro?: boolean;
 }
 
+// Map database funnel_stage values to stat keys
+const STAGE_MAP: Record<string, StageKey> = {
+  'Day 1': 'day_1',
+  'Day 2': 'day_2',
+  'Day 3': 'day_3',
+  'Minimum Bill': 'minimum_bill',
+  'Level Up': 'level_up',
+  '2CC': 'two_cc',
+};
+
+// Calculate stats from prospects array
+function calculateStats(prospects: ProspectWithDate[]): FunnelStats {
+  const stats: FunnelStats = {
+    enrollment: 0,
+    day_1: 0,
+    day_2: 0,
+    day_3: 0,
+    minimum_bill: 0,
+    level_up: 0,
+    two_cc: 0,
+  };
+  prospects.forEach(p => {
+    const stage = p.funnel_stage;
+    if (stage && STAGE_MAP[stage]) {
+      stats[STAGE_MAP[stage]]++;
+    }
+  });
+  return stats;
+}
+
 export function FunnelTracker({ isPro = true }: FunnelTrackerProps) {
-  const { totals, loading, totalProspects } = useProspectFunnelStats();
+  const { totals, loading, totalProspects, prospects: funnelProspects } = useProspectFunnelStats();
   const { rows, loading: funnelLoading } = useFunnelTracking();
   const { prospects, loading: prospectsLoading } = useProspects();
-  const { configs, loading: configsLoading, addConfig, updateConfig, deleteConfig } = useFunnelConfigs();
+  const { 
+    configs, 
+    loading: configsLoading, 
+    addConfig, 
+    updateConfig, 
+    deleteConfig,
+    getCurrentCycle,
+    getCycleDates,
+    getProspectsForFunnel
+  } = useFunnelConfigs();
   const [setupOpen, setSetupOpen] = useState(false);
   const [conversionFromStage, setConversionFromStage] = useState<StageKey>('day_1');
+  const [selectedCycles, setSelectedCycles] = useState<Record<string, number | 'all'>>({});
 
-  // Calculate conversion from selected stage to 2CC
+  // Get selected cycle for a config (default to current cycle)
+  const getSelectedCycle = (config: FunnelConfig) => {
+    if (selectedCycles[config.id] !== undefined) return selectedCycles[config.id];
+    return getCurrentCycle(config) || 1;
+  };
+
+  // Calculate per-funnel stats with cycle awareness
+  const perFunnelStats = useMemo(() => {
+    if (!funnelProspects.length) return {};
+    
+    const result: Record<string, { 
+      stats: FunnelStats; 
+      currentCycle: number | null;
+      prospectCount: number;
+      cycleDates: { start: Date; end: Date } | null;
+    }> = {};
+
+    configs.forEach(config => {
+      const cycle = getSelectedCycle(config);
+      const cycleNumber = cycle === 'all' ? undefined : cycle;
+      const filteredProspects = getProspectsForFunnel(config, funnelProspects, cycleNumber);
+      const currentCycle = getCurrentCycle(config);
+      const cycleDates = cycleNumber ? getCycleDates(config, cycleNumber) : null;
+      
+      result[config.id] = {
+        stats: calculateStats(filteredProspects),
+        currentCycle,
+        prospectCount: filteredProspects.length,
+        cycleDates,
+      };
+    });
+
+    return result;
+  }, [configs, funnelProspects, selectedCycles, getCurrentCycle, getCycleDates, getProspectsForFunnel]);
+
+  // Calculate conversion from selected stage to 2CC (global)
   const fromValue = totals[conversionFromStage] || 0;
   const twoCCValue = totals.two_cc || 0;
   const conversionTo2CC = fromValue > 0 ? Math.round((twoCCValue / fromValue) * 100) : 0;
 
-  // Calculate step-by-step conversions for the tracker table
-  const getStepConversion = (from: StageKey, to: StageKey) => {
-    const fromVal = totals[from] || 0;
-    const toVal = totals[to] || 0;
+  // Calculate step-by-step conversions from stats
+  const getStepConversion = (stats: FunnelStats, from: StageKey, to: StageKey) => {
+    const fromVal = stats[from] || 0;
+    const toVal = stats[to] || 0;
     return fromVal > 0 ? Math.round((toVal / fromVal) * 100) : 0;
   };
 
   // Overall conversion: D1 -> 2CC
-  const overallConversion = (totals.day_1 || 0) > 0 
-    ? Math.round(((totals.two_cc || 0) / (totals.day_1 || 0)) * 100) 
-    : 0;
+  const getOverallConversion = (stats: FunnelStats) => {
+    return (stats.day_1 || 0) > 0 
+      ? Math.round(((stats.two_cc || 0) / (stats.day_1 || 0)) * 100) 
+      : 0;
+  };
+
+  const overallConversion = getOverallConversion(totals);
+
+  // Generate cycle options for a config
+  const getCycleOptions = (config: FunnelConfig) => {
+    const currentCycle = getCurrentCycle(config);
+    if (!currentCycle) return [];
+    const options: { value: number | 'all'; label: string }[] = [
+      { value: 'all', label: 'All Cycles' }
+    ];
+    for (let i = 1; i <= currentCycle; i++) {
+      const dates = getCycleDates(config, i);
+      const label = `C${i}: ${format(dates.start, 'MMM d')} - ${format(dates.end, 'MMM d')}`;
+      options.push({ value: i, label });
+    }
+    return options;
+  };
 
   if (loading || funnelLoading || prospectsLoading || configsLoading) {
     return (
@@ -218,34 +313,64 @@ export function FunnelTracker({ isPro = true }: FunnelTrackerProps) {
               </tr>
             </thead>
             <tbody>
-              {/* Show configured funnels or default row */}
+              {/* Show configured funnels with cycle-aware stats */}
               {configs.length > 0 ? (
-                configs.map((config) => (
-                  <tr key={config.id} className="border-b border-border/30 hover:bg-muted/20 transition-colors">
-                    <td className="px-2 py-3 font-medium">{config.funnel_name}</td>
-                    <td className="px-2 py-3 text-center">{isPro ? totals.day_1 : '–'}</td>
-                    <td className="px-2 py-3 text-center">{isPro ? (config.funnel_length >= 2 ? totals.day_2 : '–') : '–'}</td>
-                    <td className="px-2 py-3 text-center">{isPro ? (config.funnel_length >= 3 ? totals.day_3 : '–') : '–'}</td>
-                    <td className="px-2 py-3 text-center">{isPro ? totals.minimum_bill : '–'}</td>
-                    <td className="px-2 py-3 text-center">{isPro ? totals.level_up : '–'}</td>
-                    <td className="px-2 py-3 text-center">{isPro ? totals.two_cc : '–'}</td>
-                    <td className={cn("px-2 py-3 text-center bg-muted/10", isPro && getConversionTextColor(getStepConversion('day_1', 'day_2')))}>
-                      {isPro ? `${getStepConversion('day_1', 'day_2')}%` : '–'}
-                    </td>
-                    <td className={cn("px-2 py-3 text-center bg-muted/10", isPro && getConversionTextColor(getStepConversion('day_2', 'day_3')))}>
-                      {isPro ? (config.funnel_length >= 3 ? `${getStepConversion('day_2', 'day_3')}%` : '–') : '–'}
-                    </td>
-                    <td className={cn("px-2 py-3 text-center bg-muted/10", isPro && getConversionTextColor(getStepConversion('day_3', 'minimum_bill')))}>
-                      {isPro ? `${getStepConversion('day_3', 'minimum_bill')}%` : '–'}
-                    </td>
-                    <td className={cn("px-2 py-3 text-center bg-muted/10", isPro && getConversionTextColor(getStepConversion('minimum_bill', 'level_up')))}>
-                      {isPro ? `${getStepConversion('minimum_bill', 'level_up')}%` : '–'}
-                    </td>
-                    <td className={cn("px-2 py-3 text-center font-bold bg-primary/5", isPro && getConversionTextColor(overallConversion))}>
-                      {isPro ? `${overallConversion}%` : '–'}
-                    </td>
-                  </tr>
-                ))
+                configs.map((config) => {
+                  const funnelData = perFunnelStats[config.id];
+                  const stats = funnelData?.stats || totals;
+                  const cycleOptions = getCycleOptions(config);
+                  const selectedCycle = getSelectedCycle(config);
+                  const funnelConversion = getOverallConversion(stats);
+                  
+                  return (
+                    <tr key={config.id} className="border-b border-border/30 hover:bg-muted/20 transition-colors">
+                      <td className="px-2 py-3">
+                        <div className="flex flex-col gap-1">
+                          <span className="font-medium">{config.funnel_name}</span>
+                          {cycleOptions.length > 0 && (
+                            <Select 
+                              value={String(selectedCycle)} 
+                              onValueChange={(v) => setSelectedCycles(prev => ({ ...prev, [config.id]: v === 'all' ? 'all' : Number(v) }))}
+                            >
+                              <SelectTrigger className="h-6 text-[10px] w-32 bg-muted/30 border-0">
+                                <CalendarDays className="h-3 w-3 mr-1" />
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent className="bg-popover border border-border z-50">
+                                {cycleOptions.map(opt => (
+                                  <SelectItem key={String(opt.value)} value={String(opt.value)} className="text-xs">
+                                    {opt.label}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          )}
+                        </div>
+                      </td>
+                      <td className="px-2 py-3 text-center">{isPro ? stats.day_1 : '–'}</td>
+                      <td className="px-2 py-3 text-center">{isPro ? (config.funnel_length >= 2 ? stats.day_2 : '–') : '–'}</td>
+                      <td className="px-2 py-3 text-center">{isPro ? (config.funnel_length >= 3 ? stats.day_3 : '–') : '–'}</td>
+                      <td className="px-2 py-3 text-center">{isPro ? stats.minimum_bill : '–'}</td>
+                      <td className="px-2 py-3 text-center">{isPro ? stats.level_up : '–'}</td>
+                      <td className="px-2 py-3 text-center">{isPro ? stats.two_cc : '–'}</td>
+                      <td className={cn("px-2 py-3 text-center bg-muted/10", isPro && getConversionTextColor(getStepConversion(stats, 'day_1', 'day_2')))}>
+                        {isPro ? `${getStepConversion(stats, 'day_1', 'day_2')}%` : '–'}
+                      </td>
+                      <td className={cn("px-2 py-3 text-center bg-muted/10", isPro && getConversionTextColor(getStepConversion(stats, 'day_2', 'day_3')))}>
+                        {isPro ? (config.funnel_length >= 3 ? `${getStepConversion(stats, 'day_2', 'day_3')}%` : '–') : '–'}
+                      </td>
+                      <td className={cn("px-2 py-3 text-center bg-muted/10", isPro && getConversionTextColor(getStepConversion(stats, 'day_3', 'minimum_bill')))}>
+                        {isPro ? `${getStepConversion(stats, 'day_3', 'minimum_bill')}%` : '–'}
+                      </td>
+                      <td className={cn("px-2 py-3 text-center bg-muted/10", isPro && getConversionTextColor(getStepConversion(stats, 'minimum_bill', 'level_up')))}>
+                        {isPro ? `${getStepConversion(stats, 'minimum_bill', 'level_up')}%` : '–'}
+                      </td>
+                      <td className={cn("px-2 py-3 text-center font-bold bg-primary/5", isPro && getConversionTextColor(funnelConversion))}>
+                        {isPro ? `${funnelConversion}%` : '–'}
+                      </td>
+                    </tr>
+                  );
+                })
               ) : (
                 <tr className="border-b border-border/30 hover:bg-muted/20 transition-colors">
                   <td className="px-2 py-3 font-medium text-muted-foreground">All Prospects</td>
@@ -255,17 +380,17 @@ export function FunnelTracker({ isPro = true }: FunnelTrackerProps) {
                   <td className="px-2 py-3 text-center">{isPro ? totals.minimum_bill : '–'}</td>
                   <td className="px-2 py-3 text-center">{isPro ? totals.level_up : '–'}</td>
                   <td className="px-2 py-3 text-center">{isPro ? totals.two_cc : '–'}</td>
-                  <td className={cn("px-2 py-3 text-center bg-muted/10", isPro && getConversionTextColor(getStepConversion('day_1', 'day_2')))}>
-                    {isPro ? `${getStepConversion('day_1', 'day_2')}%` : '–'}
+                  <td className={cn("px-2 py-3 text-center bg-muted/10", isPro && getConversionTextColor(getStepConversion(totals, 'day_1', 'day_2')))}>
+                    {isPro ? `${getStepConversion(totals, 'day_1', 'day_2')}%` : '–'}
                   </td>
-                  <td className={cn("px-2 py-3 text-center bg-muted/10", isPro && getConversionTextColor(getStepConversion('day_2', 'day_3')))}>
-                    {isPro ? `${getStepConversion('day_2', 'day_3')}%` : '–'}
+                  <td className={cn("px-2 py-3 text-center bg-muted/10", isPro && getConversionTextColor(getStepConversion(totals, 'day_2', 'day_3')))}>
+                    {isPro ? `${getStepConversion(totals, 'day_2', 'day_3')}%` : '–'}
                   </td>
-                  <td className={cn("px-2 py-3 text-center bg-muted/10", isPro && getConversionTextColor(getStepConversion('day_3', 'minimum_bill')))}>
-                    {isPro ? `${getStepConversion('day_3', 'minimum_bill')}%` : '–'}
+                  <td className={cn("px-2 py-3 text-center bg-muted/10", isPro && getConversionTextColor(getStepConversion(totals, 'day_3', 'minimum_bill')))}>
+                    {isPro ? `${getStepConversion(totals, 'day_3', 'minimum_bill')}%` : '–'}
                   </td>
-                  <td className={cn("px-2 py-3 text-center bg-muted/10", isPro && getConversionTextColor(getStepConversion('minimum_bill', 'level_up')))}>
-                    {isPro ? `${getStepConversion('minimum_bill', 'level_up')}%` : '–'}
+                  <td className={cn("px-2 py-3 text-center bg-muted/10", isPro && getConversionTextColor(getStepConversion(totals, 'minimum_bill', 'level_up')))}>
+                    {isPro ? `${getStepConversion(totals, 'minimum_bill', 'level_up')}%` : '–'}
                   </td>
                   <td className={cn("px-2 py-3 text-center font-bold bg-primary/5", isPro && getConversionTextColor(overallConversion))}>
                     {isPro ? `${overallConversion}%` : '–'}
@@ -275,24 +400,24 @@ export function FunnelTracker({ isPro = true }: FunnelTrackerProps) {
             </tbody>
             <tfoot>
               <tr className="bg-muted/40 font-semibold">
-                <td className="px-2 py-3 text-muted-foreground">TOTAL</td>
+                <td className="px-2 py-3 text-muted-foreground">TOTAL (Lifetime)</td>
                 <td className="px-2 py-3 text-center">{isPro ? totals.day_1 : '–'}</td>
                 <td className="px-2 py-3 text-center">{isPro ? totals.day_2 : '–'}</td>
                 <td className="px-2 py-3 text-center">{isPro ? totals.day_3 : '–'}</td>
                 <td className="px-2 py-3 text-center">{isPro ? totals.minimum_bill : '–'}</td>
                 <td className="px-2 py-3 text-center">{isPro ? totals.level_up : '–'}</td>
                 <td className="px-2 py-3 text-center">{isPro ? totals.two_cc : '–'}</td>
-                <td className={cn("px-2 py-3 text-center bg-muted/20", isPro && getConversionTextColor(getStepConversion('day_1', 'day_2')))}>
-                  {isPro ? `${getStepConversion('day_1', 'day_2')}%` : '–'}
+                <td className={cn("px-2 py-3 text-center bg-muted/20", isPro && getConversionTextColor(getStepConversion(totals, 'day_1', 'day_2')))}>
+                  {isPro ? `${getStepConversion(totals, 'day_1', 'day_2')}%` : '–'}
                 </td>
-                <td className={cn("px-2 py-3 text-center bg-muted/20", isPro && getConversionTextColor(getStepConversion('day_2', 'day_3')))}>
-                  {isPro ? `${getStepConversion('day_2', 'day_3')}%` : '–'}
+                <td className={cn("px-2 py-3 text-center bg-muted/20", isPro && getConversionTextColor(getStepConversion(totals, 'day_2', 'day_3')))}>
+                  {isPro ? `${getStepConversion(totals, 'day_2', 'day_3')}%` : '–'}
                 </td>
-                <td className={cn("px-2 py-3 text-center bg-muted/20", isPro && getConversionTextColor(getStepConversion('day_3', 'minimum_bill')))}>
-                  {isPro ? `${getStepConversion('day_3', 'minimum_bill')}%` : '–'}
+                <td className={cn("px-2 py-3 text-center bg-muted/20", isPro && getConversionTextColor(getStepConversion(totals, 'day_3', 'minimum_bill')))}>
+                  {isPro ? `${getStepConversion(totals, 'day_3', 'minimum_bill')}%` : '–'}
                 </td>
-                <td className={cn("px-2 py-3 text-center bg-muted/20", isPro && getConversionTextColor(getStepConversion('minimum_bill', 'level_up')))}>
-                  {isPro ? `${getStepConversion('minimum_bill', 'level_up')}%` : '–'}
+                <td className={cn("px-2 py-3 text-center bg-muted/20", isPro && getConversionTextColor(getStepConversion(totals, 'minimum_bill', 'level_up')))}>
+                  {isPro ? `${getStepConversion(totals, 'minimum_bill', 'level_up')}%` : '–'}
                 </td>
                 <td className={cn("px-2 py-3 text-center font-bold bg-primary/10", isPro && getConversionTextColor(overallConversion))}>
                   {isPro ? `${overallConversion}%` : '–'}

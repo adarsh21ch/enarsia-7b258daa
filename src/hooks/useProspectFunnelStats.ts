@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 
@@ -10,6 +10,11 @@ export interface FunnelStats {
   minimum_bill: number;
   level_up: number;
   two_cc: number;
+}
+
+export interface ProspectWithDate {
+  funnel_stage: string | null;
+  date_added: string;
 }
 
 // Map database funnel_stage values to stat keys
@@ -26,6 +31,7 @@ const STAGE_MAP: Record<string, keyof FunnelStats> = {
 export function useProspectFunnelStats() {
   const [loading, setLoading] = useState(true);
   const [totalProspects, setTotalProspects] = useState(0);
+  const [prospects, setProspects] = useState<ProspectWithDate[]>([]);
   const [totals, setTotals] = useState<FunnelStats>({
     enrollment: 0,
     day_1: 0,
@@ -42,10 +48,10 @@ export function useProspectFunnelStats() {
     
     setLoading(true);
     try {
-      // Fetch all prospects with their funnel_stage
+      // Fetch all prospects with funnel_stage and date_added
       const { data, error } = await supabase
         .from('prospects')
-        .select('funnel_stage')
+        .select('funnel_stage, date_added')
         .eq('user_id', user.id);
 
       if (error) {
@@ -54,8 +60,9 @@ export function useProspectFunnelStats() {
         return;
       }
 
-      const prospects = data || [];
-      setTotalProspects(prospects.length);
+      const prospectData = data || [];
+      setProspects(prospectData);
+      setTotalProspects(prospectData.length);
 
       // Count prospects per funnel stage
       const stats: FunnelStats = {
@@ -68,7 +75,7 @@ export function useProspectFunnelStats() {
         two_cc: 0,
       };
 
-      prospects.forEach((p) => {
+      prospectData.forEach((p) => {
         const stage = p.funnel_stage;
         if (stage && STAGE_MAP[stage]) {
           stats[STAGE_MAP[stage]]++;
@@ -87,5 +94,5 @@ export function useProspectFunnelStats() {
     fetchData();
   }, [fetchData]);
 
-  return { totals, loading, totalProspects, refetch: fetchData };
+  return { totals, loading, totalProspects, prospects, refetch: fetchData };
 }
