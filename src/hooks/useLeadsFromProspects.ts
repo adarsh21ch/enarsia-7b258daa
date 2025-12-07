@@ -19,7 +19,7 @@ export interface MonthlyTotals {
   enrollments: number;
 }
 
-const FIVE_MINUTES_MS = 5 * 60 * 1000;
+const THIRTY_SECONDS_MS = 30 * 1000;
 
 export function useLeadsFromProspects() {
   const { user } = useAuth();
@@ -74,7 +74,7 @@ export function useLeadsFromProspects() {
       for (let day = 1; day <= daysInMonth; day++) {
         const dateObj = new Date(monthDate.getFullYear(), monthDate.getMonth(), day);
         metrics.push({
-          date: format(dateObj, 'd MMMM'),
+          date: format(dateObj, 'd MMM'),
           dayNumber: day,
           leads: 0,
           responses: 0,
@@ -91,9 +91,9 @@ export function useLeadsFromProspects() {
         if (dayIndex >= 0 && dayIndex < metrics.length) {
           metrics[dayIndex].leads++;
 
-          // Check if response is confirmed (5-minute rule)
+          // Check if response is confirmed (30-second rule)
           const actionTakenAt = p.action_taken_at ? new Date(p.action_taken_at) : null;
-          const isConfirmed = actionTakenAt && (now.getTime() - actionTakenAt.getTime() >= FIVE_MINUTES_MS);
+          const isConfirmed = actionTakenAt && (now.getTime() - actionTakenAt.getTime() >= THIRTY_SECONDS_MS);
 
           if (p.action_taken && isConfirmed) {
             metrics[dayIndex].responses++;
