@@ -595,29 +595,25 @@ export function ProspectTable({
 
   const isCalling = filterMode === 'calling';
 
-  // Sheet tabs component to render at bottom (sticky)
+  // Sheet tabs component to render inline above table header
   const renderSheetTabs = () => {
     if (subFilter !== 'all') return null;
     return (
-      <div className="fixed bottom-16 left-0 right-0 z-40 bg-background border-t border-border shadow-lg">
-        <SheetTabs
-          sheets={sheets}
-          selectedSheetId={selectedSheetId}
-          onSelectSheet={onSelectSheet}
-          onAddSheet={onAddSheet}
-          onUpdateSheet={handleUpdateSheetWithUndo}
-          onDeleteSheet={onDeleteSheet}
-          onEnterSelectMode={handleEnterSelectMode}
-          onDeleteAllInSheet={handleDeleteAllInSheet}
-        />
-      </div>
+      <SheetTabs
+        sheets={sheets}
+        selectedSheetId={selectedSheetId}
+        onSelectSheet={onSelectSheet}
+        onAddSheet={onAddSheet}
+        onUpdateSheet={handleUpdateSheetWithUndo}
+        onDeleteSheet={onDeleteSheet}
+        onEnterSelectMode={handleEnterSelectMode}
+        onDeleteAllInSheet={handleDeleteAllInSheet}
+      />
     );
   };
 
   return (
-    <div className={cn("space-y-4", subFilter === 'all' && "pb-12")}>
-      {/* Fixed Sheet Tabs at bottom */}
-      {renderSheetTabs()}
+    <div className="space-y-4">
       
       {/* Toolbar: Filters + Actions */}
       <div className="bg-card/50 rounded-xl border border-border/50 p-2 sm:p-3 space-y-2 sm:space-y-3">
@@ -773,11 +769,11 @@ export function ProspectTable({
       ) : (
         // Table Layout
         <div className="bg-card rounded-xl border border-border overflow-hidden shadow-sm">
-          {isMobile && (
-            <div className="px-3 py-1.5 bg-muted/30 text-[10px] text-muted-foreground text-center border-b border-border">
-              ← Swipe to see more columns →
-            </div>
-          )}
+          {/* Sticky container for SheetTabs and Table Header */}
+          <div className="sticky top-0 z-30 bg-card">
+            {/* Sheet tabs - replaces the "Swipe to see more columns" hint */}
+            {renderSheetTabs()}
+          </div>
           <div 
             className="overflow-x-auto"
             style={{ WebkitOverflowScrolling: 'touch' }}
@@ -786,7 +782,7 @@ export function ProspectTable({
               className="text-sm border-collapse w-full"
               style={{ minWidth: isMobile ? '580px' : '880px' }}
             >
-              <thead className="bg-muted/50 text-xs font-semibold text-muted-foreground border-b border-border">
+              <thead className="sticky top-[37px] z-20 bg-muted/95 backdrop-blur-sm text-xs font-semibold text-muted-foreground border-b border-border">
                 <tr>
                   {/* Selection checkbox header */}
                   {selectionMode.active && (

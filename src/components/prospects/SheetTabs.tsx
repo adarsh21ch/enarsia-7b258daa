@@ -113,7 +113,7 @@ export function SheetTabs({
 
   return (
     <>
-      <div className="flex items-center bg-muted/50 border-t border-border rounded-b-xl">
+      <div className="flex items-center bg-muted/50 border-b border-border">
         <ScrollArea className="flex-1 whitespace-nowrap">
           <div className="flex items-center">
             {/* "All" tab with dropdown */}
