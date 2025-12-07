@@ -66,7 +66,7 @@ export default function Dashboard() {
   const { prospects, loading, addProspect, updateProspect, deleteProspect, bulkDeleteProspects, restoreProspect, restoreProspects, importProspects, reorderProspects, refetch } = useProspects();
   const { sheets, selectedSheetId, setSelectedSheetId, addSheet, updateSheet, deleteSheet, refetch: refetchSheets } = useSheets();
   
-  const [mainTab, setMainTab] = useState<'calling' | 'funnel'>('calling');
+  const [mainTab, setMainTab] = useState<'leads' | 'funnel'>('leads');
 
   // Pull-to-refresh
   const handleRefresh = useCallback(async () => {
@@ -110,7 +110,7 @@ export default function Dashboard() {
   if (!user) return null;
 
   const toggleOptions: [{ value: string; label: string; icon: typeof Phone }, { value: string; label: string; icon: typeof GitBranch }] = [
-    { value: 'calling', label: 'Calling', icon: Phone },
+    { value: 'leads', label: 'Leads', icon: Phone },
     { value: 'funnel', label: 'Funnel', icon: GitBranch },
   ];
 
@@ -161,7 +161,7 @@ export default function Dashboard() {
             </div>
 
             {/* Content based on active tab */}
-            {mainTab === 'calling' ? (
+            {mainTab === 'leads' ? (
               <ProspectTable
                 prospects={prospects}
                 loading={loading}
@@ -211,7 +211,7 @@ export default function Dashboard() {
         <BottomViewToggle
           options={toggleOptions}
           value={mainTab}
-          onChange={(v) => setMainTab(v as 'calling' | 'funnel')}
+          onChange={(v) => setMainTab(v as 'leads' | 'funnel')}
         />
 
         <BottomNav />

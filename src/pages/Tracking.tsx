@@ -65,7 +65,7 @@ export default function Tracking() {
   const { user, loading: authLoading } = useAuth();
   const { prospects, refetch } = useProspects();
   const { isPro, loading: subLoading } = useSubscription();
-  const [activeTab, setActiveTab] = useState('funnel');
+  const [activeTab, setActiveTab] = useState('leads');
 
   // Pull-to-refresh
   const handleRefresh = useCallback(async () => {
@@ -96,9 +96,9 @@ export default function Tracking() {
 
   if (!user) return null;
 
-  const toggleOptions: [{ value: string; label: string; icon: typeof TrendingUp }, { value: string; label: string; icon: typeof Calendar }] = [
-    { value: 'funnel', label: 'Funnel', icon: TrendingUp },
+  const toggleOptions: [{ value: string; label: string; icon: typeof Calendar }, { value: string; label: string; icon: typeof TrendingUp }] = [
     { value: 'leads', label: 'Leads', icon: Calendar },
+    { value: 'funnel', label: 'Funnel', icon: TrendingUp },
   ];
 
   return (
