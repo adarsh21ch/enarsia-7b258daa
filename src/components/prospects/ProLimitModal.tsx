@@ -25,7 +25,7 @@ export function ProLimitModal({ open, onClose, currentCount }: ProLimitModalProp
           <DialogTitle className="text-xl">Upgrade to unlock this feature</DialogTitle>
           <DialogDescription className="text-center">
             {currentCount !== undefined ? (
-              <>You've reached the free limit of 100 prospects ({currentCount}/100). Upgrade to Pro to add more.</>
+              <>You've reached the free limit of 50 prospects ({currentCount}/50). Upgrade to Pro to add more.</>
             ) : (
               <>Subscribe for ₹249 to unlock unlimited prospects and all premium features.</>
             )}

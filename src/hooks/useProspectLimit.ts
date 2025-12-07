@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { Prospect } from '@/types/prospect';
 
-const FREE_PROSPECT_LIMIT = 100;
+const FREE_PROSPECT_LIMIT = 50;
 const PRO_PROSPECT_LIMIT = 10000;
 
 export function useProspectLimit(prospects: Prospect[], isPro: boolean) {
@@ -14,7 +14,7 @@ export function useProspectLimit(prospects: Prospect[], isPro: boolean) {
   const limit = isPro ? PRO_PROSPECT_LIMIT : FREE_PROSPECT_LIMIT;
   const remaining = Math.max(0, limit - uniqueCount);
   const isAtLimit = uniqueCount >= limit;
-  const isNearLimit = !isPro && uniqueCount >= 95;
+  const isNearLimit = !isPro && uniqueCount >= 45; // Warning at 45 for 50 limit
 
   // Check if we can add N new prospects
   const canAdd = (count: number = 1) => {

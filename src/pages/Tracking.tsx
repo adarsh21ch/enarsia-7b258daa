@@ -10,6 +10,7 @@ import { BottomViewToggle } from '@/components/ui/BottomViewToggle';
 import { Loader2, TrendingUp, Calendar, Lock } from 'lucide-react';
 import { useProspects } from '@/hooks/useProspects';
 import { useSubscription } from '@/hooks/useSubscription';
+import { useProspectLimit } from '@/hooks/useProspectLimit';
 import { cn } from '@/lib/utils';
 import nevoraLogo from '@/assets/nevorai-logo.jpeg';
 
@@ -65,7 +66,11 @@ export default function Tracking() {
   const { user, loading: authLoading } = useAuth();
   const { prospects, refetch } = useProspects();
   const { isPro, loading: subLoading } = useSubscription();
+  const prospectLimit = useProspectLimit(prospects, isPro);
   const [activeTab, setActiveTab] = useState('leads');
+
+  // Show lock only if Free AND at/over limit
+  const showLock = !isPro && prospectLimit.isAtLimit;
 
   // Pull-to-refresh
   const handleRefresh = useCallback(async () => {
@@ -122,9 +127,9 @@ export default function Tracking() {
 
       <main ref={containerRef} className="scrollable-content relative">
         <PullToRefreshIndicator isRefreshing={isRefreshing} pullDistance={pullDistance} showIndicator={showIndicator} />
-        <div className={cn("container py-3 px-4", !isPro ? "pb-36" : "pb-28")}>
-          {/* Lock overlay for Free users */}
-          {!isPro && (
+        <div className={cn("container py-3 px-4", showLock ? "pb-36" : "pb-28")}>
+          {/* Lock overlay only shows when Free AND at/over limit */}
+          {showLock && (
             <div className="relative mb-6">
               <div className="absolute inset-0 flex flex-col items-center justify-center z-10 bg-background/80 backdrop-blur-sm rounded-2xl">
                 <div className="p-4 rounded-full bg-muted mb-4">
@@ -132,17 +137,17 @@ export default function Tracking() {
                 </div>
                 <h3 className="text-xl font-semibold mb-2">Pro Feature</h3>
                 <p className="text-muted-foreground max-w-sm text-center">
-                  Subscribe for ₹249 to unlock TrackUp and all premium features.
+                  You've reached the free limit of {prospectLimit.limit} prospects. Subscribe for ₹249 to unlock TrackUp and all premium features.
                 </p>
               </div>
             </div>
           )}
 
-          {/* Content based on active tab */}
+          {/* Content based on active tab - always show real data */}
           {activeTab === 'funnel' ? (
-            <FunnelTracker isPro={isPro} />
+            <FunnelTracker isPro={true} />
           ) : (
-            <LeadsTracker isPro={isPro} />
+            <LeadsTracker isPro={true} />
           )}
         </div>
       </main>
@@ -154,8 +159,8 @@ export default function Tracking() {
         onChange={setActiveTab}
       />
 
-      {/* Upgrade Bar for Free Users */}
-      <UpgradeBar />
+      {/* Upgrade Bar only for Free Users at/over limit */}
+      {showLock && <UpgradeBar />}
 
       <BottomNav />
     </div>
