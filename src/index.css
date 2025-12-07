@@ -2,6 +2,12 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Disable pinch-to-zoom and prevent touch gestures from scaling */
+html {
+  touch-action: pan-x pan-y;
+  -webkit-text-size-adjust: 100%;
+}
+
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 
 @layer base {

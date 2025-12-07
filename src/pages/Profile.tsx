@@ -8,7 +8,7 @@ import { BottomNav } from '@/components/layout/BottomNav';
 import { EditProfileDialog } from '@/components/profile/EditProfileDialog';
 import { UpgradeCard } from '@/components/subscription/UpgradeCard';
 import { Button } from '@/components/ui/button';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { User, LogOut, ChevronRight, Crown, Phone, Building2, MapPin, Loader2, FileText, Shield, Receipt, Mail, Settings, CheckCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import nevoraLogo from '@/assets/nevorai-logo.jpeg';
@@ -69,6 +69,7 @@ export default function Profile() {
           <div className="relative overflow-hidden rounded-2xl p-5 bg-gradient-to-br from-primary/10 via-primary/5 to-transparent border border-primary/10 shadow-lg">
             <div className="flex items-center gap-4">
               <Avatar className="h-16 w-16 ring-4 ring-primary/20">
+                <AvatarImage src={profile?.avatar_url || undefined} alt={displayName} />
                 <AvatarFallback className="bg-gradient-to-br from-primary to-primary/80 text-primary-foreground text-xl font-bold">
                   {userInitials}
                 </AvatarFallback>

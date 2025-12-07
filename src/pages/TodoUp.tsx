@@ -435,8 +435,8 @@ export default function TodoUp() {
         </div>
       </header>
 
-      <main className="scrollable-content">
-        <div className={cn("container py-3 px-4 space-y-4", !isPro ? "pb-36" : isPro ? "pb-32" : "pb-20")}>
+      <main className="scrollable-content pb-0">
+        <div className={cn("container py-3 px-4 space-y-4", !isPro ? "pb-36" : "pb-28")}>
           {/* Lock overlay for Free users */}
           {!isPro && (
             <div className="relative mb-6">
@@ -591,41 +591,42 @@ export default function TodoUp() {
             )}
           </div>
 
-          {/* Premium AI-style input bar */}
-          {isPro && (
-            <div className="sticky bottom-0 left-0 right-0 z-30 bg-gradient-to-t from-background via-background/95 to-transparent pt-4 pb-2 -mx-4 px-4">
-              <div className="max-w-lg mx-auto">
-                <div className="flex items-center gap-2 bg-card/95 backdrop-blur-sm border border-border/60 rounded-full px-4 py-2 shadow-xl ring-1 ring-black/5 dark:ring-white/5">
-                  <Input
-                    placeholder="Add a to-do task or reminder…"
-                    value={newTodoInput}
-                    onChange={(e) => setNewTodoInput(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter' && newTodoInput.trim()) {
-                        e.preventDefault();
-                        handleAddTodo();
-                      }
-                    }}
-                    className="flex-1 border-0 bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0 placeholder:text-muted-foreground/50 text-sm h-9"
-                  />
-                  <Button
-                    size="icon"
-                    className={cn(
-                      "h-10 w-10 rounded-full shrink-0 bg-accent hover:bg-accent/90 shadow-md transition-all duration-150",
-                      "active:scale-95 hover:shadow-lg hover:shadow-accent/25",
-                      !newTodoInput.trim() && "opacity-60"
-                    )}
-                    onClick={() => handleAddTodo()}
-                    disabled={!newTodoInput.trim()}
-                  >
-                    <Send className="h-4.5 w-4.5" />
-                  </Button>
-                </div>
-              </div>
-            </div>
-          )}
         </div>
       </main>
+
+      {/* Fixed Bottom Input Bar for Pro Users */}
+      {isPro && (
+        <div className="fixed bottom-16 left-0 right-0 z-30 bg-gradient-to-t from-background via-background/98 to-transparent pt-3 pb-2 px-4">
+          <div className="max-w-lg mx-auto">
+            <div className="flex items-center gap-2 bg-card/95 backdrop-blur-sm border border-border/60 rounded-full px-4 py-2 shadow-xl ring-1 ring-black/5 dark:ring-white/5">
+              <Input
+                placeholder="Add a to-do task or reminder…"
+                value={newTodoInput}
+                onChange={(e) => setNewTodoInput(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && newTodoInput.trim()) {
+                    e.preventDefault();
+                    handleAddTodo();
+                  }
+                }}
+                className="flex-1 border-0 bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0 placeholder:text-muted-foreground/50 text-sm h-9"
+              />
+              <Button
+                size="icon"
+                className={cn(
+                  "h-10 w-10 rounded-full shrink-0 bg-accent hover:bg-accent/90 shadow-md transition-all duration-150",
+                  "active:scale-95 hover:shadow-lg hover:shadow-accent/25",
+                  !newTodoInput.trim() && "opacity-60"
+                )}
+                onClick={() => handleAddTodo()}
+                disabled={!newTodoInput.trim()}
+              >
+                <Send className="h-4.5 w-4.5" />
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Upgrade Bar for Free Users */}
       <UpgradeBar />
