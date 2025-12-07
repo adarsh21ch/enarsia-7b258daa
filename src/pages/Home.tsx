@@ -1,5 +1,5 @@
 // Home Dashboard Page
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useProspects } from '@/hooks/useProspects';
@@ -7,6 +7,7 @@ import { useUserTargets } from '@/hooks/useUserTargets';
 
 import { BottomNav } from '@/components/layout/BottomNav';
 import { StageBadge, StatusBadge } from '@/components/prospects/StatusBadge';
+import { PullToRefreshIndicator } from '@/components/PullToRefreshIndicator';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Progress } from '@/components/ui/progress';
@@ -22,16 +23,67 @@ import { cn } from '@/lib/utils';
 import nevoraLogo from '@/assets/nevorai-logo.jpeg';
 import { FUNNEL_STAGES, FunnelStage } from '@/types/prospect';
 
-// Removed Today's Followup section - kept for future use if needed
+// Pull-to-refresh hook
+function usePullToRefresh(onRefresh: () => Promise<void>, threshold = 80) {
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [pullDistance, setPullDistance] = useState(0);
+  const startY = useRef(0);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  const handleTouchStart = useCallback((e: TouchEvent) => {
+    if (containerRef.current && containerRef.current.scrollTop === 0) {
+      startY.current = e.touches[0].clientY;
+    }
+  }, []);
+
+  const handleTouchMove = useCallback((e: TouchEvent) => {
+    if (!startY.current || isRefreshing) return;
+    const currentY = e.touches[0].clientY;
+    const diff = currentY - startY.current;
+    if (diff > 0 && containerRef.current && containerRef.current.scrollTop === 0) {
+      setPullDistance(Math.min(diff * 0.5, threshold * 1.5));
+    }
+  }, [isRefreshing, threshold]);
+
+  const handleTouchEnd = useCallback(async () => {
+    if (pullDistance >= threshold && !isRefreshing) {
+      setIsRefreshing(true);
+      try { await onRefresh(); } finally { setIsRefreshing(false); }
+    }
+    setPullDistance(0);
+    startY.current = 0;
+  }, [pullDistance, threshold, isRefreshing, onRefresh]);
+
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+    container.addEventListener('touchstart', handleTouchStart, { passive: true });
+    container.addEventListener('touchmove', handleTouchMove, { passive: true });
+    container.addEventListener('touchend', handleTouchEnd);
+    return () => {
+      container.removeEventListener('touchstart', handleTouchStart);
+      container.removeEventListener('touchmove', handleTouchMove);
+      container.removeEventListener('touchend', handleTouchEnd);
+    };
+  }, [handleTouchStart, handleTouchMove, handleTouchEnd]);
+
+  return { containerRef, isRefreshing, pullDistance, showIndicator: pullDistance > 20 || isRefreshing };
+}
 
 export default function Home() {
   const navigate = useNavigate();
   const { user, loading: authLoading } = useAuth();
-  const { prospects, loading: prospectsLoading } = useProspects();
-  const { targets, loading: targetsLoading, updateTarget } = useUserTargets();
+  const { prospects, loading: prospectsLoading, refetch } = useProspects();
+  const { targets, loading: targetsLoading, updateTarget, refetch: refetchTargets } = useUserTargets();
   const [editTargetsOpen, setEditTargetsOpen] = useState(false);
   const [editingTargets, setEditingTargets] = useState<Record<string, number>>({});
   const [targetsExpanded, setTargetsExpanded] = useState(false);
+
+  // Pull-to-refresh
+  const handleRefresh = useCallback(async () => {
+    await Promise.all([refetch?.(), refetchTargets?.()]);
+  }, [refetch, refetchTargets]);
+  const { containerRef, isRefreshing, pullDistance, showIndicator } = usePullToRefresh(handleRefresh);
 
   useEffect(() => {
     if (!user && !authLoading) {
@@ -97,7 +149,8 @@ export default function Home() {
         </div>
       </header>
 
-      <main className="scrollable-content">
+      <main ref={containerRef} className="scrollable-content relative">
+        <PullToRefreshIndicator isRefreshing={isRefreshing} pullDistance={pullDistance} showIndicator={showIndicator} />
         <div className="container py-3 px-4 space-y-4 pb-20">
           {/* KPI Cards */}
           <div className="grid grid-cols-2 gap-3">

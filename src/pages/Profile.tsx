@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useProfile } from '@/hooks/useProfile';
@@ -7,19 +7,73 @@ import { useSubscription } from '@/hooks/useSubscription';
 import { BottomNav } from '@/components/layout/BottomNav';
 import { EditProfileDialog } from '@/components/profile/EditProfileDialog';
 import { UpgradeCard } from '@/components/subscription/UpgradeCard';
+import { PullToRefreshIndicator } from '@/components/PullToRefreshIndicator';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { User, LogOut, ChevronRight, Crown, Phone, Building2, MapPin, Loader2, FileText, Shield, Receipt, Mail, Settings, CheckCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import nevoraLogo from '@/assets/nevorai-logo.jpeg';
 
+// Pull-to-refresh hook
+function usePullToRefresh(onRefresh: () => Promise<void>, threshold = 80) {
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [pullDistance, setPullDistance] = useState(0);
+  const startY = useRef(0);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  const handleTouchStart = useCallback((e: TouchEvent) => {
+    if (containerRef.current && containerRef.current.scrollTop === 0) {
+      startY.current = e.touches[0].clientY;
+    }
+  }, []);
+
+  const handleTouchMove = useCallback((e: TouchEvent) => {
+    if (!startY.current || isRefreshing) return;
+    const currentY = e.touches[0].clientY;
+    const diff = currentY - startY.current;
+    if (diff > 0 && containerRef.current && containerRef.current.scrollTop === 0) {
+      setPullDistance(Math.min(diff * 0.5, threshold * 1.5));
+    }
+  }, [isRefreshing, threshold]);
+
+  const handleTouchEnd = useCallback(async () => {
+    if (pullDistance >= threshold && !isRefreshing) {
+      setIsRefreshing(true);
+      try { await onRefresh(); } finally { setIsRefreshing(false); }
+    }
+    setPullDistance(0);
+    startY.current = 0;
+  }, [pullDistance, threshold, isRefreshing, onRefresh]);
+
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+    container.addEventListener('touchstart', handleTouchStart, { passive: true });
+    container.addEventListener('touchmove', handleTouchMove, { passive: true });
+    container.addEventListener('touchend', handleTouchEnd);
+    return () => {
+      container.removeEventListener('touchstart', handleTouchStart);
+      container.removeEventListener('touchmove', handleTouchMove);
+      container.removeEventListener('touchend', handleTouchEnd);
+    };
+  }, [handleTouchStart, handleTouchMove, handleTouchEnd]);
+
+  return { containerRef, isRefreshing, pullDistance, showIndicator: pullDistance > 20 || isRefreshing };
+}
+
 export default function Profile() {
   const navigate = useNavigate();
   const { user, loading: authLoading, signOut } = useAuth();
-  const { profile, loading: profileLoading, updating, updateProfile } = useProfile();
+  const { profile, loading: profileLoading, updating, updateProfile, refetch } = useProfile();
   const { isAdmin } = useAdmin();
   const { isPro, isAdminOverride, daysRemaining, subscription, loading: subLoading } = useSubscription();
   const [editOpen, setEditOpen] = useState(false);
+
+  // Pull-to-refresh
+  const handleRefresh = useCallback(async () => {
+    await refetch?.();
+  }, [refetch]);
+  const { containerRef, isRefreshing, pullDistance, showIndicator } = usePullToRefresh(handleRefresh);
 
   useEffect(() => {
     if (!user && !authLoading) {
@@ -63,7 +117,8 @@ export default function Profile() {
         </div>
       </header>
 
-      <main className="scrollable-content">
+      <main ref={containerRef} className="scrollable-content relative">
+        <PullToRefreshIndicator isRefreshing={isRefreshing} pullDistance={pullDistance} showIndicator={showIndicator} />
         <div className="container py-3 px-4 space-y-4 pb-20">
           {/* User Card */}
           <div className="relative overflow-hidden rounded-2xl p-5 bg-gradient-to-br from-primary/10 via-primary/5 to-transparent border border-primary/10 shadow-lg">
