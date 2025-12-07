@@ -23,7 +23,19 @@ const STAGE_MAP: Record<string, keyof FunnelStats> = {
   '2CC': 'two_cc',
 };
 
-const FIVE_MINUTES_MS = 5 * 60 * 1000;
+// 5-second confirmation window
+const FIVE_SECONDS_MS = 5 * 1000;
+
+// Define stage order for cumulative counting (later stages include all earlier stages)
+const STAGE_ORDER: (keyof FunnelStats)[] = ['enrollment', 'day_1', 'day_2', 'day_3', 'minimum_bill', 'level_up', 'two_cc'];
+
+// Get all stages that should be counted when a prospect is at a given stage
+function getCumulativeStages(stage: keyof FunnelStats): (keyof FunnelStats)[] {
+  const stageIndex = STAGE_ORDER.indexOf(stage);
+  if (stageIndex === -1) return [stage];
+  // Return all stages from enrollment up to and including this stage
+  return STAGE_ORDER.slice(0, stageIndex + 1);
+}
 
 export function useProspectFunnelStats() {
   const [loading, setLoading] = useState(true);
@@ -74,12 +86,17 @@ export function useProspectFunnelStats() {
       prospects.forEach((p) => {
         const stage = p.funnel_stage;
         if (stage && STAGE_MAP[stage]) {
-          // Apply 5-minute confirmation rule
+          // Apply 5-second confirmation rule
           const stageAt = p.funnel_stage_at ? new Date(p.funnel_stage_at) : null;
-          const isConfirmed = !stageAt || (now.getTime() - stageAt.getTime() >= FIVE_MINUTES_MS);
+          const isConfirmed = !stageAt || (now.getTime() - stageAt.getTime() >= FIVE_SECONDS_MS);
           
           if (isConfirmed) {
-            stats[STAGE_MAP[stage]]++;
+            // Cumulative counting: count this prospect in all stages up to their current stage
+            const currentStageKey = STAGE_MAP[stage];
+            const cumulativeStages = getCumulativeStages(currentStageKey);
+            cumulativeStages.forEach((stageKey) => {
+              stats[stageKey]++;
+            });
           }
         }
       });
