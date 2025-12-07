@@ -140,23 +140,31 @@ export default function Dashboard() {
         <main ref={containerRef} className="scrollable-content relative">
           <PullToRefreshIndicator isRefreshing={isRefreshing} pullDistance={pullDistance} showIndicator={showIndicator} />
           <div className="container py-3 px-4 pb-20">
-            {/* Funnel Summary Bar - Cleaner Format */}
-            <div className="text-xs text-muted-foreground bg-muted/30 rounded-lg px-3 py-2 mb-4">
-              <p className="text-[10px] text-muted-foreground/70 font-medium mb-1">Current Follow-Up Numbers</p>
-              <div className="flex flex-wrap items-center gap-x-1 gap-y-1">
-                <span>Enrolled: <strong className="text-foreground">{funnelCounts.enrolled}</strong></span>
-                <span className="text-muted-foreground/50">·</span>
-                <span>Day 1: <strong className="text-foreground">{funnelCounts.day1}</strong></span>
-                <span className="text-muted-foreground/50">·</span>
-                <span>Day 2: <strong className="text-foreground">{funnelCounts.day2}</strong></span>
-                <span className="text-muted-foreground/50">·</span>
-                <span>Day 3: <strong className="text-foreground">{funnelCounts.day3}</strong></span>
-                <span className="text-muted-foreground/50">·</span>
-                <span>Min Bill: <strong className="text-foreground">{funnelCounts.minBill}</strong></span>
-                <span className="text-muted-foreground/50">·</span>
-                <span>Level Up: <strong className="text-foreground">{funnelCounts.levelUp}</strong></span>
-                <span className="text-muted-foreground/50">·</span>
-                <span>2CC: <strong className="text-foreground">{funnelCounts.twoCC}</strong></span>
+            {/* Funnel Summary Bar - Badge Style */}
+            <div className="bg-muted/30 rounded-xl px-3 py-2.5 mb-4">
+              <p className="text-[10px] text-muted-foreground/70 font-medium mb-2">Current Follow-Up Numbers</p>
+              <div className="flex flex-wrap gap-1.5">
+                <span className="inline-flex items-center gap-1 px-2 py-1 rounded-md text-[11px] font-medium bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border border-emerald-500/20">
+                  Enrolled <strong className="text-emerald-600 dark:text-emerald-300">{funnelCounts.enrolled}</strong>
+                </span>
+                <span className="inline-flex items-center gap-1 px-2 py-1 rounded-md text-[11px] font-medium bg-indigo-500/15 text-indigo-700 dark:text-indigo-400 border border-indigo-500/20">
+                  D1 <strong className="text-indigo-600 dark:text-indigo-300">{funnelCounts.day1}</strong>
+                </span>
+                <span className="inline-flex items-center gap-1 px-2 py-1 rounded-md text-[11px] font-medium bg-violet-500/15 text-violet-700 dark:text-violet-400 border border-violet-500/20">
+                  D2 <strong className="text-violet-600 dark:text-violet-300">{funnelCounts.day2}</strong>
+                </span>
+                <span className="inline-flex items-center gap-1 px-2 py-1 rounded-md text-[11px] font-medium bg-purple-500/15 text-purple-700 dark:text-purple-400 border border-purple-500/20">
+                  D3 <strong className="text-purple-600 dark:text-purple-300">{funnelCounts.day3}</strong>
+                </span>
+                <span className="inline-flex items-center gap-1 px-2 py-1 rounded-md text-[11px] font-medium bg-amber-500/15 text-amber-700 dark:text-amber-400 border border-amber-500/20">
+                  MB <strong className="text-amber-600 dark:text-amber-300">{funnelCounts.minBill}</strong>
+                </span>
+                <span className="inline-flex items-center gap-1 px-2 py-1 rounded-md text-[11px] font-medium bg-orange-500/15 text-orange-700 dark:text-orange-400 border border-orange-500/20">
+                  LU <strong className="text-orange-600 dark:text-orange-300">{funnelCounts.levelUp}</strong>
+                </span>
+                <span className="inline-flex items-center gap-1 px-2 py-1 rounded-md text-[11px] font-medium bg-rose-500/15 text-rose-700 dark:text-rose-400 border border-rose-500/20">
+                  2CC <strong className="text-rose-600 dark:text-rose-300">{funnelCounts.twoCC}</strong>
+                </span>
               </div>
             </div>
 
