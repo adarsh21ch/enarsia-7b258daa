@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback, useEffect } from 'react';
+import { useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import { Prospect, FunnelStage, ProspectQuality, Sheet, ExtendedActionTaken } from '@/types/prospect';
 import { SortableProspectRow } from './SortableProspectRow';
 import { MobileProspectCard } from './MobileProspectCard';
@@ -98,6 +98,33 @@ export function ProspectTable({
     actions: [],
     incompleteOnly: false,
   });
+
+  // Refs for horizontal scroll sync
+  const headerScrollRef = useRef<HTMLDivElement>(null);
+  const bodyScrollRef = useRef<HTMLDivElement>(null);
+  const isScrollSyncing = useRef(false);
+
+  const handleHeaderScroll = useCallback(() => {
+    if (isScrollSyncing.current) return;
+    isScrollSyncing.current = true;
+    if (bodyScrollRef.current && headerScrollRef.current) {
+      bodyScrollRef.current.scrollLeft = headerScrollRef.current.scrollLeft;
+    }
+    requestAnimationFrame(() => {
+      isScrollSyncing.current = false;
+    });
+  }, []);
+
+  const handleBodyScroll = useCallback(() => {
+    if (isScrollSyncing.current) return;
+    isScrollSyncing.current = true;
+    if (headerScrollRef.current && bodyScrollRef.current) {
+      headerScrollRef.current.scrollLeft = bodyScrollRef.current.scrollLeft;
+    }
+    requestAnimationFrame(() => {
+      isScrollSyncing.current = false;
+    });
+  }, []);
   const [expandedRowId, setExpandedRowId] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<'card' | 'table'>('table');
   const [exporting, setExporting] = useState(false);
@@ -530,6 +557,8 @@ export function ProspectTable({
           
           {/* Sticky Table Header - Always visible */}
           <div 
+            ref={headerScrollRef}
+            onScroll={handleHeaderScroll}
             className="overflow-x-auto flex-shrink-0 bg-muted border-b border-border"
             style={{ WebkitOverflowScrolling: 'touch' }}
           >
@@ -594,6 +623,8 @@ export function ProspectTable({
           
           {/* Scrollable Table Body */}
           <div 
+            ref={bodyScrollRef}
+            onScroll={handleBodyScroll}
             className="overflow-x-auto overflow-y-auto flex-1"
             style={{ 
               WebkitOverflowScrolling: 'touch',
