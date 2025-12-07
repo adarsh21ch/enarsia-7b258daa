@@ -95,6 +95,7 @@ export default function Home() {
   }, [user, authLoading, navigate]);
 
   // Calculate KPIs - 2CC counts as 2 in Total CC
+  // Enrollments are counted from action_taken === 'Enrollment' to match Follow Up / Track Up
   const kpis = useMemo(() => {
     const stageCounts: Record<FunnelStage, number> = {
       'Day 1': 0, 'Day 2': 0, 'Day 3': 0,
@@ -105,7 +106,8 @@ export default function Home() {
       if (p.funnel_stage && stageCounts[p.funnel_stage] !== undefined) stageCounts[p.funnel_stage]++;
     });
 
-    const enrolled = prospects.filter(p => p.enrollment_status === 'Enrolled').length;
+    // Count enrollments from action_taken field (matches Follow Up / Track Up data source)
+    const enrolled = prospects.filter(p => p.action_taken === 'Enrollment').length;
     
     // Calculate total CC: 2CC counts as 2, Level Up as 1
     const totalCC = prospects.reduce((sum, p) => {
