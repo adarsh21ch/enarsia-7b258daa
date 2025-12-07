@@ -145,13 +145,32 @@ export function useProspectFunnelStats(funnelConfig?: FunnelConfig | null) {
 
       setTotals(stats);
 
-      // Convert funnel rows map to array sorted by funnel number
-      const sortedFunnelRows: FunnelRowStats[] = Object.entries(funnelRowsMap)
-        .map(([num, rowStats]) => ({
-          funnel_number: parseInt(num),
-          ...rowStats,
-        }))
-        .sort((a, b) => a.funnel_number - b.funnel_number);
+      // Find the max funnel number that has data
+      const funnelNumbers = Object.keys(funnelRowsMap).map(n => parseInt(n));
+      const maxFunnelNumber = funnelNumbers.length > 0 ? Math.max(...funnelNumbers) : 0;
+
+      // Create array from Funnel 1 to max, filling in zeros for empty funnels
+      const sortedFunnelRows: FunnelRowStats[] = [];
+      for (let i = 1; i <= maxFunnelNumber; i++) {
+        if (funnelRowsMap[i]) {
+          sortedFunnelRows.push({
+            funnel_number: i,
+            ...funnelRowsMap[i],
+          });
+        } else {
+          // Add empty row with zeros for this funnel
+          sortedFunnelRows.push({
+            funnel_number: i,
+            enrollment: 0,
+            day_1: 0,
+            day_2: 0,
+            day_3: 0,
+            minimum_bill: 0,
+            level_up: 0,
+            two_cc: 0,
+          });
+        }
+      }
 
       setFunnelRows(sortedFunnelRows);
     } catch (err) {
