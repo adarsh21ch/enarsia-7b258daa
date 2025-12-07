@@ -4,6 +4,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { Toaster } from "sonner";
 import { InstallPromptBanner } from "@/components/pwa/InstallPromptBanner";
+import { UpdateBanner } from "@/components/pwa/UpdateBanner";
 
 // Direct imports
 import Auth from "./pages/Auth";
@@ -68,6 +69,7 @@ function App() {
           <AuthProvider>
             <Toaster position="top-center" />
             <InstallPromptBanner />
+            <UpdateBanner />
             <Routes>
               <Route path="/" element={<Index />} />
               <Route path="/auth" element={<Auth />} />
