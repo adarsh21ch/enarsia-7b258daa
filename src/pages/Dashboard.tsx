@@ -177,7 +177,7 @@ export default function Dashboard() {
             {isNearLimit && !isPro && (
               <div className="bg-amber-500/10 border border-amber-500/30 rounded-lg px-3 py-2 mb-4 flex items-center justify-between">
                 <span className="text-xs text-amber-600">
-                  You're near your free limit ({uniqueCount}/100). Upgrade to Pro to add more.
+                  You're near your free limit ({uniqueCount}/{limit}). Upgrade to Pro to add more.
                 </span>
                 <a 
                   href="https://rzp.io/rzp/iQIz9kH" 

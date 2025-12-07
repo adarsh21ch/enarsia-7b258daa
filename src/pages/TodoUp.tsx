@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useProspects } from '@/hooks/useProspects';
 import { useSubscription } from '@/hooks/useSubscription';
+import { useProspectLimit } from '@/hooks/useProspectLimit';
 import { useTodos } from '@/hooks/useTodos';
 import { BottomNav } from '@/components/layout/BottomNav';
 import { UpgradeBar } from '@/components/subscription/UpgradeBar';
@@ -329,6 +330,7 @@ export default function TodoUp() {
   const { user, loading: authLoading } = useAuth();
   const { prospects, updateProspect, refetch } = useProspects();
   const { isPro, loading: subLoading } = useSubscription();
+  const prospectLimit = useProspectLimit(prospects, isPro);
   const { todos, loading: todosLoading, addTodo, updateTodo, toggleTodo, deleteTodo, refetch: refetchTodos } = useTodos();
   const [newTodoInput, setNewTodoInput] = useState('');
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -336,6 +338,9 @@ export default function TodoUp() {
   const [expandedProspectId, setExpandedProspectId] = useState<string | null>(null);
   const [activeProspect, setActiveProspect] = useState<Prospect | null>(null);
   const [overColumnId, setOverColumnId] = useState<string | null>(null);
+
+  // Show lock only if Free AND at/over limit
+  const showLock = !isPro && prospectLimit.isAtLimit;
 
   // Pull-to-refresh
   const handleRefresh = useCallback(async () => {
@@ -491,9 +496,9 @@ export default function TodoUp() {
 
       <main ref={containerRef} className="scrollable-content relative pb-0">
         <PullToRefreshIndicator isRefreshing={isRefreshing} pullDistance={pullDistance} showIndicator={showIndicator} />
-        <div className={cn("container py-3 px-4 space-y-4", !isPro ? "pb-36" : "pb-28")}>
-          {/* Lock overlay for Free users */}
-          {!isPro && (
+        <div className={cn("container py-3 px-4 space-y-4", showLock ? "pb-36" : "pb-28")}>
+          {/* Lock overlay only shows when Free AND at/over limit */}
+          {showLock && (
             <div className="relative mb-6">
               <div className="absolute inset-0 flex flex-col items-center justify-center z-10 bg-background/80 backdrop-blur-sm rounded-2xl py-16">
                 <div className="p-4 rounded-full bg-muted mb-4">
@@ -501,17 +506,17 @@ export default function TodoUp() {
                 </div>
                 <h3 className="text-xl font-semibold mb-2">Pro Feature</h3>
                 <p className="text-muted-foreground max-w-sm text-center">
-                  Subscribe for ₹249 to unlock Todo Up and all premium features.
+                  You've reached the free limit of {prospectLimit.limit} prospects. Subscribe for ₹249 to unlock Todo Up and all premium features.
                 </p>
               </div>
             </div>
           )}
 
-          {/* Funnel Stage Dashboard - 4 columns with DnD */}
+          {/* Funnel Stage Dashboard - 4 columns with DnD - always show real data */}
           <div className="bg-card rounded-2xl p-4 border border-border/50 shadow-sm">
             <p className="text-xs text-muted-foreground mb-3 font-medium">
               Funnel Stage Overview 
-              {isPro && <span className="text-accent ml-1">(drag to move)</span>}
+              <span className="text-accent ml-1">(drag to move)</span>
             </p>
             <DndContext
               sensors={sensors}
@@ -526,7 +531,7 @@ export default function TodoUp() {
                     key={stage}
                     stage={stage}
                     prospects={funnelData[stage]}
-                    isPro={isPro}
+                    isPro={true}
                     expandedProspectId={expandedProspectId}
                     onToggleExpand={handleToggleExpand}
                     onAddTodo={handlePreFillTodo}
@@ -683,8 +688,8 @@ export default function TodoUp() {
         </div>
       )}
 
-      {/* Upgrade Bar for Free Users */}
-      <UpgradeBar />
+      {/* Upgrade Bar only for Free Users at/over limit */}
+      {showLock && <UpgradeBar />}
 
       <BottomNav />
     </div>
