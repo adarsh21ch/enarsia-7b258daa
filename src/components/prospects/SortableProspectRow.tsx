@@ -17,8 +17,6 @@ interface SortableProspectRowProps {
   columnOrder: string[];
   columnWidths: Record<string, number>;
   isMobileTable?: boolean;
-  isSelected?: boolean;
-  onSelect?: () => void;
 }
 
 export function SortableProspectRow(props: SortableProspectRowProps) {

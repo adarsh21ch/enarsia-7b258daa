@@ -8,8 +8,7 @@ import { ImportExcelDialog } from './ImportExcelDialog';
 import { SheetTabs } from './SheetTabs';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
-import { Checkbox } from '@/components/ui/checkbox';
-import { Users, GripVertical, LayoutGrid, Table2, Trash2, X } from 'lucide-react';
+import { Users, GripVertical, LayoutGrid, Table2 } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
@@ -55,7 +54,6 @@ interface ProspectTableProps {
   onAddSheet: (name: string) => Promise<Sheet | null>;
   onUpdateSheet: (id: string, name: string) => Promise<Sheet | null>;
   onDeleteSheet: (id: string) => Promise<boolean>;
-  onDeleteSheetProspects?: (sheetId: string) => Promise<number>;
   // Filter mode from parent
   filterMode: 'calling' | 'funnel';
   subFilter: 'all' | 'hot' | 'scheduled' | 'day1' | 'progress';
@@ -90,7 +88,6 @@ export function ProspectTable({
   onAddSheet,
   onUpdateSheet,
   onDeleteSheet,
-  onDeleteSheetProspects,
   filterMode,
   subFilter,
 }: ProspectTableProps) {
@@ -104,8 +101,6 @@ export function ProspectTable({
   const [expandedRowId, setExpandedRowId] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<'card' | 'table'>('table');
   const [exporting, setExporting] = useState(false);
-  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
-  const [isDeleting, setIsDeleting] = useState(false);
   const isMobile = useIsMobile();
 
   // Column state for reordering and resizing - load from localStorage
@@ -343,50 +338,6 @@ export function ProspectTable({
     }
   }, [expandedRowId]);
 
-  // Multi-select handlers
-  const handleSelectAll = useCallback(() => {
-    if (selectedIds.size === filteredProspects.length) {
-      setSelectedIds(new Set());
-    } else {
-      setSelectedIds(new Set(filteredProspects.map(p => p.id)));
-    }
-  }, [filteredProspects, selectedIds.size]);
-
-  const handleSelectOne = useCallback((id: string) => {
-    setSelectedIds(prev => {
-      const newSet = new Set(prev);
-      if (newSet.has(id)) {
-        newSet.delete(id);
-      } else {
-        newSet.add(id);
-      }
-      return newSet;
-    });
-  }, []);
-
-  const handleDeleteSelected = async () => {
-    if (selectedIds.size === 0) return;
-    
-    const confirmMsg = `Delete ${selectedIds.size} selected prospect${selectedIds.size > 1 ? 's' : ''}? This cannot be undone.`;
-    if (!confirm(confirmMsg)) return;
-
-    setIsDeleting(true);
-    let deleted = 0;
-    
-    for (const id of selectedIds) {
-      const success = await onDelete(id);
-      if (success) deleted++;
-    }
-    
-    setSelectedIds(new Set());
-    setIsDeleting(false);
-    toast.success(`Deleted ${deleted} prospect${deleted > 1 ? 's' : ''}`);
-  };
-
-  const handleClearSelection = () => {
-    setSelectedIds(new Set());
-  };
-
   // Column drag handlers
   const handleDragStart = (columnId: string) => {
     setDraggedColumn(columnId);
@@ -478,7 +429,6 @@ export function ProspectTable({
           onAddSheet={onAddSheet}
           onUpdateSheet={onUpdateSheet}
           onDeleteSheet={onDeleteSheet}
-          onDeleteSheetProspects={onDeleteSheetProspects}
         />
       </div>
     );
@@ -529,40 +479,6 @@ export function ProspectTable({
         </div>
       </div>
 
-      {/* Selection Action Bar */}
-      {selectedIds.size > 0 && (
-        <div className="bg-primary/10 border border-primary/20 rounded-xl px-3 py-2 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Checkbox 
-              checked={selectedIds.size === filteredProspects.length}
-              onCheckedChange={handleSelectAll}
-            />
-            <span className="text-sm font-medium">
-              {selectedIds.size} selected
-            </span>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="h-7 px-2 text-xs"
-              onClick={handleClearSelection}
-            >
-              <X className="h-3.5 w-3.5 mr-1" />
-              Clear
-            </Button>
-          </div>
-          <Button
-            variant="destructive"
-            size="sm"
-            className="h-8 gap-1.5"
-            onClick={handleDeleteSelected}
-            disabled={isDeleting}
-          >
-            <Trash2 className="h-4 w-4" />
-            Delete {selectedIds.size}
-          </Button>
-        </div>
-      )}
-
       {/* Content */}
       {prospects.length === 0 ? (
         <div className="bg-card rounded-xl border border-border p-12 text-center">
@@ -592,22 +508,14 @@ export function ProspectTable({
         // Card Layout - Works on all screen sizes
         <div className={cn("grid gap-3", isMobile ? "grid-cols-1" : "grid-cols-1 md:grid-cols-2 lg:grid-cols-3")}>
           {filteredProspects.map((prospect, index) => (
-            <div key={prospect.id} className="relative">
-              <div className="absolute top-2 left-2 z-10">
-                <Checkbox
-                  checked={selectedIds.has(prospect.id)}
-                  onCheckedChange={() => handleSelectOne(prospect.id)}
-                  className="bg-background"
-                />
-              </div>
-              <MobileProspectCard
-                prospect={prospect}
-                index={index + 1}
-                isCalling={isCalling}
-                onUpdate={onUpdate}
-                onDelete={onDelete}
-              />
-            </div>
+            <MobileProspectCard
+              key={prospect.id}
+              prospect={prospect}
+              index={index + 1}
+              isCalling={isCalling}
+              onUpdate={onUpdate}
+              onDelete={onDelete}
+            />
           ))}
         </div>
       ) : (
@@ -629,13 +537,6 @@ export function ProspectTable({
             >
               <thead className="bg-muted/50 text-xs font-semibold text-muted-foreground border-b border-border">
                 <tr>
-                  {/* Select All Checkbox */}
-                  <th className="px-2 py-2.5 w-8 min-w-8">
-                    <Checkbox 
-                      checked={selectedIds.size > 0 && selectedIds.size === filteredProspects.length}
-                      onCheckedChange={handleSelectAll}
-                    />
-                  </th>
                   {/* Drag handle header */}
                   <th className="px-1 py-2.5 w-8 min-w-8"></th>
                   {(isMobile ? MOBILE_COLUMN_ORDER : columnOrder).map((columnId) => {
@@ -711,8 +612,6 @@ export function ProspectTable({
                         columnOrder={isMobile ? MOBILE_COLUMN_ORDER : columnOrder}
                         columnWidths={isMobile ? Object.fromEntries(COLUMNS.map(c => [c.id, c.mobileWidth])) : columnWidths}
                         isMobileTable={isMobile}
-                        isSelected={selectedIds.has(prospect.id)}
-                        onSelect={() => handleSelectOne(prospect.id)}
                       />
                     ))}
                   </tbody>
