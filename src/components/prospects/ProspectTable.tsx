@@ -63,6 +63,10 @@ interface ProspectTableProps {
   // Filter mode from parent
   filterMode: 'calling' | 'funnel';
   subFilter: 'all' | 'hot' | 'scheduled' | 'day1' | 'progress';
+  // Prospect limit props
+  isAtLimit?: boolean;
+  availableSlots?: number;
+  uniqueCount?: number;
 }
 
 // Column configuration - fixed order, no drag/resize
@@ -99,6 +103,9 @@ export function ProspectTable({
   onDeleteSheet,
   filterMode,
   subFilter,
+  isAtLimit = false,
+  availableSlots = Infinity,
+  uniqueCount = 0,
 }: ProspectTableProps) {
   const [filters, setFilters] = useState<Filters>({
     search: '',
@@ -589,8 +596,17 @@ export function ProspectTable({
               </Button>
             </div>
             <div className="flex gap-2">
-              <ImportExcelDialog onImport={handleImportProspects} />
-              <AddProspectDialog onAdd={handleAddProspect} />
+              <ImportExcelDialog 
+                onImport={handleImportProspects} 
+                availableSlots={availableSlots}
+                isAtLimit={isAtLimit}
+                currentCount={uniqueCount}
+              />
+              <AddProspectDialog 
+                onAdd={handleAddProspect} 
+                isAtLimit={isAtLimit}
+                currentCount={uniqueCount}
+              />
             </div>
           </div>
         </div>

@@ -6,19 +6,30 @@ import { Label } from '@/components/ui/label';
 import { Plus } from 'lucide-react';
 import { Prospect } from '@/types/prospect';
 import { useIsMobile } from '@/hooks/use-mobile';
-import { toast } from 'sonner';
+import { ProLimitModal } from './ProLimitModal';
 
 interface AddProspectDialogProps {
   onAdd: (prospect: Partial<Prospect>) => Promise<Prospect | null>;
+  isAtLimit?: boolean;
+  currentCount?: number;
 }
 
-export function AddProspectDialog({ onAdd }: AddProspectDialogProps) {
+export function AddProspectDialog({ onAdd, isAtLimit = false, currentCount }: AddProspectDialogProps) {
   const [open, setOpen] = useState(false);
+  const [showLimitModal, setShowLimitModal] = useState(false);
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errors, setErrors] = useState<{ name?: string; phone?: string }>({});
   const isMobile = useIsMobile();
+
+  const handleOpenChange = (isOpen: boolean) => {
+    if (isOpen && isAtLimit) {
+      setShowLimitModal(true);
+      return;
+    }
+    setOpen(isOpen);
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -57,56 +68,63 @@ export function AddProspectDialog({ onAdd }: AddProspectDialogProps) {
   };
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button size="sm" className="gap-1">
-          <Plus className="h-4 w-4" />
-          {isMobile ? 'Add' : 'Add Prospect'}
-        </Button>
-      </DialogTrigger>
-      <DialogContent className="sm:max-w-md bg-card border-border">
-        <DialogHeader>
-          <DialogTitle>Add New Prospect</DialogTitle>
-        </DialogHeader>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="name">Name *</Label>
-            <Input
-              id="name"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder="Enter name"
-              maxLength={100}
-              className={errors.name ? 'border-destructive' : ''}
-            />
-            {errors.name && (
-              <p className="text-xs text-destructive">{errors.name}</p>
-            )}
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="phone">Phone *</Label>
-            <Input
-              id="phone"
-              value={phone}
-              onChange={(e) => setPhone(e.target.value)}
-              placeholder="Enter phone number"
-              maxLength={20}
-              className={errors.phone ? 'border-destructive' : ''}
-            />
-            {errors.phone && (
-              <p className="text-xs text-destructive">{errors.phone}</p>
-            )}
-          </div>
-          <div className="flex justify-end gap-2 pt-2">
-            <Button type="button" variant="outline" onClick={() => setOpen(false)}>
-              Cancel
-            </Button>
-            <Button type="submit" disabled={isSubmitting}>
-              {isSubmitting ? 'Adding...' : 'Add Prospect'}
-            </Button>
-          </div>
-        </form>
-      </DialogContent>
-    </Dialog>
+    <>
+      <Dialog open={open} onOpenChange={handleOpenChange}>
+        <DialogTrigger asChild>
+          <Button size="sm" className="gap-1">
+            <Plus className="h-4 w-4" />
+            {isMobile ? 'Add' : 'Add Prospect'}
+          </Button>
+        </DialogTrigger>
+        <DialogContent className="sm:max-w-md bg-card border-border">
+          <DialogHeader>
+            <DialogTitle>Add New Prospect</DialogTitle>
+          </DialogHeader>
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="name">Name *</Label>
+              <Input
+                id="name"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder="Enter name"
+                maxLength={100}
+                className={errors.name ? 'border-destructive' : ''}
+              />
+              {errors.name && (
+                <p className="text-xs text-destructive">{errors.name}</p>
+              )}
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="phone">Phone *</Label>
+              <Input
+                id="phone"
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
+                placeholder="Enter phone number"
+                maxLength={20}
+                className={errors.phone ? 'border-destructive' : ''}
+              />
+              {errors.phone && (
+                <p className="text-xs text-destructive">{errors.phone}</p>
+              )}
+            </div>
+            <div className="flex justify-end gap-2 pt-2">
+              <Button type="button" variant="outline" onClick={() => setOpen(false)}>
+                Cancel
+              </Button>
+              <Button type="submit" disabled={isSubmitting}>
+                {isSubmitting ? 'Adding...' : 'Add Prospect'}
+              </Button>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
+      <ProLimitModal 
+        open={showLimitModal} 
+        onClose={() => setShowLimitModal(false)} 
+        currentCount={currentCount}
+      />
+    </>
   );
 }

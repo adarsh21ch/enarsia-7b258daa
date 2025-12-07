@@ -4,8 +4,11 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useProspects } from '@/hooks/useProspects';
 import { useSheets } from '@/hooks/useSheets';
+import { useSubscription } from '@/hooks/useSubscription';
+import { useProspectLimit } from '@/hooks/useProspectLimit';
 import { BottomNav } from '@/components/layout/BottomNav';
 import { ProspectTable } from '@/components/prospects/ProspectTable';
+import { ProspectLimitBadge } from '@/components/prospects/ProspectLimitBadge';
 import { PullToRefreshIndicator } from '@/components/PullToRefreshIndicator';
 import { BottomViewToggle } from '@/components/ui/BottomViewToggle';
 import { Loader2, Phone, GitBranch } from 'lucide-react';
@@ -65,6 +68,8 @@ export default function Dashboard() {
   const { user, loading: authLoading } = useAuth();
   const { prospects, loading, addProspect, updateProspect, deleteProspect, bulkDeleteProspects, restoreProspect, restoreProspects, importProspects, reorderProspects, refetch } = useProspects();
   const { sheets, selectedSheetId, setSelectedSheetId, addSheet, updateSheet, deleteSheet, refetch: refetchSheets } = useSheets();
+  const { isPro, loading: subLoading } = useSubscription();
+  const { uniqueCount, limit, remaining, isAtLimit, isNearLimit, getAvailableSlots } = useProspectLimit(prospects, isPro);
   
   const [mainTab, setMainTab] = useState<'leads' | 'funnel'>('leads');
 
@@ -131,9 +136,17 @@ export default function Dashboard() {
                 <p className="text-xs text-muted-foreground font-medium">Calling & Funnel Follow-ups</p>
               </div>
             </div>
-            <div className="bg-gradient-to-br from-primary/10 to-primary/5 rounded-xl px-4 py-2 text-right border border-primary/10">
-              <p className="text-[10px] text-muted-foreground font-medium">Total Min Billing</p>
-              <p className="text-2xl font-bold text-primary tracking-tight">{totalCC}</p>
+            <div className="flex flex-col items-end gap-1">
+              <ProspectLimitBadge 
+                count={uniqueCount} 
+                limit={limit} 
+                isPro={isPro}
+                isNearLimit={isNearLimit}
+              />
+              <div className="bg-gradient-to-br from-primary/10 to-primary/5 rounded-xl px-4 py-2 text-right border border-primary/10">
+                <p className="text-[10px] text-muted-foreground font-medium">Total Min Billing</p>
+                <p className="text-2xl font-bold text-primary tracking-tight">{totalCC}</p>
+              </div>
             </div>
           </div>
         </header>
@@ -160,6 +173,23 @@ export default function Dashboard() {
               </div>
             </div>
 
+            {/* Near Limit Warning Banner */}
+            {isNearLimit && !isPro && (
+              <div className="bg-amber-500/10 border border-amber-500/30 rounded-lg px-3 py-2 mb-4 flex items-center justify-between">
+                <span className="text-xs text-amber-600">
+                  You're near your free limit ({uniqueCount}/100). Upgrade to Pro to add more.
+                </span>
+                <a 
+                  href="https://rzp.io/rzp/iQIz9kH" 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="text-xs font-medium text-primary hover:underline"
+                >
+                  Upgrade
+                </a>
+              </div>
+            )}
+
             {/* Content based on active tab */}
             {mainTab === 'leads' ? (
               <ProspectTable
@@ -181,6 +211,9 @@ export default function Dashboard() {
                 onDeleteSheet={deleteSheet}
                 filterMode="calling"
                 subFilter="all"
+                isAtLimit={isAtLimit}
+                availableSlots={getAvailableSlots()}
+                uniqueCount={uniqueCount}
               />
             ) : (
               <ProspectTable
@@ -202,6 +235,9 @@ export default function Dashboard() {
                 onDeleteSheet={deleteSheet}
                 filterMode="funnel"
                 subFilter="all"
+                isAtLimit={isAtLimit}
+                availableSlots={getAvailableSlots()}
+                uniqueCount={uniqueCount}
               />
             )}
           </div>

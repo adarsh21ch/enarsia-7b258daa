@@ -8,9 +8,13 @@ import { Upload, FileSpreadsheet, AlertCircle } from 'lucide-react';
 import { Prospect } from '@/types/prospect';
 import { toast } from 'sonner';
 import { sanitizeImportString, validateImportedProspect } from '@/lib/validations';
+import { ProLimitModal } from './ProLimitModal';
 
 interface ImportExcelDialogProps {
   onImport: (prospects: Partial<Prospect>[]) => Promise<{ imported: number; skipped: number }>;
+  availableSlots?: number;
+  isAtLimit?: boolean;
+  currentCount?: number;
 }
 
 interface ColumnMapping {
@@ -33,8 +37,9 @@ const FIELD_LABELS: Record<keyof ColumnMapping, string> = {
   profession: 'Profession',
 };
 
-export function ImportExcelDialog({ onImport }: ImportExcelDialogProps) {
+export function ImportExcelDialog({ onImport, availableSlots = Infinity, isAtLimit = false, currentCount }: ImportExcelDialogProps) {
   const [open, setOpen] = useState(false);
+  const [showLimitModal, setShowLimitModal] = useState(false);
   const [step, setStep] = useState<'upload' | 'mapping'>('upload');
   const [columns, setColumns] = useState<string[]>([]);
   const [previewData, setPreviewData] = useState<Record<string, string>[]>([]);
@@ -70,6 +75,15 @@ export function ImportExcelDialog({ onImport }: ImportExcelDialogProps) {
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
+  };
+
+  const handleOpenChange = (isOpen: boolean) => {
+    if (isOpen && isAtLimit) {
+      setShowLimitModal(true);
+      return;
+    }
+    setOpen(isOpen);
+    if (!isOpen) resetState();
   };
 
   const autoDetectMapping = (cols: string[]): ColumnMapping => {
@@ -186,131 +200,163 @@ export function ImportExcelDialog({ onImport }: ImportExcelDialogProps) {
       return;
     }
 
-    const result = await onImport(prospects);
-    toast.success(`${result.imported} prospects imported, ${result.skipped + skippedCount} rows skipped`);
+    // Check if we have room for all prospects
+    const prospectsToImport = availableSlots < Infinity 
+      ? prospects.slice(0, availableSlots) 
+      : prospects;
+    
+    const limitedCount = prospects.length - prospectsToImport.length;
+
+    if (prospectsToImport.length === 0) {
+      setShowLimitModal(true);
+      setIsImporting(false);
+      resetState();
+      setOpen(false);
+      return;
+    }
+
+    const result = await onImport(prospectsToImport);
+    
+    if (limitedCount > 0) {
+      toast.success(`${result.imported} prospects imported. ${limitedCount} skipped due to free limit. Upgrade to Pro to import more.`);
+    } else {
+      toast.success(`${result.imported} prospects imported, ${result.skipped + skippedCount} rows skipped`);
+    }
+    
     setIsImporting(false);
     resetState();
     setOpen(false);
   };
 
+  const importableCount = availableSlots < Infinity 
+    ? Math.min(fullData.length, availableSlots) 
+    : fullData.length;
+
   return (
-    <Dialog open={open} onOpenChange={(isOpen) => {
-      setOpen(isOpen);
-      if (!isOpen) resetState();
-    }}>
-      <DialogTrigger asChild>
-        <Button variant="outline" size="sm" className="gap-1.5">
-          <FileSpreadsheet className="h-4 w-4" />
-          Import Excel
-        </Button>
-      </DialogTrigger>
-      <DialogContent className="sm:max-w-2xl bg-card border-border max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>
-            {step === 'upload' ? 'Import from Excel/CSV' : 'Map Columns'}
-          </DialogTitle>
-        </DialogHeader>
+    <>
+      <Dialog open={open} onOpenChange={handleOpenChange}>
+        <DialogTrigger asChild>
+          <Button variant="outline" size="sm" className="gap-1.5">
+            <FileSpreadsheet className="h-4 w-4" />
+            Import Excel
+          </Button>
+        </DialogTrigger>
+        <DialogContent className="sm:max-w-2xl bg-card border-border max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>
+              {step === 'upload' ? 'Import from Excel/CSV' : 'Map Columns'}
+            </DialogTitle>
+          </DialogHeader>
 
-        {error && (
-          <div className="flex items-center gap-2 p-3 bg-destructive/10 text-destructive rounded-lg text-sm">
-            <AlertCircle className="h-4 w-4 shrink-0" />
-            {error}
-          </div>
-        )}
-
-        {step === 'upload' && (
-          <div className="space-y-4">
-            <div
-              className="border-2 border-dashed border-border rounded-lg p-8 text-center hover:border-accent/50 transition-colors cursor-pointer"
-              onClick={() => fileInputRef.current?.click()}
-            >
-              <Upload className="h-10 w-10 mx-auto text-muted-foreground mb-3" />
-              <p className="text-sm font-medium">Click to upload or drag and drop</p>
-              <p className="text-xs text-muted-foreground mt-1">
-                Supports .xlsx, .xls, .csv files
-              </p>
+          {error && (
+            <div className="flex items-center gap-2 p-3 bg-destructive/10 text-destructive rounded-lg text-sm">
+              <AlertCircle className="h-4 w-4 shrink-0" />
+              {error}
             </div>
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept=".xlsx,.xls,.csv"
-              onChange={handleFileUpload}
-              className="hidden"
-            />
-          </div>
-        )}
+          )}
 
-        {step === 'mapping' && (
-          <div className="space-y-4">
-            <div className="grid grid-cols-2 gap-3">
-              {(Object.keys(mapping) as (keyof ColumnMapping)[]).map((field) => (
-                <div key={field} className="space-y-1.5">
-                  <Label className="text-xs">{FIELD_LABELS[field]}</Label>
-                  <Select
-                    value={mapping[field] || '__none__'}
-                    onValueChange={(value) => setMapping({ ...mapping, [field]: value === '__none__' ? null : value })}
-                  >
-                    <SelectTrigger className="h-9 text-xs">
-                      <SelectValue placeholder="Select column..." />
-                    </SelectTrigger>
-                    <SelectContent className="bg-popover border-border z-50">
-                      <SelectItem value="__none__">None</SelectItem>
-                      {columns.map((col) => (
-                        <SelectItem key={col} value={col} className="text-xs">
-                          {col}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              ))}
+          {step === 'upload' && (
+            <div className="space-y-4">
+              <div
+                className="border-2 border-dashed border-border rounded-lg p-8 text-center hover:border-accent/50 transition-colors cursor-pointer"
+                onClick={() => fileInputRef.current?.click()}
+              >
+                <Upload className="h-10 w-10 mx-auto text-muted-foreground mb-3" />
+                <p className="text-sm font-medium">Click to upload or drag and drop</p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Supports .xlsx, .xls, .csv files
+                </p>
+              </div>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept=".xlsx,.xls,.csv"
+                onChange={handleFileUpload}
+                className="hidden"
+              />
             </div>
+          )}
 
-            <div className="space-y-2">
-              <Label className="text-xs">Preview (first 5 rows)</Label>
-              <div className="border border-border rounded-lg overflow-x-auto">
-                <table className="w-full text-xs">
-                  <thead className="bg-muted">
-                    <tr>
-                      {columns.slice(0, 5).map((col) => (
-                        <th key={col} className="px-2 py-1.5 text-left font-medium truncate max-w-[120px]">
-                          {col}
-                        </th>
-                      ))}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {previewData.map((row, i) => (
-                      <tr key={i} className="border-t border-border">
+          {step === 'mapping' && (
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-3">
+                {(Object.keys(mapping) as (keyof ColumnMapping)[]).map((field) => (
+                  <div key={field} className="space-y-1.5">
+                    <Label className="text-xs">{FIELD_LABELS[field]}</Label>
+                    <Select
+                      value={mapping[field] || '__none__'}
+                      onValueChange={(value) => setMapping({ ...mapping, [field]: value === '__none__' ? null : value })}
+                    >
+                      <SelectTrigger className="h-9 text-xs">
+                        <SelectValue placeholder="Select column..." />
+                      </SelectTrigger>
+                      <SelectContent className="bg-popover border-border z-50">
+                        <SelectItem value="__none__">None</SelectItem>
+                        {columns.map((col) => (
+                          <SelectItem key={col} value={col} className="text-xs">
+                            {col}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                ))}
+              </div>
+
+              <div className="space-y-2">
+                <Label className="text-xs">Preview (first 5 rows)</Label>
+                <div className="border border-border rounded-lg overflow-x-auto">
+                  <table className="w-full text-xs">
+                    <thead className="bg-muted">
+                      <tr>
                         {columns.slice(0, 5).map((col) => (
-                          <td key={col} className="px-2 py-1.5 truncate max-w-[120px]">
-                            {row[col]}
-                          </td>
+                          <th key={col} className="px-2 py-1.5 text-left font-medium truncate max-w-[120px]">
+                            {col}
+                          </th>
                         ))}
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
+                    </thead>
+                    <tbody>
+                      {previewData.map((row, i) => (
+                        <tr key={i} className="border-t border-border">
+                          {columns.slice(0, 5).map((col) => (
+                            <td key={col} className="px-2 py-1.5 truncate max-w-[120px]">
+                              {row[col]}
+                            </td>
+                          ))}
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Total: {fullData.length} rows
+                  {availableSlots < Infinity && availableSlots < fullData.length && (
+                    <span className="text-amber-600"> (Only {importableCount} will be imported due to free limit)</span>
+                  )}
+                </p>
               </div>
-              <p className="text-xs text-muted-foreground">
-                Total: {fullData.length} rows
-              </p>
-            </div>
 
-            <div className="flex justify-end gap-2 pt-2">
-              <Button variant="outline" onClick={resetState}>
-                Back
-              </Button>
-              <Button
-                onClick={handleImport}
-                disabled={isImporting || !mapping.name || !mapping.phone}
-              >
-                {isImporting ? 'Importing...' : `Import ${fullData.length} rows`}
-              </Button>
+              <div className="flex justify-end gap-2 pt-2">
+                <Button variant="outline" onClick={resetState}>
+                  Back
+                </Button>
+                <Button
+                  onClick={handleImport}
+                  disabled={isImporting || !mapping.name || !mapping.phone}
+                >
+                  {isImporting ? 'Importing...' : `Import ${importableCount} rows`}
+                </Button>
+              </div>
             </div>
-          </div>
-        )}
-      </DialogContent>
-    </Dialog>
+          )}
+        </DialogContent>
+      </Dialog>
+      <ProLimitModal 
+        open={showLimitModal} 
+        onClose={() => setShowLimitModal(false)} 
+        currentCount={currentCount}
+      />
+    </>
   );
 }
