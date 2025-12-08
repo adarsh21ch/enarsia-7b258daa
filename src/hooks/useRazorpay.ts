@@ -65,7 +65,7 @@ export function useRazorpay() {
 
     // TEST MODE: Use ₹1 test payment link for all plans
     // After testing, replace with actual payment links
-    const TEST_PAYMENT_LINK = 'https://rzp.io/rzp/3RWGjbSq';
+    const TEST_PAYMENT_LINK = 'https://rzp.io/rzp/xXwL6YP';
     
     // Redirect to the payment page (same window)
     window.location.href = TEST_PAYMENT_LINK;
