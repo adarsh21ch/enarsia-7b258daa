@@ -35,7 +35,7 @@ export function UpgradeBar({ onUpgrade }: UpgradeBarProps) {
                 🔒 Upgrade to unlock this feature
               </p>
               <p className="text-xs text-primary-foreground/80">
-                Starting at ₹249/month
+                Pro Monthly ₹249 | Pro Yearly ₹2,999
               </p>
             </div>
           </div>

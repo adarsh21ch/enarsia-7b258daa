@@ -234,7 +234,7 @@ export default function TodoUp() {
                 </div>
                 <h3 className="text-lg font-semibold mb-2">Pro Feature</h3>
                 <p className="text-sm text-muted-foreground max-w-xs text-center px-4">
-                  You've reached the free limit of {prospectLimit.limit} prospects. Subscribe starting at ₹249/month to unlock all features.
+                  You've reached the free limit of {prospectLimit.limit} prospects. Subscribe to Pro Monthly (₹249) or Pro Yearly (₹2,999) to unlock all features.
                 </p>
               </div>
             </div>

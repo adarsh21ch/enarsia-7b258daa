@@ -160,7 +160,7 @@ export default function Tracking() {
                 </div>
                 <h3 className="text-lg font-semibold mb-1">Pro Feature</h3>
                 <p className="text-sm text-muted-foreground max-w-sm text-center">
-                  You've reached the free limit of {prospectLimit.limit} prospects. Subscribe starting at ₹249/month to unlock TrackUp and all premium features.
+                  You've reached the free limit of {prospectLimit.limit} prospects. Subscribe to Pro Monthly (₹249) or Pro Yearly (₹2,999) to unlock TrackUp and all premium features.
                 </p>
               </div>
             </div>

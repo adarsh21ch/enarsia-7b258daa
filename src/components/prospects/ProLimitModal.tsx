@@ -33,13 +33,13 @@ export function ProLimitModal({ open, onClose, currentCount }: ProLimitModalProp
             {currentCount !== undefined ? (
               <>You've reached the free limit of 50 prospects ({currentCount}/50). Upgrade to Pro to add more.</>
             ) : (
-              <>Subscribe starting at ₹249/month to unlock unlimited prospects and all premium features.</>
+              <>Subscribe to Pro Monthly (₹249) or Pro Yearly (₹2,999) to unlock unlimited prospects and all premium features.</>
             )}
           </DialogDescription>
         </DialogHeader>
         <div className="flex flex-col gap-3 pt-4">
           <Button onClick={handleUnlockPro} className="w-full" disabled={loading}>
-            {loading ? 'Processing...' : 'Unlock Pro – Starting ₹249'}
+            {loading ? 'Processing...' : 'View Pro Plans'}
           </Button>
           <Button variant="ghost" onClick={onClose} className="w-full text-muted-foreground">
             Cancel
