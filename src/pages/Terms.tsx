@@ -12,7 +12,7 @@ export default function Terms() {
         </Link>
 
         <h1 className="text-3xl font-bold text-foreground mb-2">Terms & Conditions</h1>
-        <p className="text-sm text-muted-foreground mb-4">Last updated: December 2025</p>
+        <p className="text-sm text-muted-foreground mb-4">Last updated: December 2024</p>
       </div>
 
       <ScrollArea className="flex-1 px-4">
