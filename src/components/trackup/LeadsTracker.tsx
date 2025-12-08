@@ -146,10 +146,10 @@ export function LeadsTracker({ isPro = true }: LeadsTrackerProps) {
             <tbody>
               {dailyMetrics.map((row, idx) => (
                 <tr key={row.dayNumber} className={cn("border-b border-border/20", idx % 2 === 0 ? "bg-background" : "bg-muted/20")}>
-                  <td className="py-0.5 px-1 text-[9px] font-medium text-muted-foreground w-14 whitespace-nowrap">{row.date}</td>
+                  <td className="py-1.5 px-1 text-[11px] font-medium text-muted-foreground w-14 whitespace-nowrap">{row.date}</td>
                   {METRICS.map(metric => (
-                    <td key={metric} className="py-0.5 px-0.5">
-                      <div className="h-4 flex items-center justify-center text-[10px] font-medium rounded bg-background/50">
+                    <td key={metric} className="py-1.5 px-0.5">
+                      <div className="h-6 flex items-center justify-center text-[12px] font-medium rounded bg-background/50">
                         {isPro ? row[metric] : '–'}
                       </div>
                     </td>
@@ -160,15 +160,15 @@ export function LeadsTracker({ isPro = true }: LeadsTrackerProps) {
           </table>
         </div>
 
-        {/* TOTAL row - Fixed at bottom of card */}
-        <div className="flex-shrink-0 bg-gradient-to-r from-primary/10 via-primary/5 to-transparent border-t border-border/50">
+        {/* TOTAL row - Fixed at bottom of card with margin */}
+        <div className="flex-shrink-0 bg-gradient-to-r from-primary/10 via-primary/5 to-transparent border-t border-border/50 mb-3">
           <table className="w-full table-fixed">
             <tbody>
               <tr>
-                <td className="py-1 px-1 text-[9px] font-bold bg-card w-14">TOTAL</td>
+                <td className="py-1.5 px-1 text-[11px] font-bold bg-card w-14">TOTAL</td>
                 {METRICS.map(metric => (
-                  <td key={metric} className="py-1 px-0.5">
-                    <div className="h-4 flex items-center justify-center text-[10px] font-bold rounded bg-background/80 backdrop-blur-sm shadow-sm">
+                  <td key={metric} className="py-1.5 px-0.5">
+                    <div className="h-6 flex items-center justify-center text-[12px] font-bold rounded bg-background/80 backdrop-blur-sm shadow-sm">
                       {isPro ? totals[metric] : '–'}
                     </div>
                   </td>
