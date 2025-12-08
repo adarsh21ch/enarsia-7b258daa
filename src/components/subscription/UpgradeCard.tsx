@@ -26,9 +26,18 @@ export function UpgradeCard() {
   };
 
   const handleSubscribe = (plan: PlanType) => {
+    // Use static payment links for yearly plans
+    if (plan === 'yearly') {
+      const yearlyLink = couponApplied && isValidCoupon 
+        ? 'https://rzp.io/rzp/vCeu7H42'  // Achievers Club ₹1,999
+        : 'https://rzp.io/rzp/PUPxlHdU'; // Standard ₹2,999
+      window.open(yearlyLink, '_blank');
+      return;
+    }
+    
+    // Use dynamic order creation for monthly plan
     initiatePayment({
       planType: plan,
-      couponCode: plan === 'yearly' && couponApplied && isValidCoupon ? 'ACHIEVERS1000' : undefined,
       onSuccess: () => {
         refetch();
       },
