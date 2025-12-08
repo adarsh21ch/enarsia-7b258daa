@@ -20,6 +20,7 @@ import Terms from "./pages/Terms";
 import Privacy from "./pages/Privacy";
 import Refund from "./pages/Refund";
 import Admin from "./pages/Admin";
+import AdminPayments from "./pages/AdminPayments";
 import PaymentSuccess from "./pages/PaymentSuccess";
 
 // Error Boundary to catch rendering errors
@@ -83,6 +84,7 @@ function App() {
               <Route path="/privacy" element={<Privacy />} />
               <Route path="/refund" element={<Refund />} />
               <Route path="/admin" element={<Admin />} />
+              <Route path="/admin-payments" element={<AdminPayments />} />
               <Route path="/payment-success" element={<PaymentSuccess />} />
               <Route path="*" element={<NotFound />} />
             </Routes>

@@ -6,7 +6,7 @@ import { BottomNav } from '@/components/layout/BottomNav';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
-import { Loader2, Shield, Users, Crown, ArrowLeft } from 'lucide-react';
+import { Loader2, Shield, Users, Crown, ArrowLeft, Receipt } from 'lucide-react';
 import nevoraLogo from '@/assets/nevorai-logo.jpeg';
 
 export default function Admin() {
@@ -149,12 +149,20 @@ export default function Admin() {
             </div>
           </div>
 
-          <Link to="/profile">
-            <Button variant="outline" className="w-full">
-              <ArrowLeft className="h-4 w-4 mr-2" />
-              Back to Profile
-            </Button>
-          </Link>
+          <div className="flex gap-3">
+            <Link to="/admin-payments" className="flex-1">
+              <Button variant="outline" className="w-full">
+                <Receipt className="h-4 w-4 mr-2" />
+                Payment Logs
+              </Button>
+            </Link>
+            <Link to="/profile" className="flex-1">
+              <Button variant="outline" className="w-full">
+                <ArrowLeft className="h-4 w-4 mr-2" />
+                Back to Profile
+              </Button>
+            </Link>
+          </div>
         </div>
       </main>
 
