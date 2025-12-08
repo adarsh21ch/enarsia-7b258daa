@@ -150,16 +150,16 @@ export default function Tracking() {
 
       <main ref={containerRef} className="scrollable-content relative">
         <PullToRefreshIndicator isRefreshing={isRefreshing} pullDistance={pullDistance} showIndicator={showIndicator} />
-        <div className={cn("container py-3 px-4", showLock ? "pb-36" : "pb-28")}>
+        <div className={cn("container py-2 px-3 h-full flex flex-col", showLock ? "pb-36" : "pb-24")}>
           {/* Lock overlay only shows when Free AND at/over limit */}
           {showLock && (
-            <div className="relative mb-6">
-              <div className="absolute inset-0 flex flex-col items-center justify-center z-10 bg-background/80 backdrop-blur-sm rounded-2xl">
-                <div className="p-4 rounded-full bg-muted mb-4">
-                  <Lock className="h-12 w-12 text-muted-foreground" />
+            <div className="relative mb-4">
+              <div className="absolute inset-0 flex flex-col items-center justify-center z-10 bg-background/80 backdrop-blur-sm rounded-xl">
+                <div className="p-3 rounded-full bg-muted mb-3">
+                  <Lock className="h-10 w-10 text-muted-foreground" />
                 </div>
-                <h3 className="text-xl font-semibold mb-2">Pro Feature</h3>
-                <p className="text-muted-foreground max-w-sm text-center">
+                <h3 className="text-lg font-semibold mb-1">Pro Feature</h3>
+                <p className="text-sm text-muted-foreground max-w-sm text-center">
                   You've reached the free limit of {prospectLimit.limit} prospects. Subscribe for ₹249 to unlock TrackUp and all premium features.
                 </p>
               </div>
@@ -167,11 +167,13 @@ export default function Tracking() {
           )}
 
           {/* Content based on active tab - always show real data */}
-          {activeTab === 'funnel' ? (
-            <FunnelTracker isPro={true} />
-          ) : (
-            <LeadsTracker isPro={true} />
-          )}
+          <div className="flex-1 min-h-0">
+            {activeTab === 'funnel' ? (
+              <FunnelTracker isPro={true} />
+            ) : (
+              <LeadsTracker isPro={true} />
+            )}
+          </div>
         </div>
       </main>
 
