@@ -68,7 +68,10 @@ export function useRazorpay() {
 
       const { order_id, amount, currency, key_id } = data;
 
-      // Open Razorpay checkout
+      // Build callback URL for redirect after payment
+      const callbackUrl = `${window.location.origin}/payment-success`;
+
+      // Open Razorpay checkout with redirect
       const razorpayOptions = {
         key: key_id,
         amount: amount,
@@ -82,38 +85,8 @@ export function useRazorpay() {
         theme: {
           color: '#3b82f6',
         },
-        handler: async (response: any) => {
-          // Payment successful - verify on server
-          try {
-            const { data: verifyData, error: verifyError } = await supabase.functions.invoke('verify-razorpay-payment', {
-              body: {
-                razorpay_order_id: response.razorpay_order_id,
-                razorpay_payment_id: response.razorpay_payment_id,
-                razorpay_signature: response.razorpay_signature,
-                user_id: user.id,
-              },
-            });
-
-            if (verifyError || !verifyData?.success) {
-              throw new Error(verifyError?.message || 'Payment verification failed');
-            }
-
-            toast({
-              title: "Pro Plan Activated!",
-              description: "Welcome to NevorAI Pro. Enjoy all premium features for 30 days!",
-            });
-
-            options?.onSuccess?.();
-          } catch (err: any) {
-            console.error('Verification error:', err);
-            toast({
-              title: "Activation Issue",
-              description: "Payment received but activation failed. Please contact support.",
-              variant: "destructive",
-            });
-            options?.onError?.(err.message);
-          }
-        },
+        callback_url: callbackUrl,
+        redirect: true,
         modal: {
           ondismiss: () => {
             setLoading(false);
