@@ -98,10 +98,7 @@ export function useRazorpay() {
 
       const { order_id, amount, currency, key_id } = data;
 
-      // Build callback URL for redirect after payment
-      const callbackUrl = `${window.location.origin}/payment-success`;
-
-      // Open Razorpay checkout with redirect
+      // Open Razorpay checkout with handler callback (not redirect)
       const razorpayOptions = {
         key: key_id,
         amount: amount,
@@ -115,8 +112,17 @@ export function useRazorpay() {
         theme: {
           color: '#3b82f6',
         },
-        callback_url: callbackUrl,
-        redirect: true,
+        // Use handler for client-side callback instead of redirect
+        handler: function(response: any) {
+          console.log('Payment successful, redirecting...', response);
+          // Navigate to success page with payment params
+          const params = new URLSearchParams({
+            razorpay_payment_id: response.razorpay_payment_id,
+            razorpay_order_id: response.razorpay_order_id,
+            razorpay_signature: response.razorpay_signature,
+          });
+          window.location.href = `${window.location.origin}/payment-success?${params.toString()}`;
+        },
         modal: {
           ondismiss: () => {
             setLoading(false);
