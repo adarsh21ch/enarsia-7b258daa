@@ -46,6 +46,13 @@ export function useRazorpay() {
       paymentUrl = PAYMENT_LINKS.yearly;
     }
 
+    // Append user email as prefill parameter so webhook can identify the user
+    const userEmail = user.email;
+    if (userEmail) {
+      const separator = paymentUrl.includes('?') ? '&' : '?';
+      paymentUrl = `${paymentUrl}${separator}prefill[email]=${encodeURIComponent(userEmail)}`;
+    }
+
     // Open payment link in new tab
     window.open(paymentUrl, '_blank');
   }, [user, toast]);
