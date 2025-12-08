@@ -6,36 +6,6 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-const PLAN_CONFIG = {
-  monthly: {
-    amount: 24900,
-    duration_days: 30,
-  },
-  yearly: {
-    amount: 299900,
-    discountedAmount: 199900,
-    duration_days: 365,
-  },
-};
-
-async function verifySignature(orderId: string, paymentId: string, signature: string, secret: string): Promise<boolean> {
-  const body = `${orderId}|${paymentId}`;
-  const encoder = new TextEncoder();
-  const key = await crypto.subtle.importKey(
-    'raw',
-    encoder.encode(secret),
-    { name: 'HMAC', hash: 'SHA-256' },
-    false,
-    ['sign']
-  );
-  const signatureBytes = await crypto.subtle.sign('HMAC', key, encoder.encode(body));
-  const expectedSignature = Array.from(new Uint8Array(signatureBytes))
-    .map(b => b.toString(16).padStart(2, '0'))
-    .join('');
-  
-  return expectedSignature === signature;
-}
-
 serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
@@ -48,17 +18,17 @@ serve(async (req) => {
     const SUPABASE_URL = Deno.env.get('SUPABASE_URL');
     const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
 
-    if (!RAZORPAY_KEY_SECRET) {
-      console.error('Missing Razorpay secret');
+    if (!RAZORPAY_KEY_ID || !RAZORPAY_KEY_SECRET) {
+      console.error('Missing Razorpay credentials');
       return new Response(
         JSON.stringify({ error: 'Payment service not configured' }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    const { razorpay_order_id, razorpay_payment_id, razorpay_signature, user_id } = await req.json();
+    const { razorpay_payment_id, user_id, plan_type } = await req.json();
 
-    if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature || !user_id) {
+    if (!razorpay_payment_id || !user_id) {
       console.error('Missing required parameters');
       return new Response(
         JSON.stringify({ error: 'Missing payment verification parameters' }),
@@ -68,56 +38,56 @@ serve(async (req) => {
 
     console.log(`Verifying payment for user: ${user_id}, payment_id: ${razorpay_payment_id}`);
 
-    // Verify the signature
-    const isValid = await verifySignature(
-      razorpay_order_id,
-      razorpay_payment_id,
-      razorpay_signature,
-      RAZORPAY_KEY_SECRET
-    );
+    // Verify payment directly with Razorpay API
+    const authHeader = btoa(`${RAZORPAY_KEY_ID}:${RAZORPAY_KEY_SECRET}`);
+    
+    const paymentResponse = await fetch(`https://api.razorpay.com/v1/payments/${razorpay_payment_id}`, {
+      headers: {
+        'Authorization': `Basic ${authHeader}`,
+      },
+    });
 
-    if (!isValid) {
-      console.error('Invalid payment signature');
+    if (!paymentResponse.ok) {
+      console.error('Failed to fetch payment from Razorpay:', paymentResponse.status);
       return new Response(
-        JSON.stringify({ error: 'Payment verification failed - invalid signature' }),
+        JSON.stringify({ error: 'Failed to verify payment with Razorpay' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    console.log('Signature verified successfully');
+    const paymentDetails = await paymentResponse.json();
+    console.log('Payment details from Razorpay:', JSON.stringify(paymentDetails));
 
-    // Fetch order details from Razorpay to get the plan type and amount
-    const authHeader = btoa(`${RAZORPAY_KEY_ID}:${RAZORPAY_KEY_SECRET}`);
-    let planType = 'monthly';
-    let durationDays = 30;
-    let amount = 24900;
-    let couponApplied = 'none';
-
-    try {
-      const orderResponse = await fetch(`https://api.razorpay.com/v1/orders/${razorpay_order_id}`, {
-        headers: {
-          'Authorization': `Basic ${authHeader}`,
-        },
-      });
-      
-      if (orderResponse.ok) {
-        const orderDetails = await orderResponse.json();
-        const orderPlanType = orderDetails.notes?.plan_type;
-        const orderDurationDays = orderDetails.notes?.duration_days;
-        const orderCoupon = orderDetails.notes?.coupon_applied;
-        const orderAmount = orderDetails.notes?.final_amount;
-        
-        if (orderPlanType && PLAN_CONFIG[orderPlanType as keyof typeof PLAN_CONFIG]) {
-          planType = orderPlanType;
-          durationDays = parseInt(orderDurationDays) || PLAN_CONFIG[planType as keyof typeof PLAN_CONFIG].duration_days;
-          amount = parseInt(orderAmount) || orderDetails.amount;
-          couponApplied = orderCoupon || 'none';
-        }
-        console.log(`Order details: plan_type=${planType}, duration_days=${durationDays}, amount=${amount}, coupon=${couponApplied}`);
-      }
-    } catch (orderError) {
-      console.error('Error fetching order details, defaulting to monthly:', orderError);
+    // Check if payment is captured (successful)
+    if (paymentDetails.status !== 'captured') {
+      console.error('Payment not captured. Status:', paymentDetails.status);
+      return new Response(
+        JSON.stringify({ 
+          error: `Payment not successful. Status: ${paymentDetails.status}`,
+          status: paymentDetails.status 
+        }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
     }
+
+    // Determine plan type and duration based on amount
+    const amount = paymentDetails.amount; // in paise
+    let planType = plan_type || 'monthly';
+    let durationDays = 30;
+
+    // Detect plan based on amount
+    if (amount >= 199900) { // ₹1,999 or more = yearly
+      planType = 'yearly';
+      durationDays = 365;
+    } else if (amount >= 24900) { // ₹249 = monthly
+      planType = 'monthly';
+      durationDays = 30;
+    } else {
+      // Test payment (₹1) - use provided plan_type or default to monthly
+      durationDays = planType === 'yearly' ? 365 : 30;
+    }
+
+    console.log(`Detected plan: ${planType}, duration: ${durationDays} days, amount: ${amount}`);
 
     // Create Supabase client with service role
     const supabase = createClient(SUPABASE_URL!, SUPABASE_SERVICE_ROLE_KEY!);
@@ -150,13 +120,14 @@ serve(async (req) => {
 
     // Log the payment
     await supabase.from('payments_log').insert({
-      event_type: 'payment_verified',
+      event_type: 'payment_verified_api',
       user_id: user_id,
       razorpay_payment_id: razorpay_payment_id,
       amount: amount,
       status: 'success',
       found_user: true,
-      action_taken: `subscription_activated_${planType}${couponApplied !== 'none' ? `_coupon_${couponApplied}` : ''}`,
+      action_taken: `subscription_activated_${planType}`,
+      raw_payload: paymentDetails,
     });
 
     return new Response(
@@ -165,7 +136,6 @@ serve(async (req) => {
         message: 'Pro subscription activated successfully',
         plan_type: planType,
         duration_days: durationDays,
-        coupon_applied: couponApplied,
         expires_at: expiresAt.toISOString()
       }),
       { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
