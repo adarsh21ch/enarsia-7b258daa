@@ -9,10 +9,26 @@ declare global {
   }
 }
 
+export type PlanType = 'monthly' | 'yearly';
+
 interface RazorpayOptions {
+  planType?: PlanType;
   onSuccess?: () => void;
   onError?: (error: string) => void;
 }
+
+const PLAN_CONFIG = {
+  monthly: {
+    amount: 24900, // ₹249 in paise
+    duration_days: 30,
+    description: 'NevorAI Pro Monthly – ₹249 / month',
+  },
+  yearly: {
+    amount: 199900, // ₹1,999 in paise
+    duration_days: 365,
+    description: 'NevorAI Pro Yearly – ₹1,999 / year',
+  },
+};
 
 export function useRazorpay() {
   const [loading, setLoading] = useState(false);
@@ -44,6 +60,9 @@ export function useRazorpay() {
       return;
     }
 
+    const planType = options?.planType || 'monthly';
+    const planConfig = PLAN_CONFIG[planType];
+
     setLoading(true);
 
     try {
@@ -58,6 +77,7 @@ export function useRazorpay() {
         body: {
           user_id: user.id,
           user_email: user.email,
+          plan_type: planType,
         },
       });
 
@@ -77,7 +97,7 @@ export function useRazorpay() {
         amount: amount,
         currency: currency,
         name: 'NevorAI',
-        description: 'Pro Plan - 30 Days',
+        description: planConfig.description,
         order_id: order_id,
         prefill: {
           email: user.email,

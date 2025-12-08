@@ -13,6 +13,7 @@ export function UpgradeBar({ onUpgrade }: UpgradeBarProps) {
 
   const handleSubscribe = () => {
     initiatePayment({
+      planType: 'monthly',
       onSuccess: () => {
         if (onUpgrade) onUpgrade();
       },
@@ -34,7 +35,7 @@ export function UpgradeBar({ onUpgrade }: UpgradeBarProps) {
                 🔒 Upgrade to unlock this feature
               </p>
               <p className="text-xs text-primary-foreground/80">
-                ₹249 for 30 days
+                Starting at ₹249/month
               </p>
             </div>
           </div>

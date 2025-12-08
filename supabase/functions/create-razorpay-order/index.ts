@@ -5,6 +5,19 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+const PLAN_CONFIG = {
+  monthly: {
+    amount: 24900, // ₹249 in paise
+    duration_days: 30,
+    description: 'NevorAI Pro Monthly',
+  },
+  yearly: {
+    amount: 199900, // ₹1,999 in paise
+    duration_days: 365,
+    description: 'NevorAI Pro Yearly',
+  },
+};
+
 serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
@@ -23,7 +36,7 @@ serve(async (req) => {
       );
     }
 
-    const { user_id, user_email } = await req.json();
+    const { user_id, user_email, plan_type = 'monthly' } = await req.json();
 
     if (!user_id || !user_email) {
       return new Response(
@@ -32,20 +45,26 @@ serve(async (req) => {
       );
     }
 
-    console.log(`Creating Razorpay order for user: ${user_email}`);
+    // Validate plan type
+    const validPlanTypes = ['monthly', 'yearly'];
+    const selectedPlan = validPlanTypes.includes(plan_type) ? plan_type : 'monthly';
+    const planConfig = PLAN_CONFIG[selectedPlan as keyof typeof PLAN_CONFIG];
+
+    console.log(`Creating Razorpay order for user: ${user_email}, plan: ${selectedPlan}`);
 
     // Create Razorpay order via API
     // Receipt must be max 40 chars - use short user_id prefix + timestamp
     const shortUserId = user_id.slice(0, 8);
     const orderPayload = {
-      amount: 24900, // ₹249 in paise
+      amount: planConfig.amount,
       currency: 'INR',
-      receipt: `pro_${shortUserId}_${Date.now()}`,
+      receipt: `pro_${selectedPlan.slice(0, 1)}_${shortUserId}_${Date.now()}`,
       notes: {
         user_id: user_id,
         user_email: user_email,
         plan: 'pro',
-        duration_days: 30
+        plan_type: selectedPlan,
+        duration_days: planConfig.duration_days
       }
     };
 
@@ -70,7 +89,7 @@ serve(async (req) => {
     }
 
     const order = await razorpayResponse.json();
-    console.log(`Order created successfully: ${order.id}`);
+    console.log(`Order created successfully: ${order.id}, plan: ${selectedPlan}`);
 
     return new Response(
       JSON.stringify({
@@ -78,6 +97,7 @@ serve(async (req) => {
         amount: order.amount,
         currency: order.currency,
         key_id: RAZORPAY_KEY_ID,
+        plan_type: selectedPlan,
       }),
       { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );

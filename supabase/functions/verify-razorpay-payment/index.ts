@@ -6,6 +6,17 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+const PLAN_CONFIG = {
+  monthly: {
+    amount: 24900,
+    duration_days: 30,
+  },
+  yearly: {
+    amount: 199900,
+    duration_days: 365,
+  },
+};
+
 async function verifySignature(orderId: string, paymentId: string, signature: string, secret: string): Promise<boolean> {
   const body = `${orderId}|${paymentId}`;
   const encoder = new TextEncoder();
@@ -31,6 +42,7 @@ serve(async (req) => {
   }
 
   try {
+    const RAZORPAY_KEY_ID = Deno.env.get('RAZORPAY_KEY_ID');
     const RAZORPAY_KEY_SECRET = Deno.env.get('RAZORPAY_KEY_SECRET');
     const SUPABASE_URL = Deno.env.get('SUPABASE_URL');
     const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
@@ -73,13 +85,42 @@ serve(async (req) => {
 
     console.log('Signature verified successfully');
 
+    // Fetch order details from Razorpay to get the plan type
+    const authHeader = btoa(`${RAZORPAY_KEY_ID}:${RAZORPAY_KEY_SECRET}`);
+    let planType = 'monthly';
+    let durationDays = 30;
+    let amount = 24900;
+
+    try {
+      const orderResponse = await fetch(`https://api.razorpay.com/v1/orders/${razorpay_order_id}`, {
+        headers: {
+          'Authorization': `Basic ${authHeader}`,
+        },
+      });
+      
+      if (orderResponse.ok) {
+        const orderDetails = await orderResponse.json();
+        const orderPlanType = orderDetails.notes?.plan_type;
+        const orderDurationDays = orderDetails.notes?.duration_days;
+        
+        if (orderPlanType && PLAN_CONFIG[orderPlanType as keyof typeof PLAN_CONFIG]) {
+          planType = orderPlanType;
+          durationDays = parseInt(orderDurationDays) || PLAN_CONFIG[planType as keyof typeof PLAN_CONFIG].duration_days;
+          amount = PLAN_CONFIG[planType as keyof typeof PLAN_CONFIG].amount;
+        }
+        console.log(`Order details: plan_type=${planType}, duration_days=${durationDays}`);
+      }
+    } catch (orderError) {
+      console.error('Error fetching order details, defaulting to monthly:', orderError);
+    }
+
     // Create Supabase client with service role
     const supabase = createClient(SUPABASE_URL!, SUPABASE_SERVICE_ROLE_KEY!);
 
     // Activate Pro subscription
     const now = new Date();
     const expiresAt = new Date(now);
-    expiresAt.setDate(expiresAt.getDate() + 30);
+    expiresAt.setDate(expiresAt.getDate() + durationDays);
 
     const { error: updateError } = await supabase
       .from('user_subscriptions')
@@ -100,23 +141,25 @@ serve(async (req) => {
       );
     }
 
-    console.log(`Pro subscription activated for user: ${user_id}`);
+    console.log(`Pro subscription activated for user: ${user_id}, plan: ${planType}, expires: ${expiresAt.toISOString()}`);
 
     // Log the payment
     await supabase.from('payments_log').insert({
       event_type: 'payment_verified',
       user_id: user_id,
       razorpay_payment_id: razorpay_payment_id,
-      amount: 24900,
+      amount: amount,
       status: 'success',
       found_user: true,
-      action_taken: 'subscription_activated',
+      action_taken: `subscription_activated_${planType}`,
     });
 
     return new Response(
       JSON.stringify({ 
         success: true, 
         message: 'Pro subscription activated successfully',
+        plan_type: planType,
+        duration_days: durationDays,
         expires_at: expiresAt.toISOString()
       }),
       { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }

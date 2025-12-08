@@ -1,6 +1,7 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Lock } from 'lucide-react';
+import { useRazorpay } from '@/hooks/useRazorpay';
 
 interface ProLimitModalProps {
   open: boolean;
@@ -8,11 +9,16 @@ interface ProLimitModalProps {
   currentCount?: number;
 }
 
-const RAZORPAY_PAYMENT_LINK = 'https://rzp.io/rzp/iQIz9kH';
-
 export function ProLimitModal({ open, onClose, currentCount }: ProLimitModalProps) {
+  const { initiatePayment, loading } = useRazorpay();
+
   const handleUnlockPro = () => {
-    window.open(RAZORPAY_PAYMENT_LINK, '_blank');
+    initiatePayment({
+      planType: 'monthly',
+      onSuccess: () => {
+        onClose();
+      },
+    });
   };
 
   return (
@@ -27,13 +33,13 @@ export function ProLimitModal({ open, onClose, currentCount }: ProLimitModalProp
             {currentCount !== undefined ? (
               <>You've reached the free limit of 50 prospects ({currentCount}/50). Upgrade to Pro to add more.</>
             ) : (
-              <>Subscribe for ₹249 to unlock unlimited prospects and all premium features.</>
+              <>Subscribe starting at ₹249/month to unlock unlimited prospects and all premium features.</>
             )}
           </DialogDescription>
         </DialogHeader>
         <div className="flex flex-col gap-3 pt-4">
-          <Button onClick={handleUnlockPro} className="w-full">
-            Unlock Pro – ₹249
+          <Button onClick={handleUnlockPro} className="w-full" disabled={loading}>
+            {loading ? 'Processing...' : 'Unlock Pro – Starting ₹249'}
           </Button>
           <Button variant="ghost" onClick={onClose} className="w-full text-muted-foreground">
             Cancel
