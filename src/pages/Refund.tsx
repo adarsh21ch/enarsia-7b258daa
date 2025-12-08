@@ -17,7 +17,7 @@ export default function Refund() {
 
       <ScrollArea className="flex-1 px-4">
         <div className="max-w-3xl mx-auto pb-8">
-          <div className="prose prose-sm max-w-none space-y-6 text-foreground">
+        <div className="prose prose-sm max-w-none space-y-6 text-foreground">
             <section>
               <h2 className="text-xl font-semibold mb-3">1. Nature of Product</h2>
               <p className="text-muted-foreground leading-relaxed">
@@ -25,12 +25,27 @@ export default function Refund() {
               </p>
             </section>
 
-            <section>
-              <h2 className="text-xl font-semibold mb-3">2. General Refund Window</h2>
-              <ul className="list-disc pl-5 space-y-2 text-muted-foreground">
-                <li><strong className="text-foreground">New Customers:</strong> If you are a new customer and are not satisfied with the service, you may request a refund within 7 days of your initial purchase.</li>
-                <li><strong className="text-foreground">After 7 Days:</strong> Once 7 days have passed from your initial purchase, payments are generally non-refundable, except in special cases outlined below.</li>
-              </ul>
+            <section className="bg-primary/5 border border-primary/20 rounded-lg p-4">
+              <h2 className="text-xl font-semibold mb-3 text-primary">2. Plan-Specific Refund Rules</h2>
+              <p className="text-muted-foreground mb-3">
+                Refund eligibility depends on the plan you purchased:
+              </p>
+              
+              <div className="space-y-4">
+                <div className="p-3 rounded-lg bg-background border border-border">
+                  <h3 className="font-semibold text-foreground mb-2">Monthly Plan (₹249/month)</h3>
+                  <p className="text-muted-foreground text-sm">
+                    Payments for the NevorAI Pro Monthly plan are <strong className="text-destructive">NON-REFUNDABLE</strong>. Once you subscribe to the monthly plan, you will have access for the full month, but no refunds will be issued regardless of cancellation timing.
+                  </p>
+                </div>
+                
+                <div className="p-3 rounded-lg bg-background border border-border">
+                  <h3 className="font-semibold text-foreground mb-2">Yearly Plan (₹2,999/year)</h3>
+                  <p className="text-muted-foreground text-sm">
+                    Payments for NevorAI Pro Yearly plans (including discounted offers such as Achievers Club pricing) are eligible for a <strong className="text-emerald-600">full refund within 7 days</strong> of the purchase date. After 7 days from the purchase date, yearly payments become <strong className="text-destructive">NON-REFUNDABLE</strong>.
+                  </p>
+                </div>
+              </div>
             </section>
 
             <section className="bg-destructive/5 border border-destructive/20 rounded-lg p-4">
@@ -41,7 +56,7 @@ export default function Refund() {
               <ul className="list-disc pl-5 space-y-2 text-muted-foreground">
                 <li>You can cancel your subscription or AutoPay at any time before the next billing date to stop future charges.</li>
                 <li>
-                  <strong className="text-foreground">Charges already collected for the current or previous billing periods are NON-REFUNDABLE</strong>, even if you cancel AutoPay or stop using the service.
+                  <strong className="text-foreground">Charges already collected for the current or previous billing periods are NON-REFUNDABLE</strong> (subject to the 7-day window for yearly plans only).
                 </li>
                 <li>Cancelling AutoPay only stops future renewals. It does not entitle you to a refund for payments already made.</li>
               </ul>

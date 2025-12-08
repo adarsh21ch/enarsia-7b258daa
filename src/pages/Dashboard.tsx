@@ -180,7 +180,7 @@ export default function Dashboard() {
                   You're near your free limit ({uniqueCount}/{limit}). Upgrade to Pro to add more.
                 </span>
                 <a 
-                  href="https://rzp.io/rzp/iQIz9kH" 
+                  href="https://rzp.io/rzp/XgaOULf" 
                   target="_blank" 
                   rel="noopener noreferrer"
                   className="text-xs font-medium text-primary hover:underline"

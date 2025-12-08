@@ -117,6 +117,7 @@ export function UpgradeCard() {
             <div>
               <p className="font-semibold text-foreground">Pro Yearly</p>
               <p className="text-xs text-muted-foreground">12 months of Pro access</p>
+              <p className="text-[10px] text-emerald-600 mt-0.5">7-day refund available</p>
             </div>
             <div className="text-right">
               {couponApplied && isValidCoupon ? (
@@ -148,6 +149,7 @@ export function UpgradeCard() {
             <div>
               <p className="font-semibold text-foreground">Pro Monthly</p>
               <p className="text-xs text-muted-foreground">1 month of Pro access</p>
+              <p className="text-[10px] text-amber-600 mt-0.5">Non-refundable</p>
             </div>
             <div className="text-right">
               <p className="font-bold text-lg text-foreground">₹249</p>

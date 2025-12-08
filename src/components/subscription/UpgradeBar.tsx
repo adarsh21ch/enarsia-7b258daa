@@ -35,7 +35,7 @@ export function UpgradeBar({ onUpgrade }: UpgradeBarProps) {
                 🔒 Upgrade to unlock this feature
               </p>
               <p className="text-xs text-primary-foreground/80">
-                Pro Monthly ₹249 | Pro Yearly ₹2,999
+                Monthly ₹249 (non-refundable) | Yearly ₹2,999 (7-day refund)
               </p>
             </div>
           </div>
