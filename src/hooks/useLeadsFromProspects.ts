@@ -75,7 +75,7 @@ export function useLeadsFromProspects() {
       for (let day = 1; day <= daysInMonth; day++) {
         const dateObj = new Date(monthDate.getFullYear(), monthDate.getMonth(), day);
         metrics.push({
-          date: format(dateObj, 'd MMMM'),
+          date: format(dateObj, 'd MMM').toUpperCase(),
           dayNumber: day,
           leads: 0,
           responses: 0,

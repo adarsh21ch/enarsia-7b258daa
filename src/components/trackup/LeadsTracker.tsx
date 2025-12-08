@@ -41,19 +41,19 @@ export function LeadsTracker({ isPro = true }: LeadsTrackerProps) {
 
   if (loading) {
     return (
-      <div className="space-y-4">
-        <div className="grid grid-cols-2 gap-3">
-          {[...Array(4)].map((_, i) => <Skeleton key={i} className="h-28 rounded-2xl" />)}
+      <div className="space-y-2">
+        <div className="grid grid-cols-2 gap-1.5">
+          {[...Array(4)].map((_, i) => <Skeleton key={i} className="h-20 rounded-xl" />)}
         </div>
-        <Skeleton className="h-96 w-full rounded-2xl" />
+        <Skeleton className="h-64 w-full rounded-xl" />
       </div>
     );
   }
 
   return (
     <div className="flex flex-col h-full animate-fade-in">
-      {/* KPI Cards - Compact at Top */}
-      <div className="grid grid-cols-2 gap-1.5 mb-2">
+      {/* KPI Cards - Compact */}
+      <div className="grid grid-cols-2 gap-1.5 mb-1.5 flex-shrink-0">
         {METRICS.map((metric, i) => {
           const config = METRIC_CONFIG[metric];
           const Icon = config.icon;
@@ -83,7 +83,7 @@ export function LeadsTracker({ isPro = true }: LeadsTrackerProps) {
               </div>
               <p className="text-lg font-bold tracking-tight leading-none">{isPro ? value : '–'}</p>
               <p className="text-[8px] text-muted-foreground">{config.label}</p>
-              <div className="mt-1 h-0.5 w-full overflow-hidden rounded-full bg-black/10">
+              <div className="mt-0.5 h-0.5 w-full overflow-hidden rounded-full bg-black/10">
                 <div
                   className={cn("h-full rounded-full transition-all duration-700 bg-gradient-to-r", getProgressColor(value, goal))}
                   style={{ width: isPro ? `${percentage}%` : '0%' }}
@@ -94,43 +94,43 @@ export function LeadsTracker({ isPro = true }: LeadsTrackerProps) {
         })}
       </div>
 
-      {/* Daily Leads Tracking - Flex-grow to fill space */}
+      {/* Daily Leads Tracking Card */}
       <div className="glass-card rounded-xl overflow-hidden flex flex-col flex-1 min-h-0">
-        {/* Header */}
-        <div className="px-2 py-1.5 border-b border-border/50 flex-shrink-0">
+        {/* Section Header */}
+        <div className="px-2 py-1 border-b border-border/50 flex-shrink-0">
           <div className="flex items-center gap-1.5">
-            <Calendar className="h-3.5 w-3.5 text-primary" />
-            <h3 className="font-semibold text-xs">Daily Leads Tracking</h3>
+            <Calendar className="h-3 w-3 text-primary" />
+            <h3 className="font-semibold text-[11px]">Daily Leads Tracking</h3>
           </div>
         </div>
 
         {/* Month Selector */}
-        <div className="flex items-center justify-center gap-3 py-1.5 bg-muted/30 flex-shrink-0">
-          <Button variant="ghost" size="icon" onClick={() => changeMonth('prev')} className="h-6 w-6 rounded-full">
-            <ChevronLeft className="h-3.5 w-3.5" />
+        <div className="flex items-center justify-center gap-2 py-1 bg-muted/30 flex-shrink-0">
+          <Button variant="ghost" size="icon" onClick={() => changeMonth('prev')} className="h-5 w-5 rounded-full">
+            <ChevronLeft className="h-3 w-3" />
           </Button>
-          <div className="text-center min-w-[140px]">
-            <p className="font-semibold text-xs">{formattedMonth}</p>
-            <p className="text-[10px] text-muted-foreground">
+          <div className="text-center min-w-[120px]">
+            <p className="font-semibold text-[11px]">{formattedMonth}</p>
+            <p className="text-[9px] text-muted-foreground">
               <span className="text-primary font-medium">{daysInMonth - daysRemaining}</span>/{daysInMonth} days
               {daysRemaining > 0 && <span className="ml-1">• {daysRemaining} left</span>}
             </p>
           </div>
-          <Button variant="ghost" size="icon" onClick={() => changeMonth('next')} className="h-6 w-6 rounded-full">
-            <ChevronRight className="h-3.5 w-3.5" />
+          <Button variant="ghost" size="icon" onClick={() => changeMonth('next')} className="h-5 w-5 rounded-full">
+            <ChevronRight className="h-3 w-3" />
           </Button>
         </div>
 
-        {/* Table Header - Fixed */}
-        <div className="flex-shrink-0 bg-card border-b border-border/30">
+        {/* Table Header - Sticky */}
+        <div className="flex-shrink-0 bg-card border-b border-border/30 sticky top-0 z-10">
           <table className="w-full table-fixed">
             <thead>
               <tr>
-                <th className="py-1 px-1.5 text-left text-[10px] font-semibold text-muted-foreground w-16">Date</th>
+                <th className="py-0.5 px-1 text-left text-[9px] font-semibold text-muted-foreground w-14">Date</th>
                 {METRICS.map(metric => {
                   const config = METRIC_CONFIG[metric];
                   return (
-                    <th key={metric} className={cn("py-1 px-1 text-center text-[10px] font-semibold bg-gradient-to-b", config.bgGradient)}>
+                    <th key={metric} className={cn("py-0.5 px-0.5 text-center text-[9px] font-semibold bg-gradient-to-b", config.bgGradient)}>
                       {TABLE_LABELS[metric]}
                     </th>
                   );
@@ -146,10 +146,10 @@ export function LeadsTracker({ isPro = true }: LeadsTrackerProps) {
             <tbody>
               {dailyMetrics.map((row, idx) => (
                 <tr key={row.dayNumber} className={cn("border-b border-border/20", idx % 2 === 0 ? "bg-background" : "bg-muted/20")}>
-                  <td className="py-0.5 px-1.5 text-[10px] font-medium text-muted-foreground w-16">{row.date}</td>
+                  <td className="py-0.5 px-1 text-[9px] font-medium text-muted-foreground w-14 whitespace-nowrap">{row.date}</td>
                   {METRICS.map(metric => (
-                    <td key={metric} className="py-0.5 px-1">
-                      <div className="h-5 flex items-center justify-center text-xs font-medium rounded bg-background/50">
+                    <td key={metric} className="py-0.5 px-0.5">
+                      <div className="h-4 flex items-center justify-center text-[10px] font-medium rounded bg-background/50">
                         {isPro ? row[metric] : '–'}
                       </div>
                     </td>
@@ -165,10 +165,10 @@ export function LeadsTracker({ isPro = true }: LeadsTrackerProps) {
           <table className="w-full table-fixed">
             <tbody>
               <tr>
-                <td className="py-1.5 px-1.5 text-[10px] font-bold bg-card w-16">TOTAL</td>
+                <td className="py-1 px-1 text-[9px] font-bold bg-card w-14">TOTAL</td>
                 {METRICS.map(metric => (
-                  <td key={metric} className="py-1.5 px-1">
-                    <div className="h-5 flex items-center justify-center text-xs font-bold rounded bg-background/80 backdrop-blur-sm shadow-sm">
+                  <td key={metric} className="py-1 px-0.5">
+                    <div className="h-4 flex items-center justify-center text-[10px] font-bold rounded bg-background/80 backdrop-blur-sm shadow-sm">
                       {isPro ? totals[metric] : '–'}
                     </div>
                   </td>
