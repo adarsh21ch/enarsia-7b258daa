@@ -26,8 +26,8 @@ export function UpgradeCard() {
   };
 
   // Static Razorpay Payment Links for yearly plans
-  const YEARLY_PAYMENT_LINK_NORMAL = 'https://rzp.io/rzp/PUPxlHdU';
-  const YEARLY_PAYMENT_LINK_ACHIEVERS = 'https://rzp.io/rzp/vCeu7H42';
+  const YEARLY_PAYMENT_LINK_NORMAL = 'https://rzp.io/rzp/OkNwt2i1';
+  const YEARLY_PAYMENT_LINK_ACHIEVERS = 'https://rzp.io/rzp/NOWnMIP';
 
   const handleSubscribe = (plan: PlanType) => {
     if (plan === 'yearly') {
