@@ -2,7 +2,14 @@ import { supabase } from '@/integrations/supabase/client';
 
 export function useEncryption() {
   const getValidSession = async () => {
-    // First try to refresh the session to ensure token is valid
+    // Always try to refresh the session first to ensure we have a valid token
+    const { data: refreshData, error: refreshError } = await supabase.auth.refreshSession();
+    
+    if (!refreshError && refreshData.session) {
+      return refreshData.session;
+    }
+
+    // Fallback to getSession if refresh fails
     const { data: { session }, error } = await supabase.auth.getSession();
     
     if (error || !session) {
@@ -10,24 +17,10 @@ export function useEncryption() {
       return null;
     }
 
-    // Check if token is about to expire (within 60 seconds)
-    const expiresAt = session.expires_at;
-    const now = Math.floor(Date.now() / 1000);
-    
-    if (expiresAt && expiresAt - now < 60) {
-      console.log('Session token expiring soon, refreshing...');
-      const { data: refreshData, error: refreshError } = await supabase.auth.refreshSession();
-      if (refreshError || !refreshData.session) {
-        console.warn('Failed to refresh session:', refreshError?.message);
-        return session; // Return original session as fallback
-      }
-      return refreshData.session;
-    }
-
     return session;
   };
 
-  const invokeWithRetry = async (action: string, data: any, retries = 1): Promise<any> => {
+  const invokeWithRetry = async (action: string, data: any, retries = 2): Promise<any> => {
     const session = await getValidSession();
     if (!session) {
       console.warn(`No active session for ${action}, returning original data`);
@@ -40,11 +33,13 @@ export function useEncryption() {
       });
 
       if (error) {
-        // If it's an auth error and we have retries left, refresh and retry
-        if (retries > 0 && (error.message?.includes('401') || error.message?.includes('token') || error.message?.includes('Unauthorized'))) {
-          console.log(`Auth error on ${action}, refreshing session and retrying...`);
-          await supabase.auth.refreshSession();
-          return invokeWithRetry(action, data, retries - 1);
+        // If it's an auth error and we have retries left, force refresh and retry
+        if (retries > 0 && (error.message?.includes('401') || error.message?.includes('token') || error.message?.includes('Unauthorized') || error.message?.includes('Invalid'))) {
+          console.log(`Auth error on ${action}, forcing session refresh and retrying (${retries} retries left)...`);
+          const { data: newSession } = await supabase.auth.refreshSession();
+          if (newSession?.session) {
+            return invokeWithRetry(action, data, retries - 1);
+          }
         }
         console.error(`${action} error:`, error);
         return null;
