@@ -114,7 +114,7 @@ serve(async (req: Request) => {
                     
                     <div style="text-align: center; margin: 32px 0;">
                       <a href="https://nevorai.lovable.app/profile" style="display: inline-block; background: linear-gradient(135deg, #8b5cf6 0%, #6366f1 100%); color: #ffffff; text-decoration: none; padding: 16px 32px; border-radius: 8px; font-weight: 600; font-size: 16px;">
-                        Renew Pro – Starting ₹249/month
+                        Renew Pro – ₹249/month or ₹2,999/year
                       </a>
                     </div>
                     

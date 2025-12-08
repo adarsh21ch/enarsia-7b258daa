@@ -12,9 +12,17 @@ const PLAN_CONFIG = {
     description: 'NevorAI Pro Monthly',
   },
   yearly: {
-    amount: 199900, // ₹1,999 in paise
+    amount: 299900, // ₹2,999 in paise
+    discountedAmount: 199900, // ₹1,999 in paise (with ACHIEVERS1000)
     duration_days: 365,
     description: 'NevorAI Pro Yearly',
+  },
+};
+
+const VALID_COUPONS = {
+  'ACHIEVERS1000': {
+    discount: 100000, // ₹1,000 in paise
+    applicablePlans: ['yearly'],
   },
 };
 
@@ -36,7 +44,7 @@ serve(async (req) => {
       );
     }
 
-    const { user_id, user_email, plan_type = 'monthly' } = await req.json();
+    const { user_id, user_email, plan_type = 'monthly', coupon_code } = await req.json();
 
     if (!user_id || !user_email) {
       return new Response(
@@ -50,13 +58,30 @@ serve(async (req) => {
     const selectedPlan = validPlanTypes.includes(plan_type) ? plan_type : 'monthly';
     const planConfig = PLAN_CONFIG[selectedPlan as keyof typeof PLAN_CONFIG];
 
-    console.log(`Creating Razorpay order for user: ${user_email}, plan: ${selectedPlan}`);
+    // Calculate amount with coupon if applicable
+    let finalAmount = planConfig.amount;
+    let appliedCoupon: string | null = null;
+
+    if (coupon_code) {
+      const upperCoupon = coupon_code.toUpperCase();
+      const couponConfig = VALID_COUPONS[upperCoupon as keyof typeof VALID_COUPONS];
+      
+      if (couponConfig && couponConfig.applicablePlans.includes(selectedPlan)) {
+        finalAmount = planConfig.amount - couponConfig.discount;
+        appliedCoupon = upperCoupon;
+        console.log(`Coupon ${upperCoupon} applied, discount: ${couponConfig.discount} paise`);
+      } else {
+        console.log(`Invalid or non-applicable coupon: ${coupon_code}`);
+      }
+    }
+
+    console.log(`Creating Razorpay order for user: ${user_email}, plan: ${selectedPlan}, amount: ${finalAmount}, coupon: ${appliedCoupon}`);
 
     // Create Razorpay order via API
     // Receipt must be max 40 chars - use short user_id prefix + timestamp
     const shortUserId = user_id.slice(0, 8);
     const orderPayload = {
-      amount: planConfig.amount,
+      amount: finalAmount,
       currency: 'INR',
       receipt: `pro_${selectedPlan.slice(0, 1)}_${shortUserId}_${Date.now()}`,
       notes: {
@@ -64,7 +89,10 @@ serve(async (req) => {
         user_email: user_email,
         plan: 'pro',
         plan_type: selectedPlan,
-        duration_days: planConfig.duration_days
+        duration_days: planConfig.duration_days,
+        coupon_applied: appliedCoupon || 'none',
+        original_amount: planConfig.amount,
+        final_amount: finalAmount,
       }
     };
 
@@ -89,7 +117,7 @@ serve(async (req) => {
     }
 
     const order = await razorpayResponse.json();
-    console.log(`Order created successfully: ${order.id}, plan: ${selectedPlan}`);
+    console.log(`Order created successfully: ${order.id}, plan: ${selectedPlan}, amount: ${finalAmount}`);
 
     return new Response(
       JSON.stringify({
@@ -98,6 +126,7 @@ serve(async (req) => {
         currency: order.currency,
         key_id: RAZORPAY_KEY_ID,
         plan_type: selectedPlan,
+        coupon_applied: appliedCoupon,
       }),
       { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );

@@ -13,6 +13,7 @@ export type PlanType = 'monthly' | 'yearly';
 
 interface RazorpayOptions {
   planType?: PlanType;
+  couponCode?: string;
   onSuccess?: () => void;
   onError?: (error: string) => void;
 }
@@ -24,9 +25,11 @@ const PLAN_CONFIG = {
     description: 'NevorAI Pro Monthly – ₹249 / month',
   },
   yearly: {
-    amount: 199900, // ₹1,999 in paise
+    amount: 299900, // ₹2,999 in paise
+    discountedAmount: 199900, // ₹1,999 in paise (with ACHIEVERS1000)
     duration_days: 365,
-    description: 'NevorAI Pro Yearly – ₹1,999 / year',
+    description: 'NevorAI Pro Yearly – ₹2,999 / year',
+    discountedDescription: 'NevorAI Pro Yearly – ₹1,999 / year (Achievers Club)',
   },
 };
 
@@ -61,7 +64,13 @@ export function useRazorpay() {
     }
 
     const planType = options?.planType || 'monthly';
+    const couponCode = options?.couponCode;
+    const hasCoupon = planType === 'yearly' && couponCode === 'ACHIEVERS1000';
+    
     const planConfig = PLAN_CONFIG[planType];
+    const description = planType === 'yearly' && hasCoupon 
+      ? PLAN_CONFIG.yearly.discountedDescription 
+      : planConfig.description;
 
     setLoading(true);
 
@@ -78,6 +87,7 @@ export function useRazorpay() {
           user_id: user.id,
           user_email: user.email,
           plan_type: planType,
+          coupon_code: couponCode,
         },
       });
 
@@ -97,7 +107,7 @@ export function useRazorpay() {
         amount: amount,
         currency: currency,
         name: 'NevorAI',
-        description: planConfig.description,
+        description: description,
         order_id: order_id,
         prefill: {
           email: user.email,
