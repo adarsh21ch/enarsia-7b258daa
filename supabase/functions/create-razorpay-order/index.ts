@@ -35,10 +35,12 @@ serve(async (req) => {
     console.log(`Creating Razorpay order for user: ${user_email}`);
 
     // Create Razorpay order via API
+    // Receipt must be max 40 chars - use short user_id prefix + timestamp
+    const shortUserId = user_id.slice(0, 8);
     const orderPayload = {
       amount: 24900, // ₹249 in paise
       currency: 'INR',
-      receipt: `pro_${user_id}_${Date.now()}`,
+      receipt: `pro_${shortUserId}_${Date.now()}`,
       notes: {
         user_id: user_id,
         user_email: user_email,
