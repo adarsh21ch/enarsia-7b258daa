@@ -63,98 +63,18 @@ export function useRazorpay() {
       return;
     }
 
-    const planType = options?.planType || 'monthly';
-    const couponCode = options?.couponCode;
-    const hasCoupon = planType === 'yearly' && couponCode === 'ACHIEVERS1000';
+    // TEST MODE: Use ₹1 test payment link for all plans
+    // After testing, replace with actual payment links
+    const TEST_PAYMENT_LINK = 'https://rzp.io/rzp/3RWGjbSq';
     
-    const planConfig = PLAN_CONFIG[planType];
-    const description = planType === 'yearly' && hasCoupon 
-      ? PLAN_CONFIG.yearly.discountedDescription 
-      : planConfig.description;
-
-    setLoading(true);
-
-    try {
-      // Load Razorpay script
-      const scriptLoaded = await loadRazorpayScript();
-      if (!scriptLoaded) {
-        throw new Error('Failed to load payment gateway');
-      }
-
-      // Create order via edge function
-      const { data, error } = await supabase.functions.invoke('create-razorpay-order', {
-        body: {
-          user_id: user.id,
-          user_email: user.email,
-          plan_type: planType,
-          coupon_code: couponCode,
-        },
-      });
-
-      if (error || !data) {
-        console.error('Order creation error:', error);
-        throw new Error(error?.message || 'Failed to create payment order');
-      }
-
-      const { order_id, amount, currency, key_id } = data;
-
-      // Open Razorpay checkout with handler callback (not redirect)
-      const razorpayOptions = {
-        key: key_id,
-        amount: amount,
-        currency: currency,
-        name: 'NevorAI',
-        description: description,
-        order_id: order_id,
-        prefill: {
-          email: user.email,
-        },
-        theme: {
-          color: '#3b82f6',
-        },
-        // Use handler for client-side callback instead of redirect
-        handler: function(response: any) {
-          console.log('Payment successful, redirecting...', response);
-          // Navigate to success page with payment params
-          const params = new URLSearchParams({
-            razorpay_payment_id: response.razorpay_payment_id,
-            razorpay_order_id: response.razorpay_order_id,
-            razorpay_signature: response.razorpay_signature,
-          });
-          window.location.href = `${window.location.origin}/payment-success?${params.toString()}`;
-        },
-        modal: {
-          ondismiss: () => {
-            setLoading(false);
-          },
-        },
-      };
-
-      const razorpay = new window.Razorpay(razorpayOptions);
-      razorpay.on('payment.failed', (response: any) => {
-        console.error('Payment failed:', response.error);
-        toast({
-          title: "Payment Failed",
-          description: response.error?.description || "Something went wrong. Please try again.",
-          variant: "destructive",
-        });
-        options?.onError?.(response.error?.description);
-        setLoading(false);
-      });
-
-      razorpay.open();
-    } catch (err: any) {
-      console.error('Payment initiation error:', err);
-      toast({
-        title: "Payment Error",
-        description: err.message || "Could not initiate payment. Please try again.",
-        variant: "destructive",
-      });
-      options?.onError?.(err.message);
-    } finally {
-      setLoading(false);
-    }
-  }, [user, loadRazorpayScript, toast]);
+    // Open the test payment link
+    window.open(TEST_PAYMENT_LINK, '_blank');
+    
+    toast({
+      title: "Payment Page Opened",
+      description: "Complete your ₹1 test payment. After success, return here and refresh.",
+    });
+  }, [user, toast]);
 
   return { initiatePayment, loading };
 }
