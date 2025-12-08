@@ -193,51 +193,6 @@ export type Database = {
         }
         Relationships: []
       }
-      payments_log: {
-        Row: {
-          action_taken: string | null
-          amount: number | null
-          created_at: string
-          error_message: string | null
-          event_type: string
-          found_user: boolean | null
-          id: string
-          raw_payload: Json | null
-          razorpay_payment_id: string | null
-          status: string | null
-          user_email: string | null
-          user_id: string | null
-        }
-        Insert: {
-          action_taken?: string | null
-          amount?: number | null
-          created_at?: string
-          error_message?: string | null
-          event_type: string
-          found_user?: boolean | null
-          id?: string
-          raw_payload?: Json | null
-          razorpay_payment_id?: string | null
-          status?: string | null
-          user_email?: string | null
-          user_id?: string | null
-        }
-        Update: {
-          action_taken?: string | null
-          amount?: number | null
-          created_at?: string
-          error_message?: string | null
-          event_type?: string
-          found_user?: boolean | null
-          id?: string
-          raw_payload?: Json | null
-          razorpay_payment_id?: string | null
-          status?: string | null
-          user_email?: string | null
-          user_id?: string | null
-        }
-        Relationships: []
-      }
       profiles: {
         Row: {
           avatar_url: string | null
