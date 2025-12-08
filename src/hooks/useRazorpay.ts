@@ -67,13 +67,8 @@ export function useRazorpay() {
     // After testing, replace with actual payment links
     const TEST_PAYMENT_LINK = 'https://rzp.io/rzp/3RWGjbSq';
     
-    // Open the test payment link
-    window.open(TEST_PAYMENT_LINK, '_blank');
-    
-    toast({
-      title: "Payment Page Opened",
-      description: "Complete your ₹1 test payment. After success, return here and refresh.",
-    });
+    // Redirect to the payment page (same window)
+    window.location.href = TEST_PAYMENT_LINK;
   }, [user, toast]);
 
   return { initiatePayment, loading };
