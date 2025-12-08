@@ -163,7 +163,7 @@ export function UpgradeCard() {
           <div className="flex items-center gap-2 mb-2">
             <Tag className="h-4 w-4 text-amber-600" />
             <span className="text-xs font-medium text-amber-700 dark:text-amber-400">
-              Achievers Club members: Use code ACHIEVERS1000 for ₹1,000 OFF
+              Achievers Club members get ₹1,000 OFF on Pro Yearly. Ask your manager/upline for the special coupon code.
             </span>
           </div>
           {!couponApplied ? (
