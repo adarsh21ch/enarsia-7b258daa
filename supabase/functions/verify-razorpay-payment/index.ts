@@ -12,7 +12,8 @@ const PLAN_CONFIG = {
     duration_days: 30,
   },
   yearly: {
-    amount: 199900,
+    amount: 299900,
+    discountedAmount: 199900,
     duration_days: 365,
   },
 };
@@ -85,11 +86,12 @@ serve(async (req) => {
 
     console.log('Signature verified successfully');
 
-    // Fetch order details from Razorpay to get the plan type
+    // Fetch order details from Razorpay to get the plan type and amount
     const authHeader = btoa(`${RAZORPAY_KEY_ID}:${RAZORPAY_KEY_SECRET}`);
     let planType = 'monthly';
     let durationDays = 30;
     let amount = 24900;
+    let couponApplied = 'none';
 
     try {
       const orderResponse = await fetch(`https://api.razorpay.com/v1/orders/${razorpay_order_id}`, {
@@ -102,13 +104,16 @@ serve(async (req) => {
         const orderDetails = await orderResponse.json();
         const orderPlanType = orderDetails.notes?.plan_type;
         const orderDurationDays = orderDetails.notes?.duration_days;
+        const orderCoupon = orderDetails.notes?.coupon_applied;
+        const orderAmount = orderDetails.notes?.final_amount;
         
         if (orderPlanType && PLAN_CONFIG[orderPlanType as keyof typeof PLAN_CONFIG]) {
           planType = orderPlanType;
           durationDays = parseInt(orderDurationDays) || PLAN_CONFIG[planType as keyof typeof PLAN_CONFIG].duration_days;
-          amount = PLAN_CONFIG[planType as keyof typeof PLAN_CONFIG].amount;
+          amount = parseInt(orderAmount) || orderDetails.amount;
+          couponApplied = orderCoupon || 'none';
         }
-        console.log(`Order details: plan_type=${planType}, duration_days=${durationDays}`);
+        console.log(`Order details: plan_type=${planType}, duration_days=${durationDays}, amount=${amount}, coupon=${couponApplied}`);
       }
     } catch (orderError) {
       console.error('Error fetching order details, defaulting to monthly:', orderError);
@@ -151,7 +156,7 @@ serve(async (req) => {
       amount: amount,
       status: 'success',
       found_user: true,
-      action_taken: `subscription_activated_${planType}`,
+      action_taken: `subscription_activated_${planType}${couponApplied !== 'none' ? `_coupon_${couponApplied}` : ''}`,
     });
 
     return new Response(
@@ -160,6 +165,7 @@ serve(async (req) => {
         message: 'Pro subscription activated successfully',
         plan_type: planType,
         duration_days: durationDays,
+        coupon_applied: couponApplied,
         expires_at: expiresAt.toISOString()
       }),
       { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
