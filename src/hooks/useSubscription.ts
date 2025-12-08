@@ -59,17 +59,29 @@ export function useSubscription() {
     fetchSubscription();
   }, [fetchSubscription]);
 
-  // Check if Pro is active and not expired
-  const isProActive = () => {
+  // Check if Pro is active and not expired - STRICT CHECK
+  const isProActive = (): boolean => {
+    // No subscription record = not pro
     if (!subscription) return false;
-    if (subscription.is_admin_override && subscription.plan === 'pro') return true;
+    
+    // Admin override - always pro if plan is pro
+    if (subscription.is_admin_override === true && subscription.plan === 'pro') {
+      return true;
+    }
+    
+    // For regular users: MUST have all conditions met
+    // 1. Plan must be 'pro'
+    // 2. Status must be 'active'
+    // 3. expires_at must exist and be in the future
     if (subscription.plan !== 'pro') return false;
     if (subscription.status !== 'active') return false;
     if (!subscription.expires_at) return false;
     
     const expiresAt = new Date(subscription.expires_at);
     const now = new Date();
-    return expiresAt >= now;
+    
+    // Strict comparison - expires_at must be strictly greater than now
+    return expiresAt.getTime() > now.getTime();
   };
 
   const isPro = isProActive();

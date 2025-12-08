@@ -20,6 +20,12 @@ export function UpgradeCard() {
   const pollIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const { toast } = useToast();
 
+  // Reset payment pending state when component mounts (fresh start)
+  useEffect(() => {
+    setShowPaymentPending(false);
+    setIsCheckingPayment(false);
+  }, []);
+
   const isValidCoupon = couponCode.trim().toUpperCase() === 'ACHIEVERS1000';
   const yearlyPrice = couponApplied && isValidCoupon ? 1999 : 2999;
   const yearlyPricePerMonth = Math.round(yearlyPrice / 12);
@@ -92,12 +98,21 @@ export function UpgradeCard() {
   };
 
   const handleSubscribe = (plan: PlanType) => {
+    // ALWAYS open payment - never skip based on any cached state
     if (plan === 'yearly') {
       // Use static payment links for yearly plans
       const paymentLink = couponApplied && isValidCoupon 
         ? YEARLY_PAYMENT_LINK_ACHIEVERS 
         : YEARLY_PAYMENT_LINK_NORMAL;
-      window.open(paymentLink, '_blank');
+      
+      // Force open the payment link in new tab
+      const newWindow = window.open(paymentLink, '_blank');
+      if (!newWindow) {
+        // Fallback if popup blocked - navigate directly
+        window.location.href = paymentLink;
+        return;
+      }
+      
       // Start polling for payment confirmation
       startPollingForPayment();
     } else {
