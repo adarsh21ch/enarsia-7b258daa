@@ -1,19 +1,19 @@
-import { Crown, Sparkles, Check, Calendar, Star, Tag } from 'lucide-react';
+import { Crown, Sparkles, Check, Calendar, Loader2, Star, Tag } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useSubscription } from '@/hooks/useSubscription';
+import { useRazorpay } from '@/hooks/useRazorpay';
 import { format } from 'date-fns';
 import { useState } from 'react';
-import { useToast } from '@/hooks/use-toast';
 
 type PlanType = 'monthly' | 'yearly';
 
 export function UpgradeCard() {
-  const { isPro, isAdminOverride, daysRemaining, subscription, loading } = useSubscription();
+  const { isPro, isAdminOverride, daysRemaining, subscription, loading, refetch } = useSubscription();
+  const { initiatePayment, loading: paymentLoading } = useRazorpay();
   const [selectedPlan, setSelectedPlan] = useState<PlanType>('yearly');
   const [couponCode, setCouponCode] = useState('');
   const [couponApplied, setCouponApplied] = useState(false);
-  const { toast } = useToast();
 
   const isValidCoupon = couponCode.trim().toUpperCase() === 'ACHIEVERS1000';
   const yearlyPrice = couponApplied && isValidCoupon ? 1999 : 2999;
@@ -25,11 +25,13 @@ export function UpgradeCard() {
     }
   };
 
-  // Payment links temporarily disabled - show coming soon message
   const handleSubscribe = (plan: PlanType) => {
-    toast({
-      title: "Coming Soon",
-      description: "Payment integration is being updated. Please check back later.",
+    initiatePayment({
+      planType: plan,
+      couponCode: plan === 'yearly' && couponApplied && isValidCoupon ? 'ACHIEVERS1000' : undefined,
+      onSuccess: () => {
+        refetch();
+      },
     });
   };
 
@@ -203,13 +205,23 @@ export function UpgradeCard() {
 
       <Button 
         onClick={() => handleSubscribe(selectedPlan)}
+        disabled={paymentLoading}
         className="w-full h-12 text-base font-semibold shadow-lg shadow-primary/30"
       >
-        <Crown className="h-5 w-5 mr-2" />
-        {selectedPlan === 'yearly' 
-          ? `Unlock Pro Yearly – ₹${yearlyPrice.toLocaleString()}` 
-          : 'Unlock Pro Monthly – ₹249'
-        }
+        {paymentLoading ? (
+          <>
+            <Loader2 className="h-5 w-5 mr-2 animate-spin" />
+            Processing...
+          </>
+        ) : (
+          <>
+            <Crown className="h-5 w-5 mr-2" />
+            {selectedPlan === 'yearly' 
+              ? `Unlock Pro Yearly – ₹${yearlyPrice.toLocaleString()}` 
+              : 'Unlock Pro Monthly – ₹249'
+            }
+          </>
+        )}
       </Button>
     </div>
   );

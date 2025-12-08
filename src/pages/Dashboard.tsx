@@ -179,9 +179,14 @@ export default function Dashboard() {
                 <span className="text-xs text-amber-600">
                   You're near your free limit ({uniqueCount}/{limit}). Upgrade to Pro to add more.
                 </span>
-                <span className="text-xs font-medium text-primary">
-                  Upgrade (Coming Soon)
-                </span>
+                <a 
+                  href="https://rzp.io/rzp/iQIz9kH" 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="text-xs font-medium text-primary hover:underline"
+                >
+                  Upgrade
+                </a>
               </div>
             )}
 
