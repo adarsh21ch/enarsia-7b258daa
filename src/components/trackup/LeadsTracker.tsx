@@ -73,9 +73,33 @@ export function LeadsTracker({ isPro = true }: LeadsTrackerProps) {
 
   return (
     <div className="flex flex-col h-full animate-fade-in">
-      {/* Sticky Table Header - Only visible when scrolled past original position */}
+      {/* Sticky Daily Leads Tracking Block - Only visible when scrolled past original position */}
       {isHeaderSticky && (
         <div className="fixed top-12 left-0 right-0 z-30 bg-card shadow-md border-b border-border/30">
+          {/* Title Row */}
+          <div className="px-3 py-1.5 border-b border-border/50">
+            <div className="flex items-center gap-2">
+              <Calendar className="h-3.5 w-3.5 text-primary" />
+              <h3 className="font-semibold text-xs">Daily Leads Tracking</h3>
+            </div>
+          </div>
+          {/* Month Selector */}
+          <div className="flex items-center justify-center gap-3 py-1.5 bg-muted/30 border-b border-border/30">
+            <Button variant="ghost" size="icon" onClick={() => changeMonth('prev')} className="h-6 w-6 rounded-full">
+              <ChevronLeft className="h-3.5 w-3.5" />
+            </Button>
+            <div className="text-center min-w-[130px]">
+              <p className="font-semibold text-xs">{formattedMonth}</p>
+              <p className="text-[10px] text-muted-foreground">
+                <span className="text-primary font-medium">{daysInMonth - daysRemaining}</span>/{daysInMonth} days
+                {daysRemaining > 0 && <span className="ml-1">• {daysRemaining} left</span>}
+              </p>
+            </div>
+            <Button variant="ghost" size="icon" onClick={() => changeMonth('next')} className="h-6 w-6 rounded-full">
+              <ChevronRight className="h-3.5 w-3.5" />
+            </Button>
+          </div>
+          {/* Table Header */}
           <table className="w-full table-fixed">
             <thead>
               <tr>
@@ -97,8 +121,8 @@ export function LeadsTracker({ isPro = true }: LeadsTrackerProps) {
       {/* Scrollable Content Area */}
       <div 
         ref={scrollContainerRef}
-        className="flex-1 overflow-y-auto overflow-x-hidden pb-4"
-        style={{ paddingTop: isHeaderSticky ? '36px' : '0' }}
+        className="flex-1 overflow-y-auto overflow-x-hidden pb-20"
+        style={{ paddingTop: isHeaderSticky ? '110px' : '0' }}
       >
         {/* KPI Cards - Scroll with content */}
         <div className="grid grid-cols-2 gap-1.5 mb-2">
@@ -143,7 +167,7 @@ export function LeadsTracker({ isPro = true }: LeadsTrackerProps) {
         </div>
 
         {/* Daily Leads Tracking Section Header */}
-        <div className="glass-card rounded-xl overflow-hidden mb-2">
+        <div ref={tableHeaderRef} className="glass-card rounded-xl overflow-hidden mb-2">
           <div className="px-3 py-1.5 border-b border-border/50">
             <div className="flex items-center gap-2">
               <Calendar className="h-3.5 w-3.5 text-primary" />
@@ -168,8 +192,8 @@ export function LeadsTracker({ isPro = true }: LeadsTrackerProps) {
             </Button>
           </div>
 
-          {/* Table Header - This is the trigger point for sticky */}
-          <div ref={tableHeaderRef} className="bg-card border-b border-border/30">
+          {/* Table Header */}
+          <div className="bg-card border-b border-border/30">
             <table className="w-full table-fixed">
               <thead>
                 <tr>
@@ -209,7 +233,7 @@ export function LeadsTracker({ isPro = true }: LeadsTrackerProps) {
         </div>
 
         {/* TOTAL Row - Separate, clearly visible */}
-        <div className="bg-gradient-to-r from-primary/15 via-primary/10 to-primary/5 rounded-xl shadow-md border border-primary/20 mb-3">
+        <div className="bg-gradient-to-r from-primary/15 via-primary/10 to-primary/5 rounded-xl shadow-md border border-primary/20">
           <table className="w-full table-fixed">
             <tbody>
               <tr>
