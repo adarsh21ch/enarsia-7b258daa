@@ -66,83 +66,32 @@ export function useRazorpay() {
     const planType = options?.planType || 'monthly';
     const couponCode = options?.couponCode;
     const hasCoupon = planType === 'yearly' && couponCode === 'ACHIEVERS1000';
-    
-    const planConfig = PLAN_CONFIG[planType];
-    const description = planType === 'yearly' && hasCoupon 
-      ? PLAN_CONFIG.yearly.discountedDescription 
-      : planConfig.description;
 
     setLoading(true);
 
     try {
-      // Load Razorpay script
-      const scriptLoaded = await loadRazorpayScript();
-      if (!scriptLoaded) {
-        throw new Error('Failed to load payment gateway');
+      // Use static payment links for all plans
+      let paymentLink: string;
+      
+      if (planType === 'monthly') {
+        // Monthly plan - static link
+        paymentLink = 'https://rzp.io/rzp/iQIz9kH';
+      } else if (planType === 'yearly') {
+        // Yearly plan - different links based on coupon
+        paymentLink = hasCoupon 
+          ? 'https://rzp.io/rzp/5s1VsH26'  // Achievers Club discounted link
+          : 'https://rzp.io/rzp/PUPxlHdU'; // Standard yearly link
+      } else {
+        throw new Error('Invalid plan type');
       }
 
-      // Create order via edge function
-      const { data, error } = await supabase.functions.invoke('create-razorpay-order', {
-        body: {
-          user_id: user.id,
-          user_email: user.email,
-          plan_type: planType,
-          coupon_code: couponCode,
-        },
+      // Open the static payment link
+      window.open(paymentLink, '_blank');
+      
+      toast({
+        title: "Payment Page Opened",
+        description: "Complete your payment in the new tab. Your Pro status will activate automatically.",
       });
-
-      if (error || !data) {
-        console.error('Order creation error:', error);
-        throw new Error(error?.message || 'Failed to create payment order');
-      }
-
-      const { order_id, amount, currency, key_id } = data;
-
-      // Open Razorpay checkout with handler callback (not redirect)
-      const razorpayOptions = {
-        key: key_id,
-        amount: amount,
-        currency: currency,
-        name: 'NevorAI',
-        description: description,
-        order_id: order_id,
-        prefill: {
-          email: user.email,
-        },
-        theme: {
-          color: '#3b82f6',
-        },
-        // Use handler for client-side callback instead of redirect
-        handler: function(response: any) {
-          console.log('Payment successful, redirecting...', response);
-          // Navigate to success page with payment params
-          const params = new URLSearchParams({
-            razorpay_payment_id: response.razorpay_payment_id,
-            razorpay_order_id: response.razorpay_order_id,
-            razorpay_signature: response.razorpay_signature,
-          });
-          window.location.href = `${window.location.origin}/payment-success?${params.toString()}`;
-        },
-        modal: {
-          ondismiss: () => {
-            setLoading(false);
-          },
-        },
-      };
-
-      const razorpay = new window.Razorpay(razorpayOptions);
-      razorpay.on('payment.failed', (response: any) => {
-        console.error('Payment failed:', response.error);
-        toast({
-          title: "Payment Failed",
-          description: response.error?.description || "Something went wrong. Please try again.",
-          variant: "destructive",
-        });
-        options?.onError?.(response.error?.description);
-        setLoading(false);
-      });
-
-      razorpay.open();
     } catch (err: any) {
       console.error('Payment initiation error:', err);
       toast({
@@ -154,7 +103,7 @@ export function useRazorpay() {
     } finally {
       setLoading(false);
     }
-  }, [user, loadRazorpayScript, toast]);
+  }, [user, toast]);
 
   return { initiatePayment, loading };
 }
