@@ -341,13 +341,13 @@ export function ImportExcelDialog({ onImport, availableSlots = Infinity, isAtLim
               </div>
 
               <div className="space-y-2">
-                <Label className="text-xs">Preview (first 5 rows)</Label>
-                <div className="border border-border rounded-lg overflow-x-auto">
-                  <table className="w-full text-xs">
-                    <thead className="bg-muted">
+                <Label className="text-xs">Preview (first 5 rows) - Scroll horizontally to see all columns →</Label>
+                <div className="border border-border rounded-lg overflow-x-auto max-h-[200px] overflow-y-auto relative">
+                  <table className="text-xs min-w-max">
+                    <thead className="bg-muted sticky top-0">
                       <tr>
-                        {columns.slice(0, 5).map((col) => (
-                          <th key={col} className="px-2 py-1.5 text-left font-medium truncate max-w-[120px]">
+                        {columns.map((col) => (
+                          <th key={col} className="px-3 py-1.5 text-left font-medium whitespace-nowrap min-w-[100px]">
                             {col}
                           </th>
                         ))}
@@ -356,8 +356,8 @@ export function ImportExcelDialog({ onImport, availableSlots = Infinity, isAtLim
                     <tbody>
                       {previewData.map((row, i) => (
                         <tr key={i} className="border-t border-border">
-                          {columns.slice(0, 5).map((col) => (
-                            <td key={col} className="px-2 py-1.5 truncate max-w-[120px]">
+                          {columns.map((col) => (
+                            <td key={col} className="px-3 py-1.5 whitespace-nowrap min-w-[100px] max-w-[200px] truncate">
                               {row[col]}
                             </td>
                           ))}
