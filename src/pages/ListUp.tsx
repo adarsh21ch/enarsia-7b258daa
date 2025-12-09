@@ -13,6 +13,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Loader2, Filter, ChevronDown, ChevronUp, Tags, X, Users } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { getTagStyle } from '@/lib/tagColors';
 import nevoraLogo from '@/assets/nevorai-logo.jpeg';
 import { Prospect } from '@/types/prospect';
 
@@ -305,21 +306,21 @@ export default function ListUp() {
                 <p className="text-xs text-muted-foreground/70">No response tags</p>
               ) : (
                 <div className="flex flex-wrap gap-1.5">
-                  {responseTags.map(tag => (
-                    <Badge
-                      key={`response-${tag}`}
-                      variant={selectedResponses.includes(tag) ? "default" : "outline"}
-                      className={cn(
-                        "cursor-pointer text-xs transition-all",
-                        selectedResponses.includes(tag) 
-                          ? "bg-blue-600 text-white hover:bg-blue-700" 
-                          : "hover:bg-blue-50 dark:hover:bg-blue-950/30 border-blue-200 dark:border-blue-800"
-                      )}
-                      onClick={() => toggleResponse(tag)}
-                    >
-                      {tag}
-                    </Badge>
-                  ))}
+                  {responseTags.map(tag => {
+                    const isSelected = selectedResponses.includes(tag);
+                    const style = getTagStyle(tag, 'response', null, isSelected);
+                    return (
+                      <Badge
+                        key={`response-${tag}`}
+                        variant="outline"
+                        className="cursor-pointer text-xs transition-all border"
+                        style={style}
+                        onClick={() => toggleResponse(tag)}
+                      >
+                        {tag}
+                      </Badge>
+                    );
+                  })}
                 </div>
               )}
             </div>
@@ -331,21 +332,21 @@ export default function ListUp() {
                 <p className="text-xs text-muted-foreground/70">No stage tags</p>
               ) : (
                 <div className="flex flex-wrap gap-1.5">
-                  {stageTags.map(tag => (
-                    <Badge
-                      key={`stage-${tag}`}
-                      variant={selectedStages.includes(tag) ? "default" : "outline"}
-                      className={cn(
-                        "cursor-pointer text-xs transition-all",
-                        selectedStages.includes(tag) 
-                          ? "bg-purple-600 text-white hover:bg-purple-700" 
-                          : "hover:bg-purple-50 dark:hover:bg-purple-950/30 border-purple-200 dark:border-purple-800"
-                      )}
-                      onClick={() => toggleStage(tag)}
-                    >
-                      {tag}
-                    </Badge>
-                  ))}
+                  {stageTags.map(tag => {
+                    const isSelected = selectedStages.includes(tag);
+                    const style = getTagStyle(tag, 'stage', null, isSelected);
+                    return (
+                      <Badge
+                        key={`stage-${tag}`}
+                        variant="outline"
+                        className="cursor-pointer text-xs transition-all border"
+                        style={style}
+                        onClick={() => toggleStage(tag)}
+                      >
+                        {tag}
+                      </Badge>
+                    );
+                  })}
                 </div>
               )}
             </div>
@@ -357,21 +358,21 @@ export default function ListUp() {
                 <p className="text-xs text-muted-foreground/70">No quality tags</p>
               ) : (
                 <div className="flex flex-wrap gap-1.5">
-                  {qualityTags.map(tag => (
-                    <Badge
-                      key={`quality-${tag}`}
-                      variant={selectedQualities.includes(tag) ? "default" : "outline"}
-                      className={cn(
-                        "cursor-pointer text-xs transition-all",
-                        selectedQualities.includes(tag) 
-                          ? "bg-amber-600 text-white hover:bg-amber-700" 
-                          : "hover:bg-amber-50 dark:hover:bg-amber-950/30 border-amber-200 dark:border-amber-800"
-                      )}
-                      onClick={() => toggleQuality(tag)}
-                    >
-                      {tag}
-                    </Badge>
-                  ))}
+                  {qualityTags.map(tag => {
+                    const isSelected = selectedQualities.includes(tag);
+                    const style = getTagStyle(tag, 'quality', null, isSelected);
+                    return (
+                      <Badge
+                        key={`quality-${tag}`}
+                        variant="outline"
+                        className="cursor-pointer text-xs transition-all border"
+                        style={style}
+                        onClick={() => toggleQuality(tag)}
+                      >
+                        {tag}
+                      </Badge>
+                    );
+                  })}
                 </div>
               )}
             </div>
@@ -427,18 +428,30 @@ export default function ListUp() {
                             {/* Tags */}
                             <div className="flex flex-wrap gap-1">
                               {prospect.funnel_stage && (
-                                <Badge variant="outline" className="text-xs border-purple-200 dark:border-purple-800">
-                                  Stage: {prospect.funnel_stage}
+                                <Badge 
+                                  variant="outline" 
+                                  className="text-xs border"
+                                  style={getTagStyle(prospect.funnel_stage, 'stage')}
+                                >
+                                  {prospect.funnel_stage}
                                 </Badge>
                               )}
                               {prospect.action_taken && (
-                                <Badge variant="outline" className="text-xs border-blue-200 dark:border-blue-800">
-                                  Response: {prospect.action_taken}
+                                <Badge 
+                                  variant="outline" 
+                                  className="text-xs border"
+                                  style={getTagStyle(prospect.action_taken, 'response')}
+                                >
+                                  {prospect.action_taken}
                                 </Badge>
                               )}
                               {prospect.prospect_status && (
-                                <Badge variant="outline" className="text-xs border-amber-200 dark:border-amber-800">
-                                  Quality: {prospect.prospect_status}
+                                <Badge 
+                                  variant="outline" 
+                                  className="text-xs border"
+                                  style={getTagStyle(prospect.prospect_status, 'quality')}
+                                >
+                                  {prospect.prospect_status}
                                 </Badge>
                               )}
                             </div>

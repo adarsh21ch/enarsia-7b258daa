@@ -1,4 +1,5 @@
 import { cn } from '@/lib/utils';
+import { getTagStyle } from '@/lib/tagColors';
 import { ProspectStatus, PriorityLevel, FunnelStage, EnrollmentStatus, ActionTaken } from '@/types/prospect';
 
 interface StatusBadgeProps {
@@ -6,17 +7,13 @@ interface StatusBadgeProps {
 }
 
 export function StatusBadge({ status }: StatusBadgeProps) {
-  const colorClasses: Record<ProspectStatus, string> = {
-    'Good': 'bg-status-positive/15 text-status-positive border-status-positive/30',
-    'Medium': 'bg-status-neutral/15 text-status-neutral border-status-neutral/30',
-    'Bad': 'bg-status-negative/15 text-status-negative border-status-negative/30',
-  };
-
+  const style = getTagStyle(status, 'quality');
+  
   return (
-    <span className={cn(
-      'inline-flex items-center px-2 py-1 rounded-full text-xs font-medium border whitespace-nowrap',
-      colorClasses[status]
-    )}>
+    <span 
+      className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium border whitespace-nowrap"
+      style={style}
+    >
       {status}
     </span>
   );
@@ -48,20 +45,13 @@ interface StageBadgeProps {
 }
 
 export function StageBadge({ stage }: StageBadgeProps) {
-  const colorClasses: Record<FunnelStage, string> = {
-    'Day 1': 'bg-blue-500/15 text-blue-600 border-blue-500/30',
-    'Day 2': 'bg-cyan-500/15 text-cyan-600 border-cyan-500/30',
-    'Day 3': 'bg-teal-500/15 text-teal-600 border-teal-500/30',
-    'Minimum Bill': 'bg-orange-500/15 text-orange-600 border-orange-500/30',
-    'Level Up': 'bg-status-positive/15 text-status-positive border-status-positive/30',
-    '2CC': 'bg-yellow-500/15 text-yellow-600 border-yellow-500/30',
-  };
-
+  const style = getTagStyle(stage, 'stage');
+  
   return (
-    <span className={cn(
-      'inline-flex items-center px-2 py-1 rounded-full text-xs font-medium border whitespace-nowrap',
-      colorClasses[stage]
-    )}>
+    <span 
+      className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium border whitespace-nowrap"
+      style={style}
+    >
       {stage}
     </span>
   );
@@ -96,22 +86,35 @@ interface ActionBadgeProps {
 
 export function ActionBadge({ action }: ActionBadgeProps) {
   if (!action) return null;
-
-  const colorClasses: Record<ExtendedAction, string> = {
-    'Enrollment': 'bg-purple-500/15 text-purple-600 border-purple-500/30',
-    'Video Sent': 'bg-blue-500/15 text-blue-600 border-blue-500/30',
-    'Not Picked': 'bg-orange-500/15 text-orange-600 border-orange-500/30',
-    'Call Back': 'bg-cyan-500/15 text-cyan-600 border-cyan-500/30',
-    'Call Cut': 'bg-status-negative/15 text-status-negative border-status-negative/30',
-    'Not Interested': 'bg-gray-500/15 text-gray-600 border-gray-500/30',
-  };
+  
+  const style = getTagStyle(action, 'response');
 
   return (
-    <span className={cn(
-      'inline-flex items-center px-2 py-1 rounded-full text-xs font-medium border whitespace-nowrap',
-      colorClasses[action]
-    )}>
+    <span 
+      className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium border whitespace-nowrap"
+      style={style}
+    >
       {action}
+    </span>
+  );
+}
+
+// Generic tag badge for any custom tags
+interface GenericTagBadgeProps {
+  value: string;
+  type: 'response' | 'stage' | 'quality' | 'default';
+  customColor?: string | null;
+}
+
+export function GenericTagBadge({ value, type, customColor }: GenericTagBadgeProps) {
+  const style = getTagStyle(value, type, customColor);
+  
+  return (
+    <span 
+      className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium border whitespace-nowrap"
+      style={style}
+    >
+      {value}
     </span>
   );
 }

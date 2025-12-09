@@ -44,7 +44,7 @@ export function useSharedProspects() {
     }
   }, [user]);
 
-  // Fetch prospects for selected owner (uses service role via RPC for cross-user access)
+  // Fetch prospects for selected owner
   const fetchSharedProspects = useCallback(async () => {
     if (!selectedOwnerId) {
       setProspects([]);
@@ -53,8 +53,6 @@ export function useSharedProspects() {
 
     setLoading(true);
     
-    // We need to use a special approach here since RLS would normally block this
-    // The team_access table grants permission, so we query through that relationship
     const { data, error } = await supabase
       .from('prospects')
       .select('*')
@@ -62,7 +60,6 @@ export function useSharedProspects() {
       .order('updated_at', { ascending: false });
 
     if (!error && data) {
-      // Decrypt phone numbers
       try {
         const decrypted = await decryptBatch(data);
         setProspects(decrypted as Prospect[]);
@@ -74,6 +71,56 @@ export function useSharedProspects() {
     }
     
     setLoading(false);
+  }, [selectedOwnerId, decryptBatch]);
+
+  // Set up realtime subscription for shared prospect updates
+  useEffect(() => {
+    if (!selectedOwnerId) return;
+
+    const channel = supabase
+      .channel(`shared-prospects-${selectedOwnerId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'prospects',
+          filter: `user_id=eq.${selectedOwnerId}`
+        },
+        async (payload) => {
+          console.log('Realtime update for shared prospects:', payload);
+          
+          if (payload.eventType === 'INSERT') {
+            const newProspect = payload.new as Prospect;
+            try {
+              const [decrypted] = await decryptBatch([newProspect]);
+              setProspects(prev => [decrypted as Prospect, ...prev]);
+            } catch {
+              setProspects(prev => [newProspect, ...prev]);
+            }
+          } else if (payload.eventType === 'UPDATE') {
+            const updatedProspect = payload.new as Prospect;
+            try {
+              const [decrypted] = await decryptBatch([updatedProspect]);
+              setProspects(prev => 
+                prev.map(p => p.id === updatedProspect.id ? decrypted as Prospect : p)
+              );
+            } catch {
+              setProspects(prev => 
+                prev.map(p => p.id === updatedProspect.id ? updatedProspect : p)
+              );
+            }
+          } else if (payload.eventType === 'DELETE') {
+            const deletedId = payload.old.id;
+            setProspects(prev => prev.filter(p => p.id !== deletedId));
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [selectedOwnerId, decryptBatch]);
 
   useEffect(() => {
@@ -95,6 +142,7 @@ export function useSharedProspects() {
     setSelectedOwnerId,
     prospects,
     loading,
-    refetch: fetchSharedProspects
+    refetch: fetchSharedProspects,
+    refetchOwners: fetchSharedOwners
   };
 }
