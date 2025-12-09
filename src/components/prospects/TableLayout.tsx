@@ -1,4 +1,4 @@
-import { useRef, useCallback } from 'react';
+import { useRef, useCallback, useEffect } from 'react';
 import { Prospect, Sheet } from '@/types/prospect';
 import { SortableProspectRow } from './SortableProspectRow';
 import { SheetTabs } from './SheetTabs';
@@ -89,6 +89,8 @@ export function TableLayout({
 }: TableLayoutProps) {
   const headerScrollRef = useRef<HTMLDivElement>(null);
   const bodyScrollRef = useRef<HTMLDivElement>(null);
+  const stickyHeaderRef = useRef<HTMLDivElement>(null);
+  const tableContainerRef = useRef<HTMLDivElement>(null);
 
   // Sync horizontal scroll between header and body
   const handleBodyScroll = useCallback(() => {
@@ -103,12 +105,49 @@ export function TableLayout({
     }
   }, []);
 
+  // Handle sticky behavior manually by listening to scroll on scrollable-content
+  useEffect(() => {
+    const scrollContainer = document.querySelector('.scrollable-content');
+    const stickyHeader = stickyHeaderRef.current;
+    const tableContainer = tableContainerRef.current;
+    
+    if (!scrollContainer || !stickyHeader || !tableContainer) return;
+
+    const handleScroll = () => {
+      const tableRect = tableContainer.getBoundingClientRect();
+      const headerHeight = 76; // Fixed header height
+      
+      // When table top goes above the fixed header area
+      if (tableRect.top < headerHeight) {
+        stickyHeader.style.position = 'fixed';
+        stickyHeader.style.top = `${headerHeight}px`;
+        stickyHeader.style.left = `${tableRect.left}px`;
+        stickyHeader.style.width = `${tableRect.width}px`;
+        stickyHeader.style.zIndex = '40';
+      } else {
+        stickyHeader.style.position = 'relative';
+        stickyHeader.style.top = '0';
+        stickyHeader.style.left = '0';
+        stickyHeader.style.width = '100%';
+      }
+    };
+
+    scrollContainer.addEventListener('scroll', handleScroll, { passive: true });
+    window.addEventListener('resize', handleScroll);
+    handleScroll(); // Initial check
+
+    return () => {
+      scrollContainer.removeEventListener('scroll', handleScroll);
+      window.removeEventListener('resize', handleScroll);
+    };
+  }, []);
+
   const tableMinWidth = isMobile ? 580 : 880;
 
   return (
-    <div className="bg-card rounded-xl border border-border overflow-hidden shadow-sm flex flex-col">
-      {/* Sticky Header Section */}
-      <div className="sticky top-0 z-30 bg-card">
+    <div ref={tableContainerRef} className="bg-card rounded-xl border border-border overflow-hidden shadow-sm">
+      {/* Sticky Header Section - will be positioned fixed when scrolled */}
+      <div ref={stickyHeaderRef} className="bg-card" style={{ zIndex: 40 }}>
         {/* Sheet tabs - always full width, no horizontal scroll */}
         <div className="border-b border-border/50">
           <SheetTabs
@@ -176,7 +215,7 @@ export function TableLayout({
       <div
         ref={bodyScrollRef}
         onScroll={handleBodyScroll}
-        className="overflow-x-auto flex-1"
+        className="overflow-x-auto"
         style={{ WebkitOverflowScrolling: 'touch' }}
       >
         <table 
