@@ -6,33 +6,39 @@ export function useEncryption() {
     const { data: { session }, error } = await supabase.auth.getSession();
     
     if (error || !session) {
-      console.warn('No active session available');
+      // No session - don't log warning, this is expected on auth page
       return null;
     }
 
-    // Always try to refresh to ensure we have a valid token
-    const { data: refreshData, error: refreshError } = await supabase.auth.refreshSession();
-    
-    if (refreshError || !refreshData.session) {
-      console.warn('Failed to refresh session:', refreshError?.message);
-      // Session is invalid - sign out to force re-login
-      if (refreshError?.message?.includes('session_not_found') || 
-          refreshError?.message?.includes('Invalid') ||
-          refreshError?.status === 403) {
-        console.log('Session invalidated server-side, signing out...');
-        await supabase.auth.signOut();
-        return null;
+    // Check if token is close to expiring (within 60 seconds)
+    const expiresAt = session.expires_at ? session.expires_at * 1000 : 0;
+    const now = Date.now();
+    const shouldRefresh = expiresAt - now < 60000;
+
+    if (shouldRefresh) {
+      const { data: refreshData, error: refreshError } = await supabase.auth.refreshSession();
+      
+      if (refreshError || !refreshData.session) {
+        // Session is invalid - sign out to force re-login
+        if (refreshError?.message?.includes('session_not_found') || 
+            refreshError?.message?.includes('Invalid') ||
+            refreshError?.status === 403) {
+          await supabase.auth.signOut();
+          return null;
+        }
+        return session; // Return original session as fallback for other errors
       }
-      return session; // Return original session as fallback for other errors
+      
+      return refreshData.session;
     }
     
-    return refreshData.session;
+    return session;
   };
 
-  const invokeWithRetry = async (action: string, data: any, retries = 2): Promise<any> => {
+  const invokeWithRetry = async (action: string, data: any, retries = 1): Promise<any> => {
     const session = await getValidSession();
     if (!session) {
-      console.warn(`No active session for ${action}, returning original data`);
+      // No session - silently return null, don't log warning
       return null;
     }
 
