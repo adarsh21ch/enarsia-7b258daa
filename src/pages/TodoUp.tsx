@@ -1,20 +1,16 @@
-import { useState, useMemo, useEffect, useRef, useCallback } from 'react';
+// TodoUp Page - Simple To-Do List
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
-import { useProspects } from '@/hooks/useProspects';
-import { useSubscription } from '@/hooks/useSubscription';
-import { useProspectLimit } from '@/hooks/useProspectLimit';
 import { useTodos } from '@/hooks/useTodos';
 import { BottomNav } from '@/components/layout/BottomNav';
-import { UpgradeBar } from '@/components/subscription/UpgradeBar';
 import { PullToRefreshIndicator } from '@/components/PullToRefreshIndicator';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Loader2, CheckCircle, Lock, Trash2, Edit2, Send, X, Check, Phone, MessageCircle, ChevronDown, ChevronUp } from 'lucide-react';
+import { Loader2, CheckCircle, Trash2, Edit2, Send, X, Check, Plus } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 import { cn } from '@/lib/utils';
-import { Prospect, FunnelStage } from '@/types/prospect';
 import nevoraLogo from '@/assets/nevorai-logo.jpeg';
 import { toast } from 'sonner';
 
@@ -65,35 +61,18 @@ function usePullToRefresh(onRefresh: () => Promise<void>, threshold = 80) {
   return { containerRef, isRefreshing, pullDistance, showIndicator: pullDistance > 20 || isRefreshing };
 }
 
-// Only 3 stages now (Level Up removed)
-const FUNNEL_STAGES: FunnelStage[] = ['Day 1', 'Day 2', 'Minimum Bill'];
-
-// Stage colors for the horizontal bar segments
-const STAGE_COLORS: Record<string, string> = {
-  'Day 1': 'bg-gradient-to-r from-indigo-500 to-violet-500',
-  'Day 2': 'bg-gradient-to-r from-rose-400 to-pink-500',
-  'Minimum Bill': 'bg-gradient-to-r from-emerald-400 to-teal-500',
-};
-
 export default function TodoUp() {
   const navigate = useNavigate();
   const { user, loading: authLoading } = useAuth();
-  const { prospects, refetch } = useProspects();
-  const { isPro, loading: subLoading } = useSubscription();
-  const prospectLimit = useProspectLimit(prospects, isPro);
   const { todos, loading: todosLoading, addTodo, updateTodo, toggleTodo, deleteTodo, refetch: refetchTodos } = useTodos();
   const [newTodoInput, setNewTodoInput] = useState('');
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editingTitle, setEditingTitle] = useState('');
-  const [expandedProspectId, setExpandedProspectId] = useState<string | null>(null);
-
-  // Show lock only if Free AND at/over 50-prospect limit
-  const showLock = !isPro && prospectLimit.isAtLimit;
 
   // Pull-to-refresh
   const handleRefresh = useCallback(async () => {
-    await Promise.all([refetch?.(), refetchTodos?.()]);
-  }, [refetch, refetchTodos]);
+    await refetchTodos?.();
+  }, [refetchTodos]);
   const { containerRef, isRefreshing, pullDistance, showIndicator } = usePullToRefresh(handleRefresh);
 
   useEffect(() => {
@@ -102,74 +81,9 @@ export default function TodoUp() {
     }
   }, [user, authLoading, navigate]);
 
-  // Get prospects grouped by each funnel stage (separate arrays)
-  const prospectsByStage = useMemo(() => {
-    const grouped: Record<FunnelStage, Prospect[]> = {
-      'Day 1': [],
-      'Day 2': [],
-      'Minimum Bill': [],
-      'Day 3': [],
-      'Level Up': [],
-      '2CC': []
-    };
-    
-    prospects.forEach(p => {
-      if (p.funnel_stage && FUNNEL_STAGES.includes(p.funnel_stage as FunnelStage)) {
-        grouped[p.funnel_stage as FunnelStage].push(p);
-      }
-    });
-    
-    return grouped;
-  }, [prospects]);
-
-  // Helper to get first name
-  const getFirstName = (fullName: string) => {
-    return fullName.split(' ')[0];
-  };
-
-  // Toggle expanded prospect
-  const toggleProspectExpand = (id: string) => {
-    setExpandedProspectId(prev => prev === id ? null : id);
-  };
-
-  // WhatsApp and Call handlers
-  const handleWhatsApp = (phone: string) => {
-    const cleanPhone = phone.replace(/\D/g, '');
-    window.location.href = `whatsapp://send?phone=${cleanPhone}`;
-  };
-
-  const handleCall = (phone: string) => {
-    window.location.href = `tel:${phone}`;
-  };
-
-  // Count per stage for badges
-  const stageCounts = useMemo(() => {
-    return {
-      'Day 1': prospectsByStage['Day 1'].length,
-      'Day 2': prospectsByStage['Day 2'].length,
-      'Minimum Bill': prospectsByStage['Minimum Bill'].length
-    };
-  }, [prospectsByStage]);
-
-  // Calculate max rows across all 3 stages for the serial number column
-  const maxRows = useMemo(() => {
-    return Math.max(
-      prospectsByStage['Day 1'].length,
-      prospectsByStage['Day 2'].length,
-      prospectsByStage['Minimum Bill'].length,
-      0
-    );
-  }, [prospectsByStage]);
-
   const handleAddTodo = async () => {
     const todoText = newTodoInput.trim();
     if (!todoText) return;
-    
-    // Only add if not blocked
-    if (showLock) {
-      toast.error('Upgrade to Pro to add tasks');
-      return;
-    }
     
     const result = await addTodo(todoText);
     if (result) {
@@ -194,7 +108,14 @@ export default function TodoUp() {
     setEditingTitle('');
   };
 
-  if (authLoading || subLoading) {
+  const handleToggleComplete = async (id: string, completed: boolean) => {
+    await toggleTodo(id, completed);
+    if (completed) {
+      toast.success('Task completed!');
+    }
+  };
+
+  if (authLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <Loader2 className="h-8 w-8 animate-spin text-accent" />
@@ -203,6 +124,10 @@ export default function TodoUp() {
   }
 
   if (!user) return null;
+
+  // Separate completed and pending todos
+  const pendingTodos = todos.filter(t => !t.completed);
+  const completedTodos = todos.filter(t => t.completed);
 
   return (
     <div className="app-layout bg-gradient-to-b from-background via-background to-muted/20">
@@ -216,7 +141,7 @@ export default function TodoUp() {
             />
             <div>
               <h1 className="text-xl font-bold tracking-tight">To-Do Up</h1>
-              <p className="text-xs text-muted-foreground font-medium">Your To-Do List & Reminders</p>
+              <p className="text-xs text-muted-foreground font-medium">Your Tasks & Reminders</p>
             </div>
           </div>
         </div>
@@ -225,133 +150,15 @@ export default function TodoUp() {
       <main ref={containerRef} className="scrollable-content relative pb-36">
         <PullToRefreshIndicator isRefreshing={isRefreshing} pullDistance={pullDistance} showIndicator={showIndicator} />
         <div className="container py-3 px-4 space-y-4">
-          {/* Lock overlay only shows when Free AND at/over 50-prospect limit */}
-          {showLock && (
-            <div className="relative mb-4">
-              <div className="flex flex-col items-center justify-center bg-background/80 backdrop-blur-sm rounded-2xl py-12 border border-border/30">
-                <div className="p-4 rounded-full bg-muted mb-4">
-                  <Lock className="h-10 w-10 text-muted-foreground" />
-                </div>
-                <h3 className="text-lg font-semibold mb-2">Pro Feature</h3>
-                <p className="text-sm text-muted-foreground max-w-xs text-center px-4">
-                  You've reached the free limit of {prospectLimit.limit} prospects. Subscribe to Pro Monthly (₹249, non-refundable) or Pro Yearly (₹2,999, 7-day refund window) to unlock all features.
-                </p>
-              </div>
-            </div>
-          )}
-
-          {/* Funnel Stage Overview - Three vertical columns */}
-          <div className="space-y-2">
-            <p className="text-xs text-muted-foreground font-medium px-1">
-              Funnel Stage Overview
-            </p>
-            
-            {/* Container with 3 columns */}
-            <div className="rounded-xl overflow-hidden border border-border/40 shadow-sm bg-white dark:bg-card">
-              {/* Header bar with 3 segments */}
-              <div className="flex">
-                {FUNNEL_STAGES.map((stage, index) => (
-                  <div
-                    key={stage}
-                    className={cn(
-                      "flex-1 px-3 py-2 flex items-center justify-between gap-1",
-                      STAGE_COLORS[stage],
-                      index < FUNNEL_STAGES.length - 1 && "border-r border-white/20"
-                    )}
-                  >
-                    <span className="text-xs font-semibold text-white truncate">
-                      {stage === 'Minimum Bill' ? 'Min Bill' : stage}
-                    </span>
-                    <span className="text-xs font-bold bg-white/90 text-gray-700 min-w-[20px] h-5 flex items-center justify-center rounded-full px-1.5">
-                      {stageCounts[stage]}
-                    </span>
-                  </div>
-                ))}
-              </div>
-              
-              {/* Three stage columns - no serial numbers */}
-              <div className="flex max-h-56 overflow-y-auto divide-x divide-border/30">
-                {FUNNEL_STAGES.map((stage) => {
-                  const stageProspects = prospectsByStage[stage];
-                  return (
-                    <div key={stage} className="flex-1 min-w-0 py-2 px-1">
-                      {stageProspects.length === 0 ? (
-                        <p className="text-xs text-muted-foreground text-center py-3">
-                          No prospects
-                        </p>
-                      ) : (
-                        <div>
-                          {stageProspects.map((prospect) => {
-                            const isExpanded = expandedProspectId === prospect.id;
-                            return (
-                              <div key={prospect.id}>
-                                {/* Clickable first name row */}
-                                <button
-                                  onClick={() => toggleProspectExpand(prospect.id)}
-                                  className="w-full h-8 flex items-center gap-1 text-left px-1.5 rounded hover:bg-muted/40 transition-colors"
-                                >
-                                  <span className="text-sm font-medium text-foreground truncate flex-1">
-                                    {getFirstName(prospect.name)}
-                                  </span>
-                                  {isExpanded ? (
-                                    <ChevronUp className="h-3 w-3 text-muted-foreground shrink-0" />
-                                  ) : (
-                                    <ChevronDown className="h-3 w-3 text-muted-foreground shrink-0" />
-                                  )}
-                                </button>
-                                
-                                {/* Expandable mini report card */}
-                                {isExpanded && (
-                                  <div className="mx-1 mb-1 p-2 rounded-lg bg-muted/30 border border-border/40 space-y-1.5 text-xs">
-                                    <p className="font-medium text-foreground">{prospect.name}</p>
-                                    {prospect.address && (
-                                      <p className="text-muted-foreground">{prospect.address}</p>
-                                    )}
-                                    {prospect.age_or_dob && (
-                                      <p className="text-muted-foreground">Age: {prospect.age_or_dob}</p>
-                                    )}
-                                    <div className="flex items-center gap-2 pt-1">
-                                      <button
-                                        onClick={(e) => {
-                                          e.stopPropagation();
-                                          handleCall(prospect.phone);
-                                        }}
-                                        className="p-2 rounded-md bg-gray-900 text-white hover:bg-gray-800 transition-colors"
-                                        aria-label="Call"
-                                      >
-                                        <Phone className="h-4 w-4" />
-                                      </button>
-                                      <button
-                                        onClick={(e) => {
-                                          e.stopPropagation();
-                                          handleWhatsApp(prospect.phone);
-                                        }}
-                                        className="p-2 rounded-md bg-green-600 text-white hover:bg-green-700 transition-colors"
-                                        aria-label="WhatsApp"
-                                      >
-                                        <MessageCircle className="h-4 w-4" />
-                                      </button>
-                                    </div>
-                                  </div>
-                                )}
-                              </div>
-                            );
-                          })}
-                        </div>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          </div>
-
-          {/* To-Do List - Track Up table style */}
+          {/* To-Do List */}
           <div className="bg-white dark:bg-card rounded-xl border border-border/40 shadow-sm overflow-hidden">
-            {/* Header row like Track Up */}
+            {/* Header row */}
             <div className="flex items-center gap-2 px-4 py-3 bg-gray-50 dark:bg-muted/30 border-b border-border/30">
               <CheckCircle className="h-4 w-4 text-gray-600 dark:text-gray-400" />
               <h3 className="font-semibold text-sm text-gray-800 dark:text-gray-200">My To-Do List</h3>
+              <span className="ml-auto text-xs text-muted-foreground">
+                {pendingTodos.length} pending
+              </span>
             </div>
 
             {todosLoading ? (
@@ -359,28 +166,41 @@ export default function TodoUp() {
                 <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
               </div>
             ) : todos.length === 0 ? (
-              <div className="py-8 px-4">
-                <p className="text-sm text-muted-foreground text-center">
-                  No tasks yet. Add one below!
+              <div className="py-12 px-4 text-center">
+                <CheckCircle className="h-12 w-12 mx-auto text-muted-foreground/30 mb-3" />
+                <p className="text-sm font-medium text-muted-foreground mb-1">
+                  No tasks yet
                 </p>
+                <p className="text-xs text-muted-foreground/70 mb-4">
+                  Add your first to-do below
+                </p>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => document.getElementById('todo-input')?.focus()}
+                  className="gap-1"
+                >
+                  <Plus className="h-4 w-4" />
+                  Add To-Do
+                </Button>
               </div>
             ) : (
-              <div className="max-h-[40vh] overflow-y-auto divide-y divide-border/20">
-                {todos.map((todo, index) => (
+              <div className="max-h-[50vh] overflow-y-auto divide-y divide-border/20">
+                {/* Pending todos first */}
+                {pendingTodos.map((todo, index) => (
                   <div
                     key={todo.id}
                     className={cn(
-                      "flex items-center gap-3 px-4 py-3 transition-all group",
+                      "flex items-start gap-3 px-4 py-3 transition-all group",
                       index % 2 === 0 
                         ? "bg-white dark:bg-card" 
-                        : "bg-gray-50/50 dark:bg-muted/10",
-                      todo.completed && "opacity-60"
+                        : "bg-gray-50/50 dark:bg-muted/10"
                     )}
                   >
                     <Checkbox
                       checked={todo.completed}
-                      onCheckedChange={(checked) => toggleTodo(todo.id, !!checked)}
-                      className="data-[state=checked]:bg-gray-800 data-[state=checked]:border-gray-800 border-gray-400"
+                      onCheckedChange={(checked) => handleToggleComplete(todo.id, !!checked)}
+                      className="mt-1 data-[state=checked]:bg-gray-800 data-[state=checked]:border-gray-800 border-gray-400"
                     />
                     
                     {editingId === todo.id ? (
@@ -405,88 +225,102 @@ export default function TodoUp() {
                     ) : (
                       <>
                         <div className="flex-1 min-w-0">
-                          <p className={cn(
-                            "text-sm text-gray-800 dark:text-gray-200",
-                            todo.completed && "line-through text-gray-400 dark:text-gray-500"
-                          )}>
+                          <p className="text-sm font-medium text-foreground">
                             {todo.title}
                           </p>
-                          {todo.due_date && (
-                            <p className="text-xs text-gray-500 mt-0.5">
-                              Due: {format(parseISO(todo.due_date), 'dd MMM yyyy')}
-                            </p>
-                          )}
+                          <p className="text-xs text-muted-foreground mt-0.5">
+                            Created {format(parseISO(todo.created_at), 'MMM d, h:mm a')}
+                          </p>
                         </div>
                         <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                           <Button
                             variant="ghost"
                             size="icon"
-                            className="h-7 w-7 text-gray-500 hover:text-gray-800"
+                            className="h-7 w-7"
                             onClick={() => handleStartEdit(todo.id, todo.title)}
                           >
-                            <Edit2 className="h-3.5 w-3.5" />
+                            <Edit2 className="h-3.5 w-3.5 text-gray-500" />
                           </Button>
                           <Button
                             variant="ghost"
                             size="icon"
-                            className="h-7 w-7 text-gray-500 hover:text-red-600"
+                            className="h-7 w-7"
                             onClick={() => deleteTodo(todo.id)}
                           >
-                            <Trash2 className="h-3.5 w-3.5" />
+                            <Trash2 className="h-3.5 w-3.5 text-gray-500" />
                           </Button>
                         </div>
                       </>
                     )}
                   </div>
                 ))}
+
+                {/* Completed todos */}
+                {completedTodos.length > 0 && (
+                  <>
+                    <div className="px-4 py-2 bg-muted/30">
+                      <p className="text-xs font-medium text-muted-foreground">
+                        Completed ({completedTodos.length})
+                      </p>
+                    </div>
+                    {completedTodos.map((todo, index) => (
+                      <div
+                        key={todo.id}
+                        className="flex items-start gap-3 px-4 py-3 transition-all group opacity-60"
+                      >
+                        <Checkbox
+                          checked={todo.completed}
+                          onCheckedChange={(checked) => handleToggleComplete(todo.id, !!checked)}
+                          className="mt-1 data-[state=checked]:bg-gray-800 data-[state=checked]:border-gray-800 border-gray-400"
+                        />
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium text-foreground line-through">
+                            {todo.title}
+                          </p>
+                          <p className="text-xs text-muted-foreground mt-0.5">
+                            Completed {format(parseISO(todo.updated_at), 'MMM d, h:mm a')}
+                          </p>
+                        </div>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-7 w-7 opacity-0 group-hover:opacity-100"
+                          onClick={() => deleteTodo(todo.id)}
+                        >
+                          <Trash2 className="h-3.5 w-3.5 text-gray-500" />
+                        </Button>
+                      </div>
+                    ))}
+                  </>
+                )}
               </div>
             )}
           </div>
-
         </div>
       </main>
 
-      {/* Fixed AI To-Do Input Bar - Permanently fixed above bottom navigation, not draggable */}
-      <div 
-        className="fixed left-0 right-0 z-40 pointer-events-none"
-        style={{ bottom: '64px' }}
-      >
-        <div className="pointer-events-auto bg-background/95 backdrop-blur-sm border-t border-border/30 px-4 py-3">
-          <div className="max-w-lg mx-auto">
-            <div className="flex items-center gap-2 bg-white dark:bg-card border border-gray-300 dark:border-gray-600 rounded-full px-4 py-2 shadow-lg">
-              <Input
-                placeholder="Add a task or reminder"
-                value={newTodoInput}
-                onChange={(e) => setNewTodoInput(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' && newTodoInput.trim() && !showLock) {
-                    e.preventDefault();
-                    handleAddTodo();
-                  }
-                }}
-                disabled={showLock}
-                className="flex-1 border-0 bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0 placeholder:text-gray-400 text-sm h-9"
-              />
-              <Button
-                size="icon"
-                className="h-10 w-10 rounded-full shrink-0 bg-gray-900 hover:bg-gray-800 text-white shadow-md transition-all duration-150 active:scale-95"
-                onClick={handleAddTodo}
-                disabled={!newTodoInput.trim() || showLock}
-              >
-                <Send className="h-4 w-4" />
-              </Button>
-            </div>
-            {showLock && (
-              <p className="text-xs text-center text-muted-foreground mt-2">
-                Upgrade to Pro to add tasks
-              </p>
-            )}
-          </div>
+      {/* Fixed bottom input */}
+      <div className="fixed bottom-16 left-0 right-0 z-30 bg-card/95 backdrop-blur-xl border-t border-border/50 p-3 safe-area-pb">
+        <div className="max-w-lg mx-auto flex items-center gap-2">
+          <Input
+            id="todo-input"
+            placeholder="Add a to-do task or reminder..."
+            value={newTodoInput}
+            onChange={(e) => setNewTodoInput(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') handleAddTodo();
+            }}
+            className="flex-1 h-10 bg-muted/50 border-border/50"
+          />
+          <Button
+            onClick={handleAddTodo}
+            disabled={!newTodoInput.trim()}
+            className="h-10 px-4"
+          >
+            <Send className="h-4 w-4" />
+          </Button>
         </div>
       </div>
-
-      {/* Upgrade Bar only for Free Users at/over limit */}
-      {showLock && <UpgradeBar />}
 
       <BottomNav />
     </div>

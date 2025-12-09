@@ -1,14 +1,11 @@
-// Dashboard - Follow-Up List Page
+// Dashboard - Follow-Up List Page (Simplified)
 import { useEffect, useState, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useProspects } from '@/hooks/useProspects';
 import { useSheets } from '@/hooks/useSheets';
-import { useSubscription } from '@/hooks/useSubscription';
-import { useProspectLimit } from '@/hooks/useProspectLimit';
 import { BottomNav } from '@/components/layout/BottomNav';
 import { ProspectTable } from '@/components/prospects/ProspectTable';
-import { ProspectLimitBadge } from '@/components/prospects/ProspectLimitBadge';
 import { PullToRefreshIndicator } from '@/components/PullToRefreshIndicator';
 import { BottomViewToggle } from '@/components/ui/BottomViewToggle';
 import { Loader2, Phone, GitBranch } from 'lucide-react';
@@ -68,8 +65,6 @@ export default function Dashboard() {
   const { user, loading: authLoading } = useAuth();
   const { prospects, loading, addProspect, updateProspect, deleteProspect, bulkDeleteProspects, restoreProspect, restoreProspects, importProspects, reorderProspects, refetch } = useProspects();
   const { sheets, selectedSheetId, setSelectedSheetId, addSheet, updateSheet, deleteSheet, refetch: refetchSheets } = useSheets();
-  const { isPro, loading: subLoading } = useSubscription();
-  const { uniqueCount, limit, remaining, isAtLimit, isNearLimit, getAvailableSlots } = useProspectLimit(prospects, isPro);
   
   const [mainTab, setMainTab] = useState<'leads' | 'funnel'>('leads');
 
@@ -78,25 +73,6 @@ export default function Dashboard() {
     await Promise.all([refetch?.(), refetchSheets?.()]);
   }, [refetch, refetchSheets]);
   const { containerRef, isRefreshing, pullDistance, showIndicator } = usePullToRefresh(handleRefresh);
-  
-
-  // Calculate Total CC: 2CC counts as 2, Level Up as 1
-  const totalCC = prospects.reduce((sum, p) => {
-    if (p.funnel_stage === '2CC') return sum + 2;
-    if (p.funnel_stage === 'Level Up') return sum + 1;
-    return sum;
-  }, 0);
-
-  // Calculate funnel counts for summary bar
-  const funnelCounts = {
-    enrolled: prospects.filter(p => p.enrollment_status === 'Enrolled').length,
-    day1: prospects.filter(p => p.funnel_stage === 'Day 1').length,
-    day2: prospects.filter(p => p.funnel_stage === 'Day 2').length,
-    day3: prospects.filter(p => p.funnel_stage === 'Day 3').length,
-    minBill: prospects.filter(p => p.funnel_stage === 'Minimum Bill').length,
-    levelUp: prospects.filter(p => p.funnel_stage === 'Level Up').length,
-    twoCC: prospects.filter(p => p.funnel_stage === '2CC').length,
-  };
 
   useEffect(() => {
     if (!user && !authLoading) {
@@ -115,8 +91,8 @@ export default function Dashboard() {
   if (!user) return null;
 
   const toggleOptions: [{ value: string; label: string; icon: typeof Phone }, { value: string; label: string; icon: typeof GitBranch }] = [
-    { value: 'leads', label: 'Leads', icon: Phone },
-    { value: 'funnel', label: 'Funnel', icon: GitBranch },
+    { value: 'leads', label: 'Calling', icon: Phone },
+    { value: 'funnel', label: 'Stages', icon: GitBranch },
   ];
 
   return (
@@ -133,19 +109,7 @@ export default function Dashboard() {
               />
               <div>
                 <h1 className="text-xl font-bold tracking-tight">Follow Up</h1>
-                <p className="text-xs text-muted-foreground font-medium">Calling & Funnel Follow-ups</p>
-              </div>
-            </div>
-            <div className="flex flex-col items-end gap-1">
-              <ProspectLimitBadge 
-                count={uniqueCount} 
-                limit={limit} 
-                isPro={isPro}
-                isNearLimit={isNearLimit}
-              />
-              <div className="bg-gradient-to-br from-primary/10 to-primary/5 rounded-xl px-4 py-2 text-right border border-primary/10">
-                <p className="text-[10px] text-muted-foreground font-medium">Total Min Billing</p>
-                <p className="text-2xl font-bold text-primary tracking-tight">{totalCC}</p>
+                <p className="text-xs text-muted-foreground font-medium">Calling & Follow-ups</p>
               </div>
             </div>
           </div>
@@ -154,42 +118,6 @@ export default function Dashboard() {
         <main ref={containerRef} className="scrollable-content relative">
           <PullToRefreshIndicator isRefreshing={isRefreshing} pullDistance={pullDistance} showIndicator={showIndicator} />
           <div className="container py-3 px-4 pb-28">
-            {/* Funnel Summary Bar - Cleaner Format */}
-            <div className="text-xs text-muted-foreground bg-muted/30 rounded-lg px-3 py-2 mb-4">
-              <div className="flex flex-wrap items-center gap-x-1 gap-y-1">
-                <span>Enrolled: <strong className="text-foreground">{funnelCounts.enrolled}</strong></span>
-                <span className="text-muted-foreground/50">·</span>
-                <span>Day 1: <strong className="text-foreground">{funnelCounts.day1}</strong></span>
-                <span className="text-muted-foreground/50">·</span>
-                <span>Day 2: <strong className="text-foreground">{funnelCounts.day2}</strong></span>
-                <span className="text-muted-foreground/50">·</span>
-                <span>Day 3: <strong className="text-foreground">{funnelCounts.day3}</strong></span>
-                <span className="text-muted-foreground/50">·</span>
-                <span>Min Bill: <strong className="text-foreground">{funnelCounts.minBill}</strong></span>
-                <span className="text-muted-foreground/50">·</span>
-                <span>Level Up: <strong className="text-foreground">{funnelCounts.levelUp}</strong></span>
-                <span className="text-muted-foreground/50">·</span>
-                <span>2CC: <strong className="text-foreground">{funnelCounts.twoCC}</strong></span>
-              </div>
-            </div>
-
-            {/* Near Limit Warning Banner */}
-            {isNearLimit && !isPro && (
-              <div className="bg-amber-500/10 border border-amber-500/30 rounded-lg px-3 py-2 mb-4 flex items-center justify-between">
-                <span className="text-xs text-amber-600">
-                  You're near your free limit ({uniqueCount}/{limit}). Upgrade to Pro to add more.
-                </span>
-                <a 
-                  href="https://rzp.io/rzp/iQIz9kH" 
-                  target="_blank" 
-                  rel="noopener noreferrer"
-                  className="text-xs font-medium text-primary hover:underline"
-                >
-                  Upgrade
-                </a>
-              </div>
-            )}
-
             {/* Content based on active tab */}
             {mainTab === 'leads' ? (
               <ProspectTable
@@ -211,9 +139,6 @@ export default function Dashboard() {
                 onDeleteSheet={deleteSheet}
                 filterMode="calling"
                 subFilter="all"
-                isAtLimit={isAtLimit}
-                availableSlots={getAvailableSlots()}
-                uniqueCount={uniqueCount}
               />
             ) : (
               <ProspectTable
@@ -235,9 +160,6 @@ export default function Dashboard() {
                 onDeleteSheet={deleteSheet}
                 filterMode="funnel"
                 subFilter="all"
-                isAtLimit={isAtLimit}
-                availableSlots={getAvailableSlots()}
-                uniqueCount={uniqueCount}
               />
             )}
           </div>
