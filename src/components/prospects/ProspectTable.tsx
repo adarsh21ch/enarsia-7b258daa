@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback, useRef } from 'react';
 import { Prospect, FunnelStage, ProspectQuality, Sheet, ExtendedActionTaken } from '@/types/prospect';
 import { SortableProspectRow } from './SortableProspectRow';
 import { MobileProspectCard } from './MobileProspectCard';
@@ -6,6 +6,7 @@ import { ProspectFilters } from './ProspectFilters';
 import { AddProspectDialog } from './AddProspectDialog';
 import { ImportExcelDialog } from './ImportExcelDialog';
 import { SheetTabs } from './SheetTabs';
+import { TableLayout } from './TableLayout';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -691,145 +692,37 @@ export function ProspectTable({
         </>
       ) : (
         // Table Layout - ALWAYS show sheet tabs + header, even when empty
-        <div className="bg-card rounded-xl border border-border overflow-hidden shadow-sm">
-          <div 
-            className="overflow-x-auto"
-            style={{ WebkitOverflowScrolling: 'touch' }}
-          >
-            <table 
-              className="text-sm border-collapse w-full"
-              style={{ minWidth: isMobile ? '580px' : '880px' }}
-            >
-              {/* Sticky header block: Sheet tabs + column headers */}
-              <thead className="sticky top-0 z-30">
-                {/* Sheet tabs row - ALWAYS visible */}
-                <tr>
-                  <th 
-                    colSpan={COLUMN_ORDER.length + (selectionMode.active ? 2 : 1) + 1} 
-                    className="p-0 bg-card border-b border-border/50"
-                  >
-                    <SheetTabs
-                      sheets={sheets}
-                      selectedSheetId={selectedSheetId}
-                      onSelectSheet={onSelectSheet}
-                      onAddSheet={onAddSheet}
-                      onUpdateSheet={handleUpdateSheetWithUndo}
-                      onDeleteSheet={onDeleteSheet}
-                      onEnterSelectMode={handleEnterSelectMode}
-                      onDeleteAllInSheet={handleDeleteAllInSheet}
-                    />
-                  </th>
-                </tr>
-                {/* Column header row */}
-                <tr className="bg-muted/95 backdrop-blur-sm text-xs font-semibold text-muted-foreground border-b border-border">
-                  {/* Selection checkbox header */}
-                  {selectionMode.active && (
-                    <th className="px-2 py-2.5 w-10 min-w-[40px]">
-                      <Checkbox
-                        checked={selectedIds.size === selectionProspects.length && selectionProspects.length > 0}
-                        onCheckedChange={handleSelectAll}
-                      />
-                    </th>
-                  )}
-                  {/* Drag handle header */}
-                  <th className="px-1 py-2.5 w-8 min-w-[32px]"></th>
-                  {COLUMN_ORDER.map((columnId) => {
-                    const col = COLUMNS.find(c => c.id === columnId);
-                    if (!col) return null;
-                    const width = columnWidths[columnId];
-                    const isNameColumn = columnId === 'name';
-                    const isIndexColumn = columnId === 'index';
-                    
-                    return (
-                      <th
-                        key={columnId}
-                        className={cn(
-                          "px-2 py-2.5 text-left whitespace-nowrap",
-                          columnId === 'index' && "text-center",
-                          isMobile && "text-[11px] px-1.5",
-                          isMobile && isNameColumn && "sticky left-[68px] z-20 bg-muted/95 shadow-[2px_0_4px_-2px_rgba(0,0,0,0.15)]",
-                          isMobile && isIndexColumn && "sticky left-[32px] z-20 bg-muted/95"
-                        )}
-                        style={{ width: `${width}px`, minWidth: `${width}px` }}
-                      >
-                        {col.label}
-                      </th>
-                    );
-                  })}
-                </tr>
-              </thead>
-              {/* Table body */}
-              <DndContext
-                sensors={sensors}
-                collisionDetection={closestCenter}
-                onDragEnd={handleRowDragEnd}
-              >
-                <SortableContext
-                  items={filteredProspects.map(p => p.id)}
-                  strategy={verticalListSortingStrategy}
-                >
-                  <tbody>
-                    {filteredProspects.length === 0 ? (
-                      // Empty state row - keeps table structure intact
-                      <tr>
-                        <td 
-                          colSpan={COLUMN_ORDER.length + (selectionMode.active ? 2 : 1) + 1}
-                          className="py-12 text-center"
-                        >
-                          <Users className="h-10 w-10 mx-auto text-muted-foreground/40 mb-3" />
-                          <p className="text-sm font-medium text-muted-foreground mb-1">
-                            {prospects.length === 0 
-                              ? "No prospects yet" 
-                              : selectedSheetId 
-                                ? "No prospects in this sheet"
-                                : "No prospects match your filters"
-                            }
-                          </p>
-                          <p className="text-xs text-muted-foreground/70 mb-3">
-                            {prospects.length === 0 || (selectedSheetId && sheetFilteredProspects.length === 0)
-                              ? "Import Excel or Add Prospect to get started"
-                              : (
-                                <button
-                                  onClick={() => setFilters({ search: '', stages: [], qualities: [], actions: [], incompleteOnly: false })}
-                                  className="text-accent hover:underline"
-                                >
-                                  Clear filters
-                                </button>
-                              )
-                            }
-                          </p>
-                        </td>
-                      </tr>
-                    ) : (
-                      filteredProspects.map((prospect, index) => (
-                        <SortableProspectRow
-                          key={prospect.id}
-                          prospect={prospect}
-                          index={index + 1}
-                          isCalling={isCalling}
-                          isExpanded={expandedRowId === prospect.id}
-                          onToggleExpand={() => handleToggleExpand(prospect.id)}
-                          onUpdate={handleUpdateWithUndo}
-                          onDelete={handleDeleteWithUndo}
-                          isEven={index % 2 === 0}
-                          columnOrder={COLUMN_ORDER}
-                          columnWidths={columnWidths}
-                          isMobileTable={isMobile}
-                          showSelection={selectionMode.active && selectionProspects.some(p => p.id === prospect.id)}
-                          isSelected={selectedIds.has(prospect.id)}
-                          onToggleSelect={() => handleToggleSelect(prospect.id)}
-                        />
-                      ))
-                    )}
-                  </tbody>
-                </SortableContext>
-              </DndContext>
-            </table>
-          </div>
-          <div className="px-4 py-3 border-t border-border bg-muted/20 text-xs text-muted-foreground flex items-center justify-between">
-            <span>Showing {filteredProspects.length} of {baseProspects.length} prospects</span>
-          </div>
-        </div>
+        <TableLayout
+          sheets={sheets}
+          selectedSheetId={selectedSheetId}
+          onSelectSheet={onSelectSheet}
+          onAddSheet={onAddSheet}
+          onUpdateSheet={handleUpdateSheetWithUndo}
+          onDeleteSheet={onDeleteSheet}
+          onEnterSelectMode={handleEnterSelectMode}
+          onDeleteAllInSheet={handleDeleteAllInSheet}
+          selectionMode={selectionMode}
+          selectedIds={selectedIds}
+          selectionProspects={selectionProspects}
+          handleSelectAll={handleSelectAll}
+          columnOrder={COLUMN_ORDER}
+          columnWidths={columnWidths}
+          isMobile={isMobile}
+          filteredProspects={filteredProspects}
+          prospects={prospects}
+          sheetFilteredProspects={sheetFilteredProspects}
+          baseProspects={baseProspects}
+          setFilters={setFilters}
+          sensors={sensors}
+          handleRowDragEnd={handleRowDragEnd}
+          isCalling={isCalling}
+          expandedRowId={expandedRowId}
+          handleToggleExpand={handleToggleExpand}
+          handleUpdateWithUndo={handleUpdateWithUndo}
+          handleDeleteWithUndo={handleDeleteWithUndo}
+          handleToggleSelect={handleToggleSelect}
+          COLUMNS={COLUMNS}
+        />
       )}
 
       {/* Delete Confirmation Dialog */}
