@@ -20,6 +20,9 @@ export function Day1SetupDialog({ open, onSave }: Day1SetupDialogProps) {
     }
   };
 
+  // Get current month name dynamically
+  const currentMonthName = format(new Date(), 'MMMM');
+
   return (
     <Dialog open={open}>
       <DialogContent className="sm:max-w-md" onInteractOutside={(e) => e.preventDefault()}>
@@ -28,10 +31,10 @@ export function Day1SetupDialog({ open, onSave }: Day1SetupDialogProps) {
             <div className="p-2 rounded-lg bg-primary/10">
               <CalendarDays className="h-5 w-5 text-primary" />
             </div>
-            <DialogTitle>Set your Funnel Start Date</DialogTitle>
+            <DialogTitle>Set your Day-1 Follow-up Date</DialogTitle>
           </div>
           <DialogDescription>
-            Select the date you started Day 1 of your funnel so we can track your numbers correctly.
+            Enter your first Day-1 follow-up date for {currentMonthName}.
           </DialogDescription>
         </DialogHeader>
         
