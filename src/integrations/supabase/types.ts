@@ -247,6 +247,7 @@ export type Database = {
           created_at: string
           display_name: string | null
           id: string
+          neverai_id: string | null
           phone: string | null
           updated_at: string
           user_id: string
@@ -259,6 +260,7 @@ export type Database = {
           created_at?: string
           display_name?: string | null
           id?: string
+          neverai_id?: string | null
           phone?: string | null
           updated_at?: string
           user_id: string
@@ -271,6 +273,7 @@ export type Database = {
           created_at?: string
           display_name?: string | null
           id?: string
+          neverai_id?: string | null
           phone?: string | null
           updated_at?: string
           user_id?: string
@@ -372,6 +375,27 @@ export type Database = {
           id?: string
           name?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      team_access: {
+        Row: {
+          created_at: string
+          id: string
+          owner_user_id: string
+          shared_with_user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          owner_user_id: string
+          shared_with_user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          owner_user_id?: string
+          shared_with_user_id?: string
         }
         Relationships: []
       }
@@ -497,6 +521,15 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      generate_neverai_id: { Args: never; Returns: string }
+      get_user_by_neverai_id: {
+        Args: { target_neverai_id: string }
+        Returns: {
+          display_name: string
+          neverai_id: string
+          user_id: string
+        }[]
+      }
       get_user_email_for_admin: {
         Args: { target_user_id: string }
         Returns: string
