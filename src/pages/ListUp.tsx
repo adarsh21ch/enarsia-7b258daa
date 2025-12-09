@@ -3,12 +3,15 @@ import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useProspects } from '@/hooks/useProspects';
+import { useSharedProspects } from '@/hooks/useSharedProspects';
 import { BottomNav } from '@/components/layout/BottomNav';
 import { PullToRefreshIndicator } from '@/components/PullToRefreshIndicator';
+import { TeamAccessDialog } from '@/components/team/TeamAccessDialog';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Loader2, Filter, Phone, MessageCircle, ChevronDown, ChevronUp, Tags, X } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Loader2, Filter, Phone, MessageCircle, ChevronDown, ChevronUp, Tags, X, Users } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import nevoraLogo from '@/assets/nevorai-logo.jpeg';
 import { Prospect } from '@/types/prospect';
@@ -63,14 +66,23 @@ function usePullToRefresh(onRefresh: () => Promise<void>, threshold = 80) {
 export default function ListUp() {
   const navigate = useNavigate();
   const { user, loading: authLoading } = useAuth();
-  const { prospects, loading: prospectsLoading, refetch } = useProspects();
+  const { prospects: myProspects, loading: prospectsLoading, refetch } = useProspects();
+  const { sharedOwners, selectedOwnerId, setSelectedOwnerId, prospects: sharedProspects, loading: sharedLoading, refetch: refetchShared } = useSharedProspects();
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [expandedProspectId, setExpandedProspectId] = useState<string | null>(null);
 
+  // Determine which prospects to show
+  const prospects = selectedOwnerId ? sharedProspects : myProspects;
+  const isViewingShared = !!selectedOwnerId;
+
   // Pull-to-refresh
   const handleRefresh = useCallback(async () => {
-    await refetch?.();
-  }, [refetch]);
+    if (selectedOwnerId) {
+      await refetchShared?.();
+    } else {
+      await refetch?.();
+    }
+  }, [refetch, refetchShared, selectedOwnerId]);
   const { containerRef, isRefreshing, pullDistance, showIndicator } = usePullToRefresh(handleRefresh);
 
   useEffect(() => {
@@ -159,7 +171,9 @@ export default function ListUp() {
     window.location.href = `tel:${phone}`;
   };
 
-  if (authLoading || prospectsLoading) {
+  const isLoading = authLoading || prospectsLoading || (selectedOwnerId && sharedLoading);
+  
+  if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -181,21 +195,52 @@ export default function ListUp() {
             />
             <div>
               <h1 className="text-xl font-bold tracking-tight">ListUp</h1>
-              <p className="text-xs text-muted-foreground font-medium">View by Tags</p>
+              <p className="text-xs text-muted-foreground font-medium">
+                {isViewingShared ? `Viewing ${sharedOwners.find(o => o.user_id === selectedOwnerId)?.display_name}'s data` : 'View by Tags'}
+              </p>
             </div>
           </div>
-          {selectedTags.length > 0 && (
-            <Button variant="ghost" size="sm" onClick={clearTags} className="text-xs gap-1">
-              <X className="h-3 w-3" />
-              Clear
-            </Button>
-          )}
+          <div className="flex items-center gap-2">
+            {selectedTags.length > 0 && (
+              <Button variant="ghost" size="sm" onClick={clearTags} className="text-xs gap-1">
+                <X className="h-3 w-3" />
+                Clear
+              </Button>
+            )}
+            <TeamAccessDialog />
+          </div>
         </div>
       </header>
 
       <main ref={containerRef} className="scrollable-content relative pb-20">
         <PullToRefreshIndicator isRefreshing={isRefreshing} pullDistance={pullDistance} showIndicator={showIndicator} />
         <div className="container py-3 px-4 space-y-4">
+          {/* Team Data Selector */}
+          {sharedOwners.length > 0 && (
+            <div className="bg-card rounded-xl p-3 border border-border/50">
+              <div className="flex items-center gap-2 mb-2">
+                <Users className="h-4 w-4 text-muted-foreground" />
+                <span className="text-xs font-medium text-muted-foreground">View Team Data</span>
+              </div>
+              <Select 
+                value={selectedOwnerId || 'my-data'} 
+                onValueChange={(val) => setSelectedOwnerId(val === 'my-data' ? null : val)}
+              >
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Select whose data to view" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="my-data">My Prospects</SelectItem>
+                  {sharedOwners.map(owner => (
+                    <SelectItem key={owner.user_id} value={owner.user_id}>
+                      {owner.display_name}'s Prospects
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+
           {/* Tag Filter Bar */}
           <div className="bg-card rounded-xl p-3 border border-border/50">
             <div className="flex items-center gap-2 mb-2">
