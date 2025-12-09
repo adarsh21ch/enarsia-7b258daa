@@ -311,21 +311,21 @@ export function ImportExcelDialog({ onImport, availableSlots = Infinity, isAtLim
           )}
 
           {step === 'mapping' && (
-            <div className="space-y-4">
-              {/* Column Mapping Section - Fixed at top */}
-              <div className="bg-muted/30 rounded-lg p-3 border border-border">
+            <div className="flex flex-col h-[70vh] max-h-[500px]">
+              {/* Fixed Column Mapping Section - Always visible at top */}
+              <div className="flex-shrink-0 bg-muted/30 rounded-lg p-3 border border-border mb-3">
                 <p className="text-xs text-muted-foreground mb-3">
-                  Select which column contains each field. Scroll preview below to see your data.
+                  Scroll the preview table below to find your data columns, then select them here.
                 </p>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                   {(Object.keys(mapping) as (keyof ColumnMapping)[]).map((field) => (
                     <div key={field} className="flex items-center gap-2">
-                      <Label className="text-xs min-w-[80px] shrink-0">{FIELD_LABELS[field]}</Label>
+                      <Label className="text-xs min-w-[90px] shrink-0">{FIELD_LABELS[field]}</Label>
                       <Select
                         value={mapping[field] || '__none__'}
                         onValueChange={(value) => setMapping({ ...mapping, [field]: value === '__none__' ? null : value })}
                       >
-                        <SelectTrigger className="h-8 text-xs flex-1">
+                        <SelectTrigger className="h-8 text-xs flex-1 bg-background">
                           <SelectValue placeholder="Select..." />
                         </SelectTrigger>
                         <SelectContent className="bg-popover border-border z-50">
@@ -342,19 +342,27 @@ export function ImportExcelDialog({ onImport, availableSlots = Infinity, isAtLim
                 </div>
               </div>
 
-              {/* Preview Section - Scrollable */}
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <Label className="text-xs">Data Preview (scroll to see all columns →)</Label>
+              {/* Scrollable Preview Section */}
+              <div className="flex-1 flex flex-col min-h-0 space-y-2">
+                <div className="flex items-center justify-between flex-shrink-0">
+                  <Label className="text-xs">Data Preview (scroll right →)</Label>
                   <span className="text-xs text-muted-foreground">{columns.length} columns</span>
                 </div>
-                <div className="border border-border rounded-lg overflow-hidden">
-                  <div className="overflow-x-auto overflow-y-auto max-h-[180px]">
-                    <table className="text-xs w-max">
+                
+                <div className="flex-1 border border-border rounded-lg overflow-hidden min-h-0">
+                  <div className="h-full overflow-auto">
+                    <table className="text-xs border-collapse">
                       <thead className="bg-muted sticky top-0 z-10">
                         <tr>
-                          {columns.map((col) => (
-                            <th key={col} className="px-2 py-1.5 text-left font-medium whitespace-nowrap min-w-[80px] border-r border-border last:border-r-0">
+                          {/* Frozen Column 1 */}
+                          {columns.length > 0 && (
+                            <th className="px-2 py-1.5 text-left font-medium whitespace-nowrap min-w-[100px] max-w-[120px] border-r-2 border-primary/30 bg-muted sticky left-0 z-20">
+                              {columns[0]}
+                            </th>
+                          )}
+                          {/* Scrollable columns 2+ */}
+                          {columns.slice(1).map((col) => (
+                            <th key={col} className="px-2 py-1.5 text-left font-medium whitespace-nowrap min-w-[100px] border-r border-border last:border-r-0 bg-muted">
                               {col}
                             </th>
                           ))}
@@ -363,8 +371,15 @@ export function ImportExcelDialog({ onImport, availableSlots = Infinity, isAtLim
                       <tbody>
                         {previewData.map((row, i) => (
                           <tr key={i} className="border-t border-border">
-                            {columns.map((col) => (
-                              <td key={col} className="px-2 py-1.5 whitespace-nowrap min-w-[80px] max-w-[150px] truncate border-r border-border last:border-r-0">
+                            {/* Frozen Column 1 data */}
+                            {columns.length > 0 && (
+                              <td className="px-2 py-1.5 whitespace-nowrap min-w-[100px] max-w-[120px] truncate border-r-2 border-primary/30 bg-card sticky left-0 z-10">
+                                {row[columns[0]] || '–'}
+                              </td>
+                            )}
+                            {/* Scrollable columns 2+ data */}
+                            {columns.slice(1).map((col) => (
+                              <td key={col} className="px-2 py-1.5 whitespace-nowrap min-w-[100px] max-w-[150px] truncate border-r border-border last:border-r-0">
                                 {row[col] || '–'}
                               </td>
                             ))}
@@ -374,7 +389,8 @@ export function ImportExcelDialog({ onImport, availableSlots = Infinity, isAtLim
                     </table>
                   </div>
                 </div>
-                <p className="text-xs text-muted-foreground">
+                
+                <p className="text-xs text-muted-foreground flex-shrink-0">
                   Showing first 5 of {fullData.length} rows
                   {availableSlots < Infinity && availableSlots < fullData.length && (
                     <span className="text-amber-600"> • Only {importableCount} will be imported (free limit)</span>
@@ -382,8 +398,8 @@ export function ImportExcelDialog({ onImport, availableSlots = Infinity, isAtLim
                 </p>
               </div>
 
-              {/* Action Buttons */}
-              <div className="flex justify-between gap-2 pt-2 border-t border-border">
+              {/* Fixed Action Buttons at bottom */}
+              <div className="flex-shrink-0 flex justify-between gap-2 pt-3 mt-3 border-t border-border">
                 <Button variant="outline" size="sm" onClick={resetState}>
                   Back
                 </Button>
