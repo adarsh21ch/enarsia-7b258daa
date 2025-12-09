@@ -1,3 +1,6 @@
+// Hidden for v1 launch - payment/subscription features disabled but code preserved
+// To restore: uncomment all code below and remove the "return null" line
+
 import { Crown, Sparkles, Check, Calendar, Loader2, Star, Tag } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -9,6 +12,10 @@ import { useState } from 'react';
 type PlanType = 'monthly' | 'yearly';
 
 export function UpgradeCard() {
+  // V1 LAUNCH: Hidden - return null immediately
+  return null;
+
+  /* PRESERVED CODE FOR FUTURE RESTORATION:
   const { isPro, isAdminOverride, daysRemaining, subscription, loading, refetch } = useSubscription();
   const { initiatePayment, loading: paymentLoading } = useRazorpay();
   const [selectedPlan, setSelectedPlan] = useState<PlanType>('yearly');
@@ -97,9 +104,7 @@ export function UpgradeCard() {
         </div>
       </div>
 
-      {/* Plan Selection */}
       <div className="space-y-3 mb-4">
-        {/* Yearly Plan - Best Value */}
         <button
           type="button"
           onClick={() => setSelectedPlan('yearly')}
@@ -135,7 +140,6 @@ export function UpgradeCard() {
           </div>
         </button>
 
-        {/* Monthly Plan */}
         <button
           type="button"
           onClick={() => setSelectedPlan('monthly')}
@@ -159,7 +163,6 @@ export function UpgradeCard() {
         </button>
       </div>
 
-      {/* Coupon Code Section - Only show for yearly plan */}
       {selectedPlan === 'yearly' && (
         <div className="mb-4 p-3 rounded-lg bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800">
           <div className="flex items-center gap-2 mb-2">
@@ -225,4 +228,5 @@ export function UpgradeCard() {
       </Button>
     </div>
   );
+  */
 }
