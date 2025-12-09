@@ -1,16 +1,19 @@
 // Dashboard - Follow-Up List Page
 import { useEffect, useState, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { format } from 'date-fns';
 import { useAuth } from '@/contexts/AuthContext';
 import { useProspects } from '@/hooks/useProspects';
 import { useSheets } from '@/hooks/useSheets';
 import { useSubscription } from '@/hooks/useSubscription';
 import { useProspectLimit } from '@/hooks/useProspectLimit';
+import { useFunnelConfig } from '@/hooks/useFunnelConfig';
 import { BottomNav } from '@/components/layout/BottomNav';
 import { ProspectTable } from '@/components/prospects/ProspectTable';
 import { ProspectLimitBadge } from '@/components/prospects/ProspectLimitBadge';
 import { PullToRefreshIndicator } from '@/components/PullToRefreshIndicator';
 import { BottomViewToggle } from '@/components/ui/BottomViewToggle';
+import { Day1SetupDialog } from '@/components/trackup/Day1SetupDialog';
 import { Loader2, Phone, GitBranch } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import nevoraLogo from '@/assets/nevorai-logo.jpeg';
@@ -70,8 +73,31 @@ export default function Dashboard() {
   const { sheets, selectedSheetId, setSelectedSheetId, addSheet, updateSheet, deleteSheet, refetch: refetchSheets } = useSheets();
   const { isPro, loading: subLoading } = useSubscription();
   const { uniqueCount, limit, remaining, isAtLimit, isNearLimit, getAvailableSlots } = useProspectLimit(prospects, isPro);
+  const { config, loading: configLoading, saveConfig } = useFunnelConfig();
   
   const [mainTab, setMainTab] = useState<'leads' | 'funnel'>('leads');
+  const [showDay1Setup, setShowDay1Setup] = useState(false);
+  const [hasCheckedConfig, setHasCheckedConfig] = useState(false);
+
+  // Check for Day 1 setup on first visit to Follow-up page
+  useEffect(() => {
+    if (!configLoading && !hasCheckedConfig) {
+      if (!config) {
+        setShowDay1Setup(true);
+      }
+      setHasCheckedConfig(true);
+    }
+  }, [config, configLoading, hasCheckedConfig]);
+
+  // Save Day 1 date from setup dialog
+  const handleDay1Save = async (date: Date) => {
+    await saveConfig({
+      funnel_name: 'Default Funnel',
+      funnel_length: 3, // Fixed 3-day funnel
+      day_1_start: format(date, 'yyyy-MM-dd'),
+    });
+    setShowDay1Setup(false);
+  };
 
   // Pull-to-refresh
   const handleRefresh = useCallback(async () => {
@@ -104,7 +130,7 @@ export default function Dashboard() {
     }
   }, [user, authLoading, navigate]);
 
-  if (authLoading) {
+  if (authLoading || configLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -242,6 +268,12 @@ export default function Dashboard() {
             )}
           </div>
         </main>
+
+        {/* Day 1 Setup Dialog */}
+        <Day1SetupDialog 
+          open={showDay1Setup} 
+          onSave={handleDay1Save} 
+        />
 
         {/* Fixed Bottom View Toggle */}
         <BottomViewToggle
