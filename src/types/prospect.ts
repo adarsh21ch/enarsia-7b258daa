@@ -1,7 +1,8 @@
-export type FunnelStage = 'Day 1' | 'Day 2' | 'Day 3' | 'Minimum Bill' | 'Level Up' | '2CC';
-export type ActionTaken = 'Video Sent' | 'Not Picked' | 'Call Back' | 'Call Cut' | 'Not Interested';
-export type ExtendedActionTaken = ActionTaken | 'Enrollment';
-export type ProspectStatus = 'Good' | 'Medium' | 'Bad';
+// Prospect types - User-customizable tags system
+export type FunnelStage = string; // Now user-defined
+export type ActionTaken = string; // Now user-defined
+export type ExtendedActionTaken = string;
+export type ProspectStatus = string; // Now user-defined
 export type PriorityLevel = 'High' | 'Medium' | 'Low';
 export type EnrollmentStatus = 'Enrolled' | 'Not Enrolled';
 
@@ -63,36 +64,22 @@ export interface ActivityLog {
   created_at: string;
 }
 
-export const FUNNEL_STAGES: FunnelStage[] = ['Day 1', 'Day 2', 'Day 3', 'Minimum Bill', 'Level Up', '2CC'];
-export const CALLING_STAGES: FunnelStage[] = [];
-export const FUNNEL_TAB_STAGES: FunnelStage[] = ['Day 1', 'Day 2', 'Day 3', 'Minimum Bill', 'Level Up', '2CC'];
-export const ACTIONS: ActionTaken[] = ['Video Sent', 'Not Picked', 'Call Back', 'Call Cut', 'Not Interested'];
-export const EXTENDED_ACTIONS: ExtendedActionTaken[] = ['Video Sent', 'Not Picked', 'Call Back', 'Call Cut', 'Not Interested', 'Enrollment'];
-export const STATUSES: ProspectStatus[] = ['Good', 'Medium', 'Bad'];
-export const QUALITIES: ProspectQuality[] = ['Good', 'Medium', 'Bad'];
+// Empty arrays - users create their own tags
+export const FUNNEL_STAGES: string[] = [];
+export const CALLING_STAGES: string[] = [];
+export const FUNNEL_TAB_STAGES: string[] = [];
+export const ACTIONS: string[] = [];
+export const EXTENDED_ACTIONS: string[] = [];
+export const STATUSES: string[] = [];
+export const QUALITIES: string[] = [];
 export const PRIORITIES: PriorityLevel[] = ['High', 'Medium', 'Low'];
 export const ENROLLMENT_STATUSES: EnrollmentStatus[] = ['Enrolled', 'Not Enrolled'];
 
-// Helper to map old status values to new ones
+// Helper to map old status values to new ones (kept for backwards compatibility)
 export const mapOldStatusToNew = (oldStatus: string | null | undefined): ProspectStatus | null => {
   if (!oldStatus) return null;
-  const mapping: Record<string, ProspectStatus> = {
-    '+VE': 'Good',
-    'Good': 'Good',
-    '-VE': 'Bad',
-    'Bad': 'Bad',
-    '50-50': 'Medium',
-    '30-70': 'Medium',
-    'Medium': 'Medium',
-  };
-  return mapping[oldStatus] || null;
+  return oldStatus; // Pass through as-is now
 };
 
-export const FUNNEL_STAGE_ORDER: Record<FunnelStage, number> = {
-  'Day 1': 0,
-  'Day 2': 1,
-  'Day 3': 2,
-  'Minimum Bill': 3,
-  'Level Up': 4,
-  '2CC': 5,
-};
+// Empty stage order - users define their own
+export const FUNNEL_STAGE_ORDER: Record<string, number> = {};

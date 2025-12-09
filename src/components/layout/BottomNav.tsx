@@ -1,13 +1,12 @@
 import { NavLink, useLocation } from 'react-router-dom';
-import { Calendar, BarChart3, Home, ListTodo, User } from 'lucide-react';
+import { Home, ListTodo, Calendar, List, User } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
-// Note: Track Up tab hidden for v1 launch - code preserved in /tracking route
 const navItems = [
   { path: '/home', icon: Home, label: 'Home' },
   { path: '/action', icon: ListTodo, label: 'Todo Up' },
   { path: '/dashboard', icon: Calendar, label: 'Follow Up' },
-  // { path: '/tracking', icon: BarChart3, label: 'Track Up' }, // Hidden for v1 - preserved for future
+  { path: '/listup', icon: List, label: 'ListUp' },
   { path: '/profile', icon: User, label: 'Profile' },
 ];
 

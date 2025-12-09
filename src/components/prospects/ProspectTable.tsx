@@ -63,10 +63,6 @@ interface ProspectTableProps {
   // Filter mode from parent
   filterMode: 'calling' | 'funnel';
   subFilter: 'all' | 'hot' | 'scheduled' | 'day1' | 'progress';
-  // Prospect limit props
-  isAtLimit?: boolean;
-  availableSlots?: number;
-  uniqueCount?: number;
 }
 
 // Column configuration - fixed order, no drag/resize
@@ -76,7 +72,7 @@ const COLUMNS = [
   { id: 'phone', label: 'Phone', width: 140, mobileWidth: 100 },
   { id: 'contact', label: 'Call', width: 70, mobileWidth: 60 },
   { id: 'action', label: 'Response', width: 130, mobileWidth: 85 },
-  { id: 'stage', label: 'Funnel', width: 130, mobileWidth: 85 },
+  { id: 'stage', label: 'Stages', width: 130, mobileWidth: 85 },
   { id: 'quality', label: 'Quality', width: 100, mobileWidth: 75 },
   { id: 'actions', label: '', width: 80, mobileWidth: 50 },
 ];
@@ -103,9 +99,6 @@ export function ProspectTable({
   onDeleteSheet,
   filterMode,
   subFilter,
-  isAtLimit = false,
-  availableSlots = Infinity,
-  uniqueCount = 0,
 }: ProspectTableProps) {
   const [filters, setFilters] = useState<Filters>({
     search: '',
@@ -598,14 +591,9 @@ export function ProspectTable({
             <div className="flex gap-2">
               <ImportExcelDialog 
                 onImport={handleImportProspects} 
-                availableSlots={availableSlots}
-                isAtLimit={isAtLimit}
-                currentCount={uniqueCount}
               />
               <AddProspectDialog 
                 onAdd={handleAddProspect} 
-                isAtLimit={isAtLimit}
-                currentCount={uniqueCount}
               />
             </div>
           </div>
