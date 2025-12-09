@@ -1,4 +1,4 @@
-// ListUp Page - View prospects by tags
+// Follow Up Page - View prospects by tags (grouped into Responses, Stages, Quality)
 import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
@@ -11,10 +11,25 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Loader2, Filter, Phone, MessageCircle, ChevronDown, ChevronUp, Tags, X, Users } from 'lucide-react';
+import { Loader2, Filter, ChevronDown, ChevronUp, Tags, X, Users } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import nevoraLogo from '@/assets/nevorai-logo.jpeg';
 import { Prospect } from '@/types/prospect';
+
+// WhatsApp outline icon
+const WhatsAppIcon = ({ className }: { className?: string }) => (
+  <svg viewBox="0 0 24 24" className={className} fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M3 21l1.65-3.8a9 9 0 1 1 3.4 2.9L3 21" />
+    <path d="M9 10a.5.5 0 0 0 1 0V9a.5.5 0 0 0-1 0v1Zm0 0a5 5 0 0 0 5 5m0 0a.5.5 0 0 0 0-1h-1a.5.5 0 0 0 0 1h1Z" />
+  </svg>
+);
+
+// Phone outline icon
+const PhoneOutlineIcon = ({ className }: { className?: string }) => (
+  <svg viewBox="0 0 24 24" className={className} fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" />
+  </svg>
+);
 
 // Pull-to-refresh hook
 function usePullToRefresh(onRefresh: () => Promise<void>, threshold = 80) {
@@ -68,7 +83,11 @@ export default function ListUp() {
   const { user, loading: authLoading } = useAuth();
   const { prospects: myProspects, loading: prospectsLoading, refetch } = useProspects();
   const { sharedOwners, selectedOwnerId, setSelectedOwnerId, prospects: sharedProspects, loading: sharedLoading, refetch: refetchShared } = useSharedProspects();
-  const [selectedTags, setSelectedTags] = useState<string[]>([]);
+  
+  // Separate state for each tag category
+  const [selectedResponses, setSelectedResponses] = useState<string[]>([]);
+  const [selectedStages, setSelectedStages] = useState<string[]>([]);
+  const [selectedQualities, setSelectedQualities] = useState<string[]>([]);
   const [expandedProspectId, setExpandedProspectId] = useState<string | null>(null);
 
   // Determine which prospects to show
@@ -91,71 +110,102 @@ export default function ListUp() {
     }
   }, [user, authLoading, navigate]);
 
-  // Get all unique tags from prospects (both stages and responses)
-  const allTags = useMemo(() => {
-    const tags = new Set<string>();
+  // Get tags separated into categories
+  const { responseTags, stageTags, qualityTags } = useMemo(() => {
+    const responses = new Set<string>();
+    const stages = new Set<string>();
+    const qualities = new Set<string>();
+    
     prospects.forEach(p => {
-      if (p.funnel_stage) tags.add(`Stage: ${p.funnel_stage}`);
-      if (p.action_taken) tags.add(`Response: ${p.action_taken}`);
-      if (p.prospect_status) tags.add(`Quality: ${p.prospect_status}`);
+      if (p.action_taken) responses.add(p.action_taken);
+      if (p.funnel_stage) stages.add(p.funnel_stage);
+      if (p.prospect_status) qualities.add(p.prospect_status);
     });
-    return Array.from(tags).sort();
+    
+    return {
+      responseTags: Array.from(responses).sort(),
+      stageTags: Array.from(stages).sort(),
+      qualityTags: Array.from(qualities).sort()
+    };
   }, [prospects]);
 
-  // Filter prospects by selected tags
+  // Check if any filters are active
+  const hasActiveFilters = selectedResponses.length > 0 || selectedStages.length > 0 || selectedQualities.length > 0;
+
+  // Filter prospects by selected tags (AND between categories, OR within category)
   const filteredProspects = useMemo(() => {
-    if (selectedTags.length === 0) return prospects;
+    if (!hasActiveFilters) return prospects;
     
     return prospects.filter(p => {
-      return selectedTags.some(tag => {
-        if (tag.startsWith('Stage: ')) {
-          return p.funnel_stage === tag.replace('Stage: ', '');
-        }
-        if (tag.startsWith('Response: ')) {
-          return p.action_taken === tag.replace('Response: ', '');
-        }
-        if (tag.startsWith('Quality: ')) {
-          return p.prospect_status === tag.replace('Quality: ', '');
-        }
-        return false;
-      });
+      // Check responses (OR within category)
+      const matchesResponse = selectedResponses.length === 0 || 
+        (p.action_taken && selectedResponses.includes(p.action_taken));
+      
+      // Check stages (OR within category)
+      const matchesStage = selectedStages.length === 0 || 
+        (p.funnel_stage && selectedStages.includes(p.funnel_stage));
+      
+      // Check qualities (OR within category)
+      const matchesQuality = selectedQualities.length === 0 || 
+        (p.prospect_status && selectedQualities.includes(p.prospect_status));
+      
+      // AND between categories
+      return matchesResponse && matchesStage && matchesQuality;
     });
-  }, [prospects, selectedTags]);
+  }, [prospects, selectedResponses, selectedStages, selectedQualities, hasActiveFilters]);
 
-  // Group prospects by their tags
+  // Group prospects by their primary tag for display
   const prospectsByTag = useMemo(() => {
-    if (selectedTags.length === 0) {
+    if (!hasActiveFilters) {
       return { 'All Prospects': filteredProspects };
     }
 
     const grouped: Record<string, Prospect[]> = {};
-    selectedTags.forEach(tag => {
-      grouped[tag] = filteredProspects.filter(p => {
-        if (tag.startsWith('Stage: ')) {
-          return p.funnel_stage === tag.replace('Stage: ', '');
-        }
-        if (tag.startsWith('Response: ')) {
-          return p.action_taken === tag.replace('Response: ', '');
-        }
-        if (tag.startsWith('Quality: ')) {
-          return p.prospect_status === tag.replace('Quality: ', '');
-        }
+    
+    // Group by all selected tags
+    [...selectedResponses, ...selectedStages, ...selectedQualities].forEach(tag => {
+      const tagType = selectedResponses.includes(tag) ? 'Response' : 
+                      selectedStages.includes(tag) ? 'Stage' : 'Quality';
+      const displayTag = `${tagType}: ${tag}`;
+      
+      grouped[displayTag] = filteredProspects.filter(p => {
+        if (selectedResponses.includes(tag)) return p.action_taken === tag;
+        if (selectedStages.includes(tag)) return p.funnel_stage === tag;
+        if (selectedQualities.includes(tag)) return p.prospect_status === tag;
         return false;
       });
     });
+    
+    // If filters but no grouping yet, show all filtered
+    if (Object.keys(grouped).length === 0) {
+      return { 'Filtered Prospects': filteredProspects };
+    }
+    
     return grouped;
-  }, [filteredProspects, selectedTags]);
+  }, [filteredProspects, selectedResponses, selectedStages, selectedQualities, hasActiveFilters]);
 
-  const toggleTag = (tag: string) => {
-    setSelectedTags(prev => 
-      prev.includes(tag) 
-        ? prev.filter(t => t !== tag)
-        : [...prev, tag]
+  const toggleResponse = (tag: string) => {
+    setSelectedResponses(prev => 
+      prev.includes(tag) ? prev.filter(t => t !== tag) : [...prev, tag]
     );
   };
 
-  const clearTags = () => {
-    setSelectedTags([]);
+  const toggleStage = (tag: string) => {
+    setSelectedStages(prev => 
+      prev.includes(tag) ? prev.filter(t => t !== tag) : [...prev, tag]
+    );
+  };
+
+  const toggleQuality = (tag: string) => {
+    setSelectedQualities(prev => 
+      prev.includes(tag) ? prev.filter(t => t !== tag) : [...prev, tag]
+    );
+  };
+
+  const clearAllFilters = () => {
+    setSelectedResponses([]);
+    setSelectedStages([]);
+    setSelectedQualities([]);
   };
 
   const toggleProspect = (id: string) => {
@@ -194,15 +244,15 @@ export default function ListUp() {
               className="h-10 w-10 rounded-xl object-cover shadow-md"
             />
             <div>
-              <h1 className="text-xl font-bold tracking-tight">ListUp</h1>
+              <h1 className="text-xl font-bold tracking-tight">Follow Up</h1>
               <p className="text-xs text-muted-foreground font-medium">
                 {isViewingShared ? `Viewing ${sharedOwners.find(o => o.user_id === selectedOwnerId)?.display_name}'s data` : 'View by Tags'}
               </p>
             </div>
           </div>
           <div className="flex items-center gap-2">
-            {selectedTags.length > 0 && (
-              <Button variant="ghost" size="sm" onClick={clearTags} className="text-xs gap-1">
+            {hasActiveFilters && (
+              <Button variant="ghost" size="sm" onClick={clearAllFilters} className="text-xs gap-1">
                 <X className="h-3 w-3" />
                 Clear
               </Button>
@@ -241,37 +291,90 @@ export default function ListUp() {
             </div>
           )}
 
-          {/* Tag Filter Bar */}
-          <div className="bg-card rounded-xl p-3 border border-border/50">
-            <div className="flex items-center gap-2 mb-2">
+          {/* Grouped Tag Filters */}
+          <div className="bg-card rounded-xl p-4 border border-border/50 space-y-4">
+            <div className="flex items-center gap-2">
               <Filter className="h-4 w-4 text-muted-foreground" />
-              <span className="text-xs font-medium text-muted-foreground">Filter by Tags</span>
+              <span className="text-sm font-medium">Filter by Tags</span>
             </div>
-            {allTags.length === 0 ? (
-              <p className="text-xs text-muted-foreground py-2">
-                No tags found. Add tags to prospects in Follow Up.
-              </p>
-            ) : (
-              <ScrollArea className="w-full">
-                <div className="flex flex-wrap gap-1.5 pb-1">
-                  {allTags.map(tag => (
+
+            {/* Responses Section */}
+            <div className="space-y-2">
+              <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Responses</h4>
+              {responseTags.length === 0 ? (
+                <p className="text-xs text-muted-foreground/70">No response tags</p>
+              ) : (
+                <div className="flex flex-wrap gap-1.5">
+                  {responseTags.map(tag => (
                     <Badge
-                      key={tag}
-                      variant={selectedTags.includes(tag) ? "default" : "outline"}
+                      key={`response-${tag}`}
+                      variant={selectedResponses.includes(tag) ? "default" : "outline"}
                       className={cn(
                         "cursor-pointer text-xs transition-all",
-                        selectedTags.includes(tag) 
-                          ? "bg-primary text-primary-foreground" 
-                          : "hover:bg-muted"
+                        selectedResponses.includes(tag) 
+                          ? "bg-blue-600 text-white hover:bg-blue-700" 
+                          : "hover:bg-blue-50 dark:hover:bg-blue-950/30 border-blue-200 dark:border-blue-800"
                       )}
-                      onClick={() => toggleTag(tag)}
+                      onClick={() => toggleResponse(tag)}
                     >
                       {tag}
                     </Badge>
                   ))}
                 </div>
-              </ScrollArea>
-            )}
+              )}
+            </div>
+
+            {/* Stages Section */}
+            <div className="space-y-2">
+              <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Stages</h4>
+              {stageTags.length === 0 ? (
+                <p className="text-xs text-muted-foreground/70">No stage tags</p>
+              ) : (
+                <div className="flex flex-wrap gap-1.5">
+                  {stageTags.map(tag => (
+                    <Badge
+                      key={`stage-${tag}`}
+                      variant={selectedStages.includes(tag) ? "default" : "outline"}
+                      className={cn(
+                        "cursor-pointer text-xs transition-all",
+                        selectedStages.includes(tag) 
+                          ? "bg-purple-600 text-white hover:bg-purple-700" 
+                          : "hover:bg-purple-50 dark:hover:bg-purple-950/30 border-purple-200 dark:border-purple-800"
+                      )}
+                      onClick={() => toggleStage(tag)}
+                    >
+                      {tag}
+                    </Badge>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Quality Section */}
+            <div className="space-y-2">
+              <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Quality</h4>
+              {qualityTags.length === 0 ? (
+                <p className="text-xs text-muted-foreground/70">No quality tags</p>
+              ) : (
+                <div className="flex flex-wrap gap-1.5">
+                  {qualityTags.map(tag => (
+                    <Badge
+                      key={`quality-${tag}`}
+                      variant={selectedQualities.includes(tag) ? "default" : "outline"}
+                      className={cn(
+                        "cursor-pointer text-xs transition-all",
+                        selectedQualities.includes(tag) 
+                          ? "bg-amber-600 text-white hover:bg-amber-700" 
+                          : "hover:bg-amber-50 dark:hover:bg-amber-950/30 border-amber-200 dark:border-amber-800"
+                      )}
+                      onClick={() => toggleQuality(tag)}
+                    >
+                      {tag}
+                    </Badge>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
 
           {/* Prospects grouped by tags */}
@@ -324,17 +427,17 @@ export default function ListUp() {
                             {/* Tags */}
                             <div className="flex flex-wrap gap-1">
                               {prospect.funnel_stage && (
-                                <Badge variant="outline" className="text-xs">
+                                <Badge variant="outline" className="text-xs border-purple-200 dark:border-purple-800">
                                   Stage: {prospect.funnel_stage}
                                 </Badge>
                               )}
                               {prospect.action_taken && (
-                                <Badge variant="outline" className="text-xs">
+                                <Badge variant="outline" className="text-xs border-blue-200 dark:border-blue-800">
                                   Response: {prospect.action_taken}
                                 </Badge>
                               )}
                               {prospect.prospect_status && (
-                                <Badge variant="outline" className="text-xs">
+                                <Badge variant="outline" className="text-xs border-amber-200 dark:border-amber-800">
                                   Quality: {prospect.prospect_status}
                                 </Badge>
                               )}
@@ -344,25 +447,26 @@ export default function ListUp() {
                             <div className="flex items-center gap-2 pt-1">
                               <Button
                                 size="sm"
-                                variant="secondary"
+                                variant="outline"
                                 onClick={(e) => {
                                   e.stopPropagation();
                                   handleCall(prospect.phone);
                                 }}
                                 className="gap-1.5"
                               >
-                                <Phone className="h-3.5 w-3.5" />
+                                <PhoneOutlineIcon className="h-3.5 w-3.5" />
                                 Call
                               </Button>
                               <Button
                                 size="sm"
+                                variant="outline"
                                 onClick={(e) => {
                                   e.stopPropagation();
                                   handleWhatsApp(prospect.phone);
                                 }}
-                                className="gap-1.5 bg-green-600 hover:bg-green-700"
+                                className="gap-1.5 border-green-500/50 text-green-600 hover:bg-green-50 dark:hover:bg-green-950/30"
                               >
-                                <MessageCircle className="h-3.5 w-3.5" />
+                                <WhatsAppIcon className="h-3.5 w-3.5" />
                                 WhatsApp
                               </Button>
                             </div>
@@ -376,13 +480,13 @@ export default function ListUp() {
             </div>
           ))}
 
-          {filteredProspects.length === 0 && selectedTags.length > 0 && (
+          {filteredProspects.length === 0 && hasActiveFilters && (
             <div className="bg-card rounded-xl p-8 border border-border/50 text-center">
               <Tags className="h-12 w-12 mx-auto text-muted-foreground/30 mb-3" />
               <p className="text-sm text-muted-foreground mb-2">
                 No prospects match the selected tags
               </p>
-              <Button variant="outline" size="sm" onClick={clearTags}>
+              <Button variant="outline" size="sm" onClick={clearAllFilters}>
                 Clear Filters
               </Button>
             </div>

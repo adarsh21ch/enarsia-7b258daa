@@ -1,4 +1,4 @@
-// Home Dashboard Page - Simplified for Follow-ups
+// Action Up Dashboard Page - Simplified for Follow-ups
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
@@ -8,10 +8,25 @@ import { PullToRefreshIndicator } from '@/components/PullToRefreshIndicator';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
-import { Loader2, Clock, CalendarIcon, Phone, MessageCircle } from 'lucide-react';
+import { Loader2, Clock, CalendarIcon } from 'lucide-react';
 import { parseISO, format, isToday, isSameDay } from 'date-fns';
 import { cn } from '@/lib/utils';
 import nevoraLogo from '@/assets/nevorai-logo.jpeg';
+
+// WhatsApp outline icon
+const WhatsAppIcon = ({ className }: { className?: string }) => (
+  <svg viewBox="0 0 24 24" className={className} fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M3 21l1.65-3.8a9 9 0 1 1 3.4 2.9L3 21" />
+    <path d="M9 10a.5.5 0 0 0 1 0V9a.5.5 0 0 0-1 0v1Zm0 0a5 5 0 0 0 5 5m0 0a.5.5 0 0 0 0-1h-1a.5.5 0 0 0 0 1h1Z" />
+  </svg>
+);
+
+// Phone outline icon
+const PhoneOutlineIcon = ({ className }: { className?: string }) => (
+  <svg viewBox="0 0 24 24" className={className} fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" />
+  </svg>
+);
 
 // Pull-to-refresh hook
 function usePullToRefresh(onRefresh: () => Promise<void>, threshold = 80) {
@@ -110,18 +125,18 @@ export default function Home() {
               className="h-10 w-10 rounded-xl object-cover shadow-md"
             />
             <div>
-              <h1 className="text-xl font-bold tracking-tight">NevorAI</h1>
+              <h1 className="text-xl font-bold tracking-tight">Action Up</h1>
               <p className="text-xs text-muted-foreground font-medium">Never miss a follow-up again</p>
             </div>
           </div>
         </div>
       </header>
 
-      <main ref={containerRef} className="scrollable-content relative">
+      <main ref={containerRef} className="scrollable-content relative flex flex-col">
         <PullToRefreshIndicator isRefreshing={isRefreshing} pullDistance={pullDistance} showIndicator={showIndicator} />
-        <div className="container py-3 px-4 space-y-4 pb-20">
+        <div className="container py-3 px-4 pb-20 flex-1 flex flex-col">
           {/* Today's Follow-Ups - Main Focus */}
-          <div className="bg-card rounded-2xl p-4 border border-border/50">
+          <div className="bg-card rounded-2xl p-4 border border-border/50 flex-1 flex flex-col min-h-0">
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-2">
                 <Clock className="h-5 w-5 text-primary" />
@@ -155,7 +170,7 @@ export default function Home() {
 
               if (filteredActivities.length === 0) {
                 return (
-                  <div className="text-center py-12">
+                  <div className="text-center py-12 flex-1 flex flex-col items-center justify-center">
                     <Clock className="h-12 w-12 mx-auto text-muted-foreground/30 mb-3" />
                     <p className="text-sm text-muted-foreground">
                       No activity for this date
@@ -168,7 +183,7 @@ export default function Home() {
               }
 
               return (
-                <div className="space-y-2 max-h-[60vh] overflow-y-auto">
+                <div className="space-y-2 flex-1 overflow-y-auto">
                   {filteredActivities.map((prospect) => (
                     <div
                       key={prospect.id}
@@ -192,17 +207,17 @@ export default function Home() {
                       <div className="flex items-center gap-2 ml-2">
                         <button
                           onClick={() => handleCall(prospect.phone)}
-                          className="p-2 rounded-lg bg-gray-900 text-white hover:bg-gray-800 transition-colors"
+                          className="p-2 rounded-lg border border-border bg-background hover:bg-muted transition-colors"
                           aria-label="Call"
                         >
-                          <Phone className="h-4 w-4" />
+                          <PhoneOutlineIcon className="h-4 w-4" />
                         </button>
                         <button
                           onClick={() => handleWhatsApp(prospect.phone)}
-                          className="p-2 rounded-lg bg-green-600 text-white hover:bg-green-700 transition-colors"
+                          className="p-2 rounded-lg border border-green-500/50 bg-background text-green-600 hover:bg-green-50 dark:hover:bg-green-950/30 transition-colors"
                           aria-label="WhatsApp"
                         >
-                          <MessageCircle className="h-4 w-4" />
+                          <WhatsAppIcon className="h-4 w-4" />
                         </button>
                         <p className="text-xs text-muted-foreground shrink-0 font-medium min-w-[50px] text-right">
                           {format(parseISO(prospect.updated_at), 'h:mm a')}

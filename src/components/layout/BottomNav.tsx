@@ -3,10 +3,10 @@ import { Home, ListTodo, Calendar, List, User } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const navItems = [
-  { path: '/home', icon: Home, label: 'Home' },
   { path: '/action', icon: ListTodo, label: 'Todo Up' },
-  { path: '/dashboard', icon: Calendar, label: 'Follow Up' },
-  { path: '/listup', icon: List, label: 'ListUp' },
+  { path: '/home', icon: Home, label: 'Action Up' },
+  { path: '/dashboard', icon: Calendar, label: 'Calling' },
+  { path: '/listup', icon: List, label: 'Follow Up' },
   { path: '/profile', icon: User, label: 'Profile' },
 ];
 

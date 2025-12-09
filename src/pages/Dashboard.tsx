@@ -1,4 +1,4 @@
-// Dashboard - Follow-Up List Page (Simplified)
+// Dashboard - Calling Page (Simplified)
 import { useEffect, useState, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
@@ -108,8 +108,8 @@ export default function Dashboard() {
                 className="h-10 w-10 rounded-xl object-cover shadow-md"
               />
               <div>
-                <h1 className="text-xl font-bold tracking-tight">Follow Up</h1>
-                <p className="text-xs text-muted-foreground font-medium">Calling & Follow-ups</p>
+                <h1 className="text-xl font-bold tracking-tight">Calling</h1>
+                <p className="text-xs text-muted-foreground font-medium">Manage your prospects</p>
               </div>
             </div>
           </div>
