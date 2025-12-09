@@ -129,18 +129,55 @@ export function ImportExcelDialog({ onImport, availableSlots = Infinity, isAtLim
       const data = await file.arrayBuffer();
       const workbook = XLSX.read(data);
       const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
-      const jsonData = XLSX.utils.sheet_to_json<Record<string, string>>(firstSheet, { defval: '' });
+      
+      // Use header: 1 to get raw array data (no row is treated as header)
+      const rawData = XLSX.utils.sheet_to_json<(string | number | null)[]>(firstSheet, { 
+        header: 1, 
+        defval: '' 
+      });
+
+      if (rawData.length === 0) {
+        setError('The file appears to be empty');
+        return;
+      }
+
+      // Generate column names as "Column A", "Column B", etc.
+      const maxCols = Math.max(...rawData.map(row => row.length));
+      const cols = Array.from({ length: maxCols }, (_, i) => {
+        const letter = String.fromCharCode(65 + (i % 26));
+        const prefix = i >= 26 ? String.fromCharCode(65 + Math.floor(i / 26) - 1) : '';
+        return `Column ${prefix}${letter}`;
+      });
+      
+      // Convert raw array data to objects with column keys
+      const jsonData: Record<string, string>[] = rawData
+        .filter(row => row.some(cell => cell !== '' && cell !== null && cell !== undefined))
+        .map(row => {
+          const obj: Record<string, string> = {};
+          cols.forEach((col, i) => {
+            obj[col] = row[i] !== null && row[i] !== undefined ? String(row[i]) : '';
+          });
+          return obj;
+        });
 
       if (jsonData.length === 0) {
         setError('The file appears to be empty');
         return;
       }
 
-      const cols = Object.keys(jsonData[0]);
       setColumns(cols);
       setPreviewData(jsonData.slice(0, 5));
       setFullData(jsonData);
-      setMapping(autoDetectMapping(cols));
+      // Reset mapping since we now use generic column names
+      setMapping({
+        name: null,
+        phone: null,
+        address: null,
+        age_or_dob: null,
+        gender: null,
+        instagram: null,
+        profession: null,
+      });
       setStep('mapping');
     } catch (err) {
       setError('Failed to parse file. Please ensure it\'s a valid Excel or CSV file.');
