@@ -71,11 +71,11 @@ interface ProspectTableProps {
 // Quality column removed per user request
 // WhatsApp/Call moved into Name column
 const COLUMNS = [
-  { id: 'index', label: '#', width: 50, mobileWidth: 36 },
-  { id: 'name', label: 'Name', width: 240, mobileWidth: 180 },
-  { id: 'action', label: 'Response', width: 140, mobileWidth: 95 },
-  { id: 'stage', label: 'Funnel', width: 140, mobileWidth: 95 },
-  { id: 'actions', label: '', width: 80, mobileWidth: 50 },
+  { id: 'index', label: '#', width: 45, mobileWidth: 32 },
+  { id: 'name', label: 'Name', width: 180, mobileWidth: 140 },
+  { id: 'action', label: 'Response', width: 150, mobileWidth: 110 },
+  { id: 'stage', label: 'Funnel', width: 150, mobileWidth: 110 },
+  { id: 'actions', label: '', width: 70, mobileWidth: 45 },
 ];
 
 // Fixed column order (phone, contact, and quality removed from visible columns - Call/WhatsApp now in Name)
