@@ -3,12 +3,9 @@ import { Prospect, FunnelStage, ActionTaken, ProspectStatus, FUNNEL_STAGES, EXTE
 import { InlineSelect } from './InlineSelect';
 import { StatusBadge, StageBadge, ActionBadge } from './StatusBadge';
 import { InlineReportCard } from './InlineReportCard';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { CallIconButton, WhatsAppIconButton } from '@/components/ui/ActionIcons';
-import { Trash2, ChevronDown } from 'lucide-react';
+import { ChevronDown } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useCustomOptionsContext } from '@/contexts/CustomOptionsContext';
 
@@ -18,16 +15,6 @@ interface DragHandleProps {
   attributes: Record<string, any>;
   listeners: Record<string, any> | undefined;
   isDragging: boolean;
-}
-
-interface ColumnConfig {
-  id: string;
-  label: string;
-  width: number;
-  mobileWidth: number;
-  sticky?: boolean;
-  stickyLeft?: number;
-  stickyLeftMobile?: number;
 }
 
 interface ProspectRowProps {
@@ -40,10 +27,8 @@ interface ProspectRowProps {
   onDelete: (id: string) => Promise<boolean>;
   isEven: boolean;
   columnOrder: string[];
-  columnWidths: Record<string, number>;
-  columnConfig: ColumnConfig[];
-  selectionModeActive: boolean;
   isMobileTable?: boolean;
+  selectionModeActive: boolean;
   dragHandleProps?: DragHandleProps;
   showSelection?: boolean;
   isSelected?: boolean;
@@ -60,8 +45,6 @@ export function ProspectRow({
   onDelete,
   isEven,
   columnOrder,
-  columnWidths,
-  columnConfig,
   selectionModeActive,
   isMobileTable = false,
   dragHandleProps,
@@ -69,51 +52,10 @@ export function ProspectRow({
   isSelected = false,
   onToggleSelect,
 }: ProspectRowProps) {
-  const [localPhone, setLocalPhone] = useState(prospect.phone);
-  const [isDeleting, setIsDeleting] = useState(false);
-  const [isEditingPhone, setIsEditingPhone] = useState(false);
-  const phoneRef = useRef<HTMLInputElement>(null);
-  
   const { addOption, deleteOption, getOptionsForType, getCustomOptionsForType } = useCustomOptionsContext();
 
   const stageOptions = getOptionsForType('funnel_stage', FUNNEL_STAGES) as FunnelStage[];
   const actionOptions = getOptionsForType('action_taken', EXTENDED_ACTIONS) as ExtendedActionTaken[];
-  const statusOptions = getOptionsForType('prospect_status', STATUSES) as ProspectStatus[];
-
-  useEffect(() => {
-    setLocalPhone(prospect.phone);
-  }, [prospect]);
-
-  useEffect(() => {
-    if (isEditingPhone && phoneRef.current) {
-      phoneRef.current.focus();
-      phoneRef.current.select();
-    }
-  }, [isEditingPhone]);
-
-  const handlePhoneBlur = () => {
-    setIsEditingPhone(false);
-    if (localPhone !== prospect.phone && localPhone.trim()) {
-      onUpdate(prospect.id, { phone: localPhone.trim() });
-    } else {
-      setLocalPhone(prospect.phone);
-    }
-  };
-
-  const handlePhoneKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') {
-      handlePhoneBlur();
-    } else if (e.key === 'Escape') {
-      setLocalPhone(prospect.phone);
-      setIsEditingPhone(false);
-    }
-  };
-
-  const handleDelete = async () => {
-    setIsDeleting(true);
-    await onDelete(prospect.id);
-    setIsDeleting(false);
-  };
 
   const handleActionChange = (value: ExtendedActionTaken) => {
     const updates: Partial<Prospect> = {};
@@ -145,60 +87,54 @@ export function ProspectRow({
     return prospect.action_taken || null;
   };
 
+  // Row background color
+  const bgColor = isEven ? "bg-card" : "bg-muted";
+
   const renderCell = (columnId: string) => {
-    const col = columnConfig.find(c => c.id === columnId);
-    const width = isMobileTable ? col?.mobileWidth : col?.width;
-    const isSticky = col?.sticky;
-    const stickyLeft = isMobileTable ? (col?.stickyLeftMobile ?? col?.stickyLeft) : col?.stickyLeft;
-    
-    // Adjust sticky left position when selection mode is active
-    const adjustedStickyLeft = selectionModeActive && isSticky ? (stickyLeft ?? 0) + 40 : stickyLeft;
-    
-    // Use solid background colors - swap so first row (isEven=true) is light, second row (isEven=false) is darker
-    const bgColor = isEven ? "bg-card" : "bg-muted";
-    
-    const cellStyle: React.CSSProperties = {
-      width: width ? `${width}px` : undefined, 
-      minWidth: width ? `${width}px` : undefined,
-      maxWidth: width ? `${width}px` : undefined,
-      ...(isSticky && {
-        position: 'sticky',
-        left: `${adjustedStickyLeft}px`,
-        zIndex: 10,
-      }),
-    };
-    
     const cellClass = cn(
-      "px-2 py-2 whitespace-nowrap",
+      "px-2 py-2.5 whitespace-nowrap",
       bgColor,
-      !isMobileTable && "px-3 py-3",
-      isMobileTable && "text-xs",
-      isSticky && "border-r border-border/30"
+      isMobileTable && "text-xs px-1.5 py-2"
     );
     
     switch (columnId) {
       case 'index':
         return (
-          <td key={columnId} className={cn(cellClass, "text-center")} style={cellStyle}>
-            <span className={cn("text-xs font-semibold text-muted-foreground bg-muted/60 rounded px-1.5 py-0.5", isMobileTable && "text-[10px] px-1")}>{index}</span>
+          <td 
+            key={columnId} 
+            className={cn(cellClass, "text-center")} 
+            style={{ width: '10%', minWidth: '40px' }}
+          >
+            <span className={cn(
+              "text-xs font-semibold text-muted-foreground bg-muted/60 rounded px-1.5 py-0.5",
+              isMobileTable && "text-[10px] px-1"
+            )}>
+              {index}
+            </span>
           </td>
         );
+      
       case 'name':
-        // Build compact info line: "Age, Location" without labels
+        // Compact info line: "Age, Location"
         const ageValue = (prospect as any).age_or_dob || '';
         const locationValue = prospect.address || '';
         const infoParts = [ageValue, locationValue].filter(Boolean);
-        const infoLine = infoParts.length > 0 ? infoParts.join(', ') : '–';
+        const infoLine = infoParts.length > 0 ? infoParts.join(', ') : '';
         
         return (
-          <td key={columnId} className={cellClass} style={cellStyle} onPointerDown={(e) => e.stopPropagation()}>
-            <div className="flex items-center gap-1.5 overflow-hidden" style={{ maxWidth: isMobileTable ? '140px' : '200px' }}>
+          <td 
+            key={columnId} 
+            className={cellClass} 
+            style={{ width: '55%', minWidth: '160px' }}
+            onPointerDown={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center gap-1.5">
               {/* Call + WhatsApp icons */}
               <div className="flex items-center gap-0.5 shrink-0">
-                <CallIconButton onClick={openCall} className={isMobileTable ? "p-0.5" : undefined} />
-                <WhatsAppIconButton onClick={openWhatsApp} className={isMobileTable ? "p-0.5" : undefined} />
+                <CallIconButton onClick={openCall} className={isMobileTable ? "p-0.5 h-6 w-6" : "h-7 w-7"} />
+                <WhatsAppIconButton onClick={openWhatsApp} className={isMobileTable ? "p-0.5 h-6 w-6" : "h-7 w-7"} />
               </div>
-              <div className="flex flex-col overflow-hidden min-w-0">
+              <div className="flex flex-col overflow-hidden min-w-0 flex-1">
                 <button
                   onClick={onToggleExpand}
                   className={cn(
@@ -207,53 +143,33 @@ export function ProspectRow({
                     isExpanded && "text-primary bg-primary/10"
                   )}
                 >
-                  <span className="truncate" style={{ maxWidth: isMobileTable ? '70px' : '120px' }} title={prospect.name}>{prospect.name}</span>
+                  <span className="truncate" title={prospect.name}>{prospect.name}</span>
                   <span className={cn("transition-transform duration-200 text-muted-foreground group-hover:text-primary shrink-0", isExpanded && "rotate-180")}>
                     <ChevronDown className={cn("h-3 w-3", isMobileTable && "h-2.5 w-2.5")} />
                   </span>
                 </button>
-                {/* Compact info: Age, Location - truncated to stay within column */}
-                <div className={cn(
-                  "text-muted-foreground truncate pl-1",
-                  isMobileTable ? "text-[9px] max-w-[70px]" : "text-[10px] max-w-[120px]"
-                )} title={infoLine}>
-                  {infoLine}
-                </div>
+                {/* Compact info: Age, Location */}
+                {infoLine && (
+                  <div className={cn(
+                    "text-muted-foreground truncate pl-1",
+                    isMobileTable ? "text-[9px]" : "text-[10px]"
+                  )} title={infoLine}>
+                    {infoLine}
+                  </div>
+                )}
               </div>
             </div>
           </td>
         );
-      case 'phone':
-        return (
-          <td key={columnId} className={cellClass} style={cellStyle} onPointerDown={(e) => e.stopPropagation()}>
-            {isEditingPhone ? (
-              <Input ref={phoneRef} value={localPhone} onChange={(e) => setLocalPhone(e.target.value)} onBlur={handlePhoneBlur} onKeyDown={handlePhoneKeyDown} className={cn("h-7 px-1.5 text-sm border-primary", isMobileTable ? "h-5 text-[10px] w-full" : "w-28")} />
-            ) : (
-              <button onClick={() => setIsEditingPhone(true)} className={cn("text-muted-foreground font-medium hover:text-primary hover:bg-muted/50 px-1 py-0.5 -ml-1 rounded transition-colors truncate", isMobileTable ? "text-[10px]" : "text-sm")}>{localPhone}</button>
-            )}
-          </td>
-        );
-      // 'contact' column removed - Call/WhatsApp now in Name column
-      case 'stage':
-        return (
-          <td key={columnId} className={cellClass} style={cellStyle} onPointerDown={(e) => e.stopPropagation()}>
-            <InlineSelect 
-              value={prospect.funnel_stage} 
-              options={stageOptions} 
-              onChange={(value) => onUpdate(prospect.id, { funnel_stage: value })} 
-              renderValue={(value) => <StageBadge stage={value} />} 
-              placeholder="Select..." 
-              optionType="funnel_stage" 
-              customOptions={getCustomOptionsForType('funnel_stage')} 
-              onAddOption={addOption} 
-              onDeleteOption={deleteOption} 
-              defaultOptions={FUNNEL_STAGES}
-            />
-          </td>
-        );
+      
       case 'action':
         return (
-          <td key={columnId} className={cellClass} style={cellStyle} onPointerDown={(e) => e.stopPropagation()}>
+          <td 
+            key={columnId} 
+            className={cellClass} 
+            style={{ width: '35%', minWidth: '100px' }}
+            onPointerDown={(e) => e.stopPropagation()}
+          >
             <InlineSelect 
               value={getActionDisplayValue()} 
               options={isCalling ? actionOptions : actionOptions.filter(a => a !== 'Enrollment')} 
@@ -268,31 +184,30 @@ export function ProspectRow({
             />
           </td>
         );
-      case 'actions':
+      
+      case 'stage':
         return (
-          <td key={columnId} className={cellClass} style={cellStyle} onPointerDown={(e) => e.stopPropagation()}>
-            <div className="flex items-center gap-0.5">
-              <Button variant="ghost" size="icon" className={cn("h-7 w-7 hover:bg-muted/50 transition-all duration-200", isMobileTable && "h-6 w-6", isExpanded && "bg-primary/10 text-primary")} onClick={onToggleExpand}>
-                <ChevronDown className={cn("h-4 w-4 transition-transform duration-200", isMobileTable && "h-3 w-3", isExpanded && "rotate-180")} />
-              </Button>
-              <AlertDialog>
-                <AlertDialogTrigger asChild>
-                  <Button variant="ghost" size="icon" className={cn("h-7 w-7 text-muted-foreground hover:text-destructive hover:bg-destructive/10", isMobileTable && "h-6 w-6")}><Trash2 className={cn("h-4 w-4", isMobileTable && "h-3 w-3")} /></Button>
-                </AlertDialogTrigger>
-                <AlertDialogContent className="bg-card border-border">
-                  <AlertDialogHeader>
-                    <AlertDialogTitle>Delete prospect?</AlertDialogTitle>
-                    <AlertDialogDescription>Are you sure you want to delete {prospect.name}? This action cannot be undone.</AlertDialogDescription>
-                  </AlertDialogHeader>
-                  <AlertDialogFooter>
-                    <AlertDialogCancel>Cancel</AlertDialogCancel>
-                    <AlertDialogAction onClick={handleDelete} disabled={isDeleting} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">{isDeleting ? 'Deleting...' : 'Delete'}</AlertDialogAction>
-                  </AlertDialogFooter>
-                </AlertDialogContent>
-              </AlertDialog>
-            </div>
+          <td 
+            key={columnId} 
+            className={cellClass} 
+            style={{ width: '35%', minWidth: '100px' }}
+            onPointerDown={(e) => e.stopPropagation()}
+          >
+            <InlineSelect 
+              value={prospect.funnel_stage} 
+              options={stageOptions} 
+              onChange={(value) => onUpdate(prospect.id, { funnel_stage: value })} 
+              renderValue={(value) => <StageBadge stage={value} />} 
+              placeholder="Select..." 
+              optionType="funnel_stage" 
+              customOptions={getCustomOptionsForType('funnel_stage')} 
+              onAddOption={addOption} 
+              onDeleteOption={deleteOption} 
+              defaultOptions={FUNNEL_STAGES}
+            />
           </td>
         );
+      
       default:
         return null;
     }
@@ -300,8 +215,6 @@ export function ProspectRow({
 
   const rowStyle = dragHandleProps?.style || {};
   const rowRef = dragHandleProps?.ref;
-
-  // Row-based drag: apply listeners to entire row (except interactive elements)
   const rowDragListeners = dragHandleProps?.listeners || {};
 
   return (
@@ -313,25 +226,18 @@ export function ProspectRow({
         {...rowDragListeners}
         className={cn(
           "group transition-colors duration-100 border-b border-border/30", 
-          // Zebra striping: first row (isEven=true) is light, second row darker - solid backgrounds
-          isEven ? "bg-card" : "bg-muted", 
+          bgColor,
           "hover:bg-muted/80", 
           isExpanded && "bg-primary/5 hover:bg-primary/5",
           dragHandleProps?.isDragging && "shadow-lg cursor-grabbing touch-none",
           !dragHandleProps?.isDragging && "cursor-grab"
         )}
       >
-        {/* Selection checkbox cell - sticky when in selection mode */}
+        {/* Selection checkbox cell */}
         {showSelection && (
           <td 
-            className={cn("px-2 py-2", isEven ? "bg-card" : "bg-muted")} 
-            style={{
-              width: '40px',
-              minWidth: '40px',
-              position: 'sticky',
-              left: 0,
-              zIndex: 10,
-            }}
+            className={cn("px-2 py-2", bgColor)} 
+            style={{ width: '40px' }}
             onPointerDown={(e) => e.stopPropagation()}
           >
             <Checkbox
@@ -342,7 +248,15 @@ export function ProspectRow({
         )}
         {columnOrder.map(renderCell)}
       </tr>
-      {isExpanded && <InlineReportCard prospect={prospect} onUpdate={onUpdate} onClose={onToggleExpand} colSpan={columnOrder.length} />}
+      {isExpanded && (
+        <InlineReportCard 
+          prospect={prospect} 
+          onUpdate={onUpdate} 
+          onDelete={onDelete}
+          onClose={onToggleExpand} 
+          colSpan={columnOrder.length + (showSelection ? 1 : 0)} 
+        />
+      )}
     </>
   );
 }

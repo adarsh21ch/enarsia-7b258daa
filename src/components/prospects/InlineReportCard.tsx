@@ -5,8 +5,9 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Button } from '@/components/ui/button';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { StageBadge, StatusBadge, ActionBadge } from './StatusBadge';
-import { Save, X, Phone, MessageCircle, ChevronDown, Instagram, Clock } from 'lucide-react';
+import { Save, X, Phone, MessageCircle, ChevronDown, Instagram, Clock, Trash2 } from 'lucide-react';
 import { formatDistanceToNow, parseISO, format } from 'date-fns';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
@@ -14,6 +15,7 @@ import { cn } from '@/lib/utils';
 interface InlineReportCardProps {
   prospect: Prospect;
   onUpdate: (id: string, updates: Partial<Prospect>) => Promise<Prospect | null>;
+  onDelete: (id: string) => Promise<boolean>;
   onClose: () => void;
   colSpan: number;
 }
@@ -72,9 +74,10 @@ function EditableTag<T extends string>({
   );
 }
 
-export function InlineReportCard({ prospect, onUpdate, onClose, colSpan }: InlineReportCardProps) {
+export function InlineReportCard({ prospect, onUpdate, onDelete, onClose, colSpan }: InlineReportCardProps) {
   const [localData, setLocalData] = useState<Partial<Prospect>>({});
   const [isSaving, setIsSaving] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
   const [hasChanges, setHasChanges] = useState(false);
 
   useEffect(() => {
@@ -98,17 +101,6 @@ export function InlineReportCard({ prospect, onUpdate, onClose, colSpan }: Inlin
 
   const handleFieldChange = (field: string, value: any) => {
     setLocalData(prev => ({ ...prev, [field]: value }));
-    setHasChanges(true);
-  };
-
-  // Handle combined address field
-  const handleAddressChange = (value: string) => {
-    const parts = value.split(',').map(p => p.trim());
-    if (parts.length >= 2) {
-      setLocalData(prev => ({ ...prev, city: parts[0], state: parts.slice(1).join(', ') }));
-    } else {
-      setLocalData(prev => ({ ...prev, city: value, state: '' }));
-    }
     setHasChanges(true);
   };
 
@@ -147,6 +139,21 @@ export function InlineReportCard({ prospect, onUpdate, onClose, colSpan }: Inlin
     }
   };
 
+  const handleDelete = async () => {
+    setIsDeleting(true);
+    try {
+      const result = await onDelete(prospect.id);
+      if (result) {
+        toast.success('Prospect deleted');
+        onClose();
+      }
+    } catch (error) {
+      toast.error('Failed to delete');
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
   const cleanPhoneNumber = (phone: string) => {
     return phone.replace(/[^0-9+]/g, '');
   };
@@ -178,7 +185,7 @@ export function InlineReportCard({ prospect, onUpdate, onClose, colSpan }: Inlin
           <div className="flex items-center justify-between gap-2 flex-wrap mb-2">
             <div className="flex items-center gap-2 flex-wrap">
               <span className="font-semibold text-foreground text-sm">{localData.name}</span>
-              {/* Quick Call/WhatsApp/Instagram - moved after name */}
+              {/* Quick Call/WhatsApp/Instagram */}
               <div className="flex items-center gap-0.5">
                 <Button variant="ghost" size="icon" className="h-7 w-7 hover:bg-accent/10" onClick={openCall}>
                   <Phone className="h-3.5 w-3.5 text-accent" />
@@ -286,7 +293,7 @@ export function InlineReportCard({ prospect, onUpdate, onClose, colSpan }: Inlin
             </div>
           </div>
 
-          {/* Row 3: Why/Need + Notes + Date Added + Save */}
+          {/* Row 3: Why/Need + Notes + Date Added + Actions */}
           <div className="flex flex-col sm:flex-row gap-2">
             <div className="flex-1 grid grid-cols-2 gap-2">
               <div>
@@ -328,6 +335,40 @@ export function InlineReportCard({ prospect, onUpdate, onClose, colSpan }: Inlin
                 {isSaving ? 'Saving...' : hasChanges ? 'Save' : 'Saved'}
               </Button>
             </div>
+          </div>
+
+          {/* Row 4: Delete button */}
+          <div className="mt-3 pt-2 border-t border-border/50">
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button 
+                  variant="ghost" 
+                  size="sm"
+                  className="h-8 px-3 gap-1.5 text-xs text-destructive hover:text-destructive hover:bg-destructive/10"
+                >
+                  <Trash2 className="h-3 w-3" />
+                  Delete prospect
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent className="bg-card border-border">
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Delete this prospect?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    This will permanently remove <strong>{prospect.name}</strong> and their data from Calling. This action cannot be undone.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                  <AlertDialogAction 
+                    onClick={handleDelete} 
+                    disabled={isDeleting}
+                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                  >
+                    {isDeleting ? 'Deleting...' : 'Delete prospect'}
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
           </div>
         </div>
       </td>
