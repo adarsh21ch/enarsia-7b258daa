@@ -7,7 +7,6 @@ import { AddProspectDialog } from './AddProspectDialog';
 import { ImportExcelDialog } from './ImportExcelDialog';
 import { SheetTabs } from './SheetTabs';
 import { ColumnOptionsSheet } from './ColumnOptionsSheet';
-import { ChangeFilterTagButton } from './ChangeFilterTagButton';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -23,8 +22,6 @@ import { useResizableColumns } from '@/hooks/useResizableColumns';
 import { ResizableColumnHeader } from '@/components/ui/ResizableColumnHeader';
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, TouchSensor, useSensor, useSensors, DragEndEvent } from '@dnd-kit/core';
 import { arrayMove, SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy } from '@dnd-kit/sortable';
-import { useCustomOptionsContext } from '@/contexts/CustomOptionsContext';
-
 interface Filters {
   search: string;
   stages: FunnelStage[];
@@ -104,10 +101,10 @@ const COLUMNS = [{
   canResize: false
 }];
 
-// Column order for Calling tab (NO Funnel column - clean calling view)
-const CALLING_COLUMN_ORDER = ['index', 'name', 'action', 'actions'];
-// Column order for Filter tab (includes Funnel column)
-const FILTER_COLUMN_ORDER = ['index', 'name', 'stage', 'action', 'actions'];
+// Column order for Calling tab (includes Response)
+const CALLING_COLUMN_ORDER = ['index', 'name', 'action', 'stage', 'actions'];
+// Column order for Funnel tab (excludes Response)
+const FUNNEL_COLUMN_ORDER = ['index', 'name', 'stage', 'actions'];
 export function ProspectTable({
   prospects,
   loading,
@@ -212,24 +209,13 @@ export function ProspectTable({
     }
   };
 
-  // Get the single active filter tag from custom options
-  const { getActiveFilterTag } = useCustomOptionsContext();
-  const activeFilterTag = useMemo(() => getActiveFilterTag(), [getActiveFilterTag]);
-
-  // For DUPLICATING: Show prospects in BOTH tabs if they have the active filter tag
+  // For DUPLICATING: Show prospects in BOTH tabs if they have funnel stages
   const callingProspects = useMemo(() => {
     return prospects;
   }, [prospects]);
-  
-  // Filter prospects: show only those whose action_taken matches the single active filter tag
   const funnelProspects = useMemo(() => {
-    if (!activeFilterTag) {
-      // No filter tag set - show empty or fallback to old behavior
-      return prospects.filter(p => p.enrollment_status === 'Enrolled' || p.funnel_stage);
-    }
-    // New behavior: show only prospects with the single active filter tag
-    return prospects.filter(p => p.action_taken === activeFilterTag);
-  }, [prospects, activeFilterTag]);
+    return prospects.filter(p => p.enrollment_status === 'Enrolled' || p.funnel_stage);
+  }, [prospects]);
 
   // Get base prospects based on filter mode
   const baseProspects = useMemo(() => {
@@ -606,8 +592,8 @@ export function ProspectTable({
       </div>;
   }
   const isCalling = filterMode === 'calling';
-  // Use different column order based on filter mode (Calling = no Funnel, Filter = has Funnel)
-  const COLUMN_ORDER = isCalling ? CALLING_COLUMN_ORDER : FILTER_COLUMN_ORDER;
+  // Use different column order based on filter mode (Funnel hides Response column)
+  const COLUMN_ORDER = isCalling ? CALLING_COLUMN_ORDER : FUNNEL_COLUMN_ORDER;
   return <div className="space-y-4">
       
       {/* Toolbar: Filters + Actions */}
@@ -639,10 +625,7 @@ export function ProspectTable({
                   <Redo2 className="h-4 w-4" />
                 </Button>
               </div>
-              {/* Change Filter Tag button - only in Filter mode */}
-              {!isCalling && <ChangeFilterTagButton />}
-              {/* Import/Add - only show Import in Calling mode */}
-              {isCalling && <ImportExcelDialog onImport={handleImportProspects} />}
+              <ImportExcelDialog onImport={handleImportProspects} />
               <AddProspectDialog onAdd={handleAddProspect} />
             </div>
           </div>

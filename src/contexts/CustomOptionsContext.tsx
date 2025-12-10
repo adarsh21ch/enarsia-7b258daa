@@ -7,13 +7,8 @@ interface CustomOptionsContextType {
   addOption: (optionType: OptionType, optionValue: string) => Promise<CustomOption | null>;
   deleteOption: (optionId: string) => Promise<boolean>;
   updateOption: (optionId: string, newValue: string) => Promise<boolean>;
-  updateFilterTagStatus: (optionId: string, isFilterTag: boolean) => Promise<boolean>;
-  setActiveFilterTag: (tagValue: string) => Promise<boolean>;
   getOptionsForType: (optionType: OptionType, defaultOptions: readonly string[]) => string[];
   getCustomOptionsForType: (optionType: OptionType) => CustomOption[];
-  getActiveFilterTag: () => string | null;
-  getFilterTags: () => string[];
-  isFilterTag: (tagValue: string) => boolean;
 }
 
 const CustomOptionsContext = createContext<CustomOptionsContextType | null>(null);
