@@ -82,18 +82,18 @@ export function WhatsAppButton({ onClick, className, size = 'md' }: IconButtonPr
   );
 }
 
-// Compact inline versions for table cells - balanced sizes with adequate touch targets
+// Compact inline versions for table cells
 export function CallIconButton({ onClick, className }: { onClick: () => void; className?: string }) {
   return (
     <button
       onClick={onClick}
       className={cn(
-        "p-2 min-w-[44px] min-h-[44px] rounded-lg hover:bg-muted transition-colors flex items-center justify-center",
+        "p-1 rounded-md hover:bg-muted transition-colors",
         className
       )}
       aria-label="Call"
     >
-      <PhoneOutlineIcon className="h-5 w-5" />
+      <PhoneOutlineIcon className="h-3.5 w-3.5" />
     </button>
   );
 }
@@ -103,12 +103,12 @@ export function WhatsAppIconButton({ onClick, className }: { onClick: () => void
     <button
       onClick={onClick}
       className={cn(
-        "p-2 min-w-[44px] min-h-[44px] text-green-600 hover:text-green-700 hover:bg-green-50 dark:hover:bg-green-950/30 rounded-lg transition-colors flex items-center justify-center",
+        "p-1 text-green-600 hover:text-green-700 transition-colors flex items-center justify-center",
         className
       )}
       aria-label="WhatsApp"
     >
-      <WhatsAppOutlineIcon className="h-5 w-5" />
+      <WhatsAppOutlineIcon className="h-6 w-6" />
     </button>
   );
 }
