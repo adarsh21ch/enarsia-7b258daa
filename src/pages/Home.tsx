@@ -194,45 +194,63 @@ export default function Home() {
                 </p>
               </div>
             ) : (
-              <div className="space-y-2 flex-1 overflow-y-auto">
-                {activities.map((activity) => (
-                  <div
-                    key={`${activity.type}-${activity.id}`}
-                    className="flex items-center justify-between p-3 rounded-xl bg-muted/30 hover:bg-muted/50 transition-colors"
-                  >
-                    <div className="min-w-0 flex-1">
-                      <p className="text-sm font-medium truncate">{activity.name}</p>
-                      <div className="flex items-center gap-2 mt-1 flex-wrap">
-                        {activity.stage && (
-                          <span className="text-xs px-2 py-0.5 rounded-full bg-primary/10 text-primary">
-                            {activity.stage}
-                          </span>
-                        )}
-                        {activity.action && (
-                          <span className="text-xs px-2 py-0.5 rounded-full bg-muted text-muted-foreground">
-                            {activity.action}
-                          </span>
-                        )}
-                        {activity.type === 'todo' && (
-                          <span className="text-xs px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-600">
-                            To-Do
-                          </span>
+              <div className="flex-1 overflow-y-auto relative">
+                {/* Timeline vertical line */}
+                <div className="absolute left-[52px] top-0 bottom-0 w-0.5 bg-border/50" />
+                
+                <div className="space-y-0">
+                  {activities.map((activity, index) => (
+                    <div
+                      key={`${activity.type}-${activity.id}`}
+                      className="flex items-start gap-3 py-3 pl-2 pr-3"
+                    >
+                      {/* Time on the left */}
+                      <div className="w-12 text-xs text-muted-foreground font-medium text-right shrink-0 pt-0.5">
+                        {format(activity.time, 'h:mm a')}
+                      </div>
+                      
+                      {/* Timeline dot */}
+                      <div className="relative flex items-center justify-center shrink-0">
+                        <div className={cn(
+                          "w-3 h-3 rounded-full border-2 z-10",
+                          activity.type === 'todo' 
+                            ? "bg-blue-500 border-blue-400" 
+                            : "bg-primary border-primary/80"
+                        )} />
+                      </div>
+                      
+                      {/* Activity card */}
+                      <div className="flex-1 flex items-center justify-between p-3 rounded-xl bg-muted/30 hover:bg-muted/50 transition-colors min-w-0">
+                        <div className="min-w-0 flex-1">
+                          <p className="text-sm font-medium truncate">{activity.name}</p>
+                          <div className="flex items-center gap-2 mt-1 flex-wrap">
+                            {activity.stage && (
+                              <span className="text-xs px-2 py-0.5 rounded-full bg-primary/10 text-primary">
+                                {activity.stage}
+                              </span>
+                            )}
+                            {activity.action && (
+                              <span className="text-xs px-2 py-0.5 rounded-full bg-muted text-muted-foreground">
+                                {activity.action}
+                              </span>
+                            )}
+                            {activity.type === 'todo' && (
+                              <span className="text-xs px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-600">
+                                To-Do
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                        {activity.phone && (
+                          <div className="flex items-center gap-2 ml-2 shrink-0">
+                            <CallButton onClick={() => handleCall(activity.phone!)} size="sm" />
+                            <WhatsAppButton onClick={() => handleWhatsApp(activity.phone!)} size="sm" />
+                          </div>
                         )}
                       </div>
                     </div>
-                    <div className="flex items-center gap-2 ml-2">
-                      {activity.phone && (
-                        <>
-                          <CallButton onClick={() => handleCall(activity.phone!)} size="sm" />
-                          <WhatsAppButton onClick={() => handleWhatsApp(activity.phone!)} size="sm" />
-                        </>
-                      )}
-                      <p className="text-xs text-muted-foreground shrink-0 font-medium min-w-[50px] text-right">
-                        {format(activity.time, 'h:mm a')}
-                      </p>
-                    </div>
-                  </div>
-                ))}
+                  ))}
+                </div>
               </div>
             )}
           </div>

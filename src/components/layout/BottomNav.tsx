@@ -10,15 +10,15 @@ const CallingIcon = ({ className }: { className?: string }) => (
   </svg>
 );
 
-// Follow-up icon - multiple people/contacts to represent prospect list
+// Follow-up icon - single person with checkmark badge
 const FollowUpIcon = ({ className }: { className?: string }) => (
   <svg viewBox="0 0 24 24" className={className} fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
-    {/* Front person */}
-    <circle cx="9" cy="7" r="3" />
-    <path d="M9 13c-4 0-6 2-6 4v1h12v-1c0-2-2-4-6-4z" />
-    {/* Back person (slightly offset) */}
-    <circle cx="17" cy="6" r="2.5" />
-    <path d="M21 17v-1c0-1.5-1.5-3-4-3" />
+    {/* Person silhouette */}
+    <circle cx="12" cy="7" r="4" />
+    <path d="M5.5 21v-2a6.5 6.5 0 0113 0v2" />
+    {/* Checkmark badge at bottom-right */}
+    <circle cx="18" cy="17" r="4" fill="currentColor" stroke="none" />
+    <path d="M16 17l1.5 1.5 3-3" stroke="hsl(var(--background))" strokeWidth="2" fill="none" />
   </svg>
 );
 
@@ -46,11 +46,11 @@ const ProfileIcon = ({ className }: { className?: string }) => (
   </svg>
 );
 
-// Tab order: Calling (default), Follow Up, To-Do List, Activity, Profile
+// Tab order: Calling, To-Do List, Follow Up, Activity, Profile
 const navItems = [
   { path: '/dashboard', icon: CallingIcon, label: 'Calling' },
-  { path: '/listup', icon: FollowUpIcon, label: 'Follow Up' },
   { path: '/action', icon: TodoListIcon, label: 'To-Do List' },
+  { path: '/listup', icon: FollowUpIcon, label: 'Follow Up' },
   { path: '/home', icon: ActivityIcon, label: 'Activity' },
   { path: '/profile', icon: ProfileIcon, label: 'Profile' },
 ];
@@ -60,8 +60,8 @@ export function BottomNav() {
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-50 bg-card/95 backdrop-blur-xl border-t border-border/50 safe-area-pb">
-      {/* Raised position with extra padding for mobile usability */}
-      <div className="flex items-center justify-around h-14 max-w-lg mx-auto pb-1">
+      {/* Raised position with extra padding for Instagram-like positioning */}
+      <div className="flex items-center justify-around h-16 max-w-lg mx-auto pb-3 pt-1">
         {navItems.map(item => {
           const Icon = item.icon;
           const isActive = location.pathname === item.path;
@@ -84,7 +84,7 @@ export function BottomNav() {
                 />
                 {/* Active indicator bar below icon */}
                 <div className={cn(
-                  "mt-1.5 h-0.5 rounded-full transition-all duration-200",
+                  "mt-2 h-0.5 rounded-full transition-all duration-200",
                   isActive ? "w-5 bg-primary" : "w-0 bg-transparent"
                 )} />
               </div>

@@ -103,12 +103,12 @@ export function WhatsAppIconButton({ onClick, className }: { onClick: () => void
     <button
       onClick={onClick}
       className={cn(
-        "p-1 rounded-md text-green-600 hover:bg-green-50 dark:hover:bg-green-950/30 transition-colors",
+        "p-1.5 rounded-lg border border-green-500/50 text-green-600 hover:bg-green-50 dark:hover:bg-green-950/30 transition-colors flex items-center justify-center",
         className
       )}
       aria-label="WhatsApp"
     >
-      <WhatsAppOutlineIcon className="h-3.5 w-3.5" />
+      <WhatsAppOutlineIcon className="h-5 w-5" />
     </button>
   );
 }
