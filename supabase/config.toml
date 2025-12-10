@@ -1,7 +1,7 @@
 project_id = "kisankusogixarejjphi"
 
 [functions.migrate-encrypt-phones]
-verify_jwt = true
+verify_jwt = false
 
 [functions.check-expired-subscriptions]
 verify_jwt = false

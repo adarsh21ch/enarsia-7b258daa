@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback, useEffect } from 'react';
+import { useState, useRef } from 'react';
 import * as XLSX from 'xlsx';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -62,63 +62,6 @@ export function ImportExcelDialog({ onImport }: ImportExcelDialogProps) {
   const [isImporting, setIsImporting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  
-  // Resizable columns state for preview table
-  const [previewColumnWidths, setPreviewColumnWidths] = useState<Record<string, number>>({});
-  const [isResizing, setIsResizing] = useState(false);
-  const resizingColumnRef = useRef<string | null>(null);
-  const startXRef = useRef<number>(0);
-  const startWidthRef = useRef<number>(0);
-
-  const handleResizeStart = useCallback((colIndex: number, clientX: number) => {
-    const columnKey = `col_${colIndex}`;
-    resizingColumnRef.current = columnKey;
-    startXRef.current = clientX;
-    startWidthRef.current = previewColumnWidths[columnKey] ?? 120;
-    setIsResizing(true);
-  }, [previewColumnWidths]);
-
-  const handleResizeMove = useCallback((clientX: number) => {
-    if (!resizingColumnRef.current) return;
-    const delta = clientX - startXRef.current;
-    const newWidth = Math.max(60, Math.min(300, startWidthRef.current + delta));
-    setPreviewColumnWidths(prev => ({
-      ...prev,
-      [resizingColumnRef.current!]: newWidth,
-    }));
-  }, []);
-
-  const handleResizeEnd = useCallback(() => {
-    resizingColumnRef.current = null;
-    setIsResizing(false);
-  }, []);
-
-  // Global mouse/touch handlers for resizing
-  useEffect(() => {
-    if (!isResizing) return;
-
-    const handleMouseMove = (e: MouseEvent) => handleResizeMove(e.clientX);
-    const handleTouchMove = (e: TouchEvent) => {
-      const touch = e.touches[0];
-      if (touch) handleResizeMove(touch.clientX);
-    };
-    const handleMouseUp = () => handleResizeEnd();
-    const handleTouchEnd = () => handleResizeEnd();
-
-    document.addEventListener('mousemove', handleMouseMove);
-    document.addEventListener('mouseup', handleMouseUp);
-    document.addEventListener('touchmove', handleTouchMove, { passive: true });
-    document.addEventListener('touchend', handleTouchEnd);
-
-    return () => {
-      document.removeEventListener('mousemove', handleMouseMove);
-      document.removeEventListener('mouseup', handleMouseUp);
-      document.removeEventListener('touchmove', handleTouchMove);
-      document.removeEventListener('touchend', handleTouchEnd);
-    };
-  }, [isResizing, handleResizeMove, handleResizeEnd]);
-
-  const getColumnWidth = (idx: number) => previewColumnWidths[`col_${idx}`] ?? 120;
 
   const resetState = () => {
     setStep('upload');
@@ -135,7 +78,6 @@ export function ImportExcelDialog({ onImport }: ImportExcelDialogProps) {
       profession: null,
     });
     setError(null);
-    setPreviewColumnWidths({});
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
@@ -327,66 +269,30 @@ export function ImportExcelDialog({ onImport }: ImportExcelDialogProps) {
             <div className="flex-1 flex flex-col min-h-0 space-y-2 mb-3">
               <div className="flex items-center justify-between flex-shrink-0">
                 <Label className="text-xs font-medium">Data Preview (first 3 rows)</Label>
-                <span className="text-xs text-muted-foreground">{columns.length} columns • Drag column edges to resize</span>
+                <span className="text-xs text-muted-foreground">{columns.length} columns</span>
               </div>
               
               {/* Preview table container - scrollable both ways */}
               <div className="flex-1 border border-border rounded-lg overflow-hidden min-h-[100px]">
-                <div className={cn("h-full overflow-x-auto overflow-y-auto", isResizing && "select-none")}>
+                <div className="h-full overflow-x-auto overflow-y-auto">
                   <table className="text-xs border-collapse w-max">
                     <thead className="bg-muted sticky top-0 z-10">
                       <tr>
-                        {columns.map((col, idx) => {
-                          const width = getColumnWidth(idx);
-                          return (
-                            <th 
-                              key={idx} 
-                              className="relative px-3 py-2 text-left font-medium whitespace-nowrap border-r border-border last:border-r-0 bg-muted"
-                              style={{ width: `${width}px`, minWidth: `${width}px` }}
-                            >
-                              <span className="truncate block pr-2" title={col}>{col}</span>
-                              {/* Resize handle */}
-                              <div
-                                className={cn(
-                                  "absolute top-0 right-0 h-full w-1 cursor-col-resize z-20",
-                                  "transition-colors duration-150",
-                                  "hover:bg-primary/50 active:bg-primary/70"
-                                )}
-                                onMouseDown={(e) => {
-                                  e.preventDefault();
-                                  e.stopPropagation();
-                                  handleResizeStart(idx, e.clientX);
-                                }}
-                                onTouchStart={(e) => {
-                                  const touch = e.touches[0];
-                                  if (touch) {
-                                    handleResizeStart(idx, touch.clientX);
-                                  }
-                                }}
-                                style={{ touchAction: 'none' }}
-                              >
-                                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-0.5 h-3 bg-muted-foreground/30 rounded-full hover:h-5 hover:bg-primary/60 transition-all" />
-                              </div>
-                            </th>
-                          );
-                        })}
+                        {columns.map((col, idx) => (
+                          <th key={idx} className="px-3 py-2 text-left font-medium whitespace-nowrap min-w-[100px] max-w-[140px] border-r border-border last:border-r-0 bg-muted">
+                            <span className="truncate block" title={col}>{col}</span>
+                          </th>
+                        ))}
                       </tr>
                     </thead>
                     <tbody>
                       {previewData.slice(0, 3).map((row, i) => (
                         <tr key={i} className={cn("border-t border-border", i % 2 === 1 && "bg-muted/30")}>
-                          {columns.map((col, idx) => {
-                            const width = getColumnWidth(idx);
-                            return (
-                              <td 
-                                key={idx} 
-                                className="px-3 py-2 whitespace-nowrap truncate border-r border-border last:border-r-0"
-                                style={{ width: `${width}px`, minWidth: `${width}px`, maxWidth: `${width}px` }}
-                              >
-                                {row[col] || '–'}
-                              </td>
-                            );
-                          })}
+                          {columns.map((col, idx) => (
+                            <td key={idx} className="px-3 py-2 whitespace-nowrap min-w-[100px] max-w-[140px] truncate border-r border-border last:border-r-0">
+                              {row[col] || '–'}
+                            </td>
+                          ))}
                         </tr>
                       ))}
                     </tbody>

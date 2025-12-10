@@ -143,7 +143,7 @@ export function ProspectRow({
       "px-2 py-2 whitespace-nowrap",
       !isMobileTable && "px-3 py-3",
       isMobileTable && "text-xs",
-      isMobileTable && isNameColumn && `sticky left-[36px] z-10 ${bgColor} border-r border-border/30`,
+      isMobileTable && isNameColumn && `sticky left-[36px] z-10 ${bgColor} shadow-[2px_0_4px_-2px_rgba(0,0,0,0.15)]`,
       isMobileTable && isIndexColumn && `sticky left-0 z-10 ${bgColor}`
     );
     
@@ -294,7 +294,7 @@ export function ProspectRow({
       >
         {/* Selection checkbox cell */}
         {showSelection && (
-          <td className={cn("px-2 py-2", isEven ? "bg-card" : "bg-muted")} onPointerDown={(e) => e.stopPropagation()}>
+          <td className="px-2 py-2" onPointerDown={(e) => e.stopPropagation()}>
             <Checkbox
               checked={isSelected}
               onCheckedChange={onToggleSelect}

@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback, useEffect } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import { Prospect, FunnelStage, ProspectQuality, Sheet, ExtendedActionTaken, FUNNEL_STAGES, EXTENDED_ACTIONS } from '@/types/prospect';
 import { SortableProspectRow } from './SortableProspectRow';
 import { MobileProspectCard } from './MobileProspectCard';
@@ -18,8 +18,6 @@ import { toast } from 'sonner';
 import * as XLSX from 'xlsx';
 import { format } from 'date-fns';
 import { useUndoRedo, UndoAction } from '@/hooks/useUndoRedo';
-import { useResizableColumns } from '@/hooks/useResizableColumns';
-import { ResizableColumnHeader } from '@/components/ui/ResizableColumnHeader';
 import {
   DndContext,
   closestCenter,
@@ -68,22 +66,20 @@ interface ProspectTableProps {
   subFilter: 'all' | 'hot' | 'scheduled' | 'day1' | 'progress';
 }
 
-// Column configuration with resize constraints
+// Column configuration - fixed order, no drag/resize
 // Phone column removed from visible table (data still available in Report Card)
 // Quality column removed per user request
 // WhatsApp/Call moved into Name column
 const COLUMNS = [
-  { id: 'index', label: '#', width: 45, mobileWidth: 32, minWidth: 32, maxWidth: 60, canResize: false },
-  { id: 'name', label: 'Name', width: 180, mobileWidth: 140, minWidth: 100, maxWidth: 300 },
-  { id: 'action', label: 'Response', width: 150, mobileWidth: 110, minWidth: 80, maxWidth: 250 },
-  { id: 'stage', label: 'Funnel', width: 150, mobileWidth: 110, minWidth: 80, maxWidth: 250 },
-  { id: 'actions', label: '', width: 70, mobileWidth: 45, minWidth: 40, maxWidth: 100, canResize: false },
+  { id: 'index', label: '#', width: 45, mobileWidth: 32 },
+  { id: 'name', label: 'Name', width: 180, mobileWidth: 140 },
+  { id: 'action', label: 'Response', width: 150, mobileWidth: 110 },
+  { id: 'stage', label: 'Funnel', width: 150, mobileWidth: 110 },
+  { id: 'actions', label: '', width: 70, mobileWidth: 45 },
 ];
 
-// Column order for Calling tab (includes Response)
-const CALLING_COLUMN_ORDER = ['index', 'name', 'action', 'stage', 'actions'];
-// Column order for Funnel tab (excludes Response)
-const FUNNEL_COLUMN_ORDER = ['index', 'name', 'stage', 'actions'];
+// Fixed column order (phone, contact, and quality removed from visible columns - Call/WhatsApp now in Name)
+const COLUMN_ORDER = ['index', 'name', 'action', 'stage', 'actions'];
 
 export function ProspectTable({
   prospects,
@@ -125,34 +121,11 @@ export function ProspectTable({
   // Undo/Redo
   const { pushAction, popUndo, popRedo, canUndo, canRedo } = useUndoRedo();
 
-  // Initial column widths based on device
-  const initialColumnWidths = useMemo(() => 
+  // Fixed column widths based on device
+  const columnWidths = useMemo(() => 
     Object.fromEntries(COLUMNS.map(c => [c.id, isMobile ? c.mobileWidth : c.width])),
     [isMobile]
   );
-
-  // Resizable columns hook
-  const {
-    columnWidths,
-    isResizing,
-    handleResizeStart,
-    handleResizeMove,
-    handleResizeEnd,
-    getColumnWidth,
-    resetColumnWidths,
-  } = useResizableColumns({
-    columns: COLUMNS.map(c => ({
-      id: c.id,
-      minWidth: c.minWidth,
-      maxWidth: c.maxWidth,
-    })),
-    initialWidths: initialColumnWidths,
-  });
-
-  // Reset column widths when device changes
-  useEffect(() => {
-    resetColumnWidths();
-  }, [isMobile]);
 
   // Row drag-and-drop sensors
   const sensors = useSensors(
@@ -555,8 +528,6 @@ export function ProspectTable({
   }
 
   const isCalling = filterMode === 'calling';
-  // Use different column order based on filter mode (Funnel hides Response column)
-  const COLUMN_ORDER = isCalling ? CALLING_COLUMN_ORDER : FUNNEL_COLUMN_ORDER;
 
   return (
     <div className="space-y-4">
@@ -712,15 +683,15 @@ export function ProspectTable({
         // Table Layout - ALWAYS show sheet tabs + header, even when empty
         <div className="bg-card rounded-xl border border-border overflow-hidden shadow-sm">
           <div 
-            className="overflow-x-auto bg-card"
+            className="overflow-x-auto"
             style={{ WebkitOverflowScrolling: 'touch' }}
           >
             <table 
-              className="text-sm border-collapse w-full bg-card"
+              className="text-sm border-collapse w-full"
               style={{ minWidth: isMobile ? '580px' : '880px' }}
             >
               {/* Sticky header block: Sheet tabs + column headers */}
-              <thead className="sticky top-0 z-30 bg-card">
+              <thead className="sticky top-0 z-30">
                 {/* Sheet tabs row - ALWAYS visible */}
                 <tr>
                   <th 
@@ -740,13 +711,10 @@ export function ProspectTable({
                   </th>
                 </tr>
                 {/* Column header row */}
-                <tr className={cn(
-                  "bg-muted/95 backdrop-blur-sm text-xs font-semibold text-muted-foreground border-b border-border",
-                  isResizing && "select-none"
-                )}>
+                <tr className="bg-muted/95 backdrop-blur-sm text-xs font-semibold text-muted-foreground border-b border-border">
                   {/* Selection checkbox header */}
                   {selectionMode.active && (
-                    <th className="px-2 py-2.5 w-10 min-w-[40px] bg-muted/95">
+                    <th className="px-2 py-2.5 w-10 min-w-[40px]">
                       <Checkbox
                         checked={selectedIds.size === selectionProspects.length && selectionProspects.length > 0}
                         onCheckedChange={handleSelectAll}
@@ -756,28 +724,22 @@ export function ProspectTable({
                   {COLUMN_ORDER.map((columnId) => {
                     const col = COLUMNS.find(c => c.id === columnId);
                     if (!col) return null;
-                    const width = getColumnWidth(columnId);
+                    const width = columnWidths[columnId];
                     const isNameColumn = columnId === 'name';
                     const isIndexColumn = columnId === 'index';
-                    const canResize = col.canResize !== false;
+                    const showOptionsButton = columnId === 'action' || columnId === 'stage';
                     
                     return (
-                      <ResizableColumnHeader
+                      <th
                         key={columnId}
-                        columnId={columnId}
-                        width={width}
-                        onResize={handleResizeStart}
-                        onResizeMove={handleResizeMove}
-                        onResizeEnd={handleResizeEnd}
-                        isResizing={isResizing}
-                        canResize={canResize}
                         className={cn(
-                          "px-2 py-2.5 text-left whitespace-nowrap bg-muted/95",
+                          "px-2 py-2.5 text-left whitespace-nowrap",
                           columnId === 'index' && "text-center",
                           isMobile && "text-[11px] px-1.5",
-                          isMobile && isNameColumn && "sticky left-[36px] z-30 border-r border-border/30",
-                          isMobile && isIndexColumn && "sticky left-0 z-30"
+                          isMobile && isNameColumn && "sticky left-[36px] z-20 bg-muted/95 shadow-[2px_0_4px_-2px_rgba(0,0,0,0.15)]",
+                          isMobile && isIndexColumn && "sticky left-0 z-20 bg-muted/95"
                         )}
+                        style={{ width: `${width}px`, minWidth: `${width}px` }}
                       >
                         <div className="flex items-center gap-0.5">
                           <span>{col.label}</span>
@@ -796,7 +758,7 @@ export function ProspectTable({
                             />
                           )}
                         </div>
-                      </ResizableColumnHeader>
+                      </th>
                     );
                   })}
                 </tr>
