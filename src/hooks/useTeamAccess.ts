@@ -259,7 +259,7 @@ export function useTeamAccess() {
     }
 
     await Promise.all([fetchSharedWithMe(), fetchPendingRequests()]);
-    toast.success('Share request accepted. You can now view their Follow Up list.');
+    toast.success('Share request accepted. You can now view their data.');
     return true;
   };
 
@@ -293,7 +293,7 @@ export function useTeamAccess() {
     }
 
     await fetchTeamMembers();
-    toast.success('Stopped sharing your Follow Up list');
+    toast.success('Stopped sharing your data');
     return true;
   };
 

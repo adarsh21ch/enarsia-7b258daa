@@ -1,11 +1,13 @@
 // Activity Page - Today's Recent Activities
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useProspects } from '@/hooks/useProspects';
+import { useSharedProspects } from '@/hooks/useSharedProspects';
 import { useTodos } from '@/hooks/useTodos';
 import { BottomNav } from '@/components/layout/BottomNav';
 import { PullToRefreshIndicator } from '@/components/PullToRefreshIndicator';
+import { TeamBar } from '@/components/team/TeamBar';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
@@ -93,7 +95,7 @@ export default function Home() {
     loading: authLoading
   } = useAuth();
   const {
-    prospects,
+    prospects: myProspects,
     loading: prospectsLoading,
     refetch
   } = useProspects();
@@ -102,11 +104,31 @@ export default function Home() {
     refetch: refetchTodos
   } = useTodos();
   const [activityDate, setActivityDate] = useState<Date>(new Date());
+  
+  // Team data
+  const { 
+    sharedOwners, 
+    selectedOwnerIds, 
+    toggleOwnerSelection, 
+    clearSelection, 
+    selectAllOwners,
+    prospects: sharedProspects, 
+    loading: sharedLoading, 
+    refetchProspects 
+  } = useSharedProspects();
+  
+  // Determine which prospects to show
+  const isViewingTeam = selectedOwnerIds.length > 0;
+  const prospects = isViewingTeam ? sharedProspects : myProspects;
 
   // Pull-to-refresh
   const handleRefresh = useCallback(async () => {
-    await Promise.all([refetch?.(), refetchTodos?.()]);
-  }, [refetch, refetchTodos]);
+    if (isViewingTeam) {
+      await refetchProspects?.();
+    } else {
+      await Promise.all([refetch?.(), refetchTodos?.()]);
+    }
+  }, [refetch, refetchTodos, refetchProspects, isViewingTeam]);
   const {
     containerRef,
     isRefreshing,
@@ -118,6 +140,9 @@ export default function Home() {
       navigate('/auth');
     }
   }, [user, authLoading, navigate]);
+  
+  const isLoading = authLoading || prospectsLoading || (isViewingTeam && sharedLoading);
+  
   const cleanPhoneNumber = (phone: string) => phone.replace(/[^0-9+]/g, '');
   const handleWhatsApp = (phone: string) => {
     window.location.href = `whatsapp://send?phone=${cleanPhoneNumber(phone)}`;
@@ -125,7 +150,7 @@ export default function Home() {
   const handleCall = (phone: string) => {
     window.location.href = `tel:${cleanPhoneNumber(phone)}`;
   };
-  if (authLoading || prospectsLoading) {
+  if (isLoading) {
     return <div className="min-h-screen flex items-center justify-center bg-background">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
       </div>;
@@ -159,14 +184,26 @@ export default function Home() {
   const activities = getActivitiesForDate();
   return <div className="app-layout bg-gradient-to-b from-background via-background to-muted/20">
       <header className="fixed-header z-40 bg-card/80 backdrop-blur-xl border-b border-border/50">
-        <div className="flex items-center px-4 py-3">
+        <div className="flex items-center justify-between px-4 py-3">
           <div className="flex items-center gap-3">
             <img src={nevoraLogo} alt="NevorAI Logo" className="h-10 w-10 rounded-xl object-cover shadow-md" />
             <div>
               <h1 className="text-xl font-bold tracking-tight">Activity</h1>
-              <p className="text-xs text-muted-foreground font-medium">Track all your activities</p>
+              <p className="text-xs text-muted-foreground font-medium">
+                {isViewingTeam ? 'Viewing team data' : 'Track all your activities'}
+              </p>
             </div>
           </div>
+          {/* Team Selector */}
+          <TeamBar
+            sharedOwners={sharedOwners}
+            selectedOwnerIds={selectedOwnerIds}
+            onToggle={toggleOwnerSelection}
+            onClear={clearSelection}
+            onSelectAll={selectAllOwners}
+            prospectsCount={sharedProspects.length}
+            currentTab="activity"
+          />
         </div>
       </header>
 

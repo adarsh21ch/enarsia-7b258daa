@@ -81,7 +81,7 @@ export function TeamAccessDialog() {
           )}
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-w-md max-h-[85vh] overflow-y-auto">
+      <DialogContent className="max-w-md max-h-[90vh] flex flex-col overflow-hidden sm:max-h-[85vh]">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Users className="h-5 w-5" />
@@ -89,7 +89,7 @@ export function TeamAccessDialog() {
           </DialogTitle>
         </DialogHeader>
 
-        <div className="space-y-6">
+        <div className="flex-1 overflow-y-auto space-y-6 pr-1">
           {/* My TrackUp ID */}
           <div className="space-y-2">
             <Label className="text-sm font-medium">Your TrackUp ID</Label>
@@ -107,7 +107,7 @@ export function TeamAccessDialog() {
               </Button>
             </div>
             <p className="text-xs text-muted-foreground">
-              Share this TrackUp ID with your team so they can share their Follow Up lists with you.
+              Share this TrackUp ID with your team so they can share their data with you.
             </p>
           </div>
 
@@ -135,7 +135,7 @@ export function TeamAccessDialog() {
               </Button>
             </div>
             <p className="text-xs text-muted-foreground">
-              Share your Follow Up list with your leader. They must accept before they can view your data (read-only).
+              Share your data with your leader. They must accept before they can view your data (read-only).
             </p>
           </div>
 
@@ -156,7 +156,7 @@ export function TeamAccessDialog() {
                         <p className="text-sm font-medium">{request.owner_display_name || 'Unknown'}</p>
                         <p className="text-xs text-muted-foreground font-mono">{request.owner_nevorid}</p>
                         <p className="text-xs text-muted-foreground mt-1">
-                          wants to share their Follow Up list with you (read-only)
+                          wants to share their data with you (read-only)
                         </p>
                       </div>
                       <div className="flex gap-2 ml-2">
@@ -210,7 +210,7 @@ export function TeamAccessDialog() {
                   ))}
                 </div>
                 <p className="text-xs text-muted-foreground">
-                  View their Follow Up lists in the Follow Up page using the Team selector.
+                  View their data in the Follow Up page using the Team selector.
                 </p>
               </div>
             </>
@@ -237,7 +237,7 @@ export function TeamAccessDialog() {
                         </p>
                         <p className="text-xs text-muted-foreground font-mono">{member.nevorid}</p>
                         {member.status === 'active' && (
-                          <p className="text-xs text-muted-foreground">Can view your Follow Up list</p>
+                          <p className="text-xs text-muted-foreground">Can view your data</p>
                         )}
                         {member.status === 'pending' && (
                           <p className="text-xs text-muted-foreground">Waiting for them to accept</p>

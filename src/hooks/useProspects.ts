@@ -30,8 +30,8 @@ export function useProspects() {
         .from('prospects')
         .select('*')
         .eq('user_id', user.id)
-        .order('sort_order', { ascending: true, nullsFirst: false })
-        .order('date_added', { ascending: false });
+        .order('date_added', { ascending: false })
+        .order('created_at', { ascending: false });
 
       if (error) {
         toast.error('Failed to fetch prospects');
