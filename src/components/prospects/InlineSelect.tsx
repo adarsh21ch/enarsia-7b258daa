@@ -62,17 +62,23 @@ export function InlineSelect<T extends string>({
   // hideManagement only affects the gear/settings icon, not the "Add new" functionality
   const canAddNew = optionType && onAddOption;
 
+  // Handle selection - allow toggling (selecting same value deselects it)
+  const handleValueChange = (v: string) => {
+    if (v === '__add_new__') {
+      setIsAddingNew(true);
+    } else if (v === value) {
+      // Toggle off - same value selected again, clear it
+      onChange('' as T);
+    } else {
+      onChange(v as T);
+    }
+  };
+
   return (
     <div className="flex items-center gap-1">
       <Select
         value={value ?? ''}
-        onValueChange={(v) => {
-          if (v === '__add_new__') {
-            setIsAddingNew(true);
-          } else {
-            onChange(v as T);
-          }
-        }}
+        onValueChange={handleValueChange}
       >
         <SelectTrigger 
           className={cn(

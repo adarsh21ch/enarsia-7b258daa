@@ -80,8 +80,10 @@ const COLUMNS = [
   { id: 'actions', label: '', width: 70, mobileWidth: 45, minWidth: 40, maxWidth: 100, canResize: false },
 ];
 
-// Fixed column order (phone, contact, and quality removed from visible columns - Call/WhatsApp now in Name)
-const COLUMN_ORDER = ['index', 'name', 'action', 'stage', 'actions'];
+// Column order for Calling tab (includes Response)
+const CALLING_COLUMN_ORDER = ['index', 'name', 'action', 'stage', 'actions'];
+// Column order for Funnel tab (excludes Response)
+const FUNNEL_COLUMN_ORDER = ['index', 'name', 'stage', 'actions'];
 
 export function ProspectTable({
   prospects,
@@ -553,6 +555,8 @@ export function ProspectTable({
   }
 
   const isCalling = filterMode === 'calling';
+  // Use different column order based on filter mode (Funnel hides Response column)
+  const COLUMN_ORDER = isCalling ? CALLING_COLUMN_ORDER : FUNNEL_COLUMN_ORDER;
 
   return (
     <div className="space-y-4">
