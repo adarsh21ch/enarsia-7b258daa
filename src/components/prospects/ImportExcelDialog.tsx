@@ -305,15 +305,15 @@ export function ImportExcelDialog({ onImport }: ImportExcelDialogProps) {
               </p>
             </div>
 
-            {/* Fixed Column Mapping Section - Bottom, always visible */}
+            {/* Fixed Column Mapping Section - Bottom, always visible - Single column layout for both mobile and desktop */}
             <div className="flex-shrink-0 bg-muted/30 rounded-lg p-3 border border-border">
               <p className="text-xs text-muted-foreground mb-2 font-medium">
                 Map Columns
               </p>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              <div className="grid grid-cols-1 gap-2">
                 {(Object.keys(mapping) as (keyof ColumnMapping)[]).map((field) => (
                   <div key={field} className="flex items-center gap-2 h-8">
-                    <Label className="text-xs w-[70px] shrink-0">{FIELD_LABELS[field]}</Label>
+                    <Label className="text-xs w-[80px] shrink-0">{FIELD_LABELS[field]}</Label>
                     <Select
                       value={mapping[field] || '__none__'}
                       onValueChange={(value) => setMapping({ ...mapping, [field]: value === '__none__' ? null : value })}
@@ -337,8 +337,8 @@ export function ImportExcelDialog({ onImport }: ImportExcelDialogProps) {
               </div>
             </div>
 
-            {/* Fixed Action Buttons at bottom */}
-            <div className="flex-shrink-0 flex justify-between gap-2 pt-3 mt-3 border-t border-border">
+            {/* Fixed Action Buttons at bottom - sticky */}
+            <div className="flex-shrink-0 flex justify-between gap-2 pt-3 mt-3 border-t border-border sticky bottom-0 bg-card pb-1">
               <Button variant="outline" size="sm" onClick={resetState}>
                 Back
               </Button>

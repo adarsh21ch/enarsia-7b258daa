@@ -169,9 +169,10 @@ html {
   .scrollable-content {
     flex: 1;
     overflow-y: auto;
-    overflow-x: hidden;
+    overflow-x: auto;
     overscroll-behavior-y: contain;
     -webkit-overflow-scrolling: touch;
+    touch-action: pan-x pan-y;
   }
 
   /* Fixed header that doesn't shrink */

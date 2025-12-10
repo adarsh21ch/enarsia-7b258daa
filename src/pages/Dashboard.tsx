@@ -140,9 +140,9 @@ export default function Dashboard() {
           </div>
         </header>
 
-        <main ref={containerRef} className="scrollable-content relative">
+        <main ref={containerRef} className="scrollable-content relative" style={{ touchAction: 'pan-x pan-y' }}>
           <PullToRefreshIndicator isRefreshing={isRefreshing} pullDistance={pullDistance} showIndicator={showIndicator} />
-          <div className="container py-3 px-4 pb-28">
+          <div className="py-3 px-4 pb-28">
             {/* Content based on active tab */}
             {mainTab === 'leads' ? (
               <ProspectTable

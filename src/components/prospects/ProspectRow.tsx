@@ -283,12 +283,12 @@ export function ProspectRow({
         {...(dragHandleProps?.attributes || {})}
         {...rowDragListeners}
         className={cn(
-          "group transition-colors duration-100 border-b border-border/30 touch-none", 
+          "group transition-colors duration-100 border-b border-border/30", 
           // Zebra striping: first row (isEven=true) is light, second row darker - solid backgrounds
           isEven ? "bg-card" : "bg-muted", 
-          "hover:bg-accent", 
+          "hover:bg-muted/80", 
           isExpanded && "bg-primary/5 hover:bg-primary/5",
-          dragHandleProps?.isDragging && "shadow-lg cursor-grabbing",
+          dragHandleProps?.isDragging && "shadow-lg cursor-grabbing touch-none",
           !dragHandleProps?.isDragging && "cursor-grab"
         )}
       >

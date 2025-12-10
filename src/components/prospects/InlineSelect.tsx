@@ -76,7 +76,7 @@ export function InlineSelect<T extends string>({
       >
         <SelectTrigger 
           className={cn(
-            'h-9 sm:h-8 text-xs border-0 bg-transparent hover:bg-muted focus:ring-1 focus:ring-accent/30 min-w-[70px]',
+            'h-9 sm:h-8 text-xs border-0 bg-transparent hover:bg-muted/50 focus:ring-1 focus:ring-border/30 focus:bg-transparent min-w-[70px]',
             className
           )}
         >
@@ -120,7 +120,7 @@ export function InlineSelect<T extends string>({
       {/* Add new dialog */}
       {isAddingNew && (
         <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/50 p-4" onClick={() => setIsAddingNew(false)}>
-          <div className="bg-card rounded-lg border border-border p-4 w-full max-w-[300px] shadow-xl" onClick={e => e.stopPropagation()}>
+          <div className="bg-card rounded-2xl border border-border/50 p-5 w-[calc(100%-2rem)] max-w-[320px] shadow-2xl" onClick={e => e.stopPropagation()}>
             <p className="text-sm font-medium mb-3">Add new option</p>
             <Input
               value={newValue}
