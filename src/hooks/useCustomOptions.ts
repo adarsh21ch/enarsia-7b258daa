@@ -109,6 +109,36 @@ export function useCustomOptions() {
     }
   };
 
+  const updateOption = async (optionId: string, newValue: string) => {
+    if (!user) return false;
+
+    const trimmedValue = newValue.trim();
+    if (!trimmedValue) {
+      toast({ title: 'Error', description: 'Option value cannot be empty', variant: 'destructive' });
+      return false;
+    }
+
+    try {
+      const { error } = await supabase
+        .from('custom_options')
+        .update({ option_value: trimmedValue })
+        .eq('id', optionId)
+        .eq('user_id', user.id);
+
+      if (error) throw error;
+      
+      setCustomOptions(prev => prev.map(o => 
+        o.id === optionId ? { ...o, option_value: trimmedValue } : o
+      ));
+      toast({ title: 'Success', description: 'Option renamed' });
+      return true;
+    } catch (error) {
+      console.error('Error updating option:', error);
+      toast({ title: 'Error', description: 'Failed to rename option', variant: 'destructive' });
+      return false;
+    }
+  };
+
   const getOptionsForType = (optionType: OptionType, defaultOptions: readonly string[]) => {
     const custom = customOptions
       .filter(o => o.option_type === optionType)
@@ -134,6 +164,7 @@ export function useCustomOptions() {
     loading,
     addOption,
     deleteOption,
+    updateOption,
     getOptionsForType,
     getCustomOptionsForType,
     refetch: fetchOptions,

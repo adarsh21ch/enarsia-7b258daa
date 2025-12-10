@@ -163,30 +163,33 @@ export function ProspectRow({
         
         return (
           <td key={columnId} className={cellClass} style={style} onPointerDown={(e) => e.stopPropagation()}>
-            <div className="flex flex-col overflow-hidden" style={{ maxWidth: isMobileTable ? '140px' : '180px' }}>
-              <div className="flex items-center gap-1">
-                {/* Call button next to name */}
+            <div className="flex items-center gap-1.5 overflow-hidden" style={{ maxWidth: isMobileTable ? '160px' : '220px' }}>
+              {/* Call + WhatsApp icons */}
+              <div className="flex items-center gap-0.5 shrink-0">
                 <CallIconButton onClick={openCall} className={isMobileTable ? "p-0.5" : undefined} />
+                <WhatsAppIconButton onClick={openWhatsApp} className={isMobileTable ? "p-0.5" : undefined} />
+              </div>
+              <div className="flex flex-col overflow-hidden min-w-0">
                 <button
                   onClick={onToggleExpand}
                   className={cn(
-                    "group flex items-center gap-1 text-left font-semibold text-foreground hover:text-primary transition-all duration-200 cursor-pointer bg-transparent border-0 py-1 px-1.5 rounded-md hover:bg-primary/5 active:scale-[0.98]",
+                    "group flex items-center gap-1 text-left font-semibold text-foreground hover:text-primary transition-all duration-200 cursor-pointer bg-transparent border-0 py-0.5 px-1 rounded-md hover:bg-primary/5 active:scale-[0.98]",
                     isMobileTable && "text-xs py-0.5",
                     isExpanded && "text-primary bg-primary/10"
                   )}
                 >
-                  <span className="truncate" style={{ maxWidth: isMobileTable ? '90px' : '130px' }} title={prospect.name}>{prospect.name}</span>
+                  <span className="truncate" style={{ maxWidth: isMobileTable ? '80px' : '140px' }} title={prospect.name}>{prospect.name}</span>
                   <span className={cn("transition-transform duration-200 text-muted-foreground group-hover:text-primary shrink-0", isExpanded && "rotate-180")}>
                     <ChevronDown className={cn("h-3 w-3", isMobileTable && "h-2.5 w-2.5")} />
                   </span>
                 </button>
-              </div>
-              {/* Compact info: Age, Location - truncated to stay within column */}
-              <div className={cn(
-                "text-muted-foreground ml-6 truncate",
-                isMobileTable ? "text-[9px] ml-5 max-w-[100px]" : "text-[10px] max-w-[140px]"
-              )} title={infoLine}>
-                {infoLine}
+                {/* Compact info: Age, Location - truncated to stay within column */}
+                <div className={cn(
+                  "text-muted-foreground truncate pl-1",
+                  isMobileTable ? "text-[9px] max-w-[80px]" : "text-[10px] max-w-[140px]"
+                )} title={infoLine}>
+                  {infoLine}
+                </div>
               </div>
             </div>
           </td>
@@ -201,15 +204,7 @@ export function ProspectRow({
             )}
           </td>
         );
-      case 'contact':
-        // Now shows only WhatsApp button - clean icon without border
-        return (
-          <td key={columnId} className={cellClass} style={style} onPointerDown={(e) => e.stopPropagation()}>
-            <div className="flex items-center justify-center">
-              <WhatsAppIconButton onClick={openWhatsApp} className={isMobileTable ? "p-0.5" : undefined} />
-            </div>
-          </td>
-        );
+      // 'contact' column removed - Call/WhatsApp now in Name column
       case 'stage':
         return (
           <td key={columnId} className={cellClass} style={style} onPointerDown={(e) => e.stopPropagation()}>
