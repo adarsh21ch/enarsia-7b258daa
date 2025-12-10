@@ -20,9 +20,12 @@ interface SortableProspectRowProps {
   showSelection?: boolean;
   isSelected?: boolean;
   onToggleSelect?: () => void;
+  disableDrag?: boolean;
 }
 
 export function SortableProspectRow(props: SortableProspectRowProps) {
+  const { disableDrag = false } = props;
+  
   const {
     attributes,
     listeners,
@@ -30,25 +33,32 @@ export function SortableProspectRow(props: SortableProspectRowProps) {
     transform,
     transition,
     isDragging,
-  } = useSortable({ id: props.prospect.id });
+  } = useSortable({ 
+    id: props.prospect.id,
+    disabled: disableDrag,
+  });
 
-  const style = {
+  // When drag is disabled, don't apply any transform/transition styles
+  const style = disableDrag ? {} : {
     transform: CSS.Transform.toString(transform),
     transition,
     opacity: isDragging ? 0.5 : 1,
     zIndex: isDragging ? 50 : 'auto',
   };
 
+  // Don't pass drag handle props when disabled
+  const dragHandleProps = disableDrag ? undefined : {
+    ref: setNodeRef,
+    style,
+    attributes,
+    listeners,
+    isDragging,
+  };
+
   return (
     <ProspectRow
       {...props}
-      dragHandleProps={{
-        ref: setNodeRef,
-        style,
-        attributes,
-        listeners,
-        isDragging,
-      }}
+      dragHandleProps={dragHandleProps}
     />
   );
 }
