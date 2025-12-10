@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback, useEffect } from 'react';
 import { Prospect, FunnelStage, ProspectQuality, Sheet, ExtendedActionTaken, FUNNEL_STAGES, EXTENDED_ACTIONS } from '@/types/prospect';
 import { SortableProspectRow } from './SortableProspectRow';
 import { MobileProspectCard } from './MobileProspectCard';
@@ -18,6 +18,8 @@ import { toast } from 'sonner';
 import * as XLSX from 'xlsx';
 import { format } from 'date-fns';
 import { useUndoRedo, UndoAction } from '@/hooks/useUndoRedo';
+import { useResizableColumns } from '@/hooks/useResizableColumns';
+import { ResizableColumnHeader } from '@/components/ui/ResizableColumnHeader';
 import {
   DndContext,
   closestCenter,
@@ -66,16 +68,16 @@ interface ProspectTableProps {
   subFilter: 'all' | 'hot' | 'scheduled' | 'day1' | 'progress';
 }
 
-// Column configuration - fixed order, no drag/resize
+// Column configuration with resize constraints
 // Phone column removed from visible table (data still available in Report Card)
 // Quality column removed per user request
 // WhatsApp/Call moved into Name column
 const COLUMNS = [
-  { id: 'index', label: '#', width: 45, mobileWidth: 32 },
-  { id: 'name', label: 'Name', width: 180, mobileWidth: 140 },
-  { id: 'action', label: 'Response', width: 150, mobileWidth: 110 },
-  { id: 'stage', label: 'Funnel', width: 150, mobileWidth: 110 },
-  { id: 'actions', label: '', width: 70, mobileWidth: 45 },
+  { id: 'index', label: '#', width: 45, mobileWidth: 32, minWidth: 32, maxWidth: 60, canResize: false },
+  { id: 'name', label: 'Name', width: 180, mobileWidth: 140, minWidth: 100, maxWidth: 300 },
+  { id: 'action', label: 'Response', width: 150, mobileWidth: 110, minWidth: 80, maxWidth: 250 },
+  { id: 'stage', label: 'Funnel', width: 150, mobileWidth: 110, minWidth: 80, maxWidth: 250 },
+  { id: 'actions', label: '', width: 70, mobileWidth: 45, minWidth: 40, maxWidth: 100, canResize: false },
 ];
 
 // Fixed column order (phone, contact, and quality removed from visible columns - Call/WhatsApp now in Name)
@@ -121,11 +123,34 @@ export function ProspectTable({
   // Undo/Redo
   const { pushAction, popUndo, popRedo, canUndo, canRedo } = useUndoRedo();
 
-  // Fixed column widths based on device
-  const columnWidths = useMemo(() => 
+  // Initial column widths based on device
+  const initialColumnWidths = useMemo(() => 
     Object.fromEntries(COLUMNS.map(c => [c.id, isMobile ? c.mobileWidth : c.width])),
     [isMobile]
   );
+
+  // Resizable columns hook
+  const {
+    columnWidths,
+    isResizing,
+    handleResizeStart,
+    handleResizeMove,
+    handleResizeEnd,
+    getColumnWidth,
+    resetColumnWidths,
+  } = useResizableColumns({
+    columns: COLUMNS.map(c => ({
+      id: c.id,
+      minWidth: c.minWidth,
+      maxWidth: c.maxWidth,
+    })),
+    initialWidths: initialColumnWidths,
+  });
+
+  // Reset column widths when device changes
+  useEffect(() => {
+    resetColumnWidths();
+  }, [isMobile]);
 
   // Row drag-and-drop sensors
   const sensors = useSensors(
@@ -711,7 +736,10 @@ export function ProspectTable({
                   </th>
                 </tr>
                 {/* Column header row */}
-                <tr className="bg-muted/95 backdrop-blur-sm text-xs font-semibold text-muted-foreground border-b border-border">
+                <tr className={cn(
+                  "bg-muted/95 backdrop-blur-sm text-xs font-semibold text-muted-foreground border-b border-border",
+                  isResizing && "select-none"
+                )}>
                   {/* Selection checkbox header */}
                   {selectionMode.active && (
                     <th className="px-2 py-2.5 w-10 min-w-[40px]">
@@ -724,14 +752,21 @@ export function ProspectTable({
                   {COLUMN_ORDER.map((columnId) => {
                     const col = COLUMNS.find(c => c.id === columnId);
                     if (!col) return null;
-                    const width = columnWidths[columnId];
+                    const width = getColumnWidth(columnId);
                     const isNameColumn = columnId === 'name';
                     const isIndexColumn = columnId === 'index';
-                    const showOptionsButton = columnId === 'action' || columnId === 'stage';
+                    const canResize = col.canResize !== false;
                     
                     return (
-                      <th
+                      <ResizableColumnHeader
                         key={columnId}
+                        columnId={columnId}
+                        width={width}
+                        onResize={handleResizeStart}
+                        onResizeMove={handleResizeMove}
+                        onResizeEnd={handleResizeEnd}
+                        isResizing={isResizing}
+                        canResize={canResize}
                         className={cn(
                           "px-2 py-2.5 text-left whitespace-nowrap",
                           columnId === 'index' && "text-center",
@@ -739,7 +774,6 @@ export function ProspectTable({
                           isMobile && isNameColumn && "sticky left-[36px] z-20 bg-muted/95 shadow-[2px_0_4px_-2px_rgba(0,0,0,0.15)]",
                           isMobile && isIndexColumn && "sticky left-0 z-20 bg-muted/95"
                         )}
-                        style={{ width: `${width}px`, minWidth: `${width}px` }}
                       >
                         <div className="flex items-center gap-0.5">
                           <span>{col.label}</span>
@@ -758,7 +792,7 @@ export function ProspectTable({
                             />
                           )}
                         </div>
-                      </th>
+                      </ResizableColumnHeader>
                     );
                   })}
                 </tr>
