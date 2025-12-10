@@ -49,7 +49,7 @@ const navItems = [
   { path: '/profile', icon: null, label: 'Profile', isProfile: true },
 ];
 
-export function BottomNav({ className }: { className?: string }) {
+export function BottomNav() {
   const location = useLocation();
   const { profile } = useProfile();
 
@@ -58,7 +58,7 @@ export function BottomNav({ className }: { className?: string }) {
   const userInitials = displayName.slice(0, 2).toUpperCase();
 
   return (
-    <nav className={cn("fixed bottom-0 left-0 right-0 z-50 bg-card/95 backdrop-blur-xl border-t border-border/50 safe-area-pb", className)}>
+    <nav className="fixed bottom-0 left-0 right-0 z-50 bg-card/95 backdrop-blur-xl border-t border-border/50 safe-area-pb">
       {/* Raised position with extra padding for Instagram-like positioning */}
       <div className="flex items-center justify-around h-16 max-w-lg mx-auto pb-3 pt-1">
         {navItems.map(item => {
