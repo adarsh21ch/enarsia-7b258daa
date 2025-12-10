@@ -117,7 +117,7 @@ export default function Dashboard() {
 
   const toggleOptions: [{ value: string; label: string; icon: typeof Phone }, { value: string; label: string; icon: typeof GitBranch }] = [
     { value: 'leads', label: 'Calling', icon: Phone },
-    { value: 'funnel', label: 'Funnel', icon: GitBranch },
+    { value: 'funnel', label: 'Filter', icon: GitBranch },
   ];
 
   return (
