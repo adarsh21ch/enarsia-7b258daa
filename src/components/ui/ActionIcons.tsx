@@ -108,7 +108,7 @@ export function WhatsAppIconButton({ onClick, className }: { onClick: () => void
       )}
       aria-label="WhatsApp"
     >
-      <WhatsAppOutlineIcon className="h-6 w-6" />
+      <WhatsAppOutlineIcon className="h-5 w-5" />
     </button>
   );
 }
