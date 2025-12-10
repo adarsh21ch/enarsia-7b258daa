@@ -212,9 +212,9 @@ export function ImportExcelDialog({ onImport }: ImportExcelDialogProps) {
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>
-        <Button variant="outline" size="sm" className="gap-1.5">
-          <FileSpreadsheet className="h-4 w-4" />
-          Import Excel
+        <Button variant="outline" size="sm" className="h-8 gap-1 text-xs px-2">
+          <FileSpreadsheet className="h-3.5 w-3.5" />
+          <span className="hidden sm:inline">Import</span>
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-2xl bg-card border-border max-h-[90vh] overflow-y-auto">

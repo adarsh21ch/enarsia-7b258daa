@@ -195,61 +195,62 @@ export default function Home() {
               </div>
             ) : (
               <div className="flex-1 overflow-y-auto">
-                <div className="space-y-3">
+                <div className="relative pl-4">
                   {activities.map((activity, index) => (
                     <div
                       key={`${activity.type}-${activity.id}`}
-                      className="relative"
+                      className="relative flex items-start gap-2 pb-4"
                     >
-                      {/* Segmented timeline line - stops above time, restarts below row */}
-                      {index > 0 && (
-                        <div className="absolute left-3 -top-3 h-3 w-px bg-border/50" />
-                      )}
-                      
-                      {/* Activity row */}
-                      <div className="flex items-start gap-3">
-                        {/* Time column with subtle styling */}
-                        <div className="shrink-0 w-16 pt-2.5">
-                          <span className="text-[11px] text-muted-foreground/80">
-                            {format(activity.time, 'h:mm a')}
-                          </span>
-                        </div>
-                        
-                        {/* Activity content */}
-                        <div className="flex-1 flex items-center justify-between p-3 rounded-xl bg-muted/30 hover:bg-muted/40 transition-colors min-w-0">
-                          <div className="min-w-0 flex-1">
-                            <div className="flex items-center gap-2 flex-wrap">
-                              <p className="text-sm font-medium truncate">{activity.name}</p>
-                              {activity.stage && (
-                                <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-primary/10 text-primary">
-                                  {activity.stage}
-                                </span>
-                              )}
-                              {activity.action && (
-                                <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-muted text-muted-foreground">
-                                  {activity.action}
-                                </span>
-                              )}
-                              {activity.type === 'todo' && (
-                                <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-blue-500/10 text-blue-600">
-                                  To-Do
-                                </span>
-                              )}
-                            </div>
-                          </div>
-                          {activity.phone && (
-                            <div className="flex items-center gap-1.5 ml-2 shrink-0">
-                              <CallButton onClick={() => handleCall(activity.phone!)} size="sm" />
-                              <WhatsAppButton onClick={() => handleWhatsApp(activity.phone!)} size="sm" />
-                            </div>
-                          )}
-                        </div>
+                      {/* Vertical line segment - stops above time, starts below previous row */}
+                      <div className="absolute left-0 top-0 bottom-0 flex flex-col items-center" style={{ width: '2px' }}>
+                        {/* Line segment ending at time label */}
+                        {index > 0 && (
+                          <div className="w-px bg-border/60 h-2" />
+                        )}
+                        {/* Time acts as a "stop" on the timeline */}
+                        <div className="shrink-0 my-0.5" />
+                        {/* Line segment continuing below (if not last) */}
+                        {index < activities.length - 1 && (
+                          <div className="w-px bg-border/60 flex-1 mt-6" />
+                        )}
                       </div>
                       
-                      {/* Line segment below this row (if not last) */}
-                      {index < activities.length - 1 && (
-                        <div className="absolute left-3 bottom-0 translate-y-full h-3 w-px bg-border/50" />
-                      )}
+                      {/* Time label - subtle, plain text */}
+                      <div className="shrink-0 w-14 pt-0.5">
+                        <span className="text-[11px] text-muted-foreground/70">
+                          {format(activity.time, 'h:mm a')}
+                        </span>
+                      </div>
+                      
+                      {/* Activity content card */}
+                      <div className="flex-1 flex items-center justify-between p-2.5 rounded-lg bg-muted/30 hover:bg-muted/40 transition-colors min-w-0">
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center gap-1.5 flex-wrap">
+                            <p className="text-sm font-medium truncate">{activity.name}</p>
+                            {activity.stage && (
+                              <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-primary/10 text-primary">
+                                {activity.stage}
+                              </span>
+                            )}
+                            {activity.action && (
+                              <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-muted text-muted-foreground">
+                                {activity.action}
+                              </span>
+                            )}
+                            {activity.type === 'todo' && (
+                              <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-blue-500/10 text-blue-600">
+                                To-Do
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                        {activity.phone && (
+                          <div className="flex items-center gap-1 ml-2 shrink-0">
+                            <CallButton onClick={() => handleCall(activity.phone!)} size="sm" />
+                            <WhatsAppButton onClick={() => handleWhatsApp(activity.phone!)} size="sm" />
+                          </div>
+                        )}
+                      </div>
                     </div>
                   ))}
                 </div>

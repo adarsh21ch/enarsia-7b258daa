@@ -151,7 +151,7 @@ export default function TodoUp() {
         </div>
       </header>
 
-      <main ref={containerRef} className="scrollable-content relative pb-36">
+      <main ref={containerRef} className="scrollable-content relative pb-24">
         <PullToRefreshIndicator isRefreshing={isRefreshing} pullDistance={pullDistance} showIndicator={showIndicator} />
         <div className="container py-3 px-4 space-y-4">
           {/* To-Do List */}
@@ -189,7 +189,7 @@ export default function TodoUp() {
                 </Button>
               </div>
             ) : (
-              <div className="max-h-[50vh] overflow-y-auto divide-y divide-border/20">
+              <div className="divide-y divide-border/20">
                 {/* Pending todos first - sorted ascending (earliest at top) */}
                 {pendingTodos.map((todo, index) => (
                   <div
@@ -303,9 +303,9 @@ export default function TodoUp() {
         </div>
       </main>
 
-      {/* Fixed bottom chat-style input */}
-      <div className="fixed bottom-14 left-0 right-0 z-30 px-4 pb-3 pt-2 bg-gradient-to-t from-background via-background to-transparent">
-        <div className="max-w-lg mx-auto">
+      {/* Fixed bottom chat-style input - floating overlay */}
+      <div className="fixed bottom-14 left-0 right-0 z-30 px-4 pb-3 pt-2 pointer-events-none">
+        <div className="pointer-events-auto max-w-lg mx-auto">
           <div className="flex items-center gap-2 bg-card/95 backdrop-blur-xl border border-border/50 rounded-full px-4 py-2 shadow-lg">
             <input
               id="todo-input"
