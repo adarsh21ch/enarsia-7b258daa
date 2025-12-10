@@ -2,54 +2,47 @@ import { supabase } from '@/integrations/supabase/client';
 
 export function useEncryption() {
   const getValidSession = async () => {
-    try {
-      // First try to get the current session
-      const { data: { session }, error } = await supabase.auth.getSession();
-      
-      if (error || !session) {
-        // No session - don't log warning, this is expected on auth page
-        return null;
-      }
-
-      // Check if token is close to expiring (within 60 seconds)
-      const expiresAt = session.expires_at ? session.expires_at * 1000 : 0;
-      const now = Date.now();
-      const shouldRefresh = expiresAt - now < 60000;
-
-      if (shouldRefresh) {
-        const { data: refreshData, error: refreshError } = await supabase.auth.refreshSession();
-        
-        if (refreshError || !refreshData.session) {
-          // Session is invalid - sign out to force re-login
-          if (refreshError?.message?.includes('session_not_found') || 
-              refreshError?.message?.includes('Invalid') ||
-              refreshError?.message?.includes('Refresh Token Not Found') ||
-              refreshError?.status === 403 ||
-              refreshError?.status === 400) {
-            await supabase.auth.signOut();
-            return null;
-          }
-          return null; // Return null for any refresh error
-        }
-        
-        return refreshData.session;
-      }
-      
-      return session;
-    } catch (err) {
-      // Silently handle any session errors
+    // First try to get the current session
+    const { data: { session }, error } = await supabase.auth.getSession();
+    
+    if (error || !session) {
+      // No session - don't log warning, this is expected on auth page
       return null;
     }
+
+    // Check if token is close to expiring (within 60 seconds)
+    const expiresAt = session.expires_at ? session.expires_at * 1000 : 0;
+    const now = Date.now();
+    const shouldRefresh = expiresAt - now < 60000;
+
+    if (shouldRefresh) {
+      const { data: refreshData, error: refreshError } = await supabase.auth.refreshSession();
+      
+      if (refreshError || !refreshData.session) {
+        // Session is invalid - sign out to force re-login
+        if (refreshError?.message?.includes('session_not_found') || 
+            refreshError?.message?.includes('Invalid') ||
+            refreshError?.status === 403) {
+          await supabase.auth.signOut();
+          return null;
+        }
+        return session; // Return original session as fallback for other errors
+      }
+      
+      return refreshData.session;
+    }
+    
+    return session;
   };
 
   const invokeWithRetry = async (action: string, data: any, retries = 1): Promise<any> => {
-    try {
-      const session = await getValidSession();
-      if (!session) {
-        // No session - silently return null, don't log warning
-        return null;
-      }
+    const session = await getValidSession();
+    if (!session) {
+      // No session - silently return null, don't log warning
+      return null;
+    }
 
+    try {
       const { data: result, error } = await supabase.functions.invoke('encrypt-data', {
         body: { action, data }
       });
@@ -62,25 +55,26 @@ export function useEncryption() {
           error.message?.includes('Unauthorized') || 
           error.message?.includes('Invalid') ||
           error.message?.includes('non-2xx') ||
-          error.message?.includes('expired') ||
           (error as any).status === 401 ||
           (error as any).context?.status === 401;
 
         if (retries > 0 && isAuthError) {
+          console.log(`Auth error on ${action}, refreshing session and retrying... (${retries} retries left)`);
           const { error: refreshError } = await supabase.auth.refreshSession();
           if (refreshError) {
+            console.warn('Session refresh failed, signing out...');
             await supabase.auth.signOut();
             return null;
           }
           return invokeWithRetry(action, data, retries - 1);
         }
-        // Return null for any error - don't crash the app
+        console.error(`${action} error:`, error);
         return null;
       }
 
       return result;
     } catch (err) {
-      // Silently handle any errors
+      console.error(`${action} failed:`, err);
       return null;
     }
   };
