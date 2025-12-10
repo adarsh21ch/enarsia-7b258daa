@@ -39,11 +39,7 @@ export function FilterTagSetupDialog({ open, onOpenChange, onComplete }: FilterT
     }
   };
 
-  const handleSkip = () => {
-    localStorage.setItem(FILTER_SETUP_KEY, 'true');
-    onComplete();
-    onOpenChange(false);
-  };
+  // No skip option - user must select a filter tag
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -51,10 +47,10 @@ export function FilterTagSetupDialog({ open, onOpenChange, onComplete }: FilterT
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Star className="h-5 w-5 text-yellow-500" />
-            Set Up Filter Tag
+            Select Your Filter Tag
           </DialogTitle>
           <DialogDescription>
-            Select ONE Response tag to use as your Filter tag. Prospects with this tag will appear in your Filter list.
+            Choose ONE Response tag to use as your Filter tag. Prospects with this tag will appear in your Filter list.
           </DialogDescription>
         </DialogHeader>
 
@@ -83,12 +79,9 @@ export function FilterTagSetupDialog({ open, onOpenChange, onComplete }: FilterT
           )}
         </div>
 
-        <DialogFooter className="gap-2">
-          <Button variant="ghost" onClick={handleSkip}>
-            Skip for now
-          </Button>
-          <Button onClick={handleSave} disabled={saving || !selectedTag}>
-            {saving ? 'Saving...' : 'Set Filter Tag'}
+        <DialogFooter>
+          <Button onClick={handleSave} disabled={saving || !selectedTag} className="w-full sm:w-auto">
+            {saving ? 'Saving...' : 'Confirm Selection'}
           </Button>
         </DialogFooter>
       </DialogContent>
