@@ -210,9 +210,7 @@ export default function Home() {
                 <div className="space-y-0">
                   {activities.map((activity, index) => <div key={`${activity.type}-${activity.id}`} className="relative">
                       {/* Connecting line between this time and the next - only show if not last item */}
-                      {index < activities.length - 1 && (
-                        <div className="absolute left-[26px] top-[22px] bottom-0 w-px bg-border/60" />
-                      )}
+                      {index < activities.length - 1 && <div className="absolute left-[26px] top-[22px] bottom-0 w-px bg-border/60" />}
                       
                       <div className="relative flex gap-3">
                         {/* Time label - left aligned with dot */}
@@ -247,7 +245,7 @@ export default function Home() {
                             
                             {/* Call/WhatsApp buttons */}
                             {activity.phone && <div className="flex items-center gap-1 shrink-0">
-                                <button onClick={() => handleCall(activity.phone!)} className="p-1.5 rounded-full bg-primary/10 hover:bg-primary/20 transition-colors">
+                                <button onClick={() => handleCall(activity.phone!)} className="p-1.5 rounded-full transition-colors bg-secondary">
                                   <CallIcon className="h-4 w-4 text-primary" />
                                 </button>
                                 <button onClick={() => handleWhatsApp(activity.phone!)} className="p-1.5 rounded-full bg-green-500/10 hover:bg-green-500/20 transition-colors">
