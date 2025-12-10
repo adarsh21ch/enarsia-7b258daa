@@ -61,10 +61,10 @@ export function ProspectFilters({
       actions: newActions
     });
   };
-  const getFunnelsLabel = () => {
-    if (filters.stages.length === 0) return 'All Funnels';
+  const getStagesLabel = () => {
+    if (filters.stages.length === 0) return 'All Stages';
     if (filters.stages.length === 1) return filters.stages[0];
-    return `${filters.stages.length} Funnels`;
+    return `${filters.stages.length} Stages`;
   };
   const getActionsLabel = () => {
     if (filters.actions.length === 0) return 'All Responses';
@@ -107,11 +107,11 @@ export function ProspectFilters({
           </PopoverContent>
         </Popover>
 
-        {/* Multi-select Funnels Filter */}
+        {/* Multi-select Stages Filter */}
         <Popover>
           <PopoverTrigger asChild>
             <Button variant="outline" className={cn("h-10 sm:h-9 min-w-[100px] w-auto text-xs shrink-0 justify-between gap-1", filters.stages.length > 0 && "border-primary/50 bg-primary/5")}>
-              <span className="truncate">{getFunnelsLabel()}</span>
+              <span className="truncate">{getStagesLabel()}</span>
               <ChevronDown className="h-3.5 w-3.5 opacity-50" />
             </Button>
           </PopoverTrigger>
@@ -126,7 +126,7 @@ export function ProspectFilters({
             ...filters,
             stages: []
           })}>
-                Clear Funnels
+                Clear Stages
               </Button>}
           </PopoverContent>
         </Popover>

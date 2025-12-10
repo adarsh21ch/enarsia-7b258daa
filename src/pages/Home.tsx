@@ -7,7 +7,7 @@ import { useSharedProspects } from '@/hooks/useSharedProspects';
 import { useTodos } from '@/hooks/useTodos';
 import { BottomNav } from '@/components/layout/BottomNav';
 import { PullToRefreshIndicator } from '@/components/PullToRefreshIndicator';
-import { TeamBar } from '@/components/team/TeamBar';
+import { TeamToggle } from '@/components/team/TeamToggle';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
@@ -198,13 +198,11 @@ export default function Home() {
               </p>
             </div>
           </div>
-          <TeamBar
+          <TeamToggle
             sharedOwners={sharedOwners}
             selectedOwnerIds={selectedOwnerIds}
-            onToggle={toggleOwnerSelection}
-            onClear={clearSelection}
             onSelectAll={selectAllOwners}
-            prospectsCount={sharedProspects.length}
+            onClear={clearSelection}
             currentTab="activity"
           />
         </div>

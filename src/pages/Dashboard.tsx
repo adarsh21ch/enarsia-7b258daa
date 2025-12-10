@@ -10,7 +10,7 @@ import { ProspectTable } from '@/components/prospects/ProspectTable';
 import { PullToRefreshIndicator } from '@/components/PullToRefreshIndicator';
 import { BottomViewToggle } from '@/components/ui/BottomViewToggle';
 import { FilterTagSetupDialog, useFilterTagSetup } from '@/components/prospects/FilterTagSetupDialog';
-import { TeamBar } from '@/components/team/TeamBar';
+import { TeamToggle } from '@/components/team/TeamToggle';
 import { Loader2, Phone, Layers } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import nevoraLogo from '@/assets/nevorai-logo.jpeg';
@@ -153,7 +153,7 @@ export default function Dashboard() {
 
   const toggleOptions: [{ value: string; label: string; icon: typeof Phone }, { value: string; label: string; icon: typeof Layers }] = [
     { value: 'leads', label: 'Calling', icon: Phone },
-    { value: 'funnel', label: 'Stages', icon: Layers },
+    { value: 'funnel', label: 'Filter', icon: Layers },
   ];
 
   return (
@@ -169,21 +169,19 @@ export default function Dashboard() {
                 className="h-10 w-10 rounded-xl object-cover shadow-md"
               />
               <div>
-                <h1 className="text-xl font-bold tracking-tight">
-                  {mainTab === 'leads' ? 'Calling' : 'Stages'}
+              <h1 className="text-xl font-bold tracking-tight">
+                  {mainTab === 'leads' ? 'Calling' : 'Filter'}
                 </h1>
                 <p className="text-xs text-muted-foreground font-medium">
                   {isViewingTeam ? 'Viewing team data (read-only)' : 'Manage your prospects'}
                 </p>
               </div>
             </div>
-            <TeamBar
+            <TeamToggle
               sharedOwners={sharedOwners}
               selectedOwnerIds={selectedOwnerIds}
-              onToggle={toggleOwnerSelection}
-              onClear={clearSelection}
               onSelectAll={selectAllOwners}
-              prospectsCount={sharedProspects.length}
+              onClear={clearSelection}
               currentTab="calling"
             />
           </div>

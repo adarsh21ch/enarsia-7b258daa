@@ -14,7 +14,8 @@ const TAB_LABELS: Record<TabPermission, string> = {
   calling: 'Calling',
   follow_up: 'Follow Up',
   activity: 'Recent (Activity)',
-  todo: 'To-Do List'
+  todo: 'To-Do List',
+  track: 'Track Up'
 };
 
 export function ShareProfileDialog() {

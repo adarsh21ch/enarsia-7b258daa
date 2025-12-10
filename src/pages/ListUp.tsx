@@ -6,7 +6,7 @@ import { useProspects } from '@/hooks/useProspects';
 import { useSharedProspects } from '@/hooks/useSharedProspects';
 import { BottomNav } from '@/components/layout/BottomNav';
 import { PullToRefreshIndicator } from '@/components/PullToRefreshIndicator';
-import { TeamBar } from '@/components/team/TeamBar';
+import { TeamToggle } from '@/components/team/TeamToggle';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -299,13 +299,11 @@ export default function ListUp() {
                 Clear
               </Button>
             )}
-            <TeamBar
+            <TeamToggle
               sharedOwners={sharedOwners}
               selectedOwnerIds={selectedOwnerIds}
-              onToggle={toggleOwnerSelection}
-              onClear={clearSelection}
               onSelectAll={selectAllOwners}
-              prospectsCount={sharedProspects.length}
+              onClear={clearSelection}
               currentTab="follow_up"
             />
           </div>

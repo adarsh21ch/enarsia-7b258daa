@@ -174,7 +174,7 @@ export default function Profile() {
                 </Button>
               </div>
               <p className="text-xs text-muted-foreground mt-2">
-                Share this ID in Follow Up → Team to let others view your data (read-only)
+                Share this TrackUp ID so others can share their data with you.
               </p>
             </div>
           )}

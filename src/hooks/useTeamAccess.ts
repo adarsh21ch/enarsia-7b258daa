@@ -4,7 +4,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
 
 // Available tabs for permissions
-export const AVAILABLE_TABS = ['calling', 'follow_up', 'activity', 'todo'] as const;
+export const AVAILABLE_TABS = ['calling', 'follow_up', 'activity', 'todo', 'track'] as const;
 export type TabPermission = typeof AVAILABLE_TABS[number];
 
 interface TeamMember {
