@@ -19,7 +19,7 @@ import { toast } from 'sonner';
 import * as XLSX from 'xlsx';
 import { format } from 'date-fns';
 import { useUndoRedo, UndoAction } from '@/hooks/useUndoRedo';
-import { DndContext, closestCenter, KeyboardSensor, PointerSensor, TouchSensor, useSensor, useSensors, DragEndEvent } from '@dnd-kit/core';
+import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, DragEndEvent } from '@dnd-kit/core';
 import { arrayMove, SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { useCustomOptionsContext } from '@/contexts/CustomOptionsContext';
 
@@ -30,6 +30,7 @@ interface Filters {
   actions: ExtendedActionTaken[];
   incompleteOnly: boolean;
 }
+
 interface ProspectTableProps {
   prospects: Prospect[];
   loading: boolean;
@@ -59,49 +60,35 @@ interface ProspectTableProps {
   subFilter: 'all' | 'hot' | 'scheduled' | 'day1' | 'progress';
 }
 
-// Column configuration with fixed widths for frozen columns
-// # and Name columns are frozen (sticky), others scroll horizontally
+// Simplified column configuration - only 3 columns, no horizontal scroll needed
 const COLUMNS = [{
   id: 'index',
   label: '#',
-  width: 60,
-  mobileWidth: 40,
-  sticky: true,
-  stickyLeft: 0,
+  width: '10%',
+  minWidth: 40,
 }, {
   id: 'name',
   label: 'Name',
-  width: 220,
-  mobileWidth: 160,
-  sticky: true,
-  stickyLeft: 60, // after # column
-  stickyLeftMobile: 40,
+  width: '55%',
+  minWidth: 160,
 }, {
   id: 'action',
   label: 'Response',
-  width: 150,
-  mobileWidth: 120,
-  sticky: false,
+  width: '35%',
+  minWidth: 100,
 }, {
   id: 'stage',
   label: 'Funnel',
-  width: 150,
-  mobileWidth: 120,
-  sticky: false,
-}, {
-  id: 'actions',
-  label: '',
-  width: 80,
-  mobileWidth: 60,
-  sticky: false,
+  width: '35%',
+  minWidth: 100,
 }];
 
-// Column order for Calling tab (NO Funnel column - clean calling view)
-const CALLING_COLUMN_ORDER = ['index', 'name', 'action', 'actions'];
-// Column order for Filter tab (includes Funnel column)
-const FILTER_COLUMN_ORDER = ['index', 'name', 'stage', 'action', 'actions'];
+// Column order for Calling tab: #, Name, Response
+const CALLING_COLUMN_ORDER = ['index', 'name', 'action'];
+// Column order for Filter tab: #, Name, Funnel
+const FILTER_COLUMN_ORDER = ['index', 'name', 'stage'];
 
-// TableContent component extracted to avoid DndContext inside table
+// TableContent component
 interface TableContentProps {
   isMobile: boolean;
   COLUMN_ORDER: string[];
@@ -109,7 +96,6 @@ interface TableContentProps {
   selectedIds: Set<string>;
   selectionProspects: Prospect[];
   handleSelectAll: () => void;
-  getColumnWidth: (columnId: string) => number;
   sheets: Sheet[];
   selectedSheetId: string | null;
   onSelectSheet: (id: string | null) => void;
@@ -127,7 +113,6 @@ interface TableContentProps {
   handleToggleExpand: (id: string) => void;
   handleUpdateWithUndo: (id: string, updates: Partial<Prospect>) => Promise<Prospect | null>;
   handleDeleteWithUndo: (id: string) => Promise<boolean>;
-  columnWidths: Record<string, number>;
   handleToggleSelect: (id: string) => void;
   enableDragAndDrop: boolean;
 }
@@ -139,7 +124,6 @@ function TableContent({
   selectedIds,
   selectionProspects,
   handleSelectAll,
-  getColumnWidth,
   sheets,
   selectedSheetId,
   onSelectSheet,
@@ -157,19 +141,12 @@ function TableContent({
   handleToggleExpand,
   handleUpdateWithUndo,
   handleDeleteWithUndo,
-  columnWidths,
   handleToggleSelect,
   enableDragAndDrop,
 }: TableContentProps) {
-  // Calculate total table width
-  const totalWidth = COLUMN_ORDER.reduce((sum, colId) => {
-    const col = COLUMNS.find(c => c.id === colId);
-    return sum + (col ? (isMobile ? col.mobileWidth : col.width) : 100);
-  }, selectionMode.active ? 40 : 0);
-
   return (
     <div className="relative">
-      {/* Sheet tabs row - ALWAYS visible, outside scroll container */}
+      {/* Sheet tabs row */}
       <div className="bg-card border-b border-border/50">
         <SheetTabs 
           sheets={sheets} 
@@ -183,138 +160,100 @@ function TableContent({
         />
       </div>
       
-      {/* Single horizontal scroll container */}
-      <div 
-        className="overflow-x-auto overflow-y-hidden"
-        style={{
-          WebkitOverflowScrolling: 'touch',
-        }}
-      >
-        <table 
-          className="text-sm border-collapse bg-card" 
-          style={{
-            width: `${totalWidth}px`,
-            minWidth: `${totalWidth}px`,
-            tableLayout: 'fixed',
-          }}
-        >
-          {/* Sticky header row */}
-          <thead>
-            <tr className="bg-muted text-xs font-semibold text-muted-foreground border-b border-border">
-              {/* Selection checkbox header */}
-              {selectionMode.active && (
+      {/* Table - no horizontal scroll, fits viewport */}
+      <table className="w-full text-sm border-collapse bg-card table-fixed">
+        {/* Header row */}
+        <thead>
+          <tr className="bg-muted text-xs font-semibold text-muted-foreground border-b border-border">
+            {/* Selection checkbox header */}
+            {selectionMode.active && (
+              <th className="w-10 px-2 py-2.5 bg-muted">
+                <Checkbox 
+                  checked={selectedIds.size === selectionProspects.length && selectionProspects.length > 0} 
+                  onCheckedChange={handleSelectAll} 
+                />
+              </th>
+            )}
+            {COLUMN_ORDER.map(columnId => {
+              const col = COLUMNS.find(c => c.id === columnId);
+              if (!col) return null;
+              
+              return (
                 <th 
-                  className="px-2 py-2.5 bg-muted"
+                  key={columnId}
+                  className={cn(
+                    "px-2 py-2.5 text-left whitespace-nowrap bg-muted select-none",
+                    columnId === 'index' && "text-center",
+                    isMobile && "text-[11px] px-1.5"
+                  )}
                   style={{ 
-                    width: '40px', 
-                    minWidth: '40px',
-                    position: 'sticky',
-                    left: 0,
-                    zIndex: 12,
+                    width: col.width, 
+                    minWidth: `${col.minWidth}px`,
                   }}
                 >
-                  <Checkbox 
-                    checked={selectedIds.size === selectionProspects.length && selectionProspects.length > 0} 
-                    onCheckedChange={handleSelectAll} 
-                  />
+                  <div className="flex items-center gap-0.5">
+                    <span>{col.label}</span>
+                    {columnId === 'action' && <ColumnOptionsSheet columnType="action_taken" columnLabel="Response" defaultOptions={EXTENDED_ACTIONS} />}
+                    {columnId === 'stage' && <ColumnOptionsSheet columnType="funnel_stage" columnLabel="Funnel" defaultOptions={FUNNEL_STAGES} />}
+                  </div>
                 </th>
-              )}
-              {COLUMN_ORDER.map(columnId => {
-                const col = COLUMNS.find(c => c.id === columnId);
-                if (!col) return null;
-                const width = isMobile ? col.mobileWidth : col.width;
-                const isSticky = col.sticky;
-                const stickyLeft = isMobile ? (col.stickyLeftMobile ?? col.stickyLeft) : col.stickyLeft;
-                
-                // Adjust sticky left position when selection mode is active
-                const adjustedStickyLeft = selectionMode.active && isSticky ? (stickyLeft ?? 0) + 40 : stickyLeft;
-                
-                return (
-                  <th 
-                    key={columnId}
-                    className={cn(
-                      "px-2 py-2.5 text-left whitespace-nowrap bg-muted select-none",
-                      columnId === 'index' && "text-center",
-                      isMobile && "text-[11px] px-1.5",
-                      isSticky && "border-r border-border/30"
-                    )}
-                    style={{ 
-                      width: `${width}px`, 
-                      minWidth: `${width}px`,
-                      maxWidth: `${width}px`,
-                      ...(isSticky && {
-                        position: 'sticky',
-                        left: `${adjustedStickyLeft}px`,
-                        zIndex: 11,
-                      }),
-                    }}
-                  >
-                    <div className="flex items-center gap-0.5">
-                      <span>{col.label}</span>
-                      {columnId === 'action' && <ColumnOptionsSheet columnType="action_taken" columnLabel="Response" defaultOptions={EXTENDED_ACTIONS} />}
-                      {columnId === 'stage' && <ColumnOptionsSheet columnType="funnel_stage" columnLabel="Funnel" defaultOptions={FUNNEL_STAGES} />}
-                    </div>
-                  </th>
-                );
-              })}
+              );
+            })}
+          </tr>
+        </thead>
+        {/* Table body */}
+        <tbody>
+          {filteredProspects.length === 0 ? (
+            <tr>
+              <td colSpan={COLUMN_ORDER.length + (selectionMode.active ? 1 : 0)} className="py-12 text-center bg-card">
+                <Users className="h-10 w-10 mx-auto text-muted-foreground/40 mb-3" />
+                <p className="text-sm font-medium text-muted-foreground mb-1">
+                  {prospects.length === 0 ? "No prospects yet" : selectedSheetId ? "No prospects in this sheet" : "No prospects match your filters"}
+                </p>
+                <p className="text-xs text-muted-foreground/70 mb-3">
+                  {prospects.length === 0 || (selectedSheetId && sheetFilteredProspects.length === 0) ? (
+                    "Import Excel or Add Prospect to get started"
+                  ) : (
+                    <button 
+                      onClick={() => setFilters({
+                        search: '',
+                        stages: [],
+                        qualities: [],
+                        actions: [],
+                        incompleteOnly: false
+                      })} 
+                      className="text-accent hover:underline"
+                    >
+                      Clear filters
+                    </button>
+                  )}
+                </p>
+              </td>
             </tr>
-          </thead>
-          {/* Table body */}
-          <tbody>
-            {filteredProspects.length === 0 ? (
-              <tr>
-                <td colSpan={COLUMN_ORDER.length + (selectionMode.active ? 1 : 0)} className="py-12 text-center bg-card">
-                  <Users className="h-10 w-10 mx-auto text-muted-foreground/40 mb-3" />
-                  <p className="text-sm font-medium text-muted-foreground mb-1">
-                    {prospects.length === 0 ? "No prospects yet" : selectedSheetId ? "No prospects in this sheet" : "No prospects match your filters"}
-                  </p>
-                  <p className="text-xs text-muted-foreground/70 mb-3">
-                    {prospects.length === 0 || (selectedSheetId && sheetFilteredProspects.length === 0) ? (
-                      "Import Excel or Add Prospect to get started"
-                    ) : (
-                      <button 
-                        onClick={() => setFilters({
-                          search: '',
-                          stages: [],
-                          qualities: [],
-                          actions: [],
-                          incompleteOnly: false
-                        })} 
-                        className="text-accent hover:underline"
-                      >
-                        Clear filters
-                      </button>
-                    )}
-                  </p>
-                </td>
-              </tr>
-            ) : (
-              filteredProspects.map((prospect, index) => (
-                <SortableProspectRow 
-                  key={prospect.id} 
-                  prospect={prospect} 
-                  index={index + 1} 
-                  isCalling={isCalling} 
-                  isExpanded={expandedRowId === prospect.id} 
-                  onToggleExpand={() => handleToggleExpand(prospect.id)} 
-                  onUpdate={handleUpdateWithUndo} 
-                  onDelete={handleDeleteWithUndo} 
-                  isEven={index % 2 === 0} 
-                  columnOrder={COLUMN_ORDER} 
-                  columnWidths={columnWidths} 
-                  isMobileTable={isMobile}
-                  columnConfig={COLUMNS}
-                  selectionModeActive={selectionMode.active}
-                  showSelection={selectionMode.active && selectionProspects.some(p => p.id === prospect.id)} 
-                  isSelected={selectedIds.has(prospect.id)} 
-                  onToggleSelect={() => handleToggleSelect(prospect.id)}
-                  disableDrag={!enableDragAndDrop}
-                />
-              ))
-            )}
-          </tbody>
-        </table>
-      </div>
+          ) : (
+            filteredProspects.map((prospect, index) => (
+              <SortableProspectRow 
+                key={prospect.id} 
+                prospect={prospect} 
+                index={index + 1} 
+                isCalling={isCalling} 
+                isExpanded={expandedRowId === prospect.id} 
+                onToggleExpand={() => handleToggleExpand(prospect.id)} 
+                onUpdate={handleUpdateWithUndo} 
+                onDelete={handleDeleteWithUndo} 
+                isEven={index % 2 === 0} 
+                columnOrder={COLUMN_ORDER} 
+                isMobileTable={isMobile}
+                selectionModeActive={selectionMode.active}
+                showSelection={selectionMode.active && selectionProspects.some(p => p.id === prospect.id)} 
+                isSelected={selectedIds.has(prospect.id)} 
+                onToggleSelect={() => handleToggleSelect(prospect.id)}
+                disableDrag={!enableDragAndDrop}
+              />
+            ))
+          )}
+        </tbody>
+      </table>
     </div>
   );
 }
@@ -370,16 +309,6 @@ export function ProspectTable({
     canUndo,
     canRedo
   } = useUndoRedo();
-
-  // Fixed column widths (no resizing)
-  const columnWidths = useMemo(() => Object.fromEntries(
-    COLUMNS.map(c => [c.id, isMobile ? c.mobileWidth : c.width])
-  ), [isMobile]);
-
-  // Simple column width getter
-  const getColumnWidth = useCallback((columnId: string) => {
-    return columnWidths[columnId] ?? 100;
-  }, [columnWidths]);
 
   // Row drag-and-drop sensors - DISABLED on mobile for smooth scrolling
   const sensors = useSensors(
@@ -475,6 +404,7 @@ export function ProspectTable({
       return matchesSearch && matchesStage && matchesQuality && matchesAction && matchesIncomplete;
     });
   }, [sheetFilteredProspects, filters]);
+
   const getFilterLabel = (): string => {
     if (filters.stages.length > 0) return filters.stages.join('_').replace(/\s+/g, '');
     if (filters.actions.length > 0) return filters.actions.join('_').replace(/\s+/g, '');
@@ -482,6 +412,7 @@ export function ProspectTable({
     if (filters.incompleteOnly) return 'Incomplete';
     return filterMode === 'calling' ? 'Calling' : 'Funnel';
   };
+
   const exportToExcel = async () => {
     if (filteredProspects.length === 0) {
       toast.error('No data to export. Apply filters or add prospects first.');
@@ -555,12 +486,14 @@ export function ProspectTable({
       setExporting(false);
     }
   };
+
   const handleAddProspect = async (prospect: Partial<Prospect>) => {
     if (selectedSheetId) {
       prospect.sheet_id = selectedSheetId;
     }
     return onAdd(prospect);
   };
+
   const handleImportProspects = async (prospectsData: Partial<Prospect>[]) => {
     if (selectedSheetId) {
       prospectsData = prospectsData.map(p => ({
@@ -570,6 +503,7 @@ export function ProspectTable({
     }
     return onImport(prospectsData);
   };
+
   const handleToggleExpand = useCallback((prospectId: string) => {
     if (expandedRowId && expandedRowId !== prospectId) {
       setExpandedRowId(null);
@@ -586,8 +520,9 @@ export function ProspectTable({
       sheetId
     });
     setSelectedIds(new Set());
-    onSelectSheet(sheetId); // Switch to that sheet view
+    onSelectSheet(sheetId);
   };
+
   const handleExitSelectMode = () => {
     setSelectionMode({
       active: false,
@@ -595,6 +530,7 @@ export function ProspectTable({
     });
     setSelectedIds(new Set());
   };
+
   const handleToggleSelect = (id: string) => {
     setSelectedIds(prev => {
       const next = new Set(prev);
@@ -606,6 +542,7 @@ export function ProspectTable({
       return next;
     });
   };
+
   const handleSelectAll = () => {
     if (selectedIds.size === selectionProspects.length) {
       setSelectedIds(new Set());
@@ -624,9 +561,14 @@ export function ProspectTable({
         type: 'delete_prospect',
         data: prospect
       });
+      // Close expanded row if it was the deleted one
+      if (expandedRowId === id) {
+        setExpandedRowId(null);
+      }
     }
     return result;
   };
+
   const handleDeleteSelected = async () => {
     if (selectedIds.size === 0) return;
     const toDelete = prospects.filter(p => selectedIds.has(p.id));
@@ -640,7 +582,6 @@ export function ProspectTable({
         toast.success(`Deleted ${result.deleted} prospects`);
       }
     } else {
-      // Fallback to individual deletes
       let deleted = 0;
       for (const id of selectedIds) {
         const result = await onDelete(id);
@@ -657,6 +598,7 @@ export function ProspectTable({
     handleExitSelectMode();
     setDeleteConfirmOpen(false);
   };
+
   const handleDeleteAllInSheet = async (sheetId: string | null) => {
     const toDelete = sheetId === null ? baseProspects : baseProspects.filter(p => p.sheet_id === sheetId);
     if (toDelete.length === 0) {
@@ -693,11 +635,11 @@ export function ProspectTable({
     const prospect = prospects.find(p => p.id === id);
     if (!prospect) return null;
 
-    // Capture old values for the fields being updated
     const oldData: Partial<Prospect> = {};
     for (const key of Object.keys(updates)) {
       (oldData as any)[key] = (prospect as any)[key];
     }
+
     const result = await onUpdate(id, updates);
     if (result) {
       pushAction({
@@ -710,7 +652,7 @@ export function ProspectTable({
     return result;
   };
 
-  // Sheet rename with undo support
+  // Sheet update with undo
   const handleUpdateSheetWithUndo = async (id: string, name: string) => {
     const sheet = sheets.find(s => s.id === id);
     if (!sheet) return null;
@@ -731,26 +673,23 @@ export function ProspectTable({
   const handleUndo = async () => {
     const action = popUndo();
     if (!action) return;
+
     switch (action.type) {
       case 'delete_prospect':
         if (onRestoreProspect) {
-          await onRestoreProspect(action.data);
-          toast.success('Prospect restored');
+          await onRestoreProspect(action.data as Prospect);
         }
         break;
       case 'delete_prospects':
         if (onRestoreProspects) {
-          const count = await onRestoreProspects(action.data);
-          toast.success(`Restored ${count} prospects`);
+          await onRestoreProspects(action.data as Prospect[]);
         }
         break;
       case 'update_prospect':
         await onUpdate(action.id, action.oldData);
-        toast.success('Change undone');
         break;
       case 'rename_sheet':
         await onUpdateSheet(action.id, action.oldName);
-        toast.success('Sheet rename undone');
         break;
     }
   };
@@ -759,217 +698,187 @@ export function ProspectTable({
   const handleRedo = async () => {
     const action = popRedo();
     if (!action) return;
+
     switch (action.type) {
       case 'delete_prospect':
-        await onDelete(action.data.id);
-        toast.success('Prospect deleted again');
+        await onDelete((action.data as Prospect).id);
         break;
       case 'delete_prospects':
-        for (const p of action.data) {
-          await onDelete(p.id);
+        if (onBulkDelete) {
+          await onBulkDelete((action.data as Prospect[]).map(p => p.id));
         }
-        toast.success(`Deleted ${action.data.length} prospects again`);
         break;
       case 'update_prospect':
         await onUpdate(action.id, action.newData);
-        toast.success('Change redone');
         break;
       case 'rename_sheet':
         await onUpdateSheet(action.id, action.newName);
-        toast.success('Sheet renamed again');
         break;
     }
   };
-  if (loading) {
-    return <div className="space-y-4">
-        <div className="flex items-center justify-between">
-          <Skeleton className="h-9 w-64" />
-          <div className="flex gap-2">
-            <Skeleton className="h-9 w-32" />
-            <Skeleton className="h-9 w-32" />
-          </div>
-        </div>
-        <div className="bg-card rounded-lg border border-border">
-          {[...Array(5)].map((_, i) => <div key={i} className="flex items-center gap-4 p-4 border-b border-border last:border-0">
-              <Skeleton className="h-5 w-32" />
-              <Skeleton className="h-5 w-28" />
-              <Skeleton className="h-5 w-24" />
-              <Skeleton className="h-5 w-20" />
-              <Skeleton className="h-5 w-16" />
-            </div>)}
-        </div>
-      </div>;
-  }
+
   const isCalling = filterMode === 'calling';
-  // Use different column order based on filter mode (Calling = no Funnel, Filter = has Funnel)
   const COLUMN_ORDER = isCalling ? CALLING_COLUMN_ORDER : FILTER_COLUMN_ORDER;
-  return <div className="space-y-4">
-      
-      {/* Toolbar: Filters + Actions */}
-      <div className="bg-card/50 rounded-xl border border-border/50 p-2 sm:p-3 space-y-2 sm:space-y-3">
-        <div className="flex flex-col gap-2 sm:gap-3">
-          <div className="flex items-center justify-between">
-            <ProspectFilters filters={filters} onFiltersChange={setFilters} onExport={exportToExcel} exporting={exporting} filteredCount={filteredProspects.length} />
+
+  if (loading) {
+    return (
+      <div className="space-y-3">
+        <div className="flex items-center justify-between">
+          <Skeleton className="h-10 w-48" />
+          <Skeleton className="h-10 w-24" />
+        </div>
+        <div className="space-y-2">
+          {Array.from({ length: 5 }).map((_, i) => (
+            <Skeleton key={i} className="h-12 w-full" />
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-3">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div className="flex items-center gap-2 flex-wrap">
+          {/* Undo/Redo buttons */}
+          <div className="flex items-center gap-1 mr-2">
+            <Button variant="ghost" size="icon" onClick={handleUndo} disabled={!canUndo} className="h-8 w-8">
+              <Undo2 className="h-4 w-4" />
+            </Button>
+            <Button variant="ghost" size="icon" onClick={handleRedo} disabled={!canRedo} className="h-8 w-8">
+              <Redo2 className="h-4 w-4" />
+            </Button>
           </div>
-          <div className="flex gap-2 items-center justify-between">
-            {/* View Toggle */}
-            <div className="flex items-center bg-muted rounded-lg p-0.5">
-              <Button variant={viewMode === 'table' ? 'secondary' : 'ghost'} size="sm" className="h-8 px-2.5 gap-1.5" onClick={() => setViewMode('table')}>
-                <Table2 className="h-4 w-4" />
-                <span className="text-xs hidden sm:inline">Table</span>
+
+          {/* Filter tag button for funnel mode */}
+          {!isCalling && <ChangeFilterTagButton />}
+        </div>
+
+        <div className="flex items-center gap-2">
+          {/* Selection mode controls */}
+          {selectionMode.active && (
+            <div className="flex items-center gap-2 bg-muted/50 rounded-lg px-3 py-1.5">
+              <span className="text-sm font-medium">{selectedIds.size} selected</span>
+              <Button variant="destructive" size="sm" onClick={() => setDeleteConfirmOpen(true)} disabled={selectedIds.size === 0}>
+                <Trash2 className="h-4 w-4 mr-1" />
+                Delete
               </Button>
-              <Button variant={viewMode === 'card' ? 'secondary' : 'ghost'} size="sm" className="h-8 px-2.5 gap-1.5" onClick={() => setViewMode('card')}>
-                <LayoutGrid className="h-4 w-4" />
-                <span className="text-xs hidden sm:inline">Cards</span>
+              <Button variant="ghost" size="sm" onClick={handleExitSelectMode}>
+                <X className="h-4 w-4" />
               </Button>
             </div>
-            {/* Undo/Redo + Import/Add - grouped together */}
-            <div className="flex items-center gap-1.5">
-              {/* Undo/Redo buttons - compact icons with tight spacing */}
-              <div className="flex items-center gap-0.5 mr-1">
-                <Button variant="ghost" size="icon" className="h-8 w-8" onClick={handleUndo} disabled={!canUndo} title="Undo">
-                  <Undo2 className="h-4 w-[16px] px-0 py-0 mx-[7px]" />
-                </Button>
-                <Button variant="ghost" size="icon" className="h-8 w-8" onClick={handleRedo} disabled={!canRedo} title="Redo">
-                  <Redo2 className="h-4 w-4" />
-                </Button>
-              </div>
-              {/* Change Filter Tag button - only in Filter mode */}
-              {!isCalling && <ChangeFilterTagButton />}
-              {/* Import/Add - only show Import in Calling mode */}
-              {isCalling && <ImportExcelDialog onImport={handleImportProspects} />}
+          )}
+
+          {/* Action buttons - only show in calling mode */}
+          {isCalling && !selectionMode.active && (
+            <>
+              <ImportExcelDialog onImport={handleImportProspects} />
               <AddProspectDialog onAdd={handleAddProspect} />
-            </div>
-          </div>
+            </>
+          )}
         </div>
       </div>
 
-      {/* Selection Mode Bar */}
-      {selectionMode.active && <div className="bg-primary/10 border border-primary/30 rounded-xl p-3 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <Button variant="ghost" size="sm" onClick={handleExitSelectMode} className="h-8 px-2">
-              <X className="h-4 w-4 mr-1" />
-              Cancel
-            </Button>
-            <span className="text-sm font-medium">
-              {selectedIds.size} selected
-            </span>
-            <Button variant="ghost" size="sm" onClick={handleSelectAll} className="h-8 text-xs">
-              {selectedIds.size === selectionProspects.length ? 'Deselect All' : 'Select All'}
-            </Button>
-          </div>
-          <Button variant="destructive" size="sm" onClick={() => setDeleteConfirmOpen(true)} disabled={selectedIds.size === 0} className="h-8">
-            <Trash2 className="h-4 w-4 mr-1" />
-            Delete Selected
-          </Button>
-        </div>}
+      {/* Filters */}
+      <ProspectFilters
+        filters={filters}
+        onFiltersChange={setFilters}
+        onExport={exportToExcel}
+        exporting={exporting}
+        filteredCount={filteredProspects.length}
+      />
 
-      {/* Content - Always show table structure with sheet tabs */}
-      {viewMode === 'card' && filteredProspects.length > 0 ?
-    // Card Layout (only when there are prospects)
-    <>
-          {/* Sheet tabs for card view */}
-          <div className="bg-card rounded-xl border border-border overflow-hidden shadow-sm">
-            <SheetTabs sheets={sheets} selectedSheetId={selectedSheetId} onSelectSheet={onSelectSheet} onAddSheet={onAddSheet} onUpdateSheet={handleUpdateSheetWithUndo} onDeleteSheet={onDeleteSheet} onEnterSelectMode={handleEnterSelectMode} onDeleteAllInSheet={handleDeleteAllInSheet} />
-          </div>
-          <div className={cn("grid gap-3", isMobile ? "grid-cols-1" : "grid-cols-1 md:grid-cols-2 lg:grid-cols-3")}>
-            {filteredProspects.map((prospect, index) => <div key={prospect.id} className="relative">
-                {selectionMode.active && selectionProspects.some(p => p.id === prospect.id) && <div className="absolute top-2 left-2 z-10">
-                    <Checkbox checked={selectedIds.has(prospect.id)} onCheckedChange={() => handleToggleSelect(prospect.id)} />
-                  </div>}
-                <MobileProspectCard prospect={prospect} index={index + 1} isCalling={isCalling} onUpdate={handleUpdateWithUndo} onDelete={handleDeleteWithUndo} />
-              </div>)}
-          </div>
-        </> :
-    // Table Layout - ALWAYS show sheet tabs + header, even when empty
-    <div className="bg-card rounded-xl border border-border overflow-hidden shadow-sm">
-          {/* Conditionally wrap with DndContext only on desktop */}
-          {enableDragAndDrop ? (
-            <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleRowDragEnd}>
-              <SortableContext items={filteredProspects.map(p => p.id)} strategy={verticalListSortingStrategy}>
-                <TableContent
-                  isMobile={isMobile}
-                  COLUMN_ORDER={COLUMN_ORDER}
-                  selectionMode={selectionMode}
-                  selectedIds={selectedIds}
-                  selectionProspects={selectionProspects}
-                  handleSelectAll={handleSelectAll}
-                  getColumnWidth={getColumnWidth}
-                  sheets={sheets}
-                  selectedSheetId={selectedSheetId}
-                  onSelectSheet={onSelectSheet}
-                  onAddSheet={onAddSheet}
-                  handleUpdateSheetWithUndo={handleUpdateSheetWithUndo}
-                  onDeleteSheet={onDeleteSheet}
-                  handleEnterSelectMode={handleEnterSelectMode}
-                  handleDeleteAllInSheet={handleDeleteAllInSheet}
-                  filteredProspects={filteredProspects}
-                  prospects={prospects}
-                  sheetFilteredProspects={sheetFilteredProspects}
-                  setFilters={setFilters}
-                  isCalling={isCalling}
-                  expandedRowId={expandedRowId}
-                  handleToggleExpand={handleToggleExpand}
-                  handleUpdateWithUndo={handleUpdateWithUndo}
-                  handleDeleteWithUndo={handleDeleteWithUndo}
-                  columnWidths={columnWidths}
-                  handleToggleSelect={handleToggleSelect}
-                  enableDragAndDrop={enableDragAndDrop}
-                />
-              </SortableContext>
-            </DndContext>
-          ) : (
-            <TableContent
-              isMobile={isMobile}
-              COLUMN_ORDER={COLUMN_ORDER}
-              selectionMode={selectionMode}
-              selectedIds={selectedIds}
-              selectionProspects={selectionProspects}
-              handleSelectAll={handleSelectAll}
-              getColumnWidth={getColumnWidth}
-              sheets={sheets}
-              selectedSheetId={selectedSheetId}
-              onSelectSheet={onSelectSheet}
-              onAddSheet={onAddSheet}
-              handleUpdateSheetWithUndo={handleUpdateSheetWithUndo}
-              onDeleteSheet={onDeleteSheet}
-              handleEnterSelectMode={handleEnterSelectMode}
-              handleDeleteAllInSheet={handleDeleteAllInSheet}
-              filteredProspects={filteredProspects}
-              prospects={prospects}
-              sheetFilteredProspects={sheetFilteredProspects}
-              setFilters={setFilters}
-              isCalling={isCalling}
-              expandedRowId={expandedRowId}
-              handleToggleExpand={handleToggleExpand}
-              handleUpdateWithUndo={handleUpdateWithUndo}
-              handleDeleteWithUndo={handleDeleteWithUndo}
-              columnWidths={columnWidths}
-              handleToggleSelect={handleToggleSelect}
-              enableDragAndDrop={enableDragAndDrop}
-            />
-          )}
-          <div className="px-4 py-3 border-t border-border bg-muted/20 text-xs text-muted-foreground flex items-center justify-between">
-            <span>Showing {filteredProspects.length} of {baseProspects.length} prospects</span>
-          </div>
-        </div>}
+      {/* Table */}
+      <div className="bg-card rounded-xl border border-border/50 overflow-hidden shadow-sm">
+        {enableDragAndDrop ? (
+          <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleRowDragEnd}>
+            <SortableContext items={filteredProspects.map(p => p.id)} strategy={verticalListSortingStrategy}>
+              <TableContent
+                isMobile={isMobile}
+                COLUMN_ORDER={COLUMN_ORDER}
+                selectionMode={selectionMode}
+                selectedIds={selectedIds}
+                selectionProspects={selectionProspects}
+                handleSelectAll={handleSelectAll}
+                sheets={sheets}
+                selectedSheetId={selectedSheetId}
+                onSelectSheet={onSelectSheet}
+                onAddSheet={onAddSheet}
+                handleUpdateSheetWithUndo={handleUpdateSheetWithUndo}
+                onDeleteSheet={onDeleteSheet}
+                handleEnterSelectMode={handleEnterSelectMode}
+                handleDeleteAllInSheet={handleDeleteAllInSheet}
+                filteredProspects={filteredProspects}
+                prospects={prospects}
+                sheetFilteredProspects={sheetFilteredProspects}
+                setFilters={setFilters}
+                isCalling={isCalling}
+                expandedRowId={expandedRowId}
+                handleToggleExpand={handleToggleExpand}
+                handleUpdateWithUndo={handleUpdateWithUndo}
+                handleDeleteWithUndo={handleDeleteWithUndo}
+                handleToggleSelect={handleToggleSelect}
+                enableDragAndDrop={enableDragAndDrop}
+              />
+            </SortableContext>
+          </DndContext>
+        ) : (
+          <TableContent
+            isMobile={isMobile}
+            COLUMN_ORDER={COLUMN_ORDER}
+            selectionMode={selectionMode}
+            selectedIds={selectedIds}
+            selectionProspects={selectionProspects}
+            handleSelectAll={handleSelectAll}
+            sheets={sheets}
+            selectedSheetId={selectedSheetId}
+            onSelectSheet={onSelectSheet}
+            onAddSheet={onAddSheet}
+            handleUpdateSheetWithUndo={handleUpdateSheetWithUndo}
+            onDeleteSheet={onDeleteSheet}
+            handleEnterSelectMode={handleEnterSelectMode}
+            handleDeleteAllInSheet={handleDeleteAllInSheet}
+            filteredProspects={filteredProspects}
+            prospects={prospects}
+            sheetFilteredProspects={sheetFilteredProspects}
+            setFilters={setFilters}
+            isCalling={isCalling}
+            expandedRowId={expandedRowId}
+            handleToggleExpand={handleToggleExpand}
+            handleUpdateWithUndo={handleUpdateWithUndo}
+            handleDeleteWithUndo={handleDeleteWithUndo}
+            handleToggleSelect={handleToggleSelect}
+            enableDragAndDrop={enableDragAndDrop}
+          />
+        )}
+      </div>
 
-      {/* Delete Confirmation Dialog */}
+      {/* Footer info */}
+      <div className="flex items-center justify-between text-xs text-muted-foreground px-1">
+        <span>{filteredProspects.length} prospects</span>
+        <Button variant="ghost" size="sm" onClick={exportToExcel} disabled={exporting || filteredProspects.length === 0} className="h-7 text-xs">
+          {exporting ? 'Exporting...' : 'Export Excel'}
+        </Button>
+      </div>
+
+      {/* Delete confirmation dialog */}
       <AlertDialog open={deleteConfirmOpen} onOpenChange={setDeleteConfirmOpen}>
-        <AlertDialogContent>
+        <AlertDialogContent className="bg-card border-border">
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete {selectedIds.size} selected prospects?</AlertDialogTitle>
+            <AlertDialogTitle>Delete {selectedIds.size} prospects?</AlertDialogTitle>
             <AlertDialogDescription>
-              This will delete the selected prospects. You can undo this action using the Undo button.
+              This will permanently remove {selectedIds.size} prospect{selectedIds.size !== 1 ? 's' : ''} from your list.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction onClick={handleDeleteSelected} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-              Delete
+              Delete {selectedIds.size} prospect{selectedIds.size !== 1 ? 's' : ''}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </div>;
+    </div>
+  );
 }

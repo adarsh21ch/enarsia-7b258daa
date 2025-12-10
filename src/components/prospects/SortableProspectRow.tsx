@@ -2,18 +2,6 @@ import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { Prospect } from '@/types/prospect';
 import { ProspectRow } from './ProspectRow';
-import { GripVertical } from 'lucide-react';
-import { cn } from '@/lib/utils';
-
-interface ColumnConfig {
-  id: string;
-  label: string;
-  width: number;
-  mobileWidth: number;
-  sticky?: boolean;
-  stickyLeft?: number;
-  stickyLeftMobile?: number;
-}
 
 interface SortableProspectRowProps {
   prospect: Prospect;
@@ -25,10 +13,8 @@ interface SortableProspectRowProps {
   onDelete: (id: string) => Promise<boolean>;
   isEven: boolean;
   columnOrder: string[];
-  columnWidths: Record<string, number>;
-  columnConfig: ColumnConfig[];
-  selectionModeActive: boolean;
   isMobileTable?: boolean;
+  selectionModeActive: boolean;
   showSelection?: boolean;
   isSelected?: boolean;
   onToggleSelect?: () => void;
@@ -50,7 +36,6 @@ export function SortableProspectRow(props: SortableProspectRowProps) {
     disabled: disableDrag,
   });
 
-  // When drag is disabled, don't apply any transform/transition styles
   const style = disableDrag ? {} : {
     transform: CSS.Transform.toString(transform),
     transition,
@@ -58,7 +43,6 @@ export function SortableProspectRow(props: SortableProspectRowProps) {
     zIndex: isDragging ? 50 : 'auto',
   };
 
-  // Don't pass drag handle props when disabled
   const dragHandleProps = disableDrag ? undefined : {
     ref: setNodeRef,
     style,
