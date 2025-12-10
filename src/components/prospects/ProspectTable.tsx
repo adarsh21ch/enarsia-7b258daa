@@ -693,7 +693,7 @@ export function ProspectTable({
                 {/* Sheet tabs row - ALWAYS visible */}
                 <tr>
                   <th 
-                    colSpan={COLUMN_ORDER.length + (selectionMode.active ? 2 : 1) + 1} 
+                    colSpan={COLUMN_ORDER.length + (selectionMode.active ? 1 : 0)} 
                     className="p-0 bg-card border-b border-border/50"
                   >
                     <SheetTabs
@@ -719,8 +719,6 @@ export function ProspectTable({
                       />
                     </th>
                   )}
-                  {/* Drag handle header */}
-                  <th className="px-1 py-2.5 w-8 min-w-[32px]"></th>
                   {COLUMN_ORDER.map((columnId) => {
                     const col = COLUMNS.find(c => c.id === columnId);
                     if (!col) return null;
@@ -735,8 +733,8 @@ export function ProspectTable({
                           "px-2 py-2.5 text-left whitespace-nowrap",
                           columnId === 'index' && "text-center",
                           isMobile && "text-[11px] px-1.5",
-                          isMobile && isNameColumn && "sticky left-[68px] z-20 bg-muted/95 shadow-[2px_0_4px_-2px_rgba(0,0,0,0.15)]",
-                          isMobile && isIndexColumn && "sticky left-[32px] z-20 bg-muted/95"
+                          isMobile && isNameColumn && "sticky left-[36px] z-20 bg-muted/95 shadow-[2px_0_4px_-2px_rgba(0,0,0,0.15)]",
+                          isMobile && isIndexColumn && "sticky left-0 z-20 bg-muted/95"
                         )}
                         style={{ width: `${width}px`, minWidth: `${width}px` }}
                       >
@@ -761,7 +759,7 @@ export function ProspectTable({
                       // Empty state row - keeps table structure intact
                       <tr>
                         <td 
-                          colSpan={COLUMN_ORDER.length + (selectionMode.active ? 2 : 1) + 1}
+                          colSpan={COLUMN_ORDER.length + (selectionMode.active ? 1 : 0)}
                           className="py-12 text-center"
                         >
                           <Users className="h-10 w-10 mx-auto text-muted-foreground/40 mb-3" />
