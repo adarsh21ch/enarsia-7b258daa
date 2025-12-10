@@ -213,70 +213,74 @@ export default function Home() {
               </div>
             ) : (
               <div className="flex-1 overflow-y-auto">
-                {/* Timeline with reduced left margin and centered line */}
-                <div className="relative pl-1">
+                {/* Clean vertical timeline */}
+                <div className="relative">
+                  {/* Single continuous vertical line */}
+                  <div className="absolute left-[52px] top-2 bottom-2 w-px bg-border/50" />
+                  
                   {activities.map((activity, index) => (
                     <div
                       key={`${activity.type}-${activity.id}`}
-                      className="relative flex items-start gap-1.5 pb-2.5"
+                      className="relative flex gap-3 pb-4 last:pb-0"
                     >
-                      {/* Time label - closer to left edge */}
-                      <div className="shrink-0 w-14 pt-1.5 text-right pr-1">
-                        <span className="text-[10px] text-muted-foreground/70 font-medium">
+                      {/* Time label - left aligned */}
+                      <div className="shrink-0 w-12 pt-0.5">
+                        <span className="text-[10px] text-muted-foreground/80 font-medium block text-right">
                           {format(activity.time, 'h:mm a')}
                         </span>
                       </div>
                       
-                      {/* Vertical line segment - positioned between time and card */}
-                      <div className="relative shrink-0 w-2 flex flex-col items-center pt-1">
-                        {/* Line segment - stops at dot */}
-                        <div className={cn(
-                          "w-px bg-border/40 absolute left-1/2 -translate-x-1/2",
-                          index === 0 ? "top-2" : "top-0",
-                          "bottom-0"
-                        )} />
-                        {/* Small dot at the stop point */}
-                        <div className="w-1.5 h-1.5 rounded-full bg-primary/50 mt-1 z-10" />
+                      {/* Timeline connector with dot */}
+                      <div className="relative shrink-0 w-4 flex justify-center">
+                        <div className="w-2 h-2 rounded-full bg-primary/60 mt-1.5 z-10 ring-2 ring-card" />
                       </div>
                       
-                      {/* Activity content card - takes remaining space */}
-                      <div className="flex-1 flex items-center justify-between p-2 rounded-lg bg-muted/30 hover:bg-muted/40 transition-colors min-w-0">
-                        <div className="min-w-0 flex-1">
-                          <div className="flex items-center gap-1.5 flex-wrap">
+                      {/* Activity content */}
+                      <div className="flex-1 min-w-0">
+                        {/* Main content card */}
+                        <div className="flex items-start justify-between gap-2 p-2.5 rounded-xl bg-muted/30 hover:bg-muted/40 transition-colors">
+                          <div className="min-w-0 flex-1">
+                            {/* Activity name */}
                             <p className="text-sm font-medium truncate">{activity.name}</p>
-                            {activity.stage && (
-                              <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-primary/10 text-primary">
-                                {activity.stage}
-                              </span>
-                            )}
-                            {activity.action && (
-                              <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-muted text-muted-foreground">
-                                {activity.action}
-                              </span>
-                            )}
-                            {activity.type === 'todo' && (
-                              <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-blue-500/10 text-blue-600">
-                                To-Do
-                              </span>
-                            )}
+                            
+                            {/* Tags - placed below the name */}
+                            <div className="flex items-center gap-1.5 flex-wrap mt-1.5">
+                              {activity.stage && (
+                                <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-primary/10 text-primary">
+                                  {activity.stage}
+                                </span>
+                              )}
+                              {activity.action && (
+                                <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-muted text-muted-foreground">
+                                  {activity.action}
+                                </span>
+                              )}
+                              {activity.type === 'todo' && (
+                                <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-blue-500/10 text-blue-600">
+                                  To-Do
+                                </span>
+                              )}
+                            </div>
                           </div>
+                          
+                          {/* Call/WhatsApp buttons */}
+                          {activity.phone && (
+                            <div className="flex items-center gap-1 shrink-0">
+                              <button
+                                onClick={() => handleCall(activity.phone!)}
+                                className="p-1.5 rounded-full bg-primary/10 hover:bg-primary/20 transition-colors"
+                              >
+                                <CallIcon className="h-4 w-4 text-primary" />
+                              </button>
+                              <button
+                                onClick={() => handleWhatsApp(activity.phone!)}
+                                className="p-1.5 rounded-full bg-green-500/10 hover:bg-green-500/20 transition-colors"
+                              >
+                                <WhatsAppIcon className="h-4 w-4 text-green-600" />
+                              </button>
+                            </div>
+                          )}
                         </div>
-                        {activity.phone && (
-                          <div className="flex items-center gap-1 ml-2 shrink-0">
-                            <button
-                              onClick={() => handleCall(activity.phone!)}
-                              className="p-1.5 rounded-full bg-primary/10 hover:bg-primary/20 transition-colors"
-                            >
-                              <CallIcon className="h-4 w-4 text-primary" />
-                            </button>
-                            <button
-                              onClick={() => handleWhatsApp(activity.phone!)}
-                              className="p-1.5 rounded-full bg-green-500/10 hover:bg-green-500/20 transition-colors"
-                            >
-                              <WhatsAppIcon className="h-4 w-4 text-green-600" />
-                            </button>
-                          </div>
-                        )}
                       </div>
                     </div>
                   ))}
