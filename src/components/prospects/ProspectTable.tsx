@@ -1,11 +1,12 @@
 import { useState, useMemo, useCallback } from 'react';
-import { Prospect, FunnelStage, ProspectQuality, Sheet, ExtendedActionTaken } from '@/types/prospect';
+import { Prospect, FunnelStage, ProspectQuality, Sheet, ExtendedActionTaken, FUNNEL_STAGES, EXTENDED_ACTIONS } from '@/types/prospect';
 import { SortableProspectRow } from './SortableProspectRow';
 import { MobileProspectCard } from './MobileProspectCard';
 import { ProspectFilters } from './ProspectFilters';
 import { AddProspectDialog } from './AddProspectDialog';
 import { ImportExcelDialog } from './ImportExcelDialog';
 import { SheetTabs } from './SheetTabs';
+import { ColumnOptionsSheet } from './ColumnOptionsSheet';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -725,6 +726,7 @@ export function ProspectTable({
                     const width = columnWidths[columnId];
                     const isNameColumn = columnId === 'name';
                     const isIndexColumn = columnId === 'index';
+                    const showOptionsButton = columnId === 'action' || columnId === 'stage';
                     
                     return (
                       <th
@@ -738,7 +740,23 @@ export function ProspectTable({
                         )}
                         style={{ width: `${width}px`, minWidth: `${width}px` }}
                       >
-                        {col.label}
+                        <div className="flex items-center gap-0.5">
+                          <span>{col.label}</span>
+                          {columnId === 'action' && (
+                            <ColumnOptionsSheet 
+                              columnType="action_taken" 
+                              columnLabel="Response" 
+                              defaultOptions={EXTENDED_ACTIONS}
+                            />
+                          )}
+                          {columnId === 'stage' && (
+                            <ColumnOptionsSheet 
+                              columnType="funnel_stage" 
+                              columnLabel="Funnel" 
+                              defaultOptions={FUNNEL_STAGES}
+                            />
+                          )}
+                        </div>
                       </th>
                     );
                   })}

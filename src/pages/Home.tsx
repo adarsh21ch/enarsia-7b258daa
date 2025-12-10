@@ -214,33 +214,33 @@ export default function Home() {
             ) : (
               <div className="flex-1 overflow-y-auto">
                 {/* Timeline with reduced left margin and centered line */}
-                <div className="relative">
+                <div className="relative pl-1">
                   {activities.map((activity, index) => (
                     <div
                       key={`${activity.type}-${activity.id}`}
-                      className="relative flex items-start gap-2 pb-3"
+                      className="relative flex items-start gap-1.5 pb-2.5"
                     >
                       {/* Time label - closer to left edge */}
-                      <div className="shrink-0 w-12 pt-1 text-right pr-1">
-                        <span className="text-[11px] text-muted-foreground/80">
+                      <div className="shrink-0 w-14 pt-1.5 text-right pr-1">
+                        <span className="text-[10px] text-muted-foreground/70 font-medium">
                           {format(activity.time, 'h:mm a')}
                         </span>
                       </div>
                       
                       {/* Vertical line segment - positioned between time and card */}
-                      <div className="relative shrink-0 w-3 flex flex-col items-center">
-                        {/* Line segment from top (or from previous row) */}
+                      <div className="relative shrink-0 w-2 flex flex-col items-center pt-1">
+                        {/* Line segment - stops at dot */}
                         <div className={cn(
-                          "w-px bg-border/50 absolute left-1/2 -translate-x-1/2",
-                          index === 0 ? "top-3" : "top-0",
-                          index === activities.length - 1 ? "h-3" : "h-full"
+                          "w-px bg-border/40 absolute left-1/2 -translate-x-1/2",
+                          index === 0 ? "top-2" : "top-0",
+                          "bottom-0"
                         )} />
                         {/* Small dot at the stop point */}
-                        <div className="w-1.5 h-1.5 rounded-full bg-border/70 mt-2 z-10" />
+                        <div className="w-1.5 h-1.5 rounded-full bg-primary/50 mt-1 z-10" />
                       </div>
                       
                       {/* Activity content card - takes remaining space */}
-                      <div className="flex-1 flex items-center justify-between p-2.5 rounded-lg bg-muted/30 hover:bg-muted/40 transition-colors min-w-0">
+                      <div className="flex-1 flex items-center justify-between p-2 rounded-lg bg-muted/30 hover:bg-muted/40 transition-colors min-w-0">
                         <div className="min-w-0 flex-1">
                           <div className="flex items-center gap-1.5 flex-wrap">
                             <p className="text-sm font-medium truncate">{activity.name}</p>
@@ -262,7 +262,7 @@ export default function Home() {
                           </div>
                         </div>
                         {activity.phone && (
-                          <div className="flex items-center gap-1.5 ml-2 shrink-0">
+                          <div className="flex items-center gap-1 ml-2 shrink-0">
                             <button
                               onClick={() => handleCall(activity.phone!)}
                               className="p-1.5 rounded-full bg-primary/10 hover:bg-primary/20 transition-colors"

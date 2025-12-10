@@ -134,8 +134,8 @@ export function ProspectRow({
   const renderCell = (columnId: string) => {
     const width = columnWidths[columnId];
     const style = { width: width ? `${width}px` : undefined, minWidth: width ? `${width}px` : undefined };
-    // Use solid background colors without transparency to prevent see-through effect
-    const bgColor = isEven ? "bg-muted" : "bg-card";
+    // Use solid background colors - swap so first row (isEven=true) is light, second row (isEven=false) is darker
+    const bgColor = isEven ? "bg-card" : "bg-muted/50";
     const isNameColumn = columnId === 'name';
     const isIndexColumn = columnId === 'index';
     
@@ -289,8 +289,9 @@ export function ProspectRow({
         {...rowDragListeners}
         className={cn(
           "group transition-colors duration-100 border-b border-border/30 touch-none", 
-          isEven ? "bg-muted" : "bg-card", 
-          "hover:bg-muted/80", 
+          // Zebra striping: first row (isEven=true) is light, second row darker
+          isEven ? "bg-card" : "bg-muted/50", 
+          "hover:bg-muted/70", 
           isExpanded && "bg-primary/5 hover:bg-primary/5",
           dragHandleProps?.isDragging && "shadow-lg cursor-grabbing",
           !dragHandleProps?.isDragging && "cursor-grab"
