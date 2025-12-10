@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { CallIconButton, WhatsAppIconButton } from '@/components/ui/ActionIcons';
-import { Trash2, ChevronDown, GripVertical } from 'lucide-react';
+import { Trash2, ChevronDown } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useCustomOptionsContext } from '@/contexts/CustomOptionsContext';
 
@@ -162,7 +162,7 @@ export function ProspectRow({
         const infoLine = infoParts.length > 0 ? infoParts.join(', ') : '–';
         
         return (
-          <td key={columnId} className={cellClass} style={style}>
+          <td key={columnId} className={cellClass} style={style} onPointerDown={(e) => e.stopPropagation()}>
             <div className="flex flex-col overflow-hidden" style={{ maxWidth: isMobileTable ? '140px' : '180px' }}>
               <div className="flex items-center gap-1">
                 {/* Call button next to name */}
@@ -193,7 +193,7 @@ export function ProspectRow({
         );
       case 'phone':
         return (
-          <td key={columnId} className={cellClass} style={style}>
+          <td key={columnId} className={cellClass} style={style} onPointerDown={(e) => e.stopPropagation()}>
             {isEditingPhone ? (
               <Input ref={phoneRef} value={localPhone} onChange={(e) => setLocalPhone(e.target.value)} onBlur={handlePhoneBlur} onKeyDown={handlePhoneKeyDown} className={cn("h-7 px-1.5 text-sm border-primary", isMobileTable ? "h-5 text-[10px] w-full" : "w-28")} />
             ) : (
@@ -204,7 +204,7 @@ export function ProspectRow({
       case 'contact':
         // Now shows only WhatsApp button
         return (
-          <td key={columnId} className={cellClass} style={style}>
+          <td key={columnId} className={cellClass} style={style} onPointerDown={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-center">
               <WhatsAppIconButton onClick={openWhatsApp} className={isMobileTable ? "p-0.5" : undefined} />
             </div>
@@ -212,25 +212,25 @@ export function ProspectRow({
         );
       case 'stage':
         return (
-          <td key={columnId} className={cellClass} style={style}>
+          <td key={columnId} className={cellClass} style={style} onPointerDown={(e) => e.stopPropagation()}>
             <InlineSelect value={prospect.funnel_stage} options={stageOptions} onChange={(value) => onUpdate(prospect.id, { funnel_stage: value })} renderValue={(value) => <StageBadge stage={value} />} placeholder="Select..." optionType="funnel_stage" customOptions={getCustomOptionsForType('funnel_stage')} onAddOption={addOption} onDeleteOption={deleteOption} defaultOptions={FUNNEL_STAGES} />
           </td>
         );
       case 'action':
         return (
-          <td key={columnId} className={cellClass} style={style}>
+          <td key={columnId} className={cellClass} style={style} onPointerDown={(e) => e.stopPropagation()}>
             <InlineSelect value={getActionDisplayValue()} options={isCalling ? actionOptions : actionOptions.filter(a => a !== 'Enrollment')} onChange={handleActionChange} placeholder="Select..." renderValue={(value) => <ActionBadge action={value} />} optionType="action_taken" customOptions={getCustomOptionsForType('action_taken')} onAddOption={addOption} onDeleteOption={deleteOption} defaultOptions={EXTENDED_ACTIONS} />
           </td>
         );
       case 'quality':
         return (
-          <td key={columnId} className={cellClass} style={style}>
+          <td key={columnId} className={cellClass} style={style} onPointerDown={(e) => e.stopPropagation()}>
             <InlineSelect value={prospect.prospect_status} options={statusOptions} onChange={(value) => onUpdate(prospect.id, { prospect_status: value })} placeholder="Select..." renderValue={(value) => <StatusBadge status={value} />} optionType="prospect_status" customOptions={getCustomOptionsForType('prospect_status')} onAddOption={addOption} onDeleteOption={deleteOption} defaultOptions={STATUSES} />
           </td>
         );
       case 'actions':
         return (
-          <td key={columnId} className={cellClass} style={style}>
+          <td key={columnId} className={cellClass} style={style} onPointerDown={(e) => e.stopPropagation()}>
             <div className="flex items-center gap-0.5">
               <Button variant="ghost" size="icon" className={cn("h-7 w-7 hover:bg-muted/50 transition-all duration-200", isMobileTable && "h-6 w-6", isExpanded && "bg-primary/10 text-primary")} onClick={onToggleExpand}>
                 <ChevronDown className={cn("h-4 w-4 transition-transform duration-200", isMobileTable && "h-3 w-3", isExpanded && "rotate-180")} />
@@ -261,39 +261,37 @@ export function ProspectRow({
   const rowStyle = dragHandleProps?.style || {};
   const rowRef = dragHandleProps?.ref;
 
+  // Row-based drag: apply listeners to entire row (except interactive elements)
+  const rowDragListeners = dragHandleProps?.listeners || {};
+
   return (
     <>
       <tr 
         ref={rowRef}
         style={rowStyle}
         {...(dragHandleProps?.attributes || {})}
-      className={cn(
-        "group transition-colors duration-100 border-b border-border/30", 
-        isEven ? "bg-muted" : "bg-card", 
-        "hover:bg-muted/80", 
-        isExpanded && "bg-primary/5 hover:bg-primary/5",
-        dragHandleProps?.isDragging && "shadow-lg"
-      )}
+        {...rowDragListeners}
+        className={cn(
+          "group transition-colors duration-100 border-b border-border/30 touch-none", 
+          isEven ? "bg-muted" : "bg-card", 
+          "hover:bg-muted/80", 
+          isExpanded && "bg-primary/5 hover:bg-primary/5",
+          dragHandleProps?.isDragging && "shadow-lg cursor-grabbing",
+          !dragHandleProps?.isDragging && "cursor-grab"
+        )}
       >
         {/* Selection checkbox cell */}
         {showSelection && (
-          <td className="px-2 py-2">
+          <td className="px-2 py-2" onPointerDown={(e) => e.stopPropagation()}>
             <Checkbox
               checked={isSelected}
               onCheckedChange={onToggleSelect}
             />
           </td>
         )}
-        {/* Drag handle cell */}
-        <td 
-          className="px-1 py-2 cursor-grab active:cursor-grabbing touch-none"
-          {...(dragHandleProps?.listeners || {})}
-        >
-          <GripVertical className="h-4 w-4 text-muted-foreground/50 hover:text-muted-foreground" />
-        </td>
         {columnOrder.map(renderCell)}
       </tr>
-      {isExpanded && <InlineReportCard prospect={prospect} onUpdate={onUpdate} onClose={onToggleExpand} colSpan={columnOrder.length + 1} />}
+      {isExpanded && <InlineReportCard prospect={prospect} onUpdate={onUpdate} onClose={onToggleExpand} colSpan={columnOrder.length} />}
     </>
   );
 }
