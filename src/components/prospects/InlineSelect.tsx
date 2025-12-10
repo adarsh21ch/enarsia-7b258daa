@@ -8,7 +8,7 @@ import {
 } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Plus, Trash2 } from 'lucide-react';
+import { Plus } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { OptionType, CustomOption } from '@/hooks/useCustomOptions';
 
@@ -58,7 +58,9 @@ export function InlineSelect<T extends string>({
     }
   };
 
-  const canManageOptions = optionType && onAddOption && !hideManagement;
+  // Allow adding new options if optionType and onAddOption are provided
+  // hideManagement only affects the gear/settings icon, not the "Add new" functionality
+  const canAddNew = optionType && onAddOption;
 
   return (
     <div className="flex items-center gap-1">
@@ -100,8 +102,8 @@ export function InlineSelect<T extends string>({
             </SelectItem>
           ))}
           
-          {/* Add new option */}
-          {canManageOptions && (
+          {/* Add new option - always available if optionType and onAddOption are provided */}
+          {canAddNew && (
             <SelectItem 
               value="__add_new__" 
               className="text-xs text-accent border-t border-border mt-1 pt-1 min-h-[44px] sm:min-h-[32px]"
