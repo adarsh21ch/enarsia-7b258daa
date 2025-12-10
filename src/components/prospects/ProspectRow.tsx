@@ -202,7 +202,7 @@ export function ProspectRow({
           </td>
         );
       case 'contact':
-        // Now shows only WhatsApp button
+        // Now shows only WhatsApp button - clean icon without border
         return (
           <td key={columnId} className={cellClass} style={style} onPointerDown={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-center">
@@ -213,19 +213,55 @@ export function ProspectRow({
       case 'stage':
         return (
           <td key={columnId} className={cellClass} style={style} onPointerDown={(e) => e.stopPropagation()}>
-            <InlineSelect value={prospect.funnel_stage} options={stageOptions} onChange={(value) => onUpdate(prospect.id, { funnel_stage: value })} renderValue={(value) => <StageBadge stage={value} />} placeholder="Select..." optionType="funnel_stage" customOptions={getCustomOptionsForType('funnel_stage')} onAddOption={addOption} onDeleteOption={deleteOption} defaultOptions={FUNNEL_STAGES} />
+            <InlineSelect 
+              value={prospect.funnel_stage} 
+              options={stageOptions} 
+              onChange={(value) => onUpdate(prospect.id, { funnel_stage: value })} 
+              renderValue={(value) => <StageBadge stage={value} />} 
+              placeholder="Select..." 
+              optionType="funnel_stage" 
+              customOptions={getCustomOptionsForType('funnel_stage')} 
+              onAddOption={addOption} 
+              onDeleteOption={deleteOption} 
+              defaultOptions={FUNNEL_STAGES}
+              hideManagement
+            />
           </td>
         );
       case 'action':
         return (
           <td key={columnId} className={cellClass} style={style} onPointerDown={(e) => e.stopPropagation()}>
-            <InlineSelect value={getActionDisplayValue()} options={isCalling ? actionOptions : actionOptions.filter(a => a !== 'Enrollment')} onChange={handleActionChange} placeholder="Select..." renderValue={(value) => <ActionBadge action={value} />} optionType="action_taken" customOptions={getCustomOptionsForType('action_taken')} onAddOption={addOption} onDeleteOption={deleteOption} defaultOptions={EXTENDED_ACTIONS} />
+            <InlineSelect 
+              value={getActionDisplayValue()} 
+              options={isCalling ? actionOptions : actionOptions.filter(a => a !== 'Enrollment')} 
+              onChange={handleActionChange} 
+              placeholder="Select..." 
+              renderValue={(value) => <ActionBadge action={value} />} 
+              optionType="action_taken" 
+              customOptions={getCustomOptionsForType('action_taken')} 
+              onAddOption={addOption} 
+              onDeleteOption={deleteOption} 
+              defaultOptions={EXTENDED_ACTIONS}
+              hideManagement
+            />
           </td>
         );
       case 'quality':
         return (
           <td key={columnId} className={cellClass} style={style} onPointerDown={(e) => e.stopPropagation()}>
-            <InlineSelect value={prospect.prospect_status} options={statusOptions} onChange={(value) => onUpdate(prospect.id, { prospect_status: value })} placeholder="Select..." renderValue={(value) => <StatusBadge status={value} />} optionType="prospect_status" customOptions={getCustomOptionsForType('prospect_status')} onAddOption={addOption} onDeleteOption={deleteOption} defaultOptions={STATUSES} />
+            <InlineSelect 
+              value={prospect.prospect_status} 
+              options={statusOptions} 
+              onChange={(value) => onUpdate(prospect.id, { prospect_status: value })} 
+              placeholder="Select..." 
+              renderValue={(value) => <StatusBadge status={value} />} 
+              optionType="prospect_status" 
+              customOptions={getCustomOptionsForType('prospect_status')} 
+              onAddOption={addOption} 
+              onDeleteOption={deleteOption} 
+              defaultOptions={STATUSES}
+              hideManagement
+            />
           </td>
         );
       case 'actions':

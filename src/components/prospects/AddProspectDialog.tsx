@@ -58,9 +58,9 @@ export function AddProspectDialog({ onAdd }: AddProspectDialogProps) {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button size="sm" className="gap-1">
-          <Plus className="h-4 w-4" />
-          {isMobile ? 'Add' : 'Add Prospect'}
+        <Button size="sm" className="h-8 gap-1 text-xs px-2">
+          <Plus className="h-3.5 w-3.5" />
+          <span className="hidden sm:inline">Add</span>
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-md bg-card border-border">

@@ -13,35 +13,54 @@ import { cn } from '@/lib/utils';
 import nevoraLogo from '@/assets/nevorai-logo.jpeg';
 import { CustomOptionsProvider } from '@/contexts/CustomOptionsContext';
 
-// Pull-to-refresh hook
+// Pull-to-refresh hook - improved to not interfere with normal scrolling
 function usePullToRefresh(onRefresh: () => Promise<void>, threshold = 80) {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [pullDistance, setPullDistance] = useState(0);
   const startY = useRef(0);
+  const isPulling = useRef(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
   const handleTouchStart = useCallback((e: TouchEvent) => {
-    if (containerRef.current && containerRef.current.scrollTop === 0) {
+    // Only start tracking if we're at the very top
+    if (containerRef.current && containerRef.current.scrollTop <= 0) {
       startY.current = e.touches[0].clientY;
+      isPulling.current = false;
+    } else {
+      startY.current = 0;
     }
   }, []);
 
   const handleTouchMove = useCallback((e: TouchEvent) => {
     if (!startY.current || isRefreshing) return;
+    
+    const container = containerRef.current;
+    if (!container) return;
+    
     const currentY = e.touches[0].clientY;
     const diff = currentY - startY.current;
-    if (diff > 0 && containerRef.current && containerRef.current.scrollTop === 0) {
-      setPullDistance(Math.min(diff * 0.5, threshold * 1.5));
+    
+    // Only activate pull-to-refresh if:
+    // 1. We're at scroll position 0
+    // 2. User is pulling down (diff > 0)
+    // 3. Diff is significant enough to indicate intent (> 10px)
+    if (container.scrollTop <= 0 && diff > 10) {
+      isPulling.current = true;
+      setPullDistance(Math.min((diff - 10) * 0.5, threshold * 1.5));
+    } else if (!isPulling.current) {
+      // If we haven't started pulling, allow normal scroll
+      startY.current = 0;
     }
   }, [isRefreshing, threshold]);
 
   const handleTouchEnd = useCallback(async () => {
-    if (pullDistance >= threshold && !isRefreshing) {
+    if (pullDistance >= threshold && !isRefreshing && isPulling.current) {
       setIsRefreshing(true);
       try { await onRefresh(); } finally { setIsRefreshing(false); }
     }
     setPullDistance(0);
     startY.current = 0;
+    isPulling.current = false;
   }, [pullDistance, threshold, isRefreshing, onRefresh]);
 
   useEffect(() => {

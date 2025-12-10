@@ -8,8 +8,7 @@ import {
 } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Plus, Trash2, Settings2 } from 'lucide-react';
+import { Plus, Trash2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { OptionType, CustomOption } from '@/hooks/useCustomOptions';
 
@@ -26,6 +25,8 @@ interface InlineSelectProps<T extends string> {
   onAddOption?: (optionType: OptionType, value: string) => Promise<any>;
   onDeleteOption?: (optionId: string) => Promise<boolean>;
   defaultOptions?: readonly string[];
+  // Hide management UI (for use in table cells where management is in column header)
+  hideManagement?: boolean;
 }
 
 export function InlineSelect<T extends string>({
@@ -40,10 +41,10 @@ export function InlineSelect<T extends string>({
   onAddOption,
   onDeleteOption,
   defaultOptions = [],
+  hideManagement = false,
 }: InlineSelectProps<T>) {
   const [isAddingNew, setIsAddingNew] = useState(false);
   const [newValue, setNewValue] = useState('');
-  const [manageOpen, setManageOpen] = useState(false);
 
   const handleAddNew = async () => {
     if (!newValue.trim() || !optionType || !onAddOption) return;
@@ -57,21 +58,7 @@ export function InlineSelect<T extends string>({
     }
   };
 
-  const handleDeleteCustom = async (optionId: string, optionValue: string) => {
-    if (!onDeleteOption) return;
-    
-    const confirmed = window.confirm(`Delete "${optionValue}"? This won't affect existing prospects.`);
-    if (confirmed) {
-      await onDeleteOption(optionId);
-    }
-  };
-
-  // Check if an option is custom (not in default list)
-  const isCustomOption = (opt: string) => {
-    return !defaultOptions.includes(opt);
-  };
-
-  const canManageOptions = optionType && onAddOption;
+  const canManageOptions = optionType && onAddOption && !hideManagement;
 
   return (
     <div className="flex items-center gap-1">
@@ -127,43 +114,6 @@ export function InlineSelect<T extends string>({
           )}
         </SelectContent>
       </Select>
-
-      {/* Manage button for custom options */}
-      {canManageOptions && customOptions.length > 0 && (
-        <Popover open={manageOpen} onOpenChange={setManageOpen}>
-          <PopoverTrigger asChild>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-7 w-7 sm:h-6 sm:w-6 opacity-50 sm:opacity-0 group-hover:opacity-100 transition-opacity"
-            >
-              <Settings2 className="h-3.5 w-3.5 sm:h-3 sm:w-3 text-muted-foreground" />
-            </Button>
-          </PopoverTrigger>
-          <PopoverContent 
-            align="start" 
-            className="w-48 p-2 bg-popover border-border z-[100]"
-            sideOffset={4}
-          >
-            <p className="text-xs font-medium text-muted-foreground mb-2">Custom options</p>
-            <div className="space-y-1">
-              {customOptions.map((opt) => (
-                <div key={opt.id} className="flex items-center justify-between text-xs py-2 sm:py-1 px-2 rounded hover:bg-muted">
-                  <span>{opt.option_value}</span>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-7 w-7 sm:h-5 sm:w-5 text-muted-foreground hover:text-destructive"
-                    onClick={() => handleDeleteCustom(opt.id, opt.option_value)}
-                  >
-                    <Trash2 className="h-3.5 w-3.5 sm:h-3 sm:w-3" />
-                  </Button>
-                </div>
-              ))}
-            </div>
-          </PopoverContent>
-        </Popover>
-      )}
 
       {/* Add new dialog */}
       {isAddingNew && (
