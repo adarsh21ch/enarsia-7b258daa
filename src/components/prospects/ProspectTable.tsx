@@ -72,7 +72,7 @@ interface ProspectTableProps {
 // WhatsApp/Call moved into Name column
 const COLUMNS = [
   { id: 'index', label: '#', width: 45, mobileWidth: 32 },
-  { id: 'name', label: 'Name', width: 150, mobileWidth: 120 },
+  { id: 'name', label: 'Name', width: 180, mobileWidth: 140 },
   { id: 'action', label: 'Response', width: 150, mobileWidth: 110 },
   { id: 'stage', label: 'Funnel', width: 150, mobileWidth: 110 },
   { id: 'actions', label: '', width: 70, mobileWidth: 45 },
