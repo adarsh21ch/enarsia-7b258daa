@@ -7,10 +7,10 @@ import { useSharedProspects } from '@/hooks/useSharedProspects';
 import { BottomNav } from '@/components/layout/BottomNav';
 import { PullToRefreshIndicator } from '@/components/PullToRefreshIndicator';
 import { TeamAccessDialog } from '@/components/team/TeamAccessDialog';
+import { TeamMemberMultiSelect } from '@/components/team/TeamMemberMultiSelect';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Loader2, Filter, ChevronDown, ChevronUp, Tags, X, Users } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { getTagStyle } from '@/lib/tagColors';
@@ -83,26 +83,68 @@ export default function ListUp() {
   const navigate = useNavigate();
   const { user, loading: authLoading } = useAuth();
   const { prospects: myProspects, loading: prospectsLoading, refetch } = useProspects();
-  const { sharedOwners, selectedOwnerId, setSelectedOwnerId, prospects: sharedProspects, loading: sharedLoading, refetch: refetchShared } = useSharedProspects();
+  const { 
+    sharedOwners, 
+    selectedOwnerIds, 
+    toggleOwnerSelection, 
+    clearSelection, 
+    selectAllOwners,
+    prospects: sharedProspects, 
+    loading: sharedLoading, 
+    refetchOwners, 
+    refetchProspects 
+  } = useSharedProspects();
   
-  // Separate state for each tag category
-  const [selectedResponses, setSelectedResponses] = useState<string[]>([]);
-  const [selectedStages, setSelectedStages] = useState<string[]>([]);
-  const [selectedQualities, setSelectedQualities] = useState<string[]>([]);
+  // Persist filters in sessionStorage so they survive tab switches
+  const [selectedResponses, setSelectedResponses] = useState<string[]>(() => {
+    const saved = sessionStorage.getItem('listup-responses');
+    return saved ? JSON.parse(saved) : [];
+  });
+  const [selectedStages, setSelectedStages] = useState<string[]>(() => {
+    const saved = sessionStorage.getItem('listup-stages');
+    return saved ? JSON.parse(saved) : [];
+  });
+  const [selectedQualities, setSelectedQualities] = useState<string[]>(() => {
+    const saved = sessionStorage.getItem('listup-qualities');
+    return saved ? JSON.parse(saved) : [];
+  });
   const [expandedProspectId, setExpandedProspectId] = useState<string | null>(null);
 
-  // Determine which prospects to show
-  const prospects = selectedOwnerId ? sharedProspects : myProspects;
-  const isViewingShared = !!selectedOwnerId;
+  // Persist filter selections to sessionStorage
+  useEffect(() => {
+    sessionStorage.setItem('listup-responses', JSON.stringify(selectedResponses));
+  }, [selectedResponses]);
+  
+  useEffect(() => {
+    sessionStorage.setItem('listup-stages', JSON.stringify(selectedStages));
+  }, [selectedStages]);
+  
+  useEffect(() => {
+    sessionStorage.setItem('listup-qualities', JSON.stringify(selectedQualities));
+  }, [selectedQualities]);
+
+  // Determine which prospects to show - MY data is always separate from team data
+  const isViewingTeam = selectedOwnerIds.length > 0;
+  const prospects = isViewingTeam ? sharedProspects : myProspects;
+  
+  // Get selected team member names for header
+  const selectedTeamNames = useMemo(() => {
+    if (selectedOwnerIds.length === 0) return '';
+    if (selectedOwnerIds.length === 1) {
+      const owner = sharedOwners.find(o => o.user_id === selectedOwnerIds[0]);
+      return owner?.display_name || 'Unknown';
+    }
+    return `${selectedOwnerIds.length} team members`;
+  }, [selectedOwnerIds, sharedOwners]);
 
   // Pull-to-refresh
   const handleRefresh = useCallback(async () => {
-    if (selectedOwnerId) {
-      await refetchShared?.();
+    if (isViewingTeam) {
+      await refetchProspects?.();
     } else {
       await refetch?.();
     }
-  }, [refetch, refetchShared, selectedOwnerId]);
+  }, [refetch, refetchProspects, isViewingTeam]);
   const { containerRef, isRefreshing, pullDistance, showIndicator } = usePullToRefresh(handleRefresh);
 
   useEffect(() => {
@@ -222,7 +264,7 @@ export default function ListUp() {
     window.location.href = `tel:${phone}`;
   };
 
-  const isLoading = authLoading || prospectsLoading || (selectedOwnerId && sharedLoading);
+  const isLoading = authLoading || prospectsLoading || (isViewingTeam && sharedLoading);
   
   if (isLoading) {
     return (
@@ -247,7 +289,7 @@ export default function ListUp() {
             <div>
               <h1 className="text-xl font-bold tracking-tight">Follow Up</h1>
               <p className="text-xs text-muted-foreground font-medium">
-                {isViewingShared ? `Viewing ${sharedOwners.find(o => o.user_id === selectedOwnerId)?.display_name}'s data` : 'View by Tags'}
+                {isViewingTeam ? `Viewing ${selectedTeamNames}'s data` : 'View by Tags'}
               </p>
             </div>
           </div>
@@ -266,29 +308,32 @@ export default function ListUp() {
       <main ref={containerRef} className="scrollable-content relative pb-20">
         <PullToRefreshIndicator isRefreshing={isRefreshing} pullDistance={pullDistance} showIndicator={showIndicator} />
         <div className="container py-3 px-4 space-y-4">
-          {/* Team Data Selector */}
+          {/* Team Data Selector - Multi-select */}
           {sharedOwners.length > 0 && (
-            <div className="bg-card rounded-xl p-3 border border-border/50">
-              <div className="flex items-center gap-2 mb-2">
-                <Users className="h-4 w-4 text-muted-foreground" />
-                <span className="text-xs font-medium text-muted-foreground">View Team Data</span>
+            <div className="bg-card rounded-xl p-3 border border-border/50 space-y-3">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Users className="h-4 w-4 text-muted-foreground" />
+                  <span className="text-xs font-medium text-muted-foreground">View Team Data</span>
+                </div>
+                {isViewingTeam && (
+                  <Badge variant="secondary" className="text-xs">
+                    {sharedProspects.length} prospects
+                  </Badge>
+                )}
               </div>
-              <Select 
-                value={selectedOwnerId || 'my-data'} 
-                onValueChange={(val) => setSelectedOwnerId(val === 'my-data' ? null : val)}
-              >
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Select whose data to view" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="my-data">My Prospects</SelectItem>
-                  {sharedOwners.map(owner => (
-                    <SelectItem key={owner.user_id} value={owner.user_id}>
-                      {owner.display_name}'s Prospects
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <TeamMemberMultiSelect
+                teamMembers={sharedOwners}
+                selectedIds={selectedOwnerIds}
+                onToggle={toggleOwnerSelection}
+                onClear={clearSelection}
+                onSelectAll={selectAllOwners}
+              />
+              {isViewingTeam && (
+                <p className="text-xs text-muted-foreground">
+                  Viewing {selectedTeamNames}'s follow-ups (separate from your list)
+                </p>
+              )}
             </div>
           )}
 
@@ -308,7 +353,7 @@ export default function ListUp() {
                 <div className="flex flex-wrap gap-1.5">
                   {responseTags.map(tag => {
                     const isSelected = selectedResponses.includes(tag);
-                    const style = getTagStyle(tag, 'response', null, isSelected);
+                    const style = getTagStyle(tag, 'response', null, isSelected, true);
                     return (
                       <Badge
                         key={`response-${tag}`}
@@ -334,7 +379,7 @@ export default function ListUp() {
                 <div className="flex flex-wrap gap-1.5">
                   {stageTags.map(tag => {
                     const isSelected = selectedStages.includes(tag);
-                    const style = getTagStyle(tag, 'stage', null, isSelected);
+                    const style = getTagStyle(tag, 'stage', null, isSelected, true);
                     return (
                       <Badge
                         key={`stage-${tag}`}
@@ -360,7 +405,7 @@ export default function ListUp() {
                 <div className="flex flex-wrap gap-1.5">
                   {qualityTags.map(tag => {
                     const isSelected = selectedQualities.includes(tag);
-                    const style = getTagStyle(tag, 'quality', null, isSelected);
+                    const style = getTagStyle(tag, 'quality', null, isSelected, true);
                     return (
                       <Badge
                         key={`quality-${tag}`}

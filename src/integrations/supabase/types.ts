@@ -61,6 +61,7 @@ export type Database = {
           created_at: string
           id: string
           is_active: boolean
+          is_filter_tag: boolean
           option_type: string
           option_value: string
           sort_order: number | null
@@ -71,6 +72,7 @@ export type Database = {
           created_at?: string
           id?: string
           is_active?: boolean
+          is_filter_tag?: boolean
           option_type: string
           option_value: string
           sort_order?: number | null
@@ -81,6 +83,7 @@ export type Database = {
           created_at?: string
           id?: string
           is_active?: boolean
+          is_filter_tag?: boolean
           option_type?: string
           option_value?: string
           sort_order?: number | null
@@ -387,18 +390,24 @@ export type Database = {
           id: string
           owner_user_id: string
           shared_with_user_id: string
+          status: string
+          updated_at: string
         }
         Insert: {
           created_at?: string
           id?: string
           owner_user_id: string
           shared_with_user_id: string
+          status?: string
+          updated_at?: string
         }
         Update: {
           created_at?: string
           id?: string
           owner_user_id?: string
           shared_with_user_id?: string
+          status?: string
+          updated_at?: string
         }
         Relationships: []
       }

@@ -71,11 +71,11 @@ export default function Profile() {
   const [editOpen, setEditOpen] = useState(false);
   const [copiedId, setCopiedId] = useState(false);
 
-  const handleCopyNeveraiId = async () => {
+  const handleCopyTrackUpId = async () => {
     if (profile?.neverai_id) {
       await navigator.clipboard.writeText(profile.neverai_id);
       setCopiedId(true);
-      toast.success('NeverAI ID copied');
+      toast.success('TrackUp ID copied');
       setTimeout(() => setCopiedId(false), 2000);
     }
   };
@@ -143,31 +143,6 @@ export default function Profile() {
               <div className="flex-1 min-w-0">
                 <p className="font-semibold text-lg truncate">{displayName}</p>
                 <p className="text-sm text-muted-foreground truncate">{user.email}</p>
-                {/* V1 LAUNCH: Plan status hidden - code preserved for future restoration
-                <div className="flex flex-wrap items-center gap-1.5 mt-1.5">
-                  {isPro ? (
-                    <>
-                      <div className="flex items-center gap-1 text-xs bg-green-500/20 text-green-600 px-2 py-0.5 rounded-full">
-                        <CheckCircle className="h-3 w-3" />
-                        <span className="font-medium">Pro Plan Active</span>
-                      </div>
-                      {subscription?.expires_at && (
-                        <span className="text-[10px] text-muted-foreground bg-muted px-1.5 py-0.5 rounded">
-                          {daysRemaining} days left
-                        </span>
-                      )}
-                      {isAdminOverride && (
-                        <span className="text-[10px] text-amber-500 bg-amber-500/10 px-1.5 py-0.5 rounded">Admin</span>
-                      )}
-                    </>
-                  ) : (
-                    <div className="flex items-center gap-1 text-xs bg-amber-500/20 text-amber-600 px-2 py-0.5 rounded-full">
-                      <Crown className="h-3 w-3" />
-                      <span className="font-medium">Free Plan</span>
-                    </div>
-                  )}
-                </div>
-                */}
               </div>
             </div>
             {/* Decorative elements */}
@@ -175,7 +150,7 @@ export default function Profile() {
             <div className="absolute -right-4 -top-4 w-16 h-16 rounded-full bg-primary/5" />
           </div>
 
-          {/* NeverAI ID Card */}
+          {/* TrackUp ID Card */}
           {profile?.neverai_id && (
             <div className="rounded-2xl p-4 bg-gradient-to-r from-primary/10 to-primary/5 border border-primary/20">
               <div className="flex items-center justify-between">
@@ -184,21 +159,21 @@ export default function Profile() {
                     <Users className="h-4 w-4 text-primary" />
                   </div>
                   <div>
-                    <p className="text-xs text-muted-foreground">Your NeverAI ID</p>
+                    <p className="text-xs text-muted-foreground">Your TrackUp ID</p>
                     <p className="text-sm font-mono font-semibold">{profile.neverai_id}</p>
                   </div>
                 </div>
                 <Button 
                   variant="ghost" 
                   size="icon"
-                  onClick={handleCopyNeveraiId}
+                  onClick={handleCopyTrackUpId}
                   className="h-9 w-9"
                 >
                   {copiedId ? <Check className="h-4 w-4 text-green-500" /> : <Copy className="h-4 w-4" />}
                 </Button>
               </div>
               <p className="text-xs text-muted-foreground mt-2">
-                Share this ID in ListUp → Team to let others view your Follow Up data
+                Share this ID in Follow Up → Team to let others view your data (read-only)
               </p>
             </div>
           )}

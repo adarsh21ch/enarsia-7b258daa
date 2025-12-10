@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { Prospect } from '@/types/prospect';
@@ -7,142 +7,276 @@ import { useEncryption } from '@/hooks/useEncryption';
 interface SharedOwner {
   user_id: string;
   display_name: string;
+  nevorid: string | null;
 }
 
 export function useSharedProspects() {
   const { user } = useAuth();
-  const { decryptBatch } = useEncryption();
+  const { decryptFields } = useEncryption();
   const [sharedOwners, setSharedOwners] = useState<SharedOwner[]>([]);
-  const [selectedOwnerId, setSelectedOwnerId] = useState<string | null>(null);
+  const [selectedOwnerIds, setSelectedOwnerIds] = useState<string[]>([]);
   const [prospects, setProspects] = useState<Prospect[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
+  const [initialLoadDone, setInitialLoadDone] = useState(false);
+  
+  // Cache for each owner's prospects to avoid re-fetching
+  const prospectsCache = useRef<Record<string, Prospect[]>>({});
+  const fetchingRef = useRef<Set<string>>(new Set());
 
-  // Fetch owners who have shared data with me
+  // Helper to decrypt a single prospect's phone
+  const decryptProspect = useCallback(async (p: Prospect): Promise<Prospect> => {
+    try {
+      if (p.phone && p.phone.includes(':')) {
+        const result = await decryptFields({ phone: p.phone });
+        return { ...p, phone: result?.phone || p.phone };
+      }
+    } catch {
+      // Keep original if decryption fails
+    }
+    return p;
+  }, [decryptFields]);
+
+  // Fetch list of users who have shared their data with me (ACTIVE only)
   const fetchSharedOwners = useCallback(async () => {
     if (!user) return;
-
-    const { data: accessRecords } = await supabase
-      .from('team_access')
-      .select('owner_user_id')
-      .eq('shared_with_user_id', user.id);
-
-    if (accessRecords && accessRecords.length > 0) {
-      const ownerIds = accessRecords.map(r => r.owner_user_id);
-      const { data: profiles } = await supabase
-        .from('profiles')
-        .select('user_id, display_name')
-        .in('user_id', ownerIds);
-
-      if (profiles) {
-        setSharedOwners(profiles.map(p => ({
-          user_id: p.user_id,
-          display_name: p.display_name || 'Unknown'
-        })));
+    
+    try {
+      const { data: accessRecords, error } = await supabase
+        .from('team_access')
+        .select('owner_user_id')
+        .eq('shared_with_user_id', user.id)
+        .eq('status', 'active');
+      
+      if (error) {
+        console.error('Error fetching team access:', error);
+        return;
       }
-    } else {
-      setSharedOwners([]);
+      
+      if (accessRecords && accessRecords.length > 0) {
+        const ownerIds = accessRecords.map(r => r.owner_user_id);
+        const { data: profiles, error: profilesError } = await supabase
+          .from('profiles')
+          .select('user_id, display_name, neverai_id')
+          .in('user_id', ownerIds);
+        
+        if (profilesError) {
+          console.error('Error fetching profiles:', profilesError);
+          return;
+        }
+        
+        if (profiles) {
+          setSharedOwners(profiles.map(p => ({
+            user_id: p.user_id,
+            display_name: p.display_name || 'Unknown',
+            nevorid: p.neverai_id
+          })));
+        }
+      } else {
+        setSharedOwners([]);
+      }
+    } catch (err) {
+      console.error('Error in fetchSharedOwners:', err);
     }
   }, [user]);
 
-  // Fetch prospects for selected owner
-  const fetchSharedProspects = useCallback(async () => {
-    if (!selectedOwnerId) {
+  // Fetch prospects for a single owner (with caching)
+  const fetchOwnerProspects = useCallback(async (ownerId: string): Promise<Prospect[]> => {
+    // Return from cache if available
+    if (prospectsCache.current[ownerId]) {
+      return prospectsCache.current[ownerId];
+    }
+    
+    // Prevent duplicate fetches
+    if (fetchingRef.current.has(ownerId)) {
+      // Wait for existing fetch to complete
+      await new Promise(resolve => setTimeout(resolve, 100));
+      return prospectsCache.current[ownerId] || [];
+    }
+    
+    fetchingRef.current.add(ownerId);
+    
+    try {
+      const { data, error } = await supabase
+        .from('prospects')
+        .select('*')
+        .eq('user_id', ownerId)
+        .order('date_added', { ascending: false });
+      
+      if (error) {
+        console.error('Error fetching shared prospects:', error);
+        fetchingRef.current.delete(ownerId);
+        return [];
+      }
+      
+      if (data) {
+        // Decrypt phone numbers in parallel with error handling
+        const decrypted = await Promise.all(
+          data.map(p => decryptProspect(p as unknown as Prospect))
+        );
+        prospectsCache.current[ownerId] = decrypted;
+        fetchingRef.current.delete(ownerId);
+        return decrypted;
+      }
+    } catch (err) {
+      console.error('Error in fetchOwnerProspects:', err);
+    }
+    
+    fetchingRef.current.delete(ownerId);
+    return [];
+  }, [decryptProspect]);
+
+  // Update combined prospects when selection changes
+  const updateCombinedProspects = useCallback(async () => {
+    if (selectedOwnerIds.length === 0) {
       setProspects([]);
       return;
     }
-
+    
+    // Check if all data is cached - if so, show instantly without loading
+    const allCached = selectedOwnerIds.every(id => prospectsCache.current[id]);
+    
+    if (allCached) {
+      // Instantly show cached data
+      const cachedProspects = selectedOwnerIds.flatMap(id => prospectsCache.current[id] || []);
+      cachedProspects.sort((a, b) => 
+        new Date(b.date_added).getTime() - new Date(a.date_added).getTime()
+      );
+      setProspects(cachedProspects);
+      return;
+    }
+    
+    // Only show loading if we need to fetch new data
     setLoading(true);
     
-    const { data, error } = await supabase
-      .from('prospects')
-      .select('*')
-      .eq('user_id', selectedOwnerId)
-      .order('updated_at', { ascending: false });
-
-    if (!error && data) {
-      try {
-        const decrypted = await decryptBatch(data);
-        setProspects(decrypted as Prospect[]);
-      } catch {
-        setProspects(data as Prospect[]);
-      }
-    } else {
+    try {
+      // Fetch all selected owners' prospects in parallel
+      const allProspects = await Promise.all(
+        selectedOwnerIds.map(ownerId => fetchOwnerProspects(ownerId))
+      );
+      
+      // Combine all prospects
+      const combined = allProspects.flat();
+      
+      // Sort by date_added descending
+      combined.sort((a, b) => 
+        new Date(b.date_added).getTime() - new Date(a.date_added).getTime()
+      );
+      
+      setProspects(combined);
+    } catch (err) {
+      console.error('Error updating combined prospects:', err);
       setProspects([]);
     }
     
     setLoading(false);
-  }, [selectedOwnerId, decryptBatch]);
+  }, [selectedOwnerIds, fetchOwnerProspects]);
 
-  // Set up realtime subscription for shared prospect updates
+  // Set up real-time subscriptions for all selected owners
   useEffect(() => {
-    if (!selectedOwnerId) return;
+    if (selectedOwnerIds.length === 0) return;
 
-    const channel = supabase
-      .channel(`shared-prospects-${selectedOwnerId}`)
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'prospects',
-          filter: `user_id=eq.${selectedOwnerId}`
-        },
-        async (payload) => {
-          console.log('Realtime update for shared prospects:', payload);
-          
-          if (payload.eventType === 'INSERT') {
-            const newProspect = payload.new as Prospect;
-            try {
-              const [decrypted] = await decryptBatch([newProspect]);
-              setProspects(prev => [decrypted as Prospect, ...prev]);
-            } catch {
-              setProspects(prev => [newProspect, ...prev]);
-            }
-          } else if (payload.eventType === 'UPDATE') {
-            const updatedProspect = payload.new as Prospect;
-            try {
-              const [decrypted] = await decryptBatch([updatedProspect]);
-              setProspects(prev => 
-                prev.map(p => p.id === updatedProspect.id ? decrypted as Prospect : p)
-              );
-            } catch {
-              setProspects(prev => 
-                prev.map(p => p.id === updatedProspect.id ? updatedProspect : p)
-              );
-            }
-          } else if (payload.eventType === 'DELETE') {
-            const deletedId = payload.old.id;
-            setProspects(prev => prev.filter(p => p.id !== deletedId));
+    const channels = selectedOwnerIds.map(ownerId => {
+      return supabase
+        .channel(`shared-prospects-${ownerId}`)
+        .on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+            table: 'prospects',
+            filter: `user_id=eq.${ownerId}`
+          },
+          async (payload) => {
+            // Invalidate cache for this owner
+            delete prospectsCache.current[ownerId];
+            
+            // Refetch this owner's prospects and update combined
+            const updatedProspects = await fetchOwnerProspects(ownerId);
+            prospectsCache.current[ownerId] = updatedProspects;
+            
+            // Rebuild combined list
+            const allProspects = await Promise.all(
+              selectedOwnerIds.map(id => {
+                if (prospectsCache.current[id]) {
+                  return Promise.resolve(prospectsCache.current[id]);
+                }
+                return fetchOwnerProspects(id);
+              })
+            );
+            
+            const combined = allProspects.flat();
+            combined.sort((a, b) => 
+              new Date(b.date_added).getTime() - new Date(a.date_added).getTime()
+            );
+            setProspects(combined);
           }
-        }
-      )
-      .subscribe();
+        )
+        .subscribe();
+    });
 
     return () => {
-      supabase.removeChannel(channel);
+      channels.forEach(channel => supabase.removeChannel(channel));
     };
-  }, [selectedOwnerId, decryptBatch]);
+  }, [selectedOwnerIds, fetchOwnerProspects]);
 
+  // Initial fetch of shared owners
   useEffect(() => {
-    fetchSharedOwners();
-  }, [fetchSharedOwners]);
-
-  useEffect(() => {
-    if (selectedOwnerId) {
-      fetchSharedProspects();
-    } else {
-      setProspects([]);
-      setLoading(false);
+    if (user && !initialLoadDone) {
+      fetchSharedOwners().then(() => setInitialLoadDone(true));
     }
-  }, [selectedOwnerId, fetchSharedProspects]);
+  }, [user, fetchSharedOwners, initialLoadDone]);
+
+  // Update prospects when selection changes
+  useEffect(() => {
+    updateCombinedProspects();
+  }, [updateCombinedProspects]);
+
+  // Toggle a single owner selection
+  const toggleOwnerSelection = useCallback((ownerId: string) => {
+    setSelectedOwnerIds(prev => {
+      if (prev.includes(ownerId)) {
+        return prev.filter(id => id !== ownerId);
+      } else {
+        return [...prev, ownerId];
+      }
+    });
+  }, []);
+
+  // Select all owners
+  const selectAllOwners = useCallback(() => {
+    setSelectedOwnerIds(sharedOwners.map(o => o.user_id));
+  }, [sharedOwners]);
+
+  // Clear all selections
+  const clearSelection = useCallback(() => {
+    setSelectedOwnerIds([]);
+    setProspects([]);
+  }, []);
+
+  // Legacy single-select API for backward compatibility
+  const setSelectedOwnerId = useCallback((ownerId: string | null) => {
+    if (ownerId) {
+      setSelectedOwnerIds([ownerId]);
+    } else {
+      setSelectedOwnerIds([]);
+    }
+  }, []);
+
+  // Get first selected owner ID (for backward compatibility)
+  const selectedOwnerId = selectedOwnerIds.length === 1 ? selectedOwnerIds[0] : null;
 
   return {
     sharedOwners,
-    selectedOwnerId,
-    setSelectedOwnerId,
+    selectedOwnerIds,
+    selectedOwnerId, // backward compatibility
+    setSelectedOwnerId, // backward compatibility
+    setSelectedOwnerIds,
+    toggleOwnerSelection,
+    selectAllOwners,
+    clearSelection,
     prospects,
     loading,
-    refetch: fetchSharedProspects,
-    refetchOwners: fetchSharedOwners
+    refetchOwners: fetchSharedOwners,
+    refetchProspects: updateCombinedProspects
   };
 }

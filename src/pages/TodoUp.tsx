@@ -1,4 +1,4 @@
-// TodoUp Page - Simple To-Do List
+// To-Do List Page
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
@@ -6,8 +6,8 @@ import { useTodos } from '@/hooks/useTodos';
 import { BottomNav } from '@/components/layout/BottomNav';
 import { PullToRefreshIndicator } from '@/components/PullToRefreshIndicator';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Input } from '@/components/ui/input';
 import { Loader2, CheckCircle, Trash2, Edit2, Send, X, Check, Plus } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 import { cn } from '@/lib/utils';
@@ -125,9 +125,13 @@ export default function TodoUp() {
 
   if (!user) return null;
 
-  // Separate completed and pending todos
-  const pendingTodos = todos.filter(t => !t.completed);
-  const completedTodos = todos.filter(t => t.completed);
+  // Separate completed and pending todos, sort ascending by created_at (earliest at top)
+  const pendingTodos = todos
+    .filter(t => !t.completed)
+    .sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
+  const completedTodos = todos
+    .filter(t => t.completed)
+    .sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
 
   return (
     <div className="app-layout bg-gradient-to-b from-background via-background to-muted/20">
@@ -140,14 +144,14 @@ export default function TodoUp() {
               className="h-10 w-10 rounded-xl object-cover shadow-md"
             />
             <div>
-              <h1 className="text-xl font-bold tracking-tight">To-Do Up</h1>
+              <h1 className="text-xl font-bold tracking-tight">To-Do List</h1>
               <p className="text-xs text-muted-foreground font-medium">Your Tasks & Reminders</p>
             </div>
           </div>
         </div>
       </header>
 
-      <main ref={containerRef} className="scrollable-content relative pb-36">
+      <main ref={containerRef} className="scrollable-content relative pb-24">
         <PullToRefreshIndicator isRefreshing={isRefreshing} pullDistance={pullDistance} showIndicator={showIndicator} />
         <div className="container py-3 px-4 space-y-4">
           {/* To-Do List */}
@@ -185,8 +189,8 @@ export default function TodoUp() {
                 </Button>
               </div>
             ) : (
-              <div className="max-h-[50vh] overflow-y-auto divide-y divide-border/20">
-                {/* Pending todos first */}
+              <div className="divide-y divide-border/20">
+                {/* Pending todos first - sorted ascending (earliest at top) */}
                 {pendingTodos.map((todo, index) => (
                   <div
                     key={todo.id}
@@ -299,26 +303,30 @@ export default function TodoUp() {
         </div>
       </main>
 
-      {/* Fixed bottom input */}
-      <div className="fixed bottom-16 left-0 right-0 z-30 bg-card/95 backdrop-blur-xl border-t border-border/50 p-3 safe-area-pb">
-        <div className="max-w-lg mx-auto flex items-center gap-2">
-          <Input
-            id="todo-input"
-            placeholder="Add a to-do task or reminder..."
-            value={newTodoInput}
-            onChange={(e) => setNewTodoInput(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter') handleAddTodo();
-            }}
-            className="flex-1 h-10 bg-muted/50 border-border/50"
-          />
-          <Button
-            onClick={handleAddTodo}
-            disabled={!newTodoInput.trim()}
-            className="h-10 px-4"
-          >
-            <Send className="h-4 w-4" />
-          </Button>
+      {/* Fixed bottom chat-style input - floating overlay */}
+      <div className="fixed bottom-14 left-0 right-0 z-30 px-4 pb-3 pt-2 pointer-events-none">
+        <div className="pointer-events-auto max-w-lg mx-auto">
+          <div className="flex items-center gap-2 bg-card/95 backdrop-blur-xl border border-border/50 rounded-full px-4 py-2 shadow-lg">
+            <input
+              id="todo-input"
+              type="text"
+              placeholder="Add a to-do task or reminder..."
+              value={newTodoInput}
+              onChange={(e) => setNewTodoInput(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') handleAddTodo();
+              }}
+              className="flex-1 bg-transparent border-0 outline-none text-sm placeholder:text-muted-foreground/60"
+            />
+            <Button
+              onClick={handleAddTodo}
+              disabled={!newTodoInput.trim()}
+              size="icon"
+              className="h-8 w-8 rounded-full shrink-0"
+            >
+              <Send className="h-4 w-4" />
+            </Button>
+          </div>
         </div>
       </div>
 
