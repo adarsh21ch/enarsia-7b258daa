@@ -214,11 +214,11 @@ export default function Home() {
                       
                       <div className="relative flex gap-3">
                         {/* Time label - left aligned with dot */}
-                        <div className="shrink-0 w-14 flex items-center gap-1">
+                        <div className="shrink-0 w-14 gap-1 flex items-center justify-center border-none">
                           <span className="text-[10px] text-muted-foreground/80 font-medium">
                             {format(activity.time, 'h:mm a')}
                           </span>
-                          <div className="w-1.5 h-1.5 rounded-full bg-primary/60 shrink-0" />
+                          
                         </div>
                         
                         {/* Activity content */}
