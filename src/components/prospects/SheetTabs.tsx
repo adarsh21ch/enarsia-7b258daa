@@ -114,85 +114,88 @@ export function SheetTabs({
   return (
     <>
       <div className="flex items-center bg-muted/50 border-b border-border">
-        <ScrollArea className="flex-1 whitespace-nowrap">
-          <div className="flex items-center">
-            {/* "All" tab with dropdown */}
-            <div className="flex items-center border-r border-border/50">
-              <button
-                onClick={() => onSelectSheet(null)}
-                className={cn(
-                  "px-3 py-2 text-xs font-medium transition-colors",
-                  selectedSheetId === null 
-                    ? "bg-card text-foreground border-t-2 border-t-primary" 
-                    : "text-muted-foreground hover:text-foreground hover:bg-muted/80"
-                )}
-              >
-                <FileSpreadsheet className="h-3.5 w-3.5 inline mr-1.5" />
-                All
-              </button>
-              {renderAllTabMenu()}
+        {/* Fixed "All" tab with dropdown */}
+        <div className="flex items-center border-r border-border/50 shrink-0 bg-muted/50">
+          <button
+            onClick={() => onSelectSheet(null)}
+            className={cn(
+              "px-3 py-2 text-xs font-medium transition-colors",
+              selectedSheetId === null 
+                ? "bg-card text-foreground border-t-2 border-t-primary" 
+                : "text-muted-foreground hover:text-foreground hover:bg-muted/80"
+            )}
+          >
+            <FileSpreadsheet className="h-3.5 w-3.5 inline mr-1.5" />
+            All
+          </button>
+          {renderAllTabMenu()}
+        </div>
+
+        {/* Scrollable sheet tabs area */}
+        {sheets.length > 0 && (
+          <ScrollArea className="flex-1 whitespace-nowrap">
+            <div className="flex items-center">
+              {sheets.map((sheet) => (
+                <div key={sheet.id} className="flex items-center border-r border-border/50">
+                  <button
+                    onClick={() => onSelectSheet(sheet.id)}
+                    className={cn(
+                      "px-3 py-2 text-xs font-medium transition-colors",
+                      selectedSheetId === sheet.id 
+                        ? "bg-card text-foreground border-t-2 border-t-primary" 
+                        : "text-muted-foreground hover:text-foreground hover:bg-muted/80"
+                    )}
+                  >
+                    {sheet.name}
+                  </button>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <button
+                        className={cn(
+                          "px-1 py-2 text-muted-foreground hover:text-foreground",
+                          selectedSheetId === sheet.id && "text-foreground"
+                        )}
+                      >
+                        <MoreVertical className="h-3 w-3" />
+                      </button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" className="bg-popover border-border z-50">
+                      <DropdownMenuItem onClick={() => openEditDialog(sheet)}>
+                        <Pencil className="h-3.5 w-3.5 mr-2" />
+                        Rename
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => handleSelectAndDelete(sheet.id)}>
+                        <CheckSquare className="h-3.5 w-3.5 mr-2" />
+                        Select & Delete
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem
+                        onClick={() => handleDeleteAllInSheet(sheet.id, sheet.name)}
+                        className="text-destructive focus:text-destructive"
+                      >
+                        <Trash className="h-3.5 w-3.5 mr-2" />
+                        Delete all rows
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        onClick={() => handleDeleteSheet(sheet)}
+                        className="text-destructive focus:text-destructive"
+                      >
+                        <Trash2 className="h-3.5 w-3.5 mr-2" />
+                        Delete sheet
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
+              ))}
             </div>
+            <ScrollBar orientation="horizontal" />
+          </ScrollArea>
+        )}
 
-            {/* Individual sheet tabs */}
-            {sheets.map((sheet) => (
-              <div key={sheet.id} className="flex items-center border-r border-border/50">
-                <button
-                  onClick={() => onSelectSheet(sheet.id)}
-                  className={cn(
-                    "px-3 py-2 text-xs font-medium transition-colors",
-                    selectedSheetId === sheet.id 
-                      ? "bg-card text-foreground border-t-2 border-t-primary" 
-                      : "text-muted-foreground hover:text-foreground hover:bg-muted/80"
-                  )}
-                >
-                  {sheet.name}
-                </button>
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <button
-                      className={cn(
-                        "px-1 py-2 text-muted-foreground hover:text-foreground",
-                        selectedSheetId === sheet.id && "text-foreground"
-                      )}
-                    >
-                      <MoreVertical className="h-3 w-3" />
-                    </button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="bg-popover border-border z-50">
-                    <DropdownMenuItem onClick={() => openEditDialog(sheet)}>
-                      <Pencil className="h-3.5 w-3.5 mr-2" />
-                      Rename
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => handleSelectAndDelete(sheet.id)}>
-                      <CheckSquare className="h-3.5 w-3.5 mr-2" />
-                      Select & Delete
-                    </DropdownMenuItem>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem
-                      onClick={() => handleDeleteAllInSheet(sheet.id, sheet.name)}
-                      className="text-destructive focus:text-destructive"
-                    >
-                      <Trash className="h-3.5 w-3.5 mr-2" />
-                      Delete all rows
-                    </DropdownMenuItem>
-                    <DropdownMenuItem
-                      onClick={() => handleDeleteSheet(sheet)}
-                      className="text-destructive focus:text-destructive"
-                    >
-                      <Trash2 className="h-3.5 w-3.5 mr-2" />
-                      Delete sheet
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </div>
-            ))}
-          </div>
-          <ScrollBar orientation="horizontal" />
-        </ScrollArea>
-
+        {/* Fixed Add Sheet button */}
         <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
           <DialogTrigger asChild>
-            <button className="px-3 py-2 text-xs text-muted-foreground hover:text-foreground hover:bg-muted/80 border-l border-border/50">
+            <button className="px-3 py-2 text-xs text-muted-foreground hover:text-foreground hover:bg-muted/80 border-l border-border/50 shrink-0 bg-muted/50">
               <Plus className="h-3.5 w-3.5 inline mr-1" />
               <span className="hidden sm:inline">Add Sheet</span>
               <span className="sm:hidden">+</span>

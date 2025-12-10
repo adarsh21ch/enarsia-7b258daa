@@ -708,15 +708,15 @@ export function ProspectTable({
         // Table Layout - ALWAYS show sheet tabs + header, even when empty
         <div className="bg-card rounded-xl border border-border overflow-hidden shadow-sm">
           <div 
-            className="overflow-x-auto"
+            className="overflow-x-auto bg-card"
             style={{ WebkitOverflowScrolling: 'touch' }}
           >
             <table 
-              className="text-sm border-collapse w-full"
+              className="text-sm border-collapse w-full bg-card"
               style={{ minWidth: isMobile ? '580px' : '880px' }}
             >
               {/* Sticky header block: Sheet tabs + column headers */}
-              <thead className="sticky top-0 z-30">
+              <thead className="sticky top-0 z-30 bg-card">
                 {/* Sheet tabs row - ALWAYS visible */}
                 <tr>
                   <th 
@@ -742,7 +742,7 @@ export function ProspectTable({
                 )}>
                   {/* Selection checkbox header */}
                   {selectionMode.active && (
-                    <th className="px-2 py-2.5 w-10 min-w-[40px]">
+                    <th className="px-2 py-2.5 w-10 min-w-[40px] bg-muted/95">
                       <Checkbox
                         checked={selectedIds.size === selectionProspects.length && selectionProspects.length > 0}
                         onCheckedChange={handleSelectAll}
@@ -768,11 +768,11 @@ export function ProspectTable({
                         isResizing={isResizing}
                         canResize={canResize}
                         className={cn(
-                          "px-2 py-2.5 text-left whitespace-nowrap",
+                          "px-2 py-2.5 text-left whitespace-nowrap bg-muted/95",
                           columnId === 'index' && "text-center",
                           isMobile && "text-[11px] px-1.5",
-                          isMobile && isNameColumn && "sticky left-[36px] z-20 bg-muted/95 shadow-[2px_0_4px_-2px_rgba(0,0,0,0.15)]",
-                          isMobile && isIndexColumn && "sticky left-0 z-20 bg-muted/95"
+                          isMobile && isNameColumn && "sticky left-[36px] z-30 border-r border-border/30",
+                          isMobile && isIndexColumn && "sticky left-0 z-30"
                         )}
                       >
                         <div className="flex items-center gap-0.5">

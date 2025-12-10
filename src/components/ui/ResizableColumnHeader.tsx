@@ -1,4 +1,4 @@
-import { useRef, useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { cn } from '@/lib/utils';
 
 interface ResizableColumnHeaderProps {
@@ -28,7 +28,6 @@ export function ResizableColumnHeader({
 }: ResizableColumnHeaderProps) {
   const [isHovering, setIsHovering] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
-  const longPressTimeout = useRef<NodeJS.Timeout | null>(null);
 
   const handleMouseDown = useCallback((e: React.MouseEvent) => {
     e.preventDefault();
@@ -38,21 +37,17 @@ export function ResizableColumnHeader({
   }, [columnId, onResize]);
 
   const handleTouchStart = useCallback((e: React.TouchEvent) => {
-    // Long press to activate resize on mobile
-    longPressTimeout.current = setTimeout(() => {
-      const touch = e.touches[0];
-      if (touch) {
-        setIsDragging(true);
-        onResize(columnId, touch.clientX);
-      }
-    }, 300);
+    e.preventDefault();
+    e.stopPropagation();
+    const touch = e.touches[0];
+    if (touch) {
+      setIsDragging(true);
+      onResize(columnId, touch.clientX);
+    }
   }, [columnId, onResize]);
 
   const handleTouchEnd = useCallback(() => {
-    if (longPressTimeout.current) {
-      clearTimeout(longPressTimeout.current);
-      longPressTimeout.current = null;
-    }
+    // No cleanup needed - isDragging is handled by global listeners
   }, []);
 
   // Global mouse/touch move and up handlers
@@ -93,15 +88,6 @@ export function ResizableColumnHeader({
     };
   }, [isDragging, onResizeMove, onResizeEnd]);
 
-  // Cleanup timeout on unmount
-  useEffect(() => {
-    return () => {
-      if (longPressTimeout.current) {
-        clearTimeout(longPressTimeout.current);
-      }
-    };
-  }, []);
-
   return (
     <th
       className={cn("relative select-none", className)}
@@ -111,28 +97,27 @@ export function ResizableColumnHeader({
     >
       {children}
       
-      {/* Resize handle - positioned at right edge */}
+      {/* Resize handle - positioned at right edge with wider touch target */}
       {canResize && (
         <div
           className={cn(
-            "absolute top-0 right-0 h-full w-1 cursor-col-resize z-30",
+            "absolute top-0 right-[-4px] h-full w-3 cursor-col-resize z-40",
             "transition-colors duration-150",
-            "hover:bg-primary/50 active:bg-primary/70",
-            (isHovering || isDragging) && "bg-border/80",
-            isDragging && "bg-primary/50"
+            "group"
           )}
           onMouseDown={handleMouseDown}
           onTouchStart={handleTouchStart}
           onTouchEnd={handleTouchEnd}
           style={{ touchAction: 'none' }}
         >
-          {/* Visual indicator line */}
+          {/* Visual line indicator */}
           <div 
             className={cn(
-              "absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2",
-              "w-0.5 h-4 bg-muted-foreground/30 rounded-full",
-              "transition-all duration-150",
-              (isHovering || isDragging) && "h-6 bg-primary/60"
+              "absolute top-0 left-1/2 -translate-x-1/2 h-full w-0.5",
+              "transition-colors duration-150",
+              "group-hover:bg-primary/50 group-active:bg-primary/70",
+              (isHovering || isDragging) && "bg-border/80",
+              isDragging && "bg-primary/50"
             )}
           />
         </div>
