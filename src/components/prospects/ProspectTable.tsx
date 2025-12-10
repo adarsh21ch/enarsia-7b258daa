@@ -22,6 +22,8 @@ import { useResizableColumns } from '@/hooks/useResizableColumns';
 import { ResizableColumnHeader } from '@/components/ui/ResizableColumnHeader';
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, TouchSensor, useSensor, useSensors, DragEndEvent } from '@dnd-kit/core';
 import { arrayMove, SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy } from '@dnd-kit/sortable';
+import { useCustomOptionsContext } from '@/contexts/CustomOptionsContext';
+
 interface Filters {
   search: string;
   stages: FunnelStage[];
@@ -209,13 +211,24 @@ export function ProspectTable({
     }
   };
 
-  // For DUPLICATING: Show prospects in BOTH tabs if they have funnel stages
+  // Get filter tags from custom options
+  const { getFilterTags } = useCustomOptionsContext();
+  const filterTags = useMemo(() => getFilterTags(), [getFilterTags]);
+
+  // For DUPLICATING: Show prospects in BOTH tabs if they have funnel stages OR filter tags
   const callingProspects = useMemo(() => {
     return prospects;
   }, [prospects]);
+  
+  // Filter prospects: show only those whose action_taken is marked as a filter tag
   const funnelProspects = useMemo(() => {
-    return prospects.filter(p => p.enrollment_status === 'Enrolled' || p.funnel_stage);
-  }, [prospects]);
+    if (filterTags.length === 0) {
+      // Fallback to old behavior if no filter tags configured
+      return prospects.filter(p => p.enrollment_status === 'Enrolled' || p.funnel_stage);
+    }
+    // New behavior: show prospects with filter-tagged response
+    return prospects.filter(p => p.action_taken && filterTags.includes(p.action_taken));
+  }, [prospects, filterTags]);
 
   // Get base prospects based on filter mode
   const baseProspects = useMemo(() => {
@@ -625,7 +638,8 @@ export function ProspectTable({
                   <Redo2 className="h-4 w-4" />
                 </Button>
               </div>
-              <ImportExcelDialog onImport={handleImportProspects} />
+              {/* Import/Add - only show Import in Calling mode */}
+              {isCalling && <ImportExcelDialog onImport={handleImportProspects} />}
               <AddProspectDialog onAdd={handleAddProspect} />
             </div>
           </div>

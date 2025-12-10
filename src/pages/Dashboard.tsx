@@ -8,6 +8,7 @@ import { BottomNav } from '@/components/layout/BottomNav';
 import { ProspectTable } from '@/components/prospects/ProspectTable';
 import { PullToRefreshIndicator } from '@/components/PullToRefreshIndicator';
 import { BottomViewToggle } from '@/components/ui/BottomViewToggle';
+import { FilterTagSetupDialog, useFilterTagSetup } from '@/components/prospects/FilterTagSetupDialog';
 import { Loader2, Phone, GitBranch } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import nevoraLogo from '@/assets/nevorai-logo.jpeg';
@@ -91,7 +92,20 @@ export default function Dashboard() {
   const { prospects, loading, addProspect, updateProspect, deleteProspect, bulkDeleteProspects, restoreProspect, restoreProspects, importProspects, reorderProspects, refetch } = useProspects();
   const { sheets, selectedSheetId, setSelectedSheetId, addSheet, updateSheet, deleteSheet, refetch: refetchSheets } = useSheets();
   
+  // Main tab state - Calling is default
   const [mainTab, setMainTab] = useState<'leads' | 'funnel'>('leads');
+  
+  // Filter tag setup dialog
+  const { needsSetup, markSetupDone } = useFilterTagSetup();
+  const [showFilterSetup, setShowFilterSetup] = useState(false);
+
+  // Handle tab change - show setup dialog when switching to Filter for first time
+  const handleTabChange = (newTab: string) => {
+    if (newTab === 'funnel' && needsSetup) {
+      setShowFilterSetup(true);
+    }
+    setMainTab(newTab as 'leads' | 'funnel');
+  };
 
   // Pull-to-refresh
   const handleRefresh = useCallback(async () => {
@@ -194,10 +208,17 @@ export default function Dashboard() {
         <BottomViewToggle
           options={toggleOptions}
           value={mainTab}
-          onChange={(v) => setMainTab(v as 'leads' | 'funnel')}
+          onChange={handleTabChange}
         />
 
         <BottomNav />
+
+        {/* Filter Tag Setup Dialog */}
+        <FilterTagSetupDialog
+          open={showFilterSetup}
+          onOpenChange={setShowFilterSetup}
+          onComplete={markSetupDone}
+        />
       </div>
     </CustomOptionsProvider>
   );

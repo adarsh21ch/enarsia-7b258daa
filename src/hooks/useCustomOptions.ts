@@ -11,6 +11,7 @@ export interface CustomOption {
   is_active: boolean;
   sort_order: number | null;
   created_at: string;
+  is_filter_tag?: boolean;
 }
 
 export type OptionType = 'funnel_stage' | 'action_taken' | 'prospect_status' | 'priority';
@@ -71,6 +72,7 @@ export function useCustomOptions() {
           option_value: trimmedValue,
           is_active: true,
           sort_order: customOptions.filter(o => o.option_type === optionType).length,
+          is_filter_tag: false,
         })
         .select()
         .single();
@@ -139,6 +141,28 @@ export function useCustomOptions() {
     }
   };
 
+  const updateFilterTagStatus = async (optionId: string, isFilterTag: boolean) => {
+    if (!user) return false;
+
+    try {
+      const { error } = await supabase
+        .from('custom_options')
+        .update({ is_filter_tag: isFilterTag })
+        .eq('id', optionId)
+        .eq('user_id', user.id);
+
+      if (error) throw error;
+      
+      setCustomOptions(prev => prev.map(o => 
+        o.id === optionId ? { ...o, is_filter_tag: isFilterTag } : o
+      ));
+      return true;
+    } catch (error) {
+      console.error('Error updating filter tag status:', error);
+      return false;
+    }
+  };
+
   const getOptionsForType = (optionType: OptionType, defaultOptions: readonly string[]) => {
     const custom = customOptions
       .filter(o => o.option_type === optionType)
@@ -159,14 +183,29 @@ export function useCustomOptions() {
     return customOptions.filter(o => o.option_type === optionType);
   };
 
+  const getFilterTags = () => {
+    return customOptions
+      .filter(o => o.option_type === 'action_taken' && o.is_filter_tag)
+      .map(o => o.option_value);
+  };
+
+  const isFilterTag = (tagValue: string) => {
+    return customOptions.some(
+      o => o.option_type === 'action_taken' && o.option_value === tagValue && o.is_filter_tag
+    );
+  };
+
   return {
     customOptions,
     loading,
     addOption,
     deleteOption,
     updateOption,
+    updateFilterTagStatus,
     getOptionsForType,
     getCustomOptionsForType,
+    getFilterTags,
+    isFilterTag,
     refetch: fetchOptions,
   };
 }

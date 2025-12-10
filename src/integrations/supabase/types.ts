@@ -61,6 +61,7 @@ export type Database = {
           created_at: string
           id: string
           is_active: boolean
+          is_filter_tag: boolean
           option_type: string
           option_value: string
           sort_order: number | null
@@ -71,6 +72,7 @@ export type Database = {
           created_at?: string
           id?: string
           is_active?: boolean
+          is_filter_tag?: boolean
           option_type: string
           option_value: string
           sort_order?: number | null
@@ -81,6 +83,7 @@ export type Database = {
           created_at?: string
           id?: string
           is_active?: boolean
+          is_filter_tag?: boolean
           option_type?: string
           option_value?: string
           sort_order?: number | null
