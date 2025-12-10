@@ -4,8 +4,9 @@ import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Search, X, Download, ChevronDown, Loader2 } from 'lucide-react';
-import { FUNNEL_STAGES, QUALITIES, EXTENDED_ACTIONS, FunnelStage, ProspectQuality, ExtendedActionTaken } from '@/types/prospect';
+import { FUNNEL_STAGES, EXTENDED_ACTIONS, FunnelStage, ProspectQuality, ExtendedActionTaken } from '@/types/prospect';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { useCustomOptionsContext } from '@/contexts/CustomOptionsContext';
 import { cn } from '@/lib/utils';
 
 interface Filters {
@@ -25,8 +26,13 @@ interface ProspectFiltersProps {
 }
 
 export function ProspectFilters({ filters, onFiltersChange, onExport, exporting = false, filteredCount = 0 }: ProspectFiltersProps) {
-  const hasFilters = filters.search || filters.stages.length > 0 || filters.qualities.length > 0 || filters.actions.length > 0 || filters.incompleteOnly;
+  const hasFilters = filters.search || filters.stages.length > 0 || filters.actions.length > 0;
   const isMobile = useIsMobile();
+  const { getOptionsForType } = useCustomOptionsContext();
+
+  // Get dynamic options from user's custom tags
+  const stageOptions = getOptionsForType('funnel_stage', FUNNEL_STAGES) as FunnelStage[];
+  const actionOptions = getOptionsForType('action_taken', EXTENDED_ACTIONS) as ExtendedActionTaken[];
 
   const clearFilters = () => {
     onFiltersChange({
@@ -52,10 +58,10 @@ export function ProspectFilters({ filters, onFiltersChange, onExport, exporting 
     onFiltersChange({ ...filters, actions: newActions });
   };
 
-  const getStagesLabel = () => {
-    if (filters.stages.length === 0) return 'All Stages';
+  const getFunnelsLabel = () => {
+    if (filters.stages.length === 0) return 'All Funnels';
     if (filters.stages.length === 1) return filters.stages[0];
-    return `${filters.stages.length} Stages`;
+    return `${filters.stages.length} Funnels`;
   };
 
   const getActionsLabel = () => {
@@ -99,7 +105,7 @@ export function ProspectFilters({ filters, onFiltersChange, onExport, exporting 
             sideOffset={4}
           >
             <div className="space-y-1">
-              {EXTENDED_ACTIONS.map((action) => (
+              {actionOptions.map((action) => (
                 <label
                   key={action}
                   className="flex items-center gap-2 px-2 py-2 rounded-md hover:bg-muted cursor-pointer min-h-[40px]"
@@ -126,7 +132,7 @@ export function ProspectFilters({ filters, onFiltersChange, onExport, exporting 
           </PopoverContent>
         </Popover>
 
-        {/* Multi-select Stages Filter */}
+        {/* Multi-select Funnels Filter */}
         <Popover>
           <PopoverTrigger asChild>
             <Button 
@@ -136,7 +142,7 @@ export function ProspectFilters({ filters, onFiltersChange, onExport, exporting 
                 filters.stages.length > 0 && "border-primary/50 bg-primary/5"
               )}
             >
-              <span className="truncate">{getStagesLabel()}</span>
+              <span className="truncate">{getFunnelsLabel()}</span>
               <ChevronDown className="h-3.5 w-3.5 opacity-50" />
             </Button>
           </PopoverTrigger>
@@ -146,7 +152,7 @@ export function ProspectFilters({ filters, onFiltersChange, onExport, exporting 
             sideOffset={4}
           >
             <div className="space-y-1">
-              {FUNNEL_STAGES.map((stage) => (
+              {stageOptions.map((stage) => (
                 <label
                   key={stage}
                   className="flex items-center gap-2 px-2 py-2 rounded-md hover:bg-muted cursor-pointer min-h-[40px]"
@@ -167,7 +173,7 @@ export function ProspectFilters({ filters, onFiltersChange, onExport, exporting 
                 className="w-full mt-2 h-8 text-xs"
                 onClick={() => onFiltersChange({ ...filters, stages: [] })}
               >
-                Clear Stages
+                Clear Funnels
               </Button>
             )}
           </PopoverContent>

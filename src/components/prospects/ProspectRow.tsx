@@ -224,7 +224,6 @@ export function ProspectRow({
               onAddOption={addOption} 
               onDeleteOption={deleteOption} 
               defaultOptions={FUNNEL_STAGES}
-              hideManagement
             />
           </td>
         );
@@ -242,25 +241,6 @@ export function ProspectRow({
               onAddOption={addOption} 
               onDeleteOption={deleteOption} 
               defaultOptions={EXTENDED_ACTIONS}
-              hideManagement
-            />
-          </td>
-        );
-      case 'quality':
-        return (
-          <td key={columnId} className={cellClass} style={style} onPointerDown={(e) => e.stopPropagation()}>
-            <InlineSelect 
-              value={prospect.prospect_status} 
-              options={statusOptions} 
-              onChange={(value) => onUpdate(prospect.id, { prospect_status: value })} 
-              placeholder="Select..." 
-              renderValue={(value) => <StatusBadge status={value} />} 
-              optionType="prospect_status" 
-              customOptions={getCustomOptionsForType('prospect_status')} 
-              onAddOption={addOption} 
-              onDeleteOption={deleteOption} 
-              defaultOptions={STATUSES}
-              hideManagement
             />
           </td>
         );

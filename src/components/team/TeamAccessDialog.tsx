@@ -25,7 +25,7 @@ export function TeamAccessDialog() {
   } = useTeamAccess();
   
   const [open, setOpen] = useState(false);
-  const [leaderNevorId, setLeaderNevorId] = useState('');
+  const [leaderTrackUpId, setLeaderTrackUpId] = useState('');
   const [sharing, setSharing] = useState(false);
   const [copied, setCopied] = useState(false);
 
@@ -33,20 +33,20 @@ export function TeamAccessDialog() {
     if (myNevorId) {
       await navigator.clipboard.writeText(myNevorId);
       setCopied(true);
-      toast.success('NevorID copied');
+      toast.success('TrackUp ID copied');
       setTimeout(() => setCopied(false), 2000);
     }
   };
 
   const handleShareWithLeader = async () => {
-    if (!leaderNevorId.trim()) return;
+    if (!leaderTrackUpId.trim()) return;
     
     setSharing(true);
-    const result = await shareWithLeader(leaderNevorId.trim().toUpperCase());
+    const result = await shareWithLeader(leaderTrackUpId.trim().toUpperCase());
     setSharing(false);
     
     if (result.success) {
-      setLeaderNevorId('');
+      setLeaderTrackUpId('');
     } else {
       toast.error(result.error);
     }
@@ -90,9 +90,9 @@ export function TeamAccessDialog() {
         </DialogHeader>
 
         <div className="space-y-6">
-          {/* My NevorID */}
+          {/* My TrackUp ID */}
           <div className="space-y-2">
-            <Label className="text-sm font-medium">Your NevorID</Label>
+            <Label className="text-sm font-medium">Your TrackUp ID</Label>
             <div className="flex items-center gap-2">
               <div className="flex-1 px-3 py-2 bg-muted rounded-md font-mono text-sm">
                 {myNevorId || 'Loading...'}
@@ -107,7 +107,7 @@ export function TeamAccessDialog() {
               </Button>
             </div>
             <p className="text-xs text-muted-foreground">
-              Share this NevorID with your team so they can share their Follow Up lists with you.
+              Share this TrackUp ID with your team so they can share their Follow Up lists with you.
             </p>
           </div>
 
@@ -121,14 +121,14 @@ export function TeamAccessDialog() {
             </Label>
             <div className="flex items-center gap-2">
               <Input
-                placeholder="Enter Leader's NevorID (e.g., NVR-XXXXX)"
-                value={leaderNevorId}
-                onChange={(e) => setLeaderNevorId(e.target.value.toUpperCase())}
+                placeholder="Enter Leader's TrackUp ID (e.g., NVR-XXXXX)"
+                value={leaderTrackUpId}
+                onChange={(e) => setLeaderTrackUpId(e.target.value.toUpperCase())}
                 className="flex-1 font-mono"
               />
               <Button 
                 onClick={handleShareWithLeader}
-                disabled={sharing || !leaderNevorId.trim()}
+                disabled={sharing || !leaderTrackUpId.trim()}
                 size="sm"
               >
                 Share
@@ -266,7 +266,7 @@ export function TeamAccessDialog() {
             <div className="text-center py-4 text-muted-foreground">
               <Users className="h-8 w-8 mx-auto mb-2 opacity-50" />
               <p className="text-sm">No team connections yet</p>
-              <p className="text-xs">Share your NevorID with your team or enter a leader's NevorID to get started.</p>
+              <p className="text-xs">Share your TrackUp ID with your team or enter a leader's TrackUp ID to get started.</p>
             </div>
           )}
         </div>
