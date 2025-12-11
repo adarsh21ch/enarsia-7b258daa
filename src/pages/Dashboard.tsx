@@ -180,6 +180,7 @@ export default function Dashboard() {
             <TeamToggle
               sharedOwners={sharedOwners}
               selectedOwnerIds={selectedOwnerIds}
+              onToggleOwner={toggleOwnerSelection}
               onSelectAll={selectAllOwners}
               onClear={clearSelection}
               currentTab="calling"

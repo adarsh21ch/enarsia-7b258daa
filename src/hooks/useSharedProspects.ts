@@ -10,17 +10,51 @@ interface SharedOwner {
   nevorid: string | null;
 }
 
+const CACHE_KEY = 'team_prospects_cache';
+const OWNERS_CACHE_KEY = 'team_owners_cache';
+const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+
+// Session storage helpers
+const getSessionCache = <T>(key: string): { data: T; timestamp: number } | null => {
+  try {
+    const cached = sessionStorage.getItem(key);
+    if (cached) {
+      const parsed = JSON.parse(cached);
+      if (Date.now() - parsed.timestamp < CACHE_TTL) {
+        return parsed;
+      }
+    }
+  } catch {
+    // Ignore errors
+  }
+  return null;
+};
+
+const setSessionCache = <T>(key: string, data: T) => {
+  try {
+    sessionStorage.setItem(key, JSON.stringify({ data, timestamp: Date.now() }));
+  } catch {
+    // Ignore storage errors
+  }
+};
+
 export function useSharedProspects() {
   const { user } = useAuth();
   const { decryptFields } = useEncryption();
-  const [sharedOwners, setSharedOwners] = useState<SharedOwner[]>([]);
+  const [sharedOwners, setSharedOwners] = useState<SharedOwner[]>(() => {
+    // Initialize from cache if available
+    const cached = getSessionCache<SharedOwner[]>(OWNERS_CACHE_KEY);
+    return cached?.data || [];
+  });
   const [selectedOwnerIds, setSelectedOwnerIds] = useState<string[]>([]);
   const [prospects, setProspects] = useState<Prospect[]>([]);
   const [loading, setLoading] = useState(false);
   const [initialLoadDone, setInitialLoadDone] = useState(false);
   
   // Cache for each owner's prospects to avoid re-fetching
-  const prospectsCache = useRef<Record<string, Prospect[]>>({});
+  const prospectsCache = useRef<Record<string, Prospect[]>>(
+    getSessionCache<Record<string, Prospect[]>>(CACHE_KEY)?.data || {}
+  );
   const fetchingRef = useRef<Set<string>>(new Set());
   // Track current fetch request to cancel outdated ones
   const currentFetchId = useRef<number>(0);
@@ -67,14 +101,18 @@ export function useSharedProspects() {
         }
         
         if (profiles) {
-          setSharedOwners(profiles.map(p => ({
+          const owners = profiles.map(p => ({
             user_id: p.user_id,
             display_name: p.display_name || 'Unknown',
             nevorid: p.neverai_id
-          })));
+          }));
+          setSharedOwners(owners);
+          // Cache to session storage
+          setSessionCache(OWNERS_CACHE_KEY, owners);
         }
       } else {
         setSharedOwners([]);
+        setSessionCache(OWNERS_CACHE_KEY, []);
       }
     } catch (err) {
       console.error('Error in fetchSharedOwners:', err);
@@ -102,7 +140,8 @@ export function useSharedProspects() {
         .from('prospects')
         .select('*')
         .eq('user_id', ownerId)
-        .order('date_added', { ascending: false });
+        .order('date_added', { ascending: false })
+        .limit(50); // Limit initial load for performance
       
       if (error) {
         console.error('Error fetching shared prospects:', error);
@@ -116,6 +155,8 @@ export function useSharedProspects() {
           data.map(p => decryptProspect(p as unknown as Prospect))
         );
         prospectsCache.current[ownerId] = decrypted;
+        // Save cache to session storage
+        setSessionCache(CACHE_KEY, prospectsCache.current);
         fetchingRef.current.delete(ownerId);
         return decrypted;
       }

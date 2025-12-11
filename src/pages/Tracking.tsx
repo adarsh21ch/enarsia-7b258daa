@@ -72,7 +72,8 @@ export default function Tracking() {
   const { prospects, refetch } = useProspects();
   const { 
     sharedOwners, 
-    selectedOwnerIds, 
+    selectedOwnerIds,
+    toggleOwnerSelection,
     selectAllOwners,
     clearSelection 
   } = useSharedProspects();
@@ -156,6 +157,7 @@ export default function Tracking() {
           <TeamToggle
             sharedOwners={sharedOwners}
             selectedOwnerIds={selectedOwnerIds}
+            onToggleOwner={toggleOwnerSelection}
             onSelectAll={selectAllOwners}
             onClear={clearSelection}
             currentTab="track"
