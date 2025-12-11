@@ -119,6 +119,7 @@ export function ProspectRow({
         const locationValue = prospect.address || '';
         const infoParts = [ageValue, locationValue].filter(Boolean);
         const infoLine = infoParts.length > 0 ? infoParts.join(', ') : '';
+        const isEnrolled = prospect.action_taken === 'Enrollment' || prospect.enrollment_status === 'Enrolled';
         
         return (
           <td 
@@ -134,21 +135,29 @@ export function ProspectRow({
                 <WhatsAppIconButton onClick={openWhatsApp} className={cn("h-6 w-6 p-0.5", isMobileTable && "h-5 w-5")} />
               </div>
               <div className="flex flex-col overflow-hidden min-w-0 flex-1">
-                <button
-                  onClick={onToggleExpand}
-                  className={cn(
-                    "group flex items-center gap-0.5 text-left font-medium text-foreground hover:text-primary transition-colors cursor-pointer bg-transparent border-0 py-0 px-0.5 rounded hover:bg-primary/5",
-                    isMobileTable ? "text-xs" : "text-sm",
-                    isExpanded && "text-primary"
+                <div className="flex items-center gap-1">
+                  <button
+                    onClick={onToggleExpand}
+                    className={cn(
+                      "group flex items-center gap-0.5 text-left font-medium text-foreground hover:text-primary transition-colors cursor-pointer bg-transparent border-0 py-0 px-0.5 rounded hover:bg-primary/5",
+                      isMobileTable ? "text-xs" : "text-sm",
+                      isExpanded && "text-primary"
+                    )}
+                  >
+                    <span className="truncate" title={prospect.name}>{prospect.name}</span>
+                    <ChevronDown className={cn(
+                      "h-3 w-3 text-muted-foreground group-hover:text-primary shrink-0 transition-transform",
+                      isExpanded && "rotate-180",
+                      isMobileTable && "h-2.5 w-2.5"
+                    )} />
+                  </button>
+                  {/* Enrolled pill - shown in Filter tab when prospect is enrolled */}
+                  {!isCalling && isEnrolled && (
+                    <span className="shrink-0 px-1.5 py-0.5 text-[9px] font-medium rounded bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400">
+                      Enrolled
+                    </span>
                   )}
-                >
-                  <span className="truncate" title={prospect.name}>{prospect.name}</span>
-                  <ChevronDown className={cn(
-                    "h-3 w-3 text-muted-foreground group-hover:text-primary shrink-0 transition-transform",
-                    isExpanded && "rotate-180",
-                    isMobileTable && "h-2.5 w-2.5"
-                  )} />
-                </button>
+                </div>
                 {infoLine && (
                   <div className={cn(
                     "text-muted-foreground truncate pl-0.5",
