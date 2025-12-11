@@ -23,6 +23,7 @@ interface ProspectFiltersProps {
   filteredCount?: number;
   showStagesFilter?: boolean;
   showResponsesFilter?: boolean;
+  filterTagButton?: React.ReactNode;
 }
 export function ProspectFilters({
   filters,
@@ -31,7 +32,8 @@ export function ProspectFilters({
   exporting = false,
   filteredCount = 0,
   showStagesFilter = true,
-  showResponsesFilter = true
+  showResponsesFilter = true,
+  filterTagButton
 }: ProspectFiltersProps) {
   const hasFilters = filters.search || filters.stages.length > 0 || filters.actions.length > 0;
   const isMobile = useIsMobile();
@@ -76,13 +78,16 @@ export function ProspectFilters({
     return `${filters.actions.length} Responses`;
   };
   return <div className="flex flex-col gap-2 w-full">
-      {/* Search bar - full width on mobile */}
-      <div className="relative w-full sm:max-w-xs">
-        <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-        <Input placeholder="Search name, phone..." value={filters.search} onChange={e => onFiltersChange({
-        ...filters,
-        search: e.target.value
-      })} className="pl-8 h-10 sm:h-9 w-full mx-0" />
+      {/* Search bar row - with filter tag button beside it */}
+      <div className="flex items-center gap-2">
+        <div className="relative flex-1 sm:max-w-xs sm:flex-none">
+          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input placeholder="Search name, phone..." value={filters.search} onChange={e => onFiltersChange({
+          ...filters,
+          search: e.target.value
+        })} className="pl-8 h-10 sm:h-9 w-full mx-0" />
+        </div>
+        {filterTagButton}
       </div>
 
       {/* Filters row - scrollable on mobile */}

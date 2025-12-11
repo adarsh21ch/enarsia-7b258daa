@@ -750,9 +750,8 @@ export function ProspectTable({
             filteredCount={filteredProspects.length}
             showStagesFilter={!isCalling}
             showResponsesFilter={isCalling}
+            filterTagButton={!isCalling ? <ChangeFilterTagButton /> : undefined}
           />
-          {/* Filter tag button for funnel mode */}
-          {!isCalling && <ChangeFilterTagButton />}
         </div>
 
         {/* Right side - Actions */}
@@ -771,8 +770,8 @@ export function ProspectTable({
             </div>
           ) : (
             <>
-              {/* Undo/Redo buttons */}
-              <div className="flex items-center gap-1">
+              {/* Undo/Redo buttons - tight pair */}
+              <div className="flex items-center gap-0">
                 <Button variant="ghost" size="icon" onClick={handleUndo} disabled={!canUndo} className="h-8 w-8">
                   <Undo2 className="h-4 w-4" />
                 </Button>
