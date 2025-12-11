@@ -116,7 +116,7 @@ export function LeaderStagesSettings({
     setSavingTags(true);
     await onUpdateProfile({ use_leader_stages: true });
     setSavingTags(false);
-    toast.success('Now using leader tags. Your custom tags are saved as personal reference.');
+    toast.success('Now using leader tracking tags. Your custom tags are saved as personal reference.');
   };
 
   // Calling tags handlers
@@ -178,14 +178,14 @@ export function LeaderStagesSettings({
       response_labels: validCallingTags
     });
     setSavingTags(false);
-    toast.success('Tags saved');
+    toast.success('Tracking tags saved');
   };
 
   const handleSaveLeaderTagsMode = async () => {
     setSavingTags(true);
     await onUpdateProfile({ use_leader_stages: true });
     setSavingTags(false);
-    toast.success('Now using leader tags');
+    toast.success('Now using leader tracking tags');
   };
 
   return (
@@ -271,7 +271,7 @@ export function LeaderStagesSettings({
               </Button>
             </div>
             <p className="text-xs text-muted-foreground">
-              Enter the Leader ID of your team leader to connect and optionally use their sales tags.
+              Enter the Leader ID of your team leader to connect and optionally use their tracking tags.
             </p>
           </div>
         )}
@@ -279,12 +279,16 @@ export function LeaderStagesSettings({
 
       <Separator />
 
-      {/* Sales Tags Configuration */}
+      {/* Tracking Tags Configuration */}
       <div className="rounded-2xl p-4 bg-card border border-border/50 space-y-4">
         <div className="flex items-center gap-2">
           <Tag className="h-4 w-4 text-muted-foreground" />
-          <Label className="text-sm font-semibold">Sales Tags</Label>
+          <Label className="text-sm font-semibold">Tracking Tags</Label>
         </div>
+        
+        <p className="text-xs text-muted-foreground">
+          Tracking tags are used in your Calling List (Response column) and Stage Track to follow each lead's progress.
+        </p>
 
         <RadioGroup 
           value={tagMode} 
@@ -295,10 +299,10 @@ export function LeaderStagesSettings({
             <RadioGroupItem value="leader" id="leader-tags" className="mt-1" />
             <div className="flex-1">
               <Label htmlFor="leader-tags" className="font-medium cursor-pointer">
-                Use leader tags
+                Use leader tracking tags
               </Label>
               <p className="text-xs text-muted-foreground mt-1">
-                Inherit calling and stage tags from your leader for team consistency.
+                Inherit calling and stage tracking tags from your leader for team consistency.
               </p>
             </div>
           </div>
@@ -307,10 +311,10 @@ export function LeaderStagesSettings({
             <RadioGroupItem value="own" id="own-tags" className="mt-1" />
             <div className="flex-1">
               <Label htmlFor="own-tags" className="font-medium cursor-pointer">
-                Create my own tags
+                Create my own tracking tags
               </Label>
               <p className="text-xs text-muted-foreground mt-1">
-                Define your own custom calling and stage tags.
+                Define your own custom calling and stage tracking tags.
               </p>
             </div>
           </div>
@@ -326,7 +330,7 @@ export function LeaderStagesSettings({
                   <div className="space-y-2">
                     <div className="flex items-center gap-2">
                       <Phone className="h-3.5 w-3.5 text-muted-foreground" />
-                      <p className="text-xs text-muted-foreground font-medium">Calling tags (responses):</p>
+                      <p className="text-xs text-muted-foreground font-medium">Calling tracking tags (responses):</p>
                     </div>
                     <div className="flex flex-wrap gap-2">
                       {leaderCallingTags.length > 0 ? leaderCallingTags.map((tag, index) => (
@@ -343,7 +347,7 @@ export function LeaderStagesSettings({
                   <div className="space-y-2">
                     <div className="flex items-center gap-2">
                       <Layers className="h-3.5 w-3.5 text-muted-foreground" />
-                      <p className="text-xs text-muted-foreground font-medium">Stage tags (journey stages):</p>
+                      <p className="text-xs text-muted-foreground font-medium">Stage tracking tags (Stage Track):</p>
                     </div>
                     <div className="flex flex-wrap gap-2">
                       {leaderStageTags.length > 0 ? leaderStageTags.map((stage, index) => (
@@ -368,12 +372,12 @@ export function LeaderStagesSettings({
                 </div>
               ) : (
                 <p className="text-sm text-muted-foreground p-3 bg-muted/30 rounded-lg">
-                  Your leader hasn't configured their sales tags yet.
+                  Your leader hasn't configured their tracking tags yet.
                 </p>
               )
             ) : (
               <p className="text-sm text-muted-foreground p-3 bg-muted/30 rounded-lg">
-                Add your Leader's ID above, or ask your leader to configure Sales Tags so you can use them here.
+                Add your Leader's ID above, or ask your leader to configure Tracking Tags so you can use them here.
               </p>
             )}
           </div>
@@ -386,7 +390,7 @@ export function LeaderStagesSettings({
             <div className="space-y-3">
               <div className="flex items-center gap-2">
                 <Phone className="h-4 w-4 text-primary" />
-                <p className="text-sm font-medium">Calling tags (responses)</p>
+                <p className="text-sm font-medium">Calling tracking tags (responses)</p>
               </div>
               <p className="text-xs text-muted-foreground">
                 Define response options for lead calls (3-10 tags recommended):
@@ -428,10 +432,10 @@ export function LeaderStagesSettings({
             <div className="space-y-3">
               <div className="flex items-center gap-2">
                 <Layers className="h-4 w-4 text-primary" />
-                <p className="text-sm font-medium">Stage tags (journey stages)</p>
+                <p className="text-sm font-medium">Stage tracking tags (Stage Track)</p>
               </div>
               <p className="text-xs text-muted-foreground">
-                Define your sales journey stages (3-10 stages recommended):
+                Define your Stage Track progression (3-10 stages recommended):
               </p>
               <div className="space-y-2">
                 {ownStageTags.map((stage, index) => (
@@ -471,7 +475,7 @@ export function LeaderStagesSettings({
               className="w-full"
             >
               {savingTags ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
-              Save Tags
+              Save Tracking Tags
             </Button>
           </div>
         )}
@@ -481,15 +485,15 @@ export function LeaderStagesSettings({
       <AlertDialog open={showSwitchConfirm} onOpenChange={setShowSwitchConfirm}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Switch to Leader Tags?</AlertDialogTitle>
+            <AlertDialogTitle>Switch to Leader Tracking Tags?</AlertDialogTitle>
             <AlertDialogDescription>
-              Your custom tags will be kept as personal reference, but the leader's tags will become your official tracked tags. Future analytics will only count the leader's tags.
+              Your custom tracking tags will be kept as personal reference, but the leader's tracking tags will become your official tracked tags. Future analytics will only count the leader's tracking tags.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction onClick={confirmSwitchToLeader}>
-              Switch to Leader Tags
+              Switch to Leader Tracking Tags
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
