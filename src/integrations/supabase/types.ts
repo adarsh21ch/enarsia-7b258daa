@@ -273,6 +273,7 @@ export type Database = {
       }
       profiles: {
         Row: {
+          allow_leader_to_view: boolean
           avatar_url: string | null
           bio: string | null
           city: string | null
@@ -280,12 +281,19 @@ export type Database = {
           created_at: string
           display_name: string | null
           id: string
+          leaders_id_of_my_leader: string | null
           neverai_id: string | null
           phone: string | null
+          response_labels: Json | null
+          root_leader_id: string | null
+          stage_count: number
+          stage_labels: Json | null
           updated_at: string
+          use_leader_stages: boolean
           user_id: string
         }
         Insert: {
+          allow_leader_to_view?: boolean
           avatar_url?: string | null
           bio?: string | null
           city?: string | null
@@ -293,12 +301,19 @@ export type Database = {
           created_at?: string
           display_name?: string | null
           id?: string
+          leaders_id_of_my_leader?: string | null
           neverai_id?: string | null
           phone?: string | null
+          response_labels?: Json | null
+          root_leader_id?: string | null
+          stage_count?: number
+          stage_labels?: Json | null
           updated_at?: string
+          use_leader_stages?: boolean
           user_id: string
         }
         Update: {
+          allow_leader_to_view?: boolean
           avatar_url?: string | null
           bio?: string | null
           city?: string | null
@@ -306,9 +321,15 @@ export type Database = {
           created_at?: string
           display_name?: string | null
           id?: string
+          leaders_id_of_my_leader?: string | null
           neverai_id?: string | null
           phone?: string | null
+          response_labels?: Json | null
+          root_leader_id?: string | null
+          stage_count?: number
+          stage_labels?: Json | null
           updated_at?: string
+          use_leader_stages?: boolean
           user_id?: string
         }
         Relationships: []
@@ -328,12 +349,14 @@ export type Database = {
           instagram: string | null
           name: string
           notes: string | null
+          personal_tags: Json | null
           phone: string
           priority: string | null
           profession: string | null
           prospect_status: string | null
           sheet_id: string | null
           sort_order: number | null
+          stage_index: number | null
           updated_at: string
           user_id: string
           why_need: string | null
@@ -352,12 +375,14 @@ export type Database = {
           instagram?: string | null
           name: string
           notes?: string | null
+          personal_tags?: Json | null
           phone: string
           priority?: string | null
           profession?: string | null
           prospect_status?: string | null
           sheet_id?: string | null
           sort_order?: number | null
+          stage_index?: number | null
           updated_at?: string
           user_id: string
           why_need?: string | null
@@ -376,12 +401,14 @@ export type Database = {
           instagram?: string | null
           name?: string
           notes?: string | null
+          personal_tags?: Json | null
           phone?: string
           priority?: string | null
           profession?: string | null
           prospect_status?: string | null
           sheet_id?: string | null
           sort_order?: number | null
+          stage_index?: number | null
           updated_at?: string
           user_id?: string
           why_need?: string | null
@@ -570,11 +597,22 @@ export type Database = {
     }
     Functions: {
       generate_neverai_id: { Args: never; Returns: string }
+      get_leader_stage_config: {
+        Args: { target_leader_id: string }
+        Returns: Json
+      }
       get_user_by_neverai_id: {
         Args: { target_neverai_id: string }
         Returns: {
           display_name: string
           neverai_id: string
+          user_id: string
+        }[]
+      }
+      get_user_email_by_leader_id: {
+        Args: { target_leader_id: string }
+        Returns: {
+          email: string
           user_id: string
         }[]
       }
@@ -588,6 +626,10 @@ export type Database = {
           _user_id: string
         }
         Returns: boolean
+      }
+      update_leader_hierarchy: {
+        Args: { p_leader_neverai_id: string; p_user_id: string }
+        Returns: Json
       }
     }
     Enums: {

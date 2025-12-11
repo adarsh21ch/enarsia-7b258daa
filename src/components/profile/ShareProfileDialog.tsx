@@ -35,7 +35,7 @@ export function ShareProfileDialog() {
   } = useTeamAccess();
   
   const [open, setOpen] = useState(false);
-  const [leaderTrackUpId, setLeaderTrackUpId] = useState('');
+  const [leaderIdInput, setLeaderIdInput] = useState('');
   const [sharing, setSharing] = useState(false);
   const [copied, setCopied] = useState(false);
   const [editingPermissions, setEditingPermissions] = useState<string | null>(null);
@@ -48,22 +48,22 @@ export function ShareProfileDialog() {
     if (myNevorId) {
       await navigator.clipboard.writeText(myNevorId);
       setCopied(true);
-      toast.success('TrackUp ID copied');
+      toast.success('Leader ID copied');
       setTimeout(() => setCopied(false), 2000);
     }
   };
 
   const handleShareWithLeader = async () => {
-    if (!leaderTrackUpId.trim()) return;
+    if (!leaderIdInput.trim()) return;
     
     setSharing(true);
     // Pass the selected tabs (null if all selected)
     const tabsToShare = shareWithTabs.length === AVAILABLE_TABS.length ? null : shareWithTabs;
-    const result = await shareWithLeader(leaderTrackUpId.trim().toUpperCase(), tabsToShare);
+    const result = await shareWithLeader(leaderIdInput.trim().toUpperCase(), tabsToShare);
     setSharing(false);
     
     if (result.success) {
-      setLeaderTrackUpId('');
+      setLeaderIdInput('');
       // Reset tab selection to all for next share
       setShareWithTabs([...AVAILABLE_TABS]);
     } else {
@@ -126,9 +126,9 @@ export function ShareProfileDialog() {
         </DialogHeader>
 
         <div className="space-y-6">
-          {/* My TrackUp ID */}
+          {/* My Leader ID */}
           <div className="space-y-2">
-            <Label className="text-sm font-medium">Your TrackUp ID</Label>
+            <Label className="text-sm font-medium">Your Leader ID</Label>
             <div className="flex items-center gap-2">
               <div className="flex-1 px-3 py-2 bg-muted rounded-md font-mono text-sm">
                 {myNevorId || 'Loading...'}
@@ -143,7 +143,7 @@ export function ShareProfileDialog() {
               </Button>
             </div>
             <p className="text-xs text-muted-foreground">
-              Share this TrackUp ID so others can share their data with you.
+              Share this Leader ID so others can share their data with you.
             </p>
           </div>
 
@@ -174,14 +174,14 @@ export function ShareProfileDialog() {
 
             <div className="flex items-center gap-2">
               <Input
-                placeholder="Enter Leader's TrackUp ID (e.g., NVR-XXXXX)"
-                value={leaderTrackUpId}
-                onChange={(e) => setLeaderTrackUpId(e.target.value.toUpperCase())}
+                placeholder="Enter Leader's ID (e.g., NVR-XXXXX)"
+                value={leaderIdInput}
+                onChange={(e) => setLeaderIdInput(e.target.value.toUpperCase())}
                 className="flex-1 font-mono"
               />
               <Button 
                 onClick={handleShareWithLeader}
-                disabled={sharing || !leaderTrackUpId.trim() || shareWithTabs.length === 0}
+                disabled={sharing || !leaderIdInput.trim() || shareWithTabs.length === 0}
                 size="sm"
               >
                 Share
@@ -392,7 +392,7 @@ export function ShareProfileDialog() {
             <div className="text-center py-4 text-muted-foreground">
               <Users className="h-8 w-8 mx-auto mb-2 opacity-50" />
               <p className="text-sm">No team connections yet</p>
-              <p className="text-xs">Share your TrackUp ID with your team to get started.</p>
+              <p className="text-xs">Share your Leader ID with your team to get started.</p>
             </div>
           )}
         </div>

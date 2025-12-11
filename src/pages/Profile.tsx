@@ -4,14 +4,17 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useProfile } from '@/hooks/useProfile';
 import { useAdmin } from '@/hooks/useAdmin';
 import { useSubscription } from '@/hooks/useSubscription';
+import { useLeaderSetup } from '@/hooks/useLeaderSetup';
 import { BottomNav } from '@/components/layout/BottomNav';
 import { EditProfileDialog } from '@/components/profile/EditProfileDialog';
 import { ShareProfileDialog } from '@/components/profile/ShareProfileDialog';
+import { LeaderStagesSettings } from '@/components/profile/LeaderStagesSettings';
 import { UpgradeCard } from '@/components/subscription/UpgradeCard';
 import { PullToRefreshIndicator } from '@/components/PullToRefreshIndicator';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { User, LogOut, ChevronRight, Crown, Phone, Building2, MapPin, Loader2, FileText, Shield, Receipt, Mail, Settings, CheckCircle, Copy, Check, Users } from 'lucide-react';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
+import { User, LogOut, ChevronRight, Phone, Building2, MapPin, Loader2, FileText, Shield, Receipt, Mail, Settings, Users } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import nevoraLogo from '@/assets/nevorai-logo.jpeg';
@@ -66,20 +69,13 @@ function usePullToRefresh(onRefresh: () => Promise<void>, threshold = 80) {
 export default function Profile() {
   const navigate = useNavigate();
   const { user, loading: authLoading, signOut } = useAuth();
-  const { profile, loading: profileLoading, updating, updateProfile, refetch } = useProfile();
+  const { profile, loading: profileLoading, updating, updateProfile, updateLeaderHierarchy, clearLeaderHierarchy, getLeaderStageConfig, refetch } = useProfile();
   const { isAdmin } = useAdmin();
   const { isPro, isAdminOverride, daysRemaining, subscription, loading: subLoading } = useSubscription();
   const [editOpen, setEditOpen] = useState(false);
-  const [copiedId, setCopiedId] = useState(false);
 
-  const handleCopyTrackUpId = async () => {
-    if (profile?.neverai_id) {
-      await navigator.clipboard.writeText(profile.neverai_id);
-      setCopiedId(true);
-      toast.success('TrackUp ID copied');
-      setTimeout(() => setCopiedId(false), 2000);
-    }
-  };
+  // Process pending leader ID from share links
+  useLeaderSetup();
 
   // Pull-to-refresh
   const handleRefresh = useCallback(async () => {
@@ -151,39 +147,35 @@ export default function Profile() {
             <div className="absolute -right-4 -top-4 w-16 h-16 rounded-full bg-primary/5" />
           </div>
 
-          {/* TrackUp ID Card */}
-          {profile?.neverai_id && (
-            <div className="rounded-2xl p-4 bg-gradient-to-r from-primary/10 to-primary/5 border border-primary/20">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="p-2 rounded-lg bg-primary/20">
-                    <Users className="h-4 w-4 text-primary" />
-                  </div>
-                  <div>
-                    <p className="text-xs text-muted-foreground">Your TrackUp ID</p>
-                    <p className="text-sm font-mono font-semibold">{profile.neverai_id}</p>
-                  </div>
-                </div>
-                <Button 
-                  variant="ghost" 
-                  size="icon"
-                  onClick={handleCopyTrackUpId}
-                  className="h-9 w-9"
-                >
-                  {copiedId ? <Check className="h-4 w-4 text-green-500" /> : <Copy className="h-4 w-4" />}
-                </Button>
-              </div>
-              <p className="text-xs text-muted-foreground mt-2">
-                Share this TrackUp ID so others can share their data with you.
-              </p>
-            </div>
-          )}
-
           {/* Share Profile Button - Prominent */}
           <ShareProfileDialog />
 
           {/* Upgrade Card */}
           <UpgradeCard />
+
+          {/* Leader & Stages Settings - Collapsible */}
+          <Accordion type="single" collapsible className="rounded-2xl border border-border/50 bg-card overflow-hidden">
+            <AccordionItem value="leader-stages" className="border-none">
+              <AccordionTrigger className="px-4 py-3 hover:no-underline hover:bg-muted/30">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 rounded-lg bg-primary/10">
+                    <Users className="h-4 w-4 text-primary" />
+                  </div>
+                  <span className="font-medium">Leader & Stages</span>
+                </div>
+              </AccordionTrigger>
+              <AccordionContent className="px-4 pb-4">
+                <LeaderStagesSettings
+                  profile={profile}
+                  updating={updating}
+                  onUpdateProfile={updateProfile}
+                  onUpdateLeaderHierarchy={updateLeaderHierarchy}
+                  onClearLeaderHierarchy={clearLeaderHierarchy}
+                  onGetLeaderStageConfig={getLeaderStageConfig}
+                />
+              </AccordionContent>
+            </AccordionItem>
+          </Accordion>
 
           {/* Profile Details */}
           {(profile?.phone || profile?.company_name || profile?.city || profile?.bio) && (

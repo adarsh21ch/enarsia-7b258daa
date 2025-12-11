@@ -13,9 +13,18 @@ export interface Profile {
   city: string | null;
   bio: string | null;
   avatar_url: string | null;
-  neverai_id: string | null;
+  neverai_id: string | null; // This is the Leader ID
   created_at: string;
   updated_at: string;
+  // Leader hierarchy fields
+  leaders_id_of_my_leader: string | null;
+  root_leader_id: string | null;
+  allow_leader_to_view: boolean;
+  // Stage configuration fields
+  use_leader_stages: boolean;
+  stage_count: number;
+  stage_labels: string[];
+  response_labels: string[];
 }
 
 export interface ProfileUpdate {
@@ -25,6 +34,13 @@ export interface ProfileUpdate {
   city?: string | null;
   bio?: string | null;
   avatar_url?: string | null;
+  leaders_id_of_my_leader?: string | null;
+  root_leader_id?: string | null;
+  allow_leader_to_view?: boolean;
+  use_leader_stages?: boolean;
+  stage_count?: number;
+  stage_labels?: string[];
+  response_labels?: string[];
 }
 
 export function useProfile() {
@@ -63,7 +79,12 @@ export function useProfile() {
       if (insertError) {
         console.error('Error creating profile:', insertError);
       } else {
-        setProfile(newProfile as Profile);
+        const profileData = {
+          ...newProfile,
+          stage_labels: newProfile.stage_labels || [],
+          response_labels: newProfile.response_labels || [],
+        } as Profile;
+        setProfile(profileData);
       }
     } else {
       // Decrypt phone if it exists
@@ -75,7 +96,12 @@ export function useProfile() {
           // If decryption fails, phone might be unencrypted (legacy data)
         }
       }
-      setProfile(data as Profile);
+      const profileData = {
+        ...data,
+        stage_labels: data.stage_labels || [],
+        response_labels: data.response_labels || [],
+      } as Profile;
+      setProfile(profileData);
     }
     setLoading(false);
   }, [user, toast]);
@@ -118,5 +144,102 @@ export function useProfile() {
     return { error: null };
   };
 
-  return { profile, loading, updating, updateProfile, refetch: fetchProfile };
+  // Update leader hierarchy using database function
+  const updateLeaderHierarchy = async (leaderNeveraiId: string) => {
+    if (!user) return { success: false, error: 'Not authenticated' };
+
+    setUpdating(true);
+    const { data, error } = await supabase.rpc('update_leader_hierarchy', {
+      p_user_id: user.id,
+      p_leader_neverai_id: leaderNeveraiId
+    });
+
+    if (error) {
+      console.error('Error updating leader hierarchy:', error);
+      toast({ title: 'Error updating leader', variant: 'destructive' });
+      setUpdating(false);
+      return { success: false, error: error.message };
+    }
+
+    const result = data as { success: boolean; error?: string; leaders_id_of_my_leader?: string; root_leader_id?: string };
+    
+    if (!result.success) {
+      toast({ title: result.error || 'Failed to update leader', variant: 'destructive' });
+      setUpdating(false);
+      return { success: false, error: result.error };
+    }
+
+    // Update local state
+    setProfile(prev => prev ? {
+      ...prev,
+      leaders_id_of_my_leader: result.leaders_id_of_my_leader || null,
+      root_leader_id: result.root_leader_id || null
+    } : null);
+
+    toast({ title: 'Leader updated successfully' });
+    setUpdating(false);
+    return { success: true };
+  };
+
+  // Clear leader hierarchy
+  const clearLeaderHierarchy = async () => {
+    if (!user) return { success: false, error: 'Not authenticated' };
+
+    setUpdating(true);
+    const { error } = await supabase
+      .from('profiles')
+      .update({
+        leaders_id_of_my_leader: null,
+        root_leader_id: null
+      })
+      .eq('user_id', user.id);
+
+    if (error) {
+      toast({ title: 'Error clearing leader', variant: 'destructive' });
+      setUpdating(false);
+      return { success: false, error: error.message };
+    }
+
+    setProfile(prev => prev ? {
+      ...prev,
+      leaders_id_of_my_leader: null,
+      root_leader_id: null
+    } : null);
+
+    toast({ title: 'Leader cleared successfully' });
+    setUpdating(false);
+    return { success: true };
+  };
+
+  // Get leader's stage configuration
+  const getLeaderStageConfig = async (leaderId: string) => {
+    const { data, error } = await supabase.rpc('get_leader_stage_config', {
+      target_leader_id: leaderId
+    });
+
+    if (error) {
+      console.error('Error fetching leader stage config:', error);
+      return null;
+    }
+
+    const result = data as { found: boolean; stage_count?: number; stage_labels?: string[]; response_labels?: string[] };
+    if (!result.found) return null;
+
+    return {
+      stage_count: result.stage_count || 0,
+      stage_labels: result.stage_labels || [],
+      response_labels: result.response_labels || []
+    };
+  };
+
+  return { 
+    profile, 
+    loading, 
+    updating, 
+    updateProfile, 
+    updateLeaderHierarchy,
+    clearLeaderHierarchy,
+    getLeaderStageConfig,
+    refetch: fetchProfile 
+  };
 }

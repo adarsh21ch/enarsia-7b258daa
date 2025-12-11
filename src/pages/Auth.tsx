@@ -1,42 +1,75 @@
 import { useState, useEffect } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, Link, useSearchParams } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
-import { Loader2, Mail, Lock, Eye, EyeOff, ArrowLeft } from 'lucide-react';
+import { Loader2, Mail, Lock, Eye, EyeOff, ArrowLeft, User } from 'lucide-react';
 import nevoraLogo from '@/assets/nevorai-logo.jpeg';
 
 export default function Auth() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { user, signIn, signUp, loading: authLoading } = useAuth();
-  const [email, setEmail] = useState('');
+  const [emailOrLeaderId, setEmailOrLeaderId] = useState('');
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSignUp, setIsSignUp] = useState(true);
   const [isForgotPassword, setIsForgotPassword] = useState(false);
+  
+  // Get leader parameter from share link
+  const leaderParam = searchParams.get('leader');
 
   useEffect(() => {
     if (user && !authLoading) {
+      // If there's a leader param, store it for processing after profile is ready
+      if (leaderParam) {
+        sessionStorage.setItem('pending_leader_id', leaderParam);
+      }
       navigate('/home');
     }
-  }, [user, authLoading, navigate]);
+  }, [user, authLoading, navigate, leaderParam]);
+
+  // Helper to check if input is an email
+  const isEmail = (input: string) => input.includes('@');
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!email || !password) {
+    if (!emailOrLeaderId || !password) {
       toast.error('Please fill in all fields');
       return;
     }
     setIsSubmitting(true);
+    
+    let email = emailOrLeaderId;
+    
+    // If not an email, look up by Leader ID
+    if (!isEmail(emailOrLeaderId)) {
+      const { data, error } = await supabase.rpc('get_user_email_by_leader_id', {
+        target_leader_id: emailOrLeaderId.trim()
+      });
+      
+      if (error || !data || data.length === 0) {
+        toast.error('Leader ID not found. Check the ID or use your email instead.');
+        setIsSubmitting(false);
+        return;
+      }
+      
+      email = data[0].email;
+    }
+    
     const { error } = await signIn(email, password);
     if (error) {
       toast.error(error.message || 'Sign in failed');
     } else {
+      // Store leader param for processing
+      if (leaderParam) {
+        sessionStorage.setItem('pending_leader_id', leaderParam);
+      }
       toast.success('Welcome back!');
       navigate('/home');
     }
@@ -45,8 +78,12 @@ export default function Auth() {
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!name || !email || !password) {
+    if (!name || !emailOrLeaderId || !password) {
       toast.error('Please fill in all fields');
+      return;
+    }
+    if (!isEmail(emailOrLeaderId)) {
+      toast.error('Please enter a valid email address for sign up');
       return;
     }
     if (password.length < 6) {
@@ -54,10 +91,14 @@ export default function Auth() {
       return;
     }
     setIsSubmitting(true);
-    const { error } = await signUp(email, password);
+    const { error } = await signUp(emailOrLeaderId, password);
     if (error) {
       toast.error(error.message || 'Sign up failed');
     } else {
+      // Store leader param for processing after profile is created
+      if (leaderParam) {
+        sessionStorage.setItem('pending_leader_id', leaderParam);
+      }
       toast.success('Account created! You can now sign in.');
       navigate('/home');
     }
@@ -66,12 +107,16 @@ export default function Auth() {
 
   const handleForgotPassword = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!email) {
+    if (!emailOrLeaderId) {
       toast.error('Please enter your email');
       return;
     }
+    if (!isEmail(emailOrLeaderId)) {
+      toast.error('Please enter a valid email address');
+      return;
+    }
     setIsSubmitting(true);
-    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+    const { error } = await supabase.auth.resetPasswordForEmail(emailOrLeaderId, {
       redirectTo: `${window.location.origin}/reset-password`,
     });
     if (error) {
@@ -124,8 +169,8 @@ export default function Auth() {
                 <Input
                   id="reset-email"
                   type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  value={emailOrLeaderId}
+                  onChange={(e) => setEmailOrLeaderId(e.target.value)}
                   placeholder="you@example.com"
                   className="pl-10"
                   required
@@ -158,6 +203,14 @@ export default function Auth() {
           <p className="text-muted-foreground text-sm mt-1">Never miss a followup Again</p>
         </div>
 
+        {leaderParam && (
+          <div className="mb-4 p-3 bg-primary/10 border border-primary/20 rounded-lg text-center">
+            <p className="text-sm text-primary">
+              You're joining via Leader ID: <span className="font-mono font-semibold">{leaderParam}</span>
+            </p>
+          </div>
+        )}
+
         <h2 className="text-xl font-semibold text-foreground mb-6">
           {isSignUp ? 'Create your account' : 'Welcome back'}
         </h2>
@@ -166,31 +219,40 @@ export default function Auth() {
           {isSignUp && (
             <div className="space-y-2">
               <Label htmlFor="name">Full Name</Label>
-              <Input
-                id="name"
-                type="text"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                placeholder="John Doe"
-                required
-              />
+              <div className="relative">
+                <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  id="name"
+                  type="text"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  placeholder="John Doe"
+                  className="pl-10"
+                  required
+                />
+              </div>
             </div>
           )}
 
           <div className="space-y-2">
-            <Label htmlFor="email">Email</Label>
+            <Label htmlFor="email">{isSignUp ? 'Email' : 'Email or Leader ID'}</Label>
             <div className="relative">
               <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
                 id="email"
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="you@example.com"
+                type={isSignUp ? 'email' : 'text'}
+                value={emailOrLeaderId}
+                onChange={(e) => setEmailOrLeaderId(e.target.value)}
+                placeholder={isSignUp ? 'you@example.com' : 'you@example.com or NVR-XXXXX'}
                 className="pl-10"
                 required
               />
             </div>
+            {!isSignUp && (
+              <p className="text-xs text-muted-foreground">
+                Sign in with your email or Leader ID
+              </p>
+            )}
           </div>
 
           <div className="space-y-2">

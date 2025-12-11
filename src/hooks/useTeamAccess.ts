@@ -173,16 +173,16 @@ export function useTeamAccess() {
     refetch();
   }, [refetch]);
 
-  // Member initiates sharing with a leader by entering leader's NevorID
-  const shareWithLeader = async (leaderNevorId: string, allowedTabs?: TabPermission[] | null) => {
+  // Member initiates sharing with a leader by entering leader's Leader ID
+  const shareWithLeader = async (leaderNeveraiId: string, allowedTabs?: TabPermission[] | null) => {
     if (!user) return { success: false, error: 'Not authenticated' };
     
-    // Look up leader by NevorID
+    // Look up leader by Leader ID
     const { data: foundUser, error: lookupError } = await supabase
-      .rpc('get_user_by_neverai_id', { target_neverai_id: leaderNevorId });
+      .rpc('get_user_by_neverai_id', { target_neverai_id: leaderNeveraiId });
     
     if (lookupError || !foundUser || foundUser.length === 0) {
-      return { success: false, error: 'NevorID not found' };
+      return { success: false, error: 'Leader ID not found' };
     }
 
     const leaderUserId = foundUser[0].user_id;
