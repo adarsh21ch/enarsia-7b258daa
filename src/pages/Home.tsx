@@ -192,7 +192,7 @@ export default function Home() {
               </p>
             </div>
           </div>
-          <TeamToggle sharedOwners={sharedOwners} selectedOwnerIds={selectedOwnerIds} onSelectAll={selectAllOwners} onClear={clearSelection} currentTab="activity" />
+          <TeamToggle sharedOwners={sharedOwners} selectedOwnerIds={selectedOwnerIds} onToggleOwner={toggleOwnerSelection} onSelectAll={selectAllOwners} onClear={clearSelection} currentTab="activity" />
         </div>
       </header>
 

@@ -302,6 +302,7 @@ export default function ListUp() {
             <TeamToggle
               sharedOwners={sharedOwners}
               selectedOwnerIds={selectedOwnerIds}
+              onToggleOwner={toggleOwnerSelection}
               onSelectAll={selectAllOwners}
               onClear={clearSelection}
               currentTab="follow_up"

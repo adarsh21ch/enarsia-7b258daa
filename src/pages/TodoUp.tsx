@@ -72,7 +72,7 @@ export default function TodoUp() {
   const { user, loading: authLoading } = useAuth();
   const { todos, loading: todosLoading, addTodo, updateTodo, toggleTodo, deleteTodo, refetch: refetchTodos } = useTodos();
   const { teamTodos, loading: teamTodosLoading, refetch: refetchTeamTodos } = useTeamTodos();
-  const { sharedOwners, selectedOwnerIds, selectAllOwners, clearSelection } = useSharedProspects();
+  const { sharedOwners, selectedOwnerIds, toggleOwnerSelection, selectAllOwners, clearSelection } = useSharedProspects();
   
   const [newTodoInput, setNewTodoInput] = useState('');
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -180,6 +180,7 @@ export default function TodoUp() {
           <TeamToggle
             sharedOwners={sharedOwners}
             selectedOwnerIds={selectedOwnerIds}
+            onToggleOwner={toggleOwnerSelection}
             onSelectAll={() => {
               selectAllOwners();
               setIsViewingTeam(true);
