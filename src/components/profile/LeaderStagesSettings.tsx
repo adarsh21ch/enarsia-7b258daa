@@ -7,7 +7,7 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
-import { Users, ListOrdered, Copy, Check, Loader2, Eye, EyeOff, X, Plus, Trash2 } from 'lucide-react';
+import { Users, Tag, Copy, Check, Loader2, Eye, EyeOff, X, Plus, Trash2, Phone, Layers } from 'lucide-react';
 import { toast } from 'sonner';
 import { Profile, ProfileUpdate } from '@/hooks/useProfile';
 
@@ -31,23 +31,32 @@ export function LeaderStagesSettings({
   const [copiedId, setCopiedId] = useState(false);
   const [leaderIdInput, setLeaderIdInput] = useState('');
   const [savingLeader, setSavingLeader] = useState(false);
-  const [stageMode, setStageMode] = useState<'leader' | 'own'>('leader');
-  const [ownStageLabels, setOwnStageLabels] = useState<string[]>(['']);
-  const [leaderStageLabels, setLeaderStageLabels] = useState<string[]>([]);
+  const [tagMode, setTagMode] = useState<'leader' | 'own'>('leader');
+  
+  // Own tags state
+  const [ownCallingTags, setOwnCallingTags] = useState<string[]>(['']);
+  const [ownStageTags, setOwnStageTags] = useState<string[]>(['']);
+  
+  // Leader tags display
+  const [leaderCallingTags, setLeaderCallingTags] = useState<string[]>([]);
+  const [leaderStageTags, setLeaderStageTags] = useState<string[]>([]);
+  
   const [showSwitchConfirm, setShowSwitchConfirm] = useState(false);
-  const [savingStages, setSavingStages] = useState(false);
+  const [savingTags, setSavingTags] = useState(false);
 
   // Initialize state from profile
   useEffect(() => {
     if (profile) {
-      setStageMode(profile.use_leader_stages ? 'leader' : 'own');
-      setOwnStageLabels(profile.stage_labels.length > 0 ? profile.stage_labels : ['']);
+      setTagMode(profile.use_leader_stages ? 'leader' : 'own');
+      setOwnCallingTags(profile.response_labels.length > 0 ? profile.response_labels : ['']);
+      setOwnStageTags(profile.stage_labels.length > 0 ? profile.stage_labels : ['']);
       
-      // Fetch leader's stage config if using leader stages
+      // Fetch leader's tag config if using leader tags
       if (profile.use_leader_stages && profile.leaders_id_of_my_leader) {
         onGetLeaderStageConfig(profile.leaders_id_of_my_leader).then(config => {
           if (config) {
-            setLeaderStageLabels(config.stage_labels);
+            setLeaderCallingTags(config.response_labels || []);
+            setLeaderStageTags(config.stage_labels || []);
           }
         });
       }
@@ -71,10 +80,11 @@ export function LeaderStagesSettings({
     
     if (result.success) {
       setLeaderIdInput('');
-      // Fetch the leader's stage config
+      // Fetch the leader's tag config
       const config = await onGetLeaderStageConfig(leaderIdInput.trim().toUpperCase());
       if (config) {
-        setLeaderStageLabels(config.stage_labels);
+        setLeaderCallingTags(config.response_labels || []);
+        setLeaderStageTags(config.stage_labels || []);
       }
     }
     setSavingLeader(false);
@@ -82,71 +92,100 @@ export function LeaderStagesSettings({
 
   const handleClearLeader = async () => {
     await onClearLeaderHierarchy();
-    setLeaderStageLabels([]);
+    setLeaderCallingTags([]);
+    setLeaderStageTags([]);
   };
 
   const handleToggleVisibility = async (value: boolean) => {
     await onUpdateProfile({ allow_leader_to_view: value });
   };
 
-  const handleStageModeChange = (mode: 'leader' | 'own') => {
-    // If switching from own to leader and user has own stages, show confirmation
-    if (mode === 'leader' && stageMode === 'own' && ownStageLabels.some(s => s.trim())) {
+  const handleTagModeChange = (mode: 'leader' | 'own') => {
+    // If switching from own to leader and user has own tags, show confirmation
+    const hasOwnTags = ownCallingTags.some(s => s.trim()) || ownStageTags.some(s => s.trim());
+    if (mode === 'leader' && tagMode === 'own' && hasOwnTags) {
       setShowSwitchConfirm(true);
       return;
     }
-    setStageMode(mode);
+    setTagMode(mode);
   };
 
   const confirmSwitchToLeader = async () => {
     setShowSwitchConfirm(false);
-    setStageMode('leader');
-    setSavingStages(true);
+    setTagMode('leader');
+    setSavingTags(true);
     await onUpdateProfile({ use_leader_stages: true });
-    setSavingStages(false);
-    toast.success('Now using leader stages. Your custom stages are saved as personal reference.');
+    setSavingTags(false);
+    toast.success('Now using leader tags. Your custom tags are saved as personal reference.');
   };
 
-  const handleAddStage = () => {
-    if (ownStageLabels.length < 10) {
-      setOwnStageLabels([...ownStageLabels, '']);
+  // Calling tags handlers
+  const handleAddCallingTag = () => {
+    if (ownCallingTags.length < 10) {
+      setOwnCallingTags([...ownCallingTags, '']);
     }
   };
 
-  const handleRemoveStage = (index: number) => {
-    if (ownStageLabels.length > 1) {
-      setOwnStageLabels(ownStageLabels.filter((_, i) => i !== index));
+  const handleRemoveCallingTag = (index: number) => {
+    if (ownCallingTags.length > 1) {
+      setOwnCallingTags(ownCallingTags.filter((_, i) => i !== index));
     }
   };
 
-  const handleStageNameChange = (index: number, value: string) => {
-    const updated = [...ownStageLabels];
+  const handleCallingTagChange = (index: number, value: string) => {
+    const updated = [...ownCallingTags];
     updated[index] = value;
-    setOwnStageLabels(updated);
+    setOwnCallingTags(updated);
   };
 
-  const handleSaveOwnStages = async () => {
-    const validStages = ownStageLabels.filter(s => s.trim());
-    if (validStages.length < 1) {
-      toast.error('Please add at least one stage');
+  // Stage tags handlers
+  const handleAddStageTag = () => {
+    if (ownStageTags.length < 10) {
+      setOwnStageTags([...ownStageTags, '']);
+    }
+  };
+
+  const handleRemoveStageTag = (index: number) => {
+    if (ownStageTags.length > 1) {
+      setOwnStageTags(ownStageTags.filter((_, i) => i !== index));
+    }
+  };
+
+  const handleStageTagChange = (index: number, value: string) => {
+    const updated = [...ownStageTags];
+    updated[index] = value;
+    setOwnStageTags(updated);
+  };
+
+  const handleSaveOwnTags = async () => {
+    const validCallingTags = ownCallingTags.filter(s => s.trim());
+    const validStageTags = ownStageTags.filter(s => s.trim());
+    
+    if (validCallingTags.length < 3) {
+      toast.error('Please add at least 3 calling tags');
+      return;
+    }
+    if (validStageTags.length < 1) {
+      toast.error('Please add at least 1 stage tag');
       return;
     }
     
-    setSavingStages(true);
+    setSavingTags(true);
     await onUpdateProfile({
       use_leader_stages: false,
-      stage_count: validStages.length,
-      stage_labels: validStages
+      stage_count: validStageTags.length,
+      stage_labels: validStageTags,
+      response_labels: validCallingTags
     });
-    setSavingStages(false);
-    toast.success('Stages saved');
+    setSavingTags(false);
+    toast.success('Tags saved');
   };
 
-  const handleSaveLeaderStagesMode = async () => {
-    setSavingStages(true);
+  const handleSaveLeaderTagsMode = async () => {
+    setSavingTags(true);
     await onUpdateProfile({ use_leader_stages: true });
-    setSavingStages(false);
-    toast.success('Now using leader stages');
+    setSavingTags(false);
+    toast.success('Now using leader tags');
   };
 
   return (
@@ -232,7 +271,7 @@ export function LeaderStagesSettings({
               </Button>
             </div>
             <p className="text-xs text-muted-foreground">
-              Enter the Leader ID of your team leader to connect and optionally use their sales stages.
+              Enter the Leader ID of your team leader to connect and optionally use their sales tags.
             </p>
           </div>
         )}
@@ -240,126 +279,200 @@ export function LeaderStagesSettings({
 
       <Separator />
 
-      {/* Sales Stages Configuration */}
+      {/* Sales Tags Configuration */}
       <div className="rounded-2xl p-4 bg-card border border-border/50 space-y-4">
         <div className="flex items-center gap-2">
-          <ListOrdered className="h-4 w-4 text-muted-foreground" />
-          <Label className="text-sm font-semibold">Sales Stages</Label>
+          <Tag className="h-4 w-4 text-muted-foreground" />
+          <Label className="text-sm font-semibold">Sales Tags</Label>
         </div>
 
         <RadioGroup 
-          value={stageMode} 
-          onValueChange={(v) => handleStageModeChange(v as 'leader' | 'own')}
+          value={tagMode} 
+          onValueChange={(v) => handleTagModeChange(v as 'leader' | 'own')}
           className="space-y-3"
         >
           <div className="flex items-start space-x-3 p-3 rounded-lg border border-border hover:bg-muted/30 transition-colors">
-            <RadioGroupItem value="leader" id="leader-stages" className="mt-1" />
+            <RadioGroupItem value="leader" id="leader-tags" className="mt-1" />
             <div className="flex-1">
-              <Label htmlFor="leader-stages" className="font-medium cursor-pointer">
-                Use leader stages
+              <Label htmlFor="leader-tags" className="font-medium cursor-pointer">
+                Use leader tags
               </Label>
               <p className="text-xs text-muted-foreground mt-1">
-                Inherit stage configuration from your leader for team consistency.
+                Inherit calling and stage tags from your leader for team consistency.
               </p>
             </div>
           </div>
           
           <div className="flex items-start space-x-3 p-3 rounded-lg border border-border hover:bg-muted/30 transition-colors">
-            <RadioGroupItem value="own" id="own-stages" className="mt-1" />
+            <RadioGroupItem value="own" id="own-tags" className="mt-1" />
             <div className="flex-1">
-              <Label htmlFor="own-stages" className="font-medium cursor-pointer">
-                Create my own stages
+              <Label htmlFor="own-tags" className="font-medium cursor-pointer">
+                Create my own tags
               </Label>
               <p className="text-xs text-muted-foreground mt-1">
-                Define your own custom sales stages.
+                Define your own custom calling and stage tags.
               </p>
             </div>
           </div>
         </RadioGroup>
 
-        {/* Leader Stages Display */}
-        {stageMode === 'leader' && (
-          <div className="space-y-3 mt-4">
+        {/* Leader Tags Display */}
+        {tagMode === 'leader' && (
+          <div className="space-y-4 mt-4">
             {profile?.leaders_id_of_my_leader ? (
-              leaderStageLabels.length > 0 ? (
-                <div className="space-y-2">
-                  <p className="text-xs text-muted-foreground font-medium">Leader's stages:</p>
-                  <div className="flex flex-wrap gap-2">
-                    {leaderStageLabels.map((stage, index) => (
-                      <Badge key={index} variant="secondary" className="text-xs">
-                        Stage {index + 1}: {stage}
-                      </Badge>
-                    ))}
+              (leaderCallingTags.length > 0 || leaderStageTags.length > 0) ? (
+                <div className="space-y-4">
+                  {/* Leader Calling Tags */}
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2">
+                      <Phone className="h-3.5 w-3.5 text-muted-foreground" />
+                      <p className="text-xs text-muted-foreground font-medium">Calling tags (responses):</p>
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      {leaderCallingTags.length > 0 ? leaderCallingTags.map((tag, index) => (
+                        <Badge key={index} variant="secondary" className="text-xs">
+                          Tag {index + 1}: {tag}
+                        </Badge>
+                      )) : (
+                        <p className="text-xs text-muted-foreground italic">No calling tags configured</p>
+                      )}
+                    </div>
                   </div>
+                  
+                  {/* Leader Stage Tags */}
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2">
+                      <Layers className="h-3.5 w-3.5 text-muted-foreground" />
+                      <p className="text-xs text-muted-foreground font-medium">Stage tags (journey stages):</p>
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      {leaderStageTags.length > 0 ? leaderStageTags.map((stage, index) => (
+                        <Badge key={index} variant="outline" className="text-xs">
+                          Stage {index + 1}: {stage}
+                        </Badge>
+                      )) : (
+                        <p className="text-xs text-muted-foreground italic">No stage tags configured</p>
+                      )}
+                    </div>
+                  </div>
+                  
                   <Button 
-                    onClick={handleSaveLeaderStagesMode} 
-                    disabled={savingStages || profile.use_leader_stages}
+                    onClick={handleSaveLeaderTagsMode} 
+                    disabled={savingTags || profile.use_leader_stages}
                     size="sm"
                     className="mt-2"
                   >
-                    {savingStages ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
-                    {profile.use_leader_stages ? 'Currently Using Leader Stages' : 'Use These Stages'}
+                    {savingTags ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+                    {profile.use_leader_stages ? 'Currently Using Leader Tags' : 'Use These Tags'}
                   </Button>
                 </div>
               ) : (
                 <p className="text-sm text-muted-foreground p-3 bg-muted/30 rounded-lg">
-                  Your leader hasn't configured their stages yet.
+                  Your leader hasn't configured their sales tags yet.
                 </p>
               )
             ) : (
               <p className="text-sm text-muted-foreground p-3 bg-muted/30 rounded-lg">
-                Add your Leader's ID above to use their stages.
+                Add your Leader's ID above, or ask your leader to configure Sales Tags so you can use them here.
               </p>
             )}
           </div>
         )}
 
-        {/* Own Stages Editor */}
-        {stageMode === 'own' && (
-          <div className="space-y-3 mt-4">
-            <p className="text-xs text-muted-foreground font-medium">
-              Define your stages (3-10 stages recommended):
-            </p>
-            <div className="space-y-2">
-              {ownStageLabels.map((stage, index) => (
-                <div key={index} className="flex items-center gap-2">
-                  <span className="text-xs text-muted-foreground w-16">Stage {index + 1}</span>
-                  <Input
-                    value={stage}
-                    onChange={(e) => handleStageNameChange(index, e.target.value)}
-                    placeholder={`Stage ${index + 1} name`}
-                    className="flex-1"
-                  />
-                  {ownStageLabels.length > 1 && (
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => handleRemoveStage(index)}
-                      className="h-8 w-8 text-destructive"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  )}
-                </div>
-              ))}
+        {/* Own Tags Editor */}
+        {tagMode === 'own' && (
+          <div className="space-y-6 mt-4">
+            {/* Calling Tags Configuration */}
+            <div className="space-y-3">
+              <div className="flex items-center gap-2">
+                <Phone className="h-4 w-4 text-primary" />
+                <p className="text-sm font-medium">Calling tags (responses)</p>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Define response options for lead calls (3-10 tags recommended):
+              </p>
+              <div className="space-y-2">
+                {ownCallingTags.map((tag, index) => (
+                  <div key={index} className="flex items-center gap-2">
+                    <span className="text-xs text-muted-foreground w-12">Tag {index + 1}</span>
+                    <Input
+                      value={tag}
+                      onChange={(e) => handleCallingTagChange(index, e.target.value)}
+                      placeholder={`e.g., ${index === 0 ? 'Called' : index === 1 ? 'No answer' : index === 2 ? 'Interested' : `Tag ${index + 1}`}`}
+                      className="flex-1"
+                    />
+                    {ownCallingTags.length > 1 && (
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => handleRemoveCallingTag(index)}
+                        className="h-8 w-8 text-destructive"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    )}
+                  </div>
+                ))}
+              </div>
+              {ownCallingTags.length < 10 && (
+                <Button variant="outline" size="sm" onClick={handleAddCallingTag}>
+                  <Plus className="h-4 w-4 mr-1" />
+                  Add Tag
+                </Button>
+              )}
             </div>
-            
-            <div className="flex gap-2">
-              {ownStageLabels.length < 10 && (
-                <Button variant="outline" size="sm" onClick={handleAddStage}>
+
+            <Separator />
+
+            {/* Stage Tags Configuration */}
+            <div className="space-y-3">
+              <div className="flex items-center gap-2">
+                <Layers className="h-4 w-4 text-primary" />
+                <p className="text-sm font-medium">Stage tags (journey stages)</p>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Define your sales journey stages (3-10 stages recommended):
+              </p>
+              <div className="space-y-2">
+                {ownStageTags.map((stage, index) => (
+                  <div key={index} className="flex items-center gap-2">
+                    <span className="text-xs text-muted-foreground w-14">Stage {index + 1}</span>
+                    <Input
+                      value={stage}
+                      onChange={(e) => handleStageTagChange(index, e.target.value)}
+                      placeholder={`Stage ${index + 1} name`}
+                      className="flex-1"
+                    />
+                    {ownStageTags.length > 1 && (
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => handleRemoveStageTag(index)}
+                        className="h-8 w-8 text-destructive"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    )}
+                  </div>
+                ))}
+              </div>
+              {ownStageTags.length < 10 && (
+                <Button variant="outline" size="sm" onClick={handleAddStageTag}>
                   <Plus className="h-4 w-4 mr-1" />
                   Add Stage
                 </Button>
               )}
-              <Button 
-                onClick={handleSaveOwnStages} 
-                disabled={savingStages}
-                size="sm"
-              >
-                {savingStages ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
-                Save Stages
-              </Button>
             </div>
+            
+            <Button 
+              onClick={handleSaveOwnTags} 
+              disabled={savingTags}
+              size="sm"
+              className="w-full"
+            >
+              {savingTags ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+              Save Tags
+            </Button>
           </div>
         )}
       </div>
@@ -368,15 +481,15 @@ export function LeaderStagesSettings({
       <AlertDialog open={showSwitchConfirm} onOpenChange={setShowSwitchConfirm}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Switch to Leader Stages?</AlertDialogTitle>
+            <AlertDialogTitle>Switch to Leader Tags?</AlertDialogTitle>
             <AlertDialogDescription>
-              Your custom stages will be kept as personal reference, but the leader's stages will become your official tracked stages. Future analytics will only count the leader's stages.
+              Your custom tags will be kept as personal reference, but the leader's tags will become your official tracked tags. Future analytics will only count the leader's tags.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction onClick={confirmSwitchToLeader}>
-              Switch to Leader Stages
+              Switch to Leader Tags
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

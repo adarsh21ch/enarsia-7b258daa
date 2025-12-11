@@ -140,6 +140,11 @@ export default function Profile() {
               <div className="flex-1 min-w-0">
                 <p className="font-semibold text-lg truncate">{displayName}</p>
                 <p className="text-sm text-muted-foreground truncate">{user.email}</p>
+                {profile?.neverai_id && (
+                  <p className="text-xs text-primary font-medium mt-1">
+                    Your Leader ID: <span className="font-mono">{profile.neverai_id}</span>
+                  </p>
+                )}
               </div>
             </div>
             {/* Decorative elements */}
@@ -153,15 +158,15 @@ export default function Profile() {
           {/* Upgrade Card */}
           <UpgradeCard />
 
-          {/* Leader & Stages Settings - Collapsible */}
+          {/* Leader & Tags Settings - Collapsible */}
           <Accordion type="single" collapsible className="rounded-2xl border border-border/50 bg-card overflow-hidden">
-            <AccordionItem value="leader-stages" className="border-none">
+            <AccordionItem value="leader-tags" className="border-none">
               <AccordionTrigger className="px-4 py-3 hover:no-underline hover:bg-muted/30">
                 <div className="flex items-center gap-3">
                   <div className="p-2 rounded-lg bg-primary/10">
                     <Users className="h-4 w-4 text-primary" />
                   </div>
-                  <span className="font-medium">Leader & Stages</span>
+                  <span className="font-medium">Leader & Tags</span>
                 </div>
               </AccordionTrigger>
               <AccordionContent className="px-4 pb-4">
