@@ -40,11 +40,11 @@ export function useEncryption() {
     }
   };
 
-  const invokeWithRetry = async (action: string, data: any, retries = 1): Promise<any> => {
+  const invokeWithRetry = async (action: string, data: any): Promise<any> => {
     try {
       const session = await getValidSession();
       if (!session) {
-        // No session - silently return null, don't log warning
+        // No session - silently return null
         return null;
       }
 
@@ -53,26 +53,7 @@ export function useEncryption() {
       });
 
       if (error) {
-        // Check for auth errors - look in message, status, and context
-        const isAuthError = 
-          error.message?.includes('401') || 
-          error.message?.includes('token') || 
-          error.message?.includes('Unauthorized') || 
-          error.message?.includes('Invalid') ||
-          error.message?.includes('non-2xx') ||
-          error.message?.includes('expired') ||
-          (error as any).status === 401 ||
-          (error as any).context?.status === 401;
-
-        if (retries > 0 && isAuthError) {
-          const { error: refreshError } = await supabase.auth.refreshSession();
-          if (refreshError) {
-            await supabase.auth.signOut();
-            return null;
-          }
-          return invokeWithRetry(action, data, retries - 1);
-        }
-        // Return null for any error - don't crash the app
+        // Return null for any error - don't retry, don't crash
         return null;
       }
 
