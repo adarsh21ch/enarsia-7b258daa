@@ -9,7 +9,7 @@ import { UpgradeBar } from '@/components/subscription/UpgradeBar';
 import { PullToRefreshIndicator } from '@/components/PullToRefreshIndicator';
 import { BottomViewToggle } from '@/components/ui/BottomViewToggle';
 import { Day1SetupDialog } from '@/components/trackup/Day1SetupDialog';
-import { TeamToggle } from '@/components/team/TeamToggle';
+import { TeamMemberSelector } from '@/components/team/TeamMemberSelector';
 import { Loader2, TrendingUp, Calendar, Lock } from 'lucide-react';
 import { useProspects } from '@/hooks/useProspects';
 import { useSharedProspects } from '@/hooks/useSharedProspects';
@@ -75,7 +75,8 @@ export default function Tracking() {
     selectedOwnerIds,
     toggleOwnerSelection,
     selectAllOwners,
-    clearSelection 
+    clearSelection,
+    prospectCounts
   } = useSharedProspects();
   const { isPro, loading: subLoading } = useSubscription();
   const prospectLimit = useProspectLimit(prospects, isPro);
@@ -154,13 +155,14 @@ export default function Tracking() {
               <p className="text-xs text-muted-foreground font-medium">Track Your Numbers</p>
             </div>
           </div>
-          <TeamToggle
+          <TeamMemberSelector
             sharedOwners={sharedOwners}
             selectedOwnerIds={selectedOwnerIds}
             onToggleOwner={toggleOwnerSelection}
             onSelectAll={selectAllOwners}
             onClear={clearSelection}
             currentTab="track"
+            prospectCounts={prospectCounts}
           />
         </div>
       </header>

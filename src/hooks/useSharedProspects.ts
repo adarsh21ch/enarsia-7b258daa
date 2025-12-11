@@ -50,6 +50,7 @@ export function useSharedProspects() {
   const [selectedOwnerIds, setSelectedOwnerIds] = useState<string[]>([]);
   const [prospects, setProspects] = useState<Prospect[]>([]);
   const [loading, setLoading] = useState(false);
+  const [initialLoading, setInitialLoading] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
   const [initialLoadDone, setInitialLoadDone] = useState(false);
   const [prospectCounts, setProspectCounts] = useState<Record<string, number>>(() => {
@@ -290,8 +291,10 @@ export function useSharedProspects() {
         new Date(b.date_added).getTime() - new Date(a.date_added).getTime()
       );
       setProspects(cachedProspects);
+      setInitialLoading(false);
     } else {
       setLoading(true);
+      setInitialLoading(true);
     }
     
     try {
@@ -328,6 +331,7 @@ export function useSharedProspects() {
     } finally {
       if (fetchId === currentFetchId.current) {
         setLoading(false);
+        setInitialLoading(false);
       }
     }
   }, [selectedOwnerIds, fetchOwnerProspectsFirstPage, loadRemainingProspects]);
@@ -436,6 +440,7 @@ export function useSharedProspects() {
     clearSelection,
     prospects,
     loading,
+    initialLoading,
     loadingMore,
     prospectCounts,
     refetchOwners: fetchSharedOwners,
