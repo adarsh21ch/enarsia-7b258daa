@@ -102,6 +102,7 @@ export default function Dashboard() {
     prospects: sharedProspects, 
     loading: sharedLoading,
     initialLoading: sharedInitialLoading,
+    error: sharedError,
     refetchProspects,
     prospectCounts
   } = useSharedProspects();
@@ -204,6 +205,19 @@ export default function Dashboard() {
                 <p className="text-sm text-primary font-medium">
                   Viewing team data (read-only)
                 </p>
+              </div>
+            )}
+            
+            {/* Error state */}
+            {isViewingTeam && sharedError && (
+              <div className="bg-destructive/10 border border-destructive/30 rounded-xl p-4 mb-3">
+                <p className="text-sm text-destructive font-medium">{sharedError}</p>
+                <button 
+                  onClick={() => refetchProspects?.()} 
+                  className="text-xs text-destructive underline mt-2"
+                >
+                  Try again
+                </button>
               </div>
             )}
             

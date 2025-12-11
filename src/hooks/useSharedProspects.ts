@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { Prospect } from '@/types/prospect';
@@ -14,7 +14,7 @@ const CACHE_KEY = 'team_prospects_cache';
 const OWNERS_CACHE_KEY = 'team_owners_cache';
 const COUNTS_CACHE_KEY = 'team_prospect_counts';
 const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
-const PAGE_SIZE = 30; // Fetch 30 records at a time
+const PAGE_SIZE = 30;
 
 // Session storage helpers
 const getSessionCache = <T>(key: string): { data: T; timestamp: number } | null => {
@@ -43,6 +43,8 @@ const setSessionCache = <T>(key: string, data: T) => {
 export function useSharedProspects() {
   const { user } = useAuth();
   const { decryptFields } = useEncryption();
+  
+  // State
   const [sharedOwners, setSharedOwners] = useState<SharedOwner[]>(() => {
     const cached = getSessionCache<SharedOwner[]>(OWNERS_CACHE_KEY);
     return cached?.data || [];
@@ -52,19 +54,27 @@ export function useSharedProspects() {
   const [loading, setLoading] = useState(false);
   const [initialLoading, setInitialLoading] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
-  const [initialLoadDone, setInitialLoadDone] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [prospectCounts, setProspectCounts] = useState<Record<string, number>>(() => {
     const cached = getSessionCache<Record<string, number>>(COUNTS_CACHE_KEY);
     return cached?.data || {};
   });
   
-  // Cache for each owner's prospects
+  // Refs for stable references and preventing duplicate fetches
   const prospectsCache = useRef<Record<string, Prospect[]>>(
     getSessionCache<Record<string, Prospect[]>>(CACHE_KEY)?.data || {}
   );
-  const fetchingRef = useRef<Set<string>>(new Set());
+  const fetchingOwners = useRef<Set<string>>(new Set());
   const currentFetchId = useRef<number>(0);
   const fullyLoadedOwners = useRef<Set<string>>(new Set());
+  const initialLoadDone = useRef(false);
+  const lastSelectedIds = useRef<string>('');
+
+  // Stable string version of selected IDs for comparison
+  const selectedIdsKey = useMemo(() => 
+    [...selectedOwnerIds].sort().join(','), 
+    [selectedOwnerIds]
+  );
 
   // Helper to decrypt a single prospect's phone
   const decryptProspect = useCallback(async (p: Prospect): Promise<Prospect> => {
@@ -160,18 +170,25 @@ export function useSharedProspects() {
     }
   }, [user, fetchOwnerCount]);
 
-  // Fetch first page of prospects for instant display
+  // Fetch first page of prospects for a single owner
   const fetchOwnerProspectsFirstPage = useCallback(async (ownerId: string): Promise<Prospect[]> => {
+    // Return cached if available
     if (prospectsCache.current[ownerId] && prospectsCache.current[ownerId].length > 0) {
       return prospectsCache.current[ownerId];
     }
     
-    if (fetchingRef.current.has(ownerId)) {
-      await new Promise(resolve => setTimeout(resolve, 100));
+    // Prevent duplicate fetches for same owner
+    if (fetchingOwners.current.has(ownerId)) {
+      // Wait for ongoing fetch
+      let attempts = 0;
+      while (fetchingOwners.current.has(ownerId) && attempts < 50) {
+        await new Promise(resolve => setTimeout(resolve, 100));
+        attempts++;
+      }
       return prospectsCache.current[ownerId] || [];
     }
     
-    fetchingRef.current.add(ownerId);
+    fetchingOwners.current.add(ownerId);
     
     try {
       const { data, error } = await supabase
@@ -183,7 +200,6 @@ export function useSharedProspects() {
       
       if (error) {
         console.error('Error fetching shared prospects:', error);
-        fetchingRef.current.delete(ownerId);
         return [];
       }
       
@@ -193,19 +209,19 @@ export function useSharedProspects() {
         );
         prospectsCache.current[ownerId] = decrypted;
         setSessionCache(CACHE_KEY, prospectsCache.current);
-        fetchingRef.current.delete(ownerId);
         return decrypted;
       }
     } catch (err) {
       console.error('Error in fetchOwnerProspectsFirstPage:', err);
+    } finally {
+      fetchingOwners.current.delete(ownerId);
     }
     
-    fetchingRef.current.delete(ownerId);
     return [];
   }, [decryptProspect]);
 
-  // Load remaining prospects for an owner (progressive loading)
-  const loadRemainingProspects = useCallback(async (ownerId: string) => {
+  // Load remaining prospects for an owner (background progressive loading)
+  const loadRemainingProspects = useCallback(async (ownerId: string, currentSelectedIds: string[]) => {
     if (fullyLoadedOwners.current.has(ownerId)) return;
     
     const totalCount = prospectCounts[ownerId] || 0;
@@ -252,8 +268,9 @@ export function useSharedProspects() {
         prospectsCache.current[ownerId] = [...existing, ...allNewProspects];
         setSessionCache(CACHE_KEY, prospectsCache.current);
         
-        if (selectedOwnerIds.includes(ownerId)) {
-          const allProspects = selectedOwnerIds.flatMap(id => prospectsCache.current[id] || []);
+        // Only update state if this owner is still selected
+        if (currentSelectedIds.includes(ownerId)) {
+          const allProspects = currentSelectedIds.flatMap(id => prospectsCache.current[id] || []);
           allProspects.sort((a, b) => 
             new Date(b.date_added).getTime() - new Date(a.date_added).getTime()
           );
@@ -267,76 +284,104 @@ export function useSharedProspects() {
     } finally {
       setLoadingMore(false);
     }
-  }, [prospectCounts, selectedOwnerIds, decryptProspect]);
+  }, [prospectCounts, decryptProspect]);
 
-  // Update combined prospects when selection changes
-  const updateCombinedProspects = useCallback(async () => {
+  // Main effect: Fetch prospects when selection changes
+  useEffect(() => {
+    // Skip if selection hasn't actually changed
+    if (selectedIdsKey === lastSelectedIds.current) {
+      return;
+    }
+    lastSelectedIds.current = selectedIdsKey;
+    
+    const ownerIds = selectedIdsKey ? selectedIdsKey.split(',').filter(Boolean) : [];
     const fetchId = ++currentFetchId.current;
     
-    if (selectedOwnerIds.length === 0) {
+    // Handle empty selection
+    if (ownerIds.length === 0) {
       setProspects([]);
       setLoading(false);
+      setInitialLoading(false);
+      setError(null);
       return;
     }
     
-    // INSTANT: Check if we have ANY cached data for selected owners
-    const hasCachedData = selectedOwnerIds.some(id => 
+    // Check for cached data first
+    const hasCachedData = ownerIds.some(id => 
       prospectsCache.current[id] && prospectsCache.current[id].length > 0
     );
     
     if (hasCachedData) {
-      // Show cached data IMMEDIATELY
-      const cachedProspects = selectedOwnerIds.flatMap(id => prospectsCache.current[id] || []);
+      // Show cached data immediately
+      const cachedProspects = ownerIds.flatMap(id => prospectsCache.current[id] || []);
       cachedProspects.sort((a, b) => 
         new Date(b.date_added).getTime() - new Date(a.date_added).getTime()
       );
       setProspects(cachedProspects);
       setInitialLoading(false);
+      setLoading(false);
     } else {
       setLoading(true);
       setInitialLoading(true);
     }
     
-    try {
-      const ownersToFetch = selectedOwnerIds.filter(id => 
-        !prospectsCache.current[id] || prospectsCache.current[id].length === 0
-      );
-      
-      if (ownersToFetch.length > 0) {
-        await Promise.all(
-          ownersToFetch.map(ownerId => fetchOwnerProspectsFirstPage(ownerId))
+    // Async fetch function
+    const fetchProspects = async () => {
+      try {
+        setError(null);
+        
+        const ownersToFetch = ownerIds.filter(id => 
+          !prospectsCache.current[id] || prospectsCache.current[id].length === 0
         );
         
-        if (fetchId !== currentFetchId.current) return;
-        
-        const allProspects = selectedOwnerIds.flatMap(id => prospectsCache.current[id] || []);
-        allProspects.sort((a, b) => 
-          new Date(b.date_added).getTime() - new Date(a.date_added).getTime()
-        );
-        setProspects(allProspects);
-      }
-      
-      // Start progressive loading in background
-      selectedOwnerIds.forEach(ownerId => {
-        if (!fullyLoadedOwners.current.has(ownerId)) {
-          loadRemainingProspects(ownerId);
+        if (ownersToFetch.length > 0) {
+          await Promise.all(
+            ownersToFetch.map(ownerId => fetchOwnerProspectsFirstPage(ownerId))
+          );
+          
+          // Check if this fetch is still valid
+          if (fetchId !== currentFetchId.current) return;
+          
+          const allProspects = ownerIds.flatMap(id => prospectsCache.current[id] || []);
+          allProspects.sort((a, b) => 
+            new Date(b.date_added).getTime() - new Date(a.date_added).getTime()
+          );
+          setProspects(allProspects);
         }
-      });
-      
-    } catch (err) {
-      console.error('Error updating combined prospects:', err);
-      if (fetchId === currentFetchId.current) {
-        setProspects([]);
+        
+        // Start progressive loading in background (don't await)
+        ownerIds.forEach(ownerId => {
+          if (!fullyLoadedOwners.current.has(ownerId)) {
+            loadRemainingProspects(ownerId, ownerIds);
+          }
+        });
+        
+      } catch (err) {
+        console.error('Error fetching prospects:', err);
+        if (fetchId === currentFetchId.current) {
+          setError('Failed to load team data');
+          setProspects([]);
+        }
+      } finally {
+        if (fetchId === currentFetchId.current) {
+          setLoading(false);
+          setInitialLoading(false);
+        }
       }
-    } finally {
-      if (fetchId === currentFetchId.current) {
-        setLoading(false);
-        setInitialLoading(false);
-      }
-    }
-  }, [selectedOwnerIds, fetchOwnerProspectsFirstPage, loadRemainingProspects]);
+    };
+    
+    fetchProspects();
+  }, [selectedIdsKey, fetchOwnerProspectsFirstPage, loadRemainingProspects]);
 
-  // Real-time subscriptions
+  // Initial fetch of shared owners (only once)
+  useEffect(() => {
+    if (user && !initialLoadDone.current) {
+      initialLoadDone.current = true;
+      fetchSharedOwners();
+    }
+  }, [user, fetchSharedOwners]);
+
+  // Real-time subscriptions for selected owners
   useEffect(() => {
     if (selectedOwnerIds.length === 0) return;
 
@@ -352,22 +397,27 @@ export function useSharedProspects() {
             filter: `user_id=eq.${ownerId}`
           },
           async () => {
+            // Invalidate cache for this owner
             delete prospectsCache.current[ownerId];
             fullyLoadedOwners.current.delete(ownerId);
             
+            // Update count
             const count = await fetchOwnerCount(ownerId);
             setProspectCounts(prev => ({ ...prev, [ownerId]: count }));
             
+            // Refetch first page
             const updatedProspects = await fetchOwnerProspectsFirstPage(ownerId);
             prospectsCache.current[ownerId] = updatedProspects;
             
+            // Update combined list
             const allProspects = selectedOwnerIds.flatMap(id => prospectsCache.current[id] || []);
             allProspects.sort((a, b) => 
               new Date(b.date_added).getTime() - new Date(a.date_added).getTime()
             );
             setProspects(allProspects);
             
-            loadRemainingProspects(ownerId);
+            // Load remaining in background
+            loadRemainingProspects(ownerId, selectedOwnerIds);
           }
         )
         .subscribe();
@@ -378,24 +428,7 @@ export function useSharedProspects() {
     };
   }, [selectedOwnerIds, fetchOwnerProspectsFirstPage, fetchOwnerCount, loadRemainingProspects]);
 
-  // Initial fetch
-  useEffect(() => {
-    if (user && !initialLoadDone) {
-      fetchSharedOwners().then(() => setInitialLoadDone(true));
-    }
-  }, [user, fetchSharedOwners, initialLoadDone]);
-
-  // Update prospects when selection changes
-  useEffect(() => {
-    if (selectedOwnerIds.length === 0) {
-      setProspects([]);
-      setLoading(false);
-      return;
-    }
-    
-    updateCombinedProspects();
-  }, [selectedOwnerIds, updateCombinedProspects]);
-
+  // Selection handlers
   const toggleOwnerSelection = useCallback((ownerId: string) => {
     setSelectedOwnerIds(prev => {
       if (prev.includes(ownerId)) {
@@ -412,9 +445,12 @@ export function useSharedProspects() {
 
   const clearSelection = useCallback(() => {
     currentFetchId.current++;
+    lastSelectedIds.current = '';
     setSelectedOwnerIds([]);
     setProspects([]);
     setLoading(false);
+    setInitialLoading(false);
+    setError(null);
   }, []);
 
   const setSelectedOwnerId = useCallback((ownerId: string | null) => {
@@ -422,10 +458,36 @@ export function useSharedProspects() {
     if (ownerId) {
       setSelectedOwnerIds([ownerId]);
     } else {
+      lastSelectedIds.current = '';
       setSelectedOwnerIds([]);
       setProspects([]);
     }
   }, []);
+
+  // Manual refetch
+  const refetchProspects = useCallback(async () => {
+    if (selectedOwnerIds.length === 0) return;
+    
+    // Clear cache for selected owners
+    selectedOwnerIds.forEach(id => {
+      delete prospectsCache.current[id];
+      fullyLoadedOwners.current.delete(id);
+    });
+    
+    // Force re-fetch by updating lastSelectedIds
+    lastSelectedIds.current = '';
+    setLoading(true);
+    setInitialLoading(true);
+    
+    // Trigger the effect by changing the key
+    const currentIds = [...selectedOwnerIds];
+    setSelectedOwnerIds([]);
+    
+    // Re-set after a tick
+    setTimeout(() => {
+      setSelectedOwnerIds(currentIds);
+    }, 0);
+  }, [selectedOwnerIds]);
 
   const selectedOwnerId = selectedOwnerIds.length === 1 ? selectedOwnerIds[0] : null;
 
@@ -442,8 +504,9 @@ export function useSharedProspects() {
     loading,
     initialLoading,
     loadingMore,
+    error,
     prospectCounts,
     refetchOwners: fetchSharedOwners,
-    refetchProspects: updateCombinedProspects
+    refetchProspects
   };
 }
