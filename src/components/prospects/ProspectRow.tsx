@@ -88,13 +88,13 @@ export function ProspectRow({
   };
 
   // Row background color
-  const bgColor = isEven ? "bg-card" : "bg-muted/30";
+  const bgColor = isEven ? "bg-card" : "bg-muted";
 
   const renderCell = (columnId: string) => {
     const cellClass = cn(
-      "px-1.5 py-1.5 whitespace-nowrap",
+      "px-2 py-2.5 whitespace-nowrap",
       bgColor,
-      isMobileTable && "text-xs px-1 py-1"
+      isMobileTable && "text-xs px-1.5 py-2"
     );
     
     switch (columnId) {
@@ -103,11 +103,11 @@ export function ProspectRow({
           <td 
             key={columnId} 
             className={cn(cellClass, "text-center")} 
-            style={{ width: '10%', minWidth: '36px' }}
+            style={{ width: '10%', minWidth: '40px' }}
           >
             <span className={cn(
-              "text-[10px] font-medium text-muted-foreground",
-              isMobileTable && "text-[9px]"
+              "text-xs font-semibold text-muted-foreground bg-muted/60 rounded px-1.5 py-0.5",
+              isMobileTable && "text-[10px] px-1"
             )}>
               {index}
             </span>
@@ -115,6 +115,7 @@ export function ProspectRow({
         );
       
       case 'name':
+        // Compact info line: "Age, Location"
         const ageValue = (prospect as any).age_or_dob || '';
         const locationValue = prospect.address || '';
         const infoParts = [ageValue, locationValue].filter(Boolean);
@@ -124,35 +125,34 @@ export function ProspectRow({
           <td 
             key={columnId} 
             className={cellClass} 
-            style={{ width: '55%', minWidth: '140px' }}
+            style={{ width: '55%', minWidth: '160px' }}
             onPointerDown={(e) => e.stopPropagation()}
           >
-            <div className="flex items-center gap-1">
-              {/* Compact Call + WhatsApp icons */}
-              <div className="flex items-center gap-0 shrink-0">
-                <CallIconButton onClick={openCall} className={cn("h-6 w-6 p-0.5", isMobileTable && "h-5 w-5")} />
-                <WhatsAppIconButton onClick={openWhatsApp} className={cn("h-6 w-6 p-0.5", isMobileTable && "h-5 w-5")} />
+            <div className="flex items-center gap-1.5">
+              {/* Call + WhatsApp icons */}
+              <div className="flex items-center gap-0.5 shrink-0">
+                <CallIconButton onClick={openCall} className={isMobileTable ? "p-0.5 h-6 w-6" : "h-7 w-7"} />
+                <WhatsAppIconButton onClick={openWhatsApp} className={isMobileTable ? "p-0.5 h-6 w-6" : "h-7 w-7"} />
               </div>
               <div className="flex flex-col overflow-hidden min-w-0 flex-1">
                 <button
                   onClick={onToggleExpand}
                   className={cn(
-                    "group flex items-center gap-0.5 text-left font-medium text-foreground hover:text-primary transition-colors cursor-pointer bg-transparent border-0 py-0 px-0.5 rounded hover:bg-primary/5",
-                    isMobileTable ? "text-xs" : "text-sm",
-                    isExpanded && "text-primary"
+                    "group flex items-center gap-1 text-left font-semibold text-foreground hover:text-primary transition-all duration-200 cursor-pointer bg-transparent border-0 py-0.5 px-1 rounded-md hover:bg-primary/5 active:scale-[0.98]",
+                    isMobileTable && "text-xs py-0.5",
+                    isExpanded && "text-primary bg-primary/10"
                   )}
                 >
                   <span className="truncate" title={prospect.name}>{prospect.name}</span>
-                  <ChevronDown className={cn(
-                    "h-3 w-3 text-muted-foreground group-hover:text-primary shrink-0 transition-transform",
-                    isExpanded && "rotate-180",
-                    isMobileTable && "h-2.5 w-2.5"
-                  )} />
+                  <span className={cn("transition-transform duration-200 text-muted-foreground group-hover:text-primary shrink-0", isExpanded && "rotate-180")}>
+                    <ChevronDown className={cn("h-3 w-3", isMobileTable && "h-2.5 w-2.5")} />
+                  </span>
                 </button>
+                {/* Compact info: Age, Location */}
                 {infoLine && (
                   <div className={cn(
-                    "text-muted-foreground truncate pl-0.5",
-                    isMobileTable ? "text-[8px]" : "text-[9px]"
+                    "text-muted-foreground truncate pl-1",
+                    isMobileTable ? "text-[9px]" : "text-[10px]"
                   )} title={infoLine}>
                     {infoLine}
                   </div>
@@ -225,24 +225,24 @@ export function ProspectRow({
         {...(dragHandleProps?.attributes || {})}
         {...rowDragListeners}
         className={cn(
-          "group transition-colors duration-75 border-b border-border/20", 
+          "group transition-colors duration-100 border-b border-border/30", 
           bgColor,
-          "hover:bg-muted/50", 
+          "hover:bg-muted/80", 
           isExpanded && "bg-primary/5 hover:bg-primary/5",
-          dragHandleProps?.isDragging && "shadow-md cursor-grabbing touch-none",
+          dragHandleProps?.isDragging && "shadow-lg cursor-grabbing touch-none",
           !dragHandleProps?.isDragging && "cursor-grab"
         )}
       >
+        {/* Selection checkbox cell */}
         {showSelection && (
           <td 
-            className={cn("px-1.5 py-1", bgColor)} 
-            style={{ width: '32px' }}
+            className={cn("px-2 py-2", bgColor)} 
+            style={{ width: '40px' }}
             onPointerDown={(e) => e.stopPropagation()}
           >
             <Checkbox
               checked={isSelected}
               onCheckedChange={onToggleSelect}
-              className="h-3.5 w-3.5"
             />
           </td>
         )}

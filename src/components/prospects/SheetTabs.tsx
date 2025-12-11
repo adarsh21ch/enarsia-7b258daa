@@ -113,19 +113,19 @@ export function SheetTabs({
 
   return (
     <>
-      <div className="flex items-center bg-muted/30 border-b border-border/40">
+      <div className="flex items-center bg-muted/50 border-b border-border">
         {/* Fixed "All" tab with dropdown */}
-        <div className="flex items-center border-r border-border/30 shrink-0">
+        <div className="flex items-center border-r border-border/50 shrink-0 bg-muted/50">
           <button
             onClick={() => onSelectSheet(null)}
             className={cn(
-              "px-2.5 py-1.5 text-[11px] font-medium transition-colors",
+              "px-3 py-2 text-xs font-medium transition-colors",
               selectedSheetId === null 
                 ? "bg-card text-foreground border-t-2 border-t-primary" 
-                : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
+                : "text-muted-foreground hover:text-foreground hover:bg-muted/80"
             )}
           >
-            <FileSpreadsheet className="h-3 w-3 inline mr-1" />
+            <FileSpreadsheet className="h-3.5 w-3.5 inline mr-1.5" />
             All
           </button>
           {renderAllTabMenu()}
@@ -136,14 +136,14 @@ export function SheetTabs({
           <ScrollArea className="flex-1 whitespace-nowrap">
             <div className="flex items-center">
               {sheets.map((sheet) => (
-                <div key={sheet.id} className="flex items-center border-r border-border/30">
+                <div key={sheet.id} className="flex items-center border-r border-border/50">
                   <button
                     onClick={() => onSelectSheet(sheet.id)}
                     className={cn(
-                      "px-2.5 py-1.5 text-[11px] font-medium transition-colors",
+                      "px-3 py-2 text-xs font-medium transition-colors",
                       selectedSheetId === sheet.id 
                         ? "bg-card text-foreground border-t-2 border-t-primary" 
-                        : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
+                        : "text-muted-foreground hover:text-foreground hover:bg-muted/80"
                     )}
                   >
                     {sheet.name}
@@ -195,9 +195,9 @@ export function SheetTabs({
         {/* Fixed Add Sheet button */}
         <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
           <DialogTrigger asChild>
-            <button className="px-2.5 py-1.5 text-[11px] text-muted-foreground hover:text-foreground hover:bg-muted/50 border-l border-border/30 shrink-0">
-              <Plus className="h-3 w-3 inline mr-0.5" />
-              <span className="hidden sm:inline">Add</span>
+            <button className="px-3 py-2 text-xs text-muted-foreground hover:text-foreground hover:bg-muted/80 border-l border-border/50 shrink-0 bg-muted/50">
+              <Plus className="h-3.5 w-3.5 inline mr-1" />
+              <span className="hidden sm:inline">Add Sheet</span>
               <span className="sm:hidden">+</span>
             </button>
           </DialogTrigger>

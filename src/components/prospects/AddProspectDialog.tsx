@@ -60,7 +60,7 @@ export function AddProspectDialog({ onAdd }: AddProspectDialogProps) {
       <DialogTrigger asChild>
         <Button size="sm" className="h-8 gap-1 text-xs px-2">
           <Plus className="h-3.5 w-3.5" />
-          Add
+          <span className="hidden sm:inline">Add</span>
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-md bg-card border-border">
