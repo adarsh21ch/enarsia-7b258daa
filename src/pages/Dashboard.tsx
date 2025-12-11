@@ -10,7 +10,8 @@ import { ProspectTable } from '@/components/prospects/ProspectTable';
 import { PullToRefreshIndicator } from '@/components/PullToRefreshIndicator';
 import { BottomViewToggle } from '@/components/ui/BottomViewToggle';
 import { FilterTagSetupDialog, useFilterTagSetup } from '@/components/prospects/FilterTagSetupDialog';
-import { TeamToggle } from '@/components/team/TeamToggle';
+import { TeamMemberSelector } from '@/components/team/TeamMemberSelector';
+import { ProspectTableSkeleton } from '@/components/team/TeamDataSkeleton';
 import { Loader2, Phone, Layers } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import nevoraLogo from '@/assets/nevorai-logo.jpeg';
@@ -99,8 +100,10 @@ export default function Dashboard() {
     clearSelection, 
     selectAllOwners,
     prospects: sharedProspects, 
-    loading: sharedLoading, 
-    refetchProspects 
+    loading: sharedLoading,
+    initialLoading: sharedInitialLoading,
+    refetchProspects,
+    prospectCounts
   } = useSharedProspects();
   const { sheets, selectedSheetId, setSelectedSheetId, addSheet, updateSheet, deleteSheet, refetch: refetchSheets } = useSheets();
   
@@ -114,6 +117,9 @@ export default function Dashboard() {
   // Determine which prospects to show
   const isViewingTeam = selectedOwnerIds.length > 0;
   const prospects = isViewingTeam ? sharedProspects : myProspects;
+  
+  // Show skeleton when switching to team view and initial loading
+  const showSkeleton = isViewingTeam && sharedInitialLoading;
 
   // Handle tab change - show setup dialog when switching to Stages for first time
   const handleTabChange = (newTab: string) => {
@@ -148,8 +154,8 @@ export default function Dashboard() {
   }
 
   if (!user) return null;
-
-  const isLoading = loading || (isViewingTeam && sharedLoading);
+  // Only show loading for data, not initial UI
+  const isLoading = loading || (isViewingTeam && sharedLoading && !sharedInitialLoading);
 
   const toggleOptions: [{ value: string; label: string; icon: typeof Phone }, { value: string; label: string; icon: typeof Layers }] = [
     { value: 'leads', label: 'Calling', icon: Phone },
@@ -177,13 +183,14 @@ export default function Dashboard() {
                 </p>
               </div>
             </div>
-            <TeamToggle
+            <TeamMemberSelector
               sharedOwners={sharedOwners}
               selectedOwnerIds={selectedOwnerIds}
               onToggleOwner={toggleOwnerSelection}
               onSelectAll={selectAllOwners}
               onClear={clearSelection}
               currentTab="calling"
+              prospectCounts={prospectCounts}
             />
           </div>
         </header>
@@ -200,8 +207,10 @@ export default function Dashboard() {
               </div>
             )}
             
-            {/* Content based on active tab */}
-            {mainTab === 'leads' ? (
+            {/* Show skeleton when loading team data initially */}
+            {showSkeleton ? (
+              <ProspectTableSkeleton />
+            ) : mainTab === 'leads' ? (
               <ProspectTable
                 prospects={prospects}
                 loading={isLoading}

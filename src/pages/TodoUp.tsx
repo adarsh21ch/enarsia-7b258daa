@@ -7,7 +7,7 @@ import { useTeamTodos } from '@/hooks/useTeamTodos';
 import { useSharedProspects } from '@/hooks/useSharedProspects';
 import { BottomNav } from '@/components/layout/BottomNav';
 import { PullToRefreshIndicator } from '@/components/PullToRefreshIndicator';
-import { TeamToggle } from '@/components/team/TeamToggle';
+import { TeamMemberSelector } from '@/components/team/TeamMemberSelector';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
@@ -72,7 +72,7 @@ export default function TodoUp() {
   const { user, loading: authLoading } = useAuth();
   const { todos, loading: todosLoading, addTodo, updateTodo, toggleTodo, deleteTodo, refetch: refetchTodos } = useTodos();
   const { teamTodos, loading: teamTodosLoading, refetch: refetchTeamTodos } = useTeamTodos();
-  const { sharedOwners, selectedOwnerIds, toggleOwnerSelection, selectAllOwners, clearSelection } = useSharedProspects();
+  const { sharedOwners, selectedOwnerIds, toggleOwnerSelection, selectAllOwners, clearSelection, prospectCounts } = useSharedProspects();
   
   const [newTodoInput, setNewTodoInput] = useState('');
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -177,7 +177,7 @@ export default function TodoUp() {
             </div>
           </div>
           {/* Team Toggle */}
-          <TeamToggle
+          <TeamMemberSelector
             sharedOwners={sharedOwners}
             selectedOwnerIds={selectedOwnerIds}
             onToggleOwner={toggleOwnerSelection}
@@ -190,6 +190,7 @@ export default function TodoUp() {
               setIsViewingTeam(false);
             }}
             currentTab="todo"
+            prospectCounts={prospectCounts}
           />
         </div>
       </header>

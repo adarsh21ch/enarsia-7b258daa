@@ -7,7 +7,8 @@ import { useSharedProspects } from '@/hooks/useSharedProspects';
 import { useTodos } from '@/hooks/useTodos';
 import { BottomNav } from '@/components/layout/BottomNav';
 import { PullToRefreshIndicator } from '@/components/PullToRefreshIndicator';
-import { TeamToggle } from '@/components/team/TeamToggle';
+import { TeamMemberSelector } from '@/components/team/TeamMemberSelector';
+import { ActivitySkeleton } from '@/components/team/TeamDataSkeleton';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
@@ -107,7 +108,9 @@ export default function Home() {
     selectAllOwners,
     prospects: sharedProspects,
     loading: sharedLoading,
-    refetchProspects
+    initialLoading: sharedInitialLoading,
+    refetchProspects,
+    prospectCounts
   } = useSharedProspects();
   const {
     todos,
@@ -118,6 +121,9 @@ export default function Home() {
   // Determine which prospects to show
   const isViewingTeam = selectedOwnerIds.length > 0;
   const prospects = isViewingTeam ? sharedProspects : myProspects;
+  
+  // Show skeleton when switching to team view or loading team data
+  const showSkeleton = isViewingTeam && sharedInitialLoading;
 
   // Pull-to-refresh
   const handleRefresh = useCallback(async () => {
@@ -145,8 +151,9 @@ export default function Home() {
   const handleCall = (phone: string) => {
     window.open(`tel:${cleanPhoneNumber(phone)}`, '_self');
   };
-  const isLoading = authLoading || prospectsLoading || isViewingTeam && sharedLoading;
-  if (isLoading) {
+  
+  // Only show full loading for initial auth
+  if (authLoading) {
     return <div className="min-h-screen flex items-center justify-center bg-background">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
       </div>;
@@ -192,7 +199,15 @@ export default function Home() {
               </p>
             </div>
           </div>
-          <TeamToggle sharedOwners={sharedOwners} selectedOwnerIds={selectedOwnerIds} onToggleOwner={toggleOwnerSelection} onSelectAll={selectAllOwners} onClear={clearSelection} currentTab="activity" />
+          <TeamMemberSelector 
+            sharedOwners={sharedOwners} 
+            selectedOwnerIds={selectedOwnerIds} 
+            onToggleOwner={toggleOwnerSelection} 
+            onSelectAll={selectAllOwners} 
+            onClear={clearSelection} 
+            currentTab="activity"
+            prospectCounts={prospectCounts}
+          />
         </div>
       </header>
 
@@ -230,7 +245,9 @@ export default function Home() {
               </Popover>
             </div>
             
-            {activities.length === 0 ? <div className="text-center py-12 flex-1 flex flex-col items-center justify-center">
+            {showSkeleton ? (
+              <ActivitySkeleton />
+            ) : activities.length === 0 ? <div className="text-center py-12 flex-1 flex flex-col items-center justify-center">
                 <Clock className="h-12 w-12 mx-auto text-muted-foreground/30 mb-3" />
                 <p className="text-sm text-muted-foreground">
                   No activity for this date
