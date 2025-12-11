@@ -300,6 +300,7 @@ export type Database = {
           id: string
           instagram: string | null
           name: string
+          notes: string | null
           phone: string
           priority: string | null
           profession: string | null
@@ -308,6 +309,7 @@ export type Database = {
           sort_order: number | null
           updated_at: string
           user_id: string
+          why_need: string | null
         }
         Insert: {
           action_taken?: string | null
@@ -322,6 +324,7 @@ export type Database = {
           id?: string
           instagram?: string | null
           name: string
+          notes?: string | null
           phone: string
           priority?: string | null
           profession?: string | null
@@ -330,6 +333,7 @@ export type Database = {
           sort_order?: number | null
           updated_at?: string
           user_id: string
+          why_need?: string | null
         }
         Update: {
           action_taken?: string | null
@@ -344,6 +348,7 @@ export type Database = {
           id?: string
           instagram?: string | null
           name?: string
+          notes?: string | null
           phone?: string
           priority?: string | null
           profession?: string | null
@@ -352,6 +357,7 @@ export type Database = {
           sort_order?: number | null
           updated_at?: string
           user_id?: string
+          why_need?: string | null
         }
         Relationships: [
           {

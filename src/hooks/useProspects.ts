@@ -84,6 +84,8 @@ export function useProspects() {
         gender: (prospect as any).gender || null,
         instagram: (prospect as any).instagram || null,
         profession: (prospect as any).profession || null,
+        why_need: prospect.why_need || null,
+        notes: prospect.notes || null,
         sheet_id: prospect.sheet_id || null,
         batch_date: prospect.batch_date || new Date().toISOString().split('T')[0],
       })
@@ -141,6 +143,8 @@ export function useProspects() {
     }
     if (updates.prospect_status !== undefined) dbUpdates.prospect_status = updates.prospect_status;
     if (updates.priority !== undefined) dbUpdates.priority = updates.priority;
+    if (updates.why_need !== undefined) dbUpdates.why_need = updates.why_need;
+    if (updates.notes !== undefined) dbUpdates.notes = updates.notes;
 
     // If no database fields to update, just return
     if (Object.keys(dbUpdates).length === 0) {
@@ -228,6 +232,8 @@ export function useProspects() {
         gender: (prospect as any).gender || null,
         instagram: (prospect as any).instagram || null,
         profession: (prospect as any).profession || null,
+        why_need: prospect.why_need || null,
+        notes: prospect.notes || null,
         sheet_id: prospect.sheet_id || null,
         batch_date: prospect.batch_date || new Date().toISOString().split('T')[0],
         funnel_stage: prospect.funnel_stage || null,
