@@ -208,11 +208,11 @@ function TableContent({
               <td colSpan={COLUMN_ORDER.length + (selectionMode.active ? 1 : 0)} className="py-12 text-center bg-card">
                 <Users className="h-10 w-10 mx-auto text-muted-foreground/40 mb-3" />
                 <p className="text-sm font-medium text-muted-foreground mb-1">
-                  {prospects.length === 0 ? "No prospects yet" : selectedSheetId ? "No prospects in this sheet" : "No prospects match your filters"}
+                  {prospects.length === 0 ? "No leads yet" : selectedSheetId ? "No leads in this sheet" : "No leads match your filters"}
                 </p>
                 <p className="text-xs text-muted-foreground/70 mb-3">
                   {prospects.length === 0 || (selectedSheetId && sheetFilteredProspects.length === 0) ? (
-                    "Import Excel or Add Prospect to get started"
+                    "Import Excel or Add Lead to get started"
                   ) : (
                     <button 
                       onClick={() => setFilters({
@@ -855,7 +855,7 @@ export function ProspectTable({
 
       {/* Footer info */}
       <div className="flex items-center justify-between text-xs text-muted-foreground px-1">
-        <span>{filteredProspects.length} prospects</span>
+        <span>{filteredProspects.length} leads</span>
         <Button variant="ghost" size="sm" onClick={exportToExcel} disabled={exporting || filteredProspects.length === 0} className="h-7 text-xs">
           {exporting ? 'Exporting...' : 'Export Excel'}
         </Button>
@@ -865,15 +865,15 @@ export function ProspectTable({
       <AlertDialog open={deleteConfirmOpen} onOpenChange={setDeleteConfirmOpen}>
         <AlertDialogContent className="bg-card border-border">
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete {selectedIds.size} prospects?</AlertDialogTitle>
+            <AlertDialogTitle>Delete {selectedIds.size} lead{selectedIds.size !== 1 ? 's' : ''}?</AlertDialogTitle>
             <AlertDialogDescription>
-              This will permanently remove {selectedIds.size} prospect{selectedIds.size !== 1 ? 's' : ''} from your list.
+              This will permanently remove {selectedIds.size} lead{selectedIds.size !== 1 ? 's' : ''} from your list.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction onClick={handleDeleteSelected} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-              Delete {selectedIds.size} prospect{selectedIds.size !== 1 ? 's' : ''}
+              Delete {selectedIds.size} lead{selectedIds.size !== 1 ? 's' : ''}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

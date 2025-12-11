@@ -128,7 +128,7 @@ export function InlineReportCard({ prospect, onUpdate, onDelete, onClose, colSpa
       if (Object.keys(updates).length > 0) {
         const result = await onUpdate(prospect.id, updates as any);
         if (result) {
-          toast.success('Prospect updated');
+          toast.success('Lead updated');
           setHasChanges(false);
         }
       }
@@ -144,7 +144,7 @@ export function InlineReportCard({ prospect, onUpdate, onDelete, onClose, colSpa
     try {
       const result = await onDelete(prospect.id);
       if (result) {
-        toast.success('Prospect deleted');
+        toast.success('Lead deleted');
         onClose();
       }
     } catch (error) {
@@ -158,14 +158,18 @@ export function InlineReportCard({ prospect, onUpdate, onDelete, onClose, colSpa
     return phone.replace(/[^0-9+]/g, '');
   };
 
-  const openWhatsApp = () => {
+  const openWhatsApp = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
     const cleanPhone = cleanPhoneNumber(prospect.phone);
-    window.location.href = `whatsapp://send?phone=${cleanPhone}`;
+    window.open(`https://wa.me/${cleanPhone}`, '_blank');
   };
 
-  const openCall = () => {
+  const openCall = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
     const cleanPhone = cleanPhoneNumber(prospect.phone);
-    window.location.href = `tel:${cleanPhone}`;
+    window.open(`tel:${cleanPhone}`, '_self');
   };
 
   const openInstagram = () => {
@@ -347,15 +351,15 @@ export function InlineReportCard({ prospect, onUpdate, onDelete, onClose, colSpa
                   className="h-8 px-3 gap-1.5 text-xs text-destructive hover:text-destructive hover:bg-destructive/10"
                 >
                   <Trash2 className="h-3 w-3" />
-                  Delete prospect
+                  Delete lead
                 </Button>
               </AlertDialogTrigger>
               <AlertDialogContent className="bg-card border-border">
                 <AlertDialogHeader>
-                  <AlertDialogTitle>Delete this prospect?</AlertDialogTitle>
-                  <AlertDialogDescription>
-                    This will permanently remove <strong>{prospect.name}</strong> and their data from Calling. This action cannot be undone.
-                  </AlertDialogDescription>
+                <AlertDialogTitle>Delete this lead?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  This will permanently remove <strong>{prospect.name}</strong> and their data from Calling. This action cannot be undone.
+                </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
                   <AlertDialogCancel>Cancel</AlertDialogCancel>
@@ -364,7 +368,7 @@ export function InlineReportCard({ prospect, onUpdate, onDelete, onClose, colSpa
                     disabled={isDeleting}
                     className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                   >
-                    {isDeleting ? 'Deleting...' : 'Delete prospect'}
+                    {isDeleting ? 'Deleting...' : 'Delete lead'}
                   </AlertDialogAction>
                 </AlertDialogFooter>
               </AlertDialogContent>

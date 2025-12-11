@@ -42,8 +42,8 @@ export function ProspectAnalytics({ prospects, isPro = true }: ProspectAnalytics
   const total = prospects.length || 1;
 
   const statCards = [
-    { title: 'Total Prospects', value: isPro ? stats.totalProspects : '–', icon: Users, gradient: 'from-blue-500/20 to-blue-600/10', iconColor: 'text-blue-500' },
-    { title: 'Good Prospects', value: isPro ? stats.positiveCount : '–', icon: UserCheck, gradient: 'from-green-500/20 to-green-600/10', iconColor: 'text-green-500' },
+    { title: 'Total Leads', value: isPro ? stats.totalProspects : '–', icon: Users, gradient: 'from-blue-500/20 to-blue-600/10', iconColor: 'text-blue-500' },
+    { title: 'Good Leads', value: isPro ? stats.positiveCount : '–', icon: UserCheck, gradient: 'from-green-500/20 to-green-600/10', iconColor: 'text-green-500' },
     { title: 'High Priority', value: isPro ? stats.highPriorityCount : '–', icon: AlertTriangle, gradient: 'from-red-500/20 to-red-600/10', iconColor: 'text-red-500' },
     { title: 'Level Up', value: isPro ? stats.levelUpCount : '–', icon: TrendingUp, gradient: 'from-purple-500/20 to-purple-600/10', iconColor: 'text-purple-500' },
   ];

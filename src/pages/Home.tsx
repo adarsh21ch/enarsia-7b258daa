@@ -140,10 +140,10 @@ export default function Home() {
   }, [user, authLoading, navigate]);
   const cleanPhoneNumber = (phone: string) => phone.replace(/[^0-9+]/g, '');
   const handleWhatsApp = (phone: string) => {
-    window.location.href = `whatsapp://send?phone=${cleanPhoneNumber(phone)}`;
+    window.open(`https://wa.me/${cleanPhoneNumber(phone)}`, '_blank');
   };
   const handleCall = (phone: string) => {
-    window.location.href = `tel:${cleanPhoneNumber(phone)}`;
+    window.open(`tel:${cleanPhoneNumber(phone)}`, '_self');
   };
   const isLoading = authLoading || prospectsLoading || isViewingTeam && sharedLoading;
   if (isLoading) {
@@ -157,7 +157,7 @@ export default function Home() {
   const getActivitiesForDate = () => {
     const prospectActivities = prospects.filter(p => isSameDay(parseISO(p.updated_at), activityDate)).map(p => ({
       id: p.id,
-      type: 'prospect' as const,
+      type: 'lead' as const,
       name: p.name,
       phone: p.phone,
       stage: p.funnel_stage,

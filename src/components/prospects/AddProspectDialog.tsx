@@ -65,7 +65,7 @@ export function AddProspectDialog({ onAdd }: AddProspectDialogProps) {
       </DialogTrigger>
       <DialogContent className="sm:max-w-md bg-card border-border">
         <DialogHeader>
-          <DialogTitle>Add New Prospect</DialogTitle>
+          <DialogTitle>Add New Lead</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
@@ -101,7 +101,7 @@ export function AddProspectDialog({ onAdd }: AddProspectDialogProps) {
               Cancel
             </Button>
             <Button type="submit" disabled={isSubmitting}>
-              {isSubmitting ? 'Adding...' : 'Add Prospect'}
+              {isSubmitting ? 'Adding...' : 'Add Lead'}
             </Button>
           </div>
         </form>

@@ -1,4 +1,4 @@
-// Follow Up Page - View prospects by tags (grouped into Responses, Stages, Quality)
+// Follow Up Page - View leads by tags (grouped into Responses, Stages, Quality)
 import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
@@ -199,7 +199,7 @@ export default function ListUp() {
   // Group prospects by their primary tag for display
   const prospectsByTag = useMemo(() => {
     if (!hasActiveFilters) {
-      return { 'All Prospects': filteredProspects };
+      return { 'All Leads': filteredProspects };
     }
 
     const grouped: Record<string, Prospect[]> = {};
@@ -220,7 +220,7 @@ export default function ListUp() {
     
     // If filters but no grouping yet, show all filtered
     if (Object.keys(grouped).length === 0) {
-      return { 'Filtered Prospects': filteredProspects };
+      return { 'Filtered Leads': filteredProspects };
     }
     
     return grouped;
@@ -256,11 +256,11 @@ export default function ListUp() {
 
   const handleWhatsApp = (phone: string) => {
     const cleanPhone = phone.replace(/\D/g, '');
-    window.location.href = `whatsapp://send?phone=${cleanPhone}`;
+    window.open(`https://wa.me/${cleanPhone}`, '_blank');
   };
 
   const handleCall = (phone: string) => {
-    window.location.href = `tel:${phone}`;
+    window.open(`tel:${phone}`, '_self');
   };
 
   const isLoading = authLoading || prospectsLoading || (isViewingTeam && sharedLoading);
@@ -423,7 +423,7 @@ export default function ListUp() {
 
               {tagProspects.length === 0 ? (
                 <div className="py-8 text-center">
-                  <p className="text-sm text-muted-foreground">No prospects</p>
+                  <p className="text-sm text-muted-foreground">No leads</p>
                 </div>
               ) : (
                 <div className="divide-y divide-border/30">
@@ -527,7 +527,7 @@ export default function ListUp() {
             <div className="bg-card rounded-xl p-8 border border-border/50 text-center">
               <Tags className="h-12 w-12 mx-auto text-muted-foreground/30 mb-3" />
               <p className="text-sm text-muted-foreground mb-2">
-                No prospects match the selected tags
+                No leads match the selected tags
               </p>
               <Button variant="outline" size="sm" onClick={clearAllFilters}>
                 Clear Filters

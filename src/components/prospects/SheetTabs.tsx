@@ -55,7 +55,7 @@ export function SheetTabs({
   };
 
   const handleDeleteSheet = async (sheet: Sheet) => {
-    if (confirm(`Delete "${sheet.name}"? Prospects will be unassigned from this sheet.`)) {
+    if (confirm(`Delete "${sheet.name}"? Leads will be unassigned from this sheet.`)) {
       await onDeleteSheet(sheet.id);
     }
   };
@@ -253,9 +253,9 @@ export function SheetTabs({
       <AlertDialog open={!!deleteAllConfirmSheet} onOpenChange={(open) => !open && setDeleteAllConfirmSheet(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete all prospects in "{deleteAllConfirmSheet?.name}"?</AlertDialogTitle>
+            <AlertDialogTitle>Delete all leads in "{deleteAllConfirmSheet?.name}"?</AlertDialogTitle>
             <AlertDialogDescription>
-              This will delete all prospects in this sheet. This action can be undone using the Undo button.
+              This will delete all leads in this sheet. This action can be undone using the Undo button.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

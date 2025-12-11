@@ -74,12 +74,16 @@ export function ProspectRow({
 
   const cleanPhoneNumber = (phone: string) => phone.replace(/[^0-9+]/g, '');
 
-  const openWhatsApp = () => {
-    window.location.href = `whatsapp://send?phone=${cleanPhoneNumber(prospect.phone)}`;
+  const openWhatsApp = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    window.open(`https://wa.me/${cleanPhoneNumber(prospect.phone)}`, '_blank');
   };
 
-  const openCall = () => {
-    window.location.href = `tel:${cleanPhoneNumber(prospect.phone)}`;
+  const openCall = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    window.open(`tel:${cleanPhoneNumber(prospect.phone)}`, '_self');
   };
 
   const getActionDisplayValue = (): ExtendedActionTaken | null => {

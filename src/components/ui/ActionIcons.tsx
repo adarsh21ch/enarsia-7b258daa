@@ -83,7 +83,7 @@ export function WhatsAppButton({ onClick, className, size = 'md' }: IconButtonPr
 }
 
 // Compact inline versions for table cells
-export function CallIconButton({ onClick, className }: { onClick: () => void; className?: string }) {
+export function CallIconButton({ onClick, className }: { onClick: (e: React.MouseEvent) => void; className?: string }) {
   return (
     <button
       onClick={onClick}
@@ -98,7 +98,7 @@ export function CallIconButton({ onClick, className }: { onClick: () => void; cl
   );
 }
 
-export function WhatsAppIconButton({ onClick, className }: { onClick: () => void; className?: string }) {
+export function WhatsAppIconButton({ onClick, className }: { onClick: (e: React.MouseEvent) => void; className?: string }) {
   return (
     <button
       onClick={onClick}

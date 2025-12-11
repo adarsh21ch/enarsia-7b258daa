@@ -264,13 +264,13 @@ export function ImportExcelDialog({ onImport }: ImportExcelDialogProps) {
     });
 
     if (prospects.length === 0) {
-      setError('No valid prospects found. Please check that Name and Phone columns have valid data.');
+      setError('No valid leads found. Please check that Name and Phone columns have valid data.');
       setIsImporting(false);
       return;
     }
 
     const result = await onImport(prospects);
-    toast.success(`${result.imported} prospects imported, ${result.skipped + skippedCount} rows skipped`);
+    toast.success(`${result.imported} leads imported, ${result.skipped + skippedCount} rows skipped`);
     
     setIsImporting(false);
     resetState();
