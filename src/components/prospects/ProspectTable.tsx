@@ -12,7 +12,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
-import { Users, LayoutGrid, Table2, Undo2, Redo2, X, Trash2 } from 'lucide-react';
+import { Users, LayoutGrid, Table2, Undo2, Redo2, X, Trash2, Download, Loader2 } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
@@ -146,31 +146,28 @@ function TableContent({
 }: TableContentProps) {
   return (
     <div className="relative">
-      {/* Sheet tabs row */}
-      <div className="bg-card border-b border-border/50">
-        <SheetTabs 
-          sheets={sheets} 
-          selectedSheetId={selectedSheetId} 
-          onSelectSheet={onSelectSheet} 
-          onAddSheet={onAddSheet} 
-          onUpdateSheet={handleUpdateSheetWithUndo} 
-          onDeleteSheet={onDeleteSheet} 
-          onEnterSelectMode={handleEnterSelectMode} 
-          onDeleteAllInSheet={handleDeleteAllInSheet} 
-        />
-      </div>
+      {/* Compact Sheet tabs row */}
+      <SheetTabs 
+        sheets={sheets} 
+        selectedSheetId={selectedSheetId} 
+        onSelectSheet={onSelectSheet} 
+        onAddSheet={onAddSheet} 
+        onUpdateSheet={handleUpdateSheetWithUndo} 
+        onDeleteSheet={onDeleteSheet} 
+        onEnterSelectMode={handleEnterSelectMode} 
+        onDeleteAllInSheet={handleDeleteAllInSheet} 
+      />
       
-      {/* Table - no horizontal scroll, fits viewport */}
+      {/* Compact Table */}
       <table className="w-full text-sm border-collapse bg-card table-fixed">
-        {/* Header row */}
         <thead>
-          <tr className="bg-muted text-xs font-semibold text-muted-foreground border-b border-border">
-            {/* Selection checkbox header */}
+          <tr className="bg-muted/70 text-[11px] font-semibold text-muted-foreground border-b border-border/50">
             {selectionMode.active && (
-              <th className="w-10 px-2 py-2.5 bg-muted">
+              <th className="w-8 px-1.5 py-1.5 bg-muted/70">
                 <Checkbox 
                   checked={selectedIds.size === selectionProspects.length && selectionProspects.length > 0} 
-                  onCheckedChange={handleSelectAll} 
+                  onCheckedChange={handleSelectAll}
+                  className="h-3.5 w-3.5"
                 />
               </th>
             )}
@@ -182,9 +179,9 @@ function TableContent({
                 <th 
                   key={columnId}
                   className={cn(
-                    "px-2 py-2.5 text-left whitespace-nowrap bg-muted select-none",
+                    "px-1.5 py-1.5 text-left whitespace-nowrap bg-muted/70 select-none",
                     columnId === 'index' && "text-center",
-                    isMobile && "text-[11px] px-1.5"
+                    isMobile && "text-[10px] px-1"
                   )}
                   style={{ 
                     width: col.width, 
@@ -201,14 +198,13 @@ function TableContent({
             })}
           </tr>
         </thead>
-        {/* Table body */}
         <tbody>
           {filteredProspects.length === 0 ? (
             <tr>
-              <td colSpan={COLUMN_ORDER.length + (selectionMode.active ? 1 : 0)} className="py-12 text-center bg-card">
-                <Users className="h-10 w-10 mx-auto text-muted-foreground/40 mb-3" />
-                <p className="text-sm font-medium text-muted-foreground mb-1">
-                  {prospects.length === 0 ? "No prospects yet" : selectedSheetId ? "No prospects in this sheet" : "No prospects match your filters"}
+              <td colSpan={COLUMN_ORDER.length + (selectionMode.active ? 1 : 0)} className="py-8 text-center bg-card">
+                <Users className="h-8 w-8 mx-auto text-muted-foreground/40 mb-2" />
+                <p className="text-xs font-medium text-muted-foreground mb-0.5">
+                  {prospects.length === 0 ? "No prospects yet" : selectedSheetId ? "No prospects in this sheet" : "No matches"}
                 </p>
                 <p className="text-xs text-muted-foreground/70 mb-3">
                   {prospects.length === 0 || (selectedSheetId && sheetFilteredProspects.length === 0) ? (
@@ -737,11 +733,11 @@ export function ProspectTable({
   }
 
   return (
-    <div className="space-y-3">
-      {/* Single Action Bar - Filters left, Actions right */}
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        {/* Left side - Filters */}
-        <div className="flex items-center gap-2 flex-wrap flex-1">
+    <div className="space-y-2">
+      {/* Compact Toolbar - Single row */}
+      <div className="flex items-center justify-between gap-2 px-1">
+        {/* Left: Search + Filter dropdown */}
+        <div className="flex items-center gap-1.5 flex-1 min-w-0">
           <ProspectFilters
             filters={filters}
             onFiltersChange={setFilters}
@@ -751,46 +747,59 @@ export function ProspectTable({
             showStagesFilter={!isCalling}
             showResponsesFilter={isCalling}
           />
-          {/* Filter tag button for funnel mode */}
-          {!isCalling && <ChangeFilterTagButton />}
         </div>
 
-        {/* Right side - Actions */}
-        <div className="flex items-center gap-2 shrink-0">
-          {/* Selection mode controls */}
+        {/* Center: Primary actions */}
+        <div className="flex items-center gap-1.5 shrink-0">
           {selectionMode.active ? (
-            <div className="flex items-center gap-2 bg-muted/50 rounded-lg px-3 py-1.5">
-              <span className="text-sm font-medium">{selectedIds.size} selected</span>
-              <Button variant="destructive" size="sm" onClick={() => setDeleteConfirmOpen(true)} disabled={selectedIds.size === 0}>
-                <Trash2 className="h-4 w-4 mr-1" />
-                Delete
+            <div className="flex items-center gap-1.5 bg-muted/60 rounded-lg px-2 py-1">
+              <span className="text-xs font-medium">{selectedIds.size}</span>
+              <Button variant="destructive" size="sm" onClick={() => setDeleteConfirmOpen(true)} disabled={selectedIds.size === 0} className="h-7 px-2 text-xs">
+                <Trash2 className="h-3.5 w-3.5" />
               </Button>
-              <Button variant="ghost" size="sm" onClick={handleExitSelectMode}>
-                <X className="h-4 w-4" />
+              <Button variant="ghost" size="icon" onClick={handleExitSelectMode} className="h-7 w-7">
+                <X className="h-3.5 w-3.5" />
               </Button>
             </div>
           ) : (
             <>
-              {/* Undo/Redo buttons */}
-              <div className="flex items-center gap-1">
-                <Button variant="ghost" size="icon" onClick={handleUndo} disabled={!canUndo} className="h-8 w-8">
-                  <Undo2 className="h-4 w-4" />
-                </Button>
-                <Button variant="ghost" size="icon" onClick={handleRedo} disabled={!canRedo} className="h-8 w-8">
-                  <Redo2 className="h-4 w-4" />
-                </Button>
-              </div>
-
-              {/* Import & Add buttons */}
-              <ImportExcelDialog onImport={handleImportProspects} />
-              <AddProspectDialog onAdd={handleAddProspect} />
+              {/* Filter tag button for funnel mode */}
+              {!isCalling && <ChangeFilterTagButton />}
+              {/* Import & Add buttons - only in calling mode */}
+              {isCalling && (
+                <>
+                  <ImportExcelDialog onImport={handleImportProspects} />
+                  <AddProspectDialog onAdd={handleAddProspect} />
+                </>
+              )}
             </>
           )}
         </div>
+
+        {/* Right: Secondary actions (Undo/Redo/Export) */}
+        {!selectionMode.active && (
+          <div className="flex items-center gap-0.5 shrink-0">
+            <Button variant="ghost" size="icon" onClick={handleUndo} disabled={!canUndo} className="h-7 w-7 text-muted-foreground hover:text-foreground">
+              <Undo2 className="h-3.5 w-3.5" />
+            </Button>
+            <Button variant="ghost" size="icon" onClick={handleRedo} disabled={!canRedo} className="h-7 w-7 text-muted-foreground hover:text-foreground">
+              <Redo2 className="h-3.5 w-3.5" />
+            </Button>
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              onClick={exportToExcel} 
+              disabled={exporting || filteredProspects.length === 0} 
+              className="h-7 w-7 text-muted-foreground hover:text-foreground"
+            >
+              {exporting ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Download className="h-3.5 w-3.5" />}
+            </Button>
+          </div>
+        )}
       </div>
 
-      {/* Table */}
-      <div className="bg-card rounded-xl border border-border/50 overflow-hidden shadow-sm">
+      {/* Table Card */}
+      <div className="bg-card rounded-lg border border-border/40 overflow-hidden shadow-sm">
         {enableDragAndDrop ? (
           <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleRowDragEnd}>
             <SortableContext items={filteredProspects.map(p => p.id)} strategy={verticalListSortingStrategy}>
@@ -854,12 +863,9 @@ export function ProspectTable({
         )}
       </div>
 
-      {/* Footer info */}
-      <div className="flex items-center justify-between text-xs text-muted-foreground px-1">
-        <span>{filteredProspects.length} prospects</span>
-        <Button variant="ghost" size="sm" onClick={exportToExcel} disabled={exporting || filteredProspects.length === 0} className="h-7 text-xs">
-          {exporting ? 'Exporting...' : 'Export Excel'}
-        </Button>
+      {/* Compact Footer */}
+      <div className="flex items-center justify-center text-[10px] text-muted-foreground py-1">
+        <span>{filteredProspects.length} prospect{filteredProspects.length !== 1 ? 's' : ''}</span>
       </div>
 
       {/* Delete confirmation dialog */}

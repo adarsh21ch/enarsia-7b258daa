@@ -43,11 +43,10 @@ export function ChangeFilterTagButton({ onTagChanged }: ChangeFilterTagButtonPro
         variant="outline"
         size="sm"
         onClick={handleOpen}
-        className="h-8 gap-1.5 text-xs font-medium"
+        className="h-8 gap-1 text-xs font-medium px-2"
       >
-        <Star className="h-3.5 w-3.5 text-yellow-500 fill-yellow-500" />
-        <span className="hidden sm:inline">Filter Tag:</span>
-        <span className="font-semibold">{activeTag || 'Not Set'}</span>
+        <Star className="h-3 w-3 text-yellow-500 fill-yellow-500" />
+        <span className="truncate max-w-[60px] sm:max-w-[80px]">{activeTag || 'Set Tag'}</span>
       </Button>
 
       <Dialog open={open} onOpenChange={setOpen}>
