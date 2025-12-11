@@ -5,14 +5,16 @@ import { StatusBadge, StageBadge, ActionBadge } from './StatusBadge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
+import { Badge } from '@/components/ui/badge';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
-import { MessageCircle, Phone, Trash2, Calendar as CalendarIcon, ChevronDown, MapPin, Target } from 'lucide-react';
+import { MessageCircle, Phone, Trash2, Calendar as CalendarIcon, ChevronDown, MapPin, Target, X, Tag } from 'lucide-react';
 import { format, parseISO, formatDistanceToNow } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { useActivityLogs } from '@/hooks/useActivityLogs';
 import { useCustomOptionsContext } from '@/contexts/CustomOptionsContext';
+import { useTrackingTags } from '@/hooks/useTrackingTags';
 
 interface MobileProspectCardProps {
   prospect: Prospect;
@@ -30,15 +32,26 @@ export function MobileProspectCard({ prospect, index, isCalling, onUpdate, onDel
     address: prospect.address || '',
     why_need: prospect.why_need || '',
     notes: prospect.notes || '',
+    personal_tags: prospect.personal_tags || [],
   });
   const [isDeleting, setIsDeleting] = useState(false);
+  const [newTag, setNewTag] = useState('');
   const { activities } = useActivityLogs();
   const { addOption, deleteOption, getOptionsForType, getCustomOptionsForType } = useCustomOptionsContext();
+  const { callingTrackingTags, stageTrackingTags } = useTrackingTags();
 
-  // Get combined options (cast to proper types)
-  const stageOptions = getOptionsForType('funnel_stage', FUNNEL_STAGES) as (typeof FUNNEL_STAGES[number])[];
-  const actionOptions = getOptionsForType('action_taken', EXTENDED_ACTIONS) as (typeof EXTENDED_ACTIONS[number])[];
+  // Use tracking tags if configured, otherwise fall back to custom options
+  const stageOptions = stageTrackingTags.length > 0 
+    ? stageTrackingTags 
+    : getOptionsForType('funnel_stage', FUNNEL_STAGES) as (typeof FUNNEL_STAGES[number])[];
+  const actionOptions = callingTrackingTags.length > 0 
+    ? callingTrackingTags 
+    : getOptionsForType('action_taken', EXTENDED_ACTIONS) as (typeof EXTENDED_ACTIONS[number])[];
   const statusOptions = getOptionsForType('prospect_status', STATUSES) as (typeof STATUSES[number])[];
+  
+  // Determine if we're using tracking tags
+  const useTrackingTagsForStage = stageTrackingTags.length > 0;
+  const useTrackingTagsForAction = callingTrackingTags.length > 0;
 
   // Only reset local data when switching to a different lead
   useEffect(() => {
@@ -48,6 +61,7 @@ export function MobileProspectCard({ prospect, index, isCalling, onUpdate, onDel
       address: prospect.address || '',
       why_need: prospect.why_need || '',
       notes: prospect.notes || '',
+      personal_tags: prospect.personal_tags || [],
     });
   }, [prospect.id]); // Only reset when lead ID changes
 
@@ -116,6 +130,21 @@ export function MobileProspectCard({ prospect, index, isCalling, onUpdate, onDel
     }
   };
 
+  // Personal tags management
+  const handleAddTag = () => {
+    if (!newTag.trim()) return;
+    const updatedTags = [...(localData.personal_tags || []), newTag.trim()];
+    setLocalData(prev => ({ ...prev, personal_tags: updatedTags }));
+    onUpdate(prospect.id, { personal_tags: updatedTags });
+    setNewTag('');
+  };
+
+  const handleRemoveTag = (tagToRemove: string) => {
+    const updatedTags = (localData.personal_tags || []).filter(t => t !== tagToRemove);
+    setLocalData(prev => ({ ...prev, personal_tags: updatedTags }));
+    onUpdate(prospect.id, { personal_tags: updatedTags });
+  };
+
   return (
     <div className="bg-card rounded-xl border border-border/50 shadow-sm overflow-hidden">
       {/* Header: Name + Phone + Age/Gender + Quick Actions */}
@@ -167,7 +196,7 @@ export function MobileProspectCard({ prospect, index, isCalling, onUpdate, onDel
         </div>
       </div>
 
-      {/* Status Chips Row (removed Priority) */}
+      {/* Status Chips Row - Tracking Tags */}
       <div className="px-4 py-3 flex flex-wrap items-center gap-2 bg-muted/10">
         {!isCalling && (
           <InlineSelect<FunnelStage>
@@ -175,25 +204,27 @@ export function MobileProspectCard({ prospect, index, isCalling, onUpdate, onDel
             options={stageOptions as FunnelStage[]}
             onChange={(value) => onUpdate(prospect.id, { funnel_stage: value })}
             renderValue={(value) => <StageBadge stage={value} />}
-            placeholder="Stage"
-            optionType="funnel_stage"
-            customOptions={getCustomOptionsForType('funnel_stage')}
-            onAddOption={addOption}
-            onDeleteOption={deleteOption}
+            placeholder="Stage (tracking)"
+            optionType={useTrackingTagsForStage ? undefined : "funnel_stage"}
+            customOptions={useTrackingTagsForStage ? [] : getCustomOptionsForType('funnel_stage')}
+            onAddOption={useTrackingTagsForStage ? undefined : addOption}
+            onDeleteOption={useTrackingTagsForStage ? undefined : deleteOption}
             defaultOptions={FUNNEL_STAGES}
+            hideAddNew={useTrackingTagsForStage}
           />
         )}
         <InlineSelect<ExtendedActionTaken>
           value={getActionDisplayValue()}
           options={(isCalling ? actionOptions : actionOptions.filter(a => a !== 'Enrollment')) as ExtendedActionTaken[]}
           onChange={handleActionChange}
-          placeholder="Response"
+          placeholder="Response (tracking)"
           renderValue={(value) => <ActionBadge action={value as any} />}
-          optionType="action_taken"
-          customOptions={getCustomOptionsForType('action_taken')}
-          onAddOption={addOption}
-          onDeleteOption={deleteOption}
+          optionType={useTrackingTagsForAction ? undefined : "action_taken"}
+          customOptions={useTrackingTagsForAction ? [] : getCustomOptionsForType('action_taken')}
+          onAddOption={useTrackingTagsForAction ? undefined : addOption}
+          onDeleteOption={useTrackingTagsForAction ? undefined : deleteOption}
           defaultOptions={EXTENDED_ACTIONS}
+          hideAddNew={useTrackingTagsForAction}
         />
         <InlineSelect<ProspectStatus>
           value={prospect.prospect_status}
@@ -316,6 +347,52 @@ export function MobileProspectCard({ prospect, index, isCalling, onUpdate, onDel
               placeholder="Call notes, action items..."
               className="min-h-[80px] text-sm resize-none"
             />
+          </div>
+
+          {/* Personal Tags (private to user) */}
+          <div className="space-y-2">
+            <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
+              <Tag className="h-3.5 w-3.5" />
+              Personal tags (private to you)
+            </h4>
+            <p className="text-[10px] text-muted-foreground">
+              Personal tags are your private notes and are not counted in TrackUp totals.
+            </p>
+            <div className="flex flex-wrap gap-1.5 mb-2">
+              {(localData.personal_tags || []).map((tag, i) => (
+                <Badge 
+                  key={i} 
+                  variant="secondary" 
+                  className="text-xs flex items-center gap-1 pr-1"
+                >
+                  {tag}
+                  <button
+                    onClick={() => handleRemoveTag(tag)}
+                    className="hover:bg-destructive/20 rounded-full p-0.5"
+                  >
+                    <X className="h-2.5 w-2.5" />
+                  </button>
+                </Badge>
+              ))}
+            </div>
+            <div className="flex gap-2">
+              <Input
+                value={newTag}
+                onChange={(e) => setNewTag(e.target.value)}
+                placeholder="Add a personal tag..."
+                className="h-8 text-sm flex-1"
+                onKeyDown={(e) => e.key === 'Enter' && handleAddTag()}
+              />
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="h-8"
+                onClick={handleAddTag}
+                disabled={!newTag.trim()}
+              >
+                Add
+              </Button>
+            </div>
           </div>
 
           {/* Recent Activity */}

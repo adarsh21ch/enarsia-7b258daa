@@ -145,6 +145,7 @@ export function useProspects() {
     if (updates.priority !== undefined) dbUpdates.priority = updates.priority;
     if (updates.why_need !== undefined) dbUpdates.why_need = updates.why_need;
     if (updates.notes !== undefined) dbUpdates.notes = updates.notes;
+    if (updates.personal_tags !== undefined) dbUpdates.personal_tags = updates.personal_tags;
 
     // If no database fields to update, just return
     if (Object.keys(dbUpdates).length === 0) {
@@ -240,6 +241,7 @@ export function useProspects() {
         action_taken: prospect.action_taken || null,
         prospect_status: prospect.prospect_status || null,
         priority: prospect.priority || null,
+        personal_tags: prospect.personal_tags || null,
       })
       .select()
       .single();

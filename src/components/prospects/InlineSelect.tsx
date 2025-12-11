@@ -27,6 +27,8 @@ interface InlineSelectProps<T extends string> {
   defaultOptions?: readonly string[];
   // Hide management UI (for use in table cells where management is in column header)
   hideManagement?: boolean;
+  // Hide "Add new" option entirely (for tracking tags that must use configured values only)
+  hideAddNew?: boolean;
 }
 
 export function InlineSelect<T extends string>({
@@ -42,6 +44,7 @@ export function InlineSelect<T extends string>({
   onDeleteOption,
   defaultOptions = [],
   hideManagement = false,
+  hideAddNew = false,
 }: InlineSelectProps<T>) {
   const [isAddingNew, setIsAddingNew] = useState(false);
   const [newValue, setNewValue] = useState('');
@@ -58,9 +61,9 @@ export function InlineSelect<T extends string>({
     }
   };
 
-  // Allow adding new options if optionType and onAddOption are provided
+  // Allow adding new options if optionType and onAddOption are provided, and hideAddNew is false
   // hideManagement only affects the gear/settings icon, not the "Add new" functionality
-  const canAddNew = optionType && onAddOption;
+  const canAddNew = optionType && onAddOption && !hideAddNew;
 
   // Handle selection - allow toggling (selecting same value deselects it)
   const handleValueChange = (v: string) => {

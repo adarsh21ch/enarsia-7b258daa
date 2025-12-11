@@ -8,6 +8,7 @@ import { CallIconButton, WhatsAppIconButton } from '@/components/ui/ActionIcons'
 import { ChevronDown } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useCustomOptionsContext } from '@/contexts/CustomOptionsContext';
+import { useTrackingTags } from '@/hooks/useTrackingTags';
 
 interface DragHandleProps {
   ref: (node: HTMLElement | null) => void;
@@ -53,9 +54,19 @@ export function ProspectRow({
   onToggleSelect,
 }: ProspectRowProps) {
   const { addOption, deleteOption, getOptionsForType, getCustomOptionsForType } = useCustomOptionsContext();
+  const { callingTrackingTags, stageTrackingTags } = useTrackingTags();
 
-  const stageOptions = getOptionsForType('funnel_stage', FUNNEL_STAGES) as FunnelStage[];
-  const actionOptions = getOptionsForType('action_taken', EXTENDED_ACTIONS) as ExtendedActionTaken[];
+  // Use tracking tags if configured, otherwise fall back to custom options
+  const stageOptions = stageTrackingTags.length > 0 
+    ? stageTrackingTags 
+    : getOptionsForType('funnel_stage', FUNNEL_STAGES) as FunnelStage[];
+  const actionOptions = callingTrackingTags.length > 0 
+    ? callingTrackingTags 
+    : getOptionsForType('action_taken', EXTENDED_ACTIONS) as ExtendedActionTaken[];
+  
+  // Determine if we're using tracking tags (which means no "Add new" option)
+  const useTrackingTagsForStage = stageTrackingTags.length > 0;
+  const useTrackingTagsForAction = callingTrackingTags.length > 0;
 
   const handleActionChange = (value: ExtendedActionTaken) => {
     const updates: Partial<Prospect> = {};
@@ -180,11 +191,12 @@ export function ProspectRow({
               onChange={handleActionChange} 
               placeholder="Select..." 
               renderValue={(value) => <ActionBadge action={value} />} 
-              optionType="action_taken" 
-              customOptions={getCustomOptionsForType('action_taken')} 
-              onAddOption={addOption} 
-              onDeleteOption={deleteOption} 
+              optionType={useTrackingTagsForAction ? undefined : "action_taken"}
+              customOptions={useTrackingTagsForAction ? [] : getCustomOptionsForType('action_taken')} 
+              onAddOption={useTrackingTagsForAction ? undefined : addOption} 
+              onDeleteOption={useTrackingTagsForAction ? undefined : deleteOption} 
               defaultOptions={EXTENDED_ACTIONS}
+              hideAddNew={useTrackingTagsForAction}
             />
           </td>
         );
@@ -203,11 +215,12 @@ export function ProspectRow({
               onChange={(value) => onUpdate(prospect.id, { funnel_stage: value })} 
               renderValue={(value) => <StageBadge stage={value} />} 
               placeholder="Select..." 
-              optionType="funnel_stage" 
-              customOptions={getCustomOptionsForType('funnel_stage')} 
-              onAddOption={addOption} 
-              onDeleteOption={deleteOption} 
+              optionType={useTrackingTagsForStage ? undefined : "funnel_stage"}
+              customOptions={useTrackingTagsForStage ? [] : getCustomOptionsForType('funnel_stage')} 
+              onAddOption={useTrackingTagsForStage ? undefined : addOption} 
+              onDeleteOption={useTrackingTagsForStage ? undefined : deleteOption} 
               defaultOptions={FUNNEL_STAGES}
+              hideAddNew={useTrackingTagsForStage}
             />
           </td>
         );

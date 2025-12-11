@@ -3,14 +3,16 @@ import { Prospect, FUNNEL_STAGES, ACTIONS, STATUSES, FunnelStage, ActionTaken, P
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
+import { Badge } from '@/components/ui/badge';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Button } from '@/components/ui/button';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { StageBadge, StatusBadge, ActionBadge } from './StatusBadge';
-import { X, Phone, MessageCircle, ChevronDown, Instagram, Clock, Trash2 } from 'lucide-react';
+import { X, Phone, MessageCircle, ChevronDown, Instagram, Clock, Trash2, Tag } from 'lucide-react';
 import { formatDistanceToNow, parseISO, format } from 'date-fns';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
+import { useTrackingTags } from '@/hooks/useTrackingTags';
 
 interface InlineReportCardProps {
   prospect: Prospect;
@@ -77,6 +79,12 @@ function EditableTag<T extends string>({
 export function InlineReportCard({ prospect, onUpdate, onDelete, onClose, colSpan }: InlineReportCardProps) {
   const [localData, setLocalData] = useState<Partial<Prospect>>({});
   const [isDeleting, setIsDeleting] = useState(false);
+  const [newTag, setNewTag] = useState('');
+  const { callingTrackingTags, stageTrackingTags } = useTrackingTags();
+
+  // Use tracking tags if configured, otherwise fall back to default
+  const actionOptions = callingTrackingTags.length > 0 ? callingTrackingTags : ACTIONS;
+  const stageOptions = stageTrackingTags.length > 0 ? stageTrackingTags : FUNNEL_STAGES;
 
   // Only reset local data when switching to a different lead
   useEffect(() => {
@@ -94,6 +102,7 @@ export function InlineReportCard({ prospect, onUpdate, onDelete, onClose, colSpa
       prospect_status: prospect.prospect_status,
       instagram: prospect.instagram || '',
       profession: prospect.profession || '',
+      personal_tags: prospect.personal_tags || [],
     });
   }, [prospect.id]); // Only reset when lead ID changes
 
@@ -161,6 +170,23 @@ export function InlineReportCard({ prospect, onUpdate, onDelete, onClose, colSpa
     }
   };
 
+  // Personal tags management
+  const handleAddTag = async () => {
+    if (!newTag.trim()) return;
+    const currentTags = (localData.personal_tags as string[]) || [];
+    const updatedTags = [...currentTags, newTag.trim()];
+    setLocalData(prev => ({ ...prev, personal_tags: updatedTags }));
+    await onUpdate(prospect.id, { personal_tags: updatedTags });
+    setNewTag('');
+  };
+
+  const handleRemoveTag = async (tagToRemove: string) => {
+    const currentTags = (localData.personal_tags as string[]) || [];
+    const updatedTags = currentTags.filter(t => t !== tagToRemove);
+    setLocalData(prev => ({ ...prev, personal_tags: updatedTags }));
+    await onUpdate(prospect.id, { personal_tags: updatedTags });
+  };
+
   return (
     <tr className="animate-in fade-in-0 slide-in-from-top-2 duration-200">
       <td colSpan={colSpan} className="p-0">
@@ -183,21 +209,21 @@ export function InlineReportCard({ prospect, onUpdate, onDelete, onClose, colSpa
                   </Button>
                 )}
               </div>
-              {/* Editable Funnel/Quality/Response tags */}
+              {/* Editable Tracking Tags (Response/Stage/Quality) */}
               <div className="flex items-center gap-1.5 flex-wrap">
                 <EditableTag
                   value={localData.action_taken as ActionTaken}
-                  options={ACTIONS}
+                  options={actionOptions}
                   onChange={(val) => handleFieldChange('action_taken', val)}
                   renderBadge={(val) => <ActionBadge action={val} />}
-                  placeholder="Response"
+                  placeholder="Response (tracking)"
                 />
                 <EditableTag
                   value={localData.funnel_stage as FunnelStage}
-                  options={FUNNEL_STAGES}
+                  options={stageOptions}
                   onChange={(val) => handleFieldChange('funnel_stage', val)}
                   renderBadge={(val) => <StageBadge stage={val} />}
-                  placeholder="Funnel"
+                  placeholder="Stage (tracking)"
                 />
                 <EditableTag
                   value={localData.prospect_status as ProspectStatus}
@@ -320,7 +346,53 @@ export function InlineReportCard({ prospect, onUpdate, onDelete, onClose, colSpa
             </div>
           </div>
 
-          {/* Row 4: Delete button */}
+          {/* Row 4: Personal Tags (private to user) */}
+          <div className="mt-2 pt-2 border-t border-border/30">
+            <div className="flex items-center gap-1.5 mb-1.5">
+              <Tag className="h-3 w-3 text-muted-foreground" />
+              <Label className="text-[10px] text-muted-foreground">Personal tags (private to you)</Label>
+            </div>
+            <p className="text-[9px] text-muted-foreground mb-2">
+              Personal tags are your private notes and are not counted in TrackUp totals.
+            </p>
+            <div className="flex flex-wrap gap-1 mb-2">
+              {((localData.personal_tags as string[]) || []).map((tag, i) => (
+                <Badge 
+                  key={i} 
+                  variant="secondary" 
+                  className="text-[10px] flex items-center gap-0.5 pr-0.5 h-5"
+                >
+                  {tag}
+                  <button
+                    onClick={() => handleRemoveTag(tag)}
+                    className="hover:bg-destructive/20 rounded-full p-0.5"
+                  >
+                    <X className="h-2 w-2" />
+                  </button>
+                </Badge>
+              ))}
+            </div>
+            <div className="flex gap-1.5">
+              <Input
+                value={newTag}
+                onChange={(e) => setNewTag(e.target.value)}
+                placeholder="Add personal tag..."
+                className="h-6 text-[10px] flex-1 max-w-[160px]"
+                onKeyDown={(e) => e.key === 'Enter' && handleAddTag()}
+              />
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="h-6 text-[10px] px-2"
+                onClick={handleAddTag}
+                disabled={!newTag.trim()}
+              >
+                Add
+              </Button>
+            </div>
+          </div>
+
+          {/* Row 5: Delete button */}
           <div className="mt-3 pt-2 border-t border-border/50">
             <AlertDialog>
               <AlertDialogTrigger asChild>
