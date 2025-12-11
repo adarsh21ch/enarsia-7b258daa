@@ -40,11 +40,11 @@ const TodoListIcon = ({ className }: { className?: string }) => (
   </svg>
 );
 
-// Tab order: Calling, Follow Up, Recent/Activity, To-Do List, Profile (avatar)
+// Tab order: Calling, Activity (Recent), Follow Up, To-Do List, Profile (avatar)
 const navItems = [
   { path: '/dashboard', icon: CallingIcon, label: 'Calling' },
+  { path: '/home', icon: ActivityIcon, label: 'Activity' },
   { path: '/listup', icon: FollowUpIcon, label: 'Follow Up' },
-  { path: '/home', icon: ActivityIcon, label: 'Recent' },
   { path: '/action', icon: TodoListIcon, label: 'To-Do List' },
   { path: '/profile', icon: null, label: 'Profile', isProfile: true },
 ];
