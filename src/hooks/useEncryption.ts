@@ -3,11 +3,18 @@ import { supabase } from '@/integrations/supabase/client';
 export function useEncryption() {
   const getValidSession = async () => {
     try {
-      // First try to get the current session
+      // Use getUser() to validate token with server (not just cached session)
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
+      
+      if (userError || !user) {
+        // No valid user - silently return null (expected on auth page)
+        return null;
+      }
+
+      // Get the session for the token
       const { data: { session }, error } = await supabase.auth.getSession();
       
       if (error || !session) {
-        // No session - don't log warning, this is expected on auth page
         return null;
       }
 
@@ -20,15 +27,6 @@ export function useEncryption() {
         const { data: refreshData, error: refreshError } = await supabase.auth.refreshSession();
         
         if (refreshError || !refreshData.session) {
-          // Session is invalid - sign out to force re-login
-          if (refreshError?.message?.includes('session_not_found') || 
-              refreshError?.message?.includes('Invalid') ||
-              refreshError?.message?.includes('Refresh Token Not Found') ||
-              refreshError?.status === 403 ||
-              refreshError?.status === 400) {
-            await supabase.auth.signOut();
-            return null;
-          }
           return null; // Return null for any refresh error
         }
         
