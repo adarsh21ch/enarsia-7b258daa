@@ -7,7 +7,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Button } from '@/components/ui/button';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { StageBadge, StatusBadge, ActionBadge } from './StatusBadge';
-import { Save, X, Phone, MessageCircle, ChevronDown, Instagram, Clock, Trash2 } from 'lucide-react';
+import { X, Phone, MessageCircle, ChevronDown, Instagram, Clock, Trash2 } from 'lucide-react';
 import { formatDistanceToNow, parseISO, format } from 'date-fns';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
@@ -76,10 +76,9 @@ function EditableTag<T extends string>({
 
 export function InlineReportCard({ prospect, onUpdate, onDelete, onClose, colSpan }: InlineReportCardProps) {
   const [localData, setLocalData] = useState<Partial<Prospect>>({});
-  const [isSaving, setIsSaving] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
-  const [hasChanges, setHasChanges] = useState(false);
 
+  // Only reset local data when switching to a different lead
   useEffect(() => {
     setLocalData({
       name: prospect.name,
@@ -96,46 +95,27 @@ export function InlineReportCard({ prospect, onUpdate, onDelete, onClose, colSpa
       instagram: prospect.instagram || '',
       profession: prospect.profession || '',
     });
-    setHasChanges(false);
-  }, [prospect]);
+  }, [prospect.id]); // Only reset when lead ID changes
 
   const handleFieldChange = (field: string, value: any) => {
     setLocalData(prev => ({ ...prev, [field]: value }));
-    setHasChanges(true);
   };
 
-  const handleSave = async () => {
-    if (!hasChanges) return;
+  // Auto-save on blur - saves individual field immediately
+  const handleFieldBlur = async (field: string) => {
+    const currentValue = localData[field as keyof typeof localData];
+    const originalValue = prospect[field as keyof Prospect];
     
-    setIsSaving(true);
-    try {
-      const updates: Partial<Prospect> = {};
-      
-      if (localData.name !== prospect.name) updates.name = localData.name;
-      if (localData.phone !== prospect.phone) updates.phone = localData.phone;
-      if ((localData.address || null) !== (prospect.address || null)) updates.address = localData.address || null;
-      if ((localData.age_or_dob || null) !== (prospect.age_or_dob || null)) updates.age_or_dob = localData.age_or_dob || null;
-      if ((localData.gender || null) !== (prospect.gender || null)) updates.gender = localData.gender || null;
-      if ((localData.why_need || null) !== (prospect.why_need || null)) updates.why_need = localData.why_need || null;
-      if ((localData.currently_doing || null) !== (prospect.currently_doing || null)) updates.currently_doing = localData.currently_doing || null;
-      if ((localData.notes || null) !== (prospect.notes || null)) updates.notes = localData.notes || null;
-      if (localData.funnel_stage !== prospect.funnel_stage) updates.funnel_stage = localData.funnel_stage;
-      if (localData.action_taken !== prospect.action_taken) updates.action_taken = localData.action_taken;
-      if (localData.prospect_status !== prospect.prospect_status) updates.prospect_status = localData.prospect_status;
-      if ((localData.instagram || null) !== (prospect.instagram || null)) updates.instagram = localData.instagram || null;
-      if ((localData.profession || null) !== (prospect.profession || null)) updates.profession = localData.profession || null;
-
-      if (Object.keys(updates).length > 0) {
-        const result = await onUpdate(prospect.id, updates as any);
-        if (result) {
-          toast.success('Lead updated');
-          setHasChanges(false);
-        }
+    // Normalize empty strings to null for comparison
+    const normalizedCurrent = currentValue === '' ? null : currentValue;
+    const normalizedOriginal = originalValue === '' ? null : originalValue;
+    
+    if (normalizedCurrent !== normalizedOriginal) {
+      try {
+        await onUpdate(prospect.id, { [field]: normalizedCurrent } as any);
+      } catch (error) {
+        toast.error('Failed to save');
       }
-    } catch (error) {
-      toast.error('Failed to update');
-    } finally {
-      setIsSaving(false);
     }
   };
 
@@ -243,6 +223,7 @@ export function InlineReportCard({ prospect, onUpdate, onDelete, onClose, colSpa
               <Input
                 value={localData.name || ''}
                 onChange={(e) => handleFieldChange('name', e.target.value)}
+                onBlur={() => handleFieldBlur('name')}
                 className="h-7 text-xs"
               />
             </div>
@@ -252,6 +233,7 @@ export function InlineReportCard({ prospect, onUpdate, onDelete, onClose, colSpa
               <Input
                 value={localData.phone || ''}
                 onChange={(e) => handleFieldChange('phone', e.target.value)}
+                onBlur={() => handleFieldBlur('phone')}
                 className="h-7 text-xs"
               />
             </div>
@@ -261,6 +243,7 @@ export function InlineReportCard({ prospect, onUpdate, onDelete, onClose, colSpa
               <Input
                 value={localData.address || ''}
                 onChange={(e) => handleFieldChange('address', e.target.value)}
+                onBlur={() => handleFieldBlur('address')}
                 className="h-7 text-xs"
                 placeholder="City, State"
               />
@@ -271,6 +254,7 @@ export function InlineReportCard({ prospect, onUpdate, onDelete, onClose, colSpa
               <Input
                 value={localData.age_or_dob || ''}
                 onChange={(e) => handleFieldChange('age_or_dob', e.target.value)}
+                onBlur={() => handleFieldBlur('age_or_dob')}
                 className="h-7 text-xs w-16"
                 placeholder="25"
               />
@@ -281,6 +265,7 @@ export function InlineReportCard({ prospect, onUpdate, onDelete, onClose, colSpa
               <Input
                 value={localData.profession || localData.currently_doing || ''}
                 onChange={(e) => handleFieldChange('profession', e.target.value)}
+                onBlur={() => handleFieldBlur('profession')}
                 className="h-7 text-xs"
                 placeholder="student / job"
               />
@@ -291,13 +276,14 @@ export function InlineReportCard({ prospect, onUpdate, onDelete, onClose, colSpa
               <Input
                 value={localData.instagram || ''}
                 onChange={(e) => handleFieldChange('instagram', e.target.value)}
+                onBlur={() => handleFieldBlur('instagram')}
                 className="h-7 text-xs"
                 placeholder="@username"
               />
             </div>
           </div>
 
-          {/* Row 3: Why/Need + Notes + Date Added + Actions */}
+          {/* Row 3: Why/Need + Notes + Date Added */}
           <div className="flex flex-col sm:flex-row gap-2">
             <div className="flex-1 grid grid-cols-2 gap-2">
               <div>
@@ -305,6 +291,7 @@ export function InlineReportCard({ prospect, onUpdate, onDelete, onClose, colSpa
                 <Textarea
                   value={localData.why_need || ''}
                   onChange={(e) => handleFieldChange('why_need', e.target.value)}
+                  onBlur={() => handleFieldBlur('why_need')}
                   placeholder="Reason for earning..."
                   className="min-h-[36px] h-9 text-xs resize-none"
                 />
@@ -314,12 +301,13 @@ export function InlineReportCard({ prospect, onUpdate, onDelete, onClose, colSpa
                 <Textarea
                   value={localData.notes || ''}
                   onChange={(e) => handleFieldChange('notes', e.target.value)}
+                  onBlur={() => handleFieldBlur('notes')}
                   placeholder="Call notes..."
                   className="min-h-[36px] h-9 text-xs resize-none"
                 />
               </div>
             </div>
-            <div className="flex items-end gap-2">
+            <div className="flex items-end">
               <div className="flex flex-col text-[10px] text-muted-foreground">
                 <span className="flex items-center gap-1">
                   <Clock className="h-3 w-3" />
@@ -329,15 +317,6 @@ export function InlineReportCard({ prospect, onUpdate, onDelete, onClose, colSpa
                   Updated {formatDistanceToNow(parseISO(prospect.updated_at), { addSuffix: true })}
                 </span>
               </div>
-              <Button 
-                onClick={handleSave} 
-                disabled={isSaving || !hasChanges}
-                size="sm"
-                className={cn("h-8 px-3 gap-1.5 text-xs", hasChanges && "bg-primary hover:bg-primary/90")}
-              >
-                <Save className="h-3 w-3" />
-                {isSaving ? 'Saving...' : hasChanges ? 'Save' : 'Saved'}
-              </Button>
             </div>
           </div>
 

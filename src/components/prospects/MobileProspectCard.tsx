@@ -40,6 +40,7 @@ export function MobileProspectCard({ prospect, index, isCalling, onUpdate, onDel
   const actionOptions = getOptionsForType('action_taken', EXTENDED_ACTIONS) as (typeof EXTENDED_ACTIONS[number])[];
   const statusOptions = getOptionsForType('prospect_status', STATUSES) as (typeof STATUSES[number])[];
 
+  // Only reset local data when switching to a different lead
   useEffect(() => {
     setLocalData({
       name: prospect.name,
@@ -48,7 +49,7 @@ export function MobileProspectCard({ prospect, index, isCalling, onUpdate, onDel
       why_need: prospect.why_need || '',
       notes: prospect.notes || '',
     });
-  }, [prospect]);
+  }, [prospect.id]); // Only reset when lead ID changes
 
   const prospectActivities = activities
     .filter(log => log.prospect_id === prospect.id)
