@@ -25,20 +25,25 @@ function usePullToRefresh(onRefresh: () => Promise<void>, threshold = 100) {
   const startScrollTop = useRef(0);
   const isPulling = useRef(false);
   const containerRef = useRef<HTMLDivElement>(null);
+
   const handleTouchStart = useCallback((e: TouchEvent) => {
     const container = containerRef.current;
     if (!container) return;
+    
     startY.current = e.touches[0].clientY;
     startScrollTop.current = container.scrollTop;
     isPulling.current = false;
   }, []);
+
   const handleTouchMove = useCallback((e: TouchEvent) => {
     if (!startY.current || isRefreshing) return;
+    
     const container = containerRef.current;
     if (!container) return;
+    
     const currentY = e.touches[0].clientY;
     const diff = currentY - startY.current;
-
+    
     // Only activate pull-to-refresh if:
     // 1. Started at scroll position 0
     // 2. Currently at scroll position 0 (didn't scroll down first)
@@ -53,103 +58,67 @@ function usePullToRefresh(onRefresh: () => Promise<void>, threshold = 100) {
       setPullDistance(0);
     }
   }, [isRefreshing, threshold]);
+
   const handleTouchEnd = useCallback(async () => {
     if (pullDistance >= threshold && !isRefreshing && isPulling.current) {
       setIsRefreshing(true);
-      try {
-        await onRefresh();
-      } finally {
-        setIsRefreshing(false);
-      }
+      try { await onRefresh(); } finally { setIsRefreshing(false); }
     }
     setPullDistance(0);
     startY.current = 0;
     startScrollTop.current = 0;
     isPulling.current = false;
   }, [pullDistance, threshold, isRefreshing, onRefresh]);
+
   useEffect(() => {
     const container = containerRef.current;
     if (!container) return;
-
+    
     // Use passive: false for touchmove to allow preventDefault if needed
-    container.addEventListener('touchstart', handleTouchStart, {
-      passive: true
-    });
-    container.addEventListener('touchmove', handleTouchMove, {
-      passive: true
-    });
-    container.addEventListener('touchend', handleTouchEnd, {
-      passive: true
-    });
+    container.addEventListener('touchstart', handleTouchStart, { passive: true });
+    container.addEventListener('touchmove', handleTouchMove, { passive: true });
+    container.addEventListener('touchend', handleTouchEnd, { passive: true });
+    
     return () => {
       container.removeEventListener('touchstart', handleTouchStart);
       container.removeEventListener('touchmove', handleTouchMove);
       container.removeEventListener('touchend', handleTouchEnd);
     };
   }, [handleTouchStart, handleTouchMove, handleTouchEnd]);
-  return {
-    containerRef,
-    isRefreshing,
-    pullDistance,
-    showIndicator: pullDistance > 30 || isRefreshing
-  };
+
+  return { containerRef, isRefreshing, pullDistance, showIndicator: pullDistance > 30 || isRefreshing };
 }
+
 export default function Dashboard() {
   const navigate = useNavigate();
-  const {
-    user,
-    loading: authLoading
-  } = useAuth();
-  const {
-    prospects: myProspects,
-    loading,
-    addProspect,
-    updateProspect,
-    deleteProspect,
-    bulkDeleteProspects,
-    restoreProspect,
-    restoreProspects,
-    importProspects,
-    reorderProspects,
-    refetch
-  } = useProspects();
-  const {
-    sharedOwners,
-    selectedOwnerIds,
-    toggleOwnerSelection,
-    clearSelection,
+  const { user, loading: authLoading } = useAuth();
+  const { prospects: myProspects, loading, addProspect, updateProspect, deleteProspect, bulkDeleteProspects, restoreProspect, restoreProspects, importProspects, reorderProspects, refetch } = useProspects();
+  const { 
+    sharedOwners, 
+    selectedOwnerIds, 
+    toggleOwnerSelection, 
+    clearSelection, 
     selectAllOwners,
-    prospects: sharedProspects,
+    prospects: sharedProspects, 
     loading: sharedLoading,
     initialLoading: sharedInitialLoading,
     error: sharedError,
     refetchProspects,
     prospectCounts
   } = useSharedProspects();
-  const {
-    sheets,
-    selectedSheetId,
-    setSelectedSheetId,
-    addSheet,
-    updateSheet,
-    deleteSheet,
-    refetch: refetchSheets
-  } = useSheets();
-
+  const { sheets, selectedSheetId, setSelectedSheetId, addSheet, updateSheet, deleteSheet, refetch: refetchSheets } = useSheets();
+  
   // Main tab state - Calling is default
   const [mainTab, setMainTab] = useState<'leads' | 'funnel'>('leads');
-
+  
   // Filter tag setup dialog
-  const {
-    needsSetup,
-    markSetupDone
-  } = useFilterTagSetup();
+  const { needsSetup, markSetupDone } = useFilterTagSetup();
   const [showFilterSetup, setShowFilterSetup] = useState(false);
 
   // Determine which prospects to show
   const isViewingTeam = selectedOwnerIds.length > 0;
   const prospects = isViewingTeam ? sharedProspects : myProspects;
-
+  
   // Show skeleton when switching to team view and initial loading
   const showSkeleton = isViewingTeam && sharedInitialLoading;
 
@@ -169,49 +138,43 @@ export default function Dashboard() {
       await Promise.all([refetch?.(), refetchSheets?.()]);
     }
   }, [refetch, refetchSheets, refetchProspects, isViewingTeam]);
-  const {
-    containerRef,
-    isRefreshing,
-    pullDistance,
-    showIndicator
-  } = usePullToRefresh(handleRefresh);
+  const { containerRef, isRefreshing, pullDistance, showIndicator } = usePullToRefresh(handleRefresh);
+
   useEffect(() => {
     if (!user && !authLoading) {
       navigate('/auth');
     }
   }, [user, authLoading, navigate]);
+
   if (authLoading) {
-    return <div className="min-h-screen flex items-center justify-center bg-background">
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>;
+      </div>
+    );
   }
+
   if (!user) return null;
   // Only show loading for data, not initial UI
-  const isLoading = loading || isViewingTeam && sharedLoading && !sharedInitialLoading;
-  const toggleOptions: [{
-    value: string;
-    label: string;
-    icon: typeof Phone;
-  }, {
-    value: string;
-    label: string;
-    icon: typeof Layers;
-  }] = [{
-    value: 'leads',
-    label: 'Calling',
-    icon: Phone
-  }, {
-    value: 'funnel',
-    label: 'Filter',
-    icon: Layers
-  }];
-  return <CustomOptionsProvider>
+  const isLoading = loading || (isViewingTeam && sharedLoading && !sharedInitialLoading);
+
+  const toggleOptions: [{ value: string; label: string; icon: typeof Phone }, { value: string; label: string; icon: typeof Layers }] = [
+    { value: 'leads', label: 'Calling', icon: Phone },
+    { value: 'funnel', label: 'Filter', icon: Layers },
+  ];
+
+  return (
+    <CustomOptionsProvider>
       <div className="app-layout bg-gradient-to-b from-background via-background to-muted/20">
         {/* Premium Header */}
         <header className="fixed-header z-40 bg-card/80 backdrop-blur-xl border-b border-border/50">
           <div className="flex items-center justify-between px-4 py-3">
             <div className="flex items-center gap-3">
-              <img src={nevoraLogo} alt="NevorAI Logo" className="h-10 w-10 rounded-xl object-cover shadow-md" />
+              <img 
+                src={nevoraLogo} 
+                alt="NevorAI Logo" 
+                className="h-10 w-10 rounded-xl object-cover shadow-md"
+              />
               <div>
               <h1 className="text-xl font-bold tracking-tight">
                   {mainTab === 'leads' ? 'Calling' : 'Filter'}
@@ -221,48 +184,108 @@ export default function Dashboard() {
                 </p>
               </div>
             </div>
-            <TeamMemberSelector sharedOwners={sharedOwners} selectedOwnerIds={selectedOwnerIds} onToggleOwner={toggleOwnerSelection} onSelectAll={selectAllOwners} onClear={clearSelection} currentTab="calling" prospectCounts={prospectCounts} />
+            <TeamMemberSelector
+              sharedOwners={sharedOwners}
+              selectedOwnerIds={selectedOwnerIds}
+              onToggleOwner={toggleOwnerSelection}
+              onSelectAll={selectAllOwners}
+              onClear={clearSelection}
+              currentTab="calling"
+              prospectCounts={prospectCounts}
+            />
           </div>
         </header>
 
-        <main ref={containerRef} className="scrollable-content relative" style={{
-        touchAction: 'pan-x pan-y'
-      }}>
+        <main ref={containerRef} className="scrollable-content relative" style={{ touchAction: 'pan-x pan-y' }}>
           <PullToRefreshIndicator isRefreshing={isRefreshing} pullDistance={pullDistance} showIndicator={showIndicator} />
           <div className="py-3 px-4 pb-28">
             {/* Team viewing indicator */}
-            {isViewingTeam && <div className="bg-primary/10 border border-primary/30 rounded-xl p-3 mb-3">
+            {isViewingTeam && (
+              <div className="bg-primary/10 border border-primary/30 rounded-xl p-3 mb-3">
                 <p className="text-sm text-primary font-medium">
                   Viewing team data (read-only)
                 </p>
-              </div>}
+              </div>
+            )}
             
             {/* Error state */}
-            {isViewingTeam && sharedError && <div className="bg-destructive/10 border border-destructive/30 rounded-xl p-4 mb-3">
+            {isViewingTeam && sharedError && (
+              <div className="bg-destructive/10 border border-destructive/30 rounded-xl p-4 mb-3">
                 <p className="text-sm text-destructive font-medium">{sharedError}</p>
-                <button onClick={() => refetchProspects?.()} className="text-xs text-destructive underline mt-2">
+                <button 
+                  onClick={() => refetchProspects?.()} 
+                  className="text-xs text-destructive underline mt-2"
+                >
                   Try again
                 </button>
-              </div>}
+              </div>
+            )}
             
             {/* Show skeleton when loading team data initially */}
-            {showSkeleton ? <ProspectTableSkeleton /> : mainTab === 'leads' ? <ProspectTable prospects={prospects} loading={isLoading} onAdd={isViewingTeam ? async () => null : addProspect} onUpdate={isViewingTeam ? async () => null : updateProspect} onDelete={isViewingTeam ? async () => false : deleteProspect} onBulkDelete={isViewingTeam ? undefined : bulkDeleteProspects} onRestoreProspect={isViewingTeam ? undefined : restoreProspect} onRestoreProspects={isViewingTeam ? undefined : restoreProspects} onImport={isViewingTeam ? async () => ({
-            imported: 0,
-            skipped: 0
-          }) : importProspects} onReorderProspects={isViewingTeam ? undefined : reorderProspects} sheets={sheets} selectedSheetId={selectedSheetId} onSelectSheet={setSelectedSheetId} onAddSheet={addSheet} onUpdateSheet={updateSheet} onDeleteSheet={deleteSheet} filterMode="calling" subFilter="all" /> : <ProspectTable prospects={prospects} loading={isLoading} onAdd={isViewingTeam ? async () => null : addProspect} onUpdate={isViewingTeam ? async () => null : updateProspect} onDelete={isViewingTeam ? async () => false : deleteProspect} onBulkDelete={isViewingTeam ? undefined : bulkDeleteProspects} onRestoreProspect={isViewingTeam ? undefined : restoreProspect} onRestoreProspects={isViewingTeam ? undefined : restoreProspects} onImport={isViewingTeam ? async () => ({
-            imported: 0,
-            skipped: 0
-          }) : importProspects} onReorderProspects={isViewingTeam ? undefined : reorderProspects} sheets={sheets} selectedSheetId={selectedSheetId} onSelectSheet={setSelectedSheetId} onAddSheet={addSheet} onUpdateSheet={updateSheet} onDeleteSheet={deleteSheet} filterMode="funnel" subFilter="all" />}
+            {showSkeleton ? (
+              <ProspectTableSkeleton />
+            ) : mainTab === 'leads' ? (
+              <ProspectTable
+                prospects={prospects}
+                loading={isLoading}
+                onAdd={isViewingTeam ? async () => null : addProspect}
+                onUpdate={isViewingTeam ? async () => null : updateProspect}
+                onDelete={isViewingTeam ? async () => false : deleteProspect}
+                onBulkDelete={isViewingTeam ? undefined : bulkDeleteProspects}
+                onRestoreProspect={isViewingTeam ? undefined : restoreProspect}
+                onRestoreProspects={isViewingTeam ? undefined : restoreProspects}
+                onImport={isViewingTeam ? async () => ({ imported: 0, skipped: 0 }) : importProspects}
+                onReorderProspects={isViewingTeam ? undefined : reorderProspects}
+                sheets={sheets}
+                selectedSheetId={selectedSheetId}
+                onSelectSheet={setSelectedSheetId}
+                onAddSheet={addSheet}
+                onUpdateSheet={updateSheet}
+                onDeleteSheet={deleteSheet}
+                filterMode="calling"
+                subFilter="all"
+              />
+            ) : (
+              <ProspectTable
+                prospects={prospects}
+                loading={isLoading}
+                onAdd={isViewingTeam ? async () => null : addProspect}
+                onUpdate={isViewingTeam ? async () => null : updateProspect}
+                onDelete={isViewingTeam ? async () => false : deleteProspect}
+                onBulkDelete={isViewingTeam ? undefined : bulkDeleteProspects}
+                onRestoreProspect={isViewingTeam ? undefined : restoreProspect}
+                onRestoreProspects={isViewingTeam ? undefined : restoreProspects}
+                onImport={isViewingTeam ? async () => ({ imported: 0, skipped: 0 }) : importProspects}
+                onReorderProspects={isViewingTeam ? undefined : reorderProspects}
+                sheets={sheets}
+                selectedSheetId={selectedSheetId}
+                onSelectSheet={setSelectedSheetId}
+                onAddSheet={addSheet}
+                onUpdateSheet={updateSheet}
+                onDeleteSheet={deleteSheet}
+                filterMode="funnel"
+                subFilter="all"
+              />
+            )}
           </div>
         </main>
 
         {/* Fixed Bottom View Toggle */}
-        <BottomViewToggle options={toggleOptions} value={mainTab} onChange={handleTabChange} />
+        <BottomViewToggle
+          options={toggleOptions}
+          value={mainTab}
+          onChange={handleTabChange}
+        />
 
-        <BottomNav className="py-[15px]" />
+        <BottomNav />
 
         {/* Filter Tag Setup Dialog */}
-        <FilterTagSetupDialog open={showFilterSetup} onOpenChange={setShowFilterSetup} onComplete={markSetupDone} />
+        <FilterTagSetupDialog
+          open={showFilterSetup}
+          onOpenChange={setShowFilterSetup}
+          onComplete={markSetupDone}
+        />
       </div>
-    </CustomOptionsProvider>;
+    </CustomOptionsProvider>
+  );
 }
