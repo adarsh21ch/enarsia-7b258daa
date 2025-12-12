@@ -11,14 +11,12 @@ import { TeamMemberSelector } from '@/components/team/TeamMemberSelector';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
+import { SearchBar } from '@/components/ui/SearchBar';
 import { Loader2, CheckCircle, Trash2, Edit2, Send, X, Check, Plus, User } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 import { cn } from '@/lib/utils';
 import nevoraLogo from '@/assets/nevorai-logo.jpeg';
 import { toast } from 'sonner';
-
-// Data view persistence key
-const DATA_VIEW_KEY = 'neverai_todo_data_view';
 
 // Pull-to-refresh hook
 function usePullToRefresh(onRefresh: () => Promise<void>, threshold = 80) {
@@ -77,17 +75,10 @@ export default function TodoUp() {
   const [newTodoInput, setNewTodoInput] = useState('');
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editingTitle, setEditingTitle] = useState('');
+  const [searchQuery, setSearchQuery] = useState('');
   
-  // Data view state with persistence
-  const [isViewingTeam, setIsViewingTeam] = useState(() => {
-    const saved = localStorage.getItem(DATA_VIEW_KEY);
-    return saved === 'team';
-  });
-
-  // Persist data view preference
-  useEffect(() => {
-    localStorage.setItem(DATA_VIEW_KEY, isViewingTeam ? 'team' : 'my');
-  }, [isViewingTeam]);
+  // Data view state - derived from selectedOwnerIds (consistent with other tabs)
+  const isViewingTeam = selectedOwnerIds.length > 0;
 
   // Pull-to-refresh
   const handleRefresh = useCallback(async () => {
@@ -150,14 +141,25 @@ export default function TodoUp() {
   if (!user) return null;
 
   // Get the active todos based on view mode
-  const activeTodos = isViewingTeam ? teamTodos : todos;
+  // When viewing team: filter teamTodos to only selected team members
+  const getFilteredTeamTodos = () => {
+    if (selectedOwnerIds.length === 0) return [];
+    return teamTodos.filter(todo => selectedOwnerIds.includes(todo.user_id));
+  };
+  
+  const activeTodos = isViewingTeam ? getFilteredTeamTodos() : todos;
   const isLoading = isViewingTeam ? teamTodosLoading : todosLoading;
 
+  // Apply search filter
+  const filteredTodos = searchQuery.trim() 
+    ? activeTodos.filter(t => t.title.toLowerCase().includes(searchQuery.toLowerCase()))
+    : activeTodos;
+
   // Separate completed and pending todos, sort descending by created_at (most recent at top)
-  const pendingTodos = activeTodos
+  const pendingTodos = filteredTodos
     .filter(t => !t.completed)
     .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
-  const completedTodos = activeTodos
+  const completedTodos = filteredTodos
     .filter(t => t.completed)
     .sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime());
 
@@ -181,14 +183,8 @@ export default function TodoUp() {
             sharedOwners={sharedOwners}
             selectedOwnerIds={selectedOwnerIds}
             onToggleOwner={toggleOwnerSelection}
-            onSelectAll={() => {
-              selectAllOwners();
-              setIsViewingTeam(true);
-            }}
-            onClear={() => {
-              clearSelection();
-              setIsViewingTeam(false);
-            }}
+            onSelectAll={selectAllOwners}
+            onClear={clearSelection}
             currentTab="todo"
             prospectCounts={prospectCounts}
           />
@@ -198,6 +194,15 @@ export default function TodoUp() {
       <main ref={containerRef} className="scrollable-content relative pb-24">
         <PullToRefreshIndicator isRefreshing={isRefreshing} pullDistance={pullDistance} showIndicator={showIndicator} />
         <div className="container py-3 px-4 space-y-4">
+          {/* WhatsApp-style Search Bar */}
+          <div className="mb-1">
+            <SearchBar 
+              value={searchQuery}
+              onChange={setSearchQuery}
+              placeholder="Search to-do items..."
+            />
+          </div>
+
           {/* To-Do List */}
           <div className="bg-white dark:bg-card rounded-xl border border-border/40 shadow-sm overflow-hidden">
             {/* Header row */}
@@ -215,16 +220,24 @@ export default function TodoUp() {
               <div className="flex justify-center py-8">
                 <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
               </div>
-            ) : activeTodos.length === 0 ? (
+            ) : filteredTodos.length === 0 ? (
               <div className="py-12 px-4 text-center">
                 <CheckCircle className="h-12 w-12 mx-auto text-muted-foreground/30 mb-3" />
                 <p className="text-sm font-medium text-muted-foreground mb-1">
-                  {isViewingTeam ? 'No team tasks yet' : 'No tasks yet'}
+                  {searchQuery.trim() 
+                    ? 'No matching tasks' 
+                    : isViewingTeam 
+                      ? 'No team tasks yet' 
+                      : 'No tasks yet'}
                 </p>
                 <p className="text-xs text-muted-foreground/70 mb-4">
-                  {isViewingTeam ? 'Team members have no tasks' : 'Add your first to-do below'}
+                  {searchQuery.trim() 
+                    ? 'Try a different search term'
+                    : isViewingTeam 
+                      ? 'Team members have no tasks' 
+                      : 'Add your first to-do below'}
                 </p>
-                {!isViewingTeam && (
+                {!isViewingTeam && !searchQuery.trim() && (
                   <Button
                     variant="outline"
                     size="sm"

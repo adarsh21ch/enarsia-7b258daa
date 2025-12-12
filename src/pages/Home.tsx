@@ -13,6 +13,7 @@ import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
 import { Loader2, Clock, CalendarIcon, Phone } from 'lucide-react';
+import { SearchBar } from '@/components/ui/SearchBar';
 import { parseISO, format, isToday, isSameDay } from 'date-fns';
 import { cn } from '@/lib/utils';
 import nevoraLogo from '@/assets/nevorai-logo.jpeg';
@@ -117,6 +118,7 @@ export default function Home() {
     refetch: refetchTodos
   } = useTodos();
   const [activityDate, setActivityDate] = useState<Date>(new Date());
+  const [searchQuery, setSearchQuery] = useState('');
 
   // Determine which prospects to show
   const isViewingTeam = selectedOwnerIds.length > 0;
@@ -184,7 +186,17 @@ export default function Home() {
     }));
 
     // Combine and sort descending (most recent at top, oldest at bottom)
-    return [...prospectActivities, ...todoActivities].sort((a, b) => b.time.getTime() - a.time.getTime());
+    const all = [...prospectActivities, ...todoActivities].sort((a, b) => b.time.getTime() - a.time.getTime());
+    
+    // Apply search filter
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase();
+      return all.filter(a => 
+        a.name.toLowerCase().includes(query) || 
+        (a.phone && a.phone.includes(query))
+      );
+    }
+    return all;
   };
   const activities = getActivitiesForDate();
   return <div className="app-layout bg-gradient-to-b from-background via-background to-muted/20">
@@ -206,6 +218,15 @@ export default function Home() {
       <main ref={containerRef} className="scrollable-content relative flex flex-col">
         <PullToRefreshIndicator isRefreshing={isRefreshing} pullDistance={pullDistance} showIndicator={showIndicator} />
         <div className="container py-3 px-3 pb-20 flex-1 flex flex-col">
+          {/* WhatsApp-style Search Bar */}
+          <div className="mb-3">
+            <SearchBar 
+              value={searchQuery}
+              onChange={setSearchQuery}
+              placeholder="Search name, phone..."
+            />
+          </div>
+
           {/* Team viewing indicator */}
           {isViewingTeam && <div className="bg-primary/10 border border-primary/30 rounded-xl p-3 mb-3">
               <p className="text-sm text-primary font-medium">
@@ -240,10 +261,10 @@ export default function Home() {
             {showSkeleton ? <ActivitySkeleton /> : activities.length === 0 ? <div className="text-center py-12 flex-1 flex flex-col items-center justify-center">
                 <Clock className="h-12 w-12 mx-auto text-muted-foreground/30 mb-3" />
                 <p className="text-sm text-muted-foreground">
-                  No activity for this date
+                  {searchQuery.trim() ? 'No matching activities' : 'No activity for this date'}
                 </p>
                 <p className="text-xs text-muted-foreground/70 mt-1">
-                  Activities will appear here
+                  {searchQuery.trim() ? 'Try a different search term' : 'Activities will appear here'}
                 </p>
               </div> : <div className="flex-1 overflow-y-auto">
               {/* Clean vertical timeline - line connects between times only */}
