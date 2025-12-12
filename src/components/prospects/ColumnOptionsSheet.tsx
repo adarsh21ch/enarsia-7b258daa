@@ -24,7 +24,9 @@ export function ColumnOptionsSheet({
     addOption,
     deleteOption,
     updateOption,
-    updateFilterTagStatus
+    updateFilterTagStatus,
+    setActiveFilterTag,
+    getActiveFilterTag
   } = useCustomOptionsContext();
   const [open, setOpen] = useState(false);
   const [newValue, setNewValue] = useState('');
@@ -34,6 +36,7 @@ export function ColumnOptionsSheet({
 
   const customOptions = getCustomOptionsForType(columnType);
   const isResponseColumn = columnType === 'action_taken';
+  const activeFilterTag = getActiveFilterTag();
 
   const handleAddOption = async () => {
     if (!newValue.trim()) return;
@@ -69,8 +72,22 @@ export function ColumnOptionsSheet({
     setEditValue('');
   };
 
+  // Toggle filter tag for custom options
   const handleToggleFilterTag = async (id: string, currentStatus: boolean) => {
     await updateFilterTagStatus(id, !currentStatus);
+  };
+
+  // Set filter tag for default (tracking) options
+  const handleSetDefaultAsFilterTag = async (tagValue: string) => {
+    if (activeFilterTag === tagValue) {
+      // If already active, we could clear it, but for now just keep it
+      return;
+    }
+    await setActiveFilterTag(tagValue);
+  };
+
+  const isDefaultTagActiveFilter = (tagValue: string) => {
+    return activeFilterTag === tagValue;
   };
 
   return (
@@ -89,13 +106,44 @@ export function ColumnOptionsSheet({
         </DialogHeader>
         
         <div className="mt-4 space-y-4">
-          {/* Default Tags section first - read-only */}
+          {/* Filter tag hint - show at top for Response column */}
+          {isResponseColumn && (
+            <div className="flex items-center gap-2 p-2 rounded-lg bg-yellow-50 dark:bg-yellow-950/30 border border-yellow-200 dark:border-yellow-900">
+              <Star className="h-4 w-4 text-yellow-500 flex-shrink-0" />
+              <p className="text-xs text-yellow-700 dark:text-yellow-400">
+                Only ONE tag can be the Filter tag. Toggle the star to set it. Works for both Default and Custom tags.
+              </p>
+            </div>
+          )}
+
+          {/* Default Tags section first - read-only but can set as filter tag */}
           <div className="space-y-1">
             <p className="text-xs text-muted-foreground font-medium mb-2">Default Tags (from Profile → Tracking Tags)</p>
             {defaultOptions.length > 0 ? defaultOptions.map(opt => (
               <div key={opt} className="flex items-center justify-between p-2.5 rounded-md bg-muted/30">
-                <span className="text-sm">{opt}</span>
-                <span className="text-xs text-muted-foreground italic">Tracking tag</span>
+                <div className="flex items-center gap-2">
+                  <span className="text-sm">{opt}</span>
+                  {isResponseColumn && isDefaultTagActiveFilter(opt) && (
+                    <Star className="h-3.5 w-3.5 text-yellow-500 fill-yellow-500" />
+                  )}
+                </div>
+                <div className="flex items-center gap-2">
+                  {/* Filter Tag Toggle for Default Tags - Response column only */}
+                  {isResponseColumn && (
+                    <div className="flex items-center gap-1.5 px-2 py-1 rounded bg-muted/50">
+                      <Star className={cn(
+                        "h-3 w-3",
+                        isDefaultTagActiveFilter(opt) ? "text-yellow-500 fill-yellow-500" : "text-muted-foreground"
+                      )} />
+                      <Switch
+                        checked={isDefaultTagActiveFilter(opt)}
+                        onCheckedChange={() => handleSetDefaultAsFilterTag(opt)}
+                        className="h-4 w-7"
+                      />
+                    </div>
+                  )}
+                  <span className="text-xs text-muted-foreground italic">Tracking tag</span>
+                </div>
               </div>
             )) : (
               <p className="text-xs text-muted-foreground italic p-2">No tracking tags configured. Add them in Profile → Leader & Tracking Tags.</p>
@@ -120,16 +168,6 @@ export function ColumnOptionsSheet({
                 <Plus className="h-4 w-4" />
               </Button>
             </div>
-
-            {/* Filter tag hint for Response column */}
-            {isResponseColumn && customOptions.length > 0 && (
-              <div className="flex items-center gap-2 p-2 rounded-lg bg-yellow-50 dark:bg-yellow-950/30 border border-yellow-200 dark:border-yellow-900 mb-2">
-                <Star className="h-4 w-4 text-yellow-500 flex-shrink-0" />
-                <p className="text-xs text-yellow-700 dark:text-yellow-400">
-                  Only ONE tag can be the Filter tag. Enabling it here will disable any other.
-                </p>
-              </div>
-            )}
 
             {customOptions.length > 0 ? customOptions.map(opt => (
                 <div key={opt.id} className="flex items-center justify-between p-2.5 rounded-md bg-muted/30">

@@ -12,6 +12,7 @@ import { BottomViewToggle } from '@/components/ui/BottomViewToggle';
 import { FilterTagSetupDialog, useFilterTagSetup } from '@/components/prospects/FilterTagSetupDialog';
 import { TeamMemberSelector } from '@/components/team/TeamMemberSelector';
 import { ProspectTableSkeleton } from '@/components/team/TeamDataSkeleton';
+import { SearchBar } from '@/components/ui/SearchBar';
 import { Loader2, Phone, Layers } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import nevoraLogo from '@/assets/nevorai-logo.jpeg';
@@ -111,6 +112,9 @@ export default function Dashboard() {
   // Main tab state - Calling is default
   const [mainTab, setMainTab] = useState<'leads' | 'funnel'>('leads');
   
+  // Search state
+  const [searchQuery, setSearchQuery] = useState('');
+  
   // Filter tag setup dialog
   const { needsSetup, markSetupDone } = useFilterTagSetup();
   const [showFilterSetup, setShowFilterSetup] = useState(false);
@@ -199,6 +203,15 @@ export default function Dashboard() {
         <main ref={containerRef} className="scrollable-content relative" style={{ touchAction: 'pan-x pan-y' }}>
           <PullToRefreshIndicator isRefreshing={isRefreshing} pullDistance={pullDistance} showIndicator={showIndicator} />
           <div className="py-3 px-4 pb-28">
+            {/* WhatsApp-style Search Bar */}
+            <div className="mb-3">
+              <SearchBar 
+                value={searchQuery}
+                onChange={setSearchQuery}
+                placeholder="Search name, phone..."
+              />
+            </div>
+            
             {/* Team viewing indicator */}
             {isViewingTeam && (
               <div className="bg-primary/10 border border-primary/30 rounded-xl p-3 mb-3">
@@ -244,6 +257,7 @@ export default function Dashboard() {
                 onDeleteSheet={deleteSheet}
                 filterMode="calling"
                 subFilter="all"
+                externalSearch={searchQuery}
               />
             ) : (
               <ProspectTable
@@ -265,6 +279,7 @@ export default function Dashboard() {
                 onDeleteSheet={deleteSheet}
                 filterMode="funnel"
                 subFilter="all"
+                externalSearch={searchQuery}
               />
             )}
           </div>

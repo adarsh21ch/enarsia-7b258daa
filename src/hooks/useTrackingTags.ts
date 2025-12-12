@@ -1,14 +1,19 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useProfile } from '@/hooks/useProfile';
+import { useCustomOptionsContext } from '@/contexts/CustomOptionsContext';
 
 interface TrackingTags {
   callingTrackingTags: string[];
   stageTrackingTags: string[];
+  // Combined: tracking tags + custom tags for dropdown options
+  callingAllOptions: string[];
+  stageAllOptions: string[];
   loading: boolean;
 }
 
 export function useTrackingTags(): TrackingTags {
   const { profile, loading: profileLoading, getLeaderStageConfig } = useProfile();
+  const { getCustomOptionsForType } = useCustomOptionsContext();
   const [callingTrackingTags, setCallingTrackingTags] = useState<string[]>([]);
   const [stageTrackingTags, setStageTrackingTags] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
@@ -54,9 +59,30 @@ export function useTrackingTags(): TrackingTags {
     }
   }, [profileLoading, fetchTrackingTags]);
 
+  // Get custom options for each type
+  const customActionOptions = getCustomOptionsForType('action_taken').map(o => o.option_value);
+  const customStageOptions = getCustomOptionsForType('funnel_stage').map(o => o.option_value);
+
+  // Combine tracking tags (Default Tags) + custom options (Custom Tags), removing duplicates
+  const callingAllOptions = [...callingTrackingTags];
+  customActionOptions.forEach(opt => {
+    if (!callingAllOptions.includes(opt)) {
+      callingAllOptions.push(opt);
+    }
+  });
+
+  const stageAllOptions = [...stageTrackingTags];
+  customStageOptions.forEach(opt => {
+    if (!stageAllOptions.includes(opt)) {
+      stageAllOptions.push(opt);
+    }
+  });
+
   return {
     callingTrackingTags,
     stageTrackingTags,
+    callingAllOptions,
+    stageAllOptions,
     loading: loading || profileLoading,
   };
 }

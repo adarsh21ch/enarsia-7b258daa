@@ -53,20 +53,25 @@ export function ProspectRow({
   isSelected = false,
   onToggleSelect,
 }: ProspectRowProps) {
-  const { addOption, deleteOption, getOptionsForType, getCustomOptionsForType } = useCustomOptionsContext();
-  const { callingTrackingTags, stageTrackingTags } = useTrackingTags();
+  const { addOption, deleteOption, getCustomOptionsForType } = useCustomOptionsContext();
+  const { callingTrackingTags, stageTrackingTags, callingAllOptions, stageAllOptions } = useTrackingTags();
 
-  // Use tracking tags if configured, otherwise fall back to custom options
+  // Use combined options (tracking tags + custom tags) for dropdowns
+  // If tracking tags are configured, use combined; otherwise fall back to custom options context
   const stageOptions = stageTrackingTags.length > 0 
-    ? stageTrackingTags 
-    : getOptionsForType('funnel_stage', FUNNEL_STAGES) as FunnelStage[];
+    ? stageAllOptions 
+    : getCustomOptionsForType('funnel_stage').map(o => o.option_value).length > 0
+      ? [...new Set([...FUNNEL_STAGES, ...getCustomOptionsForType('funnel_stage').map(o => o.option_value)])]
+      : FUNNEL_STAGES as unknown as string[];
+      
   const actionOptions = callingTrackingTags.length > 0 
-    ? callingTrackingTags 
-    : getOptionsForType('action_taken', EXTENDED_ACTIONS) as ExtendedActionTaken[];
+    ? callingAllOptions 
+    : getCustomOptionsForType('action_taken').map(o => o.option_value).length > 0
+      ? [...new Set([...EXTENDED_ACTIONS, ...getCustomOptionsForType('action_taken').map(o => o.option_value)])]
+      : EXTENDED_ACTIONS as unknown as string[];
   
-  // Determine if we're using tracking tags (which means no "Add new" option)
-  const useTrackingTagsForStage = stageTrackingTags.length > 0;
-  const useTrackingTagsForAction = callingTrackingTags.length > 0;
+  // Always allow adding custom tags (they go to custom_options table)
+  const canAddCustomTags = true;
 
   const handleActionChange = (value: ExtendedActionTaken) => {
     const updates: Partial<Prospect> = {};
@@ -191,12 +196,12 @@ export function ProspectRow({
               onChange={handleActionChange} 
               placeholder="Select..." 
               renderValue={(value) => <ActionBadge action={value} />} 
-              optionType={useTrackingTagsForAction ? undefined : "action_taken"}
-              customOptions={useTrackingTagsForAction ? [] : getCustomOptionsForType('action_taken')} 
-              onAddOption={useTrackingTagsForAction ? undefined : addOption} 
-              onDeleteOption={useTrackingTagsForAction ? undefined : deleteOption} 
+              optionType="action_taken"
+              customOptions={getCustomOptionsForType('action_taken')} 
+              onAddOption={addOption} 
+              onDeleteOption={deleteOption} 
               defaultOptions={EXTENDED_ACTIONS}
-              hideAddNew={useTrackingTagsForAction}
+              hideAddNew={false}
             />
           </td>
         );
@@ -215,12 +220,12 @@ export function ProspectRow({
               onChange={(value) => onUpdate(prospect.id, { funnel_stage: value })} 
               renderValue={(value) => <StageBadge stage={value} />} 
               placeholder="Select..." 
-              optionType={useTrackingTagsForStage ? undefined : "funnel_stage"}
-              customOptions={useTrackingTagsForStage ? [] : getCustomOptionsForType('funnel_stage')} 
-              onAddOption={useTrackingTagsForStage ? undefined : addOption} 
-              onDeleteOption={useTrackingTagsForStage ? undefined : deleteOption} 
+              optionType="funnel_stage"
+              customOptions={getCustomOptionsForType('funnel_stage')} 
+              onAddOption={addOption} 
+              onDeleteOption={deleteOption} 
               defaultOptions={FUNNEL_STAGES}
-              hideAddNew={useTrackingTagsForStage}
+              hideAddNew={false}
             />
           </td>
         );

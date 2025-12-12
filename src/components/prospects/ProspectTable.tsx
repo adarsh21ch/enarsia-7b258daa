@@ -59,6 +59,8 @@ interface ProspectTableProps {
   // Filter mode from parent
   filterMode: 'calling' | 'funnel';
   subFilter: 'all' | 'hot' | 'scheduled' | 'day1' | 'progress';
+  // External search from parent (optional - if provided, will be used instead of internal search)
+  externalSearch?: string;
 }
 
 // Simplified column configuration - only 3 columns, no horizontal scroll needed
@@ -281,7 +283,8 @@ export function ProspectTable({
   onUpdateSheet,
   onDeleteSheet,
   filterMode,
-  subFilter
+  subFilter,
+  externalSearch = ''
 }: ProspectTableProps) {
   const [filters, setFilters] = useState<Filters>({
     search: '',
@@ -290,6 +293,9 @@ export function ProspectTable({
     actions: [],
     incompleteOnly: false
   });
+  
+  // Use external search if provided, otherwise use internal filters.search
+  const effectiveSearch = externalSearch || filters.search;
   const [expandedRowId, setExpandedRowId] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<'card' | 'table'>('table');
   const [exporting, setExporting] = useState(false);
@@ -403,15 +409,15 @@ export function ProspectTable({
   // Apply search and other filters
   const filteredProspects = useMemo(() => {
     return sheetFilteredProspects.filter(prospect => {
-      const searchLower = filters.search.toLowerCase();
-      const matchesSearch = !filters.search || prospect.name.toLowerCase().includes(searchLower) || prospect.phone.toLowerCase().includes(searchLower) || prospect.notes?.toLowerCase().includes(searchLower);
+      const searchLower = effectiveSearch.toLowerCase();
+      const matchesSearch = !effectiveSearch || prospect.name.toLowerCase().includes(searchLower) || prospect.phone.toLowerCase().includes(searchLower) || prospect.notes?.toLowerCase().includes(searchLower);
       const matchesStage = filters.stages.length === 0 || prospect.funnel_stage && filters.stages.includes(prospect.funnel_stage);
       const matchesQuality = filters.qualities.length === 0 || prospect.prospect_status && filters.qualities.includes(prospect.prospect_status);
       const matchesAction = filters.actions.length === 0 || filters.actions.includes(prospect.action_taken as ExtendedActionTaken) || filters.actions.includes('Enrollment') && prospect.enrollment_status === 'Enrolled';
       const matchesIncomplete = !filters.incompleteOnly || !prospect.funnel_stage || !prospect.prospect_status || !prospect.action_taken;
       return matchesSearch && matchesStage && matchesQuality && matchesAction && matchesIncomplete;
     });
-  }, [sheetFilteredProspects, filters]);
+  }, [sheetFilteredProspects, filters, effectiveSearch]);
 
   const getFilterLabel = (): string => {
     if (filters.stages.length > 0) return filters.stages.join('_').replace(/\s+/g, '');
