@@ -9,6 +9,7 @@ import { BottomNav } from '@/components/layout/BottomNav';
 import { EditProfileDialog } from '@/components/profile/EditProfileDialog';
 import { ShareProfileDialog } from '@/components/profile/ShareProfileDialog';
 import { LeaderStagesSettings } from '@/components/profile/LeaderStagesSettings';
+import { LevelManagement } from '@/components/profile/LevelManagement';
 import { UpgradeCard } from '@/components/subscription/UpgradeCard';
 import { PullToRefreshIndicator } from '@/components/PullToRefreshIndicator';
 import { Button } from '@/components/ui/button';
@@ -190,6 +191,15 @@ export default function Profile() {
                   onClearLeaderHierarchy={clearLeaderHierarchy}
                   onGetLeaderStageConfig={getLeaderStageConfig}
                 />
+                
+                {/* Level Management for leaders */}
+                <div className="mt-4 pt-4 border-t border-border/30">
+                  <p className="text-sm font-medium mb-2">Team Levels</p>
+                  <p className="text-xs text-muted-foreground mb-3">
+                    Define levels for your team members. New members joining with your Leader ID will be assigned the default level.
+                  </p>
+                  <LevelManagement />
+                </div>
               </AccordionContent>
             </AccordionItem>
           </Accordion>

@@ -4,6 +4,9 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
+  SelectGroup,
+  SelectLabel,
+  SelectSeparator,
 } from '@/components/ui/select';
 import { cn } from '@/lib/utils';
 import { OptionType, CustomOption } from '@/hooks/useCustomOptions';
@@ -15,15 +18,17 @@ interface InlineSelectProps<T extends string> {
   placeholder?: string;
   className?: string;
   renderValue?: (value: T) => React.ReactNode;
-  // Custom option management (kept for compatibility but not used for inline add)
+  // Tracking vs Personal tags separation
+  trackingOptions?: readonly string[];
+  personalOptions?: readonly string[];
+  showTagSeparation?: boolean;
+  // Legacy props - kept for compatibility but not used
   optionType?: OptionType;
   customOptions?: CustomOption[];
   onAddOption?: (optionType: OptionType, value: string) => Promise<any>;
   onDeleteOption?: (optionId: string) => Promise<boolean>;
   defaultOptions?: readonly string[];
-  // Hide management UI (for use in table cells where management is in column header)
   hideManagement?: boolean;
-  // Hide "Add new" option entirely (for tracking tags that must use configured values only)
   hideAddNew?: boolean;
 }
 
@@ -34,6 +39,9 @@ export function InlineSelect<T extends string>({
   placeholder = 'Select...',
   className,
   renderValue,
+  trackingOptions = [],
+  personalOptions = [],
+  showTagSeparation = false,
 }: InlineSelectProps<T>) {
   // Handle selection - allow toggling (selecting same value deselects it)
   const handleValueChange = (v: string) => {
@@ -43,6 +51,85 @@ export function InlineSelect<T extends string>({
     } else {
       onChange(v as T);
     }
+  };
+
+  // If showing separation, render grouped options
+  const renderGroupedOptions = () => {
+    if (!showTagSeparation) {
+      return options.map((option) => (
+        <SelectItem 
+          key={option} 
+          value={option} 
+          className="text-xs min-h-[44px] sm:min-h-[32px] flex items-center"
+        >
+          <div className="flex items-center gap-2">
+            {renderValue ? renderValue(option) : option}
+          </div>
+        </SelectItem>
+      ));
+    }
+
+    return (
+      <>
+        {/* Tracking tags group */}
+        {trackingOptions.length > 0 && (
+          <SelectGroup>
+            <SelectLabel className="text-[10px] text-muted-foreground/70 px-2 py-1">
+              Tracking tags (from your leader)
+            </SelectLabel>
+            {trackingOptions.map((option) => (
+              <SelectItem 
+                key={option} 
+                value={option as string} 
+                className="text-xs min-h-[44px] sm:min-h-[32px] flex items-center"
+              >
+                <div className="flex items-center gap-2">
+                  {renderValue ? renderValue(option as T) : option}
+                </div>
+              </SelectItem>
+            ))}
+          </SelectGroup>
+        )}
+        
+        {/* Separator */}
+        {trackingOptions.length > 0 && personalOptions.length > 0 && (
+          <SelectSeparator className="my-1" />
+        )}
+        
+        {/* Personal tags group */}
+        {personalOptions.length > 0 && (
+          <SelectGroup>
+            <SelectLabel className="text-[10px] text-muted-foreground/70 px-2 py-1">
+              Personal tags (only you see these)
+            </SelectLabel>
+            {personalOptions.map((option) => (
+              <SelectItem 
+                key={option} 
+                value={option as string} 
+                className="text-xs min-h-[44px] sm:min-h-[32px] flex items-center"
+              >
+                <div className="flex items-center gap-2">
+                  {renderValue ? renderValue(option as T) : option}
+                </div>
+              </SelectItem>
+            ))}
+          </SelectGroup>
+        )}
+
+        {/* Fallback if both empty but options exist */}
+        {trackingOptions.length === 0 && personalOptions.length === 0 && options.map((option) => (
+          <SelectItem 
+            key={option} 
+            value={option} 
+            className="text-xs min-h-[44px] sm:min-h-[32px] flex items-center"
+          >
+            <div className="flex items-center gap-2">
+              {renderValue ? renderValue(option) : option}
+            </div>
+          </SelectItem>
+        ))}
+      </>
+    );
   };
 
   return (
@@ -67,17 +154,7 @@ export function InlineSelect<T extends string>({
           sideOffset={4}
           align="start"
         >
-          {options.map((option) => (
-            <SelectItem 
-              key={option} 
-              value={option} 
-              className="text-xs min-h-[44px] sm:min-h-[32px] flex items-center"
-            >
-              <div className="flex items-center gap-2">
-                {renderValue ? renderValue(option) : option}
-              </div>
-            </SelectItem>
-          ))}
+          {renderGroupedOptions()}
         </SelectContent>
       </Select>
     </div>

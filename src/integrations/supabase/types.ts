@@ -199,6 +199,39 @@ export type Database = {
         }
         Relationships: []
       }
+      leader_levels: {
+        Row: {
+          code: string | null
+          created_at: string
+          id: string
+          is_default: boolean
+          label: string
+          leader_id: string
+          position: number
+          updated_at: string
+        }
+        Insert: {
+          code?: string | null
+          created_at?: string
+          id?: string
+          is_default?: boolean
+          label: string
+          leader_id: string
+          position?: number
+          updated_at?: string
+        }
+        Update: {
+          code?: string | null
+          created_at?: string
+          id?: string
+          is_default?: boolean
+          label?: string
+          leader_id?: string
+          position?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       leader_member_aliases: {
         Row: {
           alias_name: string
@@ -282,6 +315,7 @@ export type Database = {
           display_name: string | null
           id: string
           leaders_id_of_my_leader: string | null
+          level_id: string | null
           neverai_id: string | null
           phone: string | null
           response_labels: Json | null
@@ -302,6 +336,7 @@ export type Database = {
           display_name?: string | null
           id?: string
           leaders_id_of_my_leader?: string | null
+          level_id?: string | null
           neverai_id?: string | null
           phone?: string | null
           response_labels?: Json | null
@@ -322,6 +357,7 @@ export type Database = {
           display_name?: string | null
           id?: string
           leaders_id_of_my_leader?: string | null
+          level_id?: string | null
           neverai_id?: string | null
           phone?: string | null
           response_labels?: Json | null
@@ -332,7 +368,15 @@ export type Database = {
           use_leader_stages?: boolean
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "profiles_level_id_fkey"
+            columns: ["level_id"]
+            isOneToOne: false
+            referencedRelation: "leader_levels"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       prospects: {
         Row: {
@@ -600,6 +644,10 @@ export type Database = {
       get_leader_stage_config: {
         Args: { target_leader_id: string }
         Returns: Json
+      }
+      get_or_create_default_level: {
+        Args: { p_leader_user_id: string }
+        Returns: string
       }
       get_user_by_neverai_id: {
         Args: { target_neverai_id: string }
