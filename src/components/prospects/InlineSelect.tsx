@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import {
   Select,
   SelectContent,
@@ -6,9 +5,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Plus } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { OptionType, CustomOption } from '@/hooks/useCustomOptions';
 
@@ -19,7 +15,7 @@ interface InlineSelectProps<T extends string> {
   placeholder?: string;
   className?: string;
   renderValue?: (value: T) => React.ReactNode;
-  // Custom option management
+  // Custom option management (kept for compatibility but not used for inline add)
   optionType?: OptionType;
   customOptions?: CustomOption[];
   onAddOption?: (optionType: OptionType, value: string) => Promise<any>;
@@ -38,38 +34,10 @@ export function InlineSelect<T extends string>({
   placeholder = 'Select...',
   className,
   renderValue,
-  optionType,
-  customOptions = [],
-  onAddOption,
-  onDeleteOption,
-  defaultOptions = [],
-  hideManagement = false,
-  hideAddNew = false,
 }: InlineSelectProps<T>) {
-  const [isAddingNew, setIsAddingNew] = useState(false);
-  const [newValue, setNewValue] = useState('');
-
-  const handleAddNew = async () => {
-    if (!newValue.trim() || !optionType || !onAddOption) return;
-    
-    const result = await onAddOption(optionType, newValue.trim());
-    if (result) {
-      setNewValue('');
-      setIsAddingNew(false);
-      // Auto-select the new option
-      onChange(newValue.trim() as T);
-    }
-  };
-
-  // Allow adding new options if optionType and onAddOption are provided, and hideAddNew is false
-  // hideManagement only affects the gear/settings icon, not the "Add new" functionality
-  const canAddNew = optionType && onAddOption && !hideAddNew;
-
   // Handle selection - allow toggling (selecting same value deselects it)
   const handleValueChange = (v: string) => {
-    if (v === '__add_new__') {
-      setIsAddingNew(true);
-    } else if (v === value) {
+    if (v === value) {
       // Toggle off - same value selected again, clear it
       onChange('' as T);
     } else {
@@ -110,49 +78,8 @@ export function InlineSelect<T extends string>({
               </div>
             </SelectItem>
           ))}
-          
-          {/* Add custom option - always available if optionType and onAddOption are provided */}
-          {canAddNew && (
-            <SelectItem 
-              value="__add_new__" 
-              className="text-xs text-accent border-t border-border mt-1 pt-1 min-h-[44px] sm:min-h-[32px]"
-            >
-              <div className="flex items-center gap-1.5">
-                <Plus className="h-3 w-3" />
-                <span>Add custom tag...</span>
-              </div>
-            </SelectItem>
-          )}
         </SelectContent>
       </Select>
-
-      {/* Add new dialog */}
-      {isAddingNew && (
-        <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/50 p-4" onClick={() => setIsAddingNew(false)}>
-          <div className="bg-card rounded-2xl border border-border/50 p-5 w-[calc(100%-2rem)] max-w-[320px] shadow-2xl" onClick={e => e.stopPropagation()}>
-            <p className="text-sm font-medium mb-3">Add custom tag</p>
-            <Input
-              value={newValue}
-              onChange={(e) => setNewValue(e.target.value)}
-              placeholder="Enter option name..."
-              className="h-11 sm:h-9 text-sm mb-3"
-              autoFocus
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') handleAddNew();
-                if (e.key === 'Escape') setIsAddingNew(false);
-              }}
-            />
-            <div className="flex gap-2 justify-end">
-              <Button variant="outline" size="sm" className="h-10 sm:h-9" onClick={() => setIsAddingNew(false)}>
-                Cancel
-              </Button>
-              <Button size="sm" className="h-10 sm:h-9" onClick={handleAddNew} disabled={!newValue.trim()}>
-                Add
-              </Button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

@@ -765,6 +765,7 @@ export function ProspectTable({
             showStagesFilter={!isCalling}
             showResponsesFilter={isCalling}
             filterTagButton={!isCalling ? <ChangeFilterTagButton /> : undefined}
+            hideSearch={!!externalSearch}
           />
         </div>
 

@@ -346,14 +346,14 @@ export function InlineReportCard({ prospect, onUpdate, onDelete, onClose, colSpa
             </div>
           </div>
 
-          {/* Row 4: Custom Tags (private to user) */}
+          {/* Row 4: Personal Tags (private to user) */}
           <div className="mt-2 pt-2 border-t border-border/30">
             <div className="flex items-center gap-1.5 mb-1.5">
               <Tag className="h-3 w-3 text-muted-foreground" />
-              <Label className="text-[10px] text-muted-foreground">Custom tags (private to you)</Label>
+              <Label className="text-[10px] text-muted-foreground">Personal tags (private to you)</Label>
             </div>
             <p className="text-[9px] text-muted-foreground mb-2">
-              Custom tags are your private notes and are not counted in TrackUp totals.
+              Personal tags are your private notes and are not counted in TrackUp totals.
             </p>
             <div className="flex flex-wrap gap-1 mb-2">
               {((localData.personal_tags as string[]) || []).map((tag, i) => (
@@ -376,7 +376,7 @@ export function InlineReportCard({ prospect, onUpdate, onDelete, onClose, colSpa
               <Input
                 value={newTag}
                 onChange={(e) => setNewTag(e.target.value)}
-                placeholder="Add custom tag..."
+                placeholder="Add personal tag..."
                 className="h-6 text-[10px] flex-1 max-w-[160px]"
                 onKeyDown={(e) => e.key === 'Enter' && handleAddTag()}
               />

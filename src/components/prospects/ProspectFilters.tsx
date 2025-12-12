@@ -24,6 +24,7 @@ interface ProspectFiltersProps {
   showStagesFilter?: boolean;
   showResponsesFilter?: boolean;
   filterTagButton?: React.ReactNode;
+  hideSearch?: boolean;
 }
 export function ProspectFilters({
   filters,
@@ -33,7 +34,8 @@ export function ProspectFilters({
   filteredCount = 0,
   showStagesFilter = true,
   showResponsesFilter = true,
-  filterTagButton
+  filterTagButton,
+  hideSearch = false
 }: ProspectFiltersProps) {
   const hasFilters = filters.search || filters.stages.length > 0 || filters.actions.length > 0;
   const isMobile = useIsMobile();
@@ -78,17 +80,26 @@ export function ProspectFilters({
     return `${filters.actions.length} Responses`;
   };
   return <div className="flex flex-col gap-2 w-full">
-      {/* Search bar row - with filter tag button beside it */}
-      <div className="flex items-center gap-2">
-        <div className="relative flex-1 sm:max-w-xs sm:flex-none">
-          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input placeholder="Search name, phone..." value={filters.search} onChange={e => onFiltersChange({
-          ...filters,
-          search: e.target.value
-        })} className="pl-8 h-10 sm:h-9 w-full mx-0" />
+      {/* Search bar row - with filter tag button beside it (hidden if hideSearch is true) */}
+      {!hideSearch && (
+        <div className="flex items-center gap-2">
+          <div className="relative flex-1 sm:max-w-xs sm:flex-none">
+            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input placeholder="Search name, phone..." value={filters.search} onChange={e => onFiltersChange({
+            ...filters,
+            search: e.target.value
+          })} className="pl-8 h-10 sm:h-9 w-full mx-0" />
+          </div>
+          {filterTagButton}
         </div>
-        {filterTagButton}
-      </div>
+      )}
+      
+      {/* Filter tag button shown standalone when search is hidden */}
+      {hideSearch && filterTagButton && (
+        <div className="flex items-center gap-2">
+          {filterTagButton}
+        </div>
+      )}
 
       {/* Filters row - scrollable on mobile */}
       <div className="flex gap-2 overflow-x-auto pb-1 -mx-1 px-1 sm:flex-wrap sm:overflow-visible">

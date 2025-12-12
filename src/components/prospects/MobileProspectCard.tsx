@@ -349,14 +349,14 @@ export function MobileProspectCard({ prospect, index, isCalling, onUpdate, onDel
             />
           </div>
 
-          {/* Custom Tags (private to user) */}
+          {/* Personal Tags (private to user) */}
           <div className="space-y-2">
             <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
               <Tag className="h-3.5 w-3.5" />
-              Custom tags (private to you)
+              Personal tags (private to you)
             </h4>
             <p className="text-[10px] text-muted-foreground">
-              Custom tags are your private notes and are not counted in TrackUp totals.
+              Personal tags are your private notes and are not counted in TrackUp totals.
             </p>
             <div className="flex flex-wrap gap-1.5 mb-2">
               {(localData.personal_tags || []).map((tag, i) => (
@@ -379,7 +379,7 @@ export function MobileProspectCard({ prospect, index, isCalling, onUpdate, onDel
               <Input
                 value={newTag}
                 onChange={(e) => setNewTag(e.target.value)}
-                placeholder="Add a custom tag..."
+                placeholder="Add a personal tag..."
                 className="h-8 text-sm flex-1"
                 onKeyDown={(e) => e.key === 'Enter' && handleAddTag()}
               />

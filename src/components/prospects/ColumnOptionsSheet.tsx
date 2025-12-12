@@ -111,14 +111,14 @@ export function ColumnOptionsSheet({
             <div className="flex items-center gap-2 p-2 rounded-lg bg-yellow-50 dark:bg-yellow-950/30 border border-yellow-200 dark:border-yellow-900">
               <Star className="h-4 w-4 text-yellow-500 flex-shrink-0" />
               <p className="text-xs text-yellow-700 dark:text-yellow-400">
-                Only ONE tag can be the Filter tag. Toggle the star to set it. Works for both Default and Custom tags.
+                Only ONE tag can be the Filter tag. Toggle the star to set it. Works for both Tracking and Personal tags.
               </p>
             </div>
           )}
 
-          {/* Default Tags section first - read-only but can set as filter tag */}
+          {/* Tracking Tags section first - read-only but can set as filter tag */}
           <div className="space-y-1">
-            <p className="text-xs text-muted-foreground font-medium mb-2">Default Tags (from Profile → Tracking Tags)</p>
+            <p className="text-xs text-muted-foreground font-medium mb-2">Tracking tags</p>
             {defaultOptions.length > 0 ? defaultOptions.map(opt => (
               <div key={opt} className="flex items-center justify-between p-2.5 rounded-md bg-muted/30">
                 <div className="flex items-center gap-2">
@@ -128,7 +128,7 @@ export function ColumnOptionsSheet({
                   )}
                 </div>
                 <div className="flex items-center gap-2">
-                  {/* Filter Tag Toggle for Default Tags - Response column only */}
+                  {/* Filter Tag Toggle for Tracking Tags - Response column only */}
                   {isResponseColumn && (
                     <div className="flex items-center gap-1.5 px-2 py-1 rounded bg-muted/50">
                       <Star className={cn(
@@ -142,7 +142,7 @@ export function ColumnOptionsSheet({
                       />
                     </div>
                   )}
-                  <span className="text-xs text-muted-foreground italic">Tracking tag</span>
+                  <span className="text-xs text-muted-foreground/60 italic">Tracking</span>
                 </div>
               </div>
             )) : (
@@ -150,15 +150,18 @@ export function ColumnOptionsSheet({
             )}
           </div>
 
-          {/* Custom Tags section - editable */}
+          {/* Divider */}
+          <div className="border-t border-border/50 my-2" />
+
+          {/* Personal Tags section - editable */}
           <div className="space-y-1">
-            <p className="text-xs text-muted-foreground font-medium mb-2">Custom Tags</p>
-            <p className="text-[10px] text-muted-foreground mb-2">Custom tags are for your convenience and are not counted in TrackUp analytics.</p>
+            <p className="text-xs text-muted-foreground font-medium mb-2">Personal tags</p>
+            <p className="text-[10px] text-muted-foreground mb-2">Personal tags are for your convenience and are not counted in TrackUp analytics.</p>
             
-            {/* Add new custom tag */}
+            {/* Add new personal tag */}
             <div className="flex gap-2 mb-2">
               <Input 
-                placeholder={`Add custom ${columnLabel.toLowerCase()} tag...`} 
+                placeholder={`Add personal ${columnLabel.toLowerCase()} tag...`}
                 value={newValue} 
                 onChange={e => setNewValue(e.target.value)} 
                 onKeyDown={e => e.key === 'Enter' && handleAddOption()} 
@@ -170,7 +173,7 @@ export function ColumnOptionsSheet({
             </div>
 
             {customOptions.length > 0 ? customOptions.map(opt => (
-                <div key={opt.id} className="flex items-center justify-between p-2.5 rounded-md bg-muted/30">
+                <div key={opt.id} className="flex items-center justify-between p-2.5 rounded-md bg-muted/20">
                   {editingId === opt.id ? (
                     <div className="flex items-center gap-2 flex-1">
                       <Input 
@@ -249,7 +252,7 @@ export function ColumnOptionsSheet({
                 </div>
             )) : (
               <p className="text-xs text-muted-foreground italic py-2">
-                No custom tags yet. Add one above!
+                No personal tags yet. Add one above!
               </p>
             )}
           </div>
