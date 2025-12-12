@@ -353,7 +353,7 @@ export function InlineReportCard({ prospect, onUpdate, onDelete, onClose, colSpa
               <Label className="text-[10px] text-muted-foreground">Personal tags (private to you)</Label>
             </div>
             <p className="text-[9px] text-muted-foreground mb-2">
-              Personal tags are your private notes and are not counted in TrackUp totals.
+              Personal tags are your private notes and are not counted in tracking totals.
             </p>
             <div className="flex flex-wrap gap-1 mb-2">
               {((localData.personal_tags as string[]) || []).map((tag, i) => (
