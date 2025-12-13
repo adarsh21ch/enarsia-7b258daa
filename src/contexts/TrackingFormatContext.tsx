@@ -38,6 +38,10 @@ interface TrackingFormatContextType {
   isFinalTarget: (tagName: string) => boolean;
   isTrackingTag: (tagName: string) => boolean;
   
+  // Filter tag helpers from leader format
+  leadsFilterTag: string | null;
+  isLeadsFilterTag: (tagName: string) => boolean;
+  
   // Helpers
   handleTargetComplete: (tagName: string, prospectName?: string) => void;
   getLeadsDropdownOptions: () => string[];
@@ -48,6 +52,13 @@ const TrackingFormatContext = createContext<TrackingFormatContextType | null>(nu
 
 export function TrackingFormatProvider({ children }: { children: React.ReactNode }) {
   const trackingFormatHook = useTrackingFormat();
+
+  // Get the filter tag from leader's format
+  const leadsFilterTag = trackingFormatHook.trackingFormat?.leadsTrackingTags.find(t => t.isFilter)?.name || null;
+
+  const isLeadsFilterTag = useCallback((tagName: string) => {
+    return trackingFormatHook.trackingFormat?.leadsTrackingTags.find(t => t.name === tagName)?.isFilter || false;
+  }, [trackingFormatHook.trackingFormat]);
 
   // Handle target completion when final tag is selected
   const handleTargetComplete = useCallback((tagName: string, prospectName?: string) => {
@@ -78,6 +89,8 @@ export function TrackingFormatProvider({ children }: { children: React.ReactNode
 
   const value: TrackingFormatContextType = {
     ...trackingFormatHook,
+    leadsFilterTag,
+    isLeadsFilterTag,
     handleTargetComplete,
     getLeadsDropdownOptions,
     getStageDropdownOptions,
