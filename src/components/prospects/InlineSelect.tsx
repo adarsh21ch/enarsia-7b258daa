@@ -10,6 +10,7 @@ import {
 } from '@/components/ui/select';
 import { cn } from '@/lib/utils';
 import { OptionType, CustomOption } from '@/hooks/useCustomOptions';
+import { Star } from 'lucide-react';
 
 interface InlineSelectProps<T extends string> {
   value: T | null | undefined;
@@ -18,11 +19,13 @@ interface InlineSelectProps<T extends string> {
   placeholder?: string;
   className?: string;
   renderValue?: (value: T) => React.ReactNode;
-  // Tracking vs Personal tags separation
+  // Tracking vs Non-tracking tags separation
   trackingOptions?: readonly string[];
+  nonTrackingOptions?: readonly string[];
   personalOptions?: readonly string[];
   showTagSeparation?: boolean;
-  // Legacy props - kept for compatibility but not used
+  finalTargetTag?: string | null;
+  // Legacy props - kept for compatibility
   optionType?: OptionType;
   customOptions?: CustomOption[];
   onAddOption?: (optionType: OptionType, value: string) => Promise<any>;
@@ -40,8 +43,10 @@ export function InlineSelect<T extends string>({
   className,
   renderValue,
   trackingOptions = [],
+  nonTrackingOptions = [],
   personalOptions = [],
   showTagSeparation = false,
+  finalTargetTag = null,
 }: InlineSelectProps<T>) {
   // Handle selection - allow toggling (selecting same value deselects it)
   const handleValueChange = (v: string) => {
@@ -75,9 +80,37 @@ export function InlineSelect<T extends string>({
         {trackingOptions.length > 0 && (
           <SelectGroup>
             <SelectLabel className="text-[10px] text-muted-foreground/70 px-2 py-1">
-              Tracking tags (from your leader)
+              Tracking tags (for analytics)
             </SelectLabel>
             {trackingOptions.map((option) => (
+              <SelectItem 
+                key={option} 
+                value={option as string} 
+                className="text-xs min-h-[44px] sm:min-h-[32px] flex items-center"
+              >
+                <div className="flex items-center gap-2">
+                  {renderValue ? renderValue(option as T) : option}
+                  {finalTargetTag === option && (
+                    <Star className="h-3 w-3 text-yellow-500 fill-yellow-500" />
+                  )}
+                </div>
+              </SelectItem>
+            ))}
+          </SelectGroup>
+        )}
+        
+        {/* Separator */}
+        {trackingOptions.length > 0 && (nonTrackingOptions.length > 0 || personalOptions.length > 0) && (
+          <SelectSeparator className="my-1" />
+        )}
+        
+        {/* Non-tracking tags group */}
+        {nonTrackingOptions.length > 0 && (
+          <SelectGroup>
+            <SelectLabel className="text-[10px] text-muted-foreground/70 px-2 py-1">
+              Non-tracking tags (not counted)
+            </SelectLabel>
+            {nonTrackingOptions.map((option) => (
               <SelectItem 
                 key={option} 
                 value={option as string} 
@@ -91,12 +124,7 @@ export function InlineSelect<T extends string>({
           </SelectGroup>
         )}
         
-        {/* Separator */}
-        {trackingOptions.length > 0 && personalOptions.length > 0 && (
-          <SelectSeparator className="my-1" />
-        )}
-        
-        {/* Personal tags group */}
+        {/* Personal/custom tags group */}
         {personalOptions.length > 0 && (
           <SelectGroup>
             <SelectLabel className="text-[10px] text-muted-foreground/70 px-2 py-1">

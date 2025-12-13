@@ -5,10 +5,11 @@ import { useProfile } from '@/hooks/useProfile';
 import { useAdmin } from '@/hooks/useAdmin';
 import { useSubscription } from '@/hooks/useSubscription';
 import { useLeaderSetup } from '@/hooks/useLeaderSetup';
+import { useTrackingFormatContext } from '@/contexts/TrackingFormatContext';
 import { BottomNav } from '@/components/layout/BottomNav';
 import { EditProfileDialog } from '@/components/profile/EditProfileDialog';
 import { ShareProfileDialog } from '@/components/profile/ShareProfileDialog';
-import { LeaderStagesSettings } from '@/components/profile/LeaderStagesSettings';
+import { LeaderTrackingFormatSettings } from '@/components/profile/LeaderTrackingFormatSettings';
 import { LevelManagement } from '@/components/profile/LevelManagement';
 import { ProfileLevelDropdown } from '@/components/profile/ProfileLevelDropdown';
 import { UpgradeCard } from '@/components/subscription/UpgradeCard';
@@ -71,9 +72,10 @@ function usePullToRefresh(onRefresh: () => Promise<void>, threshold = 80) {
 export default function Profile() {
   const navigate = useNavigate();
   const { user, loading: authLoading, signOut } = useAuth();
-  const { profile, loading: profileLoading, updating, updateProfile, updateLeaderHierarchy, clearLeaderHierarchy, getLeaderStageConfig, refetch } = useProfile();
+  const { profile, loading: profileLoading, updating, updateProfile, updateLeaderHierarchy, clearLeaderHierarchy, refetch } = useProfile();
   const { isAdmin } = useAdmin();
   const { isPro, isAdminOverride, daysRemaining, subscription, loading: subLoading } = useSubscription();
+  const { refreshFormat } = useTrackingFormatContext();
   const [editOpen, setEditOpen] = useState(false);
 
   // Process pending leader ID from share links
@@ -82,7 +84,8 @@ export default function Profile() {
   // Pull-to-refresh
   const handleRefresh = useCallback(async () => {
     await refetch?.();
-  }, [refetch]);
+    refreshFormat();
+  }, [refetch, refreshFormat]);
   const { containerRef, isRefreshing, pullDistance, showIndicator } = usePullToRefresh(handleRefresh);
 
   useEffect(() => {
@@ -183,7 +186,7 @@ export default function Profile() {
           {/* Upgrade Card */}
           <UpgradeCard />
 
-          {/* Leader & Tracking Tags Settings - Collapsible */}
+          {/* Leader & Tracking Format Settings - Collapsible */}
           <Accordion type="single" collapsible className="rounded-2xl border border-border/50 bg-card overflow-hidden">
             <AccordionItem value="leader-tags" className="border-none">
               <AccordionTrigger className="px-4 py-3 hover:no-underline hover:bg-muted/30">
@@ -191,27 +194,28 @@ export default function Profile() {
                   <div className="p-2 rounded-lg bg-primary/10">
                     <Users className="h-4 w-4 text-primary" />
                   </div>
-                  <span className="font-medium">Leader & Tracking Tags</span>
+                  <span className="font-medium">Leader's Tracking Format</span>
                 </div>
               </AccordionTrigger>
               <AccordionContent className="px-4 pb-4">
-                <LeaderStagesSettings
+                <LeaderTrackingFormatSettings
                   profile={profile}
                   updating={updating}
                   onUpdateProfile={updateProfile}
                   onUpdateLeaderHierarchy={updateLeaderHierarchy}
                   onClearLeaderHierarchy={clearLeaderHierarchy}
-                  onGetLeaderStageConfig={getLeaderStageConfig}
                 />
                 
-                {/* Level Management for leaders */}
-                <div className="mt-4 pt-4 border-t border-border/30">
-                  <p className="text-sm font-medium mb-2">Team Levels</p>
-                  <p className="text-xs text-muted-foreground mb-3">
-                    Define levels for your team members. New members joining with your Leader ID will be assigned the default level.
-                  </p>
-                  <LevelManagement />
-                </div>
+                {/* Level Management for root leaders */}
+                {!profile?.use_leader_stages && (
+                  <div className="mt-4 pt-4 border-t border-border/30">
+                    <p className="text-sm font-medium mb-2">Team Levels</p>
+                    <p className="text-xs text-muted-foreground mb-3">
+                      Define levels for your team members. New members joining with your Leader ID will be assigned the default level.
+                    </p>
+                    <LevelManagement />
+                  </div>
+                )}
               </AccordionContent>
             </AccordionItem>
           </Accordion>
