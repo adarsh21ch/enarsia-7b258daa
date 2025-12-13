@@ -212,25 +212,32 @@ export function useProfile() {
     return { success: true };
   };
 
-  // Get leader's stage configuration
-  const getLeaderStageConfig = async (leaderId: string) => {
-    const { data, error } = await supabase.rpc('get_leader_stage_config', {
-      target_leader_id: leaderId
-    });
+  // Get leader's stage configuration by neverai_id
+  const getLeaderStageConfig = async (leaderNeveraiId: string) => {
+    if (!leaderNeveraiId) return null;
+    
+    try {
+      // First get the leader's user_id from their neverai_id
+      const { data: leaderData, error: leaderError } = await supabase
+        .from('profiles')
+        .select('user_id, stage_count, stage_labels, response_labels')
+        .ilike('neverai_id', leaderNeveraiId)
+        .maybeSingle();
 
-    if (error) {
+      if (leaderError || !leaderData) {
+        console.error('Leader not found:', leaderError);
+        return null;
+      }
+
+      return {
+        stage_count: leaderData.stage_count || 0,
+        stage_labels: (leaderData.stage_labels as string[]) || [],
+        response_labels: (leaderData.response_labels as string[]) || []
+      };
+    } catch (error) {
       console.error('Error fetching leader stage config:', error);
       return null;
     }
-
-    const result = data as { found: boolean; stage_count?: number; stage_labels?: string[]; response_labels?: string[] };
-    if (!result.found) return null;
-
-    return {
-      stage_count: result.stage_count || 0,
-      stage_labels: result.stage_labels || [],
-      response_labels: result.response_labels || []
-    };
   };
 
   return { 
