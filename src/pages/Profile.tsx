@@ -28,13 +28,11 @@ function usePullToRefresh(onRefresh: () => Promise<void>, threshold = 80) {
   const [pullDistance, setPullDistance] = useState(0);
   const startY = useRef(0);
   const containerRef = useRef<HTMLDivElement>(null);
-
   const handleTouchStart = useCallback((e: TouchEvent) => {
     if (containerRef.current && containerRef.current.scrollTop === 0) {
       startY.current = e.touches[0].clientY;
     }
   }, []);
-
   const handleTouchMove = useCallback((e: TouchEvent) => {
     if (!startY.current || isRefreshing) return;
     const currentY = e.touches[0].clientY;
@@ -43,21 +41,27 @@ function usePullToRefresh(onRefresh: () => Promise<void>, threshold = 80) {
       setPullDistance(Math.min(diff * 0.5, threshold * 1.5));
     }
   }, [isRefreshing, threshold]);
-
   const handleTouchEnd = useCallback(async () => {
     if (pullDistance >= threshold && !isRefreshing) {
       setIsRefreshing(true);
-      try { await onRefresh(); } finally { setIsRefreshing(false); }
+      try {
+        await onRefresh();
+      } finally {
+        setIsRefreshing(false);
+      }
     }
     setPullDistance(0);
     startY.current = 0;
   }, [pullDistance, threshold, isRefreshing, onRefresh]);
-
   useEffect(() => {
     const container = containerRef.current;
     if (!container) return;
-    container.addEventListener('touchstart', handleTouchStart, { passive: true });
-    container.addEventListener('touchmove', handleTouchMove, { passive: true });
+    container.addEventListener('touchstart', handleTouchStart, {
+      passive: true
+    });
+    container.addEventListener('touchmove', handleTouchMove, {
+      passive: true
+    });
     container.addEventListener('touchend', handleTouchEnd);
     return () => {
       container.removeEventListener('touchstart', handleTouchStart);
@@ -65,17 +69,42 @@ function usePullToRefresh(onRefresh: () => Promise<void>, threshold = 80) {
       container.removeEventListener('touchend', handleTouchEnd);
     };
   }, [handleTouchStart, handleTouchMove, handleTouchEnd]);
-
-  return { containerRef, isRefreshing, pullDistance, showIndicator: pullDistance > 20 || isRefreshing };
+  return {
+    containerRef,
+    isRefreshing,
+    pullDistance,
+    showIndicator: pullDistance > 20 || isRefreshing
+  };
 }
-
 export default function Profile() {
   const navigate = useNavigate();
-  const { user, loading: authLoading, signOut } = useAuth();
-  const { profile, loading: profileLoading, updating, updateProfile, updateLeaderHierarchy, clearLeaderHierarchy, refetch } = useProfile();
-  const { isAdmin } = useAdmin();
-  const { isPro, isAdminOverride, daysRemaining, subscription, loading: subLoading } = useSubscription();
-  const { refreshFormat } = useTrackingFormatContext();
+  const {
+    user,
+    loading: authLoading,
+    signOut
+  } = useAuth();
+  const {
+    profile,
+    loading: profileLoading,
+    updating,
+    updateProfile,
+    updateLeaderHierarchy,
+    clearLeaderHierarchy,
+    refetch
+  } = useProfile();
+  const {
+    isAdmin
+  } = useAdmin();
+  const {
+    isPro,
+    isAdminOverride,
+    daysRemaining,
+    subscription,
+    loading: subLoading
+  } = useSubscription();
+  const {
+    refreshFormat
+  } = useTrackingFormatContext();
   const [editOpen, setEditOpen] = useState(false);
 
   // Process pending leader ID from share links
@@ -86,42 +115,34 @@ export default function Profile() {
     await refetch?.();
     refreshFormat();
   }, [refetch, refreshFormat]);
-  const { containerRef, isRefreshing, pullDistance, showIndicator } = usePullToRefresh(handleRefresh);
-
+  const {
+    containerRef,
+    isRefreshing,
+    pullDistance,
+    showIndicator
+  } = usePullToRefresh(handleRefresh);
   useEffect(() => {
     if (!user && !authLoading) {
       navigate('/auth');
     }
   }, [user, authLoading, navigate]);
-
   const handleSignOut = async () => {
     await signOut();
     navigate('/auth');
   };
-
   if (authLoading || profileLoading || subLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
+    return <div className="min-h-screen flex items-center justify-center bg-background">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
-    );
+      </div>;
   }
-
   if (!user) return null;
-
   const displayName = profile?.display_name || user.email?.split('@')[0] || 'User';
   const userInitials = displayName.slice(0, 2).toUpperCase();
-
-  return (
-    <div className="app-layout bg-gradient-to-b from-background via-background to-muted/20">
+  return <div className="app-layout bg-gradient-to-b from-background via-background to-muted/20">
       <header className="fixed-header z-40 bg-card/80 backdrop-blur-xl border-b border-border/50">
         <div className="flex items-center justify-between px-4 py-3">
           <div className="flex items-center gap-3">
-            <img 
-              src={nevoraLogo} 
-              alt="NevorAI Logo" 
-              className="h-10 w-10 rounded-xl object-cover shadow-md"
-            />
+            <img src={nevoraLogo} alt="NevorAI Logo" className="h-10 w-10 rounded-xl object-cover shadow-md" />
             <div>
               <h1 className="text-xl font-bold tracking-tight">Profile</h1>
               <p className="text-xs text-muted-foreground font-medium">Your Account & Settings</p>
@@ -149,30 +170,19 @@ export default function Profile() {
                     <p className="text-sm text-muted-foreground truncate">{user.email}</p>
                   </div>
                   {/* Level dropdown in top-right */}
-                  <ProfileLevelDropdown
-                    currentLevelId={profile?.level_id || null}
-                    leaderNeveraiId={profile?.leaders_id_of_my_leader || null}
-                    userId={user.id}
-                    onLevelChange={() => refetch?.()}
-                  />
+                  <ProfileLevelDropdown currentLevelId={profile?.level_id || null} leaderNeveraiId={profile?.leaders_id_of_my_leader || null} userId={user.id} onLevelChange={() => refetch?.()} />
                 </div>
-                {profile?.neverai_id && (
-                  <div className="flex items-center gap-1.5 mt-2">
+                {profile?.neverai_id && <div className="flex items-center gap-1.5 mt-2">
                     <p className="text-xs text-primary font-medium">
                       Your Leader ID: <span className="font-mono">{profile.neverai_id}</span>
                     </p>
-                    <button
-                      onClick={async () => {
-                        await navigator.clipboard.writeText(profile.neverai_id || '');
-                        toast.success('Leader ID copied');
-                      }}
-                      className="p-1 rounded hover:bg-primary/10 transition-colors"
-                      title="Copy Leader ID"
-                    >
+                    <button onClick={async () => {
+                  await navigator.clipboard.writeText(profile.neverai_id || '');
+                  toast.success('Leader ID copied');
+                }} className="p-1 rounded hover:bg-primary/10 transition-colors" title="Copy Leader ID">
                       <Copy className="h-3 w-3 text-primary" />
                     </button>
-                  </div>
-                )}
+                  </div>}
               </div>
             </div>
             {/* Decorative elements */}
@@ -198,33 +208,17 @@ export default function Profile() {
                 </div>
               </AccordionTrigger>
               <AccordionContent className="px-4 pb-4">
-                <LeaderTrackingFormatSettings
-                  profile={profile}
-                  updating={updating}
-                  onUpdateProfile={updateProfile}
-                  onUpdateLeaderHierarchy={updateLeaderHierarchy}
-                  onClearLeaderHierarchy={clearLeaderHierarchy}
-                />
+                <LeaderTrackingFormatSettings profile={profile} updating={updating} onUpdateProfile={updateProfile} onUpdateLeaderHierarchy={updateLeaderHierarchy} onClearLeaderHierarchy={clearLeaderHierarchy} />
                 
                 {/* Level Management for root leaders */}
-                {!profile?.use_leader_stages && (
-                  <div className="mt-4 pt-4 border-t border-border/30">
-                    <p className="text-sm font-medium mb-2">Team Levels</p>
-                    <p className="text-xs text-muted-foreground mb-3">
-                      Define levels for your team members. New members joining with your Leader ID will be assigned the default level.
-                    </p>
-                    <LevelManagement />
-                  </div>
-                )}
+                {!profile?.use_leader_stages}
               </AccordionContent>
             </AccordionItem>
           </Accordion>
 
           {/* Profile Details */}
-          {(profile?.phone || profile?.company_name || profile?.city || profile?.bio) && (
-            <div className="rounded-2xl p-4 bg-card border border-border/50 space-y-3">
-              {profile?.phone && (
-                <div className="flex items-center gap-3">
+          {(profile?.phone || profile?.company_name || profile?.city || profile?.bio) && <div className="rounded-2xl p-4 bg-card border border-border/50 space-y-3">
+              {profile?.phone && <div className="flex items-center gap-3">
                   <div className="p-2 rounded-lg bg-primary/10">
                     <Phone className="h-4 w-4 text-primary" />
                   </div>
@@ -232,10 +226,8 @@ export default function Profile() {
                     <p className="text-xs text-muted-foreground">Phone</p>
                     <p className="text-sm font-medium">{profile.phone}</p>
                   </div>
-                </div>
-              )}
-              {profile?.company_name && (
-                <div className="flex items-center gap-3">
+                </div>}
+              {profile?.company_name && <div className="flex items-center gap-3">
                   <div className="p-2 rounded-lg bg-violet-500/10">
                     <Building2 className="h-4 w-4 text-violet-500" />
                   </div>
@@ -243,10 +235,8 @@ export default function Profile() {
                     <p className="text-xs text-muted-foreground">Company</p>
                     <p className="text-sm font-medium">{profile.company_name}</p>
                   </div>
-                </div>
-              )}
-              {profile?.city && (
-                <div className="flex items-center gap-3">
+                </div>}
+              {profile?.city && <div className="flex items-center gap-3">
                   <div className="p-2 rounded-lg bg-emerald-500/10">
                     <MapPin className="h-4 w-4 text-emerald-500" />
                   </div>
@@ -254,30 +244,16 @@ export default function Profile() {
                     <p className="text-xs text-muted-foreground">Location</p>
                     <p className="text-sm font-medium">{profile.city}</p>
                   </div>
-                </div>
-              )}
-              {profile?.bio && (
-                <div className="pt-2 border-t border-border/50">
+                </div>}
+              {profile?.bio && <div className="pt-2 border-t border-border/50">
                   <p className="text-xs text-muted-foreground mb-1">Bio</p>
                   <p className="text-sm">{profile.bio}</p>
-                </div>
-              )}
-            </div>
-          )}
+                </div>}
+            </div>}
 
           {/* Menu Items */}
           <div className="space-y-2">
-            <button
-              onClick={() => setEditOpen(true)}
-              className={cn(
-                "w-full relative overflow-hidden rounded-xl p-4",
-                "bg-gradient-to-r backdrop-blur-sm",
-                "border border-border/50 shadow-sm",
-                "flex items-center justify-between",
-                "transition-all duration-300 hover:shadow-md hover:scale-[1.01]",
-                "from-blue-500/20 to-blue-500/5"
-              )}
-            >
+            <button onClick={() => setEditOpen(true)} className={cn("w-full relative overflow-hidden rounded-xl p-4", "bg-gradient-to-r backdrop-blur-sm", "border border-border/50 shadow-sm", "flex items-center justify-between", "transition-all duration-300 hover:shadow-md hover:scale-[1.01]", "from-blue-500/20 to-blue-500/5")}>
               <div className="flex items-center gap-3">
                 <div className="p-2 rounded-lg bg-card/50">
                   <User className="h-5 w-5" />
@@ -288,18 +264,7 @@ export default function Profile() {
             </button>
 
             {/* Admin Panel Link - Only visible to admin */}
-            {isAdmin && (
-              <Link
-                to="/admin"
-                className={cn(
-                  "w-full relative overflow-hidden rounded-xl p-4",
-                  "bg-gradient-to-r backdrop-blur-sm",
-                  "border border-destructive/30 shadow-sm",
-                  "flex items-center justify-between",
-                  "transition-all duration-300 hover:shadow-md hover:scale-[1.01]",
-                  "from-destructive/20 to-destructive/5"
-                )}
-              >
+            {isAdmin && <Link to="/admin" className={cn("w-full relative overflow-hidden rounded-xl p-4", "bg-gradient-to-r backdrop-blur-sm", "border border-destructive/30 shadow-sm", "flex items-center justify-between", "transition-all duration-300 hover:shadow-md hover:scale-[1.01]", "from-destructive/20 to-destructive/5")}>
                 <div className="flex items-center gap-3">
                   <div className="p-2 rounded-lg bg-destructive/10">
                     <Settings className="h-5 w-5 text-destructive" />
@@ -307,17 +272,13 @@ export default function Profile() {
                   <span className="font-medium">Admin Panel</span>
                 </div>
                 <ChevronRight className="h-5 w-5 text-muted-foreground" />
-              </Link>
-            )}
+              </Link>}
           </div>
 
           {/* Contact Us */}
           <div className="rounded-2xl p-4 bg-card border border-border/50">
             <h3 className="text-sm font-semibold text-foreground mb-3">Contact Us</h3>
-            <a
-              href="mailto:teamnevorai@gmail.com"
-              className="flex items-center justify-between p-3 rounded-lg hover:bg-muted/50 transition-colors"
-            >
+            <a href="mailto:teamnevorai@gmail.com" className="flex items-center justify-between p-3 rounded-lg hover:bg-muted/50 transition-colors">
               <div className="flex items-center gap-3">
                 <Mail className="h-4 w-4 text-primary" />
                 <div>
@@ -333,30 +294,21 @@ export default function Profile() {
           <div className="rounded-2xl p-4 bg-card border border-border/50">
             <h3 className="text-sm font-semibold text-foreground mb-3">Legal & Policies</h3>
             <div className="space-y-2">
-              <Link
-                to="/terms"
-                className="flex items-center justify-between p-3 rounded-lg hover:bg-muted/50 transition-colors"
-              >
+              <Link to="/terms" className="flex items-center justify-between p-3 rounded-lg hover:bg-muted/50 transition-colors">
                 <div className="flex items-center gap-3">
                   <FileText className="h-4 w-4 text-muted-foreground" />
                   <span className="text-sm">Terms & Conditions</span>
                 </div>
                 <ChevronRight className="h-4 w-4 text-muted-foreground" />
               </Link>
-              <Link
-                to="/privacy"
-                className="flex items-center justify-between p-3 rounded-lg hover:bg-muted/50 transition-colors"
-              >
+              <Link to="/privacy" className="flex items-center justify-between p-3 rounded-lg hover:bg-muted/50 transition-colors">
                 <div className="flex items-center gap-3">
                   <Shield className="h-4 w-4 text-muted-foreground" />
                   <span className="text-sm">Privacy Policy</span>
                 </div>
                 <ChevronRight className="h-4 w-4 text-muted-foreground" />
               </Link>
-              <Link
-                to="/refund"
-                className="flex items-center justify-between p-3 rounded-lg hover:bg-muted/50 transition-colors"
-              >
+              <Link to="/refund" className="flex items-center justify-between p-3 rounded-lg hover:bg-muted/50 transition-colors">
                 <div className="flex items-center gap-3">
                   <Receipt className="h-4 w-4 text-muted-foreground" />
                   <span className="text-sm">Refund Policy</span>
@@ -367,26 +319,15 @@ export default function Profile() {
           </div>
 
           {/* Sign Out */}
-          <Button 
-            variant="destructive" 
-            className="w-full h-12 rounded-xl shadow-lg shadow-destructive/20 mt-4"
-            onClick={handleSignOut}
-          >
+          <Button variant="destructive" className="w-full h-12 rounded-xl shadow-lg shadow-destructive/20 mt-4" onClick={handleSignOut}>
             <LogOut className="h-5 w-5 mr-2" />
             Sign Out
           </Button>
         </div>
       </main>
 
-      <EditProfileDialog
-        open={editOpen}
-        onOpenChange={setEditOpen}
-        profile={profile}
-        onSave={updateProfile}
-        updating={updating}
-      />
+      <EditProfileDialog open={editOpen} onOpenChange={setEditOpen} profile={profile} onSave={updateProfile} updating={updating} />
 
       <BottomNav />
-    </div>
-  );
+    </div>;
 }
