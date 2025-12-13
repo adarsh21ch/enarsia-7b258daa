@@ -1,11 +1,13 @@
-// Activity Page - Today's Recent Activities (Personal Data Only)
+// Activity Page - Today's Recent Activities with Team Support
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useProspects } from '@/hooks/useProspects';
 import { useTodos } from '@/hooks/useTodos';
+import { useTeamActivities } from '@/hooks/useTeamActivities';
 import { BottomNav } from '@/components/layout/BottomNav';
 import { PullToRefreshIndicator } from '@/components/PullToRefreshIndicator';
+import { TeamMemberSelector } from '@/components/team/TeamMemberSelector';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
@@ -83,10 +85,23 @@ export default function Home() {
   const [activityDate, setActivityDate] = useState<Date>(new Date());
   const [searchQuery, setSearchQuery] = useState('');
 
+  // Team activities
+  const {
+    sharedOwners,
+    selectedOwnerIds,
+    teamActivities,
+    loading: teamLoading,
+    isViewingTeam,
+    toggleOwnerSelection,
+    selectAllOwners,
+    clearSelection,
+    refetch: refetchTeam
+  } = useTeamActivities(activityDate, 'activity');
+
   // Pull-to-refresh
   const handleRefresh = useCallback(async () => {
-    await Promise.all([refetch?.(), refetchTodos?.()]);
-  }, [refetch, refetchTodos]);
+    await Promise.all([refetch?.(), refetchTodos?.(), refetchTeam?.()]);
+  }, [refetch, refetchTodos, refetchTeam]);
   const { containerRef, isRefreshing, pullDistance, showIndicator } = usePullToRefresh(handleRefresh);
 
   useEffect(() => {
@@ -114,7 +129,7 @@ export default function Home() {
   if (!user) return null;
 
   // Get personal activities for the selected date (sorted descending - most recent at top)
-  const getActivities = () => {
+  const getPersonalActivities = () => {
     const prospectActivities = prospects
       .filter(p => isSameDay(parseISO(p.updated_at), activityDate))
       .map(p => ({
@@ -124,7 +139,8 @@ export default function Home() {
         phone: p.phone,
         stage: p.funnel_stage,
         action: p.action_taken,
-        time: new Date(p.updated_at)
+        time: new Date(p.updated_at),
+        owner_name: null as string | null
       }));
 
     const todoActivities = todos
@@ -136,24 +152,33 @@ export default function Home() {
         phone: null as string | null,
         stage: t.completed ? 'Completed' : 'Updated',
         action: null as string | null,
-        time: new Date(t.updated_at)
+        time: new Date(t.updated_at),
+        owner_name: null as string | null
       }));
 
     // Combine and sort descending (most recent at top)
-    let activitiesList = [...prospectActivities, ...todoActivities].sort((a, b) => b.time.getTime() - a.time.getTime());
+    return [...prospectActivities, ...todoActivities].sort((a, b) => b.time.getTime() - a.time.getTime());
+  };
+
+  // Get activities based on whether viewing team or personal data
+  const getActivitiesForDate = () => {
+    let activitiesList = isViewingTeam 
+      ? teamActivities.map(a => ({ ...a, owner_name: a.owner_name }))
+      : getPersonalActivities();
     
     // Apply search filter
     if (searchQuery.trim()) {
       const query = searchQuery.toLowerCase();
       activitiesList = activitiesList.filter(a => 
         a.name.toLowerCase().includes(query) || 
-        (a.phone && a.phone.includes(query))
+        (a.phone && a.phone.includes(query)) ||
+        (a.owner_name && a.owner_name.toLowerCase().includes(query))
       );
     }
     return activitiesList;
   };
 
-  const activities = getActivities();
+  const activities = getActivitiesForDate();
 
   return (
     <div className="app-layout bg-gradient-to-b from-background via-background to-muted/20">
@@ -163,9 +188,21 @@ export default function Home() {
             <img src={nevoraLogo} alt="NevorAI Logo" className="h-10 w-10 rounded-xl object-cover shadow-md" />
             <div>
               <h1 className="text-xl font-bold tracking-tight">Activity</h1>
-              <p className="text-xs text-muted-foreground font-medium">Track all your activities</p>
+              <p className="text-xs text-muted-foreground font-medium">
+                {isViewingTeam ? 'Team activities' : 'Track all your activities'}
+              </p>
             </div>
           </div>
+          {/* Team Toggle - Only on Recent/Activity tab */}
+          <TeamMemberSelector
+            sharedOwners={sharedOwners}
+            selectedOwnerIds={selectedOwnerIds}
+            onToggleOwner={toggleOwnerSelection}
+            onSelectAll={selectAllOwners}
+            onClear={clearSelection}
+            currentTab="activity"
+            loading={teamLoading}
+          />
         </div>
       </header>
 
@@ -188,7 +225,9 @@ export default function Home() {
                 <Clock className="h-5 w-5 text-primary" />
                 <div>
                   <h3 className="font-semibold text-sm">Today's Recent Activities</h3>
-                  <p className="text-xs text-muted-foreground">All user activities</p>
+                  <p className="text-xs text-muted-foreground">
+                    {isViewingTeam ? 'Team activities' : 'Your activities'}
+                  </p>
                 </div>
               </div>
               {/* Date picker with pill outline style */}
@@ -238,7 +277,14 @@ export default function Home() {
                         <div className="flex-1 min-w-0 pb-3">
                           <div className="flex items-start justify-between gap-2 p-2.5 rounded-xl bg-muted/30 hover:bg-muted/40 transition-colors">
                             <div className="min-w-0 flex-1">
-                              <p className="text-sm font-medium truncate">{activity.name}</p>
+                              <div className="flex items-center gap-1.5">
+                                <p className="text-sm font-medium truncate">{activity.name}</p>
+                                {isViewingTeam && activity.owner_name && (
+                                  <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-secondary text-secondary-foreground shrink-0">
+                                    {activity.owner_name.split(' ')[0]}
+                                  </span>
+                                )}
+                              </div>
                               
                               {/* Tags */}
                               <div className="flex items-center gap-1.5 flex-wrap mt-1.5">
