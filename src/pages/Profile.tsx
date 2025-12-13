@@ -148,7 +148,7 @@ export default function Profile() {
                   {/* Level dropdown in top-right */}
                   <ProfileLevelDropdown
                     currentLevelId={profile?.level_id || null}
-                    leaderUserId={profile?.leaders_id_of_my_leader ? null : user.id}
+                    leaderNeveraiId={profile?.leaders_id_of_my_leader || null}
                     userId={user.id}
                     onLevelChange={() => refetch?.()}
                   />

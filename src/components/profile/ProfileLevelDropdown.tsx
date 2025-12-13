@@ -3,34 +3,136 @@ import { Check, ChevronDown, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
-import { useLeaderLevelsForMember, LeaderLevel } from '@/hooks/useLeaderLevels';
+import { LeaderLevel } from '@/hooks/useLeaderLevels';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
 interface ProfileLevelDropdownProps {
   currentLevelId: string | null;
-  leaderUserId: string | null;
+  leaderNeveraiId: string | null; // The Leader ID (NVR-XXXXX format)
   userId: string;
   onLevelChange?: (levelId: string) => void;
 }
 
 export function ProfileLevelDropdown({ 
   currentLevelId, 
-  leaderUserId, 
+  leaderNeveraiId, 
   userId,
   onLevelChange 
 }: ProfileLevelDropdownProps) {
-  const { levels, loading } = useLeaderLevelsForMember(leaderUserId);
+  const [levels, setLevels] = useState<LeaderLevel[]>([]);
+  const [loading, setLoading] = useState(true);
   const [selectedLevelId, setSelectedLevelId] = useState<string | null>(currentLevelId);
   const [saving, setSaving] = useState(false);
   const [open, setOpen] = useState(false);
+  const [noLevelsMessage, setNoLevelsMessage] = useState<string | null>(null);
+
+  // Fetch levels for the leader based on their neverai_id
+  useEffect(() => {
+    const fetchLevels = async () => {
+      if (!leaderNeveraiId) {
+        // No leader set - fetch own levels (user is their own leader)
+        const { data, error } = await supabase
+          .from('leader_levels')
+          .select('*')
+          .eq('leader_id', userId)
+          .order('position', { ascending: true });
+
+        if (!error && data && data.length > 0) {
+          setLevels(data as LeaderLevel[]);
+          setNoLevelsMessage(null);
+        } else {
+          setLevels([]);
+          setNoLevelsMessage(null); // Show default Level 1
+        }
+        setLoading(false);
+        return;
+      }
+
+      // Find the leader's user_id from their neverai_id
+      const { data: leaderProfile, error: profileError } = await supabase
+        .from('profiles')
+        .select('user_id')
+        .ilike('neverai_id', leaderNeveraiId)
+        .maybeSingle();
+
+      if (profileError || !leaderProfile) {
+        setLevels([]);
+        setNoLevelsMessage('Leader not found');
+        setLoading(false);
+        return;
+      }
+
+      // Fetch levels for this leader
+      const { data: levelsData, error: levelsError } = await supabase
+        .from('leader_levels')
+        .select('*')
+        .eq('leader_id', leaderProfile.user_id)
+        .order('position', { ascending: true });
+
+      if (levelsError) {
+        console.error('Error fetching leader levels:', levelsError);
+        setLevels([]);
+        setNoLevelsMessage('Error loading levels');
+      } else if (!levelsData || levelsData.length === 0) {
+        setLevels([]);
+        setNoLevelsMessage('Your leader has not defined any levels yet');
+      } else {
+        setLevels(levelsData as LeaderLevel[]);
+        setNoLevelsMessage(null);
+        
+        // Auto-assign default level if user has no level set
+        if (!currentLevelId) {
+          const defaultLevel = levelsData.find(l => l.is_default) || levelsData[0];
+          if (defaultLevel) {
+            setSelectedLevelId(defaultLevel.id);
+            // Auto-save the default level
+            supabase
+              .from('profiles')
+              .update({ level_id: defaultLevel.id })
+              .eq('user_id', userId)
+              .then(({ error }) => {
+                if (!error) {
+                  onLevelChange?.(defaultLevel.id);
+                }
+              });
+          }
+        }
+      }
+      setLoading(false);
+    };
+
+    setLoading(true);
+    fetchLevels();
+
+    // Set up real-time subscription for level changes
+    const channel = supabase
+      .channel('leader-levels-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'leader_levels'
+        },
+        () => {
+          // Refetch levels on any change
+          fetchLevels();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [leaderNeveraiId, userId, currentLevelId, onLevelChange]);
 
   useEffect(() => {
     setSelectedLevelId(currentLevelId);
   }, [currentLevelId]);
 
   const selectedLevel = levels.find(l => l.id === selectedLevelId);
-  const displayLabel = selectedLevel?.label || 'Level 1';
+  const displayLabel = selectedLevel?.label || (levels.length > 0 ? levels[0]?.label : 'Level 1');
 
   const handleSelectLevel = async (level: LeaderLevel) => {
     if (level.id === selectedLevelId) {
@@ -38,6 +140,8 @@ export function ProfileLevelDropdown({
       return;
     }
 
+    // Optimistic update
+    const previousLevelId = selectedLevelId;
     setSaving(true);
     setSelectedLevelId(level.id);
     setOpen(false);
@@ -55,7 +159,7 @@ export function ProfileLevelDropdown({
     } catch (error) {
       console.error('Failed to update level:', error);
       toast.error('Failed to save');
-      setSelectedLevelId(currentLevelId); // Revert
+      setSelectedLevelId(previousLevelId); // Revert
     } finally {
       setSaving(false);
     }
@@ -73,7 +177,7 @@ export function ProfileLevelDropdown({
   if (levels.length === 0) {
     return (
       <div className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-foreground text-background rounded-full text-xs font-medium">
-        Level 1 <Check className="h-3 w-3" />
+        {noLevelsMessage || 'Level 1'} {!noLevelsMessage && <Check className="h-3 w-3" />}
       </div>
     );
   }
@@ -105,7 +209,7 @@ export function ProfileLevelDropdown({
         </Button>
       </PopoverTrigger>
       <PopoverContent 
-        className="w-48 p-1 bg-popover border-border" 
+        className="w-48 p-1 bg-popover border-border z-50" 
         align="end"
         sideOffset={4}
       >
@@ -124,6 +228,9 @@ export function ProfileLevelDropdown({
                 )}
               >
                 <span className="font-medium">{level.label}</span>
+                {level.is_default && !isSelected && (
+                  <span className="text-xs text-muted-foreground">★</span>
+                )}
                 {isSelected && <Check className="h-4 w-4" />}
               </button>
             );
