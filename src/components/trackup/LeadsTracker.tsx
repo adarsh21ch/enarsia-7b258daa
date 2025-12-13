@@ -1,27 +1,49 @@
 import { useLeadsFromProspects } from '@/hooks/useLeadsFromProspects';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
-import { ChevronLeft, ChevronRight, Users, MessageSquare, Video, UserPlus, Calendar, Target } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Users, MessageSquare, Layers, UserPlus, Calendar, Target } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { format, parse } from 'date-fns';
 import { useRef, useEffect, useState } from 'react';
 
-const METRICS = ['leads', 'responses', 'videoSent', 'enrollments'] as const;
+// Default metrics for the TrackUp view - now includes stageLeads
+const METRICS = ['leads', 'responses', 'stageLeads', 'enrollments'] as const;
 
-const GOALS = { leads: 100, responses: 50, videoSent: 30, enrollments: 10 };
+// Default goals - can be customized per user in future
+const GOALS = { leads: 100, responses: 50, stageLeads: 40, enrollments: 10 };
 
 const METRIC_CONFIG = {
-  leads: { icon: Users, gradient: 'from-blue-500 to-blue-600', bgGradient: 'from-blue-500/20 to-blue-500/5', label: 'Total Leads' },
-  responses: { icon: MessageSquare, gradient: 'from-emerald-500 to-emerald-600', bgGradient: 'from-emerald-500/20 to-emerald-500/5', label: 'Total Responses' },
-  videoSent: { icon: Video, gradient: 'from-violet-500 to-violet-600', bgGradient: 'from-violet-500/20 to-violet-500/5', label: 'Total Video Sent' },
-  enrollments: { icon: UserPlus, gradient: 'from-orange-500 to-orange-600', bgGradient: 'from-orange-500/20 to-orange-500/5', label: 'Total Enrollments' },
+  leads: { 
+    icon: Users, 
+    gradient: 'from-blue-500 to-blue-600', 
+    bgGradient: 'from-blue-500/20 to-blue-500/5', 
+    label: 'Total Leads' 
+  },
+  responses: { 
+    icon: MessageSquare, 
+    gradient: 'from-emerald-500 to-emerald-600', 
+    bgGradient: 'from-emerald-500/20 to-emerald-500/5', 
+    label: 'Total Responses' 
+  },
+  stageLeads: { 
+    icon: Layers, 
+    gradient: 'from-violet-500 to-violet-600', 
+    bgGradient: 'from-violet-500/20 to-violet-500/5', 
+    label: 'Total Stage Leads' 
+  },
+  enrollments: { 
+    icon: UserPlus, 
+    gradient: 'from-orange-500 to-orange-600', 
+    bgGradient: 'from-orange-500/20 to-orange-500/5', 
+    label: 'Target Complete' 
+  },
 };
 
 const TABLE_LABELS = {
   leads: 'Leads',
   responses: 'Responses',
-  videoSent: 'Video Sent',
-  enrollments: 'Enrollments',
+  stageLeads: 'Stage',
+  enrollments: 'Target',
 };
 
 function getProgressColor(current: number, goal: number) {
@@ -51,7 +73,6 @@ export function LeadsTracker({ isPro = true }: LeadsTrackerProps) {
       const trigger = tableHeaderRef.current;
       if (trigger) {
         const rect = trigger.getBoundingClientRect();
-        // Sticky when table header reaches near top (accounting for header ~48px)
         setIsHeaderSticky(rect.top <= 48);
       }
     };
@@ -73,7 +94,7 @@ export function LeadsTracker({ isPro = true }: LeadsTrackerProps) {
 
   return (
     <div className="flex flex-col h-full animate-fade-in">
-      {/* Sticky Table Header - Only visible when scrolled past original position */}
+      {/* Sticky Table Header */}
       {isHeaderSticky && (
         <div className="fixed top-12 left-0 right-0 z-30 bg-card shadow-md border-b border-border/30">
           <table className="w-full table-fixed">
@@ -100,7 +121,7 @@ export function LeadsTracker({ isPro = true }: LeadsTrackerProps) {
         className="flex-1 overflow-y-auto overflow-x-hidden pb-4"
         style={{ paddingTop: isHeaderSticky ? '36px' : '0' }}
       >
-        {/* KPI Cards - Scroll with content */}
+        {/* KPI Cards - Default totals (no "total" tags required) */}
         <div className="grid grid-cols-2 gap-1.5 mb-2">
           {METRICS.map((metric, i) => {
             const config = METRIC_CONFIG[metric];
@@ -142,12 +163,12 @@ export function LeadsTracker({ isPro = true }: LeadsTrackerProps) {
           })}
         </div>
 
-        {/* Daily Leads Tracking Section Header */}
+        {/* Daily Leads Tracking Section */}
         <div className="glass-card rounded-xl overflow-hidden mb-2">
           <div className="px-3 py-1.5 border-b border-border/50">
             <div className="flex items-center gap-2">
               <Calendar className="h-3.5 w-3.5 text-primary" />
-              <h3 className="font-semibold text-xs">Daily Leads Tracking</h3>
+              <h3 className="font-semibold text-xs">Daily Tracking</h3>
             </div>
           </div>
 
@@ -168,7 +189,7 @@ export function LeadsTracker({ isPro = true }: LeadsTrackerProps) {
             </Button>
           </div>
 
-          {/* Table Header - This is the trigger point for sticky */}
+          {/* Table Header */}
           <div ref={tableHeaderRef} className="bg-card border-b border-border/30">
             <table className="w-full table-fixed">
               <thead>
@@ -208,7 +229,7 @@ export function LeadsTracker({ isPro = true }: LeadsTrackerProps) {
           </div>
         </div>
 
-        {/* TOTAL Row - Separate, clearly visible */}
+        {/* TOTAL Row */}
         <div className="bg-gradient-to-r from-primary/15 via-primary/10 to-primary/5 rounded-xl shadow-md border border-primary/20 mb-3">
           <table className="w-full table-fixed">
             <tbody>

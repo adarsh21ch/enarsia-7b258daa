@@ -39,25 +39,46 @@ export function MobileProspectCard({ prospect, index, isCalling, onUpdate, onDel
   const { activities } = useActivityLogs();
   const { addOption, deleteOption, getOptionsForType, getCustomOptionsForType } = useCustomOptionsContext();
   const { 
-    trackingTagNames, 
-    nonTrackingTags, 
-    finalTargetTag, 
-    isFinalTarget,
+    // Leads tags
+    leadsTrackingTags,
+    leadsNonTrackingTags,
+    leadsTrackingTagNames,
+    leadsFinalTargetTag,
+    isLeadsFinalTarget,
+    
+    // Stage tags
+    stageTags,
+    stageNonTrackingTags,
+    stageTagNames,
+    stageFinalTargetTag,
+    isStageFinalTarget,
+    
+    // Helpers
     handleTargetComplete 
   } = useTrackingFormatContext();
 
-  // Build dropdown options from tracking format
+  // Build dropdown options using the correct tag systems
   const customActionOptions = getCustomOptionsForType('action_taken').map(o => o.option_value);
   const customStageOptions = getCustomOptionsForType('funnel_stage').map(o => o.option_value);
   
-  const hasTrackingTags = trackingTagNames.length > 0;
-  
-  const actionOptions = hasTrackingTags 
-    ? [...trackingTagNames, ...nonTrackingTags, ...customActionOptions.filter(o => !trackingTagNames.includes(o) && !nonTrackingTags.includes(o))]
+  // Leads tab uses leadsTrackingTags for Response column
+  const hasLeadsTrackingTags = leadsTrackingTagNames.length > 0;
+  const actionOptions = hasLeadsTrackingTags 
+    ? [
+        ...leadsTrackingTagNames, 
+        ...leadsNonTrackingTags, 
+        ...customActionOptions.filter(o => !leadsTrackingTagNames.includes(o) && !leadsNonTrackingTags.includes(o))
+      ]
     : getOptionsForType('action_taken', EXTENDED_ACTIONS) as string[];
-    
-  const stageOptions = hasTrackingTags
-    ? [...trackingTagNames, ...customStageOptions.filter(o => !trackingTagNames.includes(o))]
+  
+  // Stage tab uses stageTags for Stage column
+  const hasStageTrackingTags = stageTagNames.length > 0;
+  const stageOptions = hasStageTrackingTags
+    ? [
+        ...stageTagNames, 
+        ...stageNonTrackingTags,
+        ...customStageOptions.filter(o => !stageTagNames.includes(o) && !stageNonTrackingTags.includes(o))
+      ]
     : getOptionsForType('funnel_stage', FUNNEL_STAGES) as string[];
     
   const statusOptions = getOptionsForType('prospect_status', STATUSES) as (typeof STATUSES[number])[];
@@ -98,13 +119,25 @@ export function MobileProspectCard({ prospect, index, isCalling, onUpdate, onDel
     setIsDeleting(false);
   };
 
-  // Handle action change with target completion check
+  // Handle action change with Leads target completion check
   const handleActionChange = (value: ExtendedActionTaken) => {
     const updates: Partial<Prospect> = {};
     updates.action_taken = value as ActionTaken;
     
-    // Check if this is the final target tag
-    if (isFinalTarget(value)) {
+    // Check if this is the final Leads target tag
+    if (isLeadsFinalTarget(value)) {
+      handleTargetComplete(value, prospect.name);
+    }
+    
+    onUpdate(prospect.id, updates);
+  };
+
+  // Handle stage change with Stage target completion check
+  const handleStageChange = (value: string) => {
+    const updates: Partial<Prospect> = { funnel_stage: value };
+    
+    // Check if this is the final Stage target tag
+    if (isStageFinalTarget(value)) {
       handleTargetComplete(value, prospect.name);
     }
     
@@ -204,12 +237,14 @@ export function MobileProspectCard({ prospect, index, isCalling, onUpdate, onDel
           <InlineSelect<FunnelStage>
             value={prospect.funnel_stage}
             options={stageOptions as FunnelStage[]}
-            onChange={(value) => onUpdate(prospect.id, { funnel_stage: value })}
+            onChange={handleStageChange}
             renderValue={(value) => <StageBadge stage={value} />}
             placeholder="Stage"
-            showTagSeparation={hasTrackingTags}
-            trackingOptions={trackingTagNames}
-            personalOptions={customStageOptions.filter(o => !trackingTagNames.includes(o))}
+            showTagSeparation={hasStageTrackingTags}
+            trackingOptions={stageTagNames}
+            nonTrackingOptions={stageNonTrackingTags}
+            personalOptions={customStageOptions.filter(o => !stageTagNames.includes(o) && !stageNonTrackingTags.includes(o))}
+            finalTargetTag={stageFinalTargetTag}
           />
         )}
         <InlineSelect<ExtendedActionTaken>
@@ -218,11 +253,11 @@ export function MobileProspectCard({ prospect, index, isCalling, onUpdate, onDel
           onChange={handleActionChange}
           placeholder="Response"
           renderValue={(value) => <ActionBadge action={value as any} />}
-          showTagSeparation={hasTrackingTags}
-          trackingOptions={trackingTagNames}
-          nonTrackingOptions={nonTrackingTags}
-          personalOptions={customActionOptions.filter(o => !trackingTagNames.includes(o) && !nonTrackingTags.includes(o))}
-          finalTargetTag={finalTargetTag}
+          showTagSeparation={hasLeadsTrackingTags}
+          trackingOptions={leadsTrackingTagNames}
+          nonTrackingOptions={leadsNonTrackingTags}
+          personalOptions={customActionOptions.filter(o => !leadsTrackingTagNames.includes(o) && !leadsNonTrackingTags.includes(o))}
+          finalTargetTag={leadsFinalTargetTag}
         />
         <InlineSelect<ProspectStatus>
           value={prospect.prospect_status}

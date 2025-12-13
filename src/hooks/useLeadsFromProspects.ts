@@ -1,22 +1,25 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
+import { useTrackingFormat } from '@/hooks/useTrackingFormat';
 import { format, getDaysInMonth, parse, startOfMonth, endOfMonth } from 'date-fns';
 
 export interface DailyLeadMetrics {
   date: string; // "1 December", "2 December", etc.
   dayNumber: number;
   leads: number;
-  responses: number;
-  videoSent: number;
-  enrollments: number;
+  responses: number;       // Leads with any Leads Tracking Tag applied
+  stageLeads: number;      // Leads with any Stage Tracking Tag applied
+  videoSent: number;       // Legacy metric (can be customized)
+  enrollments: number;     // Final target completions
 }
 
 export interface MonthlyTotals {
-  leads: number;
-  responses: number;
-  videoSent: number;
-  enrollments: number;
+  leads: number;           // Total leads count (all prospects)
+  responses: number;       // Leads with any Leads Tracking Tag
+  stageLeads: number;      // Leads with any Stage Tracking Tag
+  videoSent: number;       // Legacy
+  enrollments: number;     // Final target completions
 }
 
 // 5-second confirmation window
@@ -24,10 +27,17 @@ const FIVE_SECONDS_MS = 5 * 1000;
 
 export function useLeadsFromProspects() {
   const { user } = useAuth();
+  const { leadsTrackingTagNames, stageTagNames, leadsFinalTargetTag, stageFinalTargetTag } = useTrackingFormat();
   const [loading, setLoading] = useState(true);
   const [monthYear, setMonthYear] = useState(() => format(new Date(), 'yyyy-MM'));
   const [dailyMetrics, setDailyMetrics] = useState<DailyLeadMetrics[]>([]);
-  const [totals, setTotals] = useState<MonthlyTotals>({ leads: 0, responses: 0, videoSent: 0, enrollments: 0 });
+  const [totals, setTotals] = useState<MonthlyTotals>({ 
+    leads: 0, 
+    responses: 0, 
+    stageLeads: 0,
+    videoSent: 0, 
+    enrollments: 0 
+  });
 
   const daysInMonth = useMemo(() => {
     const date = parse(monthYear, 'yyyy-MM', new Date());
@@ -53,7 +63,7 @@ export function useLeadsFromProspects() {
       const monthStart = startOfMonth(monthDate);
       const monthEnd = endOfMonth(monthDate);
 
-      // Fetch all prospects created in this month with action_taken and funnel_stage
+      // Fetch all prospects created in this month
       const { data, error } = await supabase
         .from('prospects')
         .select('id, date_added, action_taken, action_taken_at, funnel_stage, funnel_stage_at')
@@ -79,39 +89,57 @@ export function useLeadsFromProspects() {
           dayNumber: day,
           leads: 0,
           responses: 0,
+          stageLeads: 0,
           videoSent: 0,
           enrollments: 0,
         });
       }
 
-      // Aggregate prospects by day
+      // Aggregate prospects by day using tracking tags
       prospects.forEach((p) => {
         const addedDate = new Date(p.date_added);
         const dayIndex = addedDate.getDate() - 1;
         
         if (dayIndex >= 0 && dayIndex < metrics.length) {
-          // Count as lead
+          // Count as lead (Total Leads - all prospects regardless of tags)
           metrics[dayIndex].leads++;
 
-          // Check if action/response has a value
+          // Check if action/response matches any Leads Tracking Tag
           if (p.action_taken) {
-            // Apply 5-second confirmation: if action_taken_at exists, check time elapsed
-            // If no timestamp, count it (legacy data)
             const actionAt = p.action_taken_at ? new Date(p.action_taken_at) : null;
             const isConfirmed = !actionAt || (now.getTime() - actionAt.getTime() >= FIVE_SECONDS_MS);
 
             if (isConfirmed) {
-              // Count as response (any non-empty action_taken)
-              metrics[dayIndex].responses++;
+              // Total Responses: count if action_taken is in leadsTrackingTagNames
+              // If no tracking tags defined, count any non-empty action_taken
+              const isLeadsTrackingTag = leadsTrackingTagNames.length > 0 
+                ? leadsTrackingTagNames.includes(p.action_taken)
+                : !!p.action_taken;
+              
+              if (isLeadsTrackingTag) {
+                metrics[dayIndex].responses++;
+              }
 
-              // Check specific response types
+              // Enrollments: count if action_taken is the final Leads target
+              if (leadsFinalTargetTag && p.action_taken === leadsFinalTargetTag) {
+                metrics[dayIndex].enrollments++;
+              }
+
+              // Legacy: Video Sent specific count
               if (p.action_taken === 'Video Sent') {
                 metrics[dayIndex].videoSent++;
               }
-              // "Enrollment" is a response option
-              if (p.action_taken === 'Enrollment') {
-                metrics[dayIndex].enrollments++;
-              }
+            }
+          }
+
+          // Total Stage Leads: count if funnel_stage matches any Stage Tracking Tag
+          if (p.funnel_stage) {
+            const isStageTag = stageTagNames.length > 0 
+              ? stageTagNames.includes(p.funnel_stage)
+              : !!p.funnel_stage;
+            
+            if (isStageTag) {
+              metrics[dayIndex].stageLeads++;
             }
           }
         }
@@ -124,10 +152,11 @@ export function useLeadsFromProspects() {
         (acc, day) => ({
           leads: acc.leads + day.leads,
           responses: acc.responses + day.responses,
+          stageLeads: acc.stageLeads + day.stageLeads,
           videoSent: acc.videoSent + day.videoSent,
           enrollments: acc.enrollments + day.enrollments,
         }),
-        { leads: 0, responses: 0, videoSent: 0, enrollments: 0 }
+        { leads: 0, responses: 0, stageLeads: 0, videoSent: 0, enrollments: 0 }
       );
       setTotals(monthlyTotals);
     } catch (err) {
@@ -135,7 +164,7 @@ export function useLeadsFromProspects() {
     } finally {
       setLoading(false);
     }
-  }, [user, monthYear, daysInMonth]);
+  }, [user, monthYear, daysInMonth, leadsTrackingTagNames, stageTagNames, leadsFinalTargetTag]);
 
   useEffect(() => {
     fetchData();
