@@ -1,16 +1,14 @@
-// Follow Up Page - View leads by tags (grouped into Responses, Stages, Quality)
+// Follow Up Page - View leads by tags (Personal Data Only)
 import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useProspects } from '@/hooks/useProspects';
-import { useSharedProspects } from '@/hooks/useSharedProspects';
 import { BottomNav } from '@/components/layout/BottomNav';
 import { PullToRefreshIndicator } from '@/components/PullToRefreshIndicator';
-import { TeamToggle } from '@/components/team/TeamToggle';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Loader2, Filter, ChevronDown, ChevronUp, Tags, X, Users } from 'lucide-react';
+import { Loader2, Filter, ChevronDown, ChevronUp, Tags, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { getTagStyle } from '@/lib/tagColors';
 import nevoraLogo from '@/assets/nevorai-logo.jpeg';
@@ -81,18 +79,7 @@ function usePullToRefresh(onRefresh: () => Promise<void>, threshold = 80) {
 export default function ListUp() {
   const navigate = useNavigate();
   const { user, loading: authLoading } = useAuth();
-  const { prospects: myProspects, loading: prospectsLoading, refetch } = useProspects();
-  const { 
-    sharedOwners, 
-    selectedOwnerIds, 
-    toggleOwnerSelection, 
-    clearSelection, 
-    selectAllOwners,
-    prospects: sharedProspects, 
-    loading: sharedLoading, 
-    refetchOwners, 
-    refetchProspects 
-  } = useSharedProspects();
+  const { prospects, loading: prospectsLoading, refetch } = useProspects();
   
   // Persist filters in sessionStorage so they survive tab switches
   const [selectedResponses, setSelectedResponses] = useState<string[]>(() => {
@@ -122,28 +109,10 @@ export default function ListUp() {
     sessionStorage.setItem('listup-qualities', JSON.stringify(selectedQualities));
   }, [selectedQualities]);
 
-  // Determine which prospects to show - MY data is always separate from team data
-  const isViewingTeam = selectedOwnerIds.length > 0;
-  const prospects = isViewingTeam ? sharedProspects : myProspects;
-  
-  // Get selected team member names for header
-  const selectedTeamNames = useMemo(() => {
-    if (selectedOwnerIds.length === 0) return '';
-    if (selectedOwnerIds.length === 1) {
-      const owner = sharedOwners.find(o => o.user_id === selectedOwnerIds[0]);
-      return owner?.display_name || 'Unknown';
-    }
-    return `${selectedOwnerIds.length} team members`;
-  }, [selectedOwnerIds, sharedOwners]);
-
   // Pull-to-refresh
   const handleRefresh = useCallback(async () => {
-    if (isViewingTeam) {
-      await refetchProspects?.();
-    } else {
-      await refetch?.();
-    }
-  }, [refetch, refetchProspects, isViewingTeam]);
+    await refetch?.();
+  }, [refetch]);
   const { containerRef, isRefreshing, pullDistance, showIndicator } = usePullToRefresh(handleRefresh);
 
   useEffect(() => {
@@ -263,7 +232,7 @@ export default function ListUp() {
     window.open(`tel:${phone}`, '_self');
   };
 
-  const isLoading = authLoading || prospectsLoading || (isViewingTeam && sharedLoading);
+  const isLoading = authLoading || prospectsLoading;
   
   if (isLoading) {
     return (
@@ -287,9 +256,7 @@ export default function ListUp() {
             />
             <div>
               <h1 className="text-xl font-bold tracking-tight">Follow Up</h1>
-              <p className="text-xs text-muted-foreground font-medium">
-                {isViewingTeam ? `Viewing ${selectedTeamNames}'s data` : 'View by Tags'}
-              </p>
+              <p className="text-xs text-muted-foreground font-medium">View by Tags</p>
             </div>
           </div>
           <div className="flex items-center gap-2">
@@ -299,14 +266,6 @@ export default function ListUp() {
                 Clear
               </Button>
             )}
-            <TeamToggle
-              sharedOwners={sharedOwners}
-              selectedOwnerIds={selectedOwnerIds}
-              onToggleOwner={toggleOwnerSelection}
-              onSelectAll={selectAllOwners}
-              onClear={clearSelection}
-              currentTab="follow_up"
-            />
           </div>
         </div>
       </header>
@@ -314,14 +273,6 @@ export default function ListUp() {
       <main ref={containerRef} className="scrollable-content relative pb-20">
         <PullToRefreshIndicator isRefreshing={isRefreshing} pullDistance={pullDistance} showIndicator={showIndicator} />
         <div className="container py-3 px-4 space-y-4">
-          {/* Team viewing indicator */}
-          {isViewingTeam && (
-            <div className="bg-primary/10 border border-primary/30 rounded-xl p-3">
-              <p className="text-sm text-primary font-medium">
-                Viewing {selectedTeamNames}'s follow-ups (read-only)
-              </p>
-            </div>
-          )}
 
           {/* Grouped Tag Filters */}
           <div className="bg-card rounded-xl p-4 border border-border/50 space-y-4">
