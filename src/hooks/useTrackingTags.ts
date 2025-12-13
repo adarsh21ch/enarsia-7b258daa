@@ -2,6 +2,24 @@ import { useState, useEffect, useCallback } from 'react';
 import { useProfile } from '@/hooks/useProfile';
 import { useCustomOptionsContext } from '@/contexts/CustomOptionsContext';
 
+// Helper to extract tag names from any format (new JSON object or legacy string array)
+const extractTagNames = (labels: any): string[] => {
+  if (!labels) return [];
+  
+  // New JSON format: { tracking: [...], nonTracking: [...] }
+  if (labels && typeof labels === 'object' && !Array.isArray(labels)) {
+    const tracking = labels.tracking || [];
+    return tracking.map((t: any) => typeof t === 'string' ? t : t.name).filter(Boolean);
+  }
+  
+  // Legacy string array format: ["tag1", "tag2"]
+  if (Array.isArray(labels)) {
+    return labels.map((t: any) => typeof t === 'string' ? t : t.name).filter(Boolean);
+  }
+  
+  return [];
+};
+
 interface TrackingTags {
   callingTrackingTags: string[];
   stageTrackingTags: string[];
@@ -31,22 +49,22 @@ export function useTrackingTags(): TrackingTags {
       if (profile.use_leader_stages && profile.leaders_id_of_my_leader) {
         const leaderConfig = await getLeaderStageConfig(profile.leaders_id_of_my_leader);
         if (leaderConfig) {
-          setCallingTrackingTags(leaderConfig.response_labels || []);
-          setStageTrackingTags(leaderConfig.stage_labels || []);
+          setCallingTrackingTags(extractTagNames(leaderConfig.response_labels));
+          setStageTrackingTags(extractTagNames(leaderConfig.stage_labels));
         } else {
           // Leader not found, fallback to user's own tags
-          setCallingTrackingTags(profile.response_labels || []);
-          setStageTrackingTags(profile.stage_labels || []);
+          setCallingTrackingTags(extractTagNames(profile.response_labels));
+          setStageTrackingTags(extractTagNames(profile.stage_labels));
         }
       } else {
         // Use user's own tracking tags
-        setCallingTrackingTags(profile.response_labels || []);
-        setStageTrackingTags(profile.stage_labels || []);
+        setCallingTrackingTags(extractTagNames(profile.response_labels));
+        setStageTrackingTags(extractTagNames(profile.stage_labels));
       }
     } catch (error) {
       // Fallback to user's own tags on error silently
-      setCallingTrackingTags(profile.response_labels || []);
-      setStageTrackingTags(profile.stage_labels || []);
+      setCallingTrackingTags(extractTagNames(profile.response_labels));
+      setStageTrackingTags(extractTagNames(profile.stage_labels));
     } finally {
       setLoading(false);
     }
