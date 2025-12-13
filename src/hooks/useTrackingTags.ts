@@ -44,14 +44,13 @@ export function useTrackingTags(): TrackingTags {
         setStageTrackingTags(profile.stage_labels || []);
       }
     } catch (error) {
-      console.error('Error fetching tracking tags:', error);
-      // Fallback to user's own tags on error
+      // Fallback to user's own tags on error silently
       setCallingTrackingTags(profile.response_labels || []);
       setStageTrackingTags(profile.stage_labels || []);
     } finally {
       setLoading(false);
     }
-  }, [profile, getLeaderStageConfig]);
+  }, [profile?.user_id, profile?.use_leader_stages, profile?.leaders_id_of_my_leader, getLeaderStageConfig]);
 
   useEffect(() => {
     if (!profileLoading) {
