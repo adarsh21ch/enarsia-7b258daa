@@ -7,7 +7,7 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
-import { Users, Tag, Copy, Check, Loader2, Eye, EyeOff, X, Plus, Trash2, Star, Layers, Filter } from 'lucide-react';
+import { Users, Tag, Copy, Check, Loader2, Eye, EyeOff, X, Plus, Trash2, Star, Layers } from 'lucide-react';
 import { toast } from 'sonner';
 import { Profile, ProfileUpdate } from '@/hooks/useProfile';
 import { useTrackingFormatContext } from '@/contexts/TrackingFormatContext';
@@ -31,7 +31,7 @@ interface LeaderTrackingFormatSettingsProps {
 }
 interface LeadsTagInput {
   name: string;
-  isFilter: boolean;
+  isStageTag: boolean;
   isFinalTarget: boolean;
 }
 interface StageTagInput {
@@ -67,11 +67,11 @@ export function LeaderTrackingFormatSettings({
   // Team Levels state
   const [newLevelLabel, setNewLevelLabel] = useState('');
 
-  // Leads Tracking Tags state (max 4) - first tag is filter, last is final target
+  // Leads Tracking Tags state (max 4) - one tag can be marked as stage tag
   const [leadsTrackingTags, setLeadsTrackingTags] = useState<LeadsTagInput[]>([{
     name: '',
-    isFilter: true,
-    isFinalTarget: true // Single tag is both filter and final target
+    isStageTag: false,
+    isFinalTarget: false
   }]);
   const [leadsNonTrackingTags, setLeadsNonTrackingTags] = useState<string[]>([]);
   const [newLeadsNonTrackingTag, setNewLeadsNonTrackingTag] = useState('');
@@ -101,25 +101,25 @@ export function LeaderTrackingFormatSettings({
         if (typeof responseLabels === 'object' && responseLabels.tracking) {
           const tags = (responseLabels.tracking || []).map((t: any) => ({
             name: t.name || '',
-            isFilter: t.isFilter ?? true,
+            isStageTag: t.isStageTag ?? t.isFilter ?? false,
             isFinalTarget: t.isFinalTarget ?? false
           }));
           setLeadsTrackingTags(tags.length > 0 ? tags : [{
             name: '',
-            isFilter: true,
+            isStageTag: false,
             isFinalTarget: false
           }]);
           setLeadsNonTrackingTags(responseLabels.nonTracking || []);
         } else if (Array.isArray(responseLabels)) {
-          // Legacy format
-          const tags = responseLabels.slice(0, 4).map((name: string, idx: number, arr: string[]) => ({
+          // Legacy format - no stage tags by default
+          const tags = responseLabels.slice(0, 4).map((name: string) => ({
             name,
-            isFilter: true,
-            isFinalTarget: idx === arr.length - 1
+            isStageTag: false,
+            isFinalTarget: false
           }));
           setLeadsTrackingTags(tags.length > 0 ? tags : [{
             name: '',
-            isFilter: true,
+            isStageTag: false,
             isFinalTarget: false
           }]);
           setLeadsNonTrackingTags(responseLabels.slice(4));
@@ -181,7 +181,7 @@ export function LeaderTrackingFormatSettings({
     const responseLabelsData = {
       tracking: validLeadsTags.map(t => ({
         name: t.name.trim(),
-        isFilter: t.isFilter,
+        isStageTag: t.isStageTag,
         isFinalTarget: t.isFinalTarget
       })),
       nonTracking: leadsNonTrackingTags
@@ -282,9 +282,10 @@ export function LeaderTrackingFormatSettings({
   const handleLeadsTagChange = (index: number, field: keyof LeadsTagInput, value: any) => {
     setLeadsTrackingTags(prev => {
       const updated = [...prev];
-      if (field === 'isFinalTarget' && value === true) {
+      if (field === 'isStageTag' && value === true) {
+        // Only ONE tag can be the Stage Tag at a time
         updated.forEach((t, i) => {
-          t.isFinalTarget = i === index;
+          t.isStageTag = i === index;
         });
       } else {
         updated[index] = {
@@ -298,21 +299,16 @@ export function LeaderTrackingFormatSettings({
   };
   const handleAddLeadsTag = () => {
     if (leadsTrackingTags.length < 4) {
-      // Move final target to the new last tag
-      const updated = leadsTrackingTags.map(t => ({ ...t, isFinalTarget: false }));
-      setLeadsTrackingTags([...updated, {
+      setLeadsTrackingTags([...leadsTrackingTags, {
         name: '',
-        isFilter: true,
-        isFinalTarget: true // New tag becomes final target
+        isStageTag: false,
+        isFinalTarget: false
       }]);
     }
   };
   const handleRemoveLeadsTag = (index: number) => {
     if (leadsTrackingTags.length > 1) {
       const updated = leadsTrackingTags.filter((_, i) => i !== index);
-      if (!updated.some(t => t.isFinalTarget) && updated.length > 0) {
-        updated[updated.length - 1].isFinalTarget = true;
-      }
       setLeadsTrackingTags(updated);
       triggerAutoSave();
     }
@@ -590,12 +586,13 @@ export function LeaderTrackingFormatSettings({
                   <span className="text-xs text-muted-foreground w-6">#{index + 1}</span>
                   <Input value={tag.name} onChange={e => handleLeadsTagChange(index, 'name', e.target.value)} placeholder={`Response ${index + 1}`} className="flex-1 h-8" />
                   <div className="flex items-center gap-2 shrink-0">
-                    <div className="flex items-center gap-1" title="Use as filter">
-                      <Checkbox checked={tag.isFilter} onCheckedChange={checked => handleLeadsTagChange(index, 'isFilter', checked)} />
-                      <Filter className="h-3 w-3 text-muted-foreground" />
-                    </div>
-                    <button onClick={() => handleLeadsTagChange(index, 'isFinalTarget', true)} className={`p-1 rounded transition-colors ${tag.isFinalTarget ? 'text-yellow-500' : 'text-muted-foreground hover:text-yellow-500'}`} title="Set as Final Target">
-                      <Star className={`h-4 w-4 ${tag.isFinalTarget ? 'fill-yellow-500' : ''}`} />
+                    <button 
+                      onClick={() => handleLeadsTagChange(index, 'isStageTag', !tag.isStageTag)} 
+                      className={`p-1 rounded transition-colors flex items-center gap-1 text-xs ${tag.isStageTag ? 'text-yellow-600 bg-yellow-100 dark:bg-yellow-900/30' : 'text-muted-foreground hover:text-yellow-600'}`}
+                      title="Mark as Stage Tag (appears in Stage view)"
+                    >
+                      <Star className={`h-4 w-4 ${tag.isStageTag ? 'fill-yellow-500 text-yellow-500' : ''}`} />
+                      {tag.isStageTag && <span>Stage Tag</span>}
                     </button>
                   </div>
                   {leadsTrackingTags.length > 1 && <Button variant="ghost" size="icon" onClick={() => handleRemoveLeadsTag(index)} className="h-7 w-7 text-destructive">

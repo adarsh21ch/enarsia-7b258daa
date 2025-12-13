@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { AlertCircle, Plus, Trash2, Star, Filter, Tag, X, Loader2, Check } from 'lucide-react';
+import { AlertCircle, Plus, Trash2, Star, Tag, X, Loader2, Check } from 'lucide-react';
 import { toast } from 'sonner';
 import { useTrackingFormatContext } from '@/contexts/TrackingFormatContext';
 import { useProfile } from '@/hooks/useProfile';
@@ -17,7 +17,7 @@ interface ManageResponseTagsDialogProps {
 
 interface LeadsTagInput {
   name: string;
-  isFilter: boolean;
+  isStageTag: boolean;
   isFinalTarget: boolean;
 }
 
@@ -37,10 +37,10 @@ export function ManageResponseTagsDialog({ open, onOpenChange }: ManageResponseT
     if (open) {
       const tags = leadsTrackingTags.map(t => ({
         name: t.name,
-        isFilter: t.isFilter,
+        isStageTag: t.isStageTag,
         isFinalTarget: t.isFinalTarget,
       }));
-      setTrackingTags(tags.length > 0 ? tags : [{ name: '', isFilter: true, isFinalTarget: false }]);
+      setTrackingTags(tags.length > 0 ? tags : [{ name: '', isStageTag: false, isFinalTarget: false }]);
       setNonTrackingTags(leadsNonTrackingTags || []);
     }
   }, [leadsTrackingTags, leadsNonTrackingTags, open]);
@@ -56,7 +56,7 @@ export function ManageResponseTagsDialog({ open, onOpenChange }: ManageResponseT
     const responseLabelsData = {
       tracking: validTags.map(t => ({
         name: t.name.trim(),
-        isFilter: t.isFilter,
+        isStageTag: t.isStageTag,
         isFinalTarget: t.isFinalTarget,
       })),
       nonTracking: nonTrackingTags,
@@ -86,8 +86,11 @@ export function ManageResponseTagsDialog({ open, onOpenChange }: ManageResponseT
   const handleTrackingTagChange = (index: number, field: keyof LeadsTagInput, value: any) => {
     setTrackingTags(prev => {
       const updated = [...prev];
-      if (field === 'isFinalTarget' && value === true) {
-        updated.forEach((t, i) => { t.isFinalTarget = i === index; });
+      if (field === 'isStageTag' && value === true) {
+        // Only ONE tag can be the Stage Tag
+        updated.forEach((t, i) => { t.isStageTag = i === index; });
+      } else if (field === 'isStageTag' && value === false) {
+        updated[index] = { ...updated[index], isStageTag: false };
       } else {
         updated[index] = { ...updated[index], [field]: value };
       }
@@ -98,16 +101,13 @@ export function ManageResponseTagsDialog({ open, onOpenChange }: ManageResponseT
 
   const handleAddTrackingTag = () => {
     if (trackingTags.length < 4) {
-      setTrackingTags([...trackingTags, { name: '', isFilter: true, isFinalTarget: false }]);
+      setTrackingTags([...trackingTags, { name: '', isStageTag: false, isFinalTarget: false }]);
     }
   };
 
   const handleRemoveTrackingTag = (index: number) => {
     if (trackingTags.length > 1) {
       const updated = trackingTags.filter((_, i) => i !== index);
-      if (!updated.some(t => t.isFinalTarget) && updated.length > 0) {
-        updated[updated.length - 1].isFinalTarget = true;
-      }
       setTrackingTags(updated);
       triggerAutoSave();
     }
@@ -160,8 +160,7 @@ export function ManageResponseTagsDialog({ open, onOpenChange }: ManageResponseT
                 {leadsTrackingTags.map((tag, idx) => (
                   <Badge key={idx} variant="secondary" className="text-xs gap-1">
                     {tag.name}
-                    {tag.isFinalTarget && <Star className="h-3 w-3 text-yellow-500 fill-yellow-500" />}
-                    {tag.isFilter && <Filter className="h-3 w-3 text-blue-500" />}
+                    {tag.isStageTag && <Star className="h-3 w-3 text-yellow-500 fill-yellow-500" />}
                   </Badge>
                 ))}
               </div>
@@ -248,19 +247,13 @@ export function ManageResponseTagsDialog({ open, onOpenChange }: ManageResponseT
                     className="flex-1 h-8"
                   />
                   <div className="flex items-center gap-2 shrink-0">
-                    <div className="flex items-center gap-1" title="Use as filter">
-                      <Checkbox
-                        checked={tag.isFilter}
-                        onCheckedChange={(checked) => handleTrackingTagChange(index, 'isFilter', checked)}
-                      />
-                      <Filter className="h-3 w-3 text-muted-foreground" />
-                    </div>
                     <button
-                      onClick={() => handleTrackingTagChange(index, 'isFinalTarget', true)}
-                      className={`p-1 rounded transition-colors ${tag.isFinalTarget ? 'text-yellow-500' : 'text-muted-foreground hover:text-yellow-500'}`}
-                      title="Set as Final Target (★)"
+                      onClick={() => handleTrackingTagChange(index, 'isStageTag', !tag.isStageTag)}
+                      className={`p-1 rounded transition-colors flex items-center gap-1 text-xs ${tag.isStageTag ? 'text-yellow-600 bg-yellow-100 dark:bg-yellow-900/30' : 'text-muted-foreground hover:text-yellow-600'}`}
+                      title="Mark as Stage Tag (appears in Stage view)"
                     >
-                      <Star className={`h-4 w-4 ${tag.isFinalTarget ? 'fill-yellow-500' : ''}`} />
+                      <Star className={`h-4 w-4 ${tag.isStageTag ? 'fill-yellow-500 text-yellow-500' : ''}`} />
+                      {tag.isStageTag && <span>Stage Tag</span>}
                     </button>
                     {trackingTags.length > 1 && (
                       <Button

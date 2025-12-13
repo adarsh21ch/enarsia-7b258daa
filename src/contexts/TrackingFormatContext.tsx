@@ -38,7 +38,10 @@ interface TrackingFormatContextType {
   isFinalTarget: (tagName: string) => boolean;
   isTrackingTag: (tagName: string) => boolean;
   
-  // Filter tag helpers from leader format
+  // Stage tag helpers (renamed from filter)
+  leadsStageTag: string | null;
+  isLeadsStageTag: (tagName: string) => boolean;
+  // Legacy aliases for backward compatibility
   leadsFilterTag: string | null;
   isLeadsFilterTag: (tagName: string) => boolean;
   
@@ -53,11 +56,11 @@ const TrackingFormatContext = createContext<TrackingFormatContextType | null>(nu
 export function TrackingFormatProvider({ children }: { children: React.ReactNode }) {
   const trackingFormatHook = useTrackingFormat();
 
-  // Get the filter tag from leader's format
-  const leadsFilterTag = trackingFormatHook.trackingFormat?.leadsTrackingTags.find(t => t.isFilter)?.name || null;
+  // Get the stage tag from leader's format (renamed from filter)
+  const leadsStageTag = trackingFormatHook.trackingFormat?.leadsTrackingTags.find(t => t.isStageTag)?.name || null;
 
-  const isLeadsFilterTag = useCallback((tagName: string) => {
-    return trackingFormatHook.trackingFormat?.leadsTrackingTags.find(t => t.name === tagName)?.isFilter || false;
+  const isLeadsStageTag = useCallback((tagName: string) => {
+    return trackingFormatHook.trackingFormat?.leadsTrackingTags.find(t => t.name === tagName)?.isStageTag || false;
   }, [trackingFormatHook.trackingFormat]);
 
   // Handle target completion when final tag is selected
@@ -89,8 +92,11 @@ export function TrackingFormatProvider({ children }: { children: React.ReactNode
 
   const value: TrackingFormatContextType = {
     ...trackingFormatHook,
-    leadsFilterTag,
-    isLeadsFilterTag,
+    leadsStageTag,
+    isLeadsStageTag,
+    // Keep old names for backward compatibility
+    leadsFilterTag: leadsStageTag,
+    isLeadsFilterTag: isLeadsStageTag,
     handleTargetComplete,
     getLeadsDropdownOptions,
     getStageDropdownOptions,

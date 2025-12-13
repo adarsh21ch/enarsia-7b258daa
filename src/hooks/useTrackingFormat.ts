@@ -5,7 +5,7 @@ import { useProfile } from '@/hooks/useProfile';
 
 export interface TrackingTag {
   name: string;
-  isFilter: boolean;
+  isStageTag: boolean;  // true = appears in Stage view, false = leads-only
   isFinalTarget: boolean;
 }
 
@@ -60,7 +60,8 @@ function parseResponseLabels(labels: any): { leadsTracking: TrackingTag[]; leads
     return {
       leadsTracking: (labels.tracking || []).map((t: any) => ({
         name: t.name || t,
-        isFilter: t.isFilter ?? true,
+        // Support both old "isFilter" and new "isStageTag" field names
+        isStageTag: t.isStageTag ?? t.isFilter ?? false,
         isFinalTarget: t.isFinalTarget ?? false,
       })),
       leadsNonTracking: labels.nonTracking || [],
@@ -69,13 +70,12 @@ function parseResponseLabels(labels: any): { leadsTracking: TrackingTag[]; leads
   
   // Handle legacy format: string[]
   if (Array.isArray(labels)) {
-    const tracking = labels.slice(0, 3).map((name, idx, arr) => ({
+    const tracking = labels.map((name, idx, arr) => ({
       name: String(name),
-      isFilter: true,
-      isFinalTarget: idx === arr.length - 1,
+      isStageTag: false,  // Legacy tags are NOT stage tags by default
+      isFinalTarget: false,  // No Final for leads - Final is only for stages
     }));
-    const nonTracking = labels.slice(3).map(String);
-    return { leadsTracking: tracking, leadsNonTracking: nonTracking };
+    return { leadsTracking: tracking, leadsNonTracking: [] };
   }
   
   return { leadsTracking: [], leadsNonTracking: [] };
