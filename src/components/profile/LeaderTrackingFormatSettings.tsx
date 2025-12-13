@@ -13,6 +13,7 @@ import { Profile, ProfileUpdate } from '@/hooks/useProfile';
 import { useTrackingFormatContext } from '@/contexts/TrackingFormatContext';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useLeaderLevels } from '@/hooks/useLeaderLevels';
+import { supabase } from '@/integrations/supabase/client';
 interface LeaderTrackingFormatSettingsProps {
   profile: Profile | null;
   updating: boolean;
@@ -61,6 +62,7 @@ export function LeaderTrackingFormatSettings({
   const [leaderIdInput, setLeaderIdInput] = useState('');
   const [savingLeader, setSavingLeader] = useState(false);
   const [formatMode, setFormatMode] = useState<'leader' | 'own'>('leader');
+  const [leaderName, setLeaderName] = useState<string | null>(null);
 
   // Team Levels state
   const [newLevelLabel, setNewLevelLabel] = useState('');
@@ -152,7 +154,24 @@ export function LeaderTrackingFormatSettings({
     }
   }, [profile]);
 
-  // Auto-save function
+  // Fetch leader name when connected
+  useEffect(() => {
+    const fetchLeaderName = async () => {
+      if (profile?.leaders_id_of_my_leader) {
+        const { data, error } = await supabase.rpc('get_user_by_neverai_id', {
+          target_neverai_id: profile.leaders_id_of_my_leader.toUpperCase()
+        });
+        if (!error && data && data.length > 0) {
+          setLeaderName(data[0].display_name || null);
+        } else {
+          setLeaderName(null);
+        }
+      } else {
+        setLeaderName(null);
+      }
+    };
+    fetchLeaderName();
+  }, [profile?.leaders_id_of_my_leader]);
   const autoSaveFormat = useCallback(async () => {
     if (formatMode !== 'own') return;
     setAutoSaveStatus('saving');
@@ -418,7 +437,12 @@ export function LeaderTrackingFormatSettings({
             <div className="flex items-center justify-between p-3 bg-primary/10 rounded-lg border border-primary/20">
               <div>
                 <p className="text-xs text-muted-foreground">Connected to Leader</p>
-                <p className="font-mono font-semibold text-primary">{profile?.leaders_id_of_my_leader}</p>
+                <div className="flex items-center gap-2">
+                  <p className="font-mono font-semibold text-primary">{profile?.leaders_id_of_my_leader}</p>
+                  {leaderName && (
+                    <span className="text-sm text-foreground font-medium">({leaderName})</span>
+                  )}
+                </div>
               </div>
               <Button variant="ghost" size="sm" onClick={handleClearLeader} disabled={updating}>
                 <X className="h-4 w-4 mr-1" />
