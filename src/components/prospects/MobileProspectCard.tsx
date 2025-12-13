@@ -14,7 +14,7 @@ import { format, parseISO, formatDistanceToNow } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { useActivityLogs } from '@/hooks/useActivityLogs';
 import { useCustomOptionsContext } from '@/contexts/CustomOptionsContext';
-import { useTrackingTags } from '@/hooks/useTrackingTags';
+import { useTrackingFormatContext } from '@/contexts/TrackingFormatContext';
 
 interface MobileProspectCardProps {
   prospect: Prospect;
@@ -38,20 +38,29 @@ export function MobileProspectCard({ prospect, index, isCalling, onUpdate, onDel
   const [newTag, setNewTag] = useState('');
   const { activities } = useActivityLogs();
   const { addOption, deleteOption, getOptionsForType, getCustomOptionsForType } = useCustomOptionsContext();
-  const { callingTrackingTags, stageTrackingTags } = useTrackingTags();
+  const { 
+    trackingTagNames, 
+    nonTrackingTags, 
+    finalTargetTag, 
+    isFinalTarget,
+    handleTargetComplete 
+  } = useTrackingFormatContext();
 
-  // Use tracking tags if configured, otherwise fall back to custom options
-  const stageOptions = stageTrackingTags.length > 0 
-    ? stageTrackingTags 
-    : getOptionsForType('funnel_stage', FUNNEL_STAGES) as (typeof FUNNEL_STAGES[number])[];
-  const actionOptions = callingTrackingTags.length > 0 
-    ? callingTrackingTags 
-    : getOptionsForType('action_taken', EXTENDED_ACTIONS) as (typeof EXTENDED_ACTIONS[number])[];
-  const statusOptions = getOptionsForType('prospect_status', STATUSES) as (typeof STATUSES[number])[];
+  // Build dropdown options from tracking format
+  const customActionOptions = getCustomOptionsForType('action_taken').map(o => o.option_value);
+  const customStageOptions = getCustomOptionsForType('funnel_stage').map(o => o.option_value);
   
-  // Determine if we're using tracking tags
-  const useTrackingTagsForStage = stageTrackingTags.length > 0;
-  const useTrackingTagsForAction = callingTrackingTags.length > 0;
+  const hasTrackingTags = trackingTagNames.length > 0;
+  
+  const actionOptions = hasTrackingTags 
+    ? [...trackingTagNames, ...nonTrackingTags, ...customActionOptions.filter(o => !trackingTagNames.includes(o) && !nonTrackingTags.includes(o))]
+    : getOptionsForType('action_taken', EXTENDED_ACTIONS) as string[];
+    
+  const stageOptions = hasTrackingTags
+    ? [...trackingTagNames, ...customStageOptions.filter(o => !trackingTagNames.includes(o))]
+    : getOptionsForType('funnel_stage', FUNNEL_STAGES) as string[];
+    
+  const statusOptions = getOptionsForType('prospect_status', STATUSES) as (typeof STATUSES[number])[];
 
   // Only reset local data when switching to a different lead
   useEffect(() => {
@@ -89,27 +98,20 @@ export function MobileProspectCard({ prospect, index, isCalling, onUpdate, onDel
     setIsDeleting(false);
   };
 
-  // Handle action change - if "Enrollment" is selected, also update enrollment_status
+  // Handle action change with target completion check
   const handleActionChange = (value: ExtendedActionTaken) => {
     const updates: Partial<Prospect> = {};
+    updates.action_taken = value as ActionTaken;
     
-    if (value === 'Enrollment') {
-      updates.enrollment_status = 'Enrolled';
-      if (!prospect.funnel_stage) {
-        updates.funnel_stage = 'Day 1';
-      }
-      updates.action_taken = prospect.action_taken;
-    } else {
-      updates.action_taken = value as ActionTaken;
+    // Check if this is the final target tag
+    if (isFinalTarget(value)) {
+      handleTargetComplete(value, prospect.name);
     }
     
     onUpdate(prospect.id, updates);
   };
 
   const getActionDisplayValue = (): ExtendedActionTaken | null => {
-    if (prospect.enrollment_status === 'Enrolled') {
-      return 'Enrollment';
-    }
     return prospect.action_taken || null;
   };
 
@@ -204,27 +206,23 @@ export function MobileProspectCard({ prospect, index, isCalling, onUpdate, onDel
             options={stageOptions as FunnelStage[]}
             onChange={(value) => onUpdate(prospect.id, { funnel_stage: value })}
             renderValue={(value) => <StageBadge stage={value} />}
-            placeholder="Stage (tracking)"
-            optionType={useTrackingTagsForStage ? undefined : "funnel_stage"}
-            customOptions={useTrackingTagsForStage ? [] : getCustomOptionsForType('funnel_stage')}
-            onAddOption={useTrackingTagsForStage ? undefined : addOption}
-            onDeleteOption={useTrackingTagsForStage ? undefined : deleteOption}
-            defaultOptions={FUNNEL_STAGES}
-            hideAddNew={useTrackingTagsForStage}
+            placeholder="Stage"
+            showTagSeparation={hasTrackingTags}
+            trackingOptions={trackingTagNames}
+            personalOptions={customStageOptions.filter(o => !trackingTagNames.includes(o))}
           />
         )}
         <InlineSelect<ExtendedActionTaken>
           value={getActionDisplayValue()}
-          options={(isCalling ? actionOptions : actionOptions.filter(a => a !== 'Enrollment')) as ExtendedActionTaken[]}
+          options={actionOptions as ExtendedActionTaken[]}
           onChange={handleActionChange}
-          placeholder="Response (tracking)"
+          placeholder="Response"
           renderValue={(value) => <ActionBadge action={value as any} />}
-          optionType={useTrackingTagsForAction ? undefined : "action_taken"}
-          customOptions={useTrackingTagsForAction ? [] : getCustomOptionsForType('action_taken')}
-          onAddOption={useTrackingTagsForAction ? undefined : addOption}
-          onDeleteOption={useTrackingTagsForAction ? undefined : deleteOption}
-          defaultOptions={EXTENDED_ACTIONS}
-          hideAddNew={useTrackingTagsForAction}
+          showTagSeparation={hasTrackingTags}
+          trackingOptions={trackingTagNames}
+          nonTrackingOptions={nonTrackingTags}
+          personalOptions={customActionOptions.filter(o => !trackingTagNames.includes(o) && !nonTrackingTags.includes(o))}
+          finalTargetTag={finalTargetTag}
         />
         <InlineSelect<ProspectStatus>
           value={prospect.prospect_status}

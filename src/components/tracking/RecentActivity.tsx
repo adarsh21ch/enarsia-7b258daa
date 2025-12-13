@@ -1,13 +1,17 @@
 import { Prospect } from '@/types/prospect';
 import { useMemo } from 'react';
 import { formatDistanceToNow, parseISO } from 'date-fns';
-import { StageBadge, StatusBadge } from '@/components/prospects/StatusBadge';
+import { StageBadge, ActionBadge } from '@/components/prospects/StatusBadge';
+import { useTrackingFormatContext } from '@/contexts/TrackingFormatContext';
+import { Star } from 'lucide-react';
 
 interface RecentActivityProps {
   prospects: Prospect[];
 }
 
 export function RecentActivity({ prospects }: RecentActivityProps) {
+  const { isFinalTarget } = useTrackingFormatContext();
+  
   const recentProspects = useMemo(() => {
     return [...prospects]
       .sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime())
@@ -37,9 +41,16 @@ export function RecentActivity({ prospects }: RecentActivityProps) {
             <div className="min-w-0 flex-1">
               <p className="text-sm font-medium truncate">{prospect.name}</p>
               <div className="flex items-center gap-2 mt-1">
-                <StageBadge stage={prospect.funnel_stage} />
-                {prospect.prospect_status && (
-                  <StatusBadge status={prospect.prospect_status} />
+                {prospect.action_taken && (
+                  <div className="flex items-center gap-1">
+                    <ActionBadge action={prospect.action_taken} />
+                    {isFinalTarget(prospect.action_taken) && (
+                      <Star className="h-3 w-3 text-yellow-500 fill-yellow-500" />
+                    )}
+                  </div>
+                )}
+                {prospect.funnel_stage && (
+                  <StageBadge stage={prospect.funnel_stage} />
                 )}
               </div>
             </div>
