@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -12,6 +12,7 @@ import { toast } from 'sonner';
 import { Profile, ProfileUpdate } from '@/hooks/useProfile';
 import { useTrackingFormatContext } from '@/contexts/TrackingFormatContext';
 import { Checkbox } from '@/components/ui/checkbox';
+import { useLeaderLevels } from '@/hooks/useLeaderLevels';
 
 interface LeaderTrackingFormatSettingsProps {
   profile: Profile | null;
@@ -21,9 +22,14 @@ interface LeaderTrackingFormatSettingsProps {
   onClearLeaderHierarchy: () => Promise<{ success: boolean; error?: string }>;
 }
 
-interface TrackingTagInput {
+interface LeadsTagInput {
   name: string;
   isFilter: boolean;
+  isFinalTarget: boolean;
+}
+
+interface StageTagInput {
+  name: string;
   isFinalTarget: boolean;
 }
 
@@ -34,24 +40,36 @@ export function LeaderTrackingFormatSettings({
   onUpdateLeaderHierarchy,
   onClearLeaderHierarchy,
 }: LeaderTrackingFormatSettingsProps) {
-  const { trackingFormat, refreshFormat, isRootLeader, rootLeaderName, levels } = useTrackingFormatContext();
+  const { trackingFormat, refreshFormat, isRootLeader, rootLeaderName, levels: inheritedLevels } = useTrackingFormatContext();
+  const { levels: ownLevels, addLevel, updateLevel, deleteLevel } = useLeaderLevels();
   
   const [copiedId, setCopiedId] = useState(false);
   const [leaderIdInput, setLeaderIdInput] = useState('');
   const [savingLeader, setSavingLeader] = useState(false);
   const [formatMode, setFormatMode] = useState<'leader' | 'own'>('leader');
   
-  // Tracking tags state (max 3)
-  const [trackingTags, setTrackingTags] = useState<TrackingTagInput[]>([
+  // Team Levels state
+  const [newLevelLabel, setNewLevelLabel] = useState('');
+  
+  // Leads Tracking Tags state (max 4)
+  const [leadsTrackingTags, setLeadsTrackingTags] = useState<LeadsTagInput[]>([
     { name: '', isFilter: true, isFinalTarget: false }
   ]);
+  const [leadsNonTrackingTags, setLeadsNonTrackingTags] = useState<string[]>([]);
+  const [newLeadsNonTrackingTag, setNewLeadsNonTrackingTag] = useState('');
   
-  // Non-tracking tags state (unlimited)
-  const [nonTrackingTags, setNonTrackingTags] = useState<string[]>([]);
-  const [newNonTrackingTag, setNewNonTrackingTag] = useState('');
+  // Stage Tags state
+  const [stageTags, setStageTags] = useState<StageTagInput[]>([
+    { name: '', isFinalTarget: false }
+  ]);
+  const [stageNonTrackingTags, setStageNonTrackingTags] = useState<string[]>([]);
+  const [newStageNonTrackingTag, setNewStageNonTrackingTag] = useState('');
   
   const [showSwitchConfirm, setShowSwitchConfirm] = useState(false);
-  const [savingTags, setSavingTags] = useState(false);
+  const [autoSaveStatus, setAutoSaveStatus] = useState<'idle' | 'saving' | 'saved'>('idle');
+  
+  // Debounce timer ref
+  const saveTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   // Initialize state from profile
   useEffect(() => {
@@ -59,19 +77,100 @@ export function LeaderTrackingFormatSettings({
       const isUsingLeaderFormat = profile.use_leader_stages && !!profile.leaders_id_of_my_leader;
       setFormatMode(isUsingLeaderFormat ? 'leader' : 'own');
       
-      // Parse tracking tags from response_labels
-      const responseLabels = profile.response_labels || [];
-      if (responseLabels.length > 0) {
-        const tags = responseLabels.slice(0, 3).map((name, idx) => ({
-          name,
-          isFilter: true,
-          isFinalTarget: idx === Math.min(responseLabels.length, 3) - 1
-        }));
-        setTrackingTags(tags.length > 0 ? tags : [{ name: '', isFilter: true, isFinalTarget: false }]);
-        setNonTrackingTags(responseLabels.slice(3));
+      // Parse leads tracking tags from response_labels
+      const responseLabels = profile.response_labels as any;
+      if (responseLabels) {
+        if (typeof responseLabels === 'object' && responseLabels.tracking) {
+          const tags = (responseLabels.tracking || []).map((t: any) => ({
+            name: t.name || '',
+            isFilter: t.isFilter ?? true,
+            isFinalTarget: t.isFinalTarget ?? false,
+          }));
+          setLeadsTrackingTags(tags.length > 0 ? tags : [{ name: '', isFilter: true, isFinalTarget: false }]);
+          setLeadsNonTrackingTags(responseLabels.nonTracking || []);
+        } else if (Array.isArray(responseLabels)) {
+          // Legacy format
+          const tags = responseLabels.slice(0, 4).map((name: string, idx: number, arr: string[]) => ({
+            name,
+            isFilter: true,
+            isFinalTarget: idx === arr.length - 1,
+          }));
+          setLeadsTrackingTags(tags.length > 0 ? tags : [{ name: '', isFilter: true, isFinalTarget: false }]);
+          setLeadsNonTrackingTags(responseLabels.slice(4));
+        }
+      }
+      
+      // Parse stage tags from stage_labels
+      const stageLabels = profile.stage_labels as any;
+      if (stageLabels) {
+        if (typeof stageLabels === 'object' && stageLabels.stages) {
+          const tags = (stageLabels.stages || []).map((s: any) => ({
+            name: s.name || '',
+            isFinalTarget: s.isFinalTarget ?? false,
+          }));
+          setStageTags(tags.length > 0 ? tags : [{ name: '', isFinalTarget: false }]);
+          setStageNonTrackingTags(stageLabels.nonTracking || []);
+        } else if (Array.isArray(stageLabels)) {
+          // Legacy format
+          const tags = stageLabels.map((name: string, idx: number, arr: string[]) => ({
+            name,
+            isFinalTarget: idx === arr.length - 1,
+          }));
+          setStageTags(tags.length > 0 ? tags : [{ name: '', isFinalTarget: false }]);
+        }
       }
     }
   }, [profile]);
+
+  // Auto-save function
+  const autoSaveFormat = useCallback(async () => {
+    if (formatMode !== 'own') return;
+    
+    setAutoSaveStatus('saving');
+    
+    // Build response_labels with new structure
+    const validLeadsTags = leadsTrackingTags.filter(t => t.name.trim());
+    const responseLabelsData = {
+      tracking: validLeadsTags.map(t => ({
+        name: t.name.trim(),
+        isFilter: t.isFilter,
+        isFinalTarget: t.isFinalTarget,
+      })),
+      nonTracking: leadsNonTrackingTags,
+    };
+    
+    // Build stage_labels with new structure
+    const validStageTags = stageTags.filter(t => t.name.trim());
+    const stageLabelsData = {
+      stages: validStageTags.map(s => ({
+        name: s.name.trim(),
+        isFinalTarget: s.isFinalTarget,
+      })),
+      nonTracking: stageNonTrackingTags,
+    };
+    
+    await onUpdateProfile({
+      use_leader_stages: false,
+      response_labels: responseLabelsData as any,
+      stage_labels: stageLabelsData as any,
+      stage_count: validStageTags.length,
+    });
+    
+    refreshFormat();
+    setAutoSaveStatus('saved');
+    
+    setTimeout(() => setAutoSaveStatus('idle'), 1500);
+  }, [formatMode, leadsTrackingTags, leadsNonTrackingTags, stageTags, stageNonTrackingTags, onUpdateProfile, refreshFormat]);
+
+  // Debounced auto-save
+  const triggerAutoSave = useCallback(() => {
+    if (saveTimerRef.current) {
+      clearTimeout(saveTimerRef.current);
+    }
+    saveTimerRef.current = setTimeout(() => {
+      autoSaveFormat();
+    }, 800);
+  }, [autoSaveFormat]);
 
   const handleCopyLeaderId = async () => {
     if (profile?.neverai_id) {
@@ -111,12 +210,9 @@ export function LeaderTrackingFormatSettings({
 
   const handleFormatModeChange = async (mode: 'leader' | 'own') => {
     if (mode === 'own' && formatMode === 'leader') {
-      // Switching to own format
       setFormatMode('own');
-      setSavingTags(true);
       await onUpdateProfile({ use_leader_stages: false });
       refreshFormat();
-      setSavingTags(false);
       toast.success('You can now create your own tracking format');
     } else if (mode === 'leader' && formatMode === 'own') {
       if (!profile?.leaders_id_of_my_leader) {
@@ -130,88 +226,113 @@ export function LeaderTrackingFormatSettings({
   const confirmSwitchToLeader = async () => {
     setShowSwitchConfirm(false);
     setFormatMode('leader');
-    setSavingTags(true);
     await onUpdateProfile({ use_leader_stages: true });
     refreshFormat();
-    setSavingTags(false);
     toast.success('Now using leader tracking format');
   };
 
-  // Tracking tag handlers
-  const handleTrackingTagChange = (index: number, field: keyof TrackingTagInput, value: any) => {
-    setTrackingTags(prev => {
+  // === LEADS TAG HANDLERS ===
+  const handleLeadsTagChange = (index: number, field: keyof LeadsTagInput, value: any) => {
+    setLeadsTrackingTags(prev => {
       const updated = [...prev];
       if (field === 'isFinalTarget' && value === true) {
-        // Only one can be final target
-        updated.forEach((t, i) => {
-          t.isFinalTarget = i === index;
-        });
+        updated.forEach((t, i) => { t.isFinalTarget = i === index; });
       } else {
         updated[index] = { ...updated[index], [field]: value };
       }
       return updated;
     });
+    triggerAutoSave();
   };
 
-  const handleAddTrackingTag = () => {
-    if (trackingTags.length < 3) {
-      setTrackingTags([...trackingTags, { name: '', isFilter: true, isFinalTarget: false }]);
+  const handleAddLeadsTag = () => {
+    if (leadsTrackingTags.length < 4) {
+      setLeadsTrackingTags([...leadsTrackingTags, { name: '', isFilter: true, isFinalTarget: false }]);
     }
   };
 
-  const handleRemoveTrackingTag = (index: number) => {
-    if (trackingTags.length > 1) {
-      const updated = trackingTags.filter((_, i) => i !== index);
-      // Ensure at least one has final target
+  const handleRemoveLeadsTag = (index: number) => {
+    if (leadsTrackingTags.length > 1) {
+      const updated = leadsTrackingTags.filter((_, i) => i !== index);
       if (!updated.some(t => t.isFinalTarget) && updated.length > 0) {
         updated[updated.length - 1].isFinalTarget = true;
       }
-      setTrackingTags(updated);
+      setLeadsTrackingTags(updated);
+      triggerAutoSave();
     }
   };
 
-  // Non-tracking tag handlers
-  const handleAddNonTrackingTag = () => {
-    if (newNonTrackingTag.trim()) {
-      if (nonTrackingTags.includes(newNonTrackingTag.trim())) {
-        toast.error('This tag already exists');
-        return;
+  const handleAddLeadsNonTracking = () => {
+    if (newLeadsNonTrackingTag.trim() && !leadsNonTrackingTags.includes(newLeadsNonTrackingTag.trim())) {
+      setLeadsNonTrackingTags([...leadsNonTrackingTags, newLeadsNonTrackingTag.trim()]);
+      setNewLeadsNonTrackingTag('');
+      triggerAutoSave();
+    }
+  };
+
+  const handleRemoveLeadsNonTracking = (index: number) => {
+    setLeadsNonTrackingTags(leadsNonTrackingTags.filter((_, i) => i !== index));
+    triggerAutoSave();
+  };
+
+  // === STAGE TAG HANDLERS ===
+  const handleStageTagChange = (index: number, field: keyof StageTagInput, value: any) => {
+    setStageTags(prev => {
+      const updated = [...prev];
+      if (field === 'isFinalTarget' && value === true) {
+        updated.forEach((t, i) => { t.isFinalTarget = i === index; });
+      } else {
+        updated[index] = { ...updated[index], [field]: value };
       }
-      setNonTrackingTags([...nonTrackingTags, newNonTrackingTag.trim()]);
-      setNewNonTrackingTag('');
-    }
-  };
-
-  const handleRemoveNonTrackingTag = (index: number) => {
-    setNonTrackingTags(nonTrackingTags.filter((_, i) => i !== index));
-  };
-
-  const handleSaveOwnFormat = async () => {
-    const validTrackingTags = trackingTags.filter(t => t.name.trim());
-    
-    if (validTrackingTags.length === 0) {
-      toast.error('Please add at least 1 tracking tag');
-      return;
-    }
-    
-    // Combine tracking + non-tracking tags into response_labels
-    const allLabels = [
-      ...validTrackingTags.map(t => t.name.trim()),
-      ...nonTrackingTags
-    ];
-    
-    setSavingTags(true);
-    await onUpdateProfile({
-      use_leader_stages: false,
-      response_labels: allLabels,
-      stage_count: validTrackingTags.length
+      return updated;
     });
-    refreshFormat();
-    setSavingTags(false);
-    toast.success('Tracking format saved');
+    triggerAutoSave();
+  };
+
+  const handleAddStageTag = () => {
+    if (stageTags.length < 10) {
+      setStageTags([...stageTags, { name: '', isFinalTarget: false }]);
+    }
+  };
+
+  const handleRemoveStageTag = (index: number) => {
+    if (stageTags.length > 1) {
+      const updated = stageTags.filter((_, i) => i !== index);
+      if (!updated.some(t => t.isFinalTarget) && updated.length > 0) {
+        updated[updated.length - 1].isFinalTarget = true;
+      }
+      setStageTags(updated);
+      triggerAutoSave();
+    }
+  };
+
+  const handleAddStageNonTracking = () => {
+    if (newStageNonTrackingTag.trim() && !stageNonTrackingTags.includes(newStageNonTrackingTag.trim())) {
+      setStageNonTrackingTags([...stageNonTrackingTags, newStageNonTrackingTag.trim()]);
+      setNewStageNonTrackingTag('');
+      triggerAutoSave();
+    }
+  };
+
+  const handleRemoveStageNonTracking = (index: number) => {
+    setStageNonTrackingTags(stageNonTrackingTags.filter((_, i) => i !== index));
+    triggerAutoSave();
+  };
+
+  // === LEVEL HANDLERS ===
+  const handleAddLevel = async () => {
+    if (newLevelLabel.trim()) {
+      await addLevel(newLevelLabel.trim(), `L${ownLevels.length + 1}`);
+      setNewLevelLabel('');
+    }
+  };
+
+  const handleUpdateLevelLabel = async (levelId: string, newLabel: string) => {
+    await updateLevel(levelId, { label: newLabel });
   };
 
   const hasLeader = !!profile?.leaders_id_of_my_leader;
+  const displayLevels = formatMode === 'own' ? ownLevels : inheritedLevels;
 
   return (
     <div className="space-y-6">
@@ -246,9 +367,21 @@ export function LeaderTrackingFormatSettings({
 
       {/* Leader's Tracking Format Section */}
       <div className="rounded-2xl p-4 bg-card border border-border/50 space-y-4">
-        <div className="flex items-center gap-2">
-          <Tag className="h-4 w-4 text-primary" />
-          <Label className="text-sm font-semibold">Leader's Tracking Format</Label>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Tag className="h-4 w-4 text-primary" />
+            <Label className="text-sm font-semibold">Leader's Tracking Format</Label>
+          </div>
+          {autoSaveStatus === 'saving' && (
+            <span className="text-xs text-muted-foreground flex items-center gap-1">
+              <Loader2 className="h-3 w-3 animate-spin" /> Saving...
+            </span>
+          )}
+          {autoSaveStatus === 'saved' && (
+            <span className="text-xs text-green-600 flex items-center gap-1">
+              <Check className="h-3 w-3" /> Saved
+            </span>
+          )}
         </div>
         
         <p className="text-xs text-muted-foreground">
@@ -268,7 +401,7 @@ export function LeaderTrackingFormatSettings({
                 Use Leader's Tracking Format
               </Label>
               <p className="text-xs text-muted-foreground mt-1">
-                Enter Leader ID to inherit their complete tracking system (tags, levels, and funnel logic). You cannot edit it, but your leader can.
+                Enter Leader ID to inherit their complete tracking system (tags, levels, and funnel logic).
               </p>
               
               {formatMode === 'leader' && (
@@ -304,28 +437,58 @@ export function LeaderTrackingFormatSettings({
 
                       {/* Show inherited format */}
                       {trackingFormat && (
-                        <div className="p-3 bg-green-50 dark:bg-green-950/30 rounded-lg border border-green-200 dark:border-green-900">
-                          <div className="flex items-center gap-2 mb-2">
+                        <div className="p-3 bg-green-50 dark:bg-green-950/30 rounded-lg border border-green-200 dark:border-green-900 space-y-3">
+                          <div className="flex items-center gap-2">
                             <Check className="h-4 w-4 text-green-600" />
                             <span className="text-sm font-medium text-green-700 dark:text-green-400">
                               Using {rootLeaderName}'s Tracking Format
                             </span>
                           </div>
-                          <div className="space-y-2">
-                            <div className="flex flex-wrap gap-1.5">
-                              {trackingFormat.trackingTags.map((tag, idx) => (
-                                <Badge key={idx} variant="secondary" className="text-xs gap-1">
-                                  {tag.name}
-                                  {tag.isFinalTarget && <Star className="h-3 w-3 text-yellow-500 fill-yellow-500" />}
-                                </Badge>
-                              ))}
+                          
+                          {/* Inherited Levels */}
+                          {inheritedLevels.length > 0 && (
+                            <div>
+                              <p className="text-xs text-muted-foreground mb-1">Team Levels</p>
+                              <div className="flex flex-wrap gap-1.5">
+                                {inheritedLevels.map((level, idx) => (
+                                  <Badge key={idx} variant="outline" className="text-xs">
+                                    {level.code}: {level.label}
+                                    {level.isDefault && <Star className="h-2.5 w-2.5 ml-1 text-yellow-500 fill-yellow-500" />}
+                                  </Badge>
+                                ))}
+                              </div>
                             </div>
-                            {levels.length > 0 && (
-                              <p className="text-xs text-muted-foreground">
-                                {levels.length} level{levels.length > 1 ? 's' : ''} available
-                              </p>
-                            )}
-                          </div>
+                          )}
+                          
+                          {/* Inherited Leads Tags */}
+                          {trackingFormat.leadsTrackingTags.length > 0 && (
+                            <div>
+                              <p className="text-xs text-muted-foreground mb-1">Leads Tracking Tags</p>
+                              <div className="flex flex-wrap gap-1.5">
+                                {trackingFormat.leadsTrackingTags.map((tag, idx) => (
+                                  <Badge key={idx} variant="secondary" className="text-xs gap-1">
+                                    {tag.name}
+                                    {tag.isFinalTarget && <Star className="h-3 w-3 text-yellow-500 fill-yellow-500" />}
+                                  </Badge>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+                          
+                          {/* Inherited Stage Tags */}
+                          {trackingFormat.stageTags.length > 0 && (
+                            <div>
+                              <p className="text-xs text-muted-foreground mb-1">Stage Tags</p>
+                              <div className="flex flex-wrap gap-1.5">
+                                {trackingFormat.stageTags.map((tag, idx) => (
+                                  <Badge key={idx} variant="secondary" className="text-xs gap-1">
+                                    {tag.name}
+                                    {tag.isFinalTarget && <Star className="h-3 w-3 text-yellow-500 fill-yellow-500" />}
+                                  </Badge>
+                                ))}
+                              </div>
+                            </div>
+                          )}
                         </div>
                       )}
                     </>
@@ -367,59 +530,115 @@ export function LeaderTrackingFormatSettings({
           </div>
         </RadioGroup>
 
-        {/* Own Format Editor - Only shown when Option 2 is selected */}
+        {/* Own Format Editor */}
         {formatMode === 'own' && (
           <div className="space-y-6 mt-4 pt-4 border-t border-border/50">
-            {/* Tracking Tags (Max 3) */}
+            
+            {/* 1. TEAM LEVELS */}
+            <div className="space-y-3">
+              <div className="flex items-center gap-2">
+                <Users className="h-4 w-4 text-primary" />
+                <p className="text-sm font-medium">Team Levels</p>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Define levels for your team members. New members joining with your Leader ID will be assigned Level 1 as default.
+              </p>
+              
+              <div className="space-y-2">
+                {ownLevels.map((level, index) => (
+                  <div key={level.id} className="flex items-center gap-2 p-2 bg-muted/30 rounded-lg">
+                    <span className="text-xs text-muted-foreground w-16 shrink-0">Level {index + 1}</span>
+                    <Input
+                      value={level.label}
+                      onChange={(e) => handleUpdateLevelLabel(level.id, e.target.value)}
+                      onBlur={() => handleUpdateLevelLabel(level.id, level.label)}
+                      placeholder="Aligned name..."
+                      className="flex-1 h-8"
+                    />
+                    {level.is_default && (
+                      <Badge variant="outline" className="text-xs shrink-0">Default</Badge>
+                    )}
+                    {ownLevels.length > 1 && !level.is_default && (
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => deleteLevel(level.id)}
+                        className="h-7 w-7 text-destructive shrink-0"
+                      >
+                        <Trash2 className="h-3 w-3" />
+                      </Button>
+                    )}
+                  </div>
+                ))}
+              </div>
+              
+              {ownLevels.length < 10 && (
+                <div className="flex gap-2">
+                  <Input
+                    value={newLevelLabel}
+                    onChange={(e) => setNewLevelLabel(e.target.value)}
+                    placeholder="Add new level..."
+                    className="flex-1 h-8"
+                    onKeyDown={(e) => e.key === 'Enter' && handleAddLevel()}
+                  />
+                  <Button variant="outline" size="sm" onClick={handleAddLevel} disabled={!newLevelLabel.trim()}>
+                    <Plus className="h-3 w-3" />
+                  </Button>
+                </div>
+              )}
+            </div>
+
+            <Separator />
+
+            {/* 2. LEADS TRACKING TAGS */}
             <div className="space-y-3">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <Tag className="h-4 w-4 text-primary" />
-                  <p className="text-sm font-medium">Tracking Tags (max 3)</p>
+                  <p className="text-sm font-medium">Leads Tracking Tags (Responses)</p>
                 </div>
-                {trackingTags.length < 3 && (
-                  <Button variant="outline" size="sm" onClick={handleAddTrackingTag}>
+                {leadsTrackingTags.length < 4 && (
+                  <Button variant="outline" size="sm" onClick={handleAddLeadsTag}>
                     <Plus className="h-3 w-3 mr-1" />
                     Add
                   </Button>
                 )}
               </div>
               <p className="text-xs text-muted-foreground">
-                Tracking tags are used in TrackUp analytics. Mark one as the final target (★).
+                These tags are used in the Leads tab and are counted in analytics. Mark one as ★ Final target.
               </p>
               
               <div className="space-y-2">
-                {trackingTags.map((tag, index) => (
+                {leadsTrackingTags.map((tag, index) => (
                   <div key={index} className="flex items-center gap-2 p-2 bg-muted/30 rounded-lg">
-                    <span className="text-xs text-muted-foreground w-8">#{index + 1}</span>
+                    <span className="text-xs text-muted-foreground w-6">#{index + 1}</span>
                     <Input
                       value={tag.name}
-                      onChange={(e) => handleTrackingTagChange(index, 'name', e.target.value)}
-                      placeholder={`Tag ${index + 1} (e.g., ${index === 0 ? 'Called' : index === 1 ? 'Interested' : 'Enrolled'})`}
+                      onChange={(e) => handleLeadsTagChange(index, 'name', e.target.value)}
+                      placeholder={`Response ${index + 1}`}
                       className="flex-1 h-8"
                     />
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 shrink-0">
                       <div className="flex items-center gap-1" title="Use as filter">
                         <Checkbox
                           checked={tag.isFilter}
-                          onCheckedChange={(checked) => handleTrackingTagChange(index, 'isFilter', checked)}
-                          id={`filter-${index}`}
+                          onCheckedChange={(checked) => handleLeadsTagChange(index, 'isFilter', checked)}
                         />
                         <Filter className="h-3 w-3 text-muted-foreground" />
                       </div>
                       <button
-                        onClick={() => handleTrackingTagChange(index, 'isFinalTarget', true)}
+                        onClick={() => handleLeadsTagChange(index, 'isFinalTarget', true)}
                         className={`p-1 rounded transition-colors ${tag.isFinalTarget ? 'text-yellow-500' : 'text-muted-foreground hover:text-yellow-500'}`}
                         title="Set as Final Target"
                       >
                         <Star className={`h-4 w-4 ${tag.isFinalTarget ? 'fill-yellow-500' : ''}`} />
                       </button>
                     </div>
-                    {trackingTags.length > 1 && (
+                    {leadsTrackingTags.length > 1 && (
                       <Button
                         variant="ghost"
                         size="icon"
-                        onClick={() => handleRemoveTrackingTag(index)}
+                        onClick={() => handleRemoveLeadsTag(index)}
                         className="h-7 w-7 text-destructive"
                       >
                         <Trash2 className="h-3 w-3" />
@@ -428,64 +647,113 @@ export function LeaderTrackingFormatSettings({
                   </div>
                 ))}
               </div>
-            </div>
-
-            <Separator />
-
-            {/* Non-Tracking Tags (Unlimited) */}
-            <div className="space-y-3">
-              <div className="flex items-center gap-2">
-                <Layers className="h-4 w-4 text-muted-foreground" />
-                <p className="text-sm font-medium">Non-Tracking Tags</p>
-              </div>
-              <p className="text-xs text-muted-foreground">
-                These are for your convenience only and are NOT counted in TrackUp analytics.
-              </p>
               
-              <div className="flex gap-2">
-                <Input
-                  value={newNonTrackingTag}
-                  onChange={(e) => setNewNonTrackingTag(e.target.value)}
-                  placeholder="Add non-tracking tag..."
-                  className="flex-1 h-8"
-                  onKeyDown={(e) => e.key === 'Enter' && handleAddNonTrackingTag()}
-                />
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  onClick={handleAddNonTrackingTag}
-                  disabled={!newNonTrackingTag.trim()}
-                >
-                  <Plus className="h-3 w-3" />
-                </Button>
-              </div>
-              
-              {nonTrackingTags.length > 0 && (
-                <div className="flex flex-wrap gap-2">
-                  {nonTrackingTags.map((tag, index) => (
-                    <Badge key={index} variant="outline" className="gap-1 pr-1">
+              {/* Leads Non-Tracking Tags */}
+              <div className="pt-2">
+                <p className="text-xs text-muted-foreground mb-2">Leads Non-Tracking Tags (display only)</p>
+                <div className="flex flex-wrap gap-2 mb-2">
+                  {leadsNonTrackingTags.map((tag, idx) => (
+                    <Badge key={idx} variant="outline" className="gap-1 pr-1">
                       {tag}
-                      <button
-                        onClick={() => handleRemoveNonTrackingTag(index)}
-                        className="ml-1 hover:text-destructive"
-                      >
+                      <button onClick={() => handleRemoveLeadsNonTracking(idx)} className="ml-1 hover:text-destructive">
                         <X className="h-3 w-3" />
                       </button>
                     </Badge>
                   ))}
                 </div>
-              )}
+                <div className="flex gap-2">
+                  <Input
+                    value={newLeadsNonTrackingTag}
+                    onChange={(e) => setNewLeadsNonTrackingTag(e.target.value)}
+                    placeholder="Add non-tracking tag..."
+                    className="flex-1 h-8"
+                    onKeyDown={(e) => e.key === 'Enter' && handleAddLeadsNonTracking()}
+                  />
+                  <Button variant="outline" size="sm" onClick={handleAddLeadsNonTracking} disabled={!newLeadsNonTrackingTag.trim()}>
+                    <Plus className="h-3 w-3" />
+                  </Button>
+                </div>
+              </div>
             </div>
-            
-            <Button 
-              onClick={handleSaveOwnFormat} 
-              disabled={savingTags}
-              size="sm"
-              className="w-full"
-            >
-              {savingTags ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
-              Save Tracking Format
-            </Button>
+
+            <Separator />
+
+            {/* 3. STAGE TAGS */}
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Layers className="h-4 w-4 text-primary" />
+                  <p className="text-sm font-medium">Stage Tags (Sales Stages)</p>
+                </div>
+                {stageTags.length < 10 && (
+                  <Button variant="outline" size="sm" onClick={handleAddStageTag}>
+                    <Plus className="h-3 w-3 mr-1" />
+                    Add
+                  </Button>
+                )}
+              </div>
+              <p className="text-xs text-muted-foreground">
+                These stages are used in the Stage tab and funnel analytics. Mark one as ★ Final stage.
+              </p>
+              
+              <div className="space-y-2">
+                {stageTags.map((tag, index) => (
+                  <div key={index} className="flex items-center gap-2 p-2 bg-muted/30 rounded-lg">
+                    <span className="text-xs text-muted-foreground w-16 shrink-0">Stage {index + 1}</span>
+                    <Input
+                      value={tag.name}
+                      onChange={(e) => handleStageTagChange(index, 'name', e.target.value)}
+                      placeholder={`Stage ${index + 1}`}
+                      className="flex-1 h-8"
+                    />
+                    <button
+                      onClick={() => handleStageTagChange(index, 'isFinalTarget', true)}
+                      className={`p-1 rounded transition-colors shrink-0 ${tag.isFinalTarget ? 'text-yellow-500' : 'text-muted-foreground hover:text-yellow-500'}`}
+                      title="Set as Final Stage"
+                    >
+                      <Star className={`h-4 w-4 ${tag.isFinalTarget ? 'fill-yellow-500' : ''}`} />
+                    </button>
+                    {stageTags.length > 1 && (
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => handleRemoveStageTag(index)}
+                        className="h-7 w-7 text-destructive shrink-0"
+                      >
+                        <Trash2 className="h-3 w-3" />
+                      </Button>
+                    )}
+                  </div>
+                ))}
+              </div>
+              
+              {/* Stage Non-Tracking Tags */}
+              <div className="pt-2">
+                <p className="text-xs text-muted-foreground mb-2">Stage Non-Tracking Tags (display only)</p>
+                <div className="flex flex-wrap gap-2 mb-2">
+                  {stageNonTrackingTags.map((tag, idx) => (
+                    <Badge key={idx} variant="outline" className="gap-1 pr-1">
+                      {tag}
+                      <button onClick={() => handleRemoveStageNonTracking(idx)} className="ml-1 hover:text-destructive">
+                        <X className="h-3 w-3" />
+                      </button>
+                    </Badge>
+                  ))}
+                </div>
+                <div className="flex gap-2">
+                  <Input
+                    value={newStageNonTrackingTag}
+                    onChange={(e) => setNewStageNonTrackingTag(e.target.value)}
+                    placeholder="Add non-tracking tag..."
+                    className="flex-1 h-8"
+                    onKeyDown={(e) => e.key === 'Enter' && handleAddStageNonTracking()}
+                  />
+                  <Button variant="outline" size="sm" onClick={handleAddStageNonTracking} disabled={!newStageNonTrackingTag.trim()}>
+                    <Plus className="h-3 w-3" />
+                  </Button>
+                </div>
+              </div>
+            </div>
           </div>
         )}
       </div>

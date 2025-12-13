@@ -9,10 +9,32 @@ export interface TrackingTag {
   isFinalTarget: boolean;
 }
 
+export interface StageTag {
+  name: string;
+  isFinalTarget: boolean;
+}
+
+export interface TeamLevel {
+  id: string;
+  position: number;
+  code: string;
+  label: string;
+  isDefault: boolean;
+}
+
 export interface TrackingFormat {
-  trackingTags: TrackingTag[];  // Max 3, for analytics
-  nonTrackingTags: string[];    // Unlimited, display only
-  levels: { id: string; label: string; code?: string; isDefault: boolean }[];
+  // Leads tracking (responses)
+  leadsTrackingTags: TrackingTag[];  // Max 3-4, for analytics
+  leadsNonTrackingTags: string[];    // Unlimited, display only
+  
+  // Stage tracking (sales stages)
+  stageTags: StageTag[];             // Ordered stages
+  stageNonTrackingTags: string[];    // Optional stage labels
+  
+  // Team levels
+  levels: TeamLevel[];
+  
+  // Metadata
   rootLeaderName: string | null;
   rootLeaderId: string | null;
   isUsingLeaderFormat: boolean;
@@ -26,6 +48,67 @@ interface CachedFormat extends TrackingFormat {
 // Cache tracking format for 5 minutes
 const FORMAT_CACHE_TTL = 5 * 60 * 1000;
 let formatCache: Record<string, CachedFormat> = {};
+
+// Parse response_labels JSON structure
+function parseResponseLabels(labels: any): { leadsTracking: TrackingTag[]; leadsNonTracking: string[] } {
+  if (!labels) {
+    return { leadsTracking: [], leadsNonTracking: [] };
+  }
+  
+  // Handle new format: { tracking: [...], nonTracking: [...] }
+  if (typeof labels === 'object' && labels.tracking) {
+    return {
+      leadsTracking: (labels.tracking || []).map((t: any) => ({
+        name: t.name || t,
+        isFilter: t.isFilter ?? true,
+        isFinalTarget: t.isFinalTarget ?? false,
+      })),
+      leadsNonTracking: labels.nonTracking || [],
+    };
+  }
+  
+  // Handle legacy format: string[]
+  if (Array.isArray(labels)) {
+    const tracking = labels.slice(0, 3).map((name, idx, arr) => ({
+      name: String(name),
+      isFilter: true,
+      isFinalTarget: idx === arr.length - 1,
+    }));
+    const nonTracking = labels.slice(3).map(String);
+    return { leadsTracking: tracking, leadsNonTracking: nonTracking };
+  }
+  
+  return { leadsTracking: [], leadsNonTracking: [] };
+}
+
+// Parse stage_labels JSON structure
+function parseStageLabels(labels: any): { stageTags: StageTag[]; stageNonTracking: string[] } {
+  if (!labels) {
+    return { stageTags: [], stageNonTracking: [] };
+  }
+  
+  // Handle new format: { stages: [...], nonTracking: [...] }
+  if (typeof labels === 'object' && labels.stages) {
+    return {
+      stageTags: (labels.stages || []).map((s: any) => ({
+        name: s.name || s,
+        isFinalTarget: s.isFinalTarget ?? false,
+      })),
+      stageNonTracking: labels.nonTracking || [],
+    };
+  }
+  
+  // Handle legacy format: string[]
+  if (Array.isArray(labels)) {
+    const stageTags = labels.map((name, idx, arr) => ({
+      name: String(name),
+      isFinalTarget: idx === arr.length - 1,
+    }));
+    return { stageTags, stageNonTracking: [] };
+  }
+  
+  return { stageTags: [], stageNonTracking: [] };
+}
 
 export function useTrackingFormat() {
   const { user } = useAuth();
@@ -52,12 +135,11 @@ export function useTrackingFormat() {
 
     let currentLeaderId = startLeaderId;
     let iterations = 0;
-    const maxIterations = 10; // Prevent infinite loops
+    const maxIterations = 10;
 
     while (iterations < maxIterations) {
       iterations++;
       
-      // Get leader's profile
       const { data: leaderProfile, error } = await supabase
         .from('profiles')
         .select('user_id, display_name, neverai_id, leaders_id_of_my_leader, use_leader_stages, response_labels, stage_labels')
@@ -71,29 +153,26 @@ export function useTrackingFormat() {
 
       // If this leader creates their own format (is root leader)
       if (!leaderProfile.use_leader_stages || !leaderProfile.leaders_id_of_my_leader) {
-        // This is the root leader - get their full format
+        // Get their levels
         const { data: levels } = await supabase
           .from('leader_levels')
-          .select('id, label, code, is_default')
+          .select('id, label, code, is_default, position')
           .eq('leader_id', leaderProfile.user_id)
           .order('position', { ascending: true });
 
-        // Parse tracking tags from response_labels (first 3 are tracking, rest are non-tracking)
-        const responseLabels = (leaderProfile.response_labels as string[]) || [];
-        const trackingTags: TrackingTag[] = responseLabels.slice(0, 3).map((name, idx) => ({
-          name,
-          isFilter: true, // All tracking tags are filter tags by default
-          isFinalTarget: idx === 2 // Last tracking tag is final target by default
-        }));
-        const nonTrackingTags = responseLabels.slice(3);
+        const { leadsTracking, leadsNonTracking } = parseResponseLabels(leaderProfile.response_labels);
+        const { stageTags, stageNonTracking } = parseStageLabels(leaderProfile.stage_labels);
 
         const format: TrackingFormat = {
-          trackingTags,
-          nonTrackingTags,
+          leadsTrackingTags: leadsTracking,
+          leadsNonTrackingTags: leadsNonTracking,
+          stageTags,
+          stageNonTrackingTags: stageNonTracking,
           levels: (levels || []).map(l => ({
             id: l.id,
+            position: l.position,
+            code: l.code || `L${l.position}`,
             label: l.label,
-            code: l.code || undefined,
             isDefault: l.is_default
           })),
           rootLeaderName: leaderProfile.display_name || 'Leader',
@@ -112,7 +191,6 @@ export function useTrackingFormat() {
         };
       }
 
-      // Otherwise, walk up to this leader's leader
       currentLeaderId = leaderProfile.leaders_id_of_my_leader;
     }
 
@@ -135,26 +213,23 @@ export function useTrackingFormat() {
         // User is their own root leader
         const { data: levels } = await supabase
           .from('leader_levels')
-          .select('id, label, code, is_default')
+          .select('id, label, code, is_default, position')
           .eq('leader_id', user.id)
           .order('position', { ascending: true });
 
-        // Parse tracking tags from response_labels
-        const responseLabels = profile.response_labels || [];
-        const trackingTags: TrackingTag[] = responseLabels.slice(0, 3).map((name, idx) => ({
-          name,
-          isFilter: true,
-          isFinalTarget: idx === responseLabels.slice(0, 3).length - 1 // Last one is final
-        }));
-        const nonTrackingTags = responseLabels.slice(3);
+        const { leadsTracking, leadsNonTracking } = parseResponseLabels(profile.response_labels);
+        const { stageTags, stageNonTracking } = parseStageLabels(profile.stage_labels);
 
         setTrackingFormat({
-          trackingTags,
-          nonTrackingTags,
+          leadsTrackingTags: leadsTracking,
+          leadsNonTrackingTags: leadsNonTracking,
+          stageTags,
+          stageNonTrackingTags: stageNonTracking,
           levels: (levels || []).map(l => ({
             id: l.id,
+            position: l.position,
+            code: l.code || `L${l.position}`,
             label: l.label,
-            code: l.code || undefined,
             isDefault: l.is_default
           })),
           rootLeaderName: profile.display_name || 'You',
@@ -177,8 +252,10 @@ export function useTrackingFormat() {
         } else {
           // Fallback to empty format
           setTrackingFormat({
-            trackingTags: [],
-            nonTrackingTags: [],
+            leadsTrackingTags: [],
+            leadsNonTrackingTags: [],
+            stageTags: [],
+            stageNonTrackingTags: [],
             levels: [],
             rootLeaderName: null,
             rootLeaderId: null,
@@ -206,40 +283,91 @@ export function useTrackingFormat() {
     loadTrackingFormat();
   }, [loadTrackingFormat]);
 
-  // Get tracking tag names only (for dropdowns)
-  const trackingTagNames = useMemo(() => 
-    trackingFormat?.trackingTags.map(t => t.name) || [],
+  // === LEADS helpers ===
+  const leadsTrackingTagNames = useMemo(() => 
+    trackingFormat?.leadsTrackingTags.map(t => t.name) || [],
     [trackingFormat]
   );
 
-  // Get the final target tag name
-  const finalTargetTag = useMemo(() => 
-    trackingFormat?.trackingTags.find(t => t.isFinalTarget)?.name || null,
+  const leadsFinalTargetTag = useMemo(() => 
+    trackingFormat?.leadsTrackingTags.find(t => t.isFinalTarget)?.name || null,
     [trackingFormat]
   );
 
-  // Check if a tag is the final target
+  const isLeadsFinalTarget = useCallback((tagName: string) => {
+    return trackingFormat?.leadsTrackingTags.find(t => t.name === tagName)?.isFinalTarget || false;
+  }, [trackingFormat]);
+
+  const isLeadsTrackingTag = useCallback((tagName: string) => {
+    return trackingFormat?.leadsTrackingTags.some(t => t.name === tagName) || false;
+  }, [trackingFormat]);
+
+  // === STAGE helpers ===
+  const stageTagNames = useMemo(() => 
+    trackingFormat?.stageTags.map(t => t.name) || [],
+    [trackingFormat]
+  );
+
+  const stageFinalTargetTag = useMemo(() => 
+    trackingFormat?.stageTags.find(t => t.isFinalTarget)?.name || null,
+    [trackingFormat]
+  );
+
+  const isStageFinalTarget = useCallback((tagName: string) => {
+    return trackingFormat?.stageTags.find(t => t.name === tagName)?.isFinalTarget || false;
+  }, [trackingFormat]);
+
+  const isStageTag = useCallback((tagName: string) => {
+    return trackingFormat?.stageTags.some(t => t.name === tagName) || false;
+  }, [trackingFormat]);
+
+  // === Legacy helpers for backward compatibility ===
+  const trackingTagNames = leadsTrackingTagNames;
+  const nonTrackingTags = trackingFormat?.leadsNonTrackingTags || [];
+  const finalTargetTag = leadsFinalTargetTag;
+  
   const isFinalTarget = useCallback((tagName: string) => {
-    return trackingFormat?.trackingTags.find(t => t.name === tagName)?.isFinalTarget || false;
-  }, [trackingFormat]);
-
-  // Check if a tag is a tracking tag (not non-tracking)
+    return isLeadsFinalTarget(tagName) || isStageFinalTarget(tagName);
+  }, [isLeadsFinalTarget, isStageFinalTarget]);
+  
   const isTrackingTag = useCallback((tagName: string) => {
-    return trackingFormat?.trackingTags.some(t => t.name === tagName) || false;
-  }, [trackingFormat]);
+    return isLeadsTrackingTag(tagName) || isStageTag(tagName);
+  }, [isLeadsTrackingTag, isStageTag]);
 
   return {
     trackingFormat,
     loading: loading || profileLoading,
     refreshFormat,
-    trackingTagNames,
-    nonTrackingTags: trackingFormat?.nonTrackingTags || [],
-    finalTargetTag,
-    isFinalTarget,
-    isTrackingTag,
+    
+    // Leads (Response) tags
+    leadsTrackingTags: trackingFormat?.leadsTrackingTags || [],
+    leadsNonTrackingTags: trackingFormat?.leadsNonTrackingTags || [],
+    leadsTrackingTagNames,
+    leadsFinalTargetTag,
+    isLeadsFinalTarget,
+    isLeadsTrackingTag,
+    
+    // Stage tags
+    stageTags: trackingFormat?.stageTags || [],
+    stageNonTrackingTags: trackingFormat?.stageNonTrackingTags || [],
+    stageTagNames,
+    stageFinalTargetTag,
+    isStageFinalTarget,
+    isStageTag,
+    
+    // Team levels
     levels: trackingFormat?.levels || [],
+    
+    // Metadata
     isRootLeader: trackingFormat?.isRootLeader || false,
     isUsingLeaderFormat: trackingFormat?.isUsingLeaderFormat || false,
     rootLeaderName: trackingFormat?.rootLeaderName || null,
+    
+    // Legacy aliases for backward compatibility
+    trackingTagNames,
+    nonTrackingTags,
+    finalTargetTag,
+    isFinalTarget,
+    isTrackingTag,
   };
 }

@@ -1,24 +1,47 @@
 import React, { createContext, useContext, useCallback } from 'react';
-import { useTrackingFormat, TrackingTag, TrackingFormat } from '@/hooks/useTrackingFormat';
+import { useTrackingFormat, TrackingTag, StageTag, TeamLevel, TrackingFormat } from '@/hooks/useTrackingFormat';
 import { toast } from 'sonner';
 
 interface TrackingFormatContextType {
   trackingFormat: TrackingFormat | null;
   loading: boolean;
   refreshFormat: () => void;
+  
+  // Leads (Response) tags
+  leadsTrackingTags: TrackingTag[];
+  leadsNonTrackingTags: string[];
+  leadsTrackingTagNames: string[];
+  leadsFinalTargetTag: string | null;
+  isLeadsFinalTarget: (tagName: string) => boolean;
+  isLeadsTrackingTag: (tagName: string) => boolean;
+  
+  // Stage tags
+  stageTags: StageTag[];
+  stageNonTrackingTags: string[];
+  stageTagNames: string[];
+  stageFinalTargetTag: string | null;
+  isStageFinalTarget: (tagName: string) => boolean;
+  isStageTag: (tagName: string) => boolean;
+  
+  // Team levels
+  levels: TeamLevel[];
+  
+  // Metadata
+  isRootLeader: boolean;
+  isUsingLeaderFormat: boolean;
+  rootLeaderName: string | null;
+  
+  // Legacy aliases
   trackingTagNames: string[];
   nonTrackingTags: string[];
   finalTargetTag: string | null;
   isFinalTarget: (tagName: string) => boolean;
   isTrackingTag: (tagName: string) => boolean;
-  levels: { id: string; label: string; code?: string; isDefault: boolean }[];
-  isRootLeader: boolean;
-  isUsingLeaderFormat: boolean;
-  rootLeaderName: string | null;
-  // Helper to handle target completion
+  
+  // Helpers
   handleTargetComplete: (tagName: string, prospectName?: string) => void;
-  // Get all options for dropdowns (tracking + custom)
-  getDropdownOptions: () => string[];
+  getLeadsDropdownOptions: () => string[];
+  getStageDropdownOptions: () => string[];
 }
 
 const TrackingFormatContext = createContext<TrackingFormatContextType | null>(null);
@@ -28,25 +51,36 @@ export function TrackingFormatProvider({ children }: { children: React.ReactNode
 
   // Handle target completion when final tag is selected
   const handleTargetComplete = useCallback((tagName: string, prospectName?: string) => {
-    if (trackingFormatHook.isFinalTarget(tagName)) {
+    if (trackingFormatHook.isLeadsFinalTarget(tagName)) {
       toast.success(`🎯 Target Complete! ${prospectName ? `(${prospectName})` : ''}`, {
         duration: 2000,
       });
-      // Future: increment target counter in database
+    } else if (trackingFormatHook.isStageFinalTarget(tagName)) {
+      toast.success(`🏆 Final Stage Reached! ${prospectName ? `(${prospectName})` : ''}`, {
+        duration: 2000,
+      });
     }
-  }, [trackingFormatHook.isFinalTarget]);
+  }, [trackingFormatHook.isLeadsFinalTarget, trackingFormatHook.isStageFinalTarget]);
 
-  // Get all options for dropdowns
-  const getDropdownOptions = useCallback(() => {
-    const tracking = trackingFormatHook.trackingTagNames || [];
-    const nonTracking = trackingFormatHook.nonTrackingTags || [];
+  // Get Leads dropdown options (tracking + non-tracking)
+  const getLeadsDropdownOptions = useCallback(() => {
+    const tracking = trackingFormatHook.leadsTrackingTagNames || [];
+    const nonTracking = trackingFormatHook.leadsNonTrackingTags || [];
     return [...tracking, ...nonTracking];
-  }, [trackingFormatHook.trackingTagNames, trackingFormatHook.nonTrackingTags]);
+  }, [trackingFormatHook.leadsTrackingTagNames, trackingFormatHook.leadsNonTrackingTags]);
+
+  // Get Stage dropdown options (tracking + non-tracking)
+  const getStageDropdownOptions = useCallback(() => {
+    const stages = trackingFormatHook.stageTagNames || [];
+    const nonTracking = trackingFormatHook.stageNonTrackingTags || [];
+    return [...stages, ...nonTracking];
+  }, [trackingFormatHook.stageTagNames, trackingFormatHook.stageNonTrackingTags]);
 
   const value: TrackingFormatContextType = {
     ...trackingFormatHook,
     handleTargetComplete,
-    getDropdownOptions,
+    getLeadsDropdownOptions,
+    getStageDropdownOptions,
   };
 
   return (

@@ -1,11 +1,11 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { AlertCircle, Plus, Trash2, Star, Filter, Tag, X, Loader2 } from 'lucide-react';
+import { AlertCircle, Plus, Trash2, Star, Filter, Tag, X, Loader2, Check } from 'lucide-react';
 import { toast } from 'sonner';
 import { useTrackingFormatContext } from '@/contexts/TrackingFormatContext';
 import { useProfile } from '@/hooks/useProfile';
@@ -15,51 +15,89 @@ interface ManageResponseTagsDialogProps {
   onOpenChange: (open: boolean) => void;
 }
 
-interface TrackingTagInput {
+interface LeadsTagInput {
   name: string;
   isFilter: boolean;
   isFinalTarget: boolean;
 }
 
 export function ManageResponseTagsDialog({ open, onOpenChange }: ManageResponseTagsDialogProps) {
-  const { trackingFormat, refreshFormat, isRootLeader, isUsingLeaderFormat, rootLeaderName } = useTrackingFormatContext();
+  const { trackingFormat, refreshFormat, isRootLeader, isUsingLeaderFormat, rootLeaderName, leadsTrackingTags, leadsNonTrackingTags } = useTrackingFormatContext();
   const { profile, updateProfile } = useProfile();
   
-  const [trackingTags, setTrackingTags] = useState<TrackingTagInput[]>([]);
+  const [trackingTags, setTrackingTags] = useState<LeadsTagInput[]>([]);
   const [nonTrackingTags, setNonTrackingTags] = useState<string[]>([]);
   const [newNonTrackingTag, setNewNonTrackingTag] = useState('');
-  const [saving, setSaving] = useState(false);
+  const [autoSaveStatus, setAutoSaveStatus] = useState<'idle' | 'saving' | 'saved'>('idle');
+  
+  const saveTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   // Initialize from tracking format
   useEffect(() => {
-    if (trackingFormat && open) {
-      const tags = trackingFormat.trackingTags.map(t => ({
+    if (open) {
+      const tags = leadsTrackingTags.map(t => ({
         name: t.name,
         isFilter: t.isFilter,
         isFinalTarget: t.isFinalTarget,
       }));
       setTrackingTags(tags.length > 0 ? tags : [{ name: '', isFilter: true, isFinalTarget: false }]);
-      setNonTrackingTags(trackingFormat.nonTrackingTags || []);
+      setNonTrackingTags(leadsNonTrackingTags || []);
     }
-  }, [trackingFormat, open]);
+  }, [leadsTrackingTags, leadsNonTrackingTags, open]);
 
-  const handleTrackingTagChange = (index: number, field: keyof TrackingTagInput, value: any) => {
+  // Auto-save function
+  const autoSave = useCallback(async () => {
+    if (isUsingLeaderFormat && !isRootLeader) return;
+    
+    setAutoSaveStatus('saving');
+    
+    const validTags = trackingTags.filter(t => t.name.trim());
+    
+    const responseLabelsData = {
+      tracking: validTags.map(t => ({
+        name: t.name.trim(),
+        isFilter: t.isFilter,
+        isFinalTarget: t.isFinalTarget,
+      })),
+      nonTracking: nonTrackingTags,
+    };
+    
+    await updateProfile({
+      response_labels: responseLabelsData as any,
+      stage_count: validTags.length,
+    });
+    
+    refreshFormat();
+    setAutoSaveStatus('saved');
+    
+    setTimeout(() => setAutoSaveStatus('idle'), 1500);
+  }, [trackingTags, nonTrackingTags, isUsingLeaderFormat, isRootLeader, updateProfile, refreshFormat]);
+
+  // Debounced auto-save
+  const triggerAutoSave = useCallback(() => {
+    if (saveTimerRef.current) {
+      clearTimeout(saveTimerRef.current);
+    }
+    saveTimerRef.current = setTimeout(() => {
+      autoSave();
+    }, 800);
+  }, [autoSave]);
+
+  const handleTrackingTagChange = (index: number, field: keyof LeadsTagInput, value: any) => {
     setTrackingTags(prev => {
       const updated = [...prev];
       if (field === 'isFinalTarget' && value === true) {
-        // Only one can be final target
-        updated.forEach((t, i) => {
-          t.isFinalTarget = i === index;
-        });
+        updated.forEach((t, i) => { t.isFinalTarget = i === index; });
       } else {
         updated[index] = { ...updated[index], [field]: value };
       }
       return updated;
     });
+    triggerAutoSave();
   };
 
   const handleAddTrackingTag = () => {
-    if (trackingTags.length < 3) {
+    if (trackingTags.length < 4) {
       setTrackingTags([...trackingTags, { name: '', isFilter: true, isFinalTarget: false }]);
     }
   };
@@ -71,6 +109,7 @@ export function ManageResponseTagsDialog({ open, onOpenChange }: ManageResponseT
         updated[updated.length - 1].isFinalTarget = true;
       }
       setTrackingTags(updated);
+      triggerAutoSave();
     }
   };
 
@@ -83,41 +122,12 @@ export function ManageResponseTagsDialog({ open, onOpenChange }: ManageResponseT
     }
     setNonTrackingTags([...nonTrackingTags, tag]);
     setNewNonTrackingTag('');
+    triggerAutoSave();
   };
 
   const handleRemoveNonTrackingTag = (index: number) => {
     setNonTrackingTags(nonTrackingTags.filter((_, i) => i !== index));
-  };
-
-  const handleSave = async () => {
-    const validTrackingTags = trackingTags.filter(t => t.name.trim());
-    
-    if (validTrackingTags.length === 0) {
-      toast.error('Please add at least 1 tracking tag');
-      return;
-    }
-
-    setSaving(true);
-    try {
-      // Combine tracking + non-tracking tags into response_labels
-      const allLabels = [
-        ...validTrackingTags.map(t => t.name.trim()),
-        ...nonTrackingTags
-      ];
-      
-      await updateProfile({
-        response_labels: allLabels,
-        stage_count: validTrackingTags.length
-      });
-      
-      refreshFormat();
-      toast.success('Response tags saved');
-      onOpenChange(false);
-    } catch (error) {
-      toast.error('Failed to save tags');
-    } finally {
-      setSaving(false);
-    }
+    triggerAutoSave();
   };
 
   // If using leader format, show read-only view
@@ -128,7 +138,7 @@ export function ManageResponseTagsDialog({ open, onOpenChange }: ManageResponseT
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Tag className="h-5 w-5 text-primary" />
-              Response Tags
+              Leads Response Tags
             </DialogTitle>
           </DialogHeader>
           
@@ -144,10 +154,10 @@ export function ManageResponseTagsDialog({ open, onOpenChange }: ManageResponseT
           <div className="space-y-4">
             <div>
               <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2">
-                Tracking Tags (for analytics)
+                Leads Tracking Tags (for analytics)
               </p>
               <div className="flex flex-wrap gap-2">
-                {trackingFormat?.trackingTags.map((tag, idx) => (
+                {leadsTrackingTags.map((tag, idx) => (
                   <Badge key={idx} variant="secondary" className="text-xs gap-1">
                     {tag.name}
                     {tag.isFinalTarget && <Star className="h-3 w-3 text-yellow-500 fill-yellow-500" />}
@@ -157,13 +167,13 @@ export function ManageResponseTagsDialog({ open, onOpenChange }: ManageResponseT
               </div>
             </div>
 
-            {(trackingFormat?.nonTrackingTags?.length || 0) > 0 && (
+            {leadsNonTrackingTags.length > 0 && (
               <div>
                 <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2">
-                  Non-Tracking Tags
+                  Leads Non-Tracking Tags
                 </p>
                 <div className="flex flex-wrap gap-2">
-                  {trackingFormat?.nonTrackingTags.map((tag, idx) => (
+                  {leadsNonTrackingTags.map((tag, idx) => (
                     <Badge key={idx} variant="outline" className="text-xs">
                       {tag}
                     </Badge>
@@ -185,30 +195,42 @@ export function ManageResponseTagsDialog({ open, onOpenChange }: ManageResponseT
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <Tag className="h-5 w-5 text-primary" />
-            Manage Response Tags
-          </DialogTitle>
+          <div className="flex items-center justify-between">
+            <DialogTitle className="flex items-center gap-2">
+              <Tag className="h-5 w-5 text-primary" />
+              Manage Leads Response Tags
+            </DialogTitle>
+            {autoSaveStatus === 'saving' && (
+              <span className="text-xs text-muted-foreground flex items-center gap-1">
+                <Loader2 className="h-3 w-3 animate-spin" /> Saving...
+              </span>
+            )}
+            {autoSaveStatus === 'saved' && (
+              <span className="text-xs text-green-600 flex items-center gap-1">
+                <Check className="h-3 w-3" /> Saved
+              </span>
+            )}
+          </div>
         </DialogHeader>
 
         {/* Info banner */}
         <div className="flex items-start gap-2 p-3 bg-blue-50 dark:bg-blue-950/30 rounded-lg border border-blue-200 dark:border-blue-900">
           <AlertCircle className="h-4 w-4 text-blue-600 mt-0.5 shrink-0" />
           <p className="text-xs text-blue-700 dark:text-blue-300">
-            <strong>Tracking tags</strong> are used in TrackUp analytics. 
+            <strong>Leads Tracking tags</strong> are used in analytics. 
             <strong> Non-tracking tags</strong> are for your convenience and are not counted.
           </p>
         </div>
 
         <div className="space-y-6">
-          {/* Tracking Tags Section */}
+          {/* Leads Tracking Tags Section */}
           <div className="space-y-3">
             <div className="flex items-center justify-between">
               <p className="text-sm font-medium flex items-center gap-2">
                 <Tag className="h-4 w-4 text-primary" />
-                Tracking Tags (max 3)
+                Leads Tracking Tags (max 4)
               </p>
-              {trackingTags.length < 3 && (
+              {trackingTags.length < 4 && (
                 <Button variant="outline" size="sm" onClick={handleAddTrackingTag}>
                   <Plus className="h-3 w-3 mr-1" />
                   Add
@@ -222,7 +244,7 @@ export function ManageResponseTagsDialog({ open, onOpenChange }: ManageResponseT
                   <Input
                     value={tag.name}
                     onChange={(e) => handleTrackingTagChange(index, 'name', e.target.value)}
-                    placeholder={`Tag ${index + 1}`}
+                    placeholder={`Response ${index + 1}`}
                     className="flex-1 h-8"
                   />
                   <div className="flex items-center gap-2 shrink-0">
@@ -260,7 +282,7 @@ export function ManageResponseTagsDialog({ open, onOpenChange }: ManageResponseT
 
           {/* Non-Tracking Tags Section */}
           <div className="space-y-3">
-            <p className="text-sm font-medium">Non-Tracking Tags</p>
+            <p className="text-sm font-medium">Leads Non-Tracking Tags</p>
             <p className="text-xs text-muted-foreground">
               These are for your convenience only and will not be counted in analytics.
             </p>
@@ -299,12 +321,8 @@ export function ManageResponseTagsDialog({ open, onOpenChange }: ManageResponseT
           </div>
         </div>
 
-        <div className="flex justify-end gap-2 pt-4 border-t">
-          <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
-          <Button onClick={handleSave} disabled={saving}>
-            {saving && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-            Save Changes
-          </Button>
+        <div className="flex justify-end pt-4 border-t">
+          <Button variant="outline" onClick={() => onOpenChange(false)}>Close</Button>
         </div>
       </DialogContent>
     </Dialog>
