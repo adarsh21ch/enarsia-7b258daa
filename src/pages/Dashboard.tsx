@@ -1,20 +1,16 @@
-// Dashboard - Calling Page (Simplified)
+// Dashboard - Calling Page (Personal Data Only)
 import { useEffect, useState, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useProspects } from '@/hooks/useProspects';
-import { useSharedProspects } from '@/hooks/useSharedProspects';
 import { useSheets } from '@/hooks/useSheets';
 import { BottomNav } from '@/components/layout/BottomNav';
 import { ProspectTable } from '@/components/prospects/ProspectTable';
 import { PullToRefreshIndicator } from '@/components/PullToRefreshIndicator';
 import { BottomViewToggle } from '@/components/ui/BottomViewToggle';
 import { FilterTagSetupDialog, useFilterTagSetup } from '@/components/prospects/FilterTagSetupDialog';
-import { TeamMemberSelector } from '@/components/team/TeamMemberSelector';
-import { ProspectTableSkeleton } from '@/components/team/TeamDataSkeleton';
 import { SearchBar } from '@/components/ui/SearchBar';
 import { Loader2, Phone, Layers } from 'lucide-react';
-import { cn } from '@/lib/utils';
 import nevoraLogo from '@/assets/nevorai-logo.jpeg';
 import { CustomOptionsProvider } from '@/contexts/CustomOptionsContext';
 
@@ -45,16 +41,10 @@ function usePullToRefresh(onRefresh: () => Promise<void>, threshold = 100) {
     const currentY = e.touches[0].clientY;
     const diff = currentY - startY.current;
     
-    // Only activate pull-to-refresh if:
-    // 1. Started at scroll position 0
-    // 2. Currently at scroll position 0 (didn't scroll down first)
-    // 3. User is pulling down (diff > 0)
-    // 4. Diff is significant enough to indicate intent (> 20px)
     if (startScrollTop.current <= 0 && container.scrollTop <= 0 && diff > 20) {
       isPulling.current = true;
       setPullDistance(Math.min((diff - 20) * 0.4, threshold * 1.2));
     } else {
-      // Allow normal scrolling
       isPulling.current = false;
       setPullDistance(0);
     }
@@ -75,7 +65,6 @@ function usePullToRefresh(onRefresh: () => Promise<void>, threshold = 100) {
     const container = containerRef.current;
     if (!container) return;
     
-    // Use passive: false for touchmove to allow preventDefault if needed
     container.addEventListener('touchstart', handleTouchStart, { passive: true });
     container.addEventListener('touchmove', handleTouchMove, { passive: true });
     container.addEventListener('touchend', handleTouchEnd, { passive: true });
@@ -93,20 +82,7 @@ function usePullToRefresh(onRefresh: () => Promise<void>, threshold = 100) {
 export default function Dashboard() {
   const navigate = useNavigate();
   const { user, loading: authLoading } = useAuth();
-  const { prospects: myProspects, loading, addProspect, updateProspect, deleteProspect, bulkDeleteProspects, restoreProspect, restoreProspects, importProspects, reorderProspects, refetch } = useProspects();
-  const { 
-    sharedOwners, 
-    selectedOwnerIds, 
-    toggleOwnerSelection, 
-    clearSelection, 
-    selectAllOwners,
-    prospects: sharedProspects, 
-    loading: sharedLoading,
-    initialLoading: sharedInitialLoading,
-    error: sharedError,
-    refetchProspects,
-    prospectCounts
-  } = useSharedProspects();
+  const { prospects, loading, addProspect, updateProspect, deleteProspect, bulkDeleteProspects, restoreProspect, restoreProspects, importProspects, reorderProspects, refetch } = useProspects();
   const { sheets, selectedSheetId, setSelectedSheetId, addSheet, updateSheet, deleteSheet, refetch: refetchSheets } = useSheets();
   
   // Main tab state - Calling is default
@@ -119,13 +95,6 @@ export default function Dashboard() {
   const { needsSetup, markSetupDone } = useFilterTagSetup();
   const [showFilterSetup, setShowFilterSetup] = useState(false);
 
-  // Determine which prospects to show
-  const isViewingTeam = selectedOwnerIds.length > 0;
-  const prospects = isViewingTeam ? sharedProspects : myProspects;
-  
-  // Show skeleton when switching to team view and initial loading
-  const showSkeleton = isViewingTeam && sharedInitialLoading;
-
   // Handle tab change - show setup dialog when switching to Stages for first time
   const handleTabChange = (newTab: string) => {
     if (newTab === 'funnel' && needsSetup) {
@@ -136,12 +105,8 @@ export default function Dashboard() {
 
   // Pull-to-refresh
   const handleRefresh = useCallback(async () => {
-    if (isViewingTeam) {
-      await refetchProspects?.();
-    } else {
-      await Promise.all([refetch?.(), refetchSheets?.()]);
-    }
-  }, [refetch, refetchSheets, refetchProspects, isViewingTeam]);
+    await Promise.all([refetch?.(), refetchSheets?.()]);
+  }, [refetch, refetchSheets]);
   const { containerRef, isRefreshing, pullDistance, showIndicator } = usePullToRefresh(handleRefresh);
 
   useEffect(() => {
@@ -159,8 +124,6 @@ export default function Dashboard() {
   }
 
   if (!user) return null;
-  // Only show loading for data, not initial UI
-  const isLoading = loading || (isViewingTeam && sharedLoading && !sharedInitialLoading);
 
   const toggleOptions: [{ value: string; label: string; icon: typeof Phone }, { value: string; label: string; icon: typeof Layers }] = [
     { value: 'leads', label: 'Calling', icon: Phone },
@@ -180,23 +143,14 @@ export default function Dashboard() {
                 className="h-10 w-10 rounded-xl object-cover shadow-md"
               />
               <div>
-              <h1 className="text-xl font-bold tracking-tight">
+                <h1 className="text-xl font-bold tracking-tight">
                   {mainTab === 'leads' ? 'Calling' : 'Filter'}
                 </h1>
                 <p className="text-xs text-muted-foreground font-medium">
-                  {isViewingTeam ? 'Viewing team data (read-only)' : 'Manage your prospects'}
+                  Manage your prospects
                 </p>
               </div>
             </div>
-            <TeamMemberSelector
-              sharedOwners={sharedOwners}
-              selectedOwnerIds={selectedOwnerIds}
-              onToggleOwner={toggleOwnerSelection}
-              onSelectAll={selectAllOwners}
-              onClear={clearSelection}
-              currentTab="calling"
-              prospectCounts={prospectCounts}
-            />
           </div>
         </header>
 
@@ -212,43 +166,18 @@ export default function Dashboard() {
               />
             </div>
             
-            {/* Team viewing indicator */}
-            {isViewingTeam && (
-              <div className="bg-primary/10 border border-primary/30 rounded-xl p-3 mb-3">
-                <p className="text-sm text-primary font-medium">
-                  Viewing team data (read-only)
-                </p>
-              </div>
-            )}
-            
-            {/* Error state */}
-            {isViewingTeam && sharedError && (
-              <div className="bg-destructive/10 border border-destructive/30 rounded-xl p-4 mb-3">
-                <p className="text-sm text-destructive font-medium">{sharedError}</p>
-                <button 
-                  onClick={() => refetchProspects?.()} 
-                  className="text-xs text-destructive underline mt-2"
-                >
-                  Try again
-                </button>
-              </div>
-            )}
-            
-            {/* Show skeleton when loading team data initially */}
-            {showSkeleton ? (
-              <ProspectTableSkeleton />
-            ) : mainTab === 'leads' ? (
+            {mainTab === 'leads' ? (
               <ProspectTable
                 prospects={prospects}
-                loading={isLoading}
-                onAdd={isViewingTeam ? async () => null : addProspect}
-                onUpdate={isViewingTeam ? async () => null : updateProspect}
-                onDelete={isViewingTeam ? async () => false : deleteProspect}
-                onBulkDelete={isViewingTeam ? undefined : bulkDeleteProspects}
-                onRestoreProspect={isViewingTeam ? undefined : restoreProspect}
-                onRestoreProspects={isViewingTeam ? undefined : restoreProspects}
-                onImport={isViewingTeam ? async () => ({ imported: 0, skipped: 0 }) : importProspects}
-                onReorderProspects={isViewingTeam ? undefined : reorderProspects}
+                loading={loading}
+                onAdd={addProspect}
+                onUpdate={updateProspect}
+                onDelete={deleteProspect}
+                onBulkDelete={bulkDeleteProspects}
+                onRestoreProspect={restoreProspect}
+                onRestoreProspects={restoreProspects}
+                onImport={importProspects}
+                onReorderProspects={reorderProspects}
                 sheets={sheets}
                 selectedSheetId={selectedSheetId}
                 onSelectSheet={setSelectedSheetId}
@@ -262,15 +191,15 @@ export default function Dashboard() {
             ) : (
               <ProspectTable
                 prospects={prospects}
-                loading={isLoading}
-                onAdd={isViewingTeam ? async () => null : addProspect}
-                onUpdate={isViewingTeam ? async () => null : updateProspect}
-                onDelete={isViewingTeam ? async () => false : deleteProspect}
-                onBulkDelete={isViewingTeam ? undefined : bulkDeleteProspects}
-                onRestoreProspect={isViewingTeam ? undefined : restoreProspect}
-                onRestoreProspects={isViewingTeam ? undefined : restoreProspects}
-                onImport={isViewingTeam ? async () => ({ imported: 0, skipped: 0 }) : importProspects}
-                onReorderProspects={isViewingTeam ? undefined : reorderProspects}
+                loading={loading}
+                onAdd={addProspect}
+                onUpdate={updateProspect}
+                onDelete={deleteProspect}
+                onBulkDelete={bulkDeleteProspects}
+                onRestoreProspect={restoreProspect}
+                onRestoreProspects={restoreProspects}
+                onImport={importProspects}
+                onReorderProspects={reorderProspects}
                 sheets={sheets}
                 selectedSheetId={selectedSheetId}
                 onSelectSheet={setSelectedSheetId}

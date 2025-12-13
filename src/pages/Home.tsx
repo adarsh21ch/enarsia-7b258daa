@@ -1,40 +1,32 @@
-// Activity Page - Today's Recent Activities
-import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
+// Activity Page - Today's Recent Activities (Personal Data Only)
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useProspects } from '@/hooks/useProspects';
-import { useSharedProspects } from '@/hooks/useSharedProspects';
 import { useTodos } from '@/hooks/useTodos';
 import { BottomNav } from '@/components/layout/BottomNav';
 import { PullToRefreshIndicator } from '@/components/PullToRefreshIndicator';
-import { TeamMemberSelector } from '@/components/team/TeamMemberSelector';
-import { ActivitySkeleton } from '@/components/team/TeamDataSkeleton';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
-import { Loader2, Clock, CalendarIcon, Phone } from 'lucide-react';
+import { Loader2, Clock, CalendarIcon } from 'lucide-react';
 import { SearchBar } from '@/components/ui/SearchBar';
 import { parseISO, format, isToday, isSameDay } from 'date-fns';
-import { cn } from '@/lib/utils';
 import nevoraLogo from '@/assets/nevorai-logo.jpeg';
 
-// Consistent Call icon (matches Calling tab style)
-const CallIcon = ({
-  className
-}: {
-  className?: string;
-}) => <svg viewBox="0 0 24 24" className={className} fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+// Consistent Call icon
+const CallIcon = ({ className }: { className?: string }) => (
+  <svg viewBox="0 0 24 24" className={className} fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
     <path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07 19.5 19.5 0 01-6-6 19.79 19.79 0 01-3.07-8.67A2 2 0 014.11 2h3a2 2 0 012 1.72c.127.96.362 1.903.7 2.81a2 2 0 01-.45 2.11L8.09 9.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.338 1.85.573 2.81.7A2 2 0 0122 16.92z" />
-  </svg>;
+  </svg>
+);
 
-// Consistent WhatsApp icon (official style)
-const WhatsAppIcon = ({
-  className
-}: {
-  className?: string;
-}) => <svg viewBox="0 0 24 24" className={className} fill="currentColor">
+// Consistent WhatsApp icon
+const WhatsAppIcon = ({ className }: { className?: string }) => (
+  <svg viewBox="0 0 24 24" className={className} fill="currentColor">
     <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z" />
-  </svg>;
+  </svg>
+);
 
 // Pull-to-refresh hook
 function usePullToRefresh(onRefresh: () => Promise<void>, threshold = 80) {
@@ -42,11 +34,13 @@ function usePullToRefresh(onRefresh: () => Promise<void>, threshold = 80) {
   const [pullDistance, setPullDistance] = useState(0);
   const startY = useRef(0);
   const containerRef = useRef<HTMLDivElement>(null);
+
   const handleTouchStart = useCallback((e: TouchEvent) => {
     if (containerRef.current && containerRef.current.scrollTop === 0) {
       startY.current = e.touches[0].clientY;
     }
   }, []);
+
   const handleTouchMove = useCallback((e: TouchEvent) => {
     if (!startY.current || isRefreshing) return;
     const currentY = e.touches[0].clientY;
@@ -55,27 +49,21 @@ function usePullToRefresh(onRefresh: () => Promise<void>, threshold = 80) {
       setPullDistance(Math.min(diff * 0.5, threshold * 1.5));
     }
   }, [isRefreshing, threshold]);
+
   const handleTouchEnd = useCallback(async () => {
     if (pullDistance >= threshold && !isRefreshing) {
       setIsRefreshing(true);
-      try {
-        await onRefresh();
-      } finally {
-        setIsRefreshing(false);
-      }
+      try { await onRefresh(); } finally { setIsRefreshing(false); }
     }
     setPullDistance(0);
     startY.current = 0;
   }, [pullDistance, threshold, isRefreshing, onRefresh]);
+
   useEffect(() => {
     const container = containerRef.current;
     if (!container) return;
-    container.addEventListener('touchstart', handleTouchStart, {
-      passive: true
-    });
-    container.addEventListener('touchmove', handleTouchMove, {
-      passive: true
-    });
+    container.addEventListener('touchstart', handleTouchStart, { passive: true });
+    container.addEventListener('touchmove', handleTouchMove, { passive: true });
     container.addEventListener('touchend', handleTouchEnd);
     return () => {
       container.removeEventListener('touchstart', handleTouchStart);
@@ -83,69 +71,30 @@ function usePullToRefresh(onRefresh: () => Promise<void>, threshold = 80) {
       container.removeEventListener('touchend', handleTouchEnd);
     };
   }, [handleTouchStart, handleTouchMove, handleTouchEnd]);
-  return {
-    containerRef,
-    isRefreshing,
-    pullDistance,
-    showIndicator: pullDistance > 20 || isRefreshing
-  };
+
+  return { containerRef, isRefreshing, pullDistance, showIndicator: pullDistance > 20 || isRefreshing };
 }
+
 export default function Home() {
   const navigate = useNavigate();
-  const {
-    user,
-    loading: authLoading
-  } = useAuth();
-  const {
-    prospects: myProspects,
-    loading: prospectsLoading,
-    refetch
-  } = useProspects();
-  const {
-    sharedOwners,
-    selectedOwnerIds,
-    toggleOwnerSelection,
-    clearSelection,
-    selectAllOwners,
-    prospects: sharedProspects,
-    loading: sharedLoading,
-    initialLoading: sharedInitialLoading,
-    refetchProspects,
-    prospectCounts
-  } = useSharedProspects();
-  const {
-    todos,
-    refetch: refetchTodos
-  } = useTodos();
+  const { user, loading: authLoading } = useAuth();
+  const { prospects, loading: prospectsLoading, refetch } = useProspects();
+  const { todos, refetch: refetchTodos } = useTodos();
   const [activityDate, setActivityDate] = useState<Date>(new Date());
   const [searchQuery, setSearchQuery] = useState('');
 
-  // Determine which prospects to show
-  const isViewingTeam = selectedOwnerIds.length > 0;
-  const prospects = isViewingTeam ? sharedProspects : myProspects;
-
-  // Show skeleton when switching to team view or loading team data
-  const showSkeleton = isViewingTeam && sharedInitialLoading;
-
   // Pull-to-refresh
   const handleRefresh = useCallback(async () => {
-    if (isViewingTeam) {
-      await refetchProspects?.();
-    } else {
-      await Promise.all([refetch?.(), refetchTodos?.()]);
-    }
-  }, [refetch, refetchTodos, refetchProspects, isViewingTeam]);
-  const {
-    containerRef,
-    isRefreshing,
-    pullDistance,
-    showIndicator
-  } = usePullToRefresh(handleRefresh);
+    await Promise.all([refetch?.(), refetchTodos?.()]);
+  }, [refetch, refetchTodos]);
+  const { containerRef, isRefreshing, pullDistance, showIndicator } = usePullToRefresh(handleRefresh);
+
   useEffect(() => {
     if (!user && !authLoading) {
       navigate('/auth');
     }
   }, [user, authLoading, navigate]);
+
   const cleanPhoneNumber = (phone: string) => phone.replace(/[^0-9+]/g, '');
   const handleWhatsApp = (phone: string) => {
     window.open(`https://wa.me/${cleanPhoneNumber(phone)}`, '_blank');
@@ -154,38 +103,43 @@ export default function Home() {
     window.open(`tel:${cleanPhoneNumber(phone)}`, '_self');
   };
 
-  // Only show full loading for initial auth
   if (authLoading) {
-    return <div className="min-h-screen flex items-center justify-center bg-background">
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>;
+      </div>
+    );
   }
+
   if (!user) return null;
 
   // Get all activities for the selected date (sorted descending - most recent at top)
   const getActivitiesForDate = () => {
-    const prospectActivities = prospects.filter(p => isSameDay(parseISO(p.updated_at), activityDate)).map(p => ({
-      id: p.id,
-      type: 'lead' as const,
-      name: p.name,
-      phone: p.phone,
-      stage: p.funnel_stage,
-      action: p.action_taken,
-      time: new Date(p.updated_at)
-    }));
+    const prospectActivities = prospects
+      .filter(p => isSameDay(parseISO(p.updated_at), activityDate))
+      .map(p => ({
+        id: p.id,
+        type: 'lead' as const,
+        name: p.name,
+        phone: p.phone,
+        stage: p.funnel_stage,
+        action: p.action_taken,
+        time: new Date(p.updated_at)
+      }));
 
-    // Only show todos for own data (not team data)
-    const todoActivities = isViewingTeam ? [] : todos.filter(t => isSameDay(parseISO(t.updated_at), activityDate)).map(t => ({
-      id: t.id,
-      type: 'todo' as const,
-      name: t.title,
-      phone: null,
-      stage: t.completed ? 'Completed' : 'Updated',
-      action: null,
-      time: new Date(t.updated_at)
-    }));
+    const todoActivities = todos
+      .filter(t => isSameDay(parseISO(t.updated_at), activityDate))
+      .map(t => ({
+        id: t.id,
+        type: 'todo' as const,
+        name: t.title,
+        phone: null,
+        stage: t.completed ? 'Completed' : 'Updated',
+        action: null,
+        time: new Date(t.updated_at)
+      }));
 
-    // Combine and sort descending (most recent at top, oldest at bottom)
+    // Combine and sort descending (most recent at top)
     const all = [...prospectActivities, ...todoActivities].sort((a, b) => b.time.getTime() - a.time.getTime());
     
     // Apply search filter
@@ -198,8 +152,11 @@ export default function Home() {
     }
     return all;
   };
+
   const activities = getActivitiesForDate();
-  return <div className="app-layout bg-gradient-to-b from-background via-background to-muted/20">
+
+  return (
+    <div className="app-layout bg-gradient-to-b from-background via-background to-muted/20">
       <header className="fixed-header z-40 bg-card/80 backdrop-blur-xl border-b border-border/50">
         <div className="flex items-center justify-between px-4 py-3">
           <div className="flex items-center gap-3">
@@ -207,11 +164,10 @@ export default function Home() {
             <div>
               <h1 className="text-xl font-bold tracking-tight">Activity</h1>
               <p className="text-xs text-muted-foreground font-medium">
-                {isViewingTeam ? 'Viewing team activities' : 'Track all your activities'}
+                Track all your activities
               </p>
             </div>
           </div>
-          <TeamMemberSelector sharedOwners={sharedOwners} selectedOwnerIds={selectedOwnerIds} onToggleOwner={toggleOwnerSelection} onSelectAll={selectAllOwners} onClear={clearSelection} currentTab="activity" prospectCounts={prospectCounts} />
         </div>
       </header>
 
@@ -226,13 +182,6 @@ export default function Home() {
               placeholder="Search name, phone..."
             />
           </div>
-
-          {/* Team viewing indicator */}
-          {isViewingTeam && <div className="bg-primary/10 border border-primary/30 rounded-xl p-3 mb-3">
-              <p className="text-sm text-primary font-medium">
-                Viewing team activities (read-only)
-              </p>
-            </div>}
 
           {/* Today's Recent Activities - Main Focus */}
           <div className="bg-card rounded-2xl p-3 border border-border/50 flex-1 flex flex-col min-h-0">
@@ -258,7 +207,8 @@ export default function Home() {
               </Popover>
             </div>
             
-            {showSkeleton ? <ActivitySkeleton /> : activities.length === 0 ? <div className="text-center py-12 flex-1 flex flex-col items-center justify-center">
+            {activities.length === 0 ? (
+              <div className="text-center py-12 flex-1 flex flex-col items-center justify-center">
                 <Clock className="h-12 w-12 mx-auto text-muted-foreground/30 mb-3" />
                 <p className="text-sm text-muted-foreground">
                   {searchQuery.trim() ? 'No matching activities' : 'No activity for this date'}
@@ -266,63 +216,76 @@ export default function Home() {
                 <p className="text-xs text-muted-foreground/70 mt-1">
                   {searchQuery.trim() ? 'Try a different search term' : 'Activities will appear here'}
                 </p>
-              </div> : <div className="flex-1 overflow-y-auto">
-              {/* Clean vertical timeline - line connects between times only */}
+              </div>
+            ) : (
+              <div className="flex-1 overflow-y-auto">
+                {/* Clean vertical timeline */}
                 <div className="space-y-0">
-                  {activities.map((activity, index) => <div key={`${activity.type}-${activity.id}`} className="relative">
-                      {/* Connecting line between this time and the next - only show if not last item */}
-                      {index < activities.length - 1 && <div className="absolute left-[26px] top-[22px] bottom-0 w-px bg-border/60" />}
+                  {activities.map((activity, index) => (
+                    <div key={`${activity.type}-${activity.id}`} className="relative">
+                      {/* Connecting line between items */}
+                      {index < activities.length - 1 && (
+                        <div className="absolute left-[26px] top-[22px] bottom-0 w-px bg-border/60" />
+                      )}
                       
                       <div className="relative flex gap-3">
-                        {/* Time label - left aligned with dot */}
+                        {/* Time label */}
                         <div className="shrink-0 w-14 gap-1 flex items-center justify-center border-none">
                           <span className="text-[10px] text-muted-foreground/80 font-medium">
                             {format(activity.time, 'h:mm a')}
                           </span>
-                          
                         </div>
                         
                         {/* Activity content */}
                         <div className="flex-1 min-w-0 pb-3">
-                          {/* Main content card */}
                           <div className="flex items-start justify-between gap-2 p-2.5 rounded-xl bg-muted/30 hover:bg-muted/40 transition-colors">
                             <div className="min-w-0 flex-1">
-                              {/* Activity name */}
                               <p className="text-sm font-medium truncate">{activity.name}</p>
                               
-                              {/* Tags - placed below the name */}
+                              {/* Tags */}
                               <div className="flex items-center gap-1.5 flex-wrap mt-1.5">
-                                {activity.stage && <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-primary/10 text-primary">
+                                {activity.stage && (
+                                  <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-primary/10 text-primary">
                                     {activity.stage}
-                                  </span>}
-                                {activity.action && <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-muted text-muted-foreground">
+                                  </span>
+                                )}
+                                {activity.action && (
+                                  <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-muted text-muted-foreground">
                                     {activity.action}
-                                  </span>}
-                                {activity.type === 'todo' && <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-blue-500/10 text-blue-600">
+                                  </span>
+                                )}
+                                {activity.type === 'todo' && (
+                                  <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-blue-500/10 text-blue-600">
                                     To-Do
-                                  </span>}
+                                  </span>
+                                )}
                               </div>
                             </div>
                             
                             {/* Call/WhatsApp buttons */}
-                            {activity.phone && <div className="flex items-center gap-1 shrink-0">
+                            {activity.phone && (
+                              <div className="flex items-center gap-1 shrink-0">
                                 <button onClick={() => handleCall(activity.phone!)} className="p-1.5 rounded-full transition-colors bg-secondary">
                                   <CallIcon className="h-4 w-4 text-primary" />
                                 </button>
                                 <button onClick={() => handleWhatsApp(activity.phone!)} className="p-1.5 rounded-full bg-green-500/10 hover:bg-green-500/20 transition-colors">
                                   <WhatsAppIcon className="h-4 w-4 text-green-600" />
                                 </button>
-                              </div>}
+                              </div>
+                            )}
                           </div>
                         </div>
                       </div>
-                    </div>)}
+                    </div>
+                  ))}
                 </div>
-              </div>}
+              </div>
+            )}
           </div>
         </div>
       </main>
 
       <BottomNav className="px-0 my-0 border-0 py-0" />
-    </div>;
+    </div>
+  );
 }
