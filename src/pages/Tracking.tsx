@@ -9,10 +9,8 @@ import { UpgradeBar } from '@/components/subscription/UpgradeBar';
 import { PullToRefreshIndicator } from '@/components/PullToRefreshIndicator';
 import { BottomViewToggle } from '@/components/ui/BottomViewToggle';
 import { Day1SetupDialog } from '@/components/trackup/Day1SetupDialog';
-import { TeamMemberSelector } from '@/components/team/TeamMemberSelector';
 import { Loader2, TrendingUp, Calendar, Lock } from 'lucide-react';
 import { useProspects } from '@/hooks/useProspects';
-import { useSharedProspects } from '@/hooks/useSharedProspects';
 import { useSubscription } from '@/hooks/useSubscription';
 import { useProspectLimit } from '@/hooks/useProspectLimit';
 import { useFunnelConfig } from '@/hooks/useFunnelConfig';
@@ -70,14 +68,6 @@ export default function Tracking() {
   const navigate = useNavigate();
   const { user, loading: authLoading } = useAuth();
   const { prospects, refetch } = useProspects();
-  const { 
-    sharedOwners, 
-    selectedOwnerIds,
-    toggleOwnerSelection,
-    selectAllOwners,
-    clearSelection,
-    prospectCounts
-  } = useSharedProspects();
   const { isPro, loading: subLoading } = useSubscription();
   const prospectLimit = useProspectLimit(prospects, isPro);
   const { config, loading: configLoading, saveConfig } = useFunnelConfig();
@@ -155,15 +145,6 @@ export default function Tracking() {
               <p className="text-xs text-muted-foreground font-medium">Track Your Numbers</p>
             </div>
           </div>
-          <TeamMemberSelector
-            sharedOwners={sharedOwners}
-            selectedOwnerIds={selectedOwnerIds}
-            onToggleOwner={toggleOwnerSelection}
-            onSelectAll={selectAllOwners}
-            onClear={clearSelection}
-            currentTab="track"
-            prospectCounts={prospectCounts}
-          />
         </div>
       </header>
 

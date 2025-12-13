@@ -14,6 +14,7 @@ export interface Profile {
   bio: string | null;
   avatar_url: string | null;
   neverai_id: string | null; // This is the Leader ID
+  level_id: string | null; // FK to leader_levels
   created_at: string;
   updated_at: string;
   // Leader hierarchy fields

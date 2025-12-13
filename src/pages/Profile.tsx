@@ -10,6 +10,7 @@ import { EditProfileDialog } from '@/components/profile/EditProfileDialog';
 import { ShareProfileDialog } from '@/components/profile/ShareProfileDialog';
 import { LeaderStagesSettings } from '@/components/profile/LeaderStagesSettings';
 import { LevelManagement } from '@/components/profile/LevelManagement';
+import { ProfileLevelDropdown } from '@/components/profile/ProfileLevelDropdown';
 import { UpgradeCard } from '@/components/subscription/UpgradeCard';
 import { PullToRefreshIndicator } from '@/components/PullToRefreshIndicator';
 import { Button } from '@/components/ui/button';
@@ -131,18 +132,29 @@ export default function Profile() {
         <div className="container py-3 px-4 space-y-4 pb-20">
           {/* User Card */}
           <div className="relative overflow-hidden rounded-2xl p-5 bg-gradient-to-br from-primary/10 via-primary/5 to-transparent border border-primary/10 shadow-lg">
-            <div className="flex items-center gap-4">
-              <Avatar className="h-16 w-16 ring-4 ring-primary/20">
+            <div className="flex items-start gap-4">
+              <Avatar className="h-16 w-16 ring-4 ring-primary/20 shrink-0">
                 <AvatarImage src={profile?.avatar_url || undefined} alt={displayName} />
                 <AvatarFallback className="bg-gradient-to-br from-primary to-primary/80 text-primary-foreground text-xl font-bold">
                   {userInitials}
                 </AvatarFallback>
               </Avatar>
               <div className="flex-1 min-w-0">
-                <p className="font-semibold text-lg truncate">{displayName}</p>
-                <p className="text-sm text-muted-foreground truncate">{user.email}</p>
+                <div className="flex items-start justify-between gap-2">
+                  <div className="min-w-0">
+                    <p className="font-semibold text-lg truncate">{displayName}</p>
+                    <p className="text-sm text-muted-foreground truncate">{user.email}</p>
+                  </div>
+                  {/* Level dropdown in top-right */}
+                  <ProfileLevelDropdown
+                    currentLevelId={profile?.level_id || null}
+                    leaderUserId={profile?.leaders_id_of_my_leader ? null : user.id}
+                    userId={user.id}
+                    onLevelChange={() => refetch?.()}
+                  />
+                </div>
                 {profile?.neverai_id && (
-                  <div className="flex items-center gap-1.5 mt-1">
+                  <div className="flex items-center gap-1.5 mt-2">
                     <p className="text-xs text-primary font-medium">
                       Your Leader ID: <span className="font-mono">{profile.neverai_id}</span>
                     </p>

@@ -28,7 +28,7 @@ export function BottomViewToggle({ options, value, onChange }: BottomViewToggleP
               className={cn(
                 "flex items-center gap-1.5 px-4 py-2 rounded-full text-xs font-semibold transition-all duration-200",
                 isActive
-                  ? "bg-primary text-primary-foreground shadow-md"
+                  ? "bg-foreground text-background shadow-md"
                   : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
               )}
             >
