@@ -390,7 +390,7 @@ export function LeaderTrackingFormatSettings({
 
         {/* Leader ID Input - Always visible */}
         {hasLeader ? (
-          <div className="space-y-3">
+          <div className="space-y-4">
             <div className="flex items-center justify-between p-3 bg-primary/10 rounded-lg border border-primary/20">
               <div>
                 <p className="text-xs text-muted-foreground">Connected to Leader</p>
@@ -417,6 +417,70 @@ export function LeaderTrackingFormatSettings({
                 onCheckedChange={handleToggleVisibility}
                 disabled={updating}
               />
+            </div>
+
+            {/* Inherited Format Preview */}
+            <Separator />
+            <div className="space-y-4">
+              <p className="text-xs text-muted-foreground font-medium">Inherited Tracking Format (Read-only)</p>
+              
+              {/* Inherited Team Levels */}
+              {inheritedLevels.length > 0 && (
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2">
+                    <Users className="h-3 w-3 text-muted-foreground" />
+                    <p className="text-xs font-medium text-muted-foreground">Team Levels</p>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {inheritedLevels.map((level, idx) => (
+                      <Badge key={level.id} variant="secondary" className="text-xs">
+                        L{idx + 1}: {level.label}
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Inherited Leads Tracking Tags */}
+              {trackingFormat?.leadsTrackingTags && trackingFormat.leadsTrackingTags.length > 0 && (
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2">
+                    <Tag className="h-3 w-3 text-muted-foreground" />
+                    <p className="text-xs font-medium text-muted-foreground">Leads Tracking Tags</p>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {trackingFormat.leadsTrackingTags.map((tag, idx) => (
+                      <Badge key={idx} variant="outline" className="text-xs gap-1">
+                        {tag.name}
+                        {tag.isFinalTarget && <Star className="h-3 w-3 fill-yellow-500 text-yellow-500" />}
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Inherited Stage Tags */}
+              {trackingFormat?.stageTags && trackingFormat.stageTags.length > 0 && (
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2">
+                    <Layers className="h-3 w-3 text-muted-foreground" />
+                    <p className="text-xs font-medium text-muted-foreground">Stage Tags</p>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {trackingFormat.stageTags.map((tag, idx) => (
+                      <Badge key={idx} variant="outline" className="text-xs gap-1">
+                        {tag.name}
+                        {tag.isFinalTarget && <Star className="h-3 w-3 fill-yellow-500 text-yellow-500" />}
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Show message if no format loaded yet */}
+              {(!trackingFormat?.leadsTrackingTags?.length && !trackingFormat?.stageTags?.length && !inheritedLevels.length) && (
+                <p className="text-xs text-muted-foreground italic">Loading inherited format...</p>
+              )}
             </div>
           </div>
         ) : (
