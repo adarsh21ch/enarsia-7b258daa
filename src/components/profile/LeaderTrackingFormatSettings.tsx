@@ -434,82 +434,33 @@ export function LeaderTrackingFormatSettings({
                           disabled={updating}
                         />
                       </div>
-
-                      {/* Show inherited format */}
-                      {trackingFormat && (
-                        <div className="p-3 bg-green-50 dark:bg-green-950/30 rounded-lg border border-green-200 dark:border-green-900 space-y-3">
-                          <div className="flex items-center gap-2">
-                            <Check className="h-4 w-4 text-green-600" />
-                            <span className="text-sm font-medium text-green-700 dark:text-green-400">
-                              Using {rootLeaderName}'s Tracking Format
-                            </span>
-                          </div>
-                          
-                          {/* Inherited Levels */}
-                          {inheritedLevels.length > 0 && (
-                            <div>
-                              <p className="text-xs text-muted-foreground mb-1">Team Levels</p>
-                              <div className="flex flex-wrap gap-1.5">
-                                {inheritedLevels.map((level, idx) => (
-                                  <Badge key={idx} variant="outline" className="text-xs">
-                                    {level.code}: {level.label}
-                                    {level.isDefault && <Star className="h-2.5 w-2.5 ml-1 text-yellow-500 fill-yellow-500" />}
-                                  </Badge>
-                                ))}
-                              </div>
-                            </div>
-                          )}
-                          
-                          {/* Inherited Leads Tags */}
-                          {trackingFormat.leadsTrackingTags.length > 0 && (
-                            <div>
-                              <p className="text-xs text-muted-foreground mb-1">Leads Tracking Tags</p>
-                              <div className="flex flex-wrap gap-1.5">
-                                {trackingFormat.leadsTrackingTags.map((tag, idx) => (
-                                  <Badge key={idx} variant="secondary" className="text-xs gap-1">
-                                    {tag.name}
-                                    {tag.isFinalTarget && <Star className="h-3 w-3 text-yellow-500 fill-yellow-500" />}
-                                  </Badge>
-                                ))}
-                              </div>
-                            </div>
-                          )}
-                          
-                          {/* Inherited Stage Tags */}
-                          {trackingFormat.stageTags.length > 0 && (
-                            <div>
-                              <p className="text-xs text-muted-foreground mb-1">Stage Tags</p>
-                              <div className="flex flex-wrap gap-1.5">
-                                {trackingFormat.stageTags.map((tag, idx) => (
-                                  <Badge key={idx} variant="secondary" className="text-xs gap-1">
-                                    {tag.name}
-                                    {tag.isFinalTarget && <Star className="h-3 w-3 text-yellow-500 fill-yellow-500" />}
-                                  </Badge>
-                                ))}
-                              </div>
-                            </div>
-                          )}
-                        </div>
-                      )}
                     </>
                   ) : (
-                    <div className="space-y-2">
-                      <div className="flex gap-2">
-                        <Input
-                          placeholder="Enter Leader's ID (e.g., NVR-XXXXX)"
-                          value={leaderIdInput}
-                          onChange={(e) => setLeaderIdInput(e.target.value.toUpperCase())}
-                          className="flex-1 font-mono"
-                        />
-                        <Button 
-                          onClick={handleSaveLeaderId}
-                          disabled={savingLeader || !leaderIdInput.trim()}
-                          size="sm"
-                        >
-                          {savingLeader ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Save'}
-                        </Button>
+                    <>
+                      {/* Leader ID Input */}
+                      <div className="space-y-2">
+                        <Label htmlFor="leader-id-input" className="text-sm">Leader ID</Label>
+                        <div className="flex gap-2">
+                          <Input
+                            id="leader-id-input"
+                            placeholder="Enter Leader ID…"
+                            value={leaderIdInput}
+                            onChange={(e) => setLeaderIdInput(e.target.value.toUpperCase())}
+                            className="font-mono"
+                          />
+                          <Button 
+                            onClick={handleSaveLeaderId} 
+                            disabled={!leaderIdInput.trim() || savingLeader}
+                            size="sm"
+                          >
+                            {savingLeader ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Connect'}
+                          </Button>
+                        </div>
+                        <p className="text-xs text-muted-foreground">
+                          Enter your leader's ID to inherit their complete tracking system (tags, levels, and funnel logic).
+                        </p>
                       </div>
-                    </div>
+                    </>
                   )}
                 </div>
               )}
