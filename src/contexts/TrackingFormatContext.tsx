@@ -38,12 +38,12 @@ interface TrackingFormatContextType {
   isFinalTarget: (tagName: string) => boolean;
   isTrackingTag: (tagName: string) => boolean;
   
-  // Stage tag helpers (renamed from filter)
-  leadsStageTag: string | null;
-  isLeadsStageTag: (tagName: string) => boolean;
-  // Legacy aliases for backward compatibility
+  // Filter tag helpers (isStageTag in data = Filter Tag in UI)
   leadsFilterTag: string | null;
   isLeadsFilterTag: (tagName: string) => boolean;
+  // Legacy aliases for backward compatibility
+  leadsStageTag: string | null;
+  isLeadsStageTag: (tagName: string) => boolean;
   
   // Helpers
   handleTargetComplete: (tagName: string, prospectName?: string) => void;
@@ -56,21 +56,21 @@ const TrackingFormatContext = createContext<TrackingFormatContextType | null>(nu
 export function TrackingFormatProvider({ children }: { children: React.ReactNode }) {
   const trackingFormatHook = useTrackingFormat();
 
-  // Get the stage tag from leader's format (renamed from filter)
-  const leadsStageTag = trackingFormatHook.trackingFormat?.leadsTrackingTags.find(t => t.isStageTag)?.name || null;
+  // Get the filter tag from leader's format (isStageTag in data = Filter Tag in UI)
+  const leadsFilterTag = trackingFormatHook.trackingFormat?.leadsTrackingTags.find(t => t.isStageTag)?.name || null;
 
-  const isLeadsStageTag = useCallback((tagName: string) => {
+  const isLeadsFilterTag = useCallback((tagName: string) => {
     return trackingFormatHook.trackingFormat?.leadsTrackingTags.find(t => t.name === tagName)?.isStageTag || false;
   }, [trackingFormatHook.trackingFormat]);
 
-  // Handle target completion when final tag is selected
+  // Handle target completion when business tag is selected
   const handleTargetComplete = useCallback((tagName: string, prospectName?: string) => {
     if (trackingFormatHook.isLeadsFinalTarget(tagName)) {
       toast.success(`🎯 Target Complete! ${prospectName ? `(${prospectName})` : ''}`, {
         duration: 2000,
       });
     } else if (trackingFormatHook.isStageFinalTarget(tagName)) {
-      toast.success(`🏆 Final Stage Reached! ${prospectName ? `(${prospectName})` : ''}`, {
+      toast.success(`🏆 Business Complete! ${prospectName ? `(${prospectName})` : ''}`, {
         duration: 2000,
       });
     }
@@ -92,11 +92,11 @@ export function TrackingFormatProvider({ children }: { children: React.ReactNode
 
   const value: TrackingFormatContextType = {
     ...trackingFormatHook,
-    leadsStageTag,
-    isLeadsStageTag,
+    leadsFilterTag,
+    isLeadsFilterTag,
     // Keep old names for backward compatibility
-    leadsFilterTag: leadsStageTag,
-    isLeadsFilterTag: isLeadsStageTag,
+    leadsStageTag: leadsFilterTag,
+    isLeadsStageTag: isLeadsFilterTag,
     handleTargetComplete,
     getLeadsDropdownOptions,
     getStageDropdownOptions,

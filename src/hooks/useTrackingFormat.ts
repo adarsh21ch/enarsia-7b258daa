@@ -5,13 +5,13 @@ import { useProfile } from '@/hooks/useProfile';
 
 export interface TrackingTag {
   name: string;
-  isStageTag: boolean;  // true = appears in Stage view, false = leads-only
-  isFinalTarget: boolean;
+  isStageTag: boolean;  // true = appears in Filter view, false = leads-only (UI: "Filter Tag")
+  isFinalTarget: boolean;  // UI: "Business Tag" for stage tags
 }
 
 export interface StageTag {
   name: string;
-  isFinalTarget: boolean;
+  isFinalTarget: boolean;  // UI: "Business Tag"
 }
 
 export interface TeamLevel {
@@ -27,9 +27,9 @@ export interface TrackingFormat {
   leadsTrackingTags: TrackingTag[];  // Max 3-4, for analytics
   leadsNonTrackingTags: string[];    // Unlimited, display only
   
-  // Stage tracking (sales stages)
-  stageTags: StageTag[];             // Ordered stages
-  stageNonTrackingTags: string[];    // Optional stage labels
+  // Filter tracking (funnel stages) - UI: "Filter Tags"
+  stageTags: StageTag[];             // Ordered filter tags, isFinalTarget = "Business Tag"
+  stageNonTrackingTags: string[];    // Optional filter labels
   
   // Team levels
   levels: TeamLevel[];
@@ -60,9 +60,9 @@ function parseResponseLabels(labels: any): { leadsTracking: TrackingTag[]; leads
     return {
       leadsTracking: (labels.tracking || []).map((t: any) => ({
         name: t.name || t,
-        // Support both old "isFilter" and new "isStageTag" field names
+        // Support both old "isFilter" and new "isStageTag" field names (UI: "Filter Tag")
         isStageTag: t.isStageTag ?? t.isFilter ?? false,
-        isFinalTarget: t.isFinalTarget ?? false,
+        isFinalTarget: t.isFinalTarget ?? false,  // UI: "Business Tag"
       })),
       leadsNonTracking: labels.nonTracking || [],
     };
@@ -72,8 +72,8 @@ function parseResponseLabels(labels: any): { leadsTracking: TrackingTag[]; leads
   if (Array.isArray(labels)) {
     const tracking = labels.map((name, idx, arr) => ({
       name: String(name),
-      isStageTag: false,  // Legacy tags are NOT stage tags by default
-      isFinalTarget: false,  // No Final for leads - Final is only for stages
+      isStageTag: false,  // Legacy tags are NOT filter tags by default
+      isFinalTarget: false,  // No Business Tag for leads - Business Tag is only for filter tags
     }));
     return { leadsTracking: tracking, leadsNonTracking: [] };
   }
@@ -81,7 +81,7 @@ function parseResponseLabels(labels: any): { leadsTracking: TrackingTag[]; leads
   return { leadsTracking: [], leadsNonTracking: [] };
 }
 
-// Parse stage_labels JSON structure
+// Parse stage_labels JSON structure (UI: "Filter Tags")
 function parseStageLabels(labels: any): { stageTags: StageTag[]; stageNonTracking: string[] } {
   if (!labels) {
     return { stageTags: [], stageNonTracking: [] };
@@ -92,7 +92,7 @@ function parseStageLabels(labels: any): { stageTags: StageTag[]; stageNonTrackin
     return {
       stageTags: (labels.stages || []).map((s: any) => ({
         name: s.name || s,
-        isFinalTarget: s.isFinalTarget ?? false,
+        isFinalTarget: s.isFinalTarget ?? false,  // UI: "Business Tag"
       })),
       stageNonTracking: labels.nonTracking || [],
     };
@@ -102,7 +102,7 @@ function parseStageLabels(labels: any): { stageTags: StageTag[]; stageNonTrackin
   if (Array.isArray(labels)) {
     const stageTags = labels.map((name, idx, arr) => ({
       name: String(name),
-      isFinalTarget: idx === arr.length - 1,
+      isFinalTarget: idx === arr.length - 1,  // Last tag is Business Tag by default
     }));
     return { stageTags, stageNonTracking: [] };
   }

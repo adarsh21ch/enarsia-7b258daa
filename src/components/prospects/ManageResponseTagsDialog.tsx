@@ -160,7 +160,7 @@ export function ManageResponseTagsDialog({ open, onOpenChange }: ManageResponseT
                 {leadsTrackingTags.map((tag, idx) => (
                   <Badge key={idx} variant="secondary" className="text-xs gap-1">
                     {tag.name}
-                    {tag.isStageTag && <Star className="h-3 w-3 text-yellow-500 fill-yellow-500" />}
+                    {tag.isStageTag && <span className="text-[10px] text-yellow-600 ml-1">(Filter)</span>}
                   </Badge>
                 ))}
               </div>
@@ -250,10 +250,10 @@ export function ManageResponseTagsDialog({ open, onOpenChange }: ManageResponseT
                     <button
                       onClick={() => handleTrackingTagChange(index, 'isStageTag', !tag.isStageTag)}
                       className={`p-1 rounded transition-colors flex items-center gap-1 text-xs ${tag.isStageTag ? 'text-yellow-600 bg-yellow-100 dark:bg-yellow-900/30' : 'text-muted-foreground hover:text-yellow-600'}`}
-                      title="Mark as Stage Tag (appears in Stage view)"
+                      title="Mark as Filter Tag (appears in Filter view)"
                     >
                       <Star className={`h-4 w-4 ${tag.isStageTag ? 'fill-yellow-500 text-yellow-500' : ''}`} />
-                      {tag.isStageTag && <span>Stage Tag</span>}
+                      {tag.isStageTag && <span>Filter Tag</span>}
                     </button>
                     {trackingTags.length > 1 && (
                       <Button
