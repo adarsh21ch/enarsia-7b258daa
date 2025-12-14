@@ -307,11 +307,11 @@ export default function ListUp() {
               )}
             </div>
 
-            {/* Filter Tags Section */}
+            {/* Stages Section */}
             <div className="space-y-2">
-              <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Filters</h4>
+              <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Stages</h4>
               {stageTags.length === 0 ? (
-                <p className="text-xs text-muted-foreground/70">No filter tags</p>
+                <p className="text-xs text-muted-foreground/70">No stage tags</p>
               ) : (
                 <div className="flex flex-wrap gap-1.5">
                   {stageTags.map(tag => {

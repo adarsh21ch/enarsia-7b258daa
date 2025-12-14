@@ -22,10 +22,10 @@ const extractTagNames = (labels: any): string[] => {
 
 interface TrackingTags {
   callingTrackingTags: string[];
-  stageTrackingTags: string[];  // UI: "Filter Tags"
+  stageTrackingTags: string[];
   // Combined: tracking tags + custom tags for dropdown options
   callingAllOptions: string[];
-  stageAllOptions: string[];  // UI: "Filter Tag" options
+  stageAllOptions: string[];
   loading: boolean;
 }
 

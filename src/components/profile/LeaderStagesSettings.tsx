@@ -138,7 +138,7 @@ export function LeaderStagesSettings({
     setOwnCallingTags(updated);
   };
 
-  // Filter tags handlers
+  // Stage tags handlers
   const handleAddStageTag = () => {
     if (ownStageTags.length < 10) {
       setOwnStageTags([...ownStageTags, '']);
@@ -166,7 +166,7 @@ export function LeaderStagesSettings({
       return;
     }
     if (validStageTags.length < 1) {
-      toast.error('Please add at least 1 filter tag');
+      toast.error('Please add at least 1 stage tag');
       return;
     }
     
@@ -343,19 +343,19 @@ export function LeaderStagesSettings({
                     </div>
                   </div>
                   
-                  {/* Leader Filter Tags */}
+                  {/* Leader Stage Tags */}
                   <div className="space-y-2">
                     <div className="flex items-center gap-2">
                       <Layers className="h-3.5 w-3.5 text-muted-foreground" />
-                      <p className="text-xs text-muted-foreground font-medium">Filter tracking tags (Funnel Tracking):</p>
+                      <p className="text-xs text-muted-foreground font-medium">Stage tracking tags (Sales Stages):</p>
                     </div>
                     <div className="flex flex-wrap gap-2">
                       {leaderStageTags.length > 0 ? leaderStageTags.map((stage, index) => (
                         <Badge key={index} variant="outline" className="text-xs">
-                          Filter {index + 1}: {stage}
+                          Stage {index + 1}: {stage}
                         </Badge>
                       )) : (
-                        <p className="text-xs text-muted-foreground italic">No filter tags configured</p>
+                        <p className="text-xs text-muted-foreground italic">No stage tags configured</p>
                       )}
                     </div>
                   </div>
@@ -428,23 +428,23 @@ export function LeaderStagesSettings({
 
             <Separator />
 
-            {/* Filter Tags Configuration */}
+            {/* Stage Tags Configuration */}
             <div className="space-y-3">
               <div className="flex items-center gap-2">
                 <Layers className="h-4 w-4 text-primary" />
-                <p className="text-sm font-medium">Filter tracking tags (Funnel Tracking)</p>
+                <p className="text-sm font-medium">Stage tracking tags (Sales Stages)</p>
               </div>
               <p className="text-xs text-muted-foreground">
-                Define your Funnel Filter progression (3-10 tags recommended):
+                Define your Sales Stages progression (3-10 stages recommended):
               </p>
               <div className="space-y-2">
                 {ownStageTags.map((stage, index) => (
                   <div key={index} className="flex items-center gap-2">
-                    <span className="text-xs text-muted-foreground w-14">Filter {index + 1}</span>
+                    <span className="text-xs text-muted-foreground w-14">Stage {index + 1}</span>
                     <Input
                       value={stage}
                       onChange={(e) => handleStageTagChange(index, e.target.value)}
-                      placeholder={`Filter ${index + 1} name`}
+                      placeholder={`Stage ${index + 1} name`}
                       className="flex-1"
                     />
                     {ownStageTags.length > 1 && (
@@ -463,7 +463,7 @@ export function LeaderStagesSettings({
               {ownStageTags.length < 10 && (
                 <Button variant="outline" size="sm" onClick={handleAddStageTag}>
                   <Plus className="h-4 w-4 mr-1" />
-                  Add Filter
+                  Add Stage
                 </Button>
               )}
             </div>

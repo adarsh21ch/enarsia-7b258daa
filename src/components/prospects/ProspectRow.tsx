@@ -115,7 +115,7 @@ export function ProspectRow({
   const handleStageChange = (value: string) => {
     const updates: Partial<Prospect> = { funnel_stage: value };
     
-    // Check if this is the Business Tag
+    // Check if this is the final Stage target tag
     if (isStageFinalTarget(value)) {
       handleTargetComplete(value, prospect.name);
     }
