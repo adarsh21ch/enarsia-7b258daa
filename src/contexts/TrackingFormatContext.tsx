@@ -38,7 +38,7 @@ interface TrackingFormatContextType {
   isFinalTarget: (tagName: string) => boolean;
   isTrackingTag: (tagName: string) => boolean;
   
-  // Stage tag helpers (renamed from filter)
+  // Filter tag helpers (used for Funnel tab)
   leadsStageTag: string | null;
   isLeadsStageTag: (tagName: string) => boolean;
   // Legacy aliases for backward compatibility
@@ -56,7 +56,7 @@ const TrackingFormatContext = createContext<TrackingFormatContextType | null>(nu
 export function TrackingFormatProvider({ children }: { children: React.ReactNode }) {
   const trackingFormatHook = useTrackingFormat();
 
-  // Get the stage tag from leader's format (renamed from filter)
+  // Get the filter tag from leader's format (for Funnel tab)
   const leadsStageTag = trackingFormatHook.trackingFormat?.leadsTrackingTags.find(t => t.isStageTag)?.name || null;
 
   const isLeadsStageTag = useCallback((tagName: string) => {

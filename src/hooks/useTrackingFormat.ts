@@ -5,7 +5,7 @@ import { useProfile } from '@/hooks/useProfile';
 
 export interface TrackingTag {
   name: string;
-  isStageTag: boolean;  // true = appears in Stage view, false = leads-only
+  isStageTag: boolean;  // true = filter tag (appears in Funnel tab), false = leads-only
   isFinalTarget: boolean;
 }
 

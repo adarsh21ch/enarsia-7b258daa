@@ -87,7 +87,7 @@ export function ManageResponseTagsDialog({ open, onOpenChange }: ManageResponseT
     setTrackingTags(prev => {
       const updated = [...prev];
       if (field === 'isStageTag' && value === true) {
-        // Only ONE tag can be the Stage Tag
+        // Only ONE tag can be the Filter Tag
         updated.forEach((t, i) => { t.isStageTag = i === index; });
       } else if (field === 'isStageTag' && value === false) {
         updated[index] = { ...updated[index], isStageTag: false };
@@ -250,10 +250,10 @@ export function ManageResponseTagsDialog({ open, onOpenChange }: ManageResponseT
                     <button
                       onClick={() => handleTrackingTagChange(index, 'isStageTag', !tag.isStageTag)}
                       className={`p-1 rounded transition-colors flex items-center gap-1 text-xs ${tag.isStageTag ? 'text-yellow-600 bg-yellow-100 dark:bg-yellow-900/30' : 'text-muted-foreground hover:text-yellow-600'}`}
-                      title="Mark as Stage Tag (appears in Stage view)"
+                      title="Mark as Filter Tag (moves leads to Funnel tab)"
                     >
                       <Star className={`h-4 w-4 ${tag.isStageTag ? 'fill-yellow-500 text-yellow-500' : ''}`} />
-                      {tag.isStageTag && <span>Stage Tag</span>}
+                      {tag.isStageTag && <span>Filter Tag</span>}
                     </button>
                     {trackingTags.length > 1 && (
                       <Button

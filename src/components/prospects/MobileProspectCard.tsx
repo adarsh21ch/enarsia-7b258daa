@@ -68,7 +68,7 @@ const [localData, setLocalData] = useState({
       ]
     : getOptionsForType('action_taken', EXTENDED_ACTIONS) as string[];
   
-  // Stage tab uses stageTags for Stage column
+  // Funnel tab uses stageTags for Filter column
   const hasStageTrackingTags = stageTagNames.length > 0;
   const stageOptions = hasStageTrackingTags
     ? [

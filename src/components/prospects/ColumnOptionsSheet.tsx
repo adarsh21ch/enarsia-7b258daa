@@ -64,7 +64,7 @@ export function ColumnOptionsSheet({
             {isResponseColumn && (
               <div className="flex items-center gap-1">
                 <Star className="h-3 w-3 text-yellow-500 fill-yellow-500" />
-                <span>Stage Tag</span>
+                <span>Filter Tag</span>
               </div>
             )}
             {isStageColumn && (
@@ -93,7 +93,7 @@ export function ColumnOptionsSheet({
                     {isStageTagFlag && (
                       <span className="flex items-center gap-1 text-xs text-yellow-600 dark:text-yellow-400">
                         <Star className="h-3 w-3 text-yellow-500 fill-yellow-500" />
-                        Stage Tag
+                        Filter Tag
                       </span>
                     )}
                     {isFinal && (

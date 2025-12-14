@@ -88,10 +88,15 @@ export function LeaderTrackingFormatSettings({
 
   // Debounce timer ref
   const saveTimerRef = useRef<NodeJS.Timeout | null>(null);
+  
+  // Flag to prevent re-initialization after initial load
+  const initializedRef = useRef(false);
 
-  // Initialize state from profile
+  // Initialize state from profile - only once
   useEffect(() => {
-    if (profile) {
+    if (profile && !initializedRef.current) {
+      initializedRef.current = true;
+      
       const isUsingLeaderFormat = profile.use_leader_stages && !!profile.leaders_id_of_my_leader;
       setFormatMode(isUsingLeaderFormat ? 'leader' : 'own');
 
@@ -111,7 +116,7 @@ export function LeaderTrackingFormatSettings({
           }]);
           setLeadsNonTrackingTags(responseLabels.nonTracking || []);
         } else if (Array.isArray(responseLabels)) {
-          // Legacy format - no stage tags by default
+          // Legacy format - no filter tags by default
           const tags = responseLabels.slice(0, 4).map((name: string) => ({
             name,
             isStageTag: false,
@@ -126,7 +131,7 @@ export function LeaderTrackingFormatSettings({
         }
       }
 
-      // Parse stage tags from stage_labels
+      // Parse filter tags from stage_labels
       const stageLabels = profile.stage_labels as any;
       if (stageLabels) {
         if (typeof stageLabels === 'object' && stageLabels.stages) {
@@ -283,7 +288,7 @@ export function LeaderTrackingFormatSettings({
     setLeadsTrackingTags(prev => {
       const updated = [...prev];
       if (field === 'isStageTag' && value === true) {
-        // Only ONE tag can be the Stage Tag at a time
+        // Only ONE tag can be the Filter Tag at a time
         updated.forEach((t, i) => {
           t.isStageTag = i === index;
         });
@@ -491,11 +496,11 @@ export function LeaderTrackingFormatSettings({
                   </div>
                 </div>}
 
-              {/* Inherited Stage Tags */}
+              {/* Inherited Filter Tags */}
               {trackingFormat?.stageTags && trackingFormat.stageTags.length > 0 && <div className="space-y-2">
                   <div className="flex items-center gap-2">
                     <Layers className="h-3 w-3 text-muted-foreground" />
-                    <p className="text-xs font-medium text-muted-foreground">Stage Tracking Tags</p>
+                    <p className="text-xs font-medium text-muted-foreground">Filter Tags (Funnel Tracking)</p>
                   </div>
                   <div className="flex flex-wrap gap-2">
                     {trackingFormat.stageTags.map((tag, idx) => <Badge key={idx} variant="outline" className="text-xs gap-1">
@@ -578,7 +583,7 @@ export function LeaderTrackingFormatSettings({
                 </Button>}
             </div>
             <p className="text-xs text-muted-foreground">
-              These tags are used in the Leads tab and are counted in analytics. Mark one as ★ Final target.
+              These tags are used in the Leads tab and are counted in analytics. Mark one as ★ Filter Tag to move leads to the Funnel tab.
             </p>
             
             <div className="space-y-2">
@@ -589,10 +594,10 @@ export function LeaderTrackingFormatSettings({
                     <button 
                       onClick={() => handleLeadsTagChange(index, 'isStageTag', !tag.isStageTag)} 
                       className={`p-1 rounded transition-colors flex items-center gap-1 text-xs ${tag.isStageTag ? 'text-yellow-600 bg-yellow-100 dark:bg-yellow-900/30' : 'text-muted-foreground hover:text-yellow-600'}`}
-                      title="Mark as Stage Tag (appears in Stage view)"
+                      title="Mark as Filter Tag (moves leads to Funnel tab)"
                     >
                       <Star className={`h-4 w-4 ${tag.isStageTag ? 'fill-yellow-500 text-yellow-500' : ''}`} />
-                      {tag.isStageTag && <span>Stage Tag</span>}
+                      {tag.isStageTag && <span>Filter Tag</span>}
                     </button>
                   </div>
                   {leadsTrackingTags.length > 1 && <Button variant="ghost" size="icon" onClick={() => handleRemoveLeadsTag(index)} className="h-7 w-7 text-destructive">
@@ -623,12 +628,12 @@ export function LeaderTrackingFormatSettings({
 
           <Separator />
 
-          {/* 3. STAGE TAGS */}
+          {/* 3. FILTER TAGS (FUNNEL TRACKING) */}
           <div className="space-y-3">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <Layers className="h-4 w-4 text-primary" />
-                <p className="text-sm font-medium">Stage Tags (Sales Stages)</p>
+                <p className="text-sm font-medium">Filter Tags (Funnel Tracking)</p>
               </div>
               {stageTags.length < 10 && <Button variant="outline" size="sm" onClick={handleAddStageTag}>
                   <Plus className="h-3 w-3 mr-1" />
@@ -636,7 +641,7 @@ export function LeaderTrackingFormatSettings({
                 </Button>}
             </div>
             <p className="text-xs text-muted-foreground">
-              These stages are used in the Stage tab and funnel analytics. Mark one as ★ Final stage.
+              Filter Tags are used to move leads from the Leads tab into the Funnel tab (funnel view). Mark one as ★ Final stage.
             </p>
             
             <div className="space-y-2">
@@ -652,9 +657,9 @@ export function LeaderTrackingFormatSettings({
                 </div>)}
             </div>
             
-            {/* Stage Non-Tracking Tags */}
+            {/* Filter Non-Tracking Tags */}
             <div className="pt-2">
-              <p className="text-xs text-muted-foreground mb-2">Stage Non-Tracking Tags (display only)</p>
+              <p className="text-xs text-muted-foreground mb-2">Filter Non-Tracking Tags (display only)</p>
               <div className="flex flex-wrap gap-2 mb-2">
                 {stageNonTrackingTags.map((tag, idx) => <Badge key={idx} variant="outline" className="gap-1 pr-1">
                     {tag}

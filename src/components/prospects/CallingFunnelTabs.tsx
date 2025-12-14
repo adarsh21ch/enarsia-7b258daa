@@ -45,7 +45,7 @@ export function CallingFunnelTabs({ activeTab, onTabChange, callingCount, funnel
         )}
       >
         <Layers className="h-4 w-4" />
-        <span>Filter</span>
+        <span>Funnel</span>
         <span className={cn(
           "ml-1 text-xs px-2 py-0.5 rounded-full font-semibold",
           activeTab === 'funnel'
