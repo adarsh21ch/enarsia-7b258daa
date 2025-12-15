@@ -47,7 +47,17 @@ interface FunnelConfig {
   funnel_length: number;
 }
 
-export function useProspectFunnelStats(funnelConfig?: FunnelConfig | null) {
+interface ProspectData {
+  id: string;
+  funnel_stage: string | null;
+  funnel_stage_at: string | null;
+  date_added: string;
+}
+
+export function useProspectFunnelStats(
+  funnelConfig?: FunnelConfig | null,
+  externalProspects?: ProspectData[] // Optional: use external prospects instead of fetching
+) {
   const [loading, setLoading] = useState(true);
   const [totalProspects, setTotalProspects] = useState(0);
   const [totals, setTotals] = useState<FunnelStats>({
@@ -63,6 +73,12 @@ export function useProspectFunnelStats(funnelConfig?: FunnelConfig | null) {
   const { user } = useAuth();
 
   const fetchData = useCallback(async () => {
+    // If external prospects provided, use them instead of fetching
+    if (externalProspects !== undefined) {
+      processProspects(externalProspects);
+      return;
+    }
+    
     if (!user) return;
     
     setLoading(true);
@@ -80,6 +96,17 @@ export function useProspectFunnelStats(funnelConfig?: FunnelConfig | null) {
       }
 
       const prospects = data || [];
+      processProspects(prospects);
+    } catch (err) {
+      console.error('Error in fetchData:', err);
+    } finally {
+      setLoading(false);
+    }
+  }, [user, funnelConfig, externalProspects]);
+
+  const processProspects = useCallback((prospects: ProspectData[]) => {
+    setLoading(true);
+    try {
       setTotalProspects(prospects.length);
       const now = new Date();
 
@@ -173,12 +200,10 @@ export function useProspectFunnelStats(funnelConfig?: FunnelConfig | null) {
       }
 
       setFunnelRows(sortedFunnelRows);
-    } catch (err) {
-      console.error('Error in fetchData:', err);
     } finally {
       setLoading(false);
     }
-  }, [user, funnelConfig]);
+  }, [funnelConfig]);
 
   useEffect(() => {
     fetchData();

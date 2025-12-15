@@ -5,13 +5,14 @@ import { useFunnelConfig } from '@/hooks/useFunnelConfig';
 import { useProspects } from '@/hooks/useProspects';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
-import { ChevronDown, ChevronUp, Flame, TrendingUp, TrendingDown, Minus, Sparkles, Users, Grid3X3, Settings2, CalendarDays } from 'lucide-react';
+import { ChevronDown, ChevronUp, Flame, TrendingUp, TrendingDown, Minus, Sparkles, Users, Grid3X3, Settings2, CalendarDays, Lock } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { Button } from '@/components/ui/button';
 import { ExportFunnelData } from './ExportFunnelData';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
+import { Badge } from '@/components/ui/badge';
 
 const STAGES = ['enrollment', 'day_1', 'day_2', 'day_3', 'minimum_bill', 'level_up', 'two_cc'] as const;
 type StageKey = typeof STAGES[number];
@@ -67,11 +68,26 @@ function getConversionTextColor(percentage: number) {
   return 'text-red-500';
 }
 
-interface FunnelTrackerProps {
-  isPro?: boolean;
+interface FunnelConfig {
+  funnel_name?: string;
+  funnel_length: number;
+  day_1_start: string;
 }
 
-export function FunnelTracker({ isPro = true }: FunnelTrackerProps) {
+interface FunnelTrackerProps {
+  isPro?: boolean;
+  // Team viewing props
+  isViewingTeam?: boolean;
+  teamProspects?: Array<{ id: string; funnel_stage: string | null; funnel_stage_at: string | null; date_added: string }>;
+  leaderFunnelConfig?: FunnelConfig | null;
+}
+
+export function FunnelTracker({ 
+  isPro = true, 
+  isViewingTeam = false,
+  teamProspects,
+  leaderFunnelConfig 
+}: FunnelTrackerProps) {
   const { prospects, loading: prospectsLoading } = useProspects();
   const { config, loading: configLoading, saveConfig } = useFunnelConfig();
   
@@ -83,24 +99,28 @@ export function FunnelTracker({ isPro = true }: FunnelTrackerProps) {
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
   const [datePickerOpen, setDatePickerOpen] = useState(false);
 
-  // Initialize from saved config
-  useEffect(() => {
-    if (config) {
-      setSelectedDate(new Date(config.day_1_start));
-    }
-  }, [config]);
+  // Determine which config to use: leader's when viewing team, own otherwise
+  const activeConfig = isViewingTeam && leaderFunnelConfig ? leaderFunnelConfig : config;
 
-  // Build funnel config for the hook - use configured funnel length
+  // Initialize from active config
+  useEffect(() => {
+    if (activeConfig) {
+      setSelectedDate(new Date(activeConfig.day_1_start));
+    }
+  }, [activeConfig]);
+
+  // Build funnel config for the hook - use active config's funnel length
   const funnelConfigForStats = useMemo(() => {
     if (!selectedDate) return null;
     return {
       day_1_start: format(selectedDate, 'yyyy-MM-dd'),
-      funnel_length: config?.funnel_length || 3,
+      funnel_length: activeConfig?.funnel_length || 3,
     };
-  }, [selectedDate, config?.funnel_length]);
+  }, [selectedDate, activeConfig?.funnel_length]);
 
-  // Pass config to hook for auto-calculated funnel rows
-  const { totals, loading, totalProspects, funnelRows } = useProspectFunnelStats(funnelConfigForStats);
+  // Pass config and optional team prospects to hook for stats
+  const externalProspectsData = isViewingTeam && teamProspects ? teamProspects : undefined;
+  const { totals, loading, totalProspects, funnelRows } = useProspectFunnelStats(funnelConfigForStats, externalProspectsData);
 
   // Save config when Day 1 date changes
   const handleDateSelect = async (date: Date | undefined) => {
@@ -165,33 +185,47 @@ export function FunnelTracker({ isPro = true }: FunnelTrackerProps) {
             
             {/* Inline Funnel Setup - Day 1 Date Only */}
             <div className="flex items-center gap-2 bg-muted/40 rounded-xl px-3 py-1.5">
-              <Settings2 className="h-4 w-4 text-muted-foreground" />
-              
-              {/* Day 1 Date Picker */}
-              <Popover open={datePickerOpen} onOpenChange={setDatePickerOpen}>
-                <PopoverTrigger asChild>
-                  <Button 
-                    variant="ghost" 
-                    size="sm" 
-                    className="h-7 px-2 text-xs font-medium bg-background/60 hover:bg-background gap-1.5"
-                  >
-                    <CalendarDays className="h-3.5 w-3.5" />
-                    {selectedDate ? `Day 1: ${format(selectedDate, 'MMM d')}` : 'Set Day 1'}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0 z-50" align="end">
-                  <Calendar
-                    mode="single"
-                    selected={selectedDate}
-                    onSelect={handleDateSelect}
-                    initialFocus
-                    className="pointer-events-auto"
-                  />
-                </PopoverContent>
-              </Popover>
+              {isViewingTeam ? (
+                <>
+                  <Lock className="h-3.5 w-3.5 text-muted-foreground" />
+                  <span className="text-xs font-medium text-muted-foreground">
+                    Day 1: {selectedDate ? format(selectedDate, 'MMM d') : '–'}
+                  </span>
+                  <Badge variant="secondary" className="text-[10px] px-1.5 py-0 h-4">From leader</Badge>
+                </>
+              ) : (
+                <>
+                  <Settings2 className="h-4 w-4 text-muted-foreground" />
+                  {/* Day 1 Date Picker */}
+                  <Popover open={datePickerOpen} onOpenChange={setDatePickerOpen}>
+                    <PopoverTrigger asChild>
+                      <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        className="h-7 px-2 text-xs font-medium bg-background/60 hover:bg-background gap-1.5"
+                      >
+                        <CalendarDays className="h-3.5 w-3.5" />
+                        {selectedDate ? `Day 1: ${format(selectedDate, 'MMM d')}` : 'Set Day 1'}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0 z-50" align="end">
+                      <Calendar
+                        mode="single"
+                        selected={selectedDate}
+                        onSelect={handleDateSelect}
+                        initialFocus
+                        className="pointer-events-auto"
+                      />
+                    </PopoverContent>
+                  </Popover>
+                </>
+              )}
             </div>
           </div>
-          <p className="text-xs text-muted-foreground mt-1">{config?.funnel_length || 3}-day funnel auto-calculated from Follow Up.</p>
+          <p className="text-xs text-muted-foreground mt-1">
+            {activeConfig?.funnel_length || 3}-day funnel auto-calculated from Follow Up.
+            {isViewingTeam && ' (Using leader\'s config)'}
+          </p>
         </div>
         
         <div className="overflow-x-auto">
