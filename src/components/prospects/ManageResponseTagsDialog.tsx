@@ -169,7 +169,7 @@ export function ManageResponseTagsDialog({ open, onOpenChange }: ManageResponseT
             {leadsNonTrackingTags.length > 0 && (
               <div>
                 <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2">
-                  Leads Non-Tracking Tags
+                  Leads Personal Tags (not counted)
                 </p>
                 <div className="flex flex-wrap gap-2">
                   {leadsNonTrackingTags.map((tag, idx) => (
@@ -216,8 +216,8 @@ export function ManageResponseTagsDialog({ open, onOpenChange }: ManageResponseT
         <div className="flex items-start gap-2 p-3 bg-blue-50 dark:bg-blue-950/30 rounded-lg border border-blue-200 dark:border-blue-900">
           <AlertCircle className="h-4 w-4 text-blue-600 mt-0.5 shrink-0" />
           <p className="text-xs text-blue-700 dark:text-blue-300">
-            <strong>Leads Tracking tags</strong> are used in analytics. 
-            <strong> Non-tracking tags</strong> are for your convenience and are not counted.
+            <strong>Tracking tags</strong> are used in analytics. 
+            <strong> Personal tags</strong> are just for your own use and not counted.
           </p>
         </div>
 
@@ -273,11 +273,11 @@ export function ManageResponseTagsDialog({ open, onOpenChange }: ManageResponseT
 
           <Separator />
 
-          {/* Non-Tracking Tags Section */}
+          {/* Personal Tags Section */}
           <div className="space-y-3">
-            <p className="text-sm font-medium">Leads Non-Tracking Tags</p>
+            <p className="text-sm font-medium">Leads Personal Tags (not counted)</p>
             <p className="text-xs text-muted-foreground">
-              These are for your convenience only and will not be counted in analytics.
+              Personal tags are just for your own use and are not counted in analytics.
             </p>
             
             <div className="flex flex-wrap gap-2">
@@ -298,7 +298,7 @@ export function ManageResponseTagsDialog({ open, onOpenChange }: ManageResponseT
               <Input
                 value={newNonTrackingTag}
                 onChange={(e) => setNewNonTrackingTag(e.target.value)}
-                placeholder="Add non-tracking tag..."
+                placeholder="Add personal tag..."
                 className="h-8 text-sm flex-1"
                 onKeyDown={(e) => e.key === 'Enter' && handleAddNonTrackingTag()}
               />

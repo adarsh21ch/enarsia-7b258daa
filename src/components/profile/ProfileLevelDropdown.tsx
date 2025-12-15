@@ -131,7 +131,8 @@ export function ProfileLevelDropdown({
   }, [currentLevelId]);
 
   const selectedLevel = levels.find(l => l.id === selectedLevelId);
-  const displayLabel = selectedLevel?.label || (levels.length > 0 ? levels[0]?.label : 'Level 1');
+  // Show code (AS, S, AM) if available, otherwise show label
+  const displayCode = selectedLevel?.code || selectedLevel?.label || (levels.length > 0 ? (levels[0]?.code || levels[0]?.label) : 'Level 1');
 
   const handleSelectLevel = async (level: LeaderLevel) => {
     if (level.id === selectedLevelId) {
@@ -176,7 +177,7 @@ export function ProfileLevelDropdown({
   if (levels.length === 0) {
     return (
       <div className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-foreground text-background rounded-full text-xs font-medium">
-        {noLevelsMessage || 'Level 1'} {!noLevelsMessage && <Check className="h-3 w-3" />}
+        {noLevelsMessage || 'L1'}
       </div>
     );
   }
@@ -200,7 +201,7 @@ export function ProfileLevelDropdown({
             </>
           ) : (
             <>
-              {displayLabel}
+              {displayCode}
               <ChevronDown className="h-3 w-3 ml-0.5" />
             </>
           )}

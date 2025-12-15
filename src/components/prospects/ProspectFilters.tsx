@@ -80,22 +80,32 @@ export function ProspectFilters({
     return `${filters.actions.length} Responses`;
   };
   return <div className="flex flex-col gap-2 w-full">
-      {/* Search bar row - with filter tag button beside it (hidden if hideSearch is true) */}
-      {!hideSearch && <div className="flex items-center gap-2">
-          <div className="relative flex-1 sm:max-w-xs sm:flex-none">
-            
-            
-          </div>
-          {filterTagButton}
-        </div>}
-      
-      {/* Filter tag button shown standalone when search is hidden */}
-      {hideSearch && filterTagButton && <div className="flex items-center gap-2">
-          {filterTagButton}
-        </div>}
+      {/* Filters row - includes filter tag button inline */}
+      <div className="flex gap-2 overflow-x-auto pb-1 -mx-1 px-1 sm:flex-wrap sm:overflow-visible items-center">
+        {/* Multi-select Stages Filter - only show if showStagesFilter is true */}
+        {showStagesFilter && <Popover>
+            <PopoverTrigger asChild>
+              <Button variant="outline" className={cn("h-10 sm:h-9 min-w-[100px] w-auto text-xs shrink-0 justify-between gap-1", filters.stages.length > 0 && "border-primary/50 bg-primary/5")}>
+                <span className="truncate">{getStagesLabel()}</span>
+                <ChevronDown className="h-3.5 w-3.5 opacity-50" />
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-48 p-2 bg-popover border-border z-[100]" align="start" sideOffset={4}>
+              <div className="space-y-1">
+                {stageOptions.map(stage => <label key={stage} className="flex items-center gap-2 px-2 py-2 rounded-md hover:bg-muted cursor-pointer min-h-[40px]">
+                    <Checkbox checked={filters.stages.includes(stage)} onCheckedChange={() => toggleStage(stage)} className="h-4 w-4" />
+                    <span className="text-sm">{stage}</span>
+                  </label>)}
+              </div>
+              {filters.stages.length > 0 && <Button variant="ghost" size="sm" className="w-full mt-2 h-8 text-xs" onClick={() => onFiltersChange({
+            ...filters,
+            stages: []
+          })}>
+                  Clear Stages
+                </Button>}
+            </PopoverContent>
+          </Popover>}
 
-      {/* Filters row - scrollable on mobile */}
-      <div className="flex gap-2 overflow-x-auto pb-1 -mx-1 px-1 sm:flex-wrap sm:overflow-visible">
         {/* Multi-select Responses Filter - only show if showResponsesFilter is true */}
         {showResponsesFilter && <Popover>
             <PopoverTrigger asChild>
@@ -120,29 +130,8 @@ export function ProspectFilters({
             </PopoverContent>
           </Popover>}
 
-        {/* Multi-select Stages Filter - only show if showStagesFilter is true */}
-        {showStagesFilter && <Popover>
-            <PopoverTrigger asChild>
-              <Button variant="outline" className={cn("h-10 sm:h-9 min-w-[100px] w-auto text-xs shrink-0 justify-between gap-1", filters.stages.length > 0 && "border-primary/50 bg-primary/5")}>
-                <span className="truncate">{getStagesLabel()}</span>
-                <ChevronDown className="h-3.5 w-3.5 opacity-50" />
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-48 p-2 bg-popover border-border z-[100]" align="start" sideOffset={4}>
-              <div className="space-y-1">
-                {stageOptions.map(stage => <label key={stage} className="flex items-center gap-2 px-2 py-2 rounded-md hover:bg-muted cursor-pointer min-h-[40px]">
-                    <Checkbox checked={filters.stages.includes(stage)} onCheckedChange={() => toggleStage(stage)} className="h-4 w-4" />
-                    <span className="text-sm">{stage}</span>
-                  </label>)}
-              </div>
-              {filters.stages.length > 0 && <Button variant="ghost" size="sm" className="w-full mt-2 h-8 text-xs" onClick={() => onFiltersChange({
-            ...filters,
-            stages: []
-          })}>
-                  Clear Stages
-                </Button>}
-            </PopoverContent>
-          </Popover>}
+        {/* Funnel Tag button - inline with other controls */}
+        {filterTagButton}
 
         {hasFilters && <Button variant="ghost" size="sm" onClick={clearFilters} className="h-10 sm:h-9 px-2 text-xs shrink-0">
             <X className="h-3.5 w-3.5 mr-1" />
