@@ -11,6 +11,7 @@ export interface FunnelConfig {
 
 export function useFunnelConfig() {
   const [config, setConfig] = useState<FunnelConfig | null>(null);
+  const [leaderConfig, setLeaderConfig] = useState<FunnelConfig | null>(null);
   const [loading, setLoading] = useState(true);
   const { user } = useAuth();
 
@@ -95,6 +96,51 @@ export function useFunnelConfig() {
     return true;
   };
 
+  // Fetch leader's funnel config by their neverai_id
+  const fetchLeaderConfig = useCallback(async (leaderNeveraiId: string): Promise<FunnelConfig | null> => {
+    if (!leaderNeveraiId) return null;
+    
+    // First, get the leader's user_id from their neverai_id
+    const { data: leaderProfile, error: profileError } = await supabase
+      .from('profiles')
+      .select('user_id')
+      .ilike('neverai_id', leaderNeveraiId)
+      .maybeSingle();
+    
+    if (profileError || !leaderProfile) {
+      console.error('Error fetching leader profile:', profileError);
+      return null;
+    }
+    
+    // Then fetch their funnel config
+    const { data, error } = await supabase
+      .from('funnel_configs')
+      .select('*')
+      .eq('user_id', leaderProfile.user_id)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+      
+    if (error) {
+      console.error('Error fetching leader funnel config:', error);
+      return null;
+    }
+    
+    if (data) {
+      const leaderFunnelConfig: FunnelConfig = {
+        id: data.id,
+        funnel_name: data.funnel_name,
+        funnel_length: data.funnel_length,
+        day_1_start: data.day_1_start,
+      };
+      setLeaderConfig(leaderFunnelConfig);
+      return leaderFunnelConfig;
+    }
+    
+    setLeaderConfig(null);
+    return null;
+  }, []);
+
   // Get valid stages based on funnel length
   const getValidStages = (): string[] => {
     const length = config?.funnel_length || 3;
@@ -109,9 +155,11 @@ export function useFunnelConfig() {
 
   return { 
     config, 
+    leaderConfig,
     loading, 
     saveConfig, 
     refetch: fetchConfig,
+    fetchLeaderConfig,
     getValidStages,
   };
 }
