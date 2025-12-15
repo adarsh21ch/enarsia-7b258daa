@@ -6,6 +6,7 @@ import { useProspects } from '@/hooks/useProspects';
 import { useTodos } from '@/hooks/useTodos';
 import { BottomNav } from '@/components/layout/BottomNav';
 import { PullToRefreshIndicator } from '@/components/PullToRefreshIndicator';
+import { LeaderIdSetupDialog } from '@/components/profile/LeaderIdSetupDialog';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
@@ -284,6 +285,9 @@ export default function Home() {
       </main>
 
       <BottomNav className="px-0 my-0 border-0 py-0" />
+      
+      {/* First-time Leader ID Setup Dialog */}
+      <LeaderIdSetupDialog />
     </div>
   );
 }

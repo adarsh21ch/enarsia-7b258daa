@@ -322,16 +322,16 @@ export function ImportExcelDialog({ onImport }: ImportExcelDialogProps) {
         )}
 
         {step === 'mapping' && (
-          <div className="flex flex-col h-[70vh] max-h-[600px]">
+          <div className="flex flex-col h-[65vh] max-h-[550px]">
             {/* Data Preview Section - Top, scrollable */}
-            <div className="flex-1 flex flex-col min-h-0 space-y-2 mb-3">
+            <div className="flex-1 flex flex-col min-h-0 space-y-2 mb-3 overflow-hidden">
               <div className="flex items-center justify-between flex-shrink-0">
                 <Label className="text-xs font-medium">Data Preview (first 3 rows)</Label>
                 <span className="text-xs text-muted-foreground">{columns.length} columns • Drag column edges to resize</span>
               </div>
               
               {/* Preview table container - scrollable both ways */}
-              <div className="flex-1 border border-border rounded-lg overflow-hidden min-h-[100px]">
+              <div className="flex-1 border border-border rounded-lg overflow-hidden min-h-[80px]">
                 <div className={cn("h-full overflow-x-auto overflow-y-auto", isResizing && "select-none")}>
                   <table className="text-xs border-collapse w-max">
                     <thead className="bg-muted sticky top-0 z-10">
@@ -431,15 +431,16 @@ export function ImportExcelDialog({ onImport }: ImportExcelDialogProps) {
               </div>
             </div>
 
-            {/* Fixed Action Buttons at bottom - sticky */}
-            <div className="flex-shrink-0 flex justify-between gap-2 pt-3 mt-3 border-t border-border sticky bottom-0 bg-card pb-1">
-              <Button variant="outline" size="sm" onClick={resetState}>
+            {/* Fixed Action Buttons at bottom - always visible */}
+            <div className="flex-shrink-0 flex justify-between gap-2 pt-3 mt-auto border-t border-border bg-card">
+              <Button variant="outline" size="sm" onClick={resetState} className="min-w-[70px]">
                 Back
               </Button>
               <Button
                 size="sm"
                 onClick={handleImport}
                 disabled={isImporting || !mapping.name || !mapping.phone}
+                className="min-w-[120px]"
               >
                 {isImporting ? 'Importing...' : `Import ${fullData.length} rows`}
               </Button>

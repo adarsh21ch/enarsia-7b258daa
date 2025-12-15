@@ -64,7 +64,7 @@ export function ColumnOptionsSheet({
             {isResponseColumn && (
               <div className="flex items-center gap-1">
                 <Star className="h-3 w-3 text-yellow-500 fill-yellow-500" />
-                <span>Filter Tag</span>
+                <span>Funnel Tag</span>
               </div>
             )}
             {isStageColumn && (
@@ -93,7 +93,7 @@ export function ColumnOptionsSheet({
                     {isStageTagFlag && (
                       <span className="flex items-center gap-1 text-xs text-yellow-600 dark:text-yellow-400">
                         <Star className="h-3 w-3 text-yellow-500 fill-yellow-500" />
-                        Filter Tag
+                        Funnel Tag
                       </span>
                     )}
                     {isFinal && (
@@ -108,7 +108,7 @@ export function ColumnOptionsSheet({
               );
             }) : (
               <p className="text-xs text-muted-foreground italic p-2">
-                No tracking tags configured. Add them in Profile → Leader & Tracking Tags.
+                No tracking tags configured. Add them in Profile → Leader's Tracking Format.
               </p>
             )}
           </div>
