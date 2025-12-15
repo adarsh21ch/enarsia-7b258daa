@@ -4,21 +4,31 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
 import { Star } from 'lucide-react';
-import { useCustomOptionsContext } from '@/contexts/CustomOptionsContext';
-import { EXTENDED_ACTIONS } from '@/types/prospect';
+import { useTrackingFormatContext } from '@/contexts/TrackingFormatContext';
+import { useProfile } from '@/hooks/useProfile';
 
 interface ChangeFilterTagButtonProps {
   onTagChanged?: () => void;
 }
 
 export function ChangeFilterTagButton({ onTagChanged }: ChangeFilterTagButtonProps) {
-  const { getOptionsForType, getActiveFilterTag, setActiveFilterTag } = useCustomOptionsContext();
+  const { 
+    leadsTrackingTags, 
+    leadsStageTag, 
+    refreshFormat,
+    isRootLeader,
+    isUsingLeaderFormat,
+  } = useTrackingFormatContext();
+  const { profile, updateProfile } = useProfile();
   const [open, setOpen] = useState(false);
   const [selectedTag, setSelectedTag] = useState<string>('');
   const [saving, setSaving] = useState(false);
 
-  const activeTag = getActiveFilterTag();
-  const allResponseOptions = getOptionsForType('action_taken', EXTENDED_ACTIONS);
+  // Get the current funnel tag from tracking format (the Response tag with isStageTag = true)
+  const activeTag = leadsStageTag;
+  
+  // Only show tracking tags from the current Response tags
+  const allResponseOptions = leadsTrackingTags.map(t => t.name);
 
   const handleOpen = () => {
     setSelectedTag(activeTag || '');
@@ -27,9 +37,30 @@ export function ChangeFilterTagButton({ onTagChanged }: ChangeFilterTagButtonPro
 
   const handleSave = async () => {
     if (!selectedTag) return;
+    
+    // Only leaders can change the funnel tag
+    if (isUsingLeaderFormat && !isRootLeader) {
+      setOpen(false);
+      return;
+    }
+    
     setSaving(true);
     try {
-      await setActiveFilterTag(selectedTag);
+      // Update the profile's response_labels to set isStageTag on the selected tag
+      const currentLabels = profile?.response_labels as any;
+      if (currentLabels && currentLabels.tracking) {
+        const updatedTracking = currentLabels.tracking.map((t: any) => ({
+          ...t,
+          isStageTag: t.name === selectedTag,
+        }));
+        await updateProfile({
+          response_labels: {
+            ...currentLabels,
+            tracking: updatedTracking,
+          } as any,
+        });
+        refreshFormat();
+      }
       onTagChanged?.();
       setOpen(false);
     } finally {
@@ -58,14 +89,14 @@ export function ChangeFilterTagButton({ onTagChanged }: ChangeFilterTagButtonPro
               Choose Response Tag for Funnel
             </DialogTitle>
             <DialogDescription>
-              Select ONE Response tag that moves leads into the Funnel tab. Only leads with this tag will appear in the Funnel view.
+              Select ONE Response tag to use as your Funnel Tag. Only leads with this Response tag will appear in the Funnel view.
             </DialogDescription>
           </DialogHeader>
 
           <div className="py-4 max-h-[300px] overflow-y-auto">
             {allResponseOptions.length === 0 ? (
               <p className="text-sm text-muted-foreground text-center py-4">
-                No Response tags found. Add Response tags first in the Calling tab.
+                No Response tags found. Add Response tags in Profile → Leader's Tracking Format.
               </p>
             ) : (
               <RadioGroup value={selectedTag} onValueChange={setSelectedTag} className="space-y-2">
@@ -91,7 +122,7 @@ export function ChangeFilterTagButton({ onTagChanged }: ChangeFilterTagButtonPro
             <Button variant="ghost" onClick={() => setOpen(false)}>
               Cancel
             </Button>
-            <Button onClick={handleSave} disabled={saving || !selectedTag}>
+            <Button onClick={handleSave} disabled={saving || !selectedTag || (isUsingLeaderFormat && !isRootLeader)}>
               {saving ? 'Saving...' : 'Save'}
             </Button>
           </DialogFooter>
