@@ -25,11 +25,19 @@ export interface TeamLevel {
 export interface TrackingFormat {
   // Leads tracking (responses)
   leadsTrackingTags: TrackingTag[];  // Max 3-4, for analytics
-  leadsNonTrackingTags: string[];    // Unlimited, display only
+  leadsNonTrackingTags: string[];    // Combined personal tags for dropdowns
   
   // Stage tracking (sales stages)
   stageTags: StageTag[];             // Ordered stages
-  stageNonTrackingTags: string[];    // Optional stage labels
+  stageNonTrackingTags: string[];    // Combined personal tags for dropdowns
+  
+  // Leader's personal tags (read-only, inherited)
+  leaderLeadsPersonalTags: string[];
+  leaderStagePersonalTags: string[];
+  
+  // User's own personal tags (editable)
+  ownLeadsPersonalTags: string[];
+  ownStagePersonalTags: string[];
   
   // Team levels
   levels: TeamLevel[];
@@ -165,9 +173,14 @@ export function useTrackingFormat() {
 
         const format: TrackingFormat = {
           leadsTrackingTags: leadsTracking,
-          leadsNonTrackingTags: leadsNonTracking,
+          leadsNonTrackingTags: leadsNonTracking, // For root leader, all personal tags are their own
           stageTags,
           stageNonTrackingTags: stageNonTracking,
+          // For root leader, personal tags are their own
+          leaderLeadsPersonalTags: leadsNonTracking,
+          leaderStagePersonalTags: stageNonTracking,
+          ownLeadsPersonalTags: leadsNonTracking,
+          ownStagePersonalTags: stageNonTracking,
           levels: (levels || []).map(l => ({
             id: l.id,
             position: l.position,
@@ -225,6 +238,11 @@ export function useTrackingFormat() {
           leadsNonTrackingTags: leadsNonTracking,
           stageTags,
           stageNonTrackingTags: stageNonTracking,
+          // For root leader (own format), all personal tags are their own
+          leaderLeadsPersonalTags: leadsNonTracking,
+          leaderStagePersonalTags: stageNonTracking,
+          ownLeadsPersonalTags: leadsNonTracking,
+          ownStagePersonalTags: stageNonTracking,
           levels: (levels || []).map(l => ({
             id: l.id,
             position: l.position,
@@ -241,9 +259,31 @@ export function useTrackingFormat() {
         // User uses leader's format - walk the chain to root
         const rootResult = await fetchRootLeaderFormat(profile.leaders_id_of_my_leader);
         
+        // Parse user's OWN personal tags from their profile (NOT inherited from leader)
+        const { leadsNonTracking: ownLeadsPersonal } = parseResponseLabels(profile.response_labels);
+        const { stageNonTracking: ownStagePersonal } = parseStageLabels(profile.stage_labels);
+        
         if (rootResult) {
+          // Combine leader's personal tags + user's own personal tags for dropdown display
+          const combinedLeadsPersonal = [
+            ...rootResult.format.leaderLeadsPersonalTags,
+            ...ownLeadsPersonal.filter(tag => !rootResult.format.leaderLeadsPersonalTags.includes(tag))
+          ];
+          const combinedStagePersonal = [
+            ...rootResult.format.leaderStagePersonalTags,
+            ...ownStagePersonal.filter(tag => !rootResult.format.leaderStagePersonalTags.includes(tag))
+          ];
+          
           setTrackingFormat({
             ...rootResult.format,
+            // Combined for dropdowns
+            leadsNonTrackingTags: combinedLeadsPersonal,
+            stageNonTrackingTags: combinedStagePersonal,
+            // Separate arrays for UI display
+            leaderLeadsPersonalTags: rootResult.format.leaderLeadsPersonalTags,
+            leaderStagePersonalTags: rootResult.format.leaderStagePersonalTags,
+            ownLeadsPersonalTags: ownLeadsPersonal,
+            ownStagePersonalTags: ownStagePersonal,
             isUsingLeaderFormat: true,
             isRootLeader: false,
             rootLeaderName: rootResult.rootLeaderName,
@@ -253,9 +293,13 @@ export function useTrackingFormat() {
           // Fallback to empty format
           setTrackingFormat({
             leadsTrackingTags: [],
-            leadsNonTrackingTags: [],
+            leadsNonTrackingTags: ownLeadsPersonal,
             stageTags: [],
-            stageNonTrackingTags: [],
+            stageNonTrackingTags: ownStagePersonal,
+            leaderLeadsPersonalTags: [],
+            leaderStagePersonalTags: [],
+            ownLeadsPersonalTags: ownLeadsPersonal,
+            ownStagePersonalTags: ownStagePersonal,
             levels: [],
             rootLeaderName: null,
             rootLeaderId: null,
@@ -357,6 +401,12 @@ export function useTrackingFormat() {
     
     // Team levels
     levels: trackingFormat?.levels || [],
+    
+    // Separate personal tags (for UI display)
+    leaderLeadsPersonalTags: trackingFormat?.leaderLeadsPersonalTags || [],
+    leaderStagePersonalTags: trackingFormat?.leaderStagePersonalTags || [],
+    ownLeadsPersonalTags: trackingFormat?.ownLeadsPersonalTags || [],
+    ownStagePersonalTags: trackingFormat?.ownStagePersonalTags || [],
     
     // Metadata
     isRootLeader: trackingFormat?.isRootLeader || false,

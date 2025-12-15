@@ -26,6 +26,12 @@ interface TrackingFormatContextType {
   // Team levels
   levels: TeamLevel[];
   
+  // Separate personal tags (for UI display)
+  leaderLeadsPersonalTags: string[];
+  leaderStagePersonalTags: string[];
+  ownLeadsPersonalTags: string[];
+  ownStagePersonalTags: string[];
+  
   // Metadata
   isRootLeader: boolean;
   isUsingLeaderFormat: boolean;
