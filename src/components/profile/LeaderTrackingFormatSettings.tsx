@@ -606,9 +606,10 @@ export function LeaderTrackingFormatSettings({
                 </div>)}
             </div>
             
-            {/* Leads Non-Tracking Tags */}
+            {/* Leads Personal Tags */}
             <div className="pt-2">
-              <p className="text-xs text-muted-foreground mb-2">Leads Non-Tracking Tags (display only)</p>
+              <p className="text-xs text-muted-foreground mb-1">Leads Personal Tags (not counted)</p>
+              <p className="text-[10px] text-muted-foreground/70 mb-2">Personal tags are just for your own use and are not counted in analytics.</p>
               <div className="flex flex-wrap gap-2 mb-2">
                 {leadsNonTrackingTags.map((tag, idx) => <Badge key={idx} variant="outline" className="gap-1 pr-1">
                     {tag}
@@ -618,7 +619,7 @@ export function LeaderTrackingFormatSettings({
                   </Badge>)}
               </div>
               <div className="flex gap-2">
-                <Input value={newLeadsNonTrackingTag} onChange={e => setNewLeadsNonTrackingTag(e.target.value)} placeholder="Add non-tracking tag..." className="flex-1 h-8" onKeyDown={e => e.key === 'Enter' && handleAddLeadsNonTracking()} />
+                <Input value={newLeadsNonTrackingTag} onChange={e => setNewLeadsNonTrackingTag(e.target.value)} placeholder="Add personal tag..." className="flex-1 h-8" onKeyDown={e => e.key === 'Enter' && handleAddLeadsNonTracking()} />
                 <Button variant="outline" size="sm" onClick={handleAddLeadsNonTracking} disabled={!newLeadsNonTrackingTag.trim()}>
                   <Plus className="h-3 w-3" />
                 </Button>
@@ -657,9 +658,10 @@ export function LeaderTrackingFormatSettings({
                 </div>)}
             </div>
             
-            {/* Funnel Non-Tracking Tags */}
+            {/* Funnel Personal Tags */}
             <div className="pt-2">
-              <p className="text-xs text-muted-foreground mb-2">Funnel Non-Tracking Tags (display only)</p>
+              <p className="text-xs text-muted-foreground mb-1">Funnel Personal Tags (not counted)</p>
+              <p className="text-[10px] text-muted-foreground/70 mb-2">Personal tags are just for your own use and are not counted in analytics.</p>
               <div className="flex flex-wrap gap-2 mb-2">
                 {stageNonTrackingTags.map((tag, idx) => <Badge key={idx} variant="outline" className="gap-1 pr-1">
                     {tag}
@@ -669,7 +671,7 @@ export function LeaderTrackingFormatSettings({
                   </Badge>)}
               </div>
               <div className="flex gap-2">
-                <Input value={newStageNonTrackingTag} onChange={e => setNewStageNonTrackingTag(e.target.value)} placeholder="Add non-tracking tag..." className="flex-1 h-8" onKeyDown={e => e.key === 'Enter' && handleAddStageNonTracking()} />
+                <Input value={newStageNonTrackingTag} onChange={e => setNewStageNonTrackingTag(e.target.value)} placeholder="Add personal tag..." className="flex-1 h-8" onKeyDown={e => e.key === 'Enter' && handleAddStageNonTracking()} />
                 <Button variant="outline" size="sm" onClick={handleAddStageNonTracking} disabled={!newStageNonTrackingTag.trim()}>
                   <Plus className="h-3 w-3" />
                 </Button>

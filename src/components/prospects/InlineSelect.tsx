@@ -10,7 +10,7 @@ import {
 } from '@/components/ui/select';
 import { cn } from '@/lib/utils';
 import { OptionType, CustomOption } from '@/hooks/useCustomOptions';
-import { Star, Filter } from 'lucide-react';
+import { Star } from 'lucide-react';
 
 interface InlineSelectProps<T extends string> {
   value: T | null | undefined;
@@ -91,9 +91,9 @@ export function InlineSelect<T extends string>({
                 <div className="flex items-center gap-2">
                   {renderValue ? renderValue(option as T) : option}
                   {stageTag === option && (
-                    <Filter className="h-3 w-3 text-primary" />
+                    <Star className="h-3 w-3 text-yellow-500 fill-yellow-500" />
                   )}
-                  {finalTargetTag === option && (
+                  {finalTargetTag === option && finalTargetTag !== stageTag && (
                     <Star className="h-3 w-3 text-yellow-500 fill-yellow-500" />
                   )}
                 </div>
@@ -107,11 +107,11 @@ export function InlineSelect<T extends string>({
           <SelectSeparator className="my-1" />
         )}
         
-        {/* Non-tracking tags group */}
+        {/* Personal tags group */}
         {nonTrackingOptions.length > 0 && (
           <SelectGroup>
             <SelectLabel className="text-[10px] text-muted-foreground/70 px-2 py-1">
-              Non-tracking tags (not counted)
+              Personal tags (not counted)
             </SelectLabel>
             {nonTrackingOptions.map((option) => (
               <SelectItem 
