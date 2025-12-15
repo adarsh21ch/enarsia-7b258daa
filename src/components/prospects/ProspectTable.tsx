@@ -23,6 +23,7 @@ import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, us
 import { arrayMove, SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { useCustomOptionsContext } from '@/contexts/CustomOptionsContext';
 import { useTrackingTags } from '@/hooks/useTrackingTags';
+import { useTrackingFormatContext } from '@/contexts/TrackingFormatContext';
 
 interface Filters {
   search: string;
@@ -347,9 +348,8 @@ export function ProspectTable({
     }
   };
 
-  // Get the single active filter tag from custom options
-  const { getActiveFilterTag } = useCustomOptionsContext();
-  const activeFilterTag = useMemo(() => getActiveFilterTag(), [getActiveFilterTag]);
+  // Get the Funnel Tag from TrackingFormatContext (the Response tag with isStageTag = true)
+  const { leadsStageTag } = useTrackingFormatContext();
 
   // Get tracking tags from profile
   const { callingTrackingTags, stageTrackingTags } = useTrackingTags();
@@ -359,15 +359,15 @@ export function ProspectTable({
     return prospects;
   }, [prospects]);
   
-  // Filter prospects: show only those whose action_taken matches the single active filter tag
+  // Filter prospects: show only those whose action_taken matches the Funnel Tag
   const funnelProspects = useMemo(() => {
-    if (!activeFilterTag) {
-      // No filter tag set - show empty or fallback to old behavior
+    if (!leadsStageTag) {
+      // No funnel tag set - show empty or fallback to old behavior
       return prospects.filter(p => p.enrollment_status === 'Enrolled' || p.funnel_stage);
     }
-    // New behavior: show only prospects with the single active filter tag
-    return prospects.filter(p => p.action_taken === activeFilterTag);
-  }, [prospects, activeFilterTag]);
+    // New behavior: show only prospects with the Funnel Tag as their Response
+    return prospects.filter(p => p.action_taken === leadsStageTag);
+  }, [prospects, leadsStageTag]);
 
   // Get base prospects based on filter mode
   const baseProspects = useMemo(() => {

@@ -4,8 +4,8 @@ import { Button } from '@/components/ui/button';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
 import { Star } from 'lucide-react';
-import { useCustomOptionsContext } from '@/contexts/CustomOptionsContext';
-import { EXTENDED_ACTIONS } from '@/types/prospect';
+import { useTrackingFormatContext } from '@/contexts/TrackingFormatContext';
+import { useProfile } from '@/hooks/useProfile';
 
 const FILTER_SETUP_KEY = 'nevorai_filter_tags_setup_done';
 
@@ -16,19 +16,42 @@ interface FilterTagSetupDialogProps {
 }
 
 export function FilterTagSetupDialog({ open, onOpenChange, onComplete }: FilterTagSetupDialogProps) {
-  const { getOptionsForType, setActiveFilterTag } = useCustomOptionsContext();
+  const { leadsTrackingTags, refreshFormat, isRootLeader, isUsingLeaderFormat } = useTrackingFormatContext();
+  const { profile, updateProfile } = useProfile();
   const [selectedTag, setSelectedTag] = useState<string>('');
   const [saving, setSaving] = useState(false);
 
-  // Get all Response (action_taken) options
-  const allResponseOptions = getOptionsForType('action_taken', EXTENDED_ACTIONS);
+  // Get all Response tags from the current tracking format
+  const allResponseOptions = leadsTrackingTags.map(t => t.name);
 
   const handleSave = async () => {
     if (!selectedTag) return;
+    
+    // Only leaders can set funnel tag
+    if (isUsingLeaderFormat && !isRootLeader) {
+      localStorage.setItem(FILTER_SETUP_KEY, 'true');
+      onComplete();
+      onOpenChange(false);
+      return;
+    }
+    
     setSaving(true);
     try {
-      // Set the single active filter tag
-      await setActiveFilterTag(selectedTag);
+      // Update the profile's response_labels to set isStageTag on the selected tag
+      const currentLabels = profile?.response_labels as any;
+      if (currentLabels && currentLabels.tracking) {
+        const updatedTracking = currentLabels.tracking.map((t: any) => ({
+          ...t,
+          isStageTag: t.name === selectedTag,
+        }));
+        await updateProfile({
+          response_labels: {
+            ...currentLabels,
+            tracking: updatedTracking,
+          } as any,
+        });
+        refreshFormat();
+      }
       
       // Mark setup as done
       localStorage.setItem(FILTER_SETUP_KEY, 'true');
@@ -39,8 +62,6 @@ export function FilterTagSetupDialog({ open, onOpenChange, onComplete }: FilterT
     }
   };
 
-  // No skip option - user must select a filter tag
-
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[450px]">
@@ -50,14 +71,14 @@ export function FilterTagSetupDialog({ open, onOpenChange, onComplete }: FilterT
             Choose Response Tag for Funnel
           </DialogTitle>
           <DialogDescription>
-            Choose ONE Response tag that will move leads from the Leads tab into the Funnel tab. Leads with this tag will appear in your Funnel view.
+            Select ONE Response tag to use as your Funnel Tag. Only leads with this Response tag will appear in the Funnel view.
           </DialogDescription>
         </DialogHeader>
 
         <div className="py-4 max-h-[300px] overflow-y-auto">
           {allResponseOptions.length === 0 ? (
             <p className="text-sm text-muted-foreground text-center py-4">
-              No Response tags found. Add Response tags first in the Calling tab.
+              No Response tags found. Add Response tags in Profile → Leader's Tracking Format.
             </p>
           ) : (
             <RadioGroup value={selectedTag} onValueChange={setSelectedTag} className="space-y-2">
@@ -91,11 +112,13 @@ export function FilterTagSetupDialog({ open, onOpenChange, onComplete }: FilterT
 
 export function useFilterTagSetup() {
   const [needsSetup, setNeedsSetup] = useState(false);
+  const { leadsStageTag } = useTrackingFormatContext();
 
   useEffect(() => {
+    // Only show setup if no funnel tag is set AND local storage hasn't marked it done
     const done = localStorage.getItem(FILTER_SETUP_KEY);
-    setNeedsSetup(!done);
-  }, []);
+    setNeedsSetup(!done && !leadsStageTag);
+  }, [leadsStageTag]);
 
   const markSetupDone = () => {
     localStorage.setItem(FILTER_SETUP_KEY, 'true');

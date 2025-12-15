@@ -12,7 +12,7 @@ import { FilterTagSetupDialog, useFilterTagSetup } from '@/components/prospects/
 import { SearchBar } from '@/components/ui/SearchBar';
 import { Loader2, Phone, Layers } from 'lucide-react';
 import nevoraLogo from '@/assets/nevorai-logo.jpeg';
-import { CustomOptionsProvider } from '@/contexts/CustomOptionsContext';
+
 
 // Pull-to-refresh hook - fixed to not interfere with normal scrolling
 function usePullToRefresh(onRefresh: () => Promise<void>, threshold = 100) {
@@ -131,105 +131,103 @@ export default function Dashboard() {
   ];
 
   return (
-    <CustomOptionsProvider>
-      <div className="app-layout bg-gradient-to-b from-background via-background to-muted/20">
-        {/* Premium Header */}
-        <header className="fixed-header z-40 bg-card/80 backdrop-blur-xl border-b border-border/50">
-          <div className="flex items-center justify-between px-4 py-3">
-            <div className="flex items-center gap-3">
-              <img 
-                src={nevoraLogo} 
-                alt="NevorAI Logo" 
-                className="h-10 w-10 rounded-xl object-cover shadow-md"
-              />
-              <div>
-                <h1 className="text-xl font-bold tracking-tight">
-                  {mainTab === 'leads' ? 'Leads' : 'Funnel'}
-                </h1>
-                <p className="text-xs text-muted-foreground font-medium">
-                  Manage your prospects
-                </p>
-              </div>
+    <div className="app-layout bg-gradient-to-b from-background via-background to-muted/20">
+      {/* Premium Header */}
+      <header className="fixed-header z-40 bg-card/80 backdrop-blur-xl border-b border-border/50">
+        <div className="flex items-center justify-between px-4 py-3">
+          <div className="flex items-center gap-3">
+            <img 
+              src={nevoraLogo} 
+              alt="NevorAI Logo" 
+              className="h-10 w-10 rounded-xl object-cover shadow-md"
+            />
+            <div>
+              <h1 className="text-xl font-bold tracking-tight">
+                {mainTab === 'leads' ? 'Leads' : 'Funnel'}
+              </h1>
+              <p className="text-xs text-muted-foreground font-medium">
+                Manage your prospects
+              </p>
             </div>
           </div>
-        </header>
+        </div>
+      </header>
 
-        <main ref={containerRef} className="scrollable-content relative" style={{ touchAction: 'pan-x pan-y' }}>
-          <PullToRefreshIndicator isRefreshing={isRefreshing} pullDistance={pullDistance} showIndicator={showIndicator} />
-          <div className="py-3 px-4 pb-28">
-            {/* WhatsApp-style Search Bar */}
-            <div className="mb-3">
-              <SearchBar 
-                value={searchQuery}
-                onChange={setSearchQuery}
-                placeholder="Search name, phone..."
-              />
-            </div>
-            
-            {mainTab === 'leads' ? (
-              <ProspectTable
-                prospects={prospects}
-                loading={loading}
-                onAdd={addProspect}
-                onUpdate={updateProspect}
-                onDelete={deleteProspect}
-                onBulkDelete={bulkDeleteProspects}
-                onRestoreProspect={restoreProspect}
-                onRestoreProspects={restoreProspects}
-                onImport={importProspects}
-                onReorderProspects={reorderProspects}
-                sheets={sheets}
-                selectedSheetId={selectedSheetId}
-                onSelectSheet={setSelectedSheetId}
-                onAddSheet={addSheet}
-                onUpdateSheet={updateSheet}
-                onDeleteSheet={deleteSheet}
-                filterMode="calling"
-                subFilter="all"
-                externalSearch={searchQuery}
-              />
-            ) : (
-              <ProspectTable
-                prospects={prospects}
-                loading={loading}
-                onAdd={addProspect}
-                onUpdate={updateProspect}
-                onDelete={deleteProspect}
-                onBulkDelete={bulkDeleteProspects}
-                onRestoreProspect={restoreProspect}
-                onRestoreProspects={restoreProspects}
-                onImport={importProspects}
-                onReorderProspects={reorderProspects}
-                sheets={sheets}
-                selectedSheetId={selectedSheetId}
-                onSelectSheet={setSelectedSheetId}
-                onAddSheet={addSheet}
-                onUpdateSheet={updateSheet}
-                onDeleteSheet={deleteSheet}
-                filterMode="funnel"
-                subFilter="all"
-                externalSearch={searchQuery}
-              />
-            )}
+      <main ref={containerRef} className="scrollable-content relative" style={{ touchAction: 'pan-x pan-y' }}>
+        <PullToRefreshIndicator isRefreshing={isRefreshing} pullDistance={pullDistance} showIndicator={showIndicator} />
+        <div className="py-3 px-4 pb-28">
+          {/* WhatsApp-style Search Bar */}
+          <div className="mb-3">
+            <SearchBar 
+              value={searchQuery}
+              onChange={setSearchQuery}
+              placeholder="Search name, phone..."
+            />
           </div>
-        </main>
+          
+          {mainTab === 'leads' ? (
+            <ProspectTable
+              prospects={prospects}
+              loading={loading}
+              onAdd={addProspect}
+              onUpdate={updateProspect}
+              onDelete={deleteProspect}
+              onBulkDelete={bulkDeleteProspects}
+              onRestoreProspect={restoreProspect}
+              onRestoreProspects={restoreProspects}
+              onImport={importProspects}
+              onReorderProspects={reorderProspects}
+              sheets={sheets}
+              selectedSheetId={selectedSheetId}
+              onSelectSheet={setSelectedSheetId}
+              onAddSheet={addSheet}
+              onUpdateSheet={updateSheet}
+              onDeleteSheet={deleteSheet}
+              filterMode="calling"
+              subFilter="all"
+              externalSearch={searchQuery}
+            />
+          ) : (
+            <ProspectTable
+              prospects={prospects}
+              loading={loading}
+              onAdd={addProspect}
+              onUpdate={updateProspect}
+              onDelete={deleteProspect}
+              onBulkDelete={bulkDeleteProspects}
+              onRestoreProspect={restoreProspect}
+              onRestoreProspects={restoreProspects}
+              onImport={importProspects}
+              onReorderProspects={reorderProspects}
+              sheets={sheets}
+              selectedSheetId={selectedSheetId}
+              onSelectSheet={setSelectedSheetId}
+              onAddSheet={addSheet}
+              onUpdateSheet={updateSheet}
+              onDeleteSheet={deleteSheet}
+              filterMode="funnel"
+              subFilter="all"
+              externalSearch={searchQuery}
+            />
+          )}
+        </div>
+      </main>
 
-        {/* Fixed Bottom View Toggle */}
-        <BottomViewToggle
-          options={toggleOptions}
-          value={mainTab}
-          onChange={handleTabChange}
-        />
+      {/* Fixed Bottom View Toggle */}
+      <BottomViewToggle
+        options={toggleOptions}
+        value={mainTab}
+        onChange={handleTabChange}
+      />
 
-        <BottomNav />
+      <BottomNav />
 
-        {/* Filter Tag Setup Dialog */}
-        <FilterTagSetupDialog
-          open={showFilterSetup}
-          onOpenChange={setShowFilterSetup}
-          onComplete={markSetupDone}
-        />
-      </div>
-    </CustomOptionsProvider>
+      {/* Filter Tag Setup Dialog */}
+      <FilterTagSetupDialog
+        open={showFilterSetup}
+        onOpenChange={setShowFilterSetup}
+        onComplete={markSetupDone}
+      />
+    </div>
   );
 }
