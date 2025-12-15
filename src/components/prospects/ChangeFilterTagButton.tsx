@@ -46,7 +46,7 @@ export function ChangeFilterTagButton({ onTagChanged }: ChangeFilterTagButtonPro
         className="h-8 gap-1.5 text-xs font-medium"
       >
         <Star className="h-3.5 w-3.5 text-yellow-500 fill-yellow-500" />
-        <span className="hidden sm:inline">Filter Tag:</span>
+        <span className="hidden sm:inline">Funnel Tag:</span>
         <span className="font-semibold">{activeTag || 'Not Set'}</span>
       </Button>
 
@@ -55,10 +55,10 @@ export function ChangeFilterTagButton({ onTagChanged }: ChangeFilterTagButtonPro
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Star className="h-5 w-5 text-yellow-500" />
-              Change Filter Tag
+              Choose Response Tag for Funnel
             </DialogTitle>
             <DialogDescription>
-              Select ONE Response tag to use as your Filter tag. Only prospects with this tag will appear in Filter list.
+              Select ONE Response tag that moves leads into the Funnel tab. Only leads with this tag will appear in the Funnel view.
             </DialogDescription>
           </DialogHeader>
 
@@ -92,7 +92,7 @@ export function ChangeFilterTagButton({ onTagChanged }: ChangeFilterTagButtonPro
               Cancel
             </Button>
             <Button onClick={handleSave} disabled={saving || !selectedTag}>
-              {saving ? 'Saving...' : 'Update Filter Tag'}
+              {saving ? 'Saving...' : 'Save'}
             </Button>
           </DialogFooter>
         </DialogContent>

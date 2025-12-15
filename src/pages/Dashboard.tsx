@@ -144,7 +144,7 @@ export default function Dashboard() {
               />
               <div>
                 <h1 className="text-xl font-bold tracking-tight">
-                  {mainTab === 'leads' ? 'Calling' : 'Filter'}
+                  {mainTab === 'leads' ? 'Leads' : 'Funnel'}
                 </h1>
                 <p className="text-xs text-muted-foreground font-medium">
                   Manage your prospects

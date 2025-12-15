@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
 import { Check, ChevronDown, Loader2 } from 'lucide-react';
-import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
 import { LeaderLevel } from '@/hooks/useLeaderLevels';
@@ -185,14 +184,14 @@ export function ProfileLevelDropdown({
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
-        <Button
-          variant="outline"
-          size="sm"
+        <button
           className={cn(
-            "h-7 px-3 gap-1.5 rounded-full text-xs font-medium transition-all",
-            "bg-foreground text-background hover:bg-foreground/90 hover:text-background border-0"
+            "inline-flex items-center gap-1.5 h-7 px-3 rounded-full text-xs font-medium transition-all cursor-pointer",
+            "bg-foreground text-background hover:bg-foreground/90 border-0",
+            saving && "opacity-70 cursor-wait"
           )}
           disabled={saving}
+          onClick={() => !saving && setOpen(!open)}
         >
           {saving ? (
             <>
@@ -202,11 +201,10 @@ export function ProfileLevelDropdown({
           ) : (
             <>
               {displayLabel}
-              <Check className="h-3 w-3" />
               <ChevronDown className="h-3 w-3 ml-0.5" />
             </>
           )}
-        </Button>
+        </button>
       </PopoverTrigger>
       <PopoverContent 
         className="w-48 p-1 bg-popover border-border z-50" 

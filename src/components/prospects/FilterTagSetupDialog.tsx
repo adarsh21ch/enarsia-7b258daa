@@ -47,10 +47,10 @@ export function FilterTagSetupDialog({ open, onOpenChange, onComplete }: FilterT
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Star className="h-5 w-5 text-yellow-500" />
-            Select Your Filter Tag
+            Choose Response Tag for Funnel
           </DialogTitle>
           <DialogDescription>
-            Choose ONE Response tag to use as your Filter tag. Prospects with this tag will appear in your Filter list.
+            Choose ONE Response tag that will move leads from the Leads tab into the Funnel tab. Leads with this tag will appear in your Funnel view.
           </DialogDescription>
         </DialogHeader>
 
