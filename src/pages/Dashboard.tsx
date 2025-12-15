@@ -127,7 +127,7 @@ export default function Dashboard() {
 
   const toggleOptions: [{ value: string; label: string; icon: typeof Phone }, { value: string; label: string; icon: typeof Layers }] = [
     { value: 'leads', label: 'Leads', icon: Phone },
-    { value: 'funnel', label: 'Stage', icon: Layers },
+    { value: 'funnel', label: 'Funnel', icon: Layers },
   ];
 
   return (
