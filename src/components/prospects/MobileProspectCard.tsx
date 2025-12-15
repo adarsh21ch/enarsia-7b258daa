@@ -42,6 +42,7 @@ const [localData, setLocalData] = useState({
     leadsTrackingTagNames,
     leadsFinalTargetTag,
     isLeadsFinalTarget,
+    leadsStageTag,
     
     // Stage tags
     stageTags,
@@ -238,6 +239,7 @@ const [localData, setLocalData] = useState({
           trackingOptions={leadsTrackingTagNames}
           nonTrackingOptions={leadsNonTrackingTags}
           finalTargetTag={leadsFinalTargetTag}
+          stageTag={leadsStageTag}
         />
         <InlineSelect<ProspectStatus>
           value={prospect.prospect_status}

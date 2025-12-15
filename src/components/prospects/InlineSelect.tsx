@@ -10,7 +10,7 @@ import {
 } from '@/components/ui/select';
 import { cn } from '@/lib/utils';
 import { OptionType, CustomOption } from '@/hooks/useCustomOptions';
-import { Star } from 'lucide-react';
+import { Star, Filter } from 'lucide-react';
 
 interface InlineSelectProps<T extends string> {
   value: T | null | undefined;
@@ -24,6 +24,7 @@ interface InlineSelectProps<T extends string> {
   nonTrackingOptions?: readonly string[];
   showTagSeparation?: boolean;
   finalTargetTag?: string | null;
+  stageTag?: string | null; // The Response tag marked as Funnel Tag
   // Legacy props - kept for compatibility
   optionType?: OptionType;
   customOptions?: CustomOption[];
@@ -45,6 +46,7 @@ export function InlineSelect<T extends string>({
   nonTrackingOptions = [],
   showTagSeparation = false,
   finalTargetTag = null,
+  stageTag = null,
 }: InlineSelectProps<T>) {
   // Handle selection - allow toggling (selecting same value deselects it)
   const handleValueChange = (v: string) => {
@@ -88,6 +90,9 @@ export function InlineSelect<T extends string>({
               >
                 <div className="flex items-center gap-2">
                   {renderValue ? renderValue(option as T) : option}
+                  {stageTag === option && (
+                    <Filter className="h-3 w-3 text-primary" />
+                  )}
                   {finalTargetTag === option && (
                     <Star className="h-3 w-3 text-yellow-500 fill-yellow-500" />
                   )}

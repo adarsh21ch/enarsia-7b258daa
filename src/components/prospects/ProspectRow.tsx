@@ -63,6 +63,7 @@ export function ProspectRow({
     leadsTrackingTagNames,
     leadsFinalTargetTag,
     isLeadsFinalTarget,
+    leadsStageTag,
     
     // Stage tags
     stageTags,
@@ -235,6 +236,7 @@ export function ProspectRow({
               trackingOptions={leadsTrackingTagNames}
               nonTrackingOptions={leadsNonTrackingTags}
               finalTargetTag={leadsFinalTargetTag}
+              stageTag={leadsStageTag}
             />
           </td>
         );
