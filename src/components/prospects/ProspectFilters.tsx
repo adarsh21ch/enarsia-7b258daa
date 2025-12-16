@@ -135,6 +135,19 @@ export function ProspectFilters({
                 </Button>
               </PopoverContent>
             </Popover>}
+          
+          {/* Visible Manage Stage Tags button */}
+          {showStagesFilter && (
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-10 sm:h-9 w-10 sm:w-9 shrink-0"
+              onClick={() => setShowStageTagsDialog(true)}
+              title="Manage Stage Tags"
+            >
+              <Settings2 className="h-4 w-4" />
+            </Button>
+          )}
 
           {/* Multi-select Responses Filter - only show if showResponsesFilter is true */}
           {showResponsesFilter && <Popover>
@@ -168,6 +181,19 @@ export function ProspectFilters({
                 </Button>
               </PopoverContent>
             </Popover>}
+
+          {/* Visible Manage Response Tags button */}
+          {showResponsesFilter && (
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-10 sm:h-9 w-10 sm:w-9 shrink-0"
+              onClick={() => setShowResponseTagsDialog(true)}
+              title="Manage Response Tags"
+            >
+              <Tag className="h-4 w-4" />
+            </Button>
+          )}
 
           {/* Funnel Tag button - inline with other controls */}
           {filterTagButton}
