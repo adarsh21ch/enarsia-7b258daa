@@ -121,28 +121,29 @@ export function useTrackingFormat() {
   const lastRefreshTokenRef = useRef<string | null>(null);
 
   // Fetch a leader's profile meta (name/id). Used for displaying the *direct* leader.
+  // IMPORTANT: profiles table is protected by RLS, so we must use SECURITY DEFINER RPCs.
   const fetchLeaderMeta = useCallback(async (leaderNeveraiId: string): Promise<{
     leaderId: string;
     leaderName: string;
   } | null> => {
-    const { data: leaderProfile, error } = await supabase
-      .from('profiles')
-      .select('display_name, neverai_id')
-      .ilike('neverai_id', leaderNeveraiId)
-      .maybeSingle();
+    const { data, error } = await supabase.rpc('get_user_by_neverai_id', {
+      target_neverai_id: leaderNeveraiId,
+    });
 
-    if (error || !leaderProfile) {
+    if (error || !data || data.length === 0) {
       console.error('Error fetching leader meta:', error);
       return null;
     }
 
+    const leader = data[0] as any;
     return {
-      leaderId: leaderProfile.neverai_id || leaderNeveraiId,
-      leaderName: leaderProfile.display_name || 'Leader',
+      leaderId: leader.neverai_id || leaderNeveraiId,
+      leaderName: leader.display_name || 'Leader',
     };
   }, []);
 
   // Fetch ROOT leader's tracking format (this is the tracking format owner for the whole tree)
+  // IMPORTANT: profiles table is protected by RLS, so we must use SECURITY DEFINER RPCs.
   const fetchLeaderFormat = useCallback(async (leaderNeveraiId: string): Promise<{
     leaderUserId: string;
     leaderId: string;
@@ -151,34 +152,55 @@ export function useTrackingFormat() {
     stageTags: StageTag[];
     levels: TeamLevel[];
   } | null> => {
-    const { data: leaderProfile, error } = await supabase
-      .from('profiles')
-      .select('user_id, display_name, neverai_id, response_labels, stage_labels')
-      .ilike('neverai_id', leaderNeveraiId)
-      .maybeSingle();
+    // 1) Resolve leader profile (user_id + display_name) via RPC
+    const { data: leaderUsers, error: leaderUserError } = await supabase.rpc('get_user_by_neverai_id', {
+      target_neverai_id: leaderNeveraiId,
+    });
 
-    if (error || !leaderProfile) {
-      console.error('Error fetching leader format profile:', error);
+    if (leaderUserError || !leaderUsers || leaderUsers.length === 0) {
+      console.error('Error resolving leader user by ID:', leaderUserError);
       return null;
     }
 
-    // Leader levels are defined by the tracking format owner
+    const leaderUser = leaderUsers[0] as any;
+
+    // 2) Fetch leader tracking tags + stage tags via RPC
+    const { data: config, error: configError } = await supabase.rpc('get_leader_stage_config', {
+      target_leader_id: leaderNeveraiId,
+    });
+
+    if (configError || !config || (config as any).found === false) {
+      console.error('Error fetching leader stage config:', configError);
+      // Still return leader identity so UI can show “Connected to …” even if tags are empty
+      return {
+        leaderUserId: leaderUser.user_id,
+        leaderId: leaderUser.neverai_id || leaderNeveraiId,
+        leaderName: leaderUser.display_name || 'Leader',
+        leadsTracking: [],
+        stageTags: [],
+        levels: [],
+      };
+    }
+
+    const cfg: any = config;
+    const { leadsTracking } = parseResponseLabels(cfg.response_labels);
+    const { stageTags } = parseStageLabels(cfg.stage_labels);
+
+    // 3) Levels: may be restricted by RLS depending on your chosen access model.
+    // We keep it best-effort; tags inheritance is the critical path.
     const { data: levels } = await supabase
       .from('leader_levels')
       .select('id, label, code, is_default, position')
-      .eq('leader_id', leaderProfile.user_id)
+      .eq('leader_id', leaderUser.user_id)
       .order('position', { ascending: true });
 
-    const { leadsTracking } = parseResponseLabels(leaderProfile.response_labels);
-    const { stageTags } = parseStageLabels(leaderProfile.stage_labels);
-
     return {
-      leaderUserId: leaderProfile.user_id,
-      leaderId: leaderProfile.neverai_id || leaderNeveraiId,
-      leaderName: leaderProfile.display_name || 'Leader',
+      leaderUserId: leaderUser.user_id,
+      leaderId: leaderUser.neverai_id || leaderNeveraiId,
+      leaderName: leaderUser.display_name || 'Leader',
       leadsTracking,
       stageTags,
-      levels: (levels || []).map(l => ({
+      levels: (levels || []).map((l: any) => ({
         id: l.id,
         position: l.position,
         code: l.code || `L${l.position}`,
