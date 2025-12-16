@@ -4,35 +4,34 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { AlertCircle, Plus, Trash2, Star, Tag, X, Loader2, Check, Lock, Pencil } from 'lucide-react';
+import { AlertCircle, Plus, Trash2, Star, Layers, X, Loader2, Check, Lock, Pencil } from 'lucide-react';
 import { toast } from 'sonner';
 import { useTrackingFormatContext } from '@/contexts/TrackingFormatContext';
 import { useProfile } from '@/hooks/useProfile';
 
-interface ManageResponseTagsDialogProps {
+interface ManageStageTagsDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }
 
-interface LeadsTagInput {
+interface StageTagInput {
   name: string;
-  isStageTag: boolean;
   isFinalTarget: boolean;
 }
 
-export function ManageResponseTagsDialog({ open, onOpenChange }: ManageResponseTagsDialogProps) {
+export function ManageStageTagsDialog({ open, onOpenChange }: ManageStageTagsDialogProps) {
   const { 
     refreshFormat, 
     isRootLeader, 
     isUsingLeaderFormat, 
     directLeaderName,
-    leadsTrackingTags, 
-    ownLeadsPersonalTags,
+    stageTags: leaderStageTags, 
+    ownStagePersonalTags,
   } = useTrackingFormatContext();
   const { profile, updateProfile } = useProfile();
   
   // Only for root leaders - tracking tag editing
-  const [trackingTags, setTrackingTags] = useState<LeadsTagInput[]>([]);
+  const [stageTags, setStageTags] = useState<StageTagInput[]>([]);
   // For all users - personal tag editing
   const [personalTags, setPersonalTags] = useState<string[]>([]);
   const [newPersonalTag, setNewPersonalTag] = useState('');
@@ -45,41 +44,40 @@ export function ManageResponseTagsDialog({ open, onOpenChange }: ManageResponseT
   // Initialize from tracking format
   useEffect(() => {
     if (open) {
-      // Tracking tags - only editable if root leader
-      const tags = leadsTrackingTags.map(t => ({
+      // Stage tags - only editable if root leader
+      const tags = leaderStageTags.map(t => ({
         name: t.name,
-        isStageTag: t.isStageTag,
         isFinalTarget: t.isFinalTarget,
       }));
-      setTrackingTags(tags.length > 0 ? tags : [{ name: '', isStageTag: false, isFinalTarget: false }]);
+      setStageTags(tags.length > 0 ? tags : [{ name: '', isFinalTarget: false }]);
       
       // Personal tags - always user's own
-      setPersonalTags(ownLeadsPersonalTags || []);
+      setPersonalTags(ownStagePersonalTags || []);
       setEditingPersonalIndex(null);
       setEditingPersonalValue('');
     }
-  }, [leadsTrackingTags, ownLeadsPersonalTags, open]);
+  }, [leaderStageTags, ownStagePersonalTags, open]);
 
   // Auto-save function for personal tags
   const autoSavePersonalTags = useCallback(async () => {
     setAutoSaveStatus('saving');
     
-    // Get current response_labels and only update nonTracking
-    const currentResponseLabels = profile?.response_labels as any;
+    // Get current stage_labels and only update nonTracking
+    const currentStageLabels = profile?.stage_labels as any;
     
-    const responseLabelsData = {
-      tracking: currentResponseLabels?.tracking || [],
+    const stageLabelsData = {
+      stages: currentStageLabels?.stages || [],
       nonTracking: personalTags,
     };
     
     await updateProfile({
-      response_labels: responseLabelsData as any,
+      stage_labels: stageLabelsData as any,
     });
     
     refreshFormat();
     setAutoSaveStatus('saved');
     setTimeout(() => setAutoSaveStatus('idle'), 1500);
-  }, [personalTags, profile?.response_labels, updateProfile, refreshFormat]);
+  }, [personalTags, profile?.stage_labels, updateProfile, refreshFormat]);
 
   // Auto-save function for root leader (tracking + personal)
   const autoSaveAll = useCallback(async () => {
@@ -91,26 +89,24 @@ export function ManageResponseTagsDialog({ open, onOpenChange }: ManageResponseT
     
     setAutoSaveStatus('saving');
     
-    const validTags = trackingTags.filter(t => t.name.trim());
+    const validTags = stageTags.filter(t => t.name.trim());
     
-    const responseLabelsData = {
-      tracking: validTags.map(t => ({
+    const stageLabelsData = {
+      stages: validTags.map(t => ({
         name: t.name.trim(),
-        isStageTag: t.isStageTag,
         isFinalTarget: t.isFinalTarget,
       })),
       nonTracking: personalTags,
     };
     
     await updateProfile({
-      response_labels: responseLabelsData as any,
-      stage_count: validTags.length,
+      stage_labels: stageLabelsData as any,
     });
     
     refreshFormat();
     setAutoSaveStatus('saved');
     setTimeout(() => setAutoSaveStatus('idle'), 1500);
-  }, [trackingTags, personalTags, isRootLeader, updateProfile, refreshFormat, autoSavePersonalTags]);
+  }, [stageTags, personalTags, isRootLeader, updateProfile, refreshFormat, autoSavePersonalTags]);
 
   // Debounced auto-save
   const triggerAutoSave = useCallback(() => {
@@ -122,17 +118,17 @@ export function ManageResponseTagsDialog({ open, onOpenChange }: ManageResponseT
     }, 800);
   }, [autoSaveAll]);
 
-  // === Tracking tag handlers (root leader only) ===
-  const handleTrackingTagChange = (index: number, field: keyof LeadsTagInput, value: any) => {
+  // === Stage tag handlers (root leader only) ===
+  const handleStageTagChange = (index: number, field: keyof StageTagInput, value: any) => {
     if (!isRootLeader) return;
     
-    setTrackingTags(prev => {
+    setStageTags(prev => {
       const updated = [...prev];
-      if (field === 'isStageTag' && value === true) {
-        // Only ONE tag can be the Filter Tag
-        updated.forEach((t, i) => { t.isStageTag = i === index; });
-      } else if (field === 'isStageTag' && value === false) {
-        updated[index] = { ...updated[index], isStageTag: false };
+      if (field === 'isFinalTarget' && value === true) {
+        // Only ONE tag can be the Final Target
+        updated.forEach((t, i) => { t.isFinalTarget = i === index; });
+      } else if (field === 'isFinalTarget' && value === false) {
+        updated[index] = { ...updated[index], isFinalTarget: false };
       } else {
         updated[index] = { ...updated[index], [field]: value };
       }
@@ -141,18 +137,18 @@ export function ManageResponseTagsDialog({ open, onOpenChange }: ManageResponseT
     triggerAutoSave();
   };
 
-  const handleAddTrackingTag = () => {
+  const handleAddStageTag = () => {
     if (!isRootLeader) return;
-    if (trackingTags.length < 4) {
-      setTrackingTags([...trackingTags, { name: '', isStageTag: false, isFinalTarget: false }]);
+    if (stageTags.length < 6) {
+      setStageTags([...stageTags, { name: '', isFinalTarget: false }]);
     }
   };
 
-  const handleRemoveTrackingTag = (index: number) => {
+  const handleRemoveStageTag = (index: number) => {
     if (!isRootLeader) return;
-    if (trackingTags.length > 1) {
-      const updated = trackingTags.filter((_, i) => i !== index);
-      setTrackingTags(updated);
+    if (stageTags.length > 1) {
+      const updated = stageTags.filter((_, i) => i !== index);
+      setStageTags(updated);
       triggerAutoSave();
     }
   };
@@ -163,7 +159,7 @@ export function ManageResponseTagsDialog({ open, onOpenChange }: ManageResponseT
     if (!tag) return;
     
     // Check if tag already exists in tracking or personal
-    const trackingNames = leadsTrackingTags.map(t => t.name.toUpperCase());
+    const trackingNames = leaderStageTags.map(t => t.name.toUpperCase());
     if (personalTags.map(t => t.toUpperCase()).includes(tag) || trackingNames.includes(tag)) {
       toast.error('This tag already exists');
       return;
@@ -195,7 +191,7 @@ export function ManageResponseTagsDialog({ open, onOpenChange }: ManageResponseT
     }
     
     // Check for duplicates (excluding current tag)
-    const trackingNames = leadsTrackingTags.map(t => t.name.toUpperCase());
+    const trackingNames = leaderStageTags.map(t => t.name.toUpperCase());
     const otherPersonal = personalTags.filter((_, i) => i !== editingPersonalIndex).map(t => t.toUpperCase());
     if (otherPersonal.includes(newValue) || trackingNames.includes(newValue)) {
       toast.error('This tag already exists');
@@ -221,8 +217,8 @@ export function ManageResponseTagsDialog({ open, onOpenChange }: ManageResponseT
         <DialogHeader>
           <div className="flex items-center justify-between">
             <DialogTitle className="flex items-center gap-2">
-              <Tag className="h-5 w-5 text-primary" />
-              Manage Response Tags
+              <Layers className="h-5 w-5 text-primary" />
+              Manage Stage Tags
             </DialogTitle>
             {autoSaveStatus === 'saving' && (
               <span className="text-xs text-muted-foreground flex items-center gap-1">
@@ -238,15 +234,15 @@ export function ManageResponseTagsDialog({ open, onOpenChange }: ManageResponseT
         </DialogHeader>
 
         <div className="space-y-6">
-          {/* SECTION A: Tracking Tags */}
+          {/* SECTION A: Stage Tags */}
           <div className="space-y-3">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <Tag className="h-4 w-4 text-primary" />
+                <Layers className="h-4 w-4 text-primary" />
                 <p className="text-sm font-medium">
                   {isUsingLeaderFormat && !isRootLeader 
-                    ? `Tracking Tags (from ${directLeaderName || 'Leader'})`
-                    : 'Tracking Tags (Your Config)'
+                    ? `Stage Tags (from ${directLeaderName || 'Leader'})`
+                    : 'Stage Tags (Your Config)'
                   }
                 </p>
               </div>
@@ -255,8 +251,8 @@ export function ManageResponseTagsDialog({ open, onOpenChange }: ManageResponseT
                   <Lock className="h-3 w-3" /> Read-only
                 </Badge>
               )}
-              {isRootLeader && trackingTags.length < 4 && (
-                <Button variant="outline" size="sm" onClick={handleAddTrackingTag}>
+              {isRootLeader && stageTags.length < 6 && (
+                <Button variant="outline" size="sm" onClick={handleAddStageTag}>
                   <Plus className="h-3 w-3 mr-1" />
                   Add
                 </Button>
@@ -267,14 +263,14 @@ export function ManageResponseTagsDialog({ open, onOpenChange }: ManageResponseT
               // Read-only view for members
               <div className="space-y-2">
                 <div className="flex flex-wrap gap-2">
-                  {leadsTrackingTags.map((tag, idx) => (
+                  {leaderStageTags.map((tag, idx) => (
                     <Badge key={idx} variant="secondary" className="text-xs gap-1">
                       {tag.name}
-                      {tag.isStageTag && <Star className="h-3 w-3 text-yellow-500 fill-yellow-500" />}
+                      {tag.isFinalTarget && <Star className="h-3 w-3 text-green-500 fill-green-500" />}
                     </Badge>
                   ))}
-                  {leadsTrackingTags.length === 0 && (
-                    <span className="text-xs text-muted-foreground italic">No tracking tags from leader</span>
+                  {leaderStageTags.length === 0 && (
+                    <span className="text-xs text-muted-foreground italic">No stage tags from leader</span>
                   )}
                 </div>
                 <p className="text-[10px] text-muted-foreground">
@@ -284,29 +280,29 @@ export function ManageResponseTagsDialog({ open, onOpenChange }: ManageResponseT
             ) : (
               // Editable view for root leaders
               <div className="space-y-2">
-                {trackingTags.map((tag, index) => (
+                {stageTags.map((tag, index) => (
                   <div key={index} className="flex items-center gap-2 p-2 bg-muted/30 rounded-lg">
                     <Input
                       value={tag.name}
-                      onChange={(e) => handleTrackingTagChange(index, 'name', e.target.value.toUpperCase())}
-                      placeholder={`Response ${index + 1}`}
+                      onChange={(e) => handleStageTagChange(index, 'name', e.target.value.toUpperCase())}
+                      placeholder={`Stage ${index + 1}`}
                       className="flex-1 h-8 uppercase"
                     />
                     <div className="flex items-center gap-2 shrink-0">
                       <button
-                        onClick={() => handleTrackingTagChange(index, 'isStageTag', !tag.isStageTag)}
-                        className={`p-1 rounded transition-colors flex items-center gap-1 text-xs ${tag.isStageTag ? 'text-yellow-600 bg-yellow-100 dark:bg-yellow-900/30' : 'text-muted-foreground hover:text-yellow-600'}`}
-                        title="Mark as Funnel Tag (moves leads to Funnel tab)"
+                        onClick={() => handleStageTagChange(index, 'isFinalTarget', !tag.isFinalTarget)}
+                        className={`p-1 rounded transition-colors flex items-center gap-1 text-xs ${tag.isFinalTarget ? 'text-green-600 bg-green-100 dark:bg-green-900/30' : 'text-muted-foreground hover:text-green-600'}`}
+                        title="Mark as Final Target (goal stage)"
                       >
-                        <Star className={`h-4 w-4 ${tag.isStageTag ? 'fill-yellow-500 text-yellow-500' : ''}`} />
-                        {tag.isStageTag && <span>Funnel</span>}
+                        <Star className={`h-4 w-4 ${tag.isFinalTarget ? 'fill-green-500 text-green-500' : ''}`} />
+                        {tag.isFinalTarget && <span>Final</span>}
                       </button>
-                      {trackingTags.length > 1 && (
+                      {stageTags.length > 1 && (
                         <Button
                           variant="ghost"
                           size="icon"
                           className="h-7 w-7"
-                          onClick={() => handleRemoveTrackingTag(index)}
+                          onClick={() => handleRemoveStageTag(index)}
                         >
                           <Trash2 className="h-3 w-3" />
                         </Button>

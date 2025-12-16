@@ -11,20 +11,59 @@ const mapDbProspect = (dbProspect: any): Prospect => ({
   prospect_status: mapOldStatusToNew(dbProspect.prospect_status),
 });
 
+// Session storage key for caching prospects
+const PROSPECTS_CACHE_KEY = 'nevorai-prospects-cache';
+
 export function useProspects() {
   const { user } = useAuth();
-  const [prospects, setProspects] = useState<Prospect[]>([]);
+  const [prospects, setProspects] = useState<Prospect[]>(() => {
+    // Try to load from sessionStorage immediately for instant UI
+    try {
+      const cached = sessionStorage.getItem(PROSPECTS_CACHE_KEY);
+      if (cached) {
+        const { userId, data } = JSON.parse(cached);
+        // Only use cache if it's for the same user (we'll verify this in useEffect)
+        if (data && Array.isArray(data)) {
+          return data;
+        }
+      }
+    } catch (e) {
+      console.error('Error loading cached prospects:', e);
+    }
+    return [];
+  });
   const [loading, setLoading] = useState(true);
+  const [initialLoadDone, setInitialLoadDone] = useState(false);
   const hasFetched = useRef(false);
+  const currentUserId = useRef<string | null>(null);
   const { encryptFields, decryptBatch, encryptBatch } = useEncryption();
 
-  const fetchProspects = useCallback(async () => {
+  // Save to cache whenever prospects change
+  useEffect(() => {
+    if (user && prospects.length > 0) {
+      try {
+        sessionStorage.setItem(PROSPECTS_CACHE_KEY, JSON.stringify({
+          userId: user.id,
+          data: prospects,
+          timestamp: Date.now(),
+        }));
+      } catch (e) {
+        // Ignore storage errors
+      }
+    }
+  }, [prospects, user]);
+
+  const fetchProspects = useCallback(async (isRefresh = false) => {
     if (!user) {
       setLoading(false);
       return;
     }
     
-    setLoading(true);
+    // Only show loading on initial load, not on refreshes if we have data
+    if (!initialLoadDone || isRefresh) {
+      setLoading(prospects.length === 0);
+    }
+    
     try {
       const { data, error } = await supabase
         .from('prospects')
@@ -36,7 +75,7 @@ export function useProspects() {
       if (error) {
         toast.error('Failed to fetch prospects');
         console.error('Error fetching prospects:', error);
-        setProspects([]);
+        if (!initialLoadDone) setProspects([]);
       } else {
         // Decrypt phone numbers in batch
         const decryptedData = await decryptBatch(data || []);
@@ -44,20 +83,46 @@ export function useProspects() {
       }
     } catch (err) {
       console.error('Error in fetchProspects:', err);
-      setProspects([]);
+      if (!initialLoadDone) setProspects([]);
     } finally {
       setLoading(false);
+      setInitialLoadDone(true);
     }
-  }, [user]);
+  }, [user, initialLoadDone, prospects.length, decryptBatch]);
 
   useEffect(() => {
+    // Check if user changed
+    if (user && currentUserId.current !== user.id) {
+      // User changed - clear cache and refetch
+      currentUserId.current = user.id;
+      hasFetched.current = false;
+      
+      // Check if cached data is for current user
+      try {
+        const cached = sessionStorage.getItem(PROSPECTS_CACHE_KEY);
+        if (cached) {
+          const { userId } = JSON.parse(cached);
+          if (userId !== user.id) {
+            // Cache is for different user, clear it
+            setProspects([]);
+            sessionStorage.removeItem(PROSPECTS_CACHE_KEY);
+          }
+        }
+      } catch (e) {
+        // Ignore
+      }
+    }
+    
     if (user && !hasFetched.current) {
       hasFetched.current = true;
       fetchProspects();
     } else if (!user) {
       hasFetched.current = false;
+      currentUserId.current = null;
       setProspects([]);
       setLoading(false);
+      setInitialLoadDone(false);
+      sessionStorage.removeItem(PROSPECTS_CACHE_KEY);
     }
   }, [user, fetchProspects]);
 
@@ -358,9 +423,13 @@ export function useProspects() {
     }
   };
 
+  // Refresh function that forces re-fetch
+  const refetch = useCallback(() => fetchProspects(true), [fetchProspects]);
+
   return {
     prospects,
     loading,
+    initialLoadDone,
     addProspect,
     updateProspect,
     deleteProspect,
@@ -369,6 +438,6 @@ export function useProspects() {
     restoreProspects,
     importProspects,
     reorderProspects,
-    refetch: fetchProspects,
+    refetch,
   };
 }

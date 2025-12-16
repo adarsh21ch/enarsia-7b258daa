@@ -734,7 +734,9 @@ export function ProspectTable({
   const isCalling = filterMode === 'calling';
   const COLUMN_ORDER = isCalling ? CALLING_COLUMN_ORDER : FILTER_COLUMN_ORDER;
 
-  if (loading) {
+  // Only show skeleton on initial load when we have no data
+  // If we have cached data, show it immediately even while refreshing
+  if (loading && prospects.length === 0) {
     return (
       <div className="space-y-3">
         <div className="flex items-center justify-between">
