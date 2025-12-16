@@ -1,7 +1,6 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
-import { useProfile } from '@/hooks/useProfile';
 import { toast } from 'sonner';
 
 export interface TrackingTag {
@@ -117,7 +116,6 @@ function parseStageLabels(labels: any): { stageTags: StageTag[]; stageNonTrackin
 
 export function useTrackingFormat() {
   const { user } = useAuth();
-  const { profile, loading: profileLoading, refetch: refetchProfile } = useProfile();
   const [trackingFormat, setTrackingFormat] = useState<TrackingFormat | null>(null);
   const [loading, setLoading] = useState(true);
   const lastRefreshTokenRef = useRef<string | null>(null);
@@ -171,9 +169,9 @@ export function useTrackingFormat() {
     };
   }, []);
 
-  // Load tracking format for current user
+  // Load tracking format for current user - always fetches fresh data from DB
   const loadTrackingFormat = useCallback(async () => {
-    if (!user || !profile) {
+    if (!user) {
       setLoading(false);
       return;
     }
@@ -181,12 +179,26 @@ export function useTrackingFormat() {
     setLoading(true);
 
     try {
-      // Parse user's OWN personal tags from their profile
-      const { leadsNonTracking: ownLeadsPersonal } = parseResponseLabels(profile.response_labels);
-      const { stageNonTracking: ownStagePersonal } = parseStageLabels(profile.stage_labels);
+      // ALWAYS fetch fresh profile data directly from the database
+      // This ensures we get the latest tags even after save
+      const { data: freshProfile, error: profileError } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('user_id', user.id)
+        .maybeSingle();
+
+      if (profileError || !freshProfile) {
+        console.error('Error fetching fresh profile:', profileError);
+        setLoading(false);
+        return;
+      }
+
+      // Parse user's OWN personal tags from fresh profile data
+      const { leadsNonTracking: ownLeadsPersonal } = parseResponseLabels(freshProfile.response_labels);
+      const { stageNonTracking: ownStagePersonal } = parseStageLabels(freshProfile.stage_labels);
 
       // If user creates their own format (is root leader / no leader)
-      if (!profile.use_leader_stages || !profile.leaders_id_of_my_leader) {
+      if (!freshProfile.use_leader_stages || !freshProfile.leaders_id_of_my_leader) {
         // User is their own root leader - use their own tracking tags
         const { data: levels } = await supabase
           .from('leader_levels')
@@ -194,8 +206,8 @@ export function useTrackingFormat() {
           .eq('leader_id', user.id)
           .order('position', { ascending: true });
 
-        const { leadsTracking } = parseResponseLabels(profile.response_labels);
-        const { stageTags } = parseStageLabels(profile.stage_labels);
+        const { leadsTracking } = parseResponseLabels(freshProfile.response_labels);
+        const { stageTags } = parseStageLabels(freshProfile.stage_labels);
 
         setTrackingFormat({
           leadsTrackingTags: leadsTracking,
@@ -219,12 +231,12 @@ export function useTrackingFormat() {
           isUsingLeaderFormat: false,
           isRootLeader: true,
           // Legacy aliases
-          rootLeaderName: profile.display_name || 'You',
-          rootLeaderId: profile.neverai_id,
+          rootLeaderName: freshProfile.display_name || 'You',
+          rootLeaderId: freshProfile.neverai_id,
         });
       } else {
         // User uses leader's format - fetch DIRECT leader only (no chain)
-        const leaderData = await fetchDirectLeaderFormat(profile.leaders_id_of_my_leader);
+        const leaderData = await fetchDirectLeaderFormat(freshProfile.leaders_id_of_my_leader);
         
         if (leaderData) {
           // Personal tags are NEVER inherited - only user's own
@@ -252,8 +264,8 @@ export function useTrackingFormat() {
           });
         } else {
           // Fallback to user's own tags if leader not found
-          const { leadsTracking } = parseResponseLabels(profile.response_labels);
-          const { stageTags } = parseStageLabels(profile.stage_labels);
+          const { leadsTracking } = parseResponseLabels(freshProfile.response_labels);
+          const { stageTags } = parseStageLabels(freshProfile.stage_labels);
           
           setTrackingFormat({
             leadsTrackingTags: leadsTracking,
@@ -279,13 +291,13 @@ export function useTrackingFormat() {
     } finally {
       setLoading(false);
     }
-  }, [user, profile, fetchDirectLeaderFormat]);
+  }, [user, fetchDirectLeaderFormat]);
 
   useEffect(() => {
-    if (!profileLoading) {
+    if (user) {
       loadTrackingFormat();
     }
-  }, [profileLoading, loadTrackingFormat]);
+  }, [user, loadTrackingFormat]);
 
   // Real-time subscription for instant tag refresh when leader updates
   useEffect(() => {
@@ -326,7 +338,16 @@ export function useTrackingFormat() {
 
   // Function for leaders to trigger refresh for all team members
   const triggerTeamRefresh = useCallback(async () => {
-    if (!user?.id || !profile?.neverai_id) return false;
+    if (!user?.id) return false;
+
+    // Fetch current user's neverai_id fresh from database
+    const { data: currentProfile } = await supabase
+      .from('profiles')
+      .select('neverai_id')
+      .eq('user_id', user.id)
+      .maybeSingle();
+
+    if (!currentProfile?.neverai_id) return false;
 
     const refreshToken = Date.now().toString();
     
@@ -334,7 +355,7 @@ export function useTrackingFormat() {
     const { error } = await supabase
       .from('profiles')
       .update({ tags_refresh_token: refreshToken } as any)
-      .eq('leaders_id_of_my_leader', profile.neverai_id);
+      .eq('leaders_id_of_my_leader', currentProfile.neverai_id);
 
     if (error) {
       console.error('Error triggering team refresh:', error);
@@ -342,7 +363,7 @@ export function useTrackingFormat() {
     }
 
     return true;
-  }, [user?.id, profile?.neverai_id]);
+  }, [user?.id]);
 
   // === LEADS helpers ===
   const leadsTrackingTagNames = useMemo(() => 
@@ -397,7 +418,7 @@ export function useTrackingFormat() {
 
   return {
     trackingFormat,
-    loading: loading || profileLoading,
+    loading,
     refreshFormat,
     triggerTeamRefresh,
     
