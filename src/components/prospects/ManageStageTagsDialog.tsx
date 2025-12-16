@@ -8,6 +8,8 @@ import { AlertCircle, Plus, Trash2, Star, Layers, X, Loader2, Check, Lock, Penci
 import { toast } from 'sonner';
 import { useTrackingFormatContext } from '@/contexts/TrackingFormatContext';
 import { useProfile } from '@/hooks/useProfile';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface ManageStageTagsDialogProps {
   open: boolean;
@@ -20,6 +22,7 @@ interface StageTagInput {
 }
 
 export function ManageStageTagsDialog({ open, onOpenChange }: ManageStageTagsDialogProps) {
+  const { user } = useAuth();
   const { 
     refreshFormat, 
     isRootLeader, 
@@ -28,7 +31,7 @@ export function ManageStageTagsDialog({ open, onOpenChange }: ManageStageTagsDia
     stageTags: leaderStageTags, 
     ownStagePersonalTags,
   } = useTrackingFormatContext();
-  const { profile, updateProfile } = useProfile();
+  const { updateProfile } = useProfile();
   
   // Only for root leaders - tracking tag editing
   const [stageTags, setStageTags] = useState<StageTagInput[]>([]);
@@ -58,12 +61,20 @@ export function ManageStageTagsDialog({ open, onOpenChange }: ManageStageTagsDia
     }
   }, [leaderStageTags, ownStagePersonalTags, open]);
 
-  // Auto-save function for personal tags
+  // Auto-save function for personal tags - FETCH FRESH DATA to avoid stale cache
   const autoSavePersonalTags = useCallback(async () => {
+    if (!user) return;
+    
     setAutoSaveStatus('saving');
     
-    // Get current stage_labels and only update nonTracking
-    const currentStageLabels = profile?.stage_labels as any;
+    // Fetch fresh profile data from database (not stale cached data)
+    const { data: freshProfile } = await supabase
+      .from('profiles')
+      .select('stage_labels')
+      .eq('user_id', user.id)
+      .single();
+    
+    const currentStageLabels = freshProfile?.stage_labels as any;
     
     const stageLabelsData = {
       stages: currentStageLabels?.stages || [],
@@ -77,7 +88,7 @@ export function ManageStageTagsDialog({ open, onOpenChange }: ManageStageTagsDia
     refreshFormat();
     setAutoSaveStatus('saved');
     setTimeout(() => setAutoSaveStatus('idle'), 1500);
-  }, [personalTags, profile?.stage_labels, updateProfile, refreshFormat]);
+  }, [user, personalTags, updateProfile, refreshFormat]);
 
   // Auto-save function for root leader (tracking + personal)
   const autoSaveAll = useCallback(async () => {

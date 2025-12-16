@@ -8,6 +8,8 @@ import { AlertCircle, Plus, Trash2, Star, Tag, X, Loader2, Check, Lock, Pencil }
 import { toast } from 'sonner';
 import { useTrackingFormatContext } from '@/contexts/TrackingFormatContext';
 import { useProfile } from '@/hooks/useProfile';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface ManageResponseTagsDialogProps {
   open: boolean;
@@ -21,6 +23,7 @@ interface LeadsTagInput {
 }
 
 export function ManageResponseTagsDialog({ open, onOpenChange }: ManageResponseTagsDialogProps) {
+  const { user } = useAuth();
   const { 
     refreshFormat, 
     isRootLeader, 
@@ -29,7 +32,7 @@ export function ManageResponseTagsDialog({ open, onOpenChange }: ManageResponseT
     leadsTrackingTags, 
     ownLeadsPersonalTags,
   } = useTrackingFormatContext();
-  const { profile, updateProfile } = useProfile();
+  const { updateProfile } = useProfile();
   
   // Only for root leaders - tracking tag editing
   const [trackingTags, setTrackingTags] = useState<LeadsTagInput[]>([]);
@@ -60,12 +63,20 @@ export function ManageResponseTagsDialog({ open, onOpenChange }: ManageResponseT
     }
   }, [leadsTrackingTags, ownLeadsPersonalTags, open]);
 
-  // Auto-save function for personal tags
+  // Auto-save function for personal tags - FETCH FRESH DATA to avoid stale cache
   const autoSavePersonalTags = useCallback(async () => {
+    if (!user) return;
+    
     setAutoSaveStatus('saving');
     
-    // Get current response_labels and only update nonTracking
-    const currentResponseLabels = profile?.response_labels as any;
+    // Fetch fresh profile data from database (not stale cached data)
+    const { data: freshProfile } = await supabase
+      .from('profiles')
+      .select('response_labels')
+      .eq('user_id', user.id)
+      .single();
+    
+    const currentResponseLabels = freshProfile?.response_labels as any;
     
     const responseLabelsData = {
       tracking: currentResponseLabels?.tracking || [],
@@ -79,7 +90,7 @@ export function ManageResponseTagsDialog({ open, onOpenChange }: ManageResponseT
     refreshFormat();
     setAutoSaveStatus('saved');
     setTimeout(() => setAutoSaveStatus('idle'), 1500);
-  }, [personalTags, profile?.response_labels, updateProfile, refreshFormat]);
+  }, [user, personalTags, updateProfile, refreshFormat]);
 
   // Auto-save function for root leader (tracking + personal)
   const autoSaveAll = useCallback(async () => {
