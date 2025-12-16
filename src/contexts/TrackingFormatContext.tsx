@@ -6,6 +6,7 @@ interface TrackingFormatContextType {
   trackingFormat: TrackingFormat | null;
   loading: boolean;
   refreshFormat: () => void;
+  triggerTeamRefresh: () => Promise<boolean>;
   
   // Leads (Response) tags
   leadsTrackingTags: TrackingTag[];

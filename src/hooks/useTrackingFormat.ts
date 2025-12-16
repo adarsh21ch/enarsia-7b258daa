@@ -1,7 +1,8 @@
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useProfile } from '@/hooks/useProfile';
+import { toast } from 'sonner';
 
 export interface TrackingTag {
   name: string;
@@ -116,9 +117,10 @@ function parseStageLabels(labels: any): { stageTags: StageTag[]; stageNonTrackin
 
 export function useTrackingFormat() {
   const { user } = useAuth();
-  const { profile, loading: profileLoading } = useProfile();
+  const { profile, loading: profileLoading, refetch: refetchProfile } = useProfile();
   const [trackingFormat, setTrackingFormat] = useState<TrackingFormat | null>(null);
   const [loading, setLoading] = useState(true);
+  const lastRefreshTokenRef = useRef<string | null>(null);
 
   // Fetch DIRECT leader's tracking format (single lookup, no chain walking)
   const fetchDirectLeaderFormat = useCallback(async (leaderNeveraiId: string): Promise<{
@@ -285,10 +287,62 @@ export function useTrackingFormat() {
     }
   }, [profileLoading, loadTrackingFormat]);
 
+  // Real-time subscription for instant tag refresh when leader updates
+  useEffect(() => {
+    if (!user?.id) return;
+
+    const channel = supabase
+      .channel(`tags-refresh-${user.id}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'profiles',
+          filter: `user_id=eq.${user.id}`,
+        },
+        (payload) => {
+          const newToken = (payload.new as any)?.tags_refresh_token;
+          // If token changed, refetch the format
+          if (newToken && newToken !== lastRefreshTokenRef.current) {
+            lastRefreshTokenRef.current = newToken;
+            console.log('Tags refresh token changed, refetching format...');
+            loadTrackingFormat();
+            toast.success('Tracking tags updated by leader');
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [user?.id, loadTrackingFormat]);
+
   // Reload format (no cache since we removed caching for real-time updates)
   const refreshFormat = useCallback(() => {
     loadTrackingFormat();
   }, [loadTrackingFormat]);
+
+  // Function for leaders to trigger refresh for all team members
+  const triggerTeamRefresh = useCallback(async () => {
+    if (!user?.id || !profile?.neverai_id) return false;
+
+    const refreshToken = Date.now().toString();
+    
+    // Update all team members who follow this leader
+    const { error } = await supabase
+      .from('profiles')
+      .update({ tags_refresh_token: refreshToken } as any)
+      .eq('leaders_id_of_my_leader', profile.neverai_id);
+
+    if (error) {
+      console.error('Error triggering team refresh:', error);
+      return false;
+    }
+
+    return true;
+  }, [user?.id, profile?.neverai_id]);
 
   // === LEADS helpers ===
   const leadsTrackingTagNames = useMemo(() => 
@@ -345,6 +399,7 @@ export function useTrackingFormat() {
     trackingFormat,
     loading: loading || profileLoading,
     refreshFormat,
+    triggerTeamRefresh,
     
     // Leads (Response) tags
     leadsTrackingTags: trackingFormat?.leadsTrackingTags || [],
