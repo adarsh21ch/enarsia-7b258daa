@@ -7,7 +7,6 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { CallIconButton, WhatsAppIconButton } from '@/components/ui/ActionIcons';
 import { ChevronDown } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { useCustomOptionsContext } from '@/contexts/CustomOptionsContext';
 import { useTrackingFormatContext } from '@/contexts/TrackingFormatContext';
 
 interface DragHandleProps {
@@ -55,7 +54,6 @@ export function ProspectRow({
   onToggleSelect,
   tabType = 'leads',
 }: ProspectRowProps) {
-  const { addOption, deleteOption, getCustomOptionsForType } = useCustomOptionsContext();
   const { 
     // Leads tags
     leadsTrackingTags,
@@ -77,29 +75,16 @@ export function ProspectRow({
     loading: formatLoading 
   } = useTrackingFormatContext();
 
-  // Build dropdown options based on tab type
-  const customActionOptions = getCustomOptionsForType('action_taken').map(o => o.option_value);
-  const customStageOptions = getCustomOptionsForType('funnel_stage').map(o => o.option_value);
-  
-  // Leads tab uses leadsTrackingTags for Response column
+  // Build dropdown options ONLY from TrackingFormatContext (no custom_options fallback)
   const hasLeadsTrackingTags = leadsTrackingTagNames.length > 0;
   const actionOptions = hasLeadsTrackingTags 
-    ? [
-        ...leadsTrackingTagNames, 
-        ...leadsNonTrackingTags, 
-        ...customActionOptions.filter(o => !leadsTrackingTagNames.includes(o) && !leadsNonTrackingTags.includes(o))
-      ]
-    : [...EXTENDED_ACTIONS, ...customActionOptions];
+    ? [...leadsTrackingTagNames, ...leadsNonTrackingTags]
+    : EXTENDED_ACTIONS;
   
-  // Funnel tab uses stageTags for Filter column
   const hasStageTrackingTags = stageTagNames.length > 0;
   const stageOptions = hasStageTrackingTags
-    ? [
-        ...stageTagNames, 
-        ...stageNonTrackingTags,
-        ...customStageOptions.filter(o => !stageTagNames.includes(o) && !stageNonTrackingTags.includes(o))
-      ]
-    : [...FUNNEL_STAGES, ...customStageOptions];
+    ? [...stageTagNames, ...stageNonTrackingTags]
+    : FUNNEL_STAGES;
 
   const handleActionChange = (value: ExtendedActionTaken) => {
     const updates: Partial<Prospect> = {};

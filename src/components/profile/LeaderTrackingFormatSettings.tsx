@@ -331,6 +331,17 @@ export function LeaderTrackingFormatSettings({
     setSavingLeader(true);
     const result = await onUpdateLeaderHierarchy(leaderIdInput.trim().toUpperCase());
     if (result.success) {
+      // Clear old custom_options for action_taken and funnel_stage
+      // when connecting to a leader (they'll use leader's tracking tags instead)
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        await supabase
+          .from('custom_options')
+          .delete()
+          .eq('user_id', user.id)
+          .in('option_type', ['action_taken', 'funnel_stage']);
+      }
+      
       setLeaderIdInput('');
       setFormatMode('leader');
       await onUpdateProfile({

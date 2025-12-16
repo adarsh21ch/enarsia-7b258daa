@@ -34,7 +34,7 @@ const [localData, setLocalData] = useState({
   });
   const [isDeleting, setIsDeleting] = useState(false);
   const { activities } = useActivityLogs();
-  const { addOption, deleteOption, getOptionsForType, getCustomOptionsForType } = useCustomOptionsContext();
+  const { getOptionsForType, getCustomOptionsForType, addOption, deleteOption } = useCustomOptionsContext();
   const { 
     // Leads tags
     leadsTrackingTags,
@@ -55,29 +55,16 @@ const [localData, setLocalData] = useState({
     handleTargetComplete 
   } = useTrackingFormatContext();
 
-  // Build dropdown options using the correct tag systems
-  const customActionOptions = getCustomOptionsForType('action_taken').map(o => o.option_value);
-  const customStageOptions = getCustomOptionsForType('funnel_stage').map(o => o.option_value);
-  
-  // Leads tab uses leadsTrackingTags for Response column
+  // Build dropdown options ONLY from TrackingFormatContext (no custom_options fallback)
   const hasLeadsTrackingTags = leadsTrackingTagNames.length > 0;
   const actionOptions = hasLeadsTrackingTags 
-    ? [
-        ...leadsTrackingTagNames, 
-        ...leadsNonTrackingTags, 
-        ...customActionOptions.filter(o => !leadsTrackingTagNames.includes(o) && !leadsNonTrackingTags.includes(o))
-      ]
-    : getOptionsForType('action_taken', EXTENDED_ACTIONS) as string[];
+    ? [...leadsTrackingTagNames, ...leadsNonTrackingTags]
+    : EXTENDED_ACTIONS as string[];
   
-  // Funnel tab uses stageTags for Filter column
   const hasStageTrackingTags = stageTagNames.length > 0;
   const stageOptions = hasStageTrackingTags
-    ? [
-        ...stageTagNames, 
-        ...stageNonTrackingTags,
-        ...customStageOptions.filter(o => !stageTagNames.includes(o) && !stageNonTrackingTags.includes(o))
-      ]
-    : getOptionsForType('funnel_stage', FUNNEL_STAGES) as string[];
+    ? [...stageTagNames, ...stageNonTrackingTags]
+    : FUNNEL_STAGES as string[];
     
   const statusOptions = getOptionsForType('prospect_status', STATUSES) as (typeof STATUSES[number])[];
 

@@ -6,7 +6,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { X, Download, ChevronDown, Loader2, Tag, Layers, Settings2 } from 'lucide-react';
 import { FUNNEL_STAGES, EXTENDED_ACTIONS, FunnelStage, ProspectQuality, ExtendedActionTaken } from '@/types/prospect';
 import { useIsMobile } from '@/hooks/use-mobile';
-import { useCustomOptionsContext } from '@/contexts/CustomOptionsContext';
+import { useTrackingFormatContext } from '@/contexts/TrackingFormatContext';
 import { cn } from '@/lib/utils';
 import { ManageResponseTagsDialog } from './ManageResponseTagsDialog';
 import { ManageStageTagsDialog } from './ManageStageTagsDialog';
@@ -42,17 +42,29 @@ export function ProspectFilters({
 }: ProspectFiltersProps) {
   const hasFilters = filters.search || filters.stages.length > 0 || filters.actions.length > 0;
   const isMobile = useIsMobile();
+  
+  // Use TrackingFormatContext for tag options (unified source of truth)
   const {
-    getOptionsForType
-  } = useCustomOptionsContext();
+    leadsTrackingTagNames,
+    leadsNonTrackingTags,
+    stageTagNames,
+    stageNonTrackingTags,
+  } = useTrackingFormatContext();
 
   // Dialog states
   const [showResponseTagsDialog, setShowResponseTagsDialog] = useState(false);
   const [showStageTagsDialog, setShowStageTagsDialog] = useState(false);
 
-  // Get dynamic options from user's custom tags
-  const stageOptions = getOptionsForType('funnel_stage', FUNNEL_STAGES) as FunnelStage[];
-  const actionOptions = getOptionsForType('action_taken', EXTENDED_ACTIONS) as ExtendedActionTaken[];
+  // Build options from TrackingFormatContext (single source of truth)
+  const hasLeadsTrackingTags = leadsTrackingTagNames.length > 0;
+  const actionOptions = hasLeadsTrackingTags 
+    ? [...leadsTrackingTagNames, ...leadsNonTrackingTags] as ExtendedActionTaken[]
+    : EXTENDED_ACTIONS as ExtendedActionTaken[];
+    
+  const hasStageTrackingTags = stageTagNames.length > 0;
+  const stageOptions = hasStageTrackingTags
+    ? [...stageTagNames, ...stageNonTrackingTags] as FunnelStage[]
+    : FUNNEL_STAGES as FunnelStage[];
   const clearFilters = () => {
     onFiltersChange({
       search: '',

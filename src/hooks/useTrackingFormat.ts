@@ -331,6 +331,45 @@ export function useTrackingFormat() {
     };
   }, [user?.id, loadTrackingFormat]);
 
+  // Real-time subscription to leader's profile changes (backup sync method)
+  useEffect(() => {
+    if (!user?.id || !trackingFormat?.directLeaderId) return;
+
+    // Subscribe to leader's profile changes
+    const channel = supabase
+      .channel(`leader-tags-${trackingFormat.directLeaderId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'profiles',
+        },
+        async (payload) => {
+          // Check if this is our leader's profile by matching neverai_id
+          const newNeveraiId = (payload.new as any)?.neverai_id;
+          if (newNeveraiId?.toUpperCase() !== trackingFormat.directLeaderId?.toUpperCase()) {
+            return;
+          }
+          
+          const oldLabels = JSON.stringify((payload.old as any)?.response_labels);
+          const newLabels = JSON.stringify((payload.new as any)?.response_labels);
+          const oldStageLabels = JSON.stringify((payload.old as any)?.stage_labels);
+          const newStageLabels = JSON.stringify((payload.new as any)?.stage_labels);
+          
+          if (oldLabels !== newLabels || oldStageLabels !== newStageLabels) {
+            console.log('Leader tags changed, refetching format...');
+            loadTrackingFormat();
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [user?.id, trackingFormat?.directLeaderId, loadTrackingFormat]);
+
   // Reload format (no cache since we removed caching for real-time updates)
   const refreshFormat = useCallback(() => {
     loadTrackingFormat();
