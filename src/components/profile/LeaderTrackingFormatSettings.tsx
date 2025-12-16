@@ -294,6 +294,9 @@ export function LeaderTrackingFormatSettings({
       
       refreshFormat();
       
+      // Dispatch event for local tabs (Calling tab) to refresh immediately
+      window.dispatchEvent(new CustomEvent('leaderTrackingFormatUpdated'));
+      
       if (success) {
         toast.success('Tags saved! All team members will see updates within seconds.');
       } else {

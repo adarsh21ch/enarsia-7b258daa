@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useProspects } from '@/hooks/useProspects';
 import { useSheets } from '@/hooks/useSheets';
+import { useTrackingFormatContext } from '@/contexts/TrackingFormatContext';
 import { BottomNav } from '@/components/layout/BottomNav';
 import { ProspectTable } from '@/components/prospects/ProspectTable';
 import { PullToRefreshIndicator } from '@/components/PullToRefreshIndicator';
@@ -84,6 +85,7 @@ export default function Dashboard() {
   const { user, loading: authLoading } = useAuth();
   const { prospects, loading, addProspect, updateProspect, deleteProspect, bulkDeleteProspects, restoreProspect, restoreProspects, importProspects, reorderProspects, refetch } = useProspects();
   const { sheets, selectedSheetId, setSelectedSheetId, addSheet, updateSheet, deleteSheet, refetch: refetchSheets } = useSheets();
+  const { refreshFormat } = useTrackingFormatContext();
   
   // Main tab state - Calling is default
   const [mainTab, setMainTab] = useState<'leads' | 'funnel'>('leads');
@@ -94,6 +96,16 @@ export default function Dashboard() {
   // Filter tag setup dialog
   const { needsSetup, markSetupDone } = useFilterTagSetup();
   const [showFilterSetup, setShowFilterSetup] = useState(false);
+
+  // Listen for tag updates from Leader Tracking Format
+  useEffect(() => {
+    const handleTagsUpdated = () => {
+      refreshFormat();
+    };
+    
+    window.addEventListener('leaderTrackingFormatUpdated', handleTagsUpdated);
+    return () => window.removeEventListener('leaderTrackingFormatUpdated', handleTagsUpdated);
+  }, [refreshFormat]);
 
   // Handle tab change - show setup dialog when switching to Stages for first time
   const handleTabChange = (newTab: string) => {
