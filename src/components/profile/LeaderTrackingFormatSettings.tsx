@@ -706,7 +706,7 @@ export function LeaderTrackingFormatSettings({
             <Separator />
             <div className="space-y-4">
               <p className="text-xs text-muted-foreground font-medium">
-                Inherited Tracking Format from {directLeaderName || 'Leader'} ({directLeaderId})
+                Inherited Tracking Format from {trackingFormat?.rootLeaderName || directLeaderName || 'Leader'} ({trackingFormat?.rootLeaderId || directLeaderId || '—'})
               </p>
               
               {/* Inherited Team Levels */}

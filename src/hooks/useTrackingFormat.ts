@@ -120,17 +120,37 @@ export function useTrackingFormat() {
   const [loading, setLoading] = useState(true);
   const lastRefreshTokenRef = useRef<string | null>(null);
 
-  // Fetch DIRECT leader's tracking format (single lookup, no chain walking)
-  const fetchDirectLeaderFormat = useCallback(async (leaderNeveraiId: string): Promise<{
-    directLeaderId: string;
-    directLeaderName: string;
+  // Fetch a leader's profile meta (name/id). Used for displaying the *direct* leader.
+  const fetchLeaderMeta = useCallback(async (leaderNeveraiId: string): Promise<{
+    leaderId: string;
+    leaderName: string;
+  } | null> => {
+    const { data: leaderProfile, error } = await supabase
+      .from('profiles')
+      .select('display_name, neverai_id')
+      .ilike('neverai_id', leaderNeveraiId)
+      .maybeSingle();
+
+    if (error || !leaderProfile) {
+      console.error('Error fetching leader meta:', error);
+      return null;
+    }
+
+    return {
+      leaderId: leaderProfile.neverai_id || leaderNeveraiId,
+      leaderName: leaderProfile.display_name || 'Leader',
+    };
+  }, []);
+
+  // Fetch ROOT leader's tracking format (this is the tracking format owner for the whole tree)
+  const fetchLeaderFormat = useCallback(async (leaderNeveraiId: string): Promise<{
+    leaderUserId: string;
+    leaderId: string;
+    leaderName: string;
     leadsTracking: TrackingTag[];
-    leadsNonTracking: string[];
     stageTags: StageTag[];
-    stageNonTracking: string[];
     levels: TeamLevel[];
   } | null> => {
-    // Single lookup to direct leader - no chain walking
     const { data: leaderProfile, error } = await supabase
       .from('profiles')
       .select('user_id, display_name, neverai_id, response_labels, stage_labels')
@@ -138,33 +158,32 @@ export function useTrackingFormat() {
       .maybeSingle();
 
     if (error || !leaderProfile) {
-      console.error('Error fetching direct leader profile:', error);
+      console.error('Error fetching leader format profile:', error);
       return null;
     }
 
-    // Get leader's levels
+    // Leader levels are defined by the tracking format owner
     const { data: levels } = await supabase
       .from('leader_levels')
       .select('id, label, code, is_default, position')
       .eq('leader_id', leaderProfile.user_id)
       .order('position', { ascending: true });
 
-    const { leadsTracking, leadsNonTracking } = parseResponseLabels(leaderProfile.response_labels);
-    const { stageTags, stageNonTracking } = parseStageLabels(leaderProfile.stage_labels);
+    const { leadsTracking } = parseResponseLabels(leaderProfile.response_labels);
+    const { stageTags } = parseStageLabels(leaderProfile.stage_labels);
 
     return {
-      directLeaderId: leaderProfile.neverai_id || leaderNeveraiId,
-      directLeaderName: leaderProfile.display_name || 'Leader',
+      leaderUserId: leaderProfile.user_id,
+      leaderId: leaderProfile.neverai_id || leaderNeveraiId,
+      leaderName: leaderProfile.display_name || 'Leader',
       leadsTracking,
-      leadsNonTracking,
       stageTags,
-      stageNonTracking,
       levels: (levels || []).map(l => ({
         id: l.id,
         position: l.position,
         code: l.code || `L${l.position}`,
         label: l.label,
-        isDefault: l.is_default
+        isDefault: l.is_default,
       })),
     };
   }, []);
@@ -235,54 +254,62 @@ export function useTrackingFormat() {
           rootLeaderId: freshProfile.neverai_id,
         });
       } else {
-        // User uses leader's format - fetch DIRECT leader only (no chain)
-        const leaderData = await fetchDirectLeaderFormat(freshProfile.leaders_id_of_my_leader);
-        
-        if (leaderData) {
-          // Personal tags are NEVER inherited - only user's own
+        // User uses leader's format - ALWAYS inherit from the ROOT leader of the tree
+        const directLeaderNeveraiId = freshProfile.leaders_id_of_my_leader;
+        const rootLeaderNeveraiId = freshProfile.root_leader_id || directLeaderNeveraiId;
+
+        const [directLeaderMeta, rootLeaderData] = await Promise.all([
+          fetchLeaderMeta(directLeaderNeveraiId),
+          rootLeaderNeveraiId ? fetchLeaderFormat(rootLeaderNeveraiId) : Promise.resolve(null),
+        ]);
+
+        if (rootLeaderData) {
           setTrackingFormat({
-            // TRACKING tags come from DIRECT leader
-            leadsTrackingTags: leaderData.leadsTracking,
-            stageTags: leaderData.stageTags,
-            levels: leaderData.levels,
-            // Only user's own personal tags (no leader's personal tags)
+            // TRACKING tags + levels come from ROOT leader (tracking format owner)
+            leadsTrackingTags: rootLeaderData.leadsTracking,
+            stageTags: rootLeaderData.stageTags,
+            levels: rootLeaderData.levels,
+
+            // Personal tags are NEVER inherited - only user's own
             leadsNonTrackingTags: ownLeadsPersonal,
             stageNonTrackingTags: ownStagePersonal,
-            // Leader's personal tags NOT inherited - always empty for members
             leaderLeadsPersonalTags: [],
             leaderStagePersonalTags: [],
             ownLeadsPersonalTags: ownLeadsPersonal,
             ownStagePersonalTags: ownStagePersonal,
+
             // Metadata
-            directLeaderName: leaderData.directLeaderName,
-            directLeaderId: leaderData.directLeaderId,
+            directLeaderName: directLeaderMeta?.leaderName || 'Leader',
+            directLeaderId: directLeaderMeta?.leaderId || directLeaderNeveraiId,
             isUsingLeaderFormat: true,
             isRootLeader: false,
-            // Legacy aliases
-            rootLeaderName: leaderData.directLeaderName,
-            rootLeaderId: leaderData.directLeaderId,
+
+            // Root leader (tracking format owner)
+            rootLeaderName: rootLeaderData.leaderName,
+            rootLeaderId: rootLeaderData.leaderId,
           });
         } else {
-          // Fallback to user's own tags if leader not found
-          const { leadsTracking } = parseResponseLabels(freshProfile.response_labels);
-          const { stageTags } = parseStageLabels(freshProfile.stage_labels);
-          
+          // If the root leader cannot be resolved, do NOT fall back to the user's old tracking tags
+          // (keeps behavior aligned with "use leader format")
           setTrackingFormat({
-            leadsTrackingTags: leadsTracking,
+            leadsTrackingTags: [],
+            stageTags: [],
+            levels: [],
+
             leadsNonTrackingTags: ownLeadsPersonal,
-            stageTags,
             stageNonTrackingTags: ownStagePersonal,
             leaderLeadsPersonalTags: [],
             leaderStagePersonalTags: [],
             ownLeadsPersonalTags: ownLeadsPersonal,
             ownStagePersonalTags: ownStagePersonal,
-            levels: [],
-            directLeaderName: null,
-            directLeaderId: null,
-            isUsingLeaderFormat: true, // Still marked as using leader format (just not found)
+
+            directLeaderName: directLeaderMeta?.leaderName || null,
+            directLeaderId: directLeaderMeta?.leaderId || directLeaderNeveraiId,
+            isUsingLeaderFormat: true,
             isRootLeader: false,
+
             rootLeaderName: null,
-            rootLeaderId: null,
+            rootLeaderId: rootLeaderNeveraiId,
           });
         }
       }
@@ -291,7 +318,7 @@ export function useTrackingFormat() {
     } finally {
       setLoading(false);
     }
-  }, [user, fetchDirectLeaderFormat]);
+  }, [user, fetchLeaderMeta, fetchLeaderFormat]);
 
   useEffect(() => {
     if (user) {
@@ -331,13 +358,13 @@ export function useTrackingFormat() {
     };
   }, [user?.id, loadTrackingFormat]);
 
-  // Real-time subscription to leader's profile changes (backup sync method)
+  // Real-time subscription to ROOT leader's profile changes (backup sync method)
   useEffect(() => {
-    if (!user?.id || !trackingFormat?.directLeaderId) return;
+    const rootLeaderId = trackingFormat?.rootLeaderId;
+    if (!user?.id || !rootLeaderId) return;
 
-    // Subscribe to leader's profile changes
     const channel = supabase
-      .channel(`leader-tags-${trackingFormat.directLeaderId}`)
+      .channel(`root-leader-tags-${rootLeaderId}`)
       .on(
         'postgres_changes',
         {
@@ -346,19 +373,16 @@ export function useTrackingFormat() {
           table: 'profiles',
         },
         async (payload) => {
-          // Check if this is our leader's profile by matching neverai_id
           const newNeveraiId = (payload.new as any)?.neverai_id;
-          if (newNeveraiId?.toUpperCase() !== trackingFormat.directLeaderId?.toUpperCase()) {
-            return;
-          }
-          
+          if (newNeveraiId?.toUpperCase() !== rootLeaderId?.toUpperCase()) return;
+
           const oldLabels = JSON.stringify((payload.old as any)?.response_labels);
           const newLabels = JSON.stringify((payload.new as any)?.response_labels);
           const oldStageLabels = JSON.stringify((payload.old as any)?.stage_labels);
           const newStageLabels = JSON.stringify((payload.new as any)?.stage_labels);
-          
+
           if (oldLabels !== newLabels || oldStageLabels !== newStageLabels) {
-            console.log('Leader tags changed, refetching format...');
+            console.log('Root leader tags changed, refetching format...');
             loadTrackingFormat();
           }
         }
@@ -368,7 +392,7 @@ export function useTrackingFormat() {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [user?.id, trackingFormat?.directLeaderId, loadTrackingFormat]);
+  }, [user?.id, trackingFormat?.rootLeaderId, loadTrackingFormat]);
 
   // Reload format (no cache since we removed caching for real-time updates)
   const refreshFormat = useCallback(() => {
@@ -390,11 +414,11 @@ export function useTrackingFormat() {
 
     const refreshToken = Date.now().toString();
     
-    // Update all team members who follow this leader
+    // Update all team members in this leader's tree (and direct followers)
     const { error } = await supabase
       .from('profiles')
       .update({ tags_refresh_token: refreshToken } as any)
-      .eq('leaders_id_of_my_leader', currentProfile.neverai_id);
+      .or(`leaders_id_of_my_leader.eq.${currentProfile.neverai_id},root_leader_id.eq.${currentProfile.neverai_id}`);
 
     if (error) {
       console.error('Error triggering team refresh:', error);
