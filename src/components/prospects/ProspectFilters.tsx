@@ -3,11 +3,14 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Checkbox } from '@/components/ui/checkbox';
-import { X, Download, ChevronDown, Loader2 } from 'lucide-react';
+import { X, Download, ChevronDown, Loader2, Tag, Layers, Settings2 } from 'lucide-react';
 import { FUNNEL_STAGES, EXTENDED_ACTIONS, FunnelStage, ProspectQuality, ExtendedActionTaken } from '@/types/prospect';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useCustomOptionsContext } from '@/contexts/CustomOptionsContext';
 import { cn } from '@/lib/utils';
+import { ManageResponseTagsDialog } from './ManageResponseTagsDialog';
+import { ManageStageTagsDialog } from './ManageStageTagsDialog';
+
 interface Filters {
   search: string;
   stages: FunnelStage[];
@@ -42,6 +45,10 @@ export function ProspectFilters({
   const {
     getOptionsForType
   } = useCustomOptionsContext();
+
+  // Dialog states
+  const [showResponseTagsDialog, setShowResponseTagsDialog] = useState(false);
+  const [showStageTagsDialog, setShowStageTagsDialog] = useState(false);
 
   // Get dynamic options from user's custom tags
   const stageOptions = getOptionsForType('funnel_stage', FUNNEL_STAGES) as FunnelStage[];
@@ -79,69 +86,95 @@ export function ProspectFilters({
     if (filters.actions.length === 1) return filters.actions[0];
     return `${filters.actions.length} Responses`;
   };
-  return <div className="flex flex-col gap-2 w-full">
-      {/* Filters row - includes filter tag button inline */}
-      <div className="flex gap-2 overflow-x-auto pb-1 -mx-1 px-1 sm:flex-wrap sm:overflow-visible items-center">
-        {/* Multi-select Stages Filter - only show if showStagesFilter is true */}
-        {showStagesFilter && <Popover>
-            <PopoverTrigger asChild>
-              <Button variant="outline" className={cn("h-10 sm:h-9 min-w-[100px] w-auto text-xs shrink-0 justify-between gap-1", filters.stages.length > 0 && "border-primary/50 bg-primary/5")}>
-                <span className="truncate">{getStagesLabel()}</span>
-                <ChevronDown className="h-3.5 w-3.5 opacity-50" />
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-48 p-2 bg-popover border-border z-[100]" align="start" sideOffset={4}>
-              <div className="space-y-1">
-                {stageOptions.map(stage => <label key={stage} className="flex items-center gap-2 px-2 py-2 rounded-md hover:bg-muted cursor-pointer min-h-[40px]">
-                    <Checkbox checked={filters.stages.includes(stage)} onCheckedChange={() => toggleStage(stage)} className="h-4 w-4" />
-                    <span className="text-sm">{stage}</span>
-                  </label>)}
-              </div>
-              {filters.stages.length > 0 && <Button variant="ghost" size="sm" className="w-full mt-2 h-8 text-xs" onClick={() => onFiltersChange({
-            ...filters,
-            stages: []
-          })}>
-                  Clear Stages
-                </Button>}
-            </PopoverContent>
-          </Popover>}
+  return (
+    <>
+      <div className="flex flex-col gap-2 w-full">
+        {/* Filters row - includes filter tag button inline */}
+        <div className="flex gap-2 overflow-x-auto pb-1 -mx-1 px-1 sm:flex-wrap sm:overflow-visible items-center">
+          {/* Multi-select Stages Filter - only show if showStagesFilter is true */}
+          {showStagesFilter && <Popover>
+              <PopoverTrigger asChild>
+                <Button variant="outline" className={cn("h-10 sm:h-9 min-w-[100px] w-auto text-xs shrink-0 justify-between gap-1", filters.stages.length > 0 && "border-primary/50 bg-primary/5")}>
+                  <span className="truncate">{getStagesLabel()}</span>
+                  <ChevronDown className="h-3.5 w-3.5 opacity-50" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-48 p-2 bg-popover border-border z-[100]" align="start" sideOffset={4}>
+                <div className="space-y-1">
+                  {stageOptions.map(stage => <label key={stage} className="flex items-center gap-2 px-2 py-2 rounded-md hover:bg-muted cursor-pointer min-h-[40px]">
+                      <Checkbox checked={filters.stages.includes(stage)} onCheckedChange={() => toggleStage(stage)} className="h-4 w-4" />
+                      <span className="text-sm">{stage}</span>
+                    </label>)}
+                </div>
+                {filters.stages.length > 0 && <Button variant="ghost" size="sm" className="w-full mt-2 h-8 text-xs" onClick={() => onFiltersChange({
+              ...filters,
+              stages: []
+            })}>
+                    Clear Stages
+                  </Button>}
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  className="w-full mt-2 h-8 text-xs gap-1 text-muted-foreground" 
+                  onClick={() => setShowStageTagsDialog(true)}
+                >
+                  <Settings2 className="h-3 w-3" />
+                  Manage Stage Tags
+                </Button>
+              </PopoverContent>
+            </Popover>}
 
-        {/* Multi-select Responses Filter - only show if showResponsesFilter is true */}
-        {showResponsesFilter && <Popover>
-            <PopoverTrigger asChild>
-              <Button variant="outline" className={cn("h-10 sm:h-9 min-w-[100px] w-auto text-xs shrink-0 justify-between gap-1", filters.actions.length > 0 && "border-primary/50 bg-primary/5")}>
-                <span className="truncate">{getActionsLabel()}</span>
-                <ChevronDown className="h-3.5 w-3.5 opacity-50" />
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-48 p-2 bg-popover border-border z-[100]" align="start" sideOffset={4}>
-              <div className="space-y-1">
-                {actionOptions.map(action => <label key={action} className="flex items-center gap-2 px-2 py-2 rounded-md hover:bg-muted cursor-pointer min-h-[40px]">
-                    <Checkbox checked={filters.actions.includes(action)} onCheckedChange={() => toggleAction(action)} className="h-4 w-4" />
-                    <span className="text-sm">{action}</span>
-                  </label>)}
-              </div>
-              {filters.actions.length > 0 && <Button variant="ghost" size="sm" className="w-full mt-2 h-8 text-xs" onClick={() => onFiltersChange({
-            ...filters,
-            actions: []
-          })}>
-                  Clear Responses
-                </Button>}
-            </PopoverContent>
-          </Popover>}
+          {/* Multi-select Responses Filter - only show if showResponsesFilter is true */}
+          {showResponsesFilter && <Popover>
+              <PopoverTrigger asChild>
+                <Button variant="outline" className={cn("h-10 sm:h-9 min-w-[100px] w-auto text-xs shrink-0 justify-between gap-1", filters.actions.length > 0 && "border-primary/50 bg-primary/5")}>
+                  <span className="truncate">{getActionsLabel()}</span>
+                  <ChevronDown className="h-3.5 w-3.5 opacity-50" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-48 p-2 bg-popover border-border z-[100]" align="start" sideOffset={4}>
+                <div className="space-y-1">
+                  {actionOptions.map(action => <label key={action} className="flex items-center gap-2 px-2 py-2 rounded-md hover:bg-muted cursor-pointer min-h-[40px]">
+                      <Checkbox checked={filters.actions.includes(action)} onCheckedChange={() => toggleAction(action)} className="h-4 w-4" />
+                      <span className="text-sm">{action}</span>
+                    </label>)}
+                </div>
+                {filters.actions.length > 0 && <Button variant="ghost" size="sm" className="w-full mt-2 h-8 text-xs" onClick={() => onFiltersChange({
+              ...filters,
+              actions: []
+            })}>
+                    Clear Responses
+                  </Button>}
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  className="w-full mt-2 h-8 text-xs gap-1 text-muted-foreground" 
+                  onClick={() => setShowResponseTagsDialog(true)}
+                >
+                  <Settings2 className="h-3 w-3" />
+                  Manage Response Tags
+                </Button>
+              </PopoverContent>
+            </Popover>}
 
-        {/* Funnel Tag button - inline with other controls */}
-        {filterTagButton}
+          {/* Funnel Tag button - inline with other controls */}
+          {filterTagButton}
 
-        {hasFilters && <Button variant="ghost" size="sm" onClick={clearFilters} className="h-10 sm:h-9 px-2 text-xs shrink-0">
-            <X className="h-3.5 w-3.5 mr-1" />
-            Clear
-          </Button>}
+          {hasFilters && <Button variant="ghost" size="sm" onClick={clearFilters} className="h-10 sm:h-9 px-2 text-xs shrink-0">
+              <X className="h-3.5 w-3.5 mr-1" />
+              Clear
+            </Button>}
 
-        <Button variant="outline" size="sm" onClick={onExport} disabled={exporting || filteredCount === 0} className="h-10 sm:h-9 gap-1.5 shrink-0">
-          {exporting ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Download className="h-3.5 w-3.5" />}
-          {!isMobile && (exporting ? 'Exporting...' : `Export${filteredCount > 0 ? ` (${filteredCount})` : ''}`)}
-        </Button>
+          <Button variant="outline" size="sm" onClick={onExport} disabled={exporting || filteredCount === 0} className="h-10 sm:h-9 gap-1.5 shrink-0">
+            {exporting ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Download className="h-3.5 w-3.5" />}
+            {!isMobile && (exporting ? 'Exporting...' : `Export${filteredCount > 0 ? ` (${filteredCount})` : ''}`)}
+          </Button>
+        </div>
       </div>
-    </div>;
+
+      {/* Tag Management Dialogs */}
+      <ManageResponseTagsDialog open={showResponseTagsDialog} onOpenChange={setShowResponseTagsDialog} />
+      <ManageStageTagsDialog open={showStageTagsDialog} onOpenChange={setShowStageTagsDialog} />
+    </>
+  );
 }

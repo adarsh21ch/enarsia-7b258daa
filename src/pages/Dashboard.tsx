@@ -115,6 +115,7 @@ export default function Dashboard() {
     }
   }, [user, authLoading, navigate]);
 
+  // Only show loader on initial auth check, not for prospects (they have their own skeleton)
   if (authLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
