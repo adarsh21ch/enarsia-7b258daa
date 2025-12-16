@@ -56,6 +56,7 @@ export function LeaderTrackingFormatSettings({
   const {
     trackingFormat,
     refreshFormat,
+    triggerTeamRefresh,
     isRootLeader,
     directLeaderName,
     directLeaderId,
@@ -103,6 +104,7 @@ export function LeaderTrackingFormatSettings({
   const [newStageNonTrackingTag, setNewStageNonTrackingTag] = useState('');
   const [showSwitchConfirm, setShowSwitchConfirm] = useState(false);
   const [autoSaveStatus, setAutoSaveStatus] = useState<'idle' | 'saving' | 'saved'>('idle');
+  const [isSavingForTeam, setIsSavingForTeam] = useState(false);
 
   // Debounce timer ref
   const saveTimerRef = useRef<NodeJS.Timeout | null>(null);
@@ -251,6 +253,59 @@ export function LeaderTrackingFormatSettings({
     setAutoSaveStatus('saved');
     setTimeout(() => setAutoSaveStatus('idle'), 1500);
   }, [formatMode, leadsTrackingTags, leadsNonTrackingTags, stageTags, stageNonTrackingTags, onUpdateProfile, refreshFormat]);
+
+  // Save and trigger instant refresh for all team members
+  const handleSaveAndRefreshTeam = useCallback(async () => {
+    if (formatMode !== 'own') return;
+    setIsSavingForTeam(true);
+
+    try {
+      // Build response_labels with new structure
+      const validLeadsTags = leadsTrackingTags.filter(t => t.name.trim());
+      const responseLabelsData = {
+        tracking: validLeadsTags.map(t => ({
+          name: t.name.trim(),
+          isStageTag: t.isStageTag,
+          isFinalTarget: t.isFinalTarget
+        })),
+        nonTracking: leadsNonTrackingTags
+      };
+
+      // Build stage_labels with new structure
+      const validStageTags = stageTags.filter(t => t.name.trim());
+      const stageLabelsData = {
+        stages: validStageTags.map(s => ({
+          name: s.name.trim(),
+          isFinalTarget: s.isFinalTarget
+        })),
+        nonTracking: stageNonTrackingTags
+      };
+
+      // Save own profile first
+      await onUpdateProfile({
+        use_leader_stages: false,
+        response_labels: responseLabelsData as any,
+        stage_labels: stageLabelsData as any,
+        stage_count: validStageTags.length
+      });
+
+      // Trigger refresh for all team members
+      const success = await triggerTeamRefresh();
+      
+      refreshFormat();
+      
+      if (success) {
+        toast.success('Tags saved! All team members will see updates within seconds.');
+      } else {
+        toast.success('Tags saved for you.');
+      }
+    } catch (error) {
+      console.error('Error saving tags:', error);
+      toast.error('Failed to save tags');
+    } finally {
+      setIsSavingForTeam(false);
+    }
+  }, [formatMode, leadsTrackingTags, leadsNonTrackingTags, stageTags, stageNonTrackingTags, onUpdateProfile, triggerTeamRefresh, refreshFormat]);
 
   // Debounced auto-save
   const triggerAutoSave = useCallback(() => {
@@ -963,6 +1018,40 @@ export function LeaderTrackingFormatSettings({
                 </Button>
               </div>
             </div>
+          </div>
+
+          <Separator />
+
+          {/* Save & Update for Team Button */}
+          <div className="space-y-3">
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+              <Button 
+                onClick={handleSaveAndRefreshTeam}
+                disabled={isSavingForTeam}
+                className="flex-1 gap-2"
+              >
+                {isSavingForTeam ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    Saving & Updating Team...
+                  </>
+                ) : (
+                  <>
+                    <Users className="h-4 w-4" />
+                    Save & Update for Team
+                  </>
+                )}
+              </Button>
+              {autoSaveStatus === 'saved' && (
+                <div className="flex items-center gap-1 text-xs text-green-600">
+                  <Check className="h-3 w-3" />
+                  Auto-saved
+                </div>
+              )}
+            </div>
+            <p className="text-xs text-muted-foreground text-center">
+              Click to save your tags and instantly update all team members using your tracking format.
+            </p>
           </div>
         </div>
       )}

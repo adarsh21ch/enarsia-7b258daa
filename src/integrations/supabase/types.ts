@@ -322,6 +322,7 @@ export type Database = {
           root_leader_id: string | null
           stage_count: number
           stage_labels: Json | null
+          tags_refresh_token: string | null
           updated_at: string
           use_leader_stages: boolean
           user_id: string
@@ -343,6 +344,7 @@ export type Database = {
           root_leader_id?: string | null
           stage_count?: number
           stage_labels?: Json | null
+          tags_refresh_token?: string | null
           updated_at?: string
           use_leader_stages?: boolean
           user_id: string
@@ -364,6 +366,7 @@ export type Database = {
           root_leader_id?: string | null
           stage_count?: number
           stage_labels?: Json | null
+          tags_refresh_token?: string | null
           updated_at?: string
           use_leader_stages?: boolean
           user_id?: string
