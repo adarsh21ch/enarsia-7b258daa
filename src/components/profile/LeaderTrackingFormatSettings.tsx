@@ -555,119 +555,7 @@ export function LeaderTrackingFormatSettings({
 
       <Separator />
 
-      {/* Funnel Tracking Configuration */}
-      <div className="rounded-2xl p-4 bg-card border border-border/50 space-y-4">
-        <div className="flex items-center gap-2">
-          <Settings2 className="h-4 w-4 text-primary" />
-          <Label className="text-sm font-semibold">Funnel Tracking Configuration</Label>
-          {isFunnelConfigReadOnly && (
-            <Badge variant="secondary" className="text-[10px] ml-auto">🔒 From Leader</Badge>
-          )}
-        </div>
-        
-        <p className="text-xs text-muted-foreground">
-          {isFunnelConfigReadOnly 
-            ? <>Managed by Leader: <span className="font-semibold text-primary">{leaderFunnelConfigName || directLeaderName || 'Your Leader'}</span>. These settings update automatically when your leader makes changes.</>
-            : "Set your funnel start date and how many days each funnel lasts. The system will auto-calculate which funnel number each lead belongs to."
-          }
-        </p>
-
-        {/* Show leader config as read-only when using leader format */}
-        {isFunnelConfigReadOnly ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {/* Day 1 Start Date - Read Only */}
-            <div className="space-y-2">
-              <Label className="text-xs text-muted-foreground">Funnel Day 1 Start Date</Label>
-              <div className="flex items-center gap-2 h-10 px-3 rounded-md border border-border bg-muted/50">
-                <CalendarDays className="h-4 w-4 text-muted-foreground" />
-                <span className="text-sm">
-                  {leaderFunnelConfig?.day_1_start 
-                    ? format(new Date(leaderFunnelConfig.day_1_start), 'MMM d, yyyy')
-                    : 'Not set by leader'
-                  }
-                </span>
-              </div>
-            </div>
-
-            {/* Funnel Length - Read Only */}
-            <div className="space-y-2">
-              <Label className="text-xs text-muted-foreground">Days per Funnel</Label>
-              <div className="flex items-center gap-2 h-10 px-3 rounded-md border border-border bg-muted/50">
-                <span className="text-sm">
-                  {leaderFunnelConfig?.funnel_length 
-                    ? `${leaderFunnelConfig.funnel_length} ${leaderFunnelConfig.funnel_length === 1 ? 'day' : 'days'}`
-                    : 'Not set by leader'
-                  }
-                </span>
-              </div>
-            </div>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {/* Day 1 Start Date - Editable */}
-            <div className="space-y-2">
-              <Label className="text-xs text-muted-foreground">Funnel Day 1 Start Date</Label>
-              <Popover open={datePickerOpen} onOpenChange={setDatePickerOpen}>
-                <PopoverTrigger asChild>
-                  <Button 
-                    variant="outline" 
-                    className={cn(
-                      "w-full justify-start text-left font-normal h-10",
-                      !funnelDay1Date && "text-muted-foreground"
-                    )}
-                  >
-                    <CalendarDays className="mr-2 h-4 w-4" />
-                    {funnelDay1Date ? format(funnelDay1Date, 'MMM d, yyyy') : 'Select start date'}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0 z-50" align="start">
-                  <Calendar
-                    mode="single"
-                    selected={funnelDay1Date}
-                    onSelect={handleFunnelDateSelect}
-                    initialFocus
-                    className={cn("p-3 pointer-events-auto")}
-                  />
-                </PopoverContent>
-              </Popover>
-            </div>
-
-            {/* Funnel Length - Editable */}
-            <div className="space-y-2">
-              <Label className="text-xs text-muted-foreground">Days per Funnel</Label>
-              <Select value={funnelLength.toString()} onValueChange={handleFunnelLengthChange}>
-                <SelectTrigger className="w-full h-10">
-                  <SelectValue placeholder="Select days" />
-                </SelectTrigger>
-                <SelectContent className="bg-popover border border-border z-50">
-                  {[1, 2, 3, 4, 5, 6, 7].map((num) => (
-                    <SelectItem key={num} value={num.toString()}>
-                      {num} {num === 1 ? 'day' : 'days'}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-        )}
-
-        {/* Current config summary */}
-        {(isFunnelConfigReadOnly ? leaderFunnelConfig?.day_1_start : funnelDay1Date) && (
-          <div className="p-3 bg-muted/30 rounded-lg">
-            <p className="text-xs text-muted-foreground">
-              <span className="font-medium text-foreground">Current config:</span>{' '}
-              {isFunnelConfigReadOnly 
-                ? `${leaderFunnelConfig?.funnel_length || 3}-day funnels starting from ${leaderFunnelConfig?.day_1_start ? format(new Date(leaderFunnelConfig.day_1_start), 'MMMM d, yyyy') : 'N/A'}`
-                : `${funnelLength}-day funnels starting from ${funnelDay1Date ? format(funnelDay1Date, 'MMMM d, yyyy') : 'N/A'}`
-              }
-            </p>
-          </div>
-        )}
-      </div>
-
-      <Separator />
-
-      {/* Leader ID Input Section */}
+      {/* Leader ID Input Section - MOVED ABOVE FUNNEL CONFIG */}
       <div className="rounded-2xl p-4 bg-card border border-border/50 space-y-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
@@ -805,6 +693,118 @@ export function LeaderTrackingFormatSettings({
                 {savingLeader ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Connect'}
               </Button>
             </div>
+          </div>
+        )}
+      </div>
+
+      <Separator />
+
+      {/* Funnel Tracking Configuration - MOVED BELOW LEADER ID INPUT */}
+      <div className="rounded-2xl p-4 bg-card border border-border/50 space-y-4">
+        <div className="flex items-center gap-2">
+          <Settings2 className="h-4 w-4 text-primary" />
+          <Label className="text-sm font-semibold">Funnel Tracking Configuration</Label>
+          {isFunnelConfigReadOnly && (
+            <Badge variant="secondary" className="text-[10px] ml-auto">🔒 From Leader</Badge>
+          )}
+        </div>
+        
+        <p className="text-xs text-muted-foreground">
+          {isFunnelConfigReadOnly 
+            ? <>Managed by Leader: <span className="font-semibold text-primary">{leaderFunnelConfigName || directLeaderName || 'Your Leader'}</span>. These settings update automatically when your leader makes changes.</>
+            : "Set your funnel start date and how many days each funnel lasts. The system will auto-calculate which funnel number each lead belongs to."
+          }
+        </p>
+
+        {/* Show leader config as read-only when using leader format */}
+        {isFunnelConfigReadOnly ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {/* Day 1 Start Date - Read Only */}
+            <div className="space-y-2">
+              <Label className="text-xs text-muted-foreground">Funnel Day 1 Start Date</Label>
+              <div className="flex items-center gap-2 h-10 px-3 rounded-md border border-border bg-muted/50">
+                <CalendarDays className="h-4 w-4 text-muted-foreground" />
+                <span className="text-sm">
+                  {leaderFunnelConfig?.day_1_start 
+                    ? format(new Date(leaderFunnelConfig.day_1_start), 'MMM d, yyyy')
+                    : 'Not set by leader'
+                  }
+                </span>
+              </div>
+            </div>
+
+            {/* Funnel Length - Read Only */}
+            <div className="space-y-2">
+              <Label className="text-xs text-muted-foreground">Days per Funnel</Label>
+              <div className="flex items-center gap-2 h-10 px-3 rounded-md border border-border bg-muted/50">
+                <span className="text-sm">
+                  {leaderFunnelConfig?.funnel_length 
+                    ? `${leaderFunnelConfig.funnel_length} ${leaderFunnelConfig.funnel_length === 1 ? 'day' : 'days'}`
+                    : 'Not set by leader'
+                  }
+                </span>
+              </div>
+            </div>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {/* Day 1 Start Date - Editable */}
+            <div className="space-y-2">
+              <Label className="text-xs text-muted-foreground">Funnel Day 1 Start Date</Label>
+              <Popover open={datePickerOpen} onOpenChange={setDatePickerOpen}>
+                <PopoverTrigger asChild>
+                  <Button 
+                    variant="outline" 
+                    className={cn(
+                      "w-full justify-start text-left font-normal h-10",
+                      !funnelDay1Date && "text-muted-foreground"
+                    )}
+                  >
+                    <CalendarDays className="mr-2 h-4 w-4" />
+                    {funnelDay1Date ? format(funnelDay1Date, 'MMM d, yyyy') : 'Select start date'}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0 z-50" align="start">
+                  <Calendar
+                    mode="single"
+                    selected={funnelDay1Date}
+                    onSelect={handleFunnelDateSelect}
+                    initialFocus
+                    className={cn("p-3 pointer-events-auto")}
+                  />
+                </PopoverContent>
+              </Popover>
+            </div>
+
+            {/* Funnel Length - Editable */}
+            <div className="space-y-2">
+              <Label className="text-xs text-muted-foreground">Days per Funnel</Label>
+              <Select value={funnelLength.toString()} onValueChange={handleFunnelLengthChange}>
+                <SelectTrigger className="w-full h-10">
+                  <SelectValue placeholder="Select days" />
+                </SelectTrigger>
+                <SelectContent className="bg-popover border border-border z-50">
+                  {[1, 2, 3, 4, 5, 6, 7].map((num) => (
+                    <SelectItem key={num} value={num.toString()}>
+                      {num} {num === 1 ? 'day' : 'days'}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+        )}
+
+        {/* Current config summary */}
+        {(isFunnelConfigReadOnly ? leaderFunnelConfig?.day_1_start : funnelDay1Date) && (
+          <div className="p-3 bg-muted/30 rounded-lg">
+            <p className="text-xs text-muted-foreground">
+              <span className="font-medium text-foreground">Current config:</span>{' '}
+              {isFunnelConfigReadOnly 
+                ? `${leaderFunnelConfig?.funnel_length || 3}-day funnels starting from ${leaderFunnelConfig?.day_1_start ? format(new Date(leaderFunnelConfig.day_1_start), 'MMMM d, yyyy') : 'N/A'}`
+                : `${funnelLength}-day funnels starting from ${funnelDay1Date ? format(funnelDay1Date, 'MMMM d, yyyy') : 'N/A'}`
+              }
+            </p>
           </div>
         )}
       </div>

@@ -170,7 +170,7 @@ export default function Profile() {
                     <p className="text-sm text-muted-foreground truncate">{user.email}</p>
                   </div>
                   {/* Level dropdown in top-right */}
-                  <ProfileLevelDropdown currentLevelId={profile?.level_id || null} leaderNeveraiId={profile?.leaders_id_of_my_leader || null} userId={user.id} onLevelChange={() => refetch?.()} />
+                  <ProfileLevelDropdown currentLevelId={profile?.level_id || null} leaderNeveraiId={profile?.root_leader_id || profile?.leaders_id_of_my_leader || null} userId={user.id} onLevelChange={() => refetch?.()} />
                 </div>
                 {profile?.neverai_id && <div className="flex items-center gap-1.5 mt-2">
                     <p className="text-xs text-primary font-medium">

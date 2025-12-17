@@ -54,13 +54,16 @@ export function useFunnelConfig() {
     
     const { data: profile } = await supabase
       .from('profiles')
-      .select('leaders_id_of_my_leader, use_leader_stages')
+      .select('leaders_id_of_my_leader, root_leader_id, use_leader_stages')
       .eq('user_id', user.id)
       .maybeSingle();
     
-    if (profile?.leaders_id_of_my_leader && profile?.use_leader_stages) {
+    // Use root_leader_id first, fallback to direct leader
+    const configLeaderId = profile?.root_leader_id || profile?.leaders_id_of_my_leader;
+    
+    if (configLeaderId && profile?.use_leader_stages) {
       setUseLeaderConfig(true);
-      await fetchLeaderConfigInternal(profile.leaders_id_of_my_leader);
+      await fetchLeaderConfigInternal(configLeaderId);
     } else {
       setUseLeaderConfig(false);
       setLeaderConfig(null);
@@ -73,26 +76,26 @@ export function useFunnelConfig() {
   const fetchLeaderConfigInternal = async (leaderNeveraiId: string) => {
     if (!leaderNeveraiId) return null;
     
-    // Get the leader's profile (user_id and display_name)
-    const { data: leaderProfile, error: profileError } = await supabase
-      .from('profiles')
-      .select('user_id, display_name')
-      .ilike('neverai_id', leaderNeveraiId)
-      .maybeSingle();
+    // Get the leader's profile using RPC (bypasses RLS)
+    const { data: leaderData, error: rpcError } = await supabase
+      .rpc('get_user_by_neverai_id', { target_neverai_id: leaderNeveraiId });
     
-    if (profileError || !leaderProfile) {
-      console.error('Error fetching leader profile:', profileError);
+    if (rpcError || !leaderData || leaderData.length === 0) {
+      console.error('Error fetching leader profile:', rpcError);
       return null;
     }
     
-    setLeaderName(leaderProfile.display_name);
-    setLeaderUserId(leaderProfile.user_id);
+    const leaderUserId = leaderData[0].user_id;
+    const leaderDisplayName = leaderData[0].display_name;
+    
+    setLeaderName(leaderDisplayName);
+    setLeaderUserId(leaderUserId);
     
     // Fetch their funnel config
     const { data, error } = await supabase
       .from('funnel_configs')
       .select('*')
-      .eq('user_id', leaderProfile.user_id)
+      .eq('user_id', leaderUserId)
       .order('created_at', { ascending: false })
       .limit(1)
       .maybeSingle();
