@@ -17,12 +17,17 @@ export interface Prospect {
   email?: string | null;
   notes?: string | null;
   funnel_stage?: FunnelStage | null;
+  funnel_stage_at?: string | null;
   action_taken?: ExtendedActionTaken | null;
+  action_taken_at?: string | null;
   prospect_status?: ProspectStatus | null;
   priority?: PriorityLevel | null;
   date_added: string;
-  last_contact_date?: string | null;
   updated_at: string;
+
+  // Stable ordering (drag & drop)
+  sort_order?: number | null;
+
   // Database fields
   sheet_id?: string | null;
   batch_date?: string | null;
@@ -34,8 +39,12 @@ export interface Prospect {
   enrollment_status?: EnrollmentStatus | null;
   instagram?: string | null;
   profession?: string | null;
+
   // Personal tags (private to user, NOT for analytics)
   personal_tags?: string[] | null;
+
+  // Legacy/optional UI fields
+  last_contact_date?: string | null;
 }
 
 export interface Sheet {

@@ -389,19 +389,37 @@ export function ProspectTable({
   // Get tracking tags from profile
   const { callingTrackingTags, stageTrackingTags } = useTrackingTags();
 
-  // For DUPLICATING: Show prospects in BOTH tabs if they have the active filter tag
+  // For DUPLICATING: Calling tab keeps ALL leads in a stable order
   const callingProspects = useMemo(() => {
     return prospects;
   }, [prospects]);
   
-  // Filter prospects: show only those whose action_taken matches the Funnel Tag
+  // Funnel tab list order: when a lead gets the Funnel Tag, it should appear as a "new entry"
+  // at the bottom (stable order by action_taken_at ASC).
   const funnelProspects = useMemo(() => {
-    if (!leadsStageTag) {
-      // No funnel tag set - show empty or fallback to old behavior
-      return prospects.filter(p => p.enrollment_status === 'Enrolled' || p.funnel_stage);
-    }
-    // New behavior: show only prospects with the Funnel Tag as their Response
-    return prospects.filter(p => p.action_taken === leadsStageTag);
+    const base = (() => {
+      if (!leadsStageTag) {
+        // No funnel tag set - show empty or fallback to old behavior
+        return prospects.filter(p => p.enrollment_status === 'Enrolled' || p.funnel_stage);
+      }
+      // New behavior: show only leads with the Funnel Tag as their Response
+      return prospects.filter(p => p.action_taken === leadsStageTag);
+    })();
+
+    // Stable funnel ordering: oldest tagged first, newest tagged last (bottom)
+    return [...base].sort((a, b) => {
+      const aTagAt = (a as any).action_taken_at as string | null | undefined;
+      const bTagAt = (b as any).action_taken_at as string | null | undefined;
+      const aTagTime = aTagAt ? new Date(aTagAt).getTime() : 0;
+      const bTagTime = bTagAt ? new Date(bTagAt).getTime() : 0;
+      if (aTagTime !== bTagTime) return aTagTime - bTagTime;
+
+      const aAdded = new Date(a.date_added).getTime();
+      const bAdded = new Date(b.date_added).getTime();
+      if (aAdded !== bAdded) return aAdded - bAdded;
+
+      return a.id.localeCompare(b.id);
+    });
   }, [prospects, leadsStageTag]);
 
   // Get base prospects based on filter mode

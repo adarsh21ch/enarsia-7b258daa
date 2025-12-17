@@ -12,6 +12,27 @@ const mapDbProspect = (dbProspect: any): Prospect => ({
   prospect_status: mapOldStatusToNew(dbProspect.prospect_status),
 });
 
+// Stable ordering helper:
+// - NEVER reorder based on tags/updated_at
+// - Keep custom drag order if sort_order exists
+// - Otherwise keep creation order (date_added) with deterministic tiebreaker (id)
+const stableProspectCompare = (a: any, b: any) => {
+  const aOrder = a.sort_order ?? null;
+  const bOrder = b.sort_order ?? null;
+
+  if (aOrder !== null || bOrder !== null) {
+    if (aOrder === null) return 1;
+    if (bOrder === null) return -1;
+    if (aOrder !== bOrder) return aOrder - bOrder;
+  }
+
+  const aAdded = new Date(a.date_added).getTime();
+  const bAdded = new Date(b.date_added).getTime();
+  if (aAdded !== bAdded) return aAdded - bAdded;
+
+  return String(a.id).localeCompare(String(b.id));
+};
+
 const PROSPECTS_CACHE_KEY = 'nevorai-prospects-cache';
 const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
 
@@ -44,7 +65,7 @@ export function ProspectsProvider({ children }: { children: ReactNode }) {
         const { data, timestamp } = JSON.parse(cached);
         // Use cache if less than TTL old
         if (data && Array.isArray(data) && Date.now() - timestamp < CACHE_TTL) {
-          return data;
+          return [...data].sort(stableProspectCompare);
         }
       }
     } catch (e) {
@@ -93,19 +114,21 @@ export function ProspectsProvider({ children }: { children: ReactNode }) {
     }
     
     try {
-      // Stable ordering: date_added ASC ensures row order stays fixed after tag updates
+      // Stable ordering: date_added ASC (and id ASC for deterministic ties)
       const { data, error } = await supabase
         .from('prospects')
         .select('id, name, phone, address, age_or_dob, gender, instagram, profession, why_need, notes, funnel_stage, action_taken, prospect_status, priority, personal_tags, sheet_id, batch_date, date_added, updated_at, sort_order, funnel_stage_at, action_taken_at')
         .eq('user_id', user.id)
-        .order('date_added', { ascending: true });
+        .order('date_added', { ascending: true })
+        .order('id', { ascending: true });
 
       if (error) {
         console.error('Error fetching prospects:', error);
         if (!initialLoadDone) toast.error('Failed to fetch prospects');
       } else {
         const decryptedData = await decryptBatch(data || []);
-        setProspects(decryptedData.map(mapDbProspect));
+        const sorted = decryptedData.map(mapDbProspect).sort(stableProspectCompare);
+        setProspects(sorted);
       }
     } catch (err) {
       console.error('Error in fetchProspects:', err);
