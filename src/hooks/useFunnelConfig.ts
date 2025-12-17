@@ -51,16 +51,16 @@ export function useFunnelConfig() {
   // Fetch user profile to check leader connection and use_leader_stages
   const checkLeaderConnection = useCallback(async () => {
     if (!user) return;
-    
+
     const { data: profile } = await supabase
       .from('profiles')
       .select('leaders_id_of_my_leader, root_leader_id, use_leader_stages')
       .eq('user_id', user.id)
       .maybeSingle();
-    
-    // Use root_leader_id first, fallback to direct leader
-    const configLeaderId = profile?.root_leader_id || profile?.leaders_id_of_my_leader;
-    
+
+    // Funnel configuration inherits from the DIRECT leader (fallback to root only if direct is missing)
+    const configLeaderId = profile?.leaders_id_of_my_leader || profile?.root_leader_id;
+
     if (configLeaderId && profile?.use_leader_stages) {
       setUseLeaderConfig(true);
       await fetchLeaderConfigInternal(configLeaderId);
@@ -72,25 +72,50 @@ export function useFunnelConfig() {
     }
   }, [user]);
 
+  // Re-fetch leader connection as soon as the user's leader_id/use_leader_stages changes
+  useEffect(() => {
+    if (!user) return;
+
+    const channel = supabase
+      .channel(`profile-leader-connection-${user.id}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'profiles',
+          filter: `user_id=eq.${user.id}`,
+        },
+        () => {
+          checkLeaderConnection();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [user, checkLeaderConnection]);
+
   // Internal function to fetch leader's funnel config
   const fetchLeaderConfigInternal = async (leaderNeveraiId: string) => {
     if (!leaderNeveraiId) return null;
-    
+
     // Get the leader's profile using RPC (bypasses RLS)
     const { data: leaderData, error: rpcError } = await supabase
       .rpc('get_user_by_neverai_id', { target_neverai_id: leaderNeveraiId });
-    
+
     if (rpcError || !leaderData || leaderData.length === 0) {
       console.error('Error fetching leader profile:', rpcError);
       return null;
     }
-    
+
     const leaderUserId = leaderData[0].user_id;
     const leaderDisplayName = leaderData[0].display_name;
-    
+
     setLeaderName(leaderDisplayName);
     setLeaderUserId(leaderUserId);
-    
+
     // Fetch their funnel config
     const { data, error } = await supabase
       .from('funnel_configs')
@@ -99,12 +124,12 @@ export function useFunnelConfig() {
       .order('created_at', { ascending: false })
       .limit(1)
       .maybeSingle();
-      
+
     if (error) {
       console.error('Error fetching leader funnel config:', error);
       return null;
     }
-    
+
     if (data) {
       const leaderFunnelConfig: FunnelConfig = {
         id: data.id,
@@ -116,7 +141,7 @@ export function useFunnelConfig() {
       setLeaderConfig(leaderFunnelConfig);
       return leaderFunnelConfig;
     }
-    
+
     setLeaderConfig(null);
     return null;
   };

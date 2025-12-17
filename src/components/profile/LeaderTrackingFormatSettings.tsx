@@ -83,12 +83,16 @@ export function LeaderTrackingFormatSettings({
     isReadOnly: isFunnelConfigReadOnly,
     hasLeaderConfig,
   } = useFunnelConfig();
-  
+
+  // Profile-driven lock: if user is connected to a leader and using leader format, config must be read-only
+  const isLeaderLocked = !!profile?.leaders_id_of_my_leader && !!profile?.use_leader_stages;
+  const funnelLocked = isLeaderLocked || isFunnelConfigReadOnly;
+
   const [copiedId, setCopiedId] = useState(false);
   const [leaderIdInput, setLeaderIdInput] = useState('');
   const [savingLeader, setSavingLeader] = useState(false);
   const [formatMode, setFormatMode] = useState<'leader' | 'own'>('leader');
-  
+
   // Funnel config state
   const [funnelDay1Date, setFunnelDay1Date] = useState<Date | undefined>(undefined);
   const [funnelLength, setFunnelLength] = useState<number>(3);
@@ -205,7 +209,7 @@ export function LeaderTrackingFormatSettings({
 
   // Handle funnel Day 1 date change
   const handleFunnelDateSelect = async (date: Date | undefined) => {
-    if (!date) return;
+    if (!date || funnelLocked) return;
     setFunnelDay1Date(date);
     setDatePickerOpen(false);
     await saveFunnelConfig({
@@ -218,6 +222,7 @@ export function LeaderTrackingFormatSettings({
 
   // Handle funnel length change
   const handleFunnelLengthChange = async (value: string) => {
+    if (funnelLocked) return;
     const length = parseInt(value);
     setFunnelLength(length);
     if (funnelDay1Date) {
@@ -706,16 +711,16 @@ export function LeaderTrackingFormatSettings({
         <div className="flex items-center gap-2">
           <Settings2 className="h-4 w-4 text-primary" />
           <Label className="text-sm font-semibold">Funnel Tracking Configuration</Label>
-          {isFunnelConfigReadOnly && (
+          {funnelLocked && (
             <Badge variant="secondary" className="text-[10px] ml-auto gap-1">
               <RefreshCw className="h-3 w-3" />
               Synced with Leader
             </Badge>
           )}
         </div>
-        
+
         <p className="text-xs text-muted-foreground">
-          {isFunnelConfigReadOnly 
+          {funnelLocked 
             ? <>Managed by Leader: <span className="font-semibold text-primary">{leaderFunnelConfigName || directLeaderName || 'Your Leader'}</span>. These settings update automatically when your leader makes changes.</>
             : "Set your funnel start date and how many days each funnel lasts. The system will auto-calculate which funnel number each lead belongs to."
           }
@@ -733,7 +738,7 @@ export function LeaderTrackingFormatSettings({
               <Skeleton className="h-10 w-full" />
             </div>
           </div>
-        ) : isFunnelConfigReadOnly ? (
+        ) : funnelLocked ? (
           <div className="space-y-4">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {/* Day 1 Start Date - Read Only */}
