@@ -112,10 +112,10 @@ export function useProfile() {
   }, [fetchProfile]);
 
   const updateProfile = async (updates: ProfileUpdate) => {
-    if (!user || !profile) return { error: 'No user or profile' };
+    if (!user) return { error: 'No user' };
 
     setUpdating(true);
-    
+
     // Encrypt phone if provided
     let encryptedUpdates = { ...updates };
     if (updates.phone) {
@@ -126,10 +126,32 @@ export function useProfile() {
         // Continue with unencrypted if encryption fails
       }
     }
-    
+
+    // Ensure a profile row exists (new users may call update before initial fetch finishes)
+    const { data: existingProfile, error: existingError } = await supabase
+      .from('profiles')
+      .select('id')
+      .eq('user_id', user.id)
+      .maybeSingle();
+
+    if (existingError) {
+      toast({ title: 'Error updating profile', variant: 'destructive' });
+      setUpdating(false);
+      return { error: existingError };
+    }
+
+    if (!existingProfile) {
+      const { error: insertError } = await supabase.from('profiles').insert({ user_id: user.id } as any);
+      if (insertError) {
+        toast({ title: 'Error updating profile', variant: 'destructive' });
+        setUpdating(false);
+        return { error: insertError };
+      }
+    }
+
     const { error } = await supabase
       .from('profiles')
-      .update(encryptedUpdates)
+      .update(encryptedUpdates as any)
       .eq('user_id', user.id);
 
     if (error) {
@@ -138,8 +160,13 @@ export function useProfile() {
       return { error };
     }
 
-    // Store decrypted version in state for display
-    setProfile(prev => prev ? { ...prev, ...updates } : null);
+    // Store decrypted version in state for display (or refetch if we don't have it yet)
+    if (profile) {
+      setProfile(prev => (prev ? { ...prev, ...updates } : null));
+    } else {
+      await fetchProfile();
+    }
+
     toast({ title: 'Profile updated successfully' });
     setUpdating(false);
     return { error: null };
