@@ -33,7 +33,9 @@ interface ProspectRowProps {
   showSelection?: boolean;
   isSelected?: boolean;
   onToggleSelect?: () => void;
-  tabType?: 'leads' | 'stage'; // New prop to determine which tag system to use
+  tabType?: 'leads' | 'stage';
+  isLastContacted?: boolean;
+  onMarkLastContacted?: () => void;
 }
 
 export function ProspectRow({ 
@@ -53,7 +55,13 @@ export function ProspectRow({
   isSelected = false,
   onToggleSelect,
   tabType = 'leads',
+  isLastContacted = false,
+  onMarkLastContacted,
 }: ProspectRowProps) {
+  // Optimistic state for instant UI updates
+  const [optimisticAction, setOptimisticAction] = useState<ExtendedActionTaken | null>(null);
+  const [optimisticStage, setOptimisticStage] = useState<string | null>(null);
+  
   const { 
     // Leads tags
     leadsTrackingTags,
@@ -86,7 +94,16 @@ export function ProspectRow({
     ? [...stageTagNames, ...stageNonTrackingTags]
     : FUNNEL_STAGES;
 
-  const handleActionChange = (value: ExtendedActionTaken) => {
+  // Clear optimistic state when prospect updates from server
+  useEffect(() => {
+    setOptimisticAction(null);
+    setOptimisticStage(null);
+  }, [prospect.action_taken, prospect.funnel_stage]);
+
+  const handleActionChange = async (value: ExtendedActionTaken) => {
+    // Optimistic update - update UI immediately
+    setOptimisticAction(value);
+    
     const updates: Partial<Prospect> = {};
     updates.action_taken = value;
     
@@ -95,10 +112,17 @@ export function ProspectRow({
       handleTargetComplete(value, prospect.name);
     }
     
-    onUpdate(prospect.id, updates);
+    const result = await onUpdate(prospect.id, updates);
+    // If update fails, revert optimistic state
+    if (!result) {
+      setOptimisticAction(null);
+    }
   };
 
-  const handleStageChange = (value: string) => {
+  const handleStageChange = async (value: string) => {
+    // Optimistic update - update UI immediately
+    setOptimisticStage(value);
+    
     const updates: Partial<Prospect> = { funnel_stage: value };
     
     // Check if this is the final Stage target tag
@@ -106,7 +130,11 @@ export function ProspectRow({
       handleTargetComplete(value, prospect.name);
     }
     
-    onUpdate(prospect.id, updates);
+    const result = await onUpdate(prospect.id, updates);
+    // If update fails, revert optimistic state
+    if (!result) {
+      setOptimisticStage(null);
+    }
   };
 
   const cleanPhoneNumber = (phone: string) => phone.replace(/[^0-9+]/g, '');
@@ -114,27 +142,39 @@ export function ProspectRow({
   const openWhatsApp = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
+    onMarkLastContacted?.();
     window.open(`https://wa.me/${cleanPhoneNumber(prospect.phone)}`, '_blank');
   };
 
   const openCall = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
+    onMarkLastContacted?.();
     window.open(`tel:${cleanPhoneNumber(prospect.phone)}`, '_self');
   };
 
   const getActionDisplayValue = (): ExtendedActionTaken | null => {
+    // Use optimistic value if available, otherwise use prospect value
+    if (optimisticAction !== null) return optimisticAction;
     if (prospect.action_taken === 'Enrollment') return 'Enrollment';
     return prospect.action_taken || null;
   };
+  
+  const getStageDisplayValue = (): string | null => {
+    // Use optimistic value if available, otherwise use prospect value
+    if (optimisticStage !== null) return optimisticStage;
+    return prospect.funnel_stage || null;
+  };
 
-  // Row background color
-  const bgColor = isEven ? "bg-card" : "bg-muted";
+  // Row background color - highlight if last contacted
+  const bgColor = isLastContacted 
+    ? "bg-primary/10 animate-pulse" 
+    : isEven ? "bg-card" : "bg-muted";
 
   const renderCell = (columnId: string) => {
     const cellClass = cn(
       "px-2 py-2.5 whitespace-nowrap",
-      bgColor,
+      isLastContacted ? "bg-primary/10" : (isEven ? "bg-card" : "bg-muted"),
       isMobileTable && "text-xs px-1.5 py-2"
     );
     
@@ -156,11 +196,8 @@ export function ProspectRow({
         );
       
       case 'name':
-        // Compact info line: "Age, Location"
-        const ageValue = (prospect as any).age_or_dob || '';
-        const locationValue = prospect.address || '';
-        const infoParts = [ageValue, locationValue].filter(Boolean);
-        const infoLine = infoParts.length > 0 ? infoParts.join(', ') : '';
+        // Show phone number below name (not age/state)
+        const phoneDisplay = prospect.phone || '';
         
         return (
           <td 
@@ -189,13 +226,13 @@ export function ProspectRow({
                     <ChevronDown className={cn("h-3 w-3", isMobileTable && "h-2.5 w-2.5")} />
                   </span>
                 </button>
-                {/* Compact info: Age, Location */}
-                {infoLine && (
+                {/* Phone number below name */}
+                {phoneDisplay && (
                   <div className={cn(
                     "text-muted-foreground truncate pl-1",
                     isMobileTable ? "text-[9px]" : "text-[10px]"
-                  )} title={infoLine}>
-                    {infoLine}
+                  )} title={phoneDisplay}>
+                    {phoneDisplay}
                   </div>
                 )}
               </div>
@@ -235,7 +272,7 @@ export function ProspectRow({
             onPointerDown={(e) => e.stopPropagation()}
           >
             <InlineSelect 
-              value={prospect.funnel_stage} 
+              value={getStageDisplayValue()} 
               options={stageOptions} 
               onChange={handleStageChange} 
               renderValue={(value) => <StageBadge stage={value} />} 

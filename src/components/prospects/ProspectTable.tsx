@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback, useEffect } from 'react';
+import { useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import { Prospect, FunnelStage, ProspectQuality, Sheet, ExtendedActionTaken, FUNNEL_STAGES, EXTENDED_ACTIONS } from '@/types/prospect';
 import { SortableProspectRow } from './SortableProspectRow';
 import { MobileProspectCard } from './MobileProspectCard';
@@ -124,6 +124,8 @@ interface TableContentProps {
   stageTrackingTags: string[];
   onOpenResponseTagsDialog: () => void;
   onOpenStageTagsDialog: () => void;
+  lastContactedId: string | null;
+  onMarkLastContacted: (id: string) => void;
 }
 
 function TableContent({
@@ -156,6 +158,8 @@ function TableContent({
   stageTrackingTags,
   onOpenResponseTagsDialog,
   onOpenStageTagsDialog,
+  lastContactedId,
+  onMarkLastContacted,
 }: TableContentProps) {
   return (
     <div className="relative">
@@ -278,6 +282,8 @@ function TableContent({
                 isSelected={selectedIds.has(prospect.id)} 
                 onToggleSelect={() => handleToggleSelect(prospect.id)}
                 disableDrag={!enableDragAndDrop}
+                isLastContacted={lastContactedId === prospect.id}
+                onMarkLastContacted={() => onMarkLastContacted(prospect.id)}
               />
             ))
           )}
@@ -333,6 +339,10 @@ export function ProspectTable({
   });
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+  
+  // Last contacted tracking - highlight the prospect for 3 seconds after call/WhatsApp
+  const [lastContactedId, setLastContactedId] = useState<string | null>(null);
+  const lastContactedTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   
   // Tag management dialogs
   const [responseTagsDialogOpen, setResponseTagsDialogOpen] = useState(false);
@@ -551,6 +561,17 @@ export function ProspectTable({
       setExpandedRowId(prev => prev === prospectId ? null : prospectId);
     }
   }, [expandedRowId]);
+
+  // Last contacted handler - highlights the prospect for 3 seconds
+  const handleMarkLastContacted = useCallback((id: string) => {
+    if (lastContactedTimeoutRef.current) {
+      clearTimeout(lastContactedTimeoutRef.current);
+    }
+    setLastContactedId(id);
+    lastContactedTimeoutRef.current = setTimeout(() => {
+      setLastContactedId(null);
+    }, 3000);
+  }, []);
 
   // Selection mode handlers
   const handleEnterSelectMode = (sheetId: string | null) => {
@@ -865,6 +886,8 @@ export function ProspectTable({
                 stageTrackingTags={stageTrackingTags}
                 onOpenResponseTagsDialog={() => setResponseTagsDialogOpen(true)}
                 onOpenStageTagsDialog={() => setStageTagsDialogOpen(true)}
+                lastContactedId={lastContactedId}
+                onMarkLastContacted={handleMarkLastContacted}
               />
             </SortableContext>
           </DndContext>
@@ -899,6 +922,8 @@ export function ProspectTable({
             stageTrackingTags={stageTrackingTags}
             onOpenResponseTagsDialog={() => setResponseTagsDialogOpen(true)}
             onOpenStageTagsDialog={() => setStageTagsDialogOpen(true)}
+            lastContactedId={lastContactedId}
+            onMarkLastContacted={handleMarkLastContacted}
           />
         )}
       </div>

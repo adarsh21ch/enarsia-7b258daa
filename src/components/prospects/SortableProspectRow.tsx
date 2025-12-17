@@ -19,6 +19,8 @@ interface SortableProspectRowProps {
   isSelected?: boolean;
   onToggleSelect?: () => void;
   disableDrag?: boolean;
+  isLastContacted?: boolean;
+  onMarkLastContacted?: () => void;
 }
 
 export function SortableProspectRow(props: SortableProspectRowProps) {

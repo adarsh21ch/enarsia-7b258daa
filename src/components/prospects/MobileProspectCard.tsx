@@ -21,10 +21,16 @@ interface MobileProspectCardProps {
   isCalling: boolean;
   onUpdate: (id: string, updates: Partial<Prospect>) => Promise<Prospect | null>;
   onDelete: (id: string) => Promise<boolean>;
+  isLastContacted?: boolean;
+  onMarkLastContacted?: () => void;
 }
 
-export function MobileProspectCard({ prospect, index, isCalling, onUpdate, onDelete }: MobileProspectCardProps) {
+export function MobileProspectCard({ prospect, index, isCalling, onUpdate, onDelete, isLastContacted = false, onMarkLastContacted }: MobileProspectCardProps) {
   const [isExpanded, setIsExpanded] = useState(false);
+  // Optimistic state for instant UI updates
+  const [optimisticAction, setOptimisticAction] = useState<ExtendedActionTaken | null>(null);
+  const [optimisticStage, setOptimisticStage] = useState<string | null>(null);
+  
 const [localData, setLocalData] = useState({
     name: prospect.name,
     phone: prospect.phone,
@@ -77,6 +83,9 @@ const [localData, setLocalData] = useState({
       why_need: prospect.why_need || '',
       notes: prospect.notes || '',
     });
+    // Clear optimistic state when prospect updates
+    setOptimisticAction(null);
+    setOptimisticStage(null);
   }, [prospect.id]); // Only reset when lead ID changes
 
   const prospectActivities = activities
@@ -88,12 +97,14 @@ const [localData, setLocalData] = useState({
   const openWhatsApp = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
+    onMarkLastContacted?.();
     window.open(`https://wa.me/${cleanPhoneNumber(prospect.phone)}`, '_blank');
   };
 
   const openCall = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
+    onMarkLastContacted?.();
     window.open(`tel:${cleanPhoneNumber(prospect.phone)}`, '_self');
   };
 
@@ -103,8 +114,11 @@ const [localData, setLocalData] = useState({
     setIsDeleting(false);
   };
 
-  // Handle action change with Leads target completion check
-  const handleActionChange = (value: ExtendedActionTaken) => {
+  // Handle action change with Leads target completion check + optimistic update
+  const handleActionChange = async (value: ExtendedActionTaken) => {
+    // Optimistic update
+    setOptimisticAction(value);
+    
     const updates: Partial<Prospect> = {};
     updates.action_taken = value as ActionTaken;
     
@@ -113,11 +127,17 @@ const [localData, setLocalData] = useState({
       handleTargetComplete(value, prospect.name);
     }
     
-    onUpdate(prospect.id, updates);
+    const result = await onUpdate(prospect.id, updates);
+    if (!result) {
+      setOptimisticAction(null);
+    }
   };
 
-  // Handle stage change with Stage target completion check
-  const handleStageChange = (value: string) => {
+  // Handle stage change with Stage target completion check + optimistic update
+  const handleStageChange = async (value: string) => {
+    // Optimistic update
+    setOptimisticStage(value);
+    
     const updates: Partial<Prospect> = { funnel_stage: value };
     
     // Check if this is the final Stage target tag
@@ -125,11 +145,20 @@ const [localData, setLocalData] = useState({
       handleTargetComplete(value, prospect.name);
     }
     
-    onUpdate(prospect.id, updates);
+    const result = await onUpdate(prospect.id, updates);
+    if (!result) {
+      setOptimisticStage(null);
+    }
   };
 
   const getActionDisplayValue = (): ExtendedActionTaken | null => {
+    if (optimisticAction !== null) return optimisticAction;
     return prospect.action_taken || null;
+  };
+  
+  const getStageDisplayValue = (): string | null => {
+    if (optimisticStage !== null) return optimisticStage;
+    return prospect.funnel_stage || null;
   };
 
   const handleFieldUpdate = (field: keyof Prospect, value: any) => {
@@ -151,8 +180,11 @@ const [localData, setLocalData] = useState({
 
 
   return (
-    <div className="bg-card rounded-xl border border-border/50 shadow-sm overflow-hidden">
-      {/* Header: Name + Phone + Age/Gender + Quick Actions */}
+    <div className={cn(
+      "bg-card rounded-xl border border-border/50 shadow-sm overflow-hidden transition-all duration-300",
+      isLastContacted && "ring-2 ring-primary/50 bg-primary/5"
+    )}>
+      {/* Header: Name + Phone + Quick Actions */}
       <div className="p-4 border-b border-border/30">
         <div className="flex items-start justify-between gap-3">
           <div className="flex-1 min-w-0">
@@ -175,20 +207,13 @@ const [localData, setLocalData] = useState({
                 )} />
               </button>
             </div>
-            <div className="flex items-center gap-2 flex-wrap">
-              <button 
-                onClick={openCall}
-                className="text-sm text-muted-foreground font-medium hover:text-accent transition-colors text-left"
-              >
-                {localData.phone}
-              </button>
-              <span className="text-xs text-muted-foreground">
-                Age: {(prospect as any).age_or_dob || '–'}
-              </span>
-              <span className="text-xs text-muted-foreground">
-                Gender: {(prospect as any).gender || '–'}
-              </span>
-            </div>
+            {/* Phone number only - no age/gender */}
+            <button 
+              onClick={openCall}
+              className="text-sm text-muted-foreground font-medium hover:text-accent transition-colors text-left"
+            >
+              {localData.phone}
+            </button>
           </div>
           <div className="flex items-center gap-1">
             <Button variant="outline" size="icon" className="h-10 w-10" onClick={openCall}>
@@ -205,7 +230,7 @@ const [localData, setLocalData] = useState({
       <div className="px-4 py-3 flex flex-wrap items-center gap-2 bg-muted/10">
         {!isCalling && (
           <InlineSelect<FunnelStage>
-            value={prospect.funnel_stage}
+            value={getStageDisplayValue() as FunnelStage}
             options={stageOptions as FunnelStage[]}
             onChange={handleStageChange}
             renderValue={(value) => <StageBadge stage={value} />}
