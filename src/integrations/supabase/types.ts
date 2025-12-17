@@ -678,6 +678,10 @@ export type Database = {
         }
         Returns: boolean
       }
+      is_in_downline: {
+        Args: { _target_user_id: string; _viewer_id: string }
+        Returns: boolean
+      }
       update_leader_hierarchy: {
         Args: { p_leader_neverai_id: string; p_user_id: string }
         Returns: Json
