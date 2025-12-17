@@ -76,23 +76,24 @@ export function ProspectsProvider({ children }: { children: ReactNode }) {
     }
   }, [prospects, user, initialLoadDone]);
 
+  // Stable fetch function - no prospects.length dependency to avoid infinite loops
   const fetchProspects = useCallback(async (isBackground = false) => {
     if (!user) {
       setLoading(false);
       return;
     }
     
-    // Don't show loading spinner for background refreshes
-    if (!isBackground && prospects.length === 0) {
-      setLoading(true);
-    }
-    
     // Prevent concurrent fetches
     if (isRefreshing.current) return;
     isRefreshing.current = true;
     
+    // Only show loading on initial load (not background refresh)
+    if (!isBackground && !initialLoadDone) {
+      setLoading(true);
+    }
+    
     try {
-      // Stable ordering: date_added ASC ensures new leads go to end and order stays fixed
+      // Stable ordering: date_added ASC ensures row order stays fixed after tag updates
       const { data, error } = await supabase
         .from('prospects')
         .select('id, name, phone, address, age_or_dob, gender, instagram, profession, why_need, notes, funnel_stage, action_taken, prospect_status, priority, personal_tags, sheet_id, batch_date, date_added, updated_at, sort_order, funnel_stage_at, action_taken_at')
@@ -113,15 +114,26 @@ export function ProspectsProvider({ children }: { children: ReactNode }) {
       setInitialLoadDone(true);
       isRefreshing.current = false;
     }
-  }, [user, decryptBatch, initialLoadDone, prospects.length]);
+  }, [user, decryptBatch]); // Removed initialLoadDone and prospects.length to prevent infinite loops
 
-  // Initial fetch and user change handling
+  // Initial fetch and user change handling - run only when user changes
   useEffect(() => {
-    if (user && currentUserId.current !== user.id) {
+    if (!user) {
+      // User logged out - clear everything
+      hasFetched.current = false;
+      currentUserId.current = null;
+      setProspects([]);
+      setLoading(false);
+      setInitialLoadDone(false);
+      sessionStorage.removeItem(PROSPECTS_CACHE_KEY);
+      return;
+    }
+    
+    // User changed - invalidate cache if different user
+    if (currentUserId.current !== user.id) {
       currentUserId.current = user.id;
       hasFetched.current = false;
       
-      // Check cache validity
       try {
         const cached = sessionStorage.getItem(PROSPECTS_CACHE_KEY);
         if (cached) {
@@ -134,18 +146,12 @@ export function ProspectsProvider({ children }: { children: ReactNode }) {
       } catch (e) { /* ignore */ }
     }
     
-    if (user && !hasFetched.current) {
+    // Fetch if not already fetched for this user
+    if (!hasFetched.current) {
       hasFetched.current = true;
       fetchProspects();
-    } else if (!user) {
-      hasFetched.current = false;
-      currentUserId.current = null;
-      setProspects([]);
-      setLoading(false);
-      setInitialLoadDone(false);
-      sessionStorage.removeItem(PROSPECTS_CACHE_KEY);
     }
-  }, [user, fetchProspects]);
+  }, [user?.id]); // Only depend on user.id, not fetchProspects to prevent loops
 
   // Optimistic update - instant UI feedback
   const optimisticUpdate = useCallback((id: string, updates: Partial<Prospect>) => {
@@ -197,6 +203,10 @@ export function ProspectsProvider({ children }: { children: ReactNode }) {
   const updateProspect = useCallback(async (id: string, updates: Partial<Prospect>) => {
     if (!user) return null;
 
+    // Store original for potential revert
+    const originalProspect = prospects.find(p => p.id === id);
+    if (!originalProspect) return null;
+
     const dbUpdates: Record<string, any> = {};
     
     if (updates.name !== undefined) dbUpdates.name = updates.name;
@@ -231,8 +241,21 @@ export function ProspectsProvider({ children }: { children: ReactNode }) {
     if (updates.personal_tags !== undefined) dbUpdates.personal_tags = updates.personal_tags;
 
     if (Object.keys(dbUpdates).length === 0) {
-      return prospects.find(p => p.id === id) || null;
+      return originalProspect;
     }
+
+    // Optimistic update - update local state immediately
+    const optimisticUpdates = { ...updates };
+    if (updates.funnel_stage !== undefined) {
+      optimisticUpdates.funnel_stage = updates.funnel_stage;
+    }
+    if (updates.action_taken !== undefined) {
+      optimisticUpdates.action_taken = updates.action_taken;
+    }
+    
+    setProspects(prev => prev.map(p => 
+      p.id === id ? { ...p, ...optimisticUpdates } : p
+    ));
 
     const { data, error } = await supabase
       .from('prospects')
@@ -243,20 +266,26 @@ export function ProspectsProvider({ children }: { children: ReactNode }) {
       .maybeSingle();
 
     if (error) {
-      // Revert optimistic update on error
-      fetchProspects(true);
-      toast.error('Failed to update prospect');
+      // Revert optimistic update on error - restore original
+      setProspects(prev => prev.map(p => 
+        p.id === id ? originalProspect : p
+      ));
+      toast.error('Failed to update');
       return null;
     }
 
+    // Update with server response (includes updated_at, etc.)
     const updatedProspect = data 
-      ? mapDbProspect({ ...data, phone: updates.phone || prospects.find(p => p.id === id)?.phone }) 
-      : { ...prospects.find(p => p.id === id), ...updates };
+      ? mapDbProspect({ ...data, phone: updates.phone || originalProspect.phone }) 
+      : { ...originalProspect, ...updates };
     
-    // Only show toast for non-background updates
-    toast.success('Updated');
+    // Update local state with server data
+    setProspects(prev => prev.map(p => 
+      p.id === id ? updatedProspect : p
+    ));
+    
     return updatedProspect as Prospect;
-  }, [user, encryptFields, prospects, fetchProspects]);
+  }, [user, encryptFields, prospects]);
 
   const deleteProspect = useCallback(async (id: string) => {
     const { error } = await supabase
