@@ -70,7 +70,7 @@ export default function Tracking() {
   const { prospects, refetch } = useProspects();
   const { isPro, loading: subLoading } = useSubscription();
   const prospectLimit = useProspectLimit(prospects, isPro);
-  const { config, loading: configLoading, saveConfig, getEffectiveConfig, isReadOnly: isFunnelReadOnly } = useFunnelConfig();
+  const { config, loading: configLoading, saveConfig, getEffectiveConfig, isReadOnly: isFunnelReadOnly, leaderName: funnelLeaderName } = useFunnelConfig();
   const effectiveConfig = getEffectiveConfig();
   const [activeTab, setActiveTab] = useState('leads');
   const [showDay1Setup, setShowDay1Setup] = useState(false);
@@ -164,6 +164,14 @@ export default function Tracking() {
                   You've reached the free limit of {prospectLimit.limit} prospects. Subscribe to Pro Monthly (₹249, non-refundable) or Pro Yearly (₹2,999, 7-day refund window) to unlock TrackUp and all premium features.
                 </p>
               </div>
+            </div>
+          )}
+
+          {/* Sync indicator for connected members */}
+          {activeTab === 'funnel' && isFunnelReadOnly && funnelLeaderName && (
+            <div className="text-xs text-muted-foreground text-center mb-2 flex items-center justify-center gap-1.5">
+              <Lock className="h-3 w-3" />
+              Using {funnelLeaderName}'s funnel configuration
             </div>
           )}
 

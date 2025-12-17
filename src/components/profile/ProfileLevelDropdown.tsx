@@ -48,25 +48,24 @@ export function ProfileLevelDropdown({
         return;
       }
 
-      // Find the leader's user_id from their neverai_id
-      const { data: leaderProfile, error: profileError } = await supabase
-        .from('profiles')
-        .select('user_id')
-        .ilike('neverai_id', leaderNeveraiId)
-        .maybeSingle();
+      // Find the leader's user_id from their neverai_id using RPC (bypasses RLS)
+      const { data: leaderData, error: rpcError } = await supabase
+        .rpc('get_user_by_neverai_id', { target_neverai_id: leaderNeveraiId });
 
-      if (profileError || !leaderProfile) {
+      if (rpcError || !leaderData || leaderData.length === 0) {
         setLevels([]);
         setNoLevelsMessage('Leader not found');
         setLoading(false);
         return;
       }
 
+      const leaderUserId = leaderData[0].user_id;
+
       // Fetch levels for this leader
       const { data: levelsData, error: levelsError } = await supabase
         .from('leader_levels')
         .select('*')
-        .eq('leader_id', leaderProfile.user_id)
+        .eq('leader_id', leaderUserId)
         .order('position', { ascending: true });
 
       if (levelsError) {
