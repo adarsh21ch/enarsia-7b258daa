@@ -89,7 +89,7 @@ export function FunnelTracker({
   leaderFunnelConfig 
 }: FunnelTrackerProps) {
   const { prospects, loading: prospectsLoading } = useProspects();
-  const { config, loading: configLoading, saveConfig } = useFunnelConfig();
+  const { config, loading: configLoading, saveConfig, getEffectiveConfig, isReadOnly, leaderName } = useFunnelConfig();
   
   const [fromStage, setFromStage] = useState<StageKey>('enrollment');
   const [toStage, setToStage] = useState<StageKey>('day_1');
@@ -99,8 +99,12 @@ export function FunnelTracker({
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
   const [datePickerOpen, setDatePickerOpen] = useState(false);
 
-  // Determine which config to use: leader's when viewing team, own otherwise
-  const activeConfig = isViewingTeam && leaderFunnelConfig ? leaderFunnelConfig : config;
+  // Determine which config to use: 
+  // 1. When viewing team data, use leaderFunnelConfig prop
+  // 2. Otherwise, use getEffectiveConfig() which returns leader's config if connected
+  const activeConfig = isViewingTeam && leaderFunnelConfig 
+    ? leaderFunnelConfig 
+    : getEffectiveConfig();
 
   // Initialize from active config
   useEffect(() => {

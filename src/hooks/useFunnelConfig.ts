@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 
@@ -7,13 +7,18 @@ export interface FunnelConfig {
   funnel_name: string;
   funnel_length: number;
   day_1_start: string;
+  user_id?: string;
 }
 
 export function useFunnelConfig() {
   const [config, setConfig] = useState<FunnelConfig | null>(null);
   const [leaderConfig, setLeaderConfig] = useState<FunnelConfig | null>(null);
+  const [leaderName, setLeaderName] = useState<string | null>(null);
+  const [leaderUserId, setLeaderUserId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [useLeaderConfig, setUseLeaderConfig] = useState(false);
   const { user } = useAuth();
+  const subscriptionRef = useRef<any>(null);
 
   const fetchConfig = useCallback(async () => {
     if (!user) return;
@@ -35,23 +40,144 @@ export function useFunnelConfig() {
         funnel_name: data.funnel_name,
         funnel_length: data.funnel_length,
         day_1_start: data.day_1_start,
+        user_id: data.user_id,
       });
     } else {
-      // No config exists, set default
       setConfig(null);
     }
     setLoading(false);
   }, [user]);
 
+  // Fetch user profile to check leader connection and use_leader_stages
+  const checkLeaderConnection = useCallback(async () => {
+    if (!user) return;
+    
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('leaders_id_of_my_leader, use_leader_stages')
+      .eq('user_id', user.id)
+      .maybeSingle();
+    
+    if (profile?.leaders_id_of_my_leader && profile?.use_leader_stages) {
+      setUseLeaderConfig(true);
+      await fetchLeaderConfigInternal(profile.leaders_id_of_my_leader);
+    } else {
+      setUseLeaderConfig(false);
+      setLeaderConfig(null);
+      setLeaderName(null);
+      setLeaderUserId(null);
+    }
+  }, [user]);
+
+  // Internal function to fetch leader's funnel config
+  const fetchLeaderConfigInternal = async (leaderNeveraiId: string) => {
+    if (!leaderNeveraiId) return null;
+    
+    // Get the leader's profile (user_id and display_name)
+    const { data: leaderProfile, error: profileError } = await supabase
+      .from('profiles')
+      .select('user_id, display_name')
+      .ilike('neverai_id', leaderNeveraiId)
+      .maybeSingle();
+    
+    if (profileError || !leaderProfile) {
+      console.error('Error fetching leader profile:', profileError);
+      return null;
+    }
+    
+    setLeaderName(leaderProfile.display_name);
+    setLeaderUserId(leaderProfile.user_id);
+    
+    // Fetch their funnel config
+    const { data, error } = await supabase
+      .from('funnel_configs')
+      .select('*')
+      .eq('user_id', leaderProfile.user_id)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+      
+    if (error) {
+      console.error('Error fetching leader funnel config:', error);
+      return null;
+    }
+    
+    if (data) {
+      const leaderFunnelConfig: FunnelConfig = {
+        id: data.id,
+        funnel_name: data.funnel_name,
+        funnel_length: data.funnel_length,
+        day_1_start: data.day_1_start,
+        user_id: data.user_id,
+      };
+      setLeaderConfig(leaderFunnelConfig);
+      return leaderFunnelConfig;
+    }
+    
+    setLeaderConfig(null);
+    return null;
+  };
+
+  // Public function to fetch leader config (for manual calls)
+  const fetchLeaderConfig = useCallback(async (leaderNeveraiId: string): Promise<FunnelConfig | null> => {
+    return fetchLeaderConfigInternal(leaderNeveraiId);
+  }, []);
+
+  // Set up real-time subscription for leader's funnel config changes
+  useEffect(() => {
+    if (!leaderUserId || !useLeaderConfig) {
+      // Clean up subscription if leader disconnected
+      if (subscriptionRef.current) {
+        supabase.removeChannel(subscriptionRef.current);
+        subscriptionRef.current = null;
+      }
+      return;
+    }
+
+    // Subscribe to leader's funnel_configs changes
+    const channel = supabase
+      .channel(`leader-funnel-config-${leaderUserId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'funnel_configs',
+          filter: `user_id=eq.${leaderUserId}`,
+        },
+        (payload) => {
+          console.log('Leader funnel config changed:', payload);
+          if (payload.eventType === 'INSERT' || payload.eventType === 'UPDATE') {
+            const newData = payload.new as any;
+            setLeaderConfig({
+              id: newData.id,
+              funnel_name: newData.funnel_name,
+              funnel_length: newData.funnel_length,
+              day_1_start: newData.day_1_start,
+              user_id: newData.user_id,
+            });
+          }
+        }
+      )
+      .subscribe();
+
+    subscriptionRef.current = channel;
+
+    return () => {
+      supabase.removeChannel(channel);
+      subscriptionRef.current = null;
+    };
+  }, [leaderUserId, useLeaderConfig]);
+
   useEffect(() => {
     fetchConfig();
-  }, [fetchConfig]);
+    checkLeaderConnection();
+  }, [fetchConfig, checkLeaderConnection]);
 
   const saveConfig = async (newConfig: Omit<FunnelConfig, 'id'>) => {
-    if (!user) return;
+    if (!user) return false;
 
     if (config?.id) {
-      // Update existing
       const { error } = await supabase
         .from('funnel_configs')
         .update({
@@ -66,7 +192,6 @@ export function useFunnelConfig() {
         return false;
       }
     } else {
-      // Insert new
       const { data, error } = await supabase
         .from('funnel_configs')
         .insert({
@@ -88,6 +213,7 @@ export function useFunnelConfig() {
           funnel_name: data.funnel_name,
           funnel_length: data.funnel_length,
           day_1_start: data.day_1_start,
+          user_id: data.user_id,
         });
       }
     }
@@ -96,54 +222,18 @@ export function useFunnelConfig() {
     return true;
   };
 
-  // Fetch leader's funnel config by their neverai_id
-  const fetchLeaderConfig = useCallback(async (leaderNeveraiId: string): Promise<FunnelConfig | null> => {
-    if (!leaderNeveraiId) return null;
-    
-    // First, get the leader's user_id from their neverai_id
-    const { data: leaderProfile, error: profileError } = await supabase
-      .from('profiles')
-      .select('user_id')
-      .ilike('neverai_id', leaderNeveraiId)
-      .maybeSingle();
-    
-    if (profileError || !leaderProfile) {
-      console.error('Error fetching leader profile:', profileError);
-      return null;
+  // Get the effective config (leader's if connected and using leader format, otherwise own)
+  const getEffectiveConfig = useCallback((): FunnelConfig | null => {
+    if (useLeaderConfig && leaderConfig) {
+      return leaderConfig;
     }
-    
-    // Then fetch their funnel config
-    const { data, error } = await supabase
-      .from('funnel_configs')
-      .select('*')
-      .eq('user_id', leaderProfile.user_id)
-      .order('created_at', { ascending: false })
-      .limit(1)
-      .maybeSingle();
-      
-    if (error) {
-      console.error('Error fetching leader funnel config:', error);
-      return null;
-    }
-    
-    if (data) {
-      const leaderFunnelConfig: FunnelConfig = {
-        id: data.id,
-        funnel_name: data.funnel_name,
-        funnel_length: data.funnel_length,
-        day_1_start: data.day_1_start,
-      };
-      setLeaderConfig(leaderFunnelConfig);
-      return leaderFunnelConfig;
-    }
-    
-    setLeaderConfig(null);
-    return null;
-  }, []);
+    return config;
+  }, [useLeaderConfig, leaderConfig, config]);
 
-  // Get valid stages based on funnel length
+  // Get valid stages based on effective funnel length
   const getValidStages = (): string[] => {
-    const length = config?.funnel_length || 3;
+    const effectiveConfig = getEffectiveConfig();
+    const length = effectiveConfig?.funnel_length || 3;
     const baseStages: string[] = [];
     
     for (let i = 1; i <= length; i++) {
@@ -156,10 +246,15 @@ export function useFunnelConfig() {
   return { 
     config, 
     leaderConfig,
+    leaderName,
     loading, 
     saveConfig, 
     refetch: fetchConfig,
+    refetchLeaderConnection: checkLeaderConnection,
     fetchLeaderConfig,
     getValidStages,
+    getEffectiveConfig,
+    useLeaderConfig,
+    isReadOnly: useLeaderConfig && !!leaderConfig,
   };
 }

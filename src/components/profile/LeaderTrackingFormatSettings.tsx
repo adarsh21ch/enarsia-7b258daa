@@ -71,7 +71,16 @@ export function LeaderTrackingFormatSettings({
     deleteLevel
   } = useLeaderLevels();
   
-  const { config: funnelConfig, leaderConfig: leaderFunnelConfig, saveConfig: saveFunnelConfig, fetchLeaderConfig, loading: funnelConfigLoading } = useFunnelConfig();
+  const { 
+    config: funnelConfig, 
+    leaderConfig: leaderFunnelConfig, 
+    leaderName: leaderFunnelConfigName,
+    saveConfig: saveFunnelConfig, 
+    fetchLeaderConfig, 
+    refetchLeaderConnection,
+    loading: funnelConfigLoading,
+    isReadOnly: isFunnelConfigReadOnly,
+  } = useFunnelConfig();
   
   const [copiedId, setCopiedId] = useState(false);
   const [leaderIdInput, setLeaderIdInput] = useState('');
@@ -347,8 +356,12 @@ export function LeaderTrackingFormatSettings({
       await onUpdateProfile({
         use_leader_stages: true
       });
+      
+      // Refresh funnel config to get leader's settings
+      await refetchLeaderConnection();
+      
       refreshFormat();
-      toast.success('Connected to leader. You are now using their tracking format.');
+      toast.success('Connected to leader. You are now using their tracking format and funnel configuration.');
     }
     setSavingLeader(false);
   };
@@ -359,6 +372,8 @@ export function LeaderTrackingFormatSettings({
     await onUpdateProfile({
       use_leader_stages: false
     });
+    // Refresh funnel config to use own settings
+    await refetchLeaderConnection();
     refreshFormat();
   };
 
@@ -545,20 +560,20 @@ export function LeaderTrackingFormatSettings({
         <div className="flex items-center gap-2">
           <Settings2 className="h-4 w-4 text-primary" />
           <Label className="text-sm font-semibold">Funnel Tracking Configuration</Label>
-          {hasLeader && formatMode === 'leader' && (
-            <Badge variant="secondary" className="text-[10px] ml-auto">From leader</Badge>
+          {isFunnelConfigReadOnly && (
+            <Badge variant="secondary" className="text-[10px] ml-auto">🔒 From Leader</Badge>
           )}
         </div>
         
         <p className="text-xs text-muted-foreground">
-          {hasLeader && formatMode === 'leader' 
-            ? "Using your leader's funnel configuration. Disconnect to set your own."
+          {isFunnelConfigReadOnly 
+            ? <>Managed by Leader: <span className="font-semibold text-primary">{leaderFunnelConfigName || directLeaderName || 'Your Leader'}</span>. These settings update automatically when your leader makes changes.</>
             : "Set your funnel start date and how many days each funnel lasts. The system will auto-calculate which funnel number each lead belongs to."
           }
         </p>
 
         {/* Show leader config as read-only when using leader format */}
-        {hasLeader && formatMode === 'leader' ? (
+        {isFunnelConfigReadOnly ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {/* Day 1 Start Date - Read Only */}
             <div className="space-y-2">
@@ -637,11 +652,11 @@ export function LeaderTrackingFormatSettings({
         )}
 
         {/* Current config summary */}
-        {(hasLeader && formatMode === 'leader' ? leaderFunnelConfig?.day_1_start : funnelDay1Date) && (
+        {(isFunnelConfigReadOnly ? leaderFunnelConfig?.day_1_start : funnelDay1Date) && (
           <div className="p-3 bg-muted/30 rounded-lg">
             <p className="text-xs text-muted-foreground">
               <span className="font-medium text-foreground">Current config:</span>{' '}
-              {hasLeader && formatMode === 'leader' 
+              {isFunnelConfigReadOnly 
                 ? `${leaderFunnelConfig?.funnel_length || 3}-day funnels starting from ${leaderFunnelConfig?.day_1_start ? format(new Date(leaderFunnelConfig.day_1_start), 'MMMM d, yyyy') : 'N/A'}`
                 : `${funnelLength}-day funnels starting from ${funnelDay1Date ? format(funnelDay1Date, 'MMMM d, yyyy') : 'N/A'}`
               }

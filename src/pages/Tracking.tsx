@@ -70,13 +70,14 @@ export default function Tracking() {
   const { prospects, refetch } = useProspects();
   const { isPro, loading: subLoading } = useSubscription();
   const prospectLimit = useProspectLimit(prospects, isPro);
-  const { config, loading: configLoading, saveConfig } = useFunnelConfig();
+  const { config, loading: configLoading, saveConfig, getEffectiveConfig, isReadOnly: isFunnelReadOnly } = useFunnelConfig();
+  const effectiveConfig = getEffectiveConfig();
   const [activeTab, setActiveTab] = useState('leads');
   const [showDay1Setup, setShowDay1Setup] = useState(false);
 
-  // Handle tab change - show Day 1 setup if switching to funnel with no config
+  // Handle tab change - show Day 1 setup if switching to funnel with no config (and not read-only from leader)
   const handleTabChange = (newTab: string) => {
-    if (newTab === 'funnel' && !config && !configLoading) {
+    if (newTab === 'funnel' && !effectiveConfig && !configLoading && !isFunnelReadOnly) {
       setShowDay1Setup(true);
     }
     setActiveTab(newTab);
