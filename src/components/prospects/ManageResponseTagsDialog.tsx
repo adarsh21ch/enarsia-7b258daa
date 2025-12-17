@@ -7,7 +7,6 @@ import { Separator } from '@/components/ui/separator';
 import { AlertCircle, Plus, Trash2, Star, Tag, X, Loader2, Check, Lock, Pencil } from 'lucide-react';
 import { toast } from 'sonner';
 import { useTrackingFormatContext } from '@/contexts/TrackingFormatContext';
-import { useProfile } from '@/hooks/useProfile';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 
@@ -22,18 +21,49 @@ interface LeadsTagInput {
   isFinalTarget: boolean;
 }
 
+type ResponseLabelsJson = {
+  tracking: Array<string | { name: string; isStageTag?: boolean; isFinalTarget?: boolean }>;
+  nonTracking: string[];
+};
+
+function normalizeResponseTracking(existing: any): LeadsTagInput[] {
+  if (!existing) return [];
+
+  // New format
+  if (typeof existing === 'object' && !Array.isArray(existing) && Array.isArray(existing.tracking)) {
+    return (existing.tracking || [])
+      .map((t: any) => {
+        if (typeof t === 'string') return { name: t, isStageTag: false, isFinalTarget: false };
+        return {
+          name: t.name ?? String(t),
+          isStageTag: t.isStageTag ?? t.isFilter ?? false,
+          isFinalTarget: t.isFinalTarget ?? false,
+        };
+      })
+      .filter((t: any) => t?.name);
+  }
+
+  // Legacy string[]
+  if (Array.isArray(existing)) {
+    return existing
+      .map((name: any) => ({ name: String(name), isStageTag: false, isFinalTarget: false }))
+      .filter((t: any) => t?.name);
+  }
+
+  return [];
+}
+
 export function ManageResponseTagsDialog({ open, onOpenChange }: ManageResponseTagsDialogProps) {
   const { user } = useAuth();
-  const { 
-    refreshFormat, 
-    isRootLeader, 
-    isUsingLeaderFormat, 
+  const {
+    refreshFormat,
+    isRootLeader,
+    isUsingLeaderFormat,
     directLeaderName,
-    leadsTrackingTags, 
+    leadsTrackingTags,
     ownLeadsPersonalTags,
   } = useTrackingFormatContext();
-  const { updateProfile } = useProfile();
-  
+
   // Only for root leaders - tracking tag editing
   const [trackingTags, setTrackingTags] = useState<LeadsTagInput[]>([]);
   // For all users - personal tag editing
@@ -42,86 +72,155 @@ export function ManageResponseTagsDialog({ open, onOpenChange }: ManageResponseT
   const [editingPersonalIndex, setEditingPersonalIndex] = useState<number | null>(null);
   const [editingPersonalValue, setEditingPersonalValue] = useState('');
   const [autoSaveStatus, setAutoSaveStatus] = useState<'idle' | 'saving' | 'saved'>('idle');
-  
-  const saveTimerRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Initialize from tracking format
+  const saveTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const didInitRef = useRef(false);
+
+  const clearPendingSave = useCallback(() => {
+    if (saveTimerRef.current) {
+      clearTimeout(saveTimerRef.current);
+      saveTimerRef.current = null;
+    }
+  }, []);
+
+  // Initialize ONCE per open (avoid wiping local state during refreshFormat())
   useEffect(() => {
-    if (open) {
+    if (open && !didInitRef.current) {
       // Tracking tags - only editable if root leader
-      const tags = leadsTrackingTags.map(t => ({
+      const tags = leadsTrackingTags.map((t) => ({
         name: t.name,
         isStageTag: t.isStageTag,
         isFinalTarget: t.isFinalTarget,
       }));
       setTrackingTags(tags.length > 0 ? tags : [{ name: '', isStageTag: false, isFinalTarget: false }]);
-      
+
       // Personal tags - always user's own
       setPersonalTags(ownLeadsPersonalTags || []);
       setEditingPersonalIndex(null);
       setEditingPersonalValue('');
-    }
-  }, [leadsTrackingTags, ownLeadsPersonalTags, open]);
+      setNewPersonalTag('');
+      setAutoSaveStatus('idle');
 
-  // Auto-save function for personal tags - FETCH FRESH DATA to avoid stale cache
+      didInitRef.current = true;
+    }
+
+    if (!open) {
+      didInitRef.current = false;
+      clearPendingSave();
+    }
+  }, [open, leadsTrackingTags, ownLeadsPersonalTags, clearPendingSave]);
+
+  const saveResponseLabels = useCallback(
+    async (data: ResponseLabelsJson, extra?: { stage_count?: number }) => {
+      if (!user) return false;
+
+      const updates: any = {
+        response_labels: data as any,
+        ...extra,
+      };
+
+      const { data: existing, error: existingError } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('user_id', user.id)
+        .maybeSingle();
+
+      if (existingError) {
+        toast.error('Failed to save tags');
+        return false;
+      }
+
+      if (!existing) {
+        const { error: insertError } = await supabase
+          .from('profiles')
+          .insert({ user_id: user.id, ...updates } as any);
+        if (insertError) {
+          toast.error('Failed to save tags');
+          return false;
+        }
+        return true;
+      }
+
+      const { error: updateError } = await supabase
+        .from('profiles')
+        .update(updates)
+        .eq('user_id', user.id);
+
+      if (updateError) {
+        toast.error('Failed to save tags');
+        return false;
+      }
+
+      return true;
+    },
+    [user]
+  );
+
+  // Auto-save function for personal tags
   const autoSavePersonalTags = useCallback(async () => {
     if (!user) return;
-    
+
     setAutoSaveStatus('saving');
-    
-    // Fetch fresh profile data from database (not stale cached data)
+
+    // Preserve current tracking tags stored on the user profile (if any)
     const { data: freshProfile } = await supabase
       .from('profiles')
       .select('response_labels')
       .eq('user_id', user.id)
-      .single();
-    
-    const currentResponseLabels = freshProfile?.response_labels as any;
-    
-    const responseLabelsData = {
-      tracking: currentResponseLabels?.tracking || [],
+      .maybeSingle();
+
+    const existingTracking = normalizeResponseTracking((freshProfile as any)?.response_labels);
+
+    const responseLabelsData: ResponseLabelsJson = {
+      tracking: existingTracking.map((t) => ({
+        name: t.name,
+        isStageTag: t.isStageTag,
+        isFinalTarget: t.isFinalTarget,
+      })),
       nonTracking: personalTags,
     };
-    
-    await updateProfile({
-      response_labels: responseLabelsData as any,
-    });
-    
-    refreshFormat();
+
+    const ok = await saveResponseLabels(responseLabelsData);
+    if (!ok) {
+      setAutoSaveStatus('idle');
+      return;
+    }
+
+    await refreshFormat();
     setAutoSaveStatus('saved');
     setTimeout(() => setAutoSaveStatus('idle'), 1500);
-  }, [user, personalTags, updateProfile, refreshFormat]);
+  }, [user, personalTags, saveResponseLabels, refreshFormat]);
 
   // Auto-save function for root leader (tracking + personal)
   const autoSaveAll = useCallback(async () => {
     if (!isRootLeader) {
-      // Members only save personal tags
       await autoSavePersonalTags();
       return;
     }
-    
+
     setAutoSaveStatus('saving');
-    
-    const validTags = trackingTags.filter(t => t.name.trim());
-    
-    const responseLabelsData = {
-      tracking: validTags.map(t => ({
+
+    const validTags = trackingTags.filter((t) => t.name.trim());
+
+    const responseLabelsData: ResponseLabelsJson = {
+      tracking: validTags.map((t) => ({
         name: t.name.trim(),
         isStageTag: t.isStageTag,
         isFinalTarget: t.isFinalTarget,
       })),
       nonTracking: personalTags,
     };
-    
-    await updateProfile({
-      response_labels: responseLabelsData as any,
-      stage_count: validTags.length,
-    });
-    
-    refreshFormat();
+
+    const ok = await saveResponseLabels(responseLabelsData, { stage_count: validTags.length });
+    if (!ok) {
+      setAutoSaveStatus('idle');
+      return;
+    }
+
+    await refreshFormat();
     setAutoSaveStatus('saved');
     setTimeout(() => setAutoSaveStatus('idle'), 1500);
-  }, [trackingTags, personalTags, isRootLeader, updateProfile, refreshFormat, autoSavePersonalTags]);
+  }, [trackingTags, personalTags, isRootLeader, autoSavePersonalTags, saveResponseLabels, refreshFormat]);
 
   // Debounced auto-save
   const triggerAutoSave = useCallback(() => {
