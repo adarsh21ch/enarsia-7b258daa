@@ -1,13 +1,7 @@
 project_id = "kisankusogixarejjphi"
 
-[functions.migrate-encrypt-phones]
+[functions.encrypt-data]
 verify_jwt = true
-
-[functions.check-expired-subscriptions]
-verify_jwt = false
-
-[functions.send-expiry-reminder]
-verify_jwt = false
 
 [functions.razorpay-webhook]
 verify_jwt = false
