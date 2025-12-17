@@ -189,13 +189,15 @@ export function FunnelTracker({
             
             {/* Inline Funnel Setup - Day 1 Date Only */}
             <div className="flex items-center gap-2 bg-muted/40 rounded-xl px-3 py-1.5">
-              {isViewingTeam ? (
+              {(isViewingTeam || isReadOnly) ? (
                 <>
                   <Lock className="h-3.5 w-3.5 text-muted-foreground" />
                   <span className="text-xs font-medium text-muted-foreground">
                     Day 1: {selectedDate ? format(selectedDate, 'MMM d') : '–'}
                   </span>
-                  <Badge variant="secondary" className="text-[10px] px-1.5 py-0 h-4">From leader</Badge>
+                  <Badge variant="secondary" className="text-[10px] px-1.5 py-0 h-4">
+                    {isViewingTeam ? 'From leader' : `Synced with ${leaderName || 'Leader'}`}
+                  </Badge>
                 </>
               ) : (
                 <>
@@ -228,7 +230,7 @@ export function FunnelTracker({
           </div>
           <p className="text-xs text-muted-foreground mt-1">
             {activeConfig?.funnel_length || 3}-day funnel auto-calculated from Follow Up.
-            {isViewingTeam && ' (Using leader\'s config)'}
+            {(isViewingTeam || isReadOnly) && ' (Using leader\'s config)'}
           </p>
         </div>
         
