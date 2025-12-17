@@ -6,13 +6,14 @@ import { ProspectFilters } from './ProspectFilters';
 import { AddProspectDialog } from './AddProspectDialog';
 import { ImportExcelDialog } from './ImportExcelDialog';
 import { SheetTabs } from './SheetTabs';
-import { ColumnOptionsSheet } from './ColumnOptionsSheet';
+import { ManageResponseTagsDialog } from './ManageResponseTagsDialog';
+import { ManageStageTagsDialog } from './ManageStageTagsDialog';
 import { ChangeFilterTagButton } from './ChangeFilterTagButton';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
-import { Users, LayoutGrid, Table2, Undo2, Redo2, X, Trash2 } from 'lucide-react';
+import { Users, LayoutGrid, Table2, Undo2, Redo2, X, Trash2, Edit } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
@@ -121,6 +122,8 @@ interface TableContentProps {
   enableDragAndDrop: boolean;
   callingTrackingTags: string[];
   stageTrackingTags: string[];
+  onOpenResponseTagsDialog: () => void;
+  onOpenStageTagsDialog: () => void;
 }
 
 function TableContent({
@@ -151,6 +154,8 @@ function TableContent({
   enableDragAndDrop,
   callingTrackingTags,
   stageTrackingTags,
+  onOpenResponseTagsDialog,
+  onOpenStageTagsDialog,
 }: TableContentProps) {
   return (
     <div className="relative">
@@ -201,8 +206,24 @@ function TableContent({
                 >
                   <div className="flex items-center gap-0.5">
                     <span>{col.label}</span>
-                    {columnId === 'action' && <ColumnOptionsSheet columnType="action_taken" columnLabel="Response" defaultOptions={callingTrackingTags.length > 0 ? callingTrackingTags : EXTENDED_ACTIONS} />}
-                    {columnId === 'stage' && <ColumnOptionsSheet columnType="funnel_stage" columnLabel="Stage" defaultOptions={stageTrackingTags.length > 0 ? stageTrackingTags : FUNNEL_STAGES} />}
+                    {columnId === 'action' && (
+                      <button 
+                        className="p-0.5 rounded hover:bg-muted/50 transition-colors ml-1" 
+                        onClick={(e) => { e.stopPropagation(); onOpenResponseTagsDialog(); }}
+                        title="Manage Response Tags"
+                      >
+                        <Edit className="h-3 w-3 text-muted-foreground" />
+                      </button>
+                    )}
+                    {columnId === 'stage' && (
+                      <button 
+                        className="p-0.5 rounded hover:bg-muted/50 transition-colors ml-1" 
+                        onClick={(e) => { e.stopPropagation(); onOpenStageTagsDialog(); }}
+                        title="Manage Stage Tags"
+                      >
+                        <Edit className="h-3 w-3 text-muted-foreground" />
+                      </button>
+                    )}
                   </div>
                 </th>
               );
@@ -312,6 +333,10 @@ export function ProspectTable({
   });
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+  
+  // Tag management dialogs
+  const [responseTagsDialogOpen, setResponseTagsDialogOpen] = useState(false);
+  const [stageTagsDialogOpen, setStageTagsDialogOpen] = useState(false);
 
   // Undo/Redo
   const {
@@ -838,6 +863,8 @@ export function ProspectTable({
                 enableDragAndDrop={enableDragAndDrop}
                 callingTrackingTags={callingTrackingTags}
                 stageTrackingTags={stageTrackingTags}
+                onOpenResponseTagsDialog={() => setResponseTagsDialogOpen(true)}
+                onOpenStageTagsDialog={() => setStageTagsDialogOpen(true)}
               />
             </SortableContext>
           </DndContext>
@@ -870,6 +897,8 @@ export function ProspectTable({
             enableDragAndDrop={enableDragAndDrop}
             callingTrackingTags={callingTrackingTags}
             stageTrackingTags={stageTrackingTags}
+            onOpenResponseTagsDialog={() => setResponseTagsDialogOpen(true)}
+            onOpenStageTagsDialog={() => setStageTagsDialogOpen(true)}
           />
         )}
       </div>
@@ -899,6 +928,10 @@ export function ProspectTable({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Tag management dialogs */}
+      <ManageResponseTagsDialog open={responseTagsDialogOpen} onOpenChange={setResponseTagsDialogOpen} />
+      <ManageStageTagsDialog open={stageTagsDialogOpen} onOpenChange={setStageTagsDialogOpen} />
     </div>
   );
 }
