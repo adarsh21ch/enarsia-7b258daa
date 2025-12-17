@@ -114,11 +114,12 @@ export function ProspectsProvider({ children }: { children: ReactNode }) {
     }
     
     try {
-      // Stable ordering: date_added ASC (and id ASC for deterministic ties)
+      // Stable ordering: sort_order first, then date_added, then id for deterministic ties
       const { data, error } = await supabase
         .from('prospects')
         .select('id, name, phone, address, age_or_dob, gender, instagram, profession, why_need, notes, funnel_stage, action_taken, prospect_status, priority, personal_tags, sheet_id, batch_date, date_added, updated_at, sort_order, funnel_stage_at, action_taken_at')
         .eq('user_id', user.id)
+        .order('sort_order', { ascending: true, nullsFirst: false })
         .order('date_added', { ascending: true })
         .order('id', { ascending: true });
 

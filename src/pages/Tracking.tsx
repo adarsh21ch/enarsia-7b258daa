@@ -10,7 +10,7 @@ import { PullToRefreshIndicator } from '@/components/PullToRefreshIndicator';
 import { BottomViewToggle } from '@/components/ui/BottomViewToggle';
 import { Day1SetupDialog } from '@/components/trackup/Day1SetupDialog';
 import { Loader2, TrendingUp, Calendar, Lock, RefreshCw } from 'lucide-react';
-import { useProspects } from '@/hooks/useProspects';
+import { useGlobalProspects } from '@/contexts/ProspectsContext';
 import { useSubscription } from '@/hooks/useSubscription';
 import { useProspectLimit } from '@/hooks/useProspectLimit';
 import { useFunnelConfig } from '@/hooks/useFunnelConfig';
@@ -67,7 +67,7 @@ function usePullToRefresh(onRefresh: () => Promise<void>, threshold = 80) {
 export default function Tracking() {
   const navigate = useNavigate();
   const { user, loading: authLoading } = useAuth();
-  const { prospects, refetch } = useProspects();
+  const { prospects, refetch } = useGlobalProspects();
   const { isPro, loading: subLoading } = useSubscription();
   const prospectLimit = useProspectLimit(prospects, isPro);
   const { config, loading: configLoading, saveConfig, getEffectiveConfig, isReadOnly: isFunnelReadOnly, leaderName: funnelLeaderName } = useFunnelConfig();
