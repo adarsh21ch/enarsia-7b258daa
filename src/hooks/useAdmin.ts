@@ -55,55 +55,65 @@ export function useAdmin() {
 
     setLoading(true);
     
-    // Fetch all profiles (admin can see all via RLS policy)
-    const { data: profiles, error: profilesError } = await supabase
-      .from('profiles')
-      .select('user_id, display_name');
+    try {
+      // Fetch all profiles (admin can see all via RLS policy)
+      const { data: profiles, error: profilesError } = await supabase
+        .from('profiles')
+        .select('user_id, display_name');
 
-    if (profilesError) {
-      console.error('Error fetching profiles:', profilesError);
+      if (profilesError) {
+        console.error('Error fetching profiles:', profilesError);
+        setLoading(false);
+        return;
+      }
+
+      // Fetch all subscriptions (admin can see all via RLS policy)
+      const { data: subscriptions, error: subsError } = await supabase
+        .from('user_subscriptions')
+        .select('*');
+
+      if (subsError) {
+        console.error('Error fetching subscriptions:', subsError);
+      }
+
+      console.log('Fetched subscriptions:', subscriptions);
+
+      // Fetch emails for each user using security definer function
+      const usersWithSubs: UserWithSubscription[] = await Promise.all(
+        (profiles || []).map(async (profile: any) => {
+          const sub = subscriptions?.find((s: any) => s.user_id === profile.user_id);
+          
+          // Get email via security definer function
+          const { data: emailData } = await supabase
+            .rpc('get_user_email_for_admin', { target_user_id: profile.user_id });
+          
+          const email = emailData || profile.display_name || `User ${profile.user_id.slice(0, 8)}`;
+          
+          return {
+            id: profile.user_id,
+            email,
+            name: profile.display_name,
+            plan: (sub?.plan || 'free') as 'free' | 'pro',
+            is_admin_override: sub?.is_admin_override || false,
+            subscribed_at: sub?.subscribed_at || null,
+            expires_at: sub?.expires_at || null,
+          };
+        })
+      );
+
+      console.log('Setting users:', usersWithSubs);
+      setUsers(usersWithSubs);
+    } catch (err) {
+      console.error('Error in fetchAllUsers:', err);
+    } finally {
       setLoading(false);
-      return;
     }
-
-    // Fetch all subscriptions (admin can see all via RLS policy)
-    const { data: subscriptions, error: subsError } = await supabase
-      .from('user_subscriptions')
-      .select('*');
-
-    if (subsError) {
-      console.error('Error fetching subscriptions:', subsError);
-    }
-
-    // Fetch emails for each user using security definer function
-    const usersWithSubs: UserWithSubscription[] = await Promise.all(
-      (profiles || []).map(async (profile: any) => {
-        const sub = subscriptions?.find((s: any) => s.user_id === profile.user_id);
-        
-        // Get email via security definer function
-        const { data: emailData } = await supabase
-          .rpc('get_user_email_for_admin', { target_user_id: profile.user_id });
-        
-        const email = emailData || profile.display_name || `User ${profile.user_id.slice(0, 8)}`;
-        
-        return {
-          id: profile.user_id,
-          email,
-          name: profile.display_name,
-          plan: sub?.plan || 'free',
-          is_admin_override: sub?.is_admin_override || false,
-          subscribed_at: sub?.subscribed_at || null,
-          expires_at: sub?.expires_at || null,
-        };
-      })
-    );
-
-    setUsers(usersWithSubs);
-    setLoading(false);
   }, [isAdmin]);
 
   const updateUserSubscription = async (userId: string, plan: 'free' | 'pro', durationDays?: number) => {
     try {
+      console.log('Calling admin-update-subscription:', { userId, plan, durationDays });
+      
       const { data, error } = await supabase.functions.invoke('admin-update-subscription', {
         body: {
           user_id: userId,
@@ -112,9 +122,17 @@ export function useAdmin() {
         },
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Edge function error:', error);
+        throw error;
+      }
       
+      console.log('Edge function response:', data);
+      
+      // Wait a bit for database to sync, then refetch
+      await new Promise(resolve => setTimeout(resolve, 500));
       await fetchAllUsers();
+      
       return { error: null, data };
     } catch (err: any) {
       console.error('Error updating subscription:', err);

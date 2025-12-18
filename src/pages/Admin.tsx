@@ -41,6 +41,7 @@ export default function Admin() {
 
   // Filter users by search query (email or name)
   const filteredUsers = useMemo(() => {
+    console.log('Recomputing filteredUsers, users count:', users.length);
     if (!searchQuery.trim()) return users;
     const query = searchQuery.toLowerCase();
     return users.filter(u => 
@@ -48,6 +49,11 @@ export default function Admin() {
       (u.name && u.name.toLowerCase().includes(query))
     );
   }, [users, searchQuery]);
+
+  // Debug: log when users change
+  useEffect(() => {
+    console.log('Users state updated:', users.map(u => ({ id: u.id, plan: u.plan, expires_at: u.expires_at })));
+  }, [users]);
 
   // Check if user's Pro is expired
   const isExpired = (expiresAt: string | null) => {
