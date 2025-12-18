@@ -26,10 +26,10 @@ const PLAN_CONFIG = {
   },
   yearly: {
     amount: 299900, // ₹2,999 in paise
-    discountedAmount: 199900, // ₹1,999 in paise (with ACHIEVERS1000)
+    discountedAmount: 199900, // ₹1,999 in paise (with coupon)
     duration_days: 365,
     description: 'NevorAI Pro Yearly – ₹2,999 / year',
-    discountedDescription: 'NevorAI Pro Yearly – ₹1,999 / year (Achievers Club)',
+    discountedDescription: 'NevorAI Pro Yearly – ₹1,999 / year',
   },
 };
 
@@ -65,7 +65,7 @@ export function useRazorpay() {
 
     const planType = options?.planType || 'monthly';
     const couponCode = options?.couponCode;
-    const hasCoupon = planType === 'yearly' && couponCode === 'ACHIEVERS1000';
+    const hasCoupon = planType === 'yearly' && couponCode;
     
     const planConfig = PLAN_CONFIG[planType];
     const description = planType === 'yearly' && hasCoupon 
@@ -91,9 +91,19 @@ export function useRazorpay() {
         },
       });
 
-      if (error || !data) {
+      // Handle error response from edge function
+      if (error) {
         console.error('Order creation error:', error);
-        throw new Error(error?.message || 'Failed to create payment order');
+        throw new Error(error.message || 'Failed to create payment order');
+      }
+
+      // Check if the response contains an error (e.g., coupon limit reached)
+      if (data?.error) {
+        throw new Error(data.error);
+      }
+
+      if (!data?.order_id) {
+        throw new Error('Failed to create payment order');
       }
 
       const { order_id, amount, currency, key_id } = data;

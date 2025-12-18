@@ -14,23 +14,34 @@ export function UpgradeCard() {
   const [selectedPlan, setSelectedPlan] = useState<PlanType>('yearly');
   const [couponCode, setCouponCode] = useState('');
   const [couponApplied, setCouponApplied] = useState(false);
+  const [couponError, setCouponError] = useState('');
 
-  const isValidCoupon = couponCode.trim().toUpperCase() === 'ACHIEVERS1000';
-  const yearlyPrice = couponApplied && isValidCoupon ? 1999 : 2999;
+  const normalizedCoupon = couponCode.trim().toUpperCase();
+  const isValidCoupon = normalizedCoupon === 'DECEMBER1000';
+  const yearlyPrice = couponApplied ? 1999 : 2999;
   const yearlyPricePerMonth = Math.round(yearlyPrice / 12);
 
   const handleApplyCoupon = () => {
+    setCouponError('');
     if (isValidCoupon) {
       setCouponApplied(true);
+    } else {
+      setCouponError('Invalid coupon code. Please check and try again.');
     }
   };
 
   const handleSubscribe = (plan: PlanType) => {
     initiatePayment({
       planType: plan,
-      couponCode: plan === 'yearly' && couponApplied && isValidCoupon ? 'ACHIEVERS1000' : undefined,
+      couponCode: plan === 'yearly' && couponApplied ? 'DECEMBER1000' : undefined,
       onSuccess: () => {
         refetch();
+      },
+      onError: (error) => {
+        if (error?.includes('usage limit')) {
+          setCouponError('This coupon has reached its usage limit.');
+          setCouponApplied(false);
+        }
       },
     });
   };
@@ -118,7 +129,7 @@ export function UpgradeCard() {
               <p className="text-[10px] text-emerald-600 mt-0.5">7-day refund available</p>
             </div>
             <div className="text-right">
-              {couponApplied && isValidCoupon ? (
+              {couponApplied ? (
                 <>
                   <p className="font-bold text-lg text-foreground">₹1,999</p>
                   <p className="text-xs text-muted-foreground line-through">₹2,999</p>
@@ -161,26 +172,34 @@ export function UpgradeCard() {
           <div className="flex items-center gap-2 mb-2">
             <Tag className="h-4 w-4 text-amber-600" />
             <span className="text-xs font-medium text-amber-700 dark:text-amber-400">
-              Achievers Club members get ₹1,000 OFF on Pro Yearly. Ask your manager/upline for the special coupon code.
+              Have a coupon code? Enter it below to unlock special discounts on Pro Yearly.
             </span>
           </div>
           {!couponApplied ? (
-            <div className="flex gap-2">
-              <Input
-                placeholder="Enter coupon code"
-                value={couponCode}
-                onChange={(e) => setCouponCode(e.target.value)}
-                className="h-9 text-sm"
-              />
-              <Button 
-                variant="outline" 
-                size="sm" 
-                onClick={handleApplyCoupon}
-                disabled={!isValidCoupon}
-                className="shrink-0"
-              >
-                Apply
-              </Button>
+            <div className="space-y-2">
+              <div className="flex gap-2">
+                <Input
+                  placeholder="Enter coupon code"
+                  value={couponCode}
+                  onChange={(e) => {
+                    setCouponCode(e.target.value);
+                    setCouponError('');
+                  }}
+                  className="h-9 text-sm"
+                />
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={handleApplyCoupon}
+                  disabled={!couponCode.trim()}
+                  className="shrink-0"
+                >
+                  Apply
+                </Button>
+              </div>
+              {couponError && (
+                <p className="text-xs text-destructive">{couponError}</p>
+              )}
             </div>
           ) : (
             <div className="flex items-center justify-between">
@@ -189,7 +208,7 @@ export function UpgradeCard() {
               </span>
               <button 
                 type="button"
-                onClick={() => { setCouponApplied(false); setCouponCode(''); }}
+                onClick={() => { setCouponApplied(false); setCouponCode(''); setCouponError(''); }}
                 className="text-xs text-muted-foreground underline"
               >
                 Remove

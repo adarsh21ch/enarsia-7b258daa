@@ -55,6 +55,27 @@ export type Database = {
           },
         ]
       }
+      coupon_usages: {
+        Row: {
+          coupon_code: string
+          id: string
+          used_at: string
+          user_id: string
+        }
+        Insert: {
+          coupon_code: string
+          id?: string
+          used_at?: string
+          user_id: string
+        }
+        Update: {
+          coupon_code?: string
+          id?: string
+          used_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       custom_options: {
         Row: {
           color: string | null

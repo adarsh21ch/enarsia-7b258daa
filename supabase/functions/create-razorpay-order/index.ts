@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -13,16 +14,17 @@ const PLAN_CONFIG = {
   },
   yearly: {
     amount: 299900, // ₹2,999 in paise
-    discountedAmount: 199900, // ₹1,999 in paise (with ACHIEVERS1000)
+    discountedAmount: 199900, // ₹1,999 in paise (with coupon)
     duration_days: 365,
     description: 'NevorAI Pro Yearly',
   },
 };
 
-const VALID_COUPONS = {
-  'ACHIEVERS1000': {
+const VALID_COUPONS: Record<string, { discount: number; applicablePlans: string[]; maxUses: number }> = {
+  'DECEMBER1000': {
     discount: 100000, // ₹1,000 in paise
     applicablePlans: ['yearly'],
+    maxUses: 50,
   },
 };
 
@@ -35,6 +37,8 @@ serve(async (req) => {
   try {
     const RAZORPAY_KEY_ID = Deno.env.get('RAZORPAY_KEY_ID');
     const RAZORPAY_KEY_SECRET = Deno.env.get('RAZORPAY_KEY_SECRET');
+    const SUPABASE_URL = Deno.env.get('SUPABASE_URL');
+    const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
 
     if (!RAZORPAY_KEY_ID || !RAZORPAY_KEY_SECRET) {
       console.error('Missing Razorpay credentials');
@@ -43,6 +47,16 @@ serve(async (req) => {
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
+
+    if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
+      console.error('Missing Supabase credentials');
+      return new Response(
+        JSON.stringify({ error: 'Database service not configured' }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
     const { user_id, user_email, plan_type = 'monthly', coupon_code } = await req.json();
 
@@ -64,14 +78,54 @@ serve(async (req) => {
 
     if (coupon_code) {
       const upperCoupon = coupon_code.toUpperCase();
-      const couponConfig = VALID_COUPONS[upperCoupon as keyof typeof VALID_COUPONS];
+      const couponConfig = VALID_COUPONS[upperCoupon];
       
       if (couponConfig && couponConfig.applicablePlans.includes(selectedPlan)) {
+        // Check usage limit
+        const { count, error: countError } = await supabase
+          .from('coupon_usages')
+          .select('*', { count: 'exact', head: true })
+          .eq('coupon_code', upperCoupon);
+
+        if (countError) {
+          console.error('Error checking coupon usage:', countError);
+        }
+
+        const currentUsage = count || 0;
+        
+        if (currentUsage >= couponConfig.maxUses) {
+          console.log(`Coupon ${upperCoupon} has reached usage limit (${currentUsage}/${couponConfig.maxUses})`);
+          return new Response(
+            JSON.stringify({ error: 'This coupon has reached its usage limit.' }),
+            { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
+        }
+
+        // Check if user already used this coupon
+        const { data: existingUsage } = await supabase
+          .from('coupon_usages')
+          .select('id')
+          .eq('coupon_code', upperCoupon)
+          .eq('user_id', user_id)
+          .single();
+
+        if (existingUsage) {
+          console.log(`User ${user_id} has already used coupon ${upperCoupon}`);
+          return new Response(
+            JSON.stringify({ error: 'You have already used this coupon.' }),
+            { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
+        }
+
         finalAmount = planConfig.amount - couponConfig.discount;
         appliedCoupon = upperCoupon;
-        console.log(`Coupon ${upperCoupon} applied, discount: ${couponConfig.discount} paise`);
+        console.log(`Coupon ${upperCoupon} applied, discount: ${couponConfig.discount} paise, usage: ${currentUsage + 1}/${couponConfig.maxUses}`);
       } else {
         console.log(`Invalid or non-applicable coupon: ${coupon_code}`);
+        return new Response(
+          JSON.stringify({ error: 'Invalid coupon code. Please check and try again.' }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
       }
     }
 
@@ -118,6 +172,23 @@ serve(async (req) => {
 
     const order = await razorpayResponse.json();
     console.log(`Order created successfully: ${order.id}, plan: ${selectedPlan}, amount: ${finalAmount}`);
+
+    // Record coupon usage if coupon was applied (will be finalized on payment success)
+    if (appliedCoupon) {
+      const { error: insertError } = await supabase
+        .from('coupon_usages')
+        .insert({
+          coupon_code: appliedCoupon,
+          user_id: user_id,
+        });
+
+      if (insertError) {
+        console.error('Error recording coupon usage:', insertError);
+        // Don't fail the order creation, just log the error
+      } else {
+        console.log(`Coupon usage recorded for user ${user_id}, coupon ${appliedCoupon}`);
+      }
+    }
 
     return new Response(
       JSON.stringify({
