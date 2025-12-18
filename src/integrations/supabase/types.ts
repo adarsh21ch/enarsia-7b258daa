@@ -343,6 +343,7 @@ export type Database = {
           company_name: string | null
           created_at: string
           display_name: string | null
+          email: string | null
           id: string
           leaders_id_of_my_leader: string | null
           level_id: string | null
@@ -365,6 +366,7 @@ export type Database = {
           company_name?: string | null
           created_at?: string
           display_name?: string | null
+          email?: string | null
           id?: string
           leaders_id_of_my_leader?: string | null
           level_id?: string | null
@@ -387,6 +389,7 @@ export type Database = {
           company_name?: string | null
           created_at?: string
           display_name?: string | null
+          email?: string | null
           id?: string
           leaders_id_of_my_leader?: string | null
           level_id?: string | null
@@ -673,6 +676,28 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      admin_get_stats: {
+        Args: never
+        Returns: {
+          active_pro_users: number
+          total_payments: number
+          total_users: number
+        }[]
+      }
+      admin_list_all_profiles: {
+        Args: never
+        Returns: {
+          created_at: string
+          display_name: string
+          email: string
+          neverai_id: string
+          phone: string
+          subscription_expires_at: string
+          subscription_plan: string
+          subscription_status: string
+          user_id: string
+        }[]
+      }
       generate_neverai_id: { Args: never; Returns: string }
       get_leader_stage_config: {
         Args: { target_leader_id: string }

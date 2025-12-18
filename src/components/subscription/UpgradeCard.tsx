@@ -1,6 +1,3 @@
-// Hidden for v1 launch - payment/subscription features disabled but code preserved
-// To restore: uncomment all code below and remove the "return null" line
-
 import { Crown, Sparkles, Check, Calendar, Loader2, Star, Tag } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -12,10 +9,6 @@ import { useState } from 'react';
 type PlanType = 'monthly' | 'yearly';
 
 export function UpgradeCard() {
-  // V1 LAUNCH: Hidden - return null immediately
-  return null;
-
-  /* PRESERVED CODE FOR FUTURE RESTORATION:
   const { isPro, isAdminOverride, daysRemaining, subscription, loading, refetch } = useSubscription();
   const { initiatePayment, loading: paymentLoading } = useRazorpay();
   const [selectedPlan, setSelectedPlan] = useState<PlanType>('yearly');
@@ -228,5 +221,4 @@ export function UpgradeCard() {
       </Button>
     </div>
   );
-  */
 }

@@ -1,6 +1,3 @@
-// Hidden for v1 launch - payment features disabled but code preserved
-// To restore: uncomment all code below and remove the "return null" line
-
 import { Lock, Sparkles, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useSubscription } from '@/hooks/useSubscription';
@@ -11,10 +8,6 @@ interface UpgradeBarProps {
 }
 
 export function UpgradeBar({ onUpgrade }: UpgradeBarProps) {
-  // V1 LAUNCH: Hidden - return null immediately
-  return null;
-
-  /* PRESERVED CODE FOR FUTURE RESTORATION:
   const { isPro, loading } = useSubscription();
   const { initiatePayment, loading: paymentLoading } = useRazorpay();
 
@@ -66,5 +59,4 @@ export function UpgradeBar({ onUpgrade }: UpgradeBarProps) {
       </div>
     </div>
   );
-  */
 }
