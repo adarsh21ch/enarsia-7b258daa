@@ -1,8 +1,8 @@
 import { useMemo } from 'react';
 import { Prospect } from '@/types/prospect';
 
-const FREE_PROSPECT_LIMIT = 50;
-const PRO_PROSPECT_LIMIT = 10000;
+// Soft limit for upgrade prompt (no hard blocking)
+const SOFT_PROSPECT_LIMIT = 50;
 
 export function useProspectLimit(prospects: Prospect[], isPro: boolean) {
   // Count unique prospects by phone number
@@ -11,27 +11,22 @@ export function useProspectLimit(prospects: Prospect[], isPro: boolean) {
     return uniquePhones.size;
   }, [prospects]);
 
-  const limit = isPro ? PRO_PROSPECT_LIMIT : FREE_PROSPECT_LIMIT;
-  const remaining = Math.max(0, limit - uniqueCount);
-  const isAtLimit = uniqueCount >= limit;
-  const isNearLimit = !isPro && uniqueCount >= 45; // Warning at 45 for 50 limit
+  // No hard limits - just soft prompts for Free users
+  const showUpgradeHint = !isPro && uniqueCount >= SOFT_PROSPECT_LIMIT;
 
-  // Check if we can add N new prospects
-  const canAdd = (count: number = 1) => {
-    return uniqueCount + count <= limit;
-  };
-
-  // Calculate how many we can still add
-  const getAvailableSlots = () => remaining;
+  // Always allow adding - no blocking
+  const canAdd = () => true;
 
   return {
     uniqueCount,
-    limit,
-    remaining,
-    isAtLimit,
-    isNearLimit,
     isPro,
+    showUpgradeHint,
     canAdd,
-    getAvailableSlots,
+    // Legacy compatibility - no longer enforced
+    isAtLimit: false,
+    isNearLimit: showUpgradeHint,
+    limit: Infinity,
+    remaining: Infinity,
+    getAvailableSlots: () => Infinity,
   };
 }

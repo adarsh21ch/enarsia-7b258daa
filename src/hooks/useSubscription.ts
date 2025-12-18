@@ -60,16 +60,18 @@ export function useSubscription() {
   }, [fetchSubscription]);
 
   // Check if Pro is active and not expired
+  // isPro is true ONLY when: plan='pro' AND expires_at is not null AND expires_at > now
   const isProActive = () => {
     if (!subscription) return false;
-    if (subscription.is_admin_override && subscription.plan === 'pro') return true;
     if (subscription.plan !== 'pro') return false;
-    if (subscription.status !== 'active') return false;
+    
+    // Must have an expiry date
     if (!subscription.expires_at) return false;
     
+    // Check if not expired
     const expiresAt = new Date(subscription.expires_at);
     const now = new Date();
-    return expiresAt >= now;
+    return expiresAt > now;
   };
 
   const isPro = isProActive();

@@ -1,7 +1,7 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Lock } from 'lucide-react';
-import { useRazorpay } from '@/hooks/useRazorpay';
+import { Sparkles } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 interface ProLimitModalProps {
   open: boolean;
@@ -10,15 +10,11 @@ interface ProLimitModalProps {
 }
 
 export function ProLimitModal({ open, onClose, currentCount }: ProLimitModalProps) {
-  const { initiatePayment, loading } = useRazorpay();
+  const navigate = useNavigate();
 
-  const handleUnlockPro = () => {
-    initiatePayment({
-      planType: 'monthly',
-      onSuccess: () => {
-        onClose();
-      },
-    });
+  const handleViewPlans = () => {
+    onClose();
+    navigate('/profile');
   };
 
   return (
@@ -26,23 +22,23 @@ export function ProLimitModal({ open, onClose, currentCount }: ProLimitModalProp
       <DialogContent className="sm:max-w-md bg-card border-border">
         <DialogHeader className="text-center space-y-4">
           <div className="mx-auto w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center">
-            <Lock className="h-8 w-8 text-primary" />
+            <Sparkles className="h-8 w-8 text-primary" />
           </div>
-          <DialogTitle className="text-xl">Upgrade to unlock this feature</DialogTitle>
+          <DialogTitle className="text-xl">Unlock Pro Features</DialogTitle>
           <DialogDescription className="text-center">
-            {currentCount !== undefined ? (
-              <>You've reached the free limit of 50 prospects ({currentCount}/50). Upgrade to Pro to add more.</>
+            {currentCount !== undefined && currentCount >= 50 ? (
+              <>You've added {currentCount}+ leads. Upgrade to Pro to unlock team tracking and advanced analytics.</>
             ) : (
-              <>Subscribe to Pro Monthly (₹249) or Pro Yearly (₹2,999) to unlock unlimited prospects and all premium features.</>
+              <>Subscribe to Pro Monthly (₹249) or Pro Yearly (₹2,999) to unlock team tracking, TrackUp analytics, and all premium features.</>
             )}
           </DialogDescription>
         </DialogHeader>
         <div className="flex flex-col gap-3 pt-4">
-          <Button onClick={handleUnlockPro} className="w-full" disabled={loading}>
-            {loading ? 'Processing...' : 'View Pro Plans'}
+          <Button onClick={handleViewPlans} className="w-full">
+            View Pro Plans
           </Button>
           <Button variant="ghost" onClick={onClose} className="w-full text-muted-foreground">
-            Cancel
+            Maybe Later
           </Button>
         </div>
       </DialogContent>

@@ -93,8 +93,8 @@ export default function Tracking() {
     setShowDay1Setup(false);
   };
 
-  // Show lock only if Free AND at/over limit
-  const showLock = !isPro && prospectLimit.isAtLimit;
+  // Show Pro gate if user is not Pro
+  const showProGate = !isPro;
 
   // Pull-to-refresh
   const handleRefresh = useCallback(async () => {
@@ -151,17 +151,17 @@ export default function Tracking() {
 
       <main ref={containerRef} className="scrollable-content relative">
         <PullToRefreshIndicator isRefreshing={isRefreshing} pullDistance={pullDistance} showIndicator={showIndicator} />
-        <div className={cn("container py-2 px-3 h-full flex flex-col", showLock ? "pb-36" : "pb-24")}>
-          {/* Lock overlay only shows when Free AND at/over limit */}
-          {showLock && (
+        <div className={cn("container py-2 px-3 h-full flex flex-col", showProGate ? "pb-36" : "pb-24")}>
+          {/* Pro gate - show when user is not Pro */}
+          {showProGate && (
             <div className="relative mb-4">
-              <div className="absolute inset-0 flex flex-col items-center justify-center z-10 bg-background/80 backdrop-blur-sm rounded-xl">
+              <div className="absolute inset-0 flex flex-col items-center justify-center z-10 bg-background/80 backdrop-blur-sm rounded-xl py-8">
                 <div className="p-3 rounded-full bg-muted mb-3">
                   <Lock className="h-10 w-10 text-muted-foreground" />
                 </div>
                 <h3 className="text-lg font-semibold mb-1">Pro Feature</h3>
-                <p className="text-sm text-muted-foreground max-w-sm text-center">
-                  You've reached the free limit of {prospectLimit.limit} prospects. Subscribe to Pro Monthly (₹249, non-refundable) or Pro Yearly (₹2,999, 7-day refund window) to unlock TrackUp and all premium features.
+                <p className="text-sm text-muted-foreground max-w-sm text-center px-4">
+                  TrackUp is a Pro feature. Subscribe to Pro Monthly (₹249) or Pro Yearly (₹2,999) to unlock team tracking and advanced analytics.
                 </p>
               </div>
             </div>
@@ -199,8 +199,8 @@ export default function Tracking() {
         onChange={handleTabChange}
       />
 
-      {/* Upgrade Bar only for Free Users at/over limit */}
-      {showLock && <UpgradeBar />}
+      {/* Upgrade Bar only for Free Users */}
+      {showProGate && <UpgradeBar />}
 
       <BottomNav />
     </div>

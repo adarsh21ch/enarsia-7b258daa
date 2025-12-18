@@ -9,6 +9,7 @@ interface UserWithSubscription {
   plan: 'free' | 'pro';
   is_admin_override: boolean;
   subscribed_at: string | null;
+  expires_at: string | null;
 }
 
 export function useAdmin() {
@@ -92,6 +93,7 @@ export function useAdmin() {
           plan: sub?.plan || 'free',
           is_admin_override: sub?.is_admin_override || false,
           subscribed_at: sub?.subscribed_at || null,
+          expires_at: sub?.expires_at || null,
         };
       })
     );
@@ -100,44 +102,30 @@ export function useAdmin() {
     setLoading(false);
   }, [isAdmin]);
 
-  const toggleUserAccess = async (userId: string, grantPro: boolean) => {
-    // First check if subscription exists
-    const { data: existing } = await supabase
-      .from('user_subscriptions')
-      .select('id')
-      .eq('user_id', userId)
-      .maybeSingle();
-
-    if (existing) {
-      // Update existing
-      const { error } = await supabase
-        .from('user_subscriptions')
-        .update({
-          plan: grantPro ? 'pro' : 'free',
-          is_admin_override: grantPro,
-        })
-        .eq('user_id', userId);
-
-      if (!error) {
-        await fetchAllUsers();
-      }
-      return { error };
-    } else {
-      // Create new subscription
-      const { error } = await supabase
-        .from('user_subscriptions')
-        .insert({
+  const updateUserSubscription = async (userId: string, plan: 'free' | 'pro', durationDays?: number) => {
+    try {
+      const { data, error } = await supabase.functions.invoke('admin-update-subscription', {
+        body: {
           user_id: userId,
-          plan: grantPro ? 'pro' : 'free',
-          is_admin_override: grantPro,
-        });
+          plan,
+          duration_days: durationDays,
+        },
+      });
 
-      if (!error) {
-        await fetchAllUsers();
-      }
-      return { error };
+      if (error) throw error;
+      
+      await fetchAllUsers();
+      return { error: null, data };
+    } catch (err: any) {
+      console.error('Error updating subscription:', err);
+      return { error: err };
     }
   };
 
-  return { isAdmin, users, loading, fetchAllUsers, toggleUserAccess };
+  // Legacy toggle function for simple Pro/Free switch (uses 30 days default)
+  const toggleUserAccess = async (userId: string, grantPro: boolean) => {
+    return updateUserSubscription(userId, grantPro ? 'pro' : 'free', grantPro ? 30 : undefined);
+  };
+
+  return { isAdmin, users, loading, fetchAllUsers, toggleUserAccess, updateUserSubscription };
 }
