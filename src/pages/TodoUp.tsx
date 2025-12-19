@@ -1,16 +1,17 @@
-// To-Do List Page - Personal todos only (no team toggle)
-import { useState, useEffect, useRef, useCallback } from 'react';
+// To-Do List Page - Personal todos with calendar strip
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useGlobalTodos } from '@/contexts/TodosContext';
 import { BottomNav } from '@/components/layout/BottomNav';
 import { PullToRefreshIndicator } from '@/components/PullToRefreshIndicator';
+import { CalendarStrip } from '@/components/calendar/CalendarStrip';
+import { useCalendarStrip } from '@/hooks/useCalendarStrip';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
-import { SearchBar } from '@/components/ui/SearchBar';
 import { Loader2, CheckCircle, Trash2, Edit2, Send, X, Check, Plus } from 'lucide-react';
-import { format, parseISO } from 'date-fns';
+import { format, parseISO, isSameDay } from 'date-fns';
 import { cn } from '@/lib/utils';
 import nevoraLogo from '@/assets/nevorai-logo.jpeg';
 import { toast } from 'sonner';
@@ -70,7 +71,9 @@ export default function TodoUp() {
   const [newTodoInput, setNewTodoInput] = useState('');
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editingTitle, setEditingTitle] = useState('');
-  const [searchQuery, setSearchQuery] = useState('');
+
+  // Calendar strip state
+  const calendar = useCalendarStrip();
 
   // Pull-to-refresh
   const handleRefresh = useCallback(async () => {
@@ -84,11 +87,47 @@ export default function TodoUp() {
     }
   }, [user, authLoading, navigate]);
 
+  // Filter todos by selected date
+  const filteredTodos = useMemo(() => {
+    return todos.filter(todo => {
+      if (!todo.due_date) return false;
+      const todoDate = parseISO(todo.due_date);
+      return isSameDay(todoDate, calendar.selectedDate);
+    });
+  }, [todos, calendar.selectedDate]);
+
+  // Get dates that have tasks for the dot indicators
+  const datesWithTasks = useMemo(() => {
+    const dateSet = new Set<string>();
+    todos.forEach(todo => {
+      if (todo.due_date) {
+        dateSet.add(todo.due_date);
+      }
+    });
+    return dateSet;
+  }, [todos]);
+
+  // Separate completed and pending todos
+  const pendingTodos = useMemo(() => 
+    filteredTodos
+      .filter(t => !t.completed)
+      .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()),
+    [filteredTodos]
+  );
+  
+  const completedTodos = useMemo(() => 
+    filteredTodos
+      .filter(t => t.completed)
+      .sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime()),
+    [filteredTodos]
+  );
+
   const handleAddTodo = async () => {
     const todoText = newTodoInput.trim();
     if (!todoText) return;
     
-    const result = await addTodo(todoText);
+    // Add todo with selected date
+    const result = await addTodo(todoText, calendar.selectedDateString);
     if (result) {
       setNewTodoInput('');
     }
@@ -128,19 +167,6 @@ export default function TodoUp() {
 
   if (!user) return null;
 
-  // Apply search filter
-  const filteredTodos = searchQuery.trim() 
-    ? todos.filter(t => t.title.toLowerCase().includes(searchQuery.toLowerCase()))
-    : todos;
-
-  // Separate completed and pending todos, sort descending by created_at (most recent at top)
-  const pendingTodos = filteredTodos
-    .filter(t => !t.completed)
-    .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
-  const completedTodos = filteredTodos
-    .filter(t => t.completed)
-    .sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime());
-
   return (
     <div className="app-layout bg-gradient-to-b from-background via-background to-muted/20">
       <header className="fixed-header z-40 bg-card/80 backdrop-blur-xl border-b border-border/50">
@@ -159,31 +185,35 @@ export default function TodoUp() {
         </div>
       </header>
 
-      <main ref={containerRef} className="scrollable-content relative pb-24">
+      {/* Calendar Strip - Fixed below header */}
+      <div className="fixed top-[60px] left-0 right-0 z-30">
+        <CalendarStrip
+          selectedDate={calendar.selectedDate}
+          daysInMonth={calendar.daysInMonth}
+          monthYearLabel={calendar.monthYearLabel}
+          onSelectDate={calendar.selectDate}
+          onPreviousMonth={calendar.goToPreviousMonth}
+          onNextMonth={calendar.goToNextMonth}
+          onTodayClick={calendar.goToToday}
+          datesWithTasks={datesWithTasks}
+        />
+      </div>
+
+      <main ref={containerRef} className="scrollable-content relative pb-24 pt-[120px]">
         <PullToRefreshIndicator isRefreshing={isRefreshing} pullDistance={pullDistance} showIndicator={showIndicator} />
         <div className="container py-3 px-4 space-y-4">
-          {/* WhatsApp-style Search Bar */}
-          <div className="mb-1">
-            <SearchBar 
-              value={searchQuery}
-              onChange={setSearchQuery}
-              placeholder="Search to-do items..."
-            />
+          {/* Selected date display */}
+          <div className="flex items-center justify-between">
+            <h3 className="text-sm font-medium text-muted-foreground">
+              {format(calendar.selectedDate, 'EEEE, MMMM d, yyyy')}
+            </h3>
+            <span className="text-xs text-muted-foreground">
+              {pendingTodos.length} pending
+            </span>
           </div>
 
           {/* To-Do List */}
           <div className="bg-white dark:bg-card rounded-xl border border-border/40 shadow-sm overflow-hidden">
-            {/* Header row */}
-            <div className="flex items-center gap-2 px-4 py-3 bg-gray-50 dark:bg-muted/30 border-b border-border/30">
-              <CheckCircle className="h-4 w-4 text-gray-600 dark:text-gray-400" />
-              <h3 className="font-semibold text-sm text-gray-800 dark:text-gray-200">
-                My To-Do List
-              </h3>
-              <span className="ml-auto text-xs text-muted-foreground">
-                {pendingTodos.length} pending
-              </span>
-            </div>
-
             {todosLoading ? (
               <div className="flex justify-center py-8">
                 <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
@@ -192,26 +222,24 @@ export default function TodoUp() {
               <div className="py-12 px-4 text-center">
                 <CheckCircle className="h-12 w-12 mx-auto text-muted-foreground/30 mb-3" />
                 <p className="text-sm font-medium text-muted-foreground mb-1">
-                  {searchQuery.trim() ? 'No matching tasks' : 'No tasks yet'}
+                  No tasks for this date
                 </p>
                 <p className="text-xs text-muted-foreground/70 mb-4">
-                  {searchQuery.trim() ? 'Try a different search term' : 'Add your first to-do below'}
+                  Add a to-do for {format(calendar.selectedDate, 'MMM d')}
                 </p>
-                {!searchQuery.trim() && (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => document.getElementById('todo-input')?.focus()}
-                    className="gap-1"
-                  >
-                    <Plus className="h-4 w-4" />
-                    Add To-Do
-                  </Button>
-                )}
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => document.getElementById('todo-input')?.focus()}
+                  className="gap-1"
+                >
+                  <Plus className="h-4 w-4" />
+                  Add To-Do
+                </Button>
               </div>
             ) : (
               <div className="divide-y divide-border/20">
-                {/* Pending todos first - sorted descending (most recent at top) */}
+                {/* Pending todos first */}
                 {pendingTodos.map((todo, index) => (
                   <div
                     key={todo.id}
@@ -254,7 +282,7 @@ export default function TodoUp() {
                             {todo.title}
                           </p>
                           <p className="text-xs text-muted-foreground mt-0.5">
-                            Created {format(parseISO(todo.created_at), 'MMM d, h:mm a')}
+                            Created {format(parseISO(todo.created_at), 'h:mm a')}
                           </p>
                         </div>
                         <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -303,7 +331,7 @@ export default function TodoUp() {
                             {todo.title}
                           </p>
                           <p className="text-xs text-muted-foreground mt-0.5">
-                            Completed {format(parseISO(todo.updated_at), 'MMM d, h:mm a')}
+                            Completed {format(parseISO(todo.updated_at), 'h:mm a')}
                           </p>
                         </div>
                         <Button
@@ -324,14 +352,14 @@ export default function TodoUp() {
         </div>
       </main>
 
-      {/* Fixed bottom chat-style input - floating overlay */}
+      {/* Fixed bottom chat-style input */}
       <div className="fixed bottom-14 left-0 right-0 z-30 px-4 pb-3 pt-2 pointer-events-none">
         <div className="pointer-events-auto max-w-lg mx-auto">
           <div className="flex items-center gap-2 bg-card/95 backdrop-blur-xl border border-border/50 rounded-full px-4 py-2 shadow-lg">
             <input
               id="todo-input"
               type="text"
-              placeholder="Add a to-do task or reminder..."
+              placeholder={`Add task for ${format(calendar.selectedDate, 'MMM d')}...`}
               value={newTodoInput}
               onChange={(e) => setNewTodoInput(e.target.value)}
               onKeyDown={(e) => {
