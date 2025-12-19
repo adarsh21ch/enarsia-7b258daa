@@ -76,6 +76,9 @@ function usePullToRefresh(onRefresh: () => Promise<void>, threshold = 80) {
     showIndicator: pullDistance > 20 || isRefreshing
   };
 }
+// Feature flag: Set to true to show upgrade UI in Profile tab
+const SHOW_PROFILE_UPGRADE_UI = false;
+
 export default function Profile() {
   const navigate = useNavigate();
   const {
@@ -193,8 +196,8 @@ export default function Profile() {
           {/* Share Profile Button - Prominent */}
           <ShareProfileDialog />
 
-          {/* Upgrade Card */}
-          <UpgradeCard />
+          {/* Upgrade Card - Hidden via feature flag, can be re-enabled by setting SHOW_PROFILE_UPGRADE_UI = true */}
+          {SHOW_PROFILE_UPGRADE_UI && <UpgradeCard />}
 
           {/* Leader & Tracking Format Settings - Collapsible */}
           <Accordion type="single" collapsible className="rounded-2xl border border-border/50 bg-card overflow-hidden">
