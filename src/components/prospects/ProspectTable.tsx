@@ -571,22 +571,33 @@ export function ProspectTable({
   };
 
   const handleImportProspects = async (prospectsData: Partial<Prospect>[], onProgress?: (imported: number, total: number) => void) => {
+    let targetSheetId: string | null = null;
+    
     // Auto-assign to today's date sheet for Leads tab
     if (filterMode === 'calling' && getOrCreateTodaySheet) {
-      const todaySheetId = await getOrCreateTodaySheet();
-      if (todaySheetId) {
+      targetSheetId = await getOrCreateTodaySheet();
+      if (targetSheetId) {
         prospectsData = prospectsData.map(p => ({
           ...p,
-          sheet_id: todaySheetId
+          sheet_id: targetSheetId
         }));
       }
     } else if (selectedSheetId) {
+      targetSheetId = selectedSheetId;
       prospectsData = prospectsData.map(p => ({
         ...p,
         sheet_id: selectedSheetId
       }));
     }
-    return onImport(prospectsData, onProgress);
+    
+    const result = await onImport(prospectsData, onProgress);
+    
+    // Switch to the target sheet after successful import
+    if (result.imported > 0 && targetSheetId) {
+      onSelectSheet(targetSheetId);
+    }
+    
+    return result;
   };
 
   const handleToggleExpand = useCallback((prospectId: string) => {
