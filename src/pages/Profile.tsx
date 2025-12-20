@@ -17,7 +17,8 @@ import { PullToRefreshIndicator } from '@/components/PullToRefreshIndicator';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
-import { User, LogOut, ChevronRight, Phone, Building2, MapPin, Loader2, FileText, Shield, Receipt, Mail, Settings, Users, Copy } from 'lucide-react';
+import { User, LogOut, ChevronRight, Phone, Building2, MapPin, Loader2, FileText, Shield, Receipt, Mail, Settings, Users, Copy, ExternalLink } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import nevoraLogo from '@/assets/nevorai-logo.jpeg';
@@ -109,6 +110,37 @@ export default function Profile() {
     refreshFormat
   } = useTrackingFormatContext();
   const [editOpen, setEditOpen] = useState(false);
+  const [trackupLoading, setTrackupLoading] = useState(false);
+
+  // Handle TrackUp Dashboard SSO
+  const handleOpenTrackUp = async () => {
+    if (!user) return;
+    
+    setTrackupLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('trackup-sso-link');
+      
+      if (error) {
+        console.error('SSO link error:', error);
+        toast.error('Could not generate login link. Opening website...');
+        window.open('https://nevorai.com/trackup', '_blank');
+        return;
+      }
+      
+      if (data?.action_link) {
+        window.open(data.action_link, '_blank');
+      } else {
+        toast.error('Could not generate login link. Opening website...');
+        window.open('https://nevorai.com/trackup', '_blank');
+      }
+    } catch (err) {
+      console.error('TrackUp SSO error:', err);
+      toast.error('Error connecting. Opening website...');
+      window.open('https://nevorai.com/trackup', '_blank');
+    } finally {
+      setTrackupLoading(false);
+    }
+  };
 
   // Process pending leader ID from share links
   useLeaderSetup();
@@ -256,6 +288,36 @@ export default function Profile() {
 
           {/* Menu Items */}
           <div className="space-y-2">
+            {/* TrackUp Dashboard */}
+            <button 
+              onClick={handleOpenTrackUp}
+              disabled={trackupLoading}
+              className={cn(
+                "w-full relative overflow-hidden rounded-xl p-4",
+                "bg-gradient-to-r backdrop-blur-sm",
+                "border border-border/50 shadow-sm",
+                "flex items-center justify-between",
+                "transition-all duration-300 hover:shadow-md hover:scale-[1.01]",
+                "from-emerald-500/20 to-emerald-500/5",
+                trackupLoading && "opacity-70 cursor-wait"
+              )}
+            >
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-lg bg-emerald-500/10">
+                  {trackupLoading ? (
+                    <Loader2 className="h-5 w-5 text-emerald-500 animate-spin" />
+                  ) : (
+                    <ExternalLink className="h-5 w-5 text-emerald-500" />
+                  )}
+                </div>
+                <div className="text-left">
+                  <span className="font-medium block">TrackUp Dashboard</span>
+                  <span className="text-xs text-muted-foreground">Open web dashboard</span>
+                </div>
+              </div>
+              <ChevronRight className="h-5 w-5 text-muted-foreground" />
+            </button>
+
             <button onClick={() => setEditOpen(true)} className={cn("w-full relative overflow-hidden rounded-xl p-4", "bg-gradient-to-r backdrop-blur-sm", "border border-border/50 shadow-sm", "flex items-center justify-between", "transition-all duration-300 hover:shadow-md hover:scale-[1.01]", "from-blue-500/20 to-blue-500/5")}>
               <div className="flex items-center gap-3">
                 <div className="p-2 rounded-lg bg-card/50">
