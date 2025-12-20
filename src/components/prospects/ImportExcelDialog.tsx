@@ -293,7 +293,7 @@ export function ImportExcelDialog({ onImport }: ImportExcelDialogProps) {
           <span className="hidden sm:inline">Import</span>
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-2xl bg-card border-border max-h-[90vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-2xl bg-card border-border max-h-[90vh] overflow-y-auto overflow-x-hidden">
         <DialogHeader>
           <DialogTitle>
             {step === 'upload' ? 'Import from Excel/CSV' : 'Map Columns'}
@@ -330,7 +330,7 @@ export function ImportExcelDialog({ onImport }: ImportExcelDialogProps) {
         )}
 
         {step === 'mapping' && (
-          <div className="flex flex-col h-[65vh] max-h-[550px]">
+          <div className="flex flex-col h-[65vh] max-h-[550px] overflow-hidden">
             {/* Data Preview Section - Top, scrollable */}
             <div className="flex-1 flex flex-col min-h-0 space-y-2 mb-3 overflow-hidden">
               <div className="flex items-center justify-between flex-shrink-0">
