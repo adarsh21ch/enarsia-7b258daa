@@ -12,7 +12,6 @@ import { ShareProfileDialog } from '@/components/profile/ShareProfileDialog';
 import { LeaderTrackingFormatSettings } from '@/components/profile/LeaderTrackingFormatSettings';
 import { LevelManagement } from '@/components/profile/LevelManagement';
 import { ProfileLevelDropdown } from '@/components/profile/ProfileLevelDropdown';
-import { TrackUpLoadingOverlay } from '@/components/profile/TrackUpLoadingOverlay';
 import { UpgradeCard } from '@/components/subscription/UpgradeCard';
 import { PullToRefreshIndicator } from '@/components/PullToRefreshIndicator';
 import { Button } from '@/components/ui/button';
@@ -111,32 +110,10 @@ export default function Profile() {
     refreshFormat
   } = useTrackingFormatContext();
   const [editOpen, setEditOpen] = useState(false);
-  const [trackupOverlayOpen, setTrackupOverlayOpen] = useState(false);
 
-  // TrackUp Dashboard URL
-  const TRACKUP_URL = 'https://nevorai.com/trackup';
-
-  // Handle TrackUp Dashboard - show overlay and open URL
+  // Handle TrackUp Dashboard - open directly in browser
   const handleOpenTrackUp = () => {
-    if (!user) return;
-    setTrackupOverlayOpen(true);
-    window.open(TRACKUP_URL, '_blank');
-  };
-
-  // Retry opening TrackUp
-  const handleRetryTrackUp = () => {
-    window.open(TRACKUP_URL, '_blank');
-  };
-
-  // Open in external browser (same URL, but user can choose browser)
-  const handleOpenInBrowser = () => {
-    setTrackupOverlayOpen(false);
-    window.open(TRACKUP_URL, '_blank');
-  };
-
-  // Close overlay
-  const handleCloseTrackUpOverlay = () => {
-    setTrackupOverlayOpen(false);
+    window.open('https://nevorai.com/trackup', '_blank');
   };
 
   // Process pending leader ID from share links
@@ -383,13 +360,6 @@ export default function Profile() {
       </main>
 
       <EditProfileDialog open={editOpen} onOpenChange={setEditOpen} profile={profile} onSave={updateProfile} updating={updating} />
-      
-      <TrackUpLoadingOverlay
-        isOpen={trackupOverlayOpen}
-        onClose={handleCloseTrackUpOverlay}
-        onRetry={handleRetryTrackUp}
-        onOpenInBrowser={handleOpenInBrowser}
-      />
 
       <BottomNav />
     </div>;
