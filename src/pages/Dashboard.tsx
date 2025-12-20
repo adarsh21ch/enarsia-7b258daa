@@ -83,7 +83,7 @@ export default function Dashboard() {
   const navigate = useNavigate();
   const { user, loading: authLoading } = useAuth();
   const { prospects, loading, addProspect, updateProspect, deleteProspect, bulkDeleteProspects, restoreProspect, restoreProspects, importProspects, reorderProspects, refetch, optimisticUpdate } = useGlobalProspects();
-  const { sheets, selectedSheetId, setSelectedSheetId, addSheet, updateSheet, deleteSheet, refetch: refetchSheets } = useSheets();
+  const { sheets, selectedSheetId, setSelectedSheetId, addSheet, updateSheet, deleteSheet, refetch: refetchSheets, getOrCreateTodaySheet, todaySheetId } = useSheets();
   
   // Main tab state - Calling is default
   const [mainTab, setMainTab] = useState<'leads' | 'funnel'>('leads');
@@ -94,6 +94,17 @@ export default function Dashboard() {
   // Filter tag setup dialog
   const { needsSetup, markSetupDone } = useFilterTagSetup();
   const [showFilterSetup, setShowFilterSetup] = useState(false);
+
+  // Auto-create and select today's date sheet when Leads tab is active
+  useEffect(() => {
+    if (user && mainTab === 'leads') {
+      getOrCreateTodaySheet().then((sheetId) => {
+        if (sheetId && !selectedSheetId) {
+          setSelectedSheetId(sheetId);
+        }
+      });
+    }
+  }, [user, mainTab, getOrCreateTodaySheet, selectedSheetId, setSelectedSheetId]);
 
   // Handle tab change - show setup dialog when switching to Stages for first time
   const handleTabChange = (newTab: string) => {
