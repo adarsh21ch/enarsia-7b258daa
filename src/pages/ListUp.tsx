@@ -7,7 +7,8 @@ import { BottomNav } from '@/components/layout/BottomNav';
 import { PullToRefreshIndicator } from '@/components/PullToRefreshIndicator';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Loader2, Filter, ChevronDown, ChevronUp, Tags, X, Eye } from 'lucide-react';
+import { Loader2, Filter, ChevronDown, ChevronUp, Tags, X, Eye, Search } from 'lucide-react';
+import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
 import { getTagStyle } from '@/lib/tagColors';
 import nevoraLogo from '@/assets/nevorai-logo.jpeg';
@@ -108,6 +109,9 @@ export default function ListUp() {
   
   // Show all tags toggle (including empty ones)
   const [showAllTags, setShowAllTags] = useState(false);
+  
+  // Search query
+  const [searchQuery, setSearchQuery] = useState('');
 
   // Persist filters in sessionStorage so they survive tab switches
   const [selectedResponses, setSelectedResponses] = useState<string[]>(() => {
@@ -228,8 +232,22 @@ export default function ListUp() {
 
   // Filter prospects by selected tags (AND between categories, OR within category)
   const filteredProspects = useMemo(() => {
-    if (!hasActiveFilters) return modeFilteredProspects;
-    return modeFilteredProspects.filter(p => {
+    let result = modeFilteredProspects;
+    
+    // Apply search filter first
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase().trim();
+      result = result.filter(p => 
+        p.name.toLowerCase().includes(query) ||
+        p.phone.toLowerCase().includes(query) ||
+        (p.address && p.address.toLowerCase().includes(query)) ||
+        (p.notes && p.notes.toLowerCase().includes(query))
+      );
+    }
+    
+    // Then apply tag filters
+    if (!hasActiveFilters) return result;
+    return result.filter(p => {
       // Check responses (OR within category)
       const matchesResponse = selectedResponses.length === 0 || p.action_taken && selectedResponses.includes(p.action_taken);
 
@@ -242,7 +260,7 @@ export default function ListUp() {
       // AND between categories
       return matchesResponse && matchesStage && matchesQuality;
     });
-  }, [modeFilteredProspects, selectedResponses, selectedStages, selectedQualities, hasActiveFilters]);
+  }, [modeFilteredProspects, selectedResponses, selectedStages, selectedQualities, hasActiveFilters, searchQuery]);
 
   // Group prospects by their primary tag for display
   const prospectsByTag = useMemo(() => {
@@ -336,106 +354,128 @@ export default function ListUp() {
 
       <main ref={containerRef} className="scrollable-content relative pb-20">
         <PullToRefreshIndicator isRefreshing={isRefreshing} pullDistance={pullDistance} showIndicator={showIndicator} />
-        <div className="container py-3 px-4 space-y-4">
+        <div className="container py-3 px-4 space-y-3">
 
-          {/* Lead Mode Toggle */}
-          <div className="bg-card rounded-xl p-3 border border-border/50">
-            <div className="flex items-center justify-between gap-2">
-              <div className="flex bg-muted rounded-lg p-1 flex-1">
-                <button
-                  onClick={() => handleModeChange('funnel')}
-                  className={cn(
-                    "flex-1 px-3 py-2 text-sm font-medium rounded-md transition-all",
-                    leadMode === 'funnel'
-                      ? "bg-primary text-primary-foreground shadow-sm"
-                      : "text-muted-foreground hover:text-foreground"
-                  )}
-                >
-                  Funnel Leads
-                </button>
-                <button
-                  onClick={() => handleModeChange('response')}
-                  className={cn(
-                    "flex-1 px-3 py-2 text-sm font-medium rounded-md transition-all",
-                    leadMode === 'response'
-                      ? "bg-primary text-primary-foreground shadow-sm"
-                      : "text-muted-foreground hover:text-foreground"
-                  )}
-                >
-                  Response Leads
-                </button>
-              </div>
-            </div>
+          {/* Search Bar */}
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              type="text"
+              placeholder="Search by name, phone..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-9 h-10 bg-card border-border/50"
+            />
+            {searchQuery && (
+              <button
+                onClick={() => setSearchQuery('')}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            )}
           </div>
 
-          {/* Grouped Tag Filters */}
-          <div className="bg-card rounded-xl p-4 border border-border/50 space-y-4">
-            <div className="flex items-center justify-between">
+          {/* Tag Filters with Compact Mode Toggle */}
+          <div className="bg-card rounded-xl p-3 border border-border/50 space-y-3">
+            {/* Header Row with Toggle */}
+            <div className="flex items-center justify-between gap-2">
               <div className="flex items-center gap-2">
                 <Filter className="h-4 w-4 text-muted-foreground" />
                 <span className="text-sm font-medium">Filter by Tags</span>
               </div>
-              <button
-                onClick={() => setShowAllTags(!showAllTags)}
-                className={cn(
-                  "flex items-center gap-1 text-xs transition-colors",
-                  showAllTags ? "text-primary" : "text-muted-foreground hover:text-foreground"
-                )}
-              >
-                <Eye className="h-3 w-3" />
-                {showAllTags ? 'Hide Empty' : 'Show All'}
-              </button>
+              <div className="flex items-center gap-2">
+                {/* Show All Tags Toggle */}
+                <button
+                  onClick={() => setShowAllTags(!showAllTags)}
+                  className={cn(
+                    "flex items-center gap-1 text-xs transition-colors",
+                    showAllTags ? "text-primary" : "text-muted-foreground hover:text-foreground"
+                  )}
+                >
+                  <Eye className="h-3 w-3" />
+                </button>
+                {/* Compact Funnel/Response Toggle */}
+                <div className="flex bg-muted rounded-md p-0.5">
+                  <button
+                    onClick={() => handleModeChange('funnel')}
+                    className={cn(
+                      "px-2 py-1 text-xs font-medium rounded transition-all",
+                      leadMode === 'funnel'
+                        ? "bg-primary text-primary-foreground shadow-sm"
+                        : "text-muted-foreground hover:text-foreground"
+                    )}
+                  >
+                    Funnel
+                  </button>
+                  <button
+                    onClick={() => handleModeChange('response')}
+                    className={cn(
+                      "px-2 py-1 text-xs font-medium rounded transition-all",
+                      leadMode === 'response'
+                        ? "bg-primary text-primary-foreground shadow-sm"
+                        : "text-muted-foreground hover:text-foreground"
+                    )}
+                  >
+                    Response
+                  </button>
+                </div>
+              </div>
             </div>
 
-            {/* Show tags based on mode */}
+            {/* Tags based on mode */}
             {leadMode === 'funnel' ? (
-              /* Funnel Stages Section */
-              <div className="space-y-2">
-                <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Funnel Stages</h4>
-                {displayStageTags.length === 0 ? <p className="text-xs text-muted-foreground/70">No funnel stages</p> : <div className="flex flex-wrap gap-1.5">
-                    {displayStageTags.map(tag => {
-                  const isSelected = selectedStages.includes(tag);
-                  const count = stageTagCounts.get(tag) || 0;
-                  const style = getTagStyle(tag, 'stage', null, isSelected, true);
-                  return <Badge 
-                    key={`stage-${tag}`} 
-                    variant="outline" 
-                    className={cn(
-                      "cursor-pointer text-xs transition-all border",
-                      count === 0 && "opacity-50"
-                    )} 
-                    style={style} 
-                    onClick={() => toggleStage(tag)}
-                  >
-                    {tag} {count > 0 && <span className="ml-1 opacity-70">({count})</span>}
-                  </Badge>;
-                })}
-                  </div>}
-              </div>
+              displayStageTags.length === 0 ? (
+                <p className="text-xs text-muted-foreground/70">No funnel stages</p>
+              ) : (
+                <div className="flex flex-wrap gap-1.5">
+                  {displayStageTags.map(tag => {
+                    const isSelected = selectedStages.includes(tag);
+                    const count = stageTagCounts.get(tag) || 0;
+                    const style = getTagStyle(tag, 'stage', null, isSelected, true);
+                    return (
+                      <Badge 
+                        key={`stage-${tag}`} 
+                        variant="outline" 
+                        className={cn(
+                          "cursor-pointer text-xs transition-all border",
+                          count === 0 && "opacity-50"
+                        )} 
+                        style={style} 
+                        onClick={() => toggleStage(tag)}
+                      >
+                        {tag} {count > 0 && <span className="ml-1 opacity-70">({count})</span>}
+                      </Badge>
+                    );
+                  })}
+                </div>
+              )
             ) : (
-              /* Responses Section */
-              <div className="space-y-2">
-                <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Responses</h4>
-                {displayResponseTags.length === 0 ? <p className="text-xs text-muted-foreground/70">No response tags</p> : <div className="flex flex-wrap gap-1.5">
-                    {displayResponseTags.map(tag => {
-                  const isSelected = selectedResponses.includes(tag);
-                  const count = responseTagCounts.get(tag) || 0;
-                  const style = getTagStyle(tag, 'response', null, isSelected, true);
-                  return <Badge 
-                    key={`response-${tag}`} 
-                    variant="outline" 
-                    className={cn(
-                      "cursor-pointer text-xs transition-all border",
-                      count === 0 && "opacity-50"
-                    )}
-                    style={style} 
-                    onClick={() => toggleResponse(tag)}
-                  >
-                    {tag} {count > 0 && <span className="ml-1 opacity-70">({count})</span>}
-                  </Badge>;
-                })}
-                  </div>}
-              </div>
+              displayResponseTags.length === 0 ? (
+                <p className="text-xs text-muted-foreground/70">No response tags</p>
+              ) : (
+                <div className="flex flex-wrap gap-1.5">
+                  {displayResponseTags.map(tag => {
+                    const isSelected = selectedResponses.includes(tag);
+                    const count = responseTagCounts.get(tag) || 0;
+                    const style = getTagStyle(tag, 'response', null, isSelected, true);
+                    return (
+                      <Badge 
+                        key={`response-${tag}`} 
+                        variant="outline" 
+                        className={cn(
+                          "cursor-pointer text-xs transition-all border",
+                          count === 0 && "opacity-50"
+                        )}
+                        style={style} 
+                        onClick={() => toggleResponse(tag)}
+                      >
+                        {tag} {count > 0 && <span className="ml-1 opacity-70">({count})</span>}
+                      </Badge>
+                    );
+                  })}
+                </div>
+              )
             )}
           </div>
 
