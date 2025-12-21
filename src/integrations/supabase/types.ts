@@ -605,6 +605,45 @@ export type Database = {
         }
         Relationships: []
       }
+      tracking_overrides: {
+        Row: {
+          created_at: string | null
+          id: string
+          leads_count: number | null
+          override_date: string
+          response_values: Json | null
+          responses_count: number | null
+          stage_values: Json | null
+          target_user_id: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          leads_count?: number | null
+          override_date: string
+          response_values?: Json | null
+          responses_count?: number | null
+          stage_values?: Json | null
+          target_user_id: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          leads_count?: number | null
+          override_date?: string
+          response_values?: Json | null
+          responses_count?: number | null
+          stage_values?: Json | null
+          target_user_id?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string
