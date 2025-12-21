@@ -94,17 +94,14 @@ const [localData, setLocalData] = useState({
 
   const cleanPhoneNumber = (phone: string) => phone.replace(/[^0-9+]/g, '');
 
-  const openWhatsApp = useCallback((e: React.MouseEvent) => {
-    e.preventDefault();
+  // WhatsApp URL for anchor-based navigation (avoids popup blockers in iframes)
+  const whatsappUrl = `https://wa.me/${cleanPhoneNumber(prospect.phone)}`;
+
+  const handleWhatsAppClick = useCallback((e: React.MouseEvent) => {
     e.stopPropagation();
     onMarkLastContacted?.();
-    const phone = cleanPhoneNumber(prospect.phone);
-    const isMobile = /Android|iPhone|iPad|iPod|webOS|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-    const whatsappUrl = isMobile 
-      ? `https://wa.me/${phone}` 
-      : `https://web.whatsapp.com/send?phone=${phone}`;
-    window.open(whatsappUrl, '_blank', 'noopener,noreferrer');
-  }, [prospect.phone, onMarkLastContacted]);
+    // Let the anchor handle navigation naturally
+  }, [onMarkLastContacted]);
 
   const openCall = useCallback((e: React.MouseEvent) => {
     e.preventDefault();
@@ -225,9 +222,15 @@ const [localData, setLocalData] = useState({
             <Button variant="outline" size="icon" className="h-10 w-10" onClick={openCall}>
               <Phone className="h-4 w-4 text-accent" />
             </Button>
-            <Button variant="outline" size="icon" className="h-10 w-10 text-green-500 border-green-200 hover:bg-green-50 hover:text-green-600" onClick={openWhatsApp}>
+            <a
+              href={whatsappUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={handleWhatsAppClick}
+              className="inline-flex items-center justify-center h-10 w-10 rounded-md border border-green-200 text-green-500 hover:bg-green-50 hover:text-green-600 transition-colors"
+            >
               <MessageCircle className="h-4 w-4" />
-            </Button>
+            </a>
           </div>
         </div>
       </div>

@@ -144,16 +144,8 @@ const [localData, setLocalData] = useState<Partial<Prospect>>({});
     return phone.replace(/[^0-9+]/g, '');
   };
 
-  const openWhatsApp = (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    const cleanPhone = cleanPhoneNumber(prospect.phone);
-    const isMobile = /Android|iPhone|iPad|iPod|webOS|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-    const whatsappUrl = isMobile 
-      ? `https://wa.me/${cleanPhone}` 
-      : `https://web.whatsapp.com/send?phone=${cleanPhone}`;
-    window.open(whatsappUrl, '_blank', 'noopener,noreferrer');
-  };
+  // WhatsApp URL for anchor-based navigation (avoids popup blockers in iframes)
+  const whatsappUrl = `https://wa.me/${cleanPhoneNumber(prospect.phone)}`;
 
   const openCall = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -186,9 +178,15 @@ const [localData, setLocalData] = useState<Partial<Prospect>>({});
                 <Button variant="ghost" size="icon" className="h-7 w-7 hover:bg-accent/10" onClick={openCall}>
                   <Phone className="h-3.5 w-3.5 text-accent" />
                 </Button>
-                <Button variant="ghost" size="icon" className="h-7 w-7 text-green-500 hover:text-green-600 hover:bg-green-500/10" onClick={openWhatsApp}>
+                <a
+                  href={whatsappUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={(e) => e.stopPropagation()}
+                  className="inline-flex items-center justify-center h-7 w-7 rounded-md text-green-500 hover:text-green-600 hover:bg-green-500/10 transition-colors"
+                >
                   <MessageCircle className="h-3.5 w-3.5" />
-                </Button>
+                </a>
                 {localData.instagram && (
                   <Button variant="ghost" size="icon" className="h-7 w-7 text-pink-500 hover:text-pink-600 hover:bg-pink-500/10" onClick={openInstagram}>
                     <Instagram className="h-3.5 w-3.5" />

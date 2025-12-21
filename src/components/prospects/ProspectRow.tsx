@@ -139,17 +139,14 @@ export const ProspectRow = memo(function ProspectRow({
 
   const cleanPhoneNumber = (phone: string) => phone.replace(/[^0-9+]/g, '');
 
-  const openWhatsApp = useCallback((e: React.MouseEvent) => {
-    e.preventDefault();
+  // WhatsApp URL for anchor-based navigation (avoids popup blockers in iframes)
+  const whatsappUrl = `https://wa.me/${cleanPhoneNumber(prospect.phone)}`;
+
+  const handleWhatsAppClick = useCallback((e: React.MouseEvent) => {
     e.stopPropagation();
     onMarkLastContacted?.();
-    const phone = cleanPhoneNumber(prospect.phone);
-    const isMobile = /Android|iPhone|iPad|iPod|webOS|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-    const whatsappUrl = isMobile 
-      ? `https://wa.me/${phone}` 
-      : `https://web.whatsapp.com/send?phone=${phone}`;
-    window.open(whatsappUrl, '_blank', 'noopener,noreferrer');
-  }, [prospect.phone, onMarkLastContacted]);
+    // Let the anchor handle navigation naturally
+  }, [onMarkLastContacted]);
 
   const openCall = useCallback((e: React.MouseEvent) => {
     e.preventDefault();
@@ -213,7 +210,7 @@ export const ProspectRow = memo(function ProspectRow({
               {/* Call + WhatsApp icons */}
               <div className="flex items-center gap-0.5 shrink-0">
                 <CallIconButton onClick={openCall} className={isMobileTable ? "p-0.5 h-6 w-6" : "h-7 w-7"} />
-                <WhatsAppIconButton onClick={openWhatsApp} className={isMobileTable ? "p-0.5 h-6 w-6" : "h-7 w-7"} />
+                <WhatsAppIconButton href={whatsappUrl} onClick={handleWhatsAppClick} className={isMobileTable ? "p-0.5 h-6 w-6" : "h-7 w-7"} />
               </div>
               <div className="flex flex-col overflow-hidden min-w-0 flex-1">
                 <button

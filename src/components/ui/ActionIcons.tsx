@@ -53,8 +53,15 @@ export function CallButton({ onClick, className, size = 'md' }: IconButtonProps)
   );
 }
 
-// Standardized WhatsApp button used across the app
-export function WhatsAppButton({ onClick, className, size = 'md' }: IconButtonProps) {
+// Standardized WhatsApp button used across the app (anchor-based for iframe compatibility)
+interface WhatsAppButtonProps {
+  href: string;
+  onClick?: (e: React.MouseEvent) => void;
+  className?: string;
+  size?: 'sm' | 'md' | 'lg';
+}
+
+export function WhatsAppButton({ href, onClick, className, size = 'md' }: WhatsAppButtonProps) {
   const sizeClasses = {
     sm: 'p-1.5 h-7 w-7',
     md: 'p-2 h-9 w-9',
@@ -68,7 +75,10 @@ export function WhatsAppButton({ onClick, className, size = 'md' }: IconButtonPr
   };
 
   return (
-    <button
+    <a
+      href={href}
+      target="_blank"
+      rel="noopener noreferrer"
       onClick={onClick}
       className={cn(
         "rounded-lg border border-green-500/50 bg-background text-green-600 hover:bg-green-50 dark:hover:bg-green-950/30 transition-colors flex items-center justify-center",
@@ -78,7 +88,7 @@ export function WhatsAppButton({ onClick, className, size = 'md' }: IconButtonPr
       aria-label="WhatsApp"
     >
       <WhatsAppOutlineIcon className={iconSizes[size]} />
-    </button>
+    </a>
   );
 }
 
@@ -98,9 +108,13 @@ export function CallIconButton({ onClick, className }: { onClick: (e: React.Mous
   );
 }
 
-export function WhatsAppIconButton({ onClick, className }: { onClick: (e: React.MouseEvent) => void; className?: string }) {
+// Compact inline WhatsApp for table cells (anchor-based)
+export function WhatsAppIconButton({ href, onClick, className }: { href: string; onClick?: (e: React.MouseEvent) => void; className?: string }) {
   return (
-    <button
+    <a
+      href={href}
+      target="_blank"
+      rel="noopener noreferrer"
       onClick={onClick}
       className={cn(
         "p-1 text-green-600 hover:text-green-700 transition-colors flex items-center justify-center",
@@ -109,6 +123,6 @@ export function WhatsAppIconButton({ onClick, className }: { onClick: (e: React.
       aria-label="WhatsApp"
     >
       <WhatsAppOutlineIcon className="h-5 w-5" />
-    </button>
+    </a>
   );
 }
