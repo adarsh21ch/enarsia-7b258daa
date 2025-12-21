@@ -148,7 +148,11 @@ const [localData, setLocalData] = useState<Partial<Prospect>>({});
     e.preventDefault();
     e.stopPropagation();
     const cleanPhone = cleanPhoneNumber(prospect.phone);
-    window.open(`https://wa.me/${cleanPhone}`, '_blank');
+    const isMobile = /Android|iPhone|iPad|iPod|webOS|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    const whatsappUrl = isMobile 
+      ? `https://wa.me/${cleanPhone}` 
+      : `https://web.whatsapp.com/send?phone=${cleanPhone}`;
+    window.open(whatsappUrl, '_blank', 'noopener,noreferrer');
   };
 
   const openCall = (e: React.MouseEvent) => {

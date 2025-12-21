@@ -99,7 +99,10 @@ const [localData, setLocalData] = useState({
     e.stopPropagation();
     onMarkLastContacted?.();
     const phone = cleanPhoneNumber(prospect.phone);
-    const whatsappUrl = `https://wa.me/${phone}`;
+    const isMobile = /Android|iPhone|iPad|iPod|webOS|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    const whatsappUrl = isMobile 
+      ? `https://wa.me/${phone}` 
+      : `https://web.whatsapp.com/send?phone=${phone}`;
     window.open(whatsappUrl, '_blank', 'noopener,noreferrer');
   }, [prospect.phone, onMarkLastContacted]);
 
