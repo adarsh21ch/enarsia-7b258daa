@@ -143,7 +143,12 @@ export const ProspectRow = memo(function ProspectRow({
     e.preventDefault();
     e.stopPropagation();
     onMarkLastContacted?.();
-    window.open(`https://wa.me/${cleanPhoneNumber(prospect.phone)}`, '_blank');
+    const phone = cleanPhoneNumber(prospect.phone);
+    const isDesktop = !/Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+    const whatsappUrl = isDesktop 
+      ? `https://web.whatsapp.com/send?phone=${phone}`
+      : `https://wa.me/${phone}`;
+    window.open(whatsappUrl, '_blank');
   }, [prospect.phone, onMarkLastContacted]);
 
   const openCall = useCallback((e: React.MouseEvent) => {
