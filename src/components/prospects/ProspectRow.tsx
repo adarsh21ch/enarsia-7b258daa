@@ -1,9 +1,8 @@
-import { useState, useEffect, memo, useCallback, useRef } from 'react';
+import { useState, useEffect, memo, useCallback } from 'react';
 import { Prospect, FunnelStage, ActionTaken, ProspectStatus, FUNNEL_STAGES, EXTENDED_ACTIONS, STATUSES, ExtendedActionTaken } from '@/types/prospect';
 import { InlineSelect } from './InlineSelect';
 import { StatusBadge, StageBadge, ActionBadge } from './StatusBadge';
 import { InlineReportCard } from './InlineReportCard';
-import { CallResultModal } from './CallResultModal';
 import { Checkbox } from '@/components/ui/checkbox';
 import { CallIconButton, WhatsAppIconButton } from '@/components/ui/ActionIcons';
 import { ChevronDown } from 'lucide-react';
@@ -63,13 +62,6 @@ export const ProspectRow = memo(function ProspectRow({
   const [optimisticAction, setOptimisticAction] = useState<ExtendedActionTaken | null>(null);
   const [optimisticStage, setOptimisticStage] = useState<string | null>(null);
   
-  // Call result modal state
-  const [callResultModal, setCallResultModal] = useState<{
-    open: boolean;
-    type: 'call' | 'whatsapp';
-  }>({ open: false, type: 'call' });
-  const pendingContactRef = useRef<'call' | 'whatsapp' | null>(null);
-  
   const { 
     // Leads tags
     leadsTrackingTags,
@@ -107,23 +99,6 @@ export const ProspectRow = memo(function ProspectRow({
     setOptimisticAction(null);
     setOptimisticStage(null);
   }, [prospect.action_taken, prospect.funnel_stage]);
-
-  // Visibility change detection for call result modal
-  useEffect(() => {
-    const handleVisibilityChange = () => {
-      if (document.visibilityState === 'visible' && pendingContactRef.current) {
-        // User returned to app after call/WhatsApp - show result modal
-        setCallResultModal({ 
-          open: true, 
-          type: pendingContactRef.current 
-        });
-        pendingContactRef.current = null;
-      }
-    };
-
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
-  }, []);
 
   const handleActionChange = useCallback(async (value: ExtendedActionTaken) => {
     // Optimistic update - update UI immediately
@@ -168,7 +143,7 @@ export const ProspectRow = memo(function ProspectRow({
     e.preventDefault();
     e.stopPropagation();
     onMarkLastContacted?.();
-    pendingContactRef.current = 'whatsapp';
+    // Open WhatsApp externally - no popup on return
     window.open(`https://wa.me/${cleanPhoneNumber(prospect.phone)}`, '_blank');
   }, [prospect.phone, onMarkLastContacted]);
 
@@ -176,45 +151,9 @@ export const ProspectRow = memo(function ProspectRow({
     e.preventDefault();
     e.stopPropagation();
     onMarkLastContacted?.();
-    pendingContactRef.current = 'call';
-    window.open(`tel:${cleanPhoneNumber(prospect.phone)}`, '_self');
+    // Use location.href to avoid webview navigation blink
+    window.location.href = `tel:${cleanPhoneNumber(prospect.phone)}`;
   }, [prospect.phone, onMarkLastContacted]);
-
-  // Handle call result submission
-  const handleCallResultSubmit = useCallback(async (result: { outcome: string; notes?: string }) => {
-    // Map outcome to response tag if applicable
-    const outcomeToTag: Record<string, string> = {
-      'answered': 'Interested',
-      'not_picked': 'Not Picked',
-      'busy': 'Busy',
-      'call_back': 'Call Back',
-      'not_interested': 'Not Interested',
-      'replied': 'Interested',
-      'seen': 'Follow Up',
-      'sent': 'Video Sent',
-    };
-    
-    const updates: Partial<Prospect> = {};
-    
-    // Update notes if provided
-    if (result.notes) {
-      const existingNotes = prospect.notes || '';
-      const timestamp = new Date().toLocaleDateString();
-      updates.notes = existingNotes 
-        ? `${existingNotes}\n[${timestamp}] ${result.notes}`
-        : `[${timestamp}] ${result.notes}`;
-    }
-    
-    // Only update action if we have a matching tag
-    const mappedTag = outcomeToTag[result.outcome];
-    if (mappedTag && actionOptions.includes(mappedTag as any)) {
-      updates.action_taken = mappedTag as ActionTaken;
-    }
-    
-    if (Object.keys(updates).length > 0) {
-      await onUpdate(prospect.id, updates);
-    }
-  }, [prospect.id, prospect.notes, actionOptions, onUpdate]);
 
   const getActionDisplayValue = (): ExtendedActionTaken | null => {
     // Use optimistic value if available, otherwise use prospect value
@@ -397,14 +336,6 @@ export const ProspectRow = memo(function ProspectRow({
           colSpan={columnOrder.length + (showSelection ? 1 : 0)} 
         />
       )}
-      {/* Call Result Modal - shown when user returns from call/WhatsApp */}
-      <CallResultModal
-        open={callResultModal.open}
-        onOpenChange={(open) => setCallResultModal(prev => ({ ...prev, open }))}
-        contactType={callResultModal.type}
-        prospectName={prospect.name}
-        onSubmit={handleCallResultSubmit}
-      />
     </>
   );
 }, (prevProps, nextProps) => {
