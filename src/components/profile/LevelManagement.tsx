@@ -3,9 +3,9 @@ import { useLeaderLevels, LeaderLevel } from '@/hooks/useLeaderLevels';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from '@/components/ui/dialog';
-import { Plus, Pencil, Trash2, Check, Star, GripVertical, Loader2 } from 'lucide-react';
+import { Plus, Pencil, Trash2, Check, Star, GripVertical, Loader2, ListTodo } from 'lucide-react';
 import { cn } from '@/lib/utils';
-
+import { TodoTemplateManager } from './TodoTemplateManager';
 export function LevelManagement() {
   const { levels, loading, addLevel, updateLevel, deleteLevel, setDefaultLevel } = useLeaderLevels();
   const [open, setOpen] = useState(false);
@@ -160,6 +160,21 @@ export function LevelManagement() {
                         </div>
                       </div>
                       <div className="flex items-center gap-1">
+                        {/* Todo Template Manager Button */}
+                        <TodoTemplateManager 
+                          levelPosition={level.position} 
+                          levelLabel={level.label}
+                          trigger={
+                            <Button
+                              size="icon"
+                              variant="ghost"
+                              className="h-7 w-7"
+                              title="Manage Todo Template"
+                            >
+                              <ListTodo className="h-3.5 w-3.5 text-primary" />
+                            </Button>
+                          }
+                        />
                         {!level.is_default && (
                           <Button
                             size="icon"

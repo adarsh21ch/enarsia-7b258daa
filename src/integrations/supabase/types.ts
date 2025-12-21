@@ -575,6 +575,77 @@ export type Database = {
         }
         Relationships: []
       }
+      todo_daily_task_status: {
+        Row: {
+          date: string
+          id: string
+          status: string | null
+          template_item_id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          date: string
+          id?: string
+          status?: string | null
+          template_item_id: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          date?: string
+          id?: string
+          status?: string | null
+          template_item_id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "todo_daily_task_status_template_item_id_fkey"
+            columns: ["template_item_id"]
+            isOneToOne: false
+            referencedRelation: "todo_template_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      todo_template_items: {
+        Row: {
+          created_at: string
+          id: string
+          is_active: boolean
+          item_title: string
+          leader_id: string
+          level_position: number
+          sort_order: number
+          template_name: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          item_title: string
+          leader_id: string
+          level_position: number
+          sort_order?: number
+          template_name?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          item_title?: string
+          leader_id?: string
+          level_position?: number
+          sort_order?: number
+          template_name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       todos: {
         Row: {
           completed: boolean
