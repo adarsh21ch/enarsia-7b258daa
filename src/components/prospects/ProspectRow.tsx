@@ -139,13 +139,8 @@ export const ProspectRow = memo(function ProspectRow({
 
   const cleanPhoneNumber = (phone: string) => phone.replace(/[^0-9+]/g, '');
 
-  // WhatsApp URL for anchor-based navigation (avoids popup blockers in iframes)
-  const whatsappUrl = `https://wa.me/${cleanPhoneNumber(prospect.phone)}`;
-
   const handleWhatsAppClick = useCallback((e: React.MouseEvent) => {
-    e.stopPropagation();
     onMarkLastContacted?.();
-    // Let the anchor handle navigation naturally
   }, [onMarkLastContacted]);
 
   const openCall = useCallback((e: React.MouseEvent) => {
@@ -210,7 +205,7 @@ export const ProspectRow = memo(function ProspectRow({
               {/* Call + WhatsApp icons */}
               <div className="flex items-center gap-0.5 shrink-0">
                 <CallIconButton onClick={openCall} className={isMobileTable ? "p-0.5 h-6 w-6" : "h-7 w-7"} />
-                <WhatsAppIconButton href={whatsappUrl} onClick={handleWhatsAppClick} className={isMobileTable ? "p-0.5 h-6 w-6" : "h-7 w-7"} />
+                <WhatsAppIconButton phone={cleanPhoneNumber(prospect.phone)} onClick={handleWhatsAppClick} className={isMobileTable ? "p-0.5 h-6 w-6" : "h-7 w-7"} />
               </div>
               <div className="flex flex-col overflow-hidden min-w-0 flex-1">
                 <button

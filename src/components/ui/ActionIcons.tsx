@@ -53,15 +53,15 @@ export function CallButton({ onClick, className, size = 'md' }: IconButtonProps)
   );
 }
 
-// Standardized WhatsApp button used across the app (anchor-based for iframe compatibility)
+// Standardized WhatsApp button used across the app
 interface WhatsAppButtonProps {
-  href: string;
+  phone: string;
   onClick?: (e: React.MouseEvent) => void;
   className?: string;
   size?: 'sm' | 'md' | 'lg';
 }
 
-export function WhatsAppButton({ href, onClick, className, size = 'md' }: WhatsAppButtonProps) {
+export function WhatsAppButton({ phone, onClick, className, size = 'md' }: WhatsAppButtonProps) {
   const sizeClasses = {
     sm: 'p-1.5 h-7 w-7',
     md: 'p-2 h-9 w-9',
@@ -74,12 +74,16 @@ export function WhatsAppButton({ href, onClick, className, size = 'md' }: WhatsA
     lg: 'h-5 w-5',
   };
 
+  const handleClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    onClick?.(e);
+    // Use whatsapp:// protocol to open native app directly
+    window.location.href = `whatsapp://send?phone=${phone}`;
+  };
+
   return (
-    <a
-      href={href}
-      target="_blank"
-      rel="noopener noreferrer"
-      onClick={onClick}
+    <button
+      onClick={handleClick}
       className={cn(
         "rounded-lg border border-green-500/50 bg-background text-green-600 hover:bg-green-50 dark:hover:bg-green-950/30 transition-colors flex items-center justify-center",
         sizeClasses[size],
@@ -88,7 +92,7 @@ export function WhatsAppButton({ href, onClick, className, size = 'md' }: WhatsA
       aria-label="WhatsApp"
     >
       <WhatsAppOutlineIcon className={iconSizes[size]} />
-    </a>
+    </button>
   );
 }
 
@@ -108,14 +112,18 @@ export function CallIconButton({ onClick, className }: { onClick: (e: React.Mous
   );
 }
 
-// Compact inline WhatsApp for table cells (anchor-based)
-export function WhatsAppIconButton({ href, onClick, className }: { href: string; onClick?: (e: React.MouseEvent) => void; className?: string }) {
+// Compact inline WhatsApp for table cells
+export function WhatsAppIconButton({ phone, onClick, className }: { phone: string; onClick?: (e: React.MouseEvent) => void; className?: string }) {
+  const handleClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    onClick?.(e);
+    // Use whatsapp:// protocol to open native app directly
+    window.location.href = `whatsapp://send?phone=${phone}`;
+  };
+
   return (
-    <a
-      href={href}
-      target="_blank"
-      rel="noopener noreferrer"
-      onClick={onClick}
+    <button
+      onClick={handleClick}
       className={cn(
         "p-1 text-green-600 hover:text-green-700 transition-colors flex items-center justify-center",
         className
@@ -123,6 +131,6 @@ export function WhatsAppIconButton({ href, onClick, className }: { href: string;
       aria-label="WhatsApp"
     >
       <WhatsAppOutlineIcon className="h-5 w-5" />
-    </a>
+    </button>
   );
 }
