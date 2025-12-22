@@ -1,4 +1,4 @@
-// Hook for leader to manage todo templates per level
+// Hook for leader to manage compulsory actions per level
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
@@ -19,7 +19,7 @@ export interface TodoTemplateItem {
 export function useTodoTemplates(levelPosition: number | null) {
   const { user } = useAuth();
   const [items, setItems] = useState<TodoTemplateItem[]>([]);
-  const [templateName, setTemplateName] = useState('Todo Template');
+  const [templateName, setTemplateName] = useState('Compulsory Actions');
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
 
@@ -47,7 +47,7 @@ export function useTodoTemplates(levelPosition: number | null) {
       if (templateItems.length > 0) {
         setTemplateName(templateItems[0].template_name);
       } else {
-        setTemplateName('Todo Template');
+        setTemplateName('Compulsory Actions');
       }
     } catch (error) {
       console.error('Error fetching template items:', error);

@@ -1,4 +1,4 @@
-// Todo Template Manager - Bottom sheet on mobile, drawer on desktop
+// Compulsory Actions Manager - Bottom sheet on mobile, drawer on desktop
 import { useState, useEffect } from 'react';
 import { useTodoTemplates, TodoTemplateItem } from '@/hooks/useTodoTemplates';
 import { Button } from '@/components/ui/button';
@@ -258,7 +258,7 @@ export function TodoTemplateManager({ levelPosition, levelLabel, trigger }: Todo
   const [open, setOpen] = useState(false);
 
   const defaultTrigger = (
-    <Button variant="ghost" size="icon" className="h-7 w-7" title="Manage Todo Template">
+    <Button variant="ghost" size="icon" className="h-7 w-7" title="Manage Compulsory Actions">
       <ListTodo className="h-4 w-4 text-muted-foreground" />
     </Button>
   );
@@ -273,7 +273,7 @@ export function TodoTemplateManager({ levelPosition, levelLabel, trigger }: Todo
         </DrawerTrigger>
         <DrawerContent className="max-h-[85vh]">
           <DrawerHeader>
-            <DrawerTitle>Todo Template for {levelLabel}</DrawerTitle>
+            <DrawerTitle>Compulsory Actions for {levelLabel}</DrawerTitle>
           </DrawerHeader>
           <div className="px-4 pb-6 overflow-y-auto">
             {content}
@@ -290,7 +290,7 @@ export function TodoTemplateManager({ levelPosition, levelLabel, trigger }: Todo
       </SheetTrigger>
       <SheetContent side="right" className="w-[400px] sm:w-[450px]">
         <SheetHeader>
-          <SheetTitle>Todo Template for {levelLabel}</SheetTitle>
+          <SheetTitle>Compulsory Actions for {levelLabel}</SheetTitle>
         </SheetHeader>
         <div className="mt-4">
           {content}

@@ -9,8 +9,6 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useTrackingFormatContext } from '@/contexts/TrackingFormatContext';
 import { toast } from 'sonner';
 
-const LEADER_SETUP_DISMISSED_KEY = 'nevorai_leader_setup_dismissed';
-
 interface LeaderIdSetupDialogProps {
   onComplete?: () => void;
 }
@@ -26,7 +24,7 @@ export function LeaderIdSetupDialog({ onComplete }: LeaderIdSetupDialogProps) {
   const [success, setSuccess] = useState(false);
   const checkedRef = useRef(false);
 
-  // Check if we should show the dialog
+  // Check if we should show the dialog - now using database flag
   useEffect(() => {
     if (!user || profileLoading || !profile || checkedRef.current) return;
     checkedRef.current = true;
@@ -34,9 +32,8 @@ export function LeaderIdSetupDialog({ onComplete }: LeaderIdSetupDialogProps) {
     // Don't show if user already has a leader
     if (profile.leaders_id_of_my_leader) return;
     
-    // Don't show if user dismissed before
-    const dismissed = localStorage.getItem(LEADER_SETUP_DISMISSED_KEY);
-    if (dismissed === user.id) return;
+    // Don't show if user already completed/skipped the prompt (persisted in DB)
+    if (profile.leader_prompt_completed) return;
     
     // Show the dialog for first-time users without a leader
     setOpen(true);
@@ -49,8 +46,11 @@ export function LeaderIdSetupDialog({ onComplete }: LeaderIdSetupDialogProps) {
     const result = await updateLeaderHierarchy(leaderIdInput.trim().toUpperCase());
     
     if (result.success) {
-      // Also set use_leader_stages to true
-      await updateProfile({ use_leader_stages: true });
+      // Set use_leader_stages to true AND mark prompt as completed
+      await updateProfile({ 
+        use_leader_stages: true,
+        leader_prompt_completed: true 
+      });
       refreshFormat();
       setSuccess(true);
       toast.success('Connected to your leader. Using their tracking format.');
@@ -67,11 +67,11 @@ export function LeaderIdSetupDialog({ onComplete }: LeaderIdSetupDialogProps) {
     setSaving(false);
   };
 
-  const handleSkip = () => {
-    // Mark as dismissed for this user
-    if (user) {
-      localStorage.setItem(LEADER_SETUP_DISMISSED_KEY, user.id);
-    }
+  const handleSkip = async () => {
+    // Mark as completed in database so it never shows again
+    setSaving(true);
+    await updateProfile({ leader_prompt_completed: true });
+    setSaving(false);
     setOpen(false);
     onComplete?.();
   };
@@ -122,6 +122,7 @@ export function LeaderIdSetupDialog({ onComplete }: LeaderIdSetupDialogProps) {
 
             <DialogFooter className="gap-2 sm:gap-0">
               <Button variant="ghost" onClick={handleSkip} disabled={saving}>
+                {saving ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
                 Skip for now
               </Button>
               <Button onClick={handleConnect} disabled={saving || !leaderIdInput.trim()}>

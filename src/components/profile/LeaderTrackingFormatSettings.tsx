@@ -913,7 +913,7 @@ export function LeaderTrackingFormatSettings({
                     levelPosition={level.position} 
                     levelLabel={level.label}
                     trigger={
-                      <Button variant="ghost" size="icon" className="h-7 w-7 shrink-0" title="Manage Todo Template">
+                      <Button variant="ghost" size="icon" className="h-7 w-7 shrink-0" title="Manage Compulsory Actions">
                         <ListTodo className="h-3.5 w-3.5 text-primary" />
                       </Button>
                     }

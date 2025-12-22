@@ -366,6 +366,7 @@ export type Database = {
           display_name: string | null
           email: string | null
           id: string
+          leader_prompt_completed: boolean
           leaders_id_of_my_leader: string | null
           level_id: string | null
           neverai_id: string | null
@@ -389,6 +390,7 @@ export type Database = {
           display_name?: string | null
           email?: string | null
           id?: string
+          leader_prompt_completed?: boolean
           leaders_id_of_my_leader?: string | null
           level_id?: string | null
           neverai_id?: string | null
@@ -412,6 +414,7 @@ export type Database = {
           display_name?: string | null
           email?: string | null
           id?: string
+          leader_prompt_completed?: boolean
           leaders_id_of_my_leader?: string | null
           level_id?: string | null
           neverai_id?: string | null

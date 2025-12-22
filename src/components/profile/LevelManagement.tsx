@@ -160,7 +160,7 @@ export function LevelManagement() {
                         </div>
                       </div>
                       <div className="flex items-center gap-1">
-                        {/* Todo Template Manager Button */}
+                        {/* Compulsory Actions Manager Button */}
                         <TodoTemplateManager 
                           levelPosition={level.position} 
                           levelLabel={level.label}
@@ -169,7 +169,7 @@ export function LevelManagement() {
                               size="icon"
                               variant="ghost"
                               className="h-7 w-7"
-                              title="Manage Todo Template"
+                              title="Manage Compulsory Actions"
                             >
                               <ListTodo className="h-3.5 w-3.5 text-primary" />
                             </Button>

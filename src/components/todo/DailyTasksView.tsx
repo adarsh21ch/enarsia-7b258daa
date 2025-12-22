@@ -61,7 +61,7 @@ export function DailyTasksView({ selectedDate, selectedDateString }: DailyTasksV
       {/* Header with template name and progress */}
       <div className="flex items-center justify-between">
         <div>
-          <p className="text-xs text-muted-foreground">From Leader:</p>
+          <p className="text-xs text-muted-foreground">From Leader: Compulsory Actions</p>
           <p className="text-sm font-semibold text-primary">{templateName}</p>
         </div>
         <div className="text-right">

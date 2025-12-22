@@ -21,6 +21,7 @@ export interface Profile {
   leaders_id_of_my_leader: string | null;
   root_leader_id: string | null;
   allow_leader_to_view: boolean;
+  leader_prompt_completed: boolean; // Flag to track if leader prompt was shown
   // Stage configuration fields
   use_leader_stages: boolean;
   stage_count: number;
@@ -38,6 +39,7 @@ export interface ProfileUpdate {
   leaders_id_of_my_leader?: string | null;
   root_leader_id?: string | null;
   allow_leader_to_view?: boolean;
+  leader_prompt_completed?: boolean;
   use_leader_stages?: boolean;
   stage_count?: number;
   stage_labels?: string[];

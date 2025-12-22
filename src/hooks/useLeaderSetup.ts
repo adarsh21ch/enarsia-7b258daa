@@ -9,7 +9,7 @@ import { toast } from 'sonner';
  */
 export function useLeaderSetup() {
   const { user } = useAuth();
-  const { profile, loading, updateLeaderHierarchy } = useProfile();
+  const { profile, loading, updateLeaderHierarchy, updateProfile } = useProfile();
   const processedRef = useRef(false);
 
   useEffect(() => {
@@ -39,10 +39,12 @@ export function useLeaderSetup() {
       sessionStorage.removeItem('pending_leader_id');
       
       if (result.success) {
+        // Also mark leader prompt as completed since they connected via share link
+        await updateProfile({ leader_prompt_completed: true });
         toast.success(`Connected to leader: ${pendingLeaderId}`);
       }
     };
 
     processLeader();
-  }, [user, loading, profile, updateLeaderHierarchy]);
+  }, [user, loading, profile, updateLeaderHierarchy, updateProfile]);
 }
