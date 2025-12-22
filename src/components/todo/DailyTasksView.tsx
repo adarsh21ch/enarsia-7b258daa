@@ -1,10 +1,123 @@
 // Daily Tasks View - Shows leader-assigned template checklist for selected date
 import { useDailyTasks } from '@/hooks/useDailyTasks';
-import { Button } from '@/components/ui/button';
-import { Loader2, CheckCircle, XCircle, Circle, ClipboardList } from 'lucide-react';
+import { Loader2, CheckCircle, XCircle, ClipboardList } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { useRef, useState } from 'react';
+
+interface Task {
+  id: string;
+  item_title: string;
+  status: 'yes' | 'no' | null;
+}
+
+interface TaskRowProps {
+  task: Task;
+  index: number;
+  onStatusChange: (taskId: string, newStatus: 'yes' | 'no' | null) => void;
+}
+
+function TaskRow({ task, index, onStatusChange }: TaskRowProps) {
+  const touchStartX = useRef(0);
+  const [swipeOffset, setSwipeOffset] = useState(0);
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    touchStartX.current = e.touches[0].clientX;
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    const diff = e.touches[0].clientX - touchStartX.current;
+    setSwipeOffset(Math.max(-60, Math.min(60, diff)));
+  };
+
+  const handleTouchEnd = () => {
+    if (swipeOffset > 40) {
+      onStatusChange(task.id, task.status === 'yes' ? null : 'yes');
+    } else if (swipeOffset < -40) {
+      onStatusChange(task.id, task.status === 'no' ? null : 'no');
+    }
+    setSwipeOffset(0);
+  };
+
+  return (
+    <div
+      className={cn(
+        "flex items-center gap-3 px-4 py-3 transition-all relative overflow-hidden",
+        index % 2 === 0 
+          ? "bg-white dark:bg-card" 
+          : "bg-gray-50/50 dark:bg-muted/10"
+      )}
+      onTouchStart={handleTouchStart}
+      onTouchMove={handleTouchMove}
+      onTouchEnd={handleTouchEnd}
+      style={{ 
+        transform: `translateX(${swipeOffset}px)`,
+        transition: swipeOffset === 0 ? 'transform 0.2s ease-out' : 'none'
+      }}
+    >
+      {/* Swipe indicators */}
+      <div 
+        className={cn(
+          "absolute left-0 top-0 bottom-0 w-12 flex items-center justify-center bg-green-500 text-white transition-opacity",
+          swipeOffset > 20 ? "opacity-100" : "opacity-0"
+        )}
+        style={{ transform: `translateX(${-48 + Math.min(swipeOffset, 48)}px)` }}
+      >
+        <CheckCircle className="h-5 w-5" />
+      </div>
+      <div 
+        className={cn(
+          "absolute right-0 top-0 bottom-0 w-12 flex items-center justify-center bg-red-500 text-white transition-opacity",
+          swipeOffset < -20 ? "opacity-100" : "opacity-0"
+        )}
+        style={{ transform: `translateX(${48 + Math.max(swipeOffset, -48)}px)` }}
+      >
+        <XCircle className="h-5 w-5" />
+      </div>
+
+      {/* Task title */}
+      <div className="flex-1 min-w-0">
+        <p className={cn(
+          "text-sm font-medium",
+          task.status === 'yes' && "text-green-700 dark:text-green-400",
+          task.status === 'no' && "text-red-600 dark:text-red-400 line-through opacity-70"
+        )}>
+          {task.item_title}
+        </p>
+      </div>
+
+      {/* 3-state compact toggle */}
+      <div className="flex items-center bg-muted/50 rounded-full p-0.5 h-7 shrink-0">
+        <button
+          onClick={() => onStatusChange(task.id, task.status === 'no' ? null : 'no')}
+          className={cn(
+            "px-2.5 py-1 rounded-full text-xs font-medium transition-all",
+            task.status === 'no' 
+              ? "bg-red-500 text-white" 
+              : "text-muted-foreground hover:text-red-500"
+          )}
+        >
+          No
+        </button>
+        <div className={cn(
+          "w-1.5 h-1.5 rounded-full mx-1 transition-all",
+          task.status === null ? "bg-muted-foreground/50" : "bg-transparent"
+        )} />
+        <button
+          onClick={() => onStatusChange(task.id, task.status === 'yes' ? null : 'yes')}
+          className={cn(
+            "px-2.5 py-1 rounded-full text-xs font-medium transition-all",
+            task.status === 'yes' 
+              ? "bg-green-500 text-white" 
+              : "text-muted-foreground hover:text-green-500"
+          )}
+        >
+          Yes
+        </button>
+      </div>
+    </div>
+  );
+}
 
 interface DailyTasksViewProps {
   selectedDate: Date;
@@ -84,111 +197,14 @@ export function DailyTasksView({ selectedDate, selectedDateString }: DailyTasksV
       {/* Tasks list */}
       <div className="bg-white dark:bg-card rounded-xl border border-border/40 shadow-sm overflow-hidden">
         <div className="divide-y divide-border/20">
-          {tasks.map((task, index) => {
-            const touchStartX = useRef(0);
-            const [swipeOffset, setSwipeOffset] = useState(0);
-            
-            const handleTouchStart = (e: React.TouchEvent) => {
-              touchStartX.current = e.touches[0].clientX;
-            };
-            
-            const handleTouchMove = (e: React.TouchEvent) => {
-              const diff = e.touches[0].clientX - touchStartX.current;
-              // Limit swipe distance
-              setSwipeOffset(Math.max(-60, Math.min(60, diff)));
-            };
-            
-            const handleTouchEnd = () => {
-              if (swipeOffset > 40) {
-                // Swipe right → Yes
-                handleStatusChange(task.id, task.status === 'yes' ? null : 'yes');
-              } else if (swipeOffset < -40) {
-                // Swipe left → No
-                handleStatusChange(task.id, task.status === 'no' ? null : 'no');
-              }
-              setSwipeOffset(0);
-            };
-
-            return (
-              <div
-                key={task.id}
-                className={cn(
-                  "flex items-center gap-3 px-4 py-3 transition-all relative overflow-hidden",
-                  index % 2 === 0 
-                    ? "bg-white dark:bg-card" 
-                    : "bg-gray-50/50 dark:bg-muted/10"
-                )}
-                onTouchStart={handleTouchStart}
-                onTouchMove={handleTouchMove}
-                onTouchEnd={handleTouchEnd}
-                style={{ 
-                  transform: `translateX(${swipeOffset}px)`,
-                  transition: swipeOffset === 0 ? 'transform 0.2s ease-out' : 'none'
-                }}
-              >
-                {/* Swipe indicators */}
-                <div 
-                  className={cn(
-                    "absolute left-0 top-0 bottom-0 w-12 flex items-center justify-center bg-green-500 text-white transition-opacity",
-                    swipeOffset > 20 ? "opacity-100" : "opacity-0"
-                  )}
-                  style={{ transform: `translateX(${-48 + Math.min(swipeOffset, 48)}px)` }}
-                >
-                  <CheckCircle className="h-5 w-5" />
-                </div>
-                <div 
-                  className={cn(
-                    "absolute right-0 top-0 bottom-0 w-12 flex items-center justify-center bg-red-500 text-white transition-opacity",
-                    swipeOffset < -20 ? "opacity-100" : "opacity-0"
-                  )}
-                  style={{ transform: `translateX(${48 + Math.max(swipeOffset, -48)}px)` }}
-                >
-                  <XCircle className="h-5 w-5" />
-                </div>
-
-                {/* Task title */}
-                <div className="flex-1 min-w-0">
-                  <p className={cn(
-                    "text-sm font-medium",
-                    task.status === 'yes' && "text-green-700 dark:text-green-400",
-                    task.status === 'no' && "text-red-600 dark:text-red-400 line-through opacity-70"
-                  )}>
-                    {task.item_title}
-                  </p>
-                </div>
-
-                {/* 3-state compact toggle */}
-                <div className="flex items-center bg-muted/50 rounded-full p-0.5 h-7 shrink-0">
-                  <button
-                    onClick={() => handleStatusChange(task.id, task.status === 'no' ? null : 'no')}
-                    className={cn(
-                      "px-2.5 py-1 rounded-full text-xs font-medium transition-all",
-                      task.status === 'no' 
-                        ? "bg-red-500 text-white" 
-                        : "text-muted-foreground hover:text-red-500"
-                    )}
-                  >
-                    No
-                  </button>
-                  <div className={cn(
-                    "w-1.5 h-1.5 rounded-full mx-1 transition-all",
-                    task.status === null ? "bg-muted-foreground/50" : "bg-transparent"
-                  )} />
-                  <button
-                    onClick={() => handleStatusChange(task.id, task.status === 'yes' ? null : 'yes')}
-                    className={cn(
-                      "px-2.5 py-1 rounded-full text-xs font-medium transition-all",
-                      task.status === 'yes' 
-                        ? "bg-green-500 text-white" 
-                        : "text-muted-foreground hover:text-green-500"
-                    )}
-                  >
-                    Yes
-                  </button>
-                </div>
-              </div>
-            );
-          })}
+          {tasks.map((task, index) => (
+            <TaskRow
+              key={task.id}
+              task={task}
+              index={index}
+              onStatusChange={handleStatusChange}
+            />
+          ))}
         </div>
 
         {/* Summary footer */}
