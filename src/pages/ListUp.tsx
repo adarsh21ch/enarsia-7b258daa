@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useGlobalProspects } from '@/contexts/ProspectsContext';
 import { BottomNav } from '@/components/layout/BottomNav';
+import { HeaderBellIcon } from '@/components/layout/HeaderBellIcon';
 import { PullToRefreshIndicator } from '@/components/PullToRefreshIndicator';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -348,6 +349,7 @@ export default function ListUp() {
                 <X className="h-3 w-3" />
                 Clear
               </Button>}
+            <HeaderBellIcon />
           </div>
         </div>
       </header>

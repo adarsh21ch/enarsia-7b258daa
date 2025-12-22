@@ -5,6 +5,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useGlobalProspects } from '@/contexts/ProspectsContext';
 import { useGlobalTodos } from '@/contexts/TodosContext';
 import { BottomNav } from '@/components/layout/BottomNav';
+import { HeaderBellIcon } from '@/components/layout/HeaderBellIcon';
 import { PullToRefreshIndicator } from '@/components/PullToRefreshIndicator';
 import { LeaderIdSetupDialog } from '@/components/profile/LeaderIdSetupDialog';
 import { CalendarStrip } from '@/components/calendar/CalendarStrip';
@@ -188,6 +189,7 @@ export default function Home() {
               <p className="text-xs text-muted-foreground font-medium">Track all your activities</p>
             </div>
           </div>
+          <HeaderBellIcon />
         </div>
       </header>
 

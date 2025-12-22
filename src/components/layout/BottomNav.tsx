@@ -1,7 +1,6 @@
 import { NavLink, useLocation } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { useProfile } from '@/hooks/useProfile';
-import { useInbox } from '@/hooks/useInbox';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
 // Custom icons for premium visual representation - outline style only
@@ -41,28 +40,18 @@ const TodoListIcon = ({ className }: { className?: string }) => (
   </svg>
 );
 
-// Bell/Inbox icon
-const InboxIcon = ({ className }: { className?: string }) => (
-  <svg viewBox="0 0 24 24" className={className} fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
-    <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
-    <path d="M13.73 21a2 2 0 0 1-3.46 0" />
-  </svg>
-);
-
-// Tab order: Activity, Follow Up, Calling (default), To-Do List, Inbox, Profile (avatar)
+// Tab order: Activity, Follow Up, Calling (default), To-Do List, Profile (avatar) - 5 items max
 const navItems = [
   { path: '/home', icon: ActivityIcon, label: 'Activity' },
   { path: '/listup', icon: FollowUpIcon, label: 'Follow Up' },
   { path: '/dashboard', icon: CallingIcon, label: 'Calling' },
   { path: '/action', icon: TodoListIcon, label: 'To-Do List' },
-  { path: '/inbox', icon: InboxIcon, label: 'Inbox', showBadge: true },
   { path: '/profile', icon: null, label: 'Profile', isProfile: true },
 ];
 
 export function BottomNav({ className }: { className?: string }) {
   const location = useLocation();
   const { profile } = useProfile();
-  const { unreadCount } = useInbox();
 
   // Get user initials for avatar fallback
   const displayName = profile?.display_name || 'User';
@@ -99,20 +88,12 @@ export function BottomNav({ className }: { className?: string }) {
                   </Avatar>
                 ) : (
                   Icon && (
-                    <div className="relative">
-                      <Icon 
-                        className={cn(
-                          "h-6 w-6 transition-all duration-200",
-                          isActive && "scale-105"
-                        )} 
-                      />
-                      {/* Unread badge for inbox */}
-                      {item.showBadge && unreadCount > 0 && (
-                        <span className="absolute -top-1.5 -right-1.5 min-w-[18px] h-[18px] flex items-center justify-center rounded-full bg-destructive text-destructive-foreground text-[10px] font-bold px-1">
-                          {unreadCount > 99 ? '99+' : unreadCount}
-                        </span>
-                      )}
-                    </div>
+                    <Icon 
+                      className={cn(
+                        "h-6 w-6 transition-all duration-200",
+                        isActive && "scale-105"
+                      )} 
+                    />
                   )
                 )}
                 {/* Active indicator bar below icon */}

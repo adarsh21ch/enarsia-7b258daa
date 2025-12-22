@@ -5,6 +5,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useGlobalProspects } from '@/contexts/ProspectsContext';
 import { useSheets } from '@/hooks/useSheets';
 import { BottomNav } from '@/components/layout/BottomNav';
+import { HeaderBellIcon } from '@/components/layout/HeaderBellIcon';
 import { ProspectTable } from '@/components/prospects/ProspectTable';
 import { PullToRefreshIndicator } from '@/components/PullToRefreshIndicator';
 import { BottomViewToggle } from '@/components/ui/BottomViewToggle';
@@ -151,6 +152,7 @@ export default function Dashboard() {
               </p>
             </div>
           </div>
+          <HeaderBellIcon />
         </div>
       </header>
 

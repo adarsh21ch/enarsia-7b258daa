@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useGlobalTodos } from '@/contexts/TodosContext';
 import { BottomNav } from '@/components/layout/BottomNav';
+import { HeaderBellIcon } from '@/components/layout/HeaderBellIcon';
 import { PullToRefreshIndicator } from '@/components/PullToRefreshIndicator';
 import { CalendarStrip } from '@/components/calendar/CalendarStrip';
 import { useCalendarStrip } from '@/hooks/useCalendarStrip';
@@ -187,6 +188,7 @@ export default function TodoUp() {
               <p className="text-xs text-muted-foreground font-medium">Your Tasks & Reminders</p>
             </div>
           </div>
+          <HeaderBellIcon />
         </div>
 
         {/* Segmented Control - Under title, above calendar */}

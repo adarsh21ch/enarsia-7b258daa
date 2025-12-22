@@ -7,6 +7,7 @@ import { useSubscription } from '@/hooks/useSubscription';
 import { useLeaderSetup } from '@/hooks/useLeaderSetup';
 import { useTrackingFormatContext } from '@/contexts/TrackingFormatContext';
 import { BottomNav } from '@/components/layout/BottomNav';
+import { HeaderBellIcon } from '@/components/layout/HeaderBellIcon';
 import { EditProfileDialog } from '@/components/profile/EditProfileDialog';
 import { ShareProfileDialog } from '@/components/profile/ShareProfileDialog';
 import { LeaderTrackingFormatSettings } from '@/components/profile/LeaderTrackingFormatSettings';
@@ -158,6 +159,7 @@ export default function Profile() {
               <p className="text-xs text-muted-foreground font-medium">Your Account & Settings</p>
             </div>
           </div>
+          <HeaderBellIcon />
         </div>
       </header>
 
