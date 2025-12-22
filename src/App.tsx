@@ -19,6 +19,7 @@ import Profile from "./pages/Profile";
 import Tracking from "./pages/Tracking";
 import TodoUp from "./pages/TodoUp";
 import ListUp from "./pages/ListUp";
+import Inbox from "./pages/Inbox";
 import ResetPassword from "./pages/ResetPassword";
 import NotFound from "./pages/NotFound";
 import Terms from "./pages/Terms";
@@ -88,6 +89,7 @@ function App() {
                       <Route path="/home" element={<Home />} />
                       <Route path="/action" element={<TodoUp />} />
                       <Route path="/listup" element={<ListUp />} />
+                      <Route path="/inbox" element={<Inbox />} />
                       <Route path="/profile" element={<Profile />} />
                       <Route path="/terms" element={<Terms />} />
                       <Route path="/privacy" element={<Privacy />} />
