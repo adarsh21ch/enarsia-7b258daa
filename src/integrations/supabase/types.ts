@@ -250,6 +250,51 @@ export type Database = {
         }
         Relationships: []
       }
+      inbox_messages: {
+        Row: {
+          archived: boolean
+          body: string
+          created_at: string
+          deep_link_route: string | null
+          id: string
+          leader_id: string | null
+          message_type: string
+          read_at: string | null
+          recipient_user_id: string
+          sender_user_id: string
+          target_level_position: number | null
+          title: string
+        }
+        Insert: {
+          archived?: boolean
+          body: string
+          created_at?: string
+          deep_link_route?: string | null
+          id?: string
+          leader_id?: string | null
+          message_type?: string
+          read_at?: string | null
+          recipient_user_id: string
+          sender_user_id: string
+          target_level_position?: number | null
+          title: string
+        }
+        Update: {
+          archived?: boolean
+          body?: string
+          created_at?: string
+          deep_link_route?: string | null
+          id?: string
+          leader_id?: string | null
+          message_type?: string
+          read_at?: string | null
+          recipient_user_id?: string
+          sender_user_id?: string
+          target_level_position?: number | null
+          title?: string
+        }
+        Relationships: []
+      }
       leader_levels: {
         Row: {
           code: string | null
