@@ -7,7 +7,10 @@ import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerTrigger } from '@/components/ui/drawer';
-import { Plus, ChevronUp, ChevronDown, Loader2, ListTodo, Pencil, Check, X } from 'lucide-react';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Calendar } from '@/components/ui/calendar';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Plus, ChevronUp, ChevronDown, Loader2, ListTodo, Pencil, Check, X, CalendarIcon, Repeat, Calendar as CalendarSingle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { format } from 'date-fns';
@@ -32,10 +35,16 @@ function TemplateContent({ levelPosition, levelLabel }: { levelPosition: number;
   } = useTodoTemplates(levelPosition);
 
   const [newItemTitle, setNewItemTitle] = useState('');
+  const [newItemType, setNewItemType] = useState<'recurring' | 'one-time'>('recurring');
+  const [newItemDate, setNewItemDate] = useState<Date>(new Date());
+  const [datePickerOpen, setDatePickerOpen] = useState(false);
   const [editingNameMode, setEditingNameMode] = useState(false);
   const [editedName, setEditedName] = useState(templateName);
   const [editingItemId, setEditingItemId] = useState<string | null>(null);
   const [editingItemTitle, setEditingItemTitle] = useState('');
+  const [editingItemType, setEditingItemType] = useState<'recurring' | 'one-time'>('recurring');
+  const [editingItemDate, setEditingItemDate] = useState<Date>(new Date());
+  const [editDatePickerOpen, setEditDatePickerOpen] = useState(false);
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
 
   useEffect(() => {
@@ -44,9 +53,12 @@ function TemplateContent({ levelPosition, levelLabel }: { levelPosition: number;
 
   const handleAddItem = async () => {
     if (!newItemTitle.trim()) return;
-    const result = await addItem(newItemTitle);
+    const onlyOnDate = newItemType === 'one-time' ? format(newItemDate, 'yyyy-MM-dd') : null;
+    const result = await addItem(newItemTitle, onlyOnDate);
     if (result) {
       setNewItemTitle('');
+      setNewItemType('recurring');
+      setNewItemDate(new Date());
       setLastSaved(new Date());
     }
   };
@@ -83,13 +95,25 @@ function TemplateContent({ levelPosition, levelLabel }: { levelPosition: number;
   const handleStartEditItem = (item: TodoTemplateItem) => {
     setEditingItemId(item.id);
     setEditingItemTitle(item.item_title);
+    if (item.only_on_date) {
+      setEditingItemType('one-time');
+      setEditingItemDate(new Date(item.only_on_date));
+    } else {
+      setEditingItemType('recurring');
+      setEditingItemDate(new Date());
+    }
   };
 
   const handleSaveItemEdit = async () => {
     if (!editingItemId || !editingItemTitle.trim()) return;
-    await updateItem(editingItemId, { item_title: editingItemTitle.trim() });
+    const onlyOnDate = editingItemType === 'one-time' ? format(editingItemDate, 'yyyy-MM-dd') : null;
+    await updateItem(editingItemId, { 
+      item_title: editingItemTitle.trim(),
+      only_on_date: onlyOnDate
+    });
     setEditingItemId(null);
     setEditingItemTitle('');
+    setEditingItemType('recurring');
     setLastSaved(new Date());
   };
 
@@ -104,7 +128,7 @@ function TemplateContent({ levelPosition, levelLabel }: { levelPosition: number;
   return (
     <div className="space-y-4 p-1">
       <p className="text-xs text-muted-foreground">
-        Create a checklist template for <strong>{levelLabel}</strong>. Team members at this level will see these tasks daily.
+        Create a checklist template for <strong>{levelLabel}</strong>. Team members at this level will see these tasks daily or on specific dates.
       </p>
 
       {/* Template Name */}
@@ -137,17 +161,74 @@ function TemplateContent({ levelPosition, levelLabel }: { levelPosition: number;
       </div>
 
       {/* Add new item */}
-      <div className="flex gap-2">
-        <Input
-          placeholder="Add checklist item..."
-          value={newItemTitle}
-          onChange={(e) => setNewItemTitle(e.target.value)}
-          className="flex-1"
-          onKeyDown={(e) => e.key === 'Enter' && handleAddItem()}
-        />
-        <Button size="sm" onClick={handleAddItem} disabled={!newItemTitle.trim() || saving}>
-          <Plus className="h-4 w-4" />
-        </Button>
+      <div className="space-y-2">
+        <div className="flex gap-2">
+          <Input
+            placeholder="Add checklist item..."
+            value={newItemTitle}
+            onChange={(e) => setNewItemTitle(e.target.value)}
+            className="flex-1"
+            onKeyDown={(e) => e.key === 'Enter' && handleAddItem()}
+          />
+          <Button size="sm" onClick={handleAddItem} disabled={!newItemTitle.trim() || saving}>
+            <Plus className="h-4 w-4" />
+          </Button>
+        </div>
+        
+        {/* Type selector for new item */}
+        <div className="flex items-center gap-3 text-xs">
+          <button
+            type="button"
+            onClick={() => setNewItemType('recurring')}
+            className={cn(
+              "flex items-center gap-1.5 px-2 py-1 rounded-md transition-colors",
+              newItemType === 'recurring' 
+                ? "bg-primary/10 text-primary" 
+                : "text-muted-foreground hover:text-foreground"
+            )}
+          >
+            <Repeat className="h-3 w-3" />
+            <span>Daily</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setNewItemType('one-time')}
+            className={cn(
+              "flex items-center gap-1.5 px-2 py-1 rounded-md transition-colors",
+              newItemType === 'one-time' 
+                ? "bg-primary/10 text-primary" 
+                : "text-muted-foreground hover:text-foreground"
+            )}
+          >
+            <CalendarSingle className="h-3 w-3" />
+            <span>One-time</span>
+          </button>
+          
+          {newItemType === 'one-time' && (
+            <Popover open={datePickerOpen} onOpenChange={setDatePickerOpen}>
+              <PopoverTrigger asChild>
+                <Button variant="outline" size="sm" className="h-7 text-xs gap-1.5">
+                  <CalendarIcon className="h-3 w-3" />
+                  {format(newItemDate, 'MMM d, yyyy')}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="start">
+                <Calendar
+                  mode="single"
+                  selected={newItemDate}
+                  onSelect={(date) => {
+                    if (date) {
+                      setNewItemDate(date);
+                      setDatePickerOpen(false);
+                    }
+                  }}
+                  initialFocus
+                  className="pointer-events-auto"
+                />
+              </PopoverContent>
+            </Popover>
+          )}
+        </div>
       </div>
 
       {/* Items list */}
@@ -170,23 +251,78 @@ function TemplateContent({ levelPosition, levelLabel }: { levelPosition: number;
               )}
             >
               {editingItemId === item.id ? (
-                <div className="flex items-center gap-2 flex-1">
-                  <Input
-                    value={editingItemTitle}
-                    onChange={(e) => setEditingItemTitle(e.target.value)}
-                    className="flex-1 h-8"
-                    autoFocus
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter') handleSaveItemEdit();
-                      if (e.key === 'Escape') setEditingItemId(null);
-                    }}
-                  />
-                  <Button size="icon" variant="ghost" className="h-7 w-7" onClick={handleSaveItemEdit}>
-                    <Check className="h-4 w-4 text-green-600" />
-                  </Button>
-                  <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => setEditingItemId(null)}>
-                    <X className="h-4 w-4" />
-                  </Button>
+                <div className="flex flex-col gap-2 flex-1">
+                  <div className="flex items-center gap-2">
+                    <Input
+                      value={editingItemTitle}
+                      onChange={(e) => setEditingItemTitle(e.target.value)}
+                      className="flex-1 h-8"
+                      autoFocus
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') handleSaveItemEdit();
+                        if (e.key === 'Escape') setEditingItemId(null);
+                      }}
+                    />
+                    <Button size="icon" variant="ghost" className="h-7 w-7" onClick={handleSaveItemEdit}>
+                      <Check className="h-4 w-4 text-green-600" />
+                    </Button>
+                    <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => setEditingItemId(null)}>
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </div>
+                  <div className="flex items-center gap-3 text-xs">
+                    <button
+                      type="button"
+                      onClick={() => setEditingItemType('recurring')}
+                      className={cn(
+                        "flex items-center gap-1.5 px-2 py-1 rounded-md transition-colors",
+                        editingItemType === 'recurring' 
+                          ? "bg-primary/10 text-primary" 
+                          : "text-muted-foreground hover:text-foreground"
+                      )}
+                    >
+                      <Repeat className="h-3 w-3" />
+                      <span>Daily</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setEditingItemType('one-time')}
+                      className={cn(
+                        "flex items-center gap-1.5 px-2 py-1 rounded-md transition-colors",
+                        editingItemType === 'one-time' 
+                          ? "bg-primary/10 text-primary" 
+                          : "text-muted-foreground hover:text-foreground"
+                      )}
+                    >
+                      <CalendarSingle className="h-3 w-3" />
+                      <span>One-time</span>
+                    </button>
+                    
+                    {editingItemType === 'one-time' && (
+                      <Popover open={editDatePickerOpen} onOpenChange={setEditDatePickerOpen}>
+                        <PopoverTrigger asChild>
+                          <Button variant="outline" size="sm" className="h-7 text-xs gap-1.5">
+                            <CalendarIcon className="h-3 w-3" />
+                            {format(editingItemDate, 'MMM d, yyyy')}
+                          </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0" align="start">
+                          <Calendar
+                            mode="single"
+                            selected={editingItemDate}
+                            onSelect={(date) => {
+                              if (date) {
+                                setEditingItemDate(date);
+                                setEditDatePickerOpen(false);
+                              }
+                            }}
+                            initialFocus
+                            className="pointer-events-auto"
+                          />
+                        </PopoverContent>
+                      </Popover>
+                    )}
+                  </div>
                 </div>
               ) : (
                 <>
@@ -212,7 +348,7 @@ function TemplateContent({ levelPosition, levelLabel }: { levelPosition: number;
                     </Button>
                   </div>
 
-                  {/* Item title */}
+                  {/* Item title and type indicator */}
                   <div 
                     className="flex-1 min-w-0 cursor-pointer"
                     onClick={() => handleStartEditItem(item)}
@@ -223,6 +359,11 @@ function TemplateContent({ levelPosition, levelLabel }: { levelPosition: number;
                     )}>
                       {item.item_title}
                     </span>
+                    {item.only_on_date && (
+                      <span className="ml-2 text-[10px] text-muted-foreground bg-muted px-1.5 py-0.5 rounded">
+                        {format(new Date(item.only_on_date), 'MMM d')}
+                      </span>
+                    )}
                   </div>
 
                   {/* Active toggle */}

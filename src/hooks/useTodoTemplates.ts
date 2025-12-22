@@ -12,6 +12,7 @@ export interface TodoTemplateItem {
   item_title: string;
   is_active: boolean;
   sort_order: number;
+  only_on_date: string | null; // null = recurring, 'YYYY-MM-DD' = one-time
   created_at: string;
   updated_at: string;
 }
@@ -60,7 +61,7 @@ export function useTodoTemplates(levelPosition: number | null) {
     fetchTemplateItems();
   }, [fetchTemplateItems]);
 
-  const addItem = async (title: string) => {
+  const addItem = async (title: string, onlyOnDate: string | null = null) => {
     if (!user || levelPosition === null || !title.trim()) return null;
 
     setSaving(true);
@@ -77,7 +78,8 @@ export function useTodoTemplates(levelPosition: number | null) {
           template_name: templateName,
           item_title: title.trim(),
           sort_order: nextSortOrder,
-          is_active: true
+          is_active: true,
+          only_on_date: onlyOnDate
         })
         .select()
         .single();
@@ -95,7 +97,7 @@ export function useTodoTemplates(levelPosition: number | null) {
     }
   };
 
-  const updateItem = async (id: string, updates: Partial<Pick<TodoTemplateItem, 'item_title' | 'is_active' | 'sort_order'>>) => {
+  const updateItem = async (id: string, updates: Partial<Pick<TodoTemplateItem, 'item_title' | 'is_active' | 'sort_order' | 'only_on_date'>>) => {
     if (!user) return false;
 
     setSaving(true);

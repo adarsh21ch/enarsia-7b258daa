@@ -621,6 +621,7 @@ export type Database = {
           item_title: string
           leader_id: string
           level_position: number
+          only_on_date: string | null
           sort_order: number
           template_name: string
           updated_at: string
@@ -632,6 +633,7 @@ export type Database = {
           item_title: string
           leader_id: string
           level_position: number
+          only_on_date?: string | null
           sort_order?: number
           template_name?: string
           updated_at?: string
@@ -643,6 +645,7 @@ export type Database = {
           item_title?: string
           leader_id?: string
           level_position?: number
+          only_on_date?: string | null
           sort_order?: number
           template_name?: string
           updated_at?: string

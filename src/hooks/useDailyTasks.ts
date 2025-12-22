@@ -113,12 +113,14 @@ export function useDailyTasks(selectedDate: string) {
       }
 
       // Fetch template items for this leader + level
+      // Include recurring (only_on_date is null) OR one-time items for the selected date
       const { data: templateItems, error: templateError } = await supabase
         .from('todo_template_items')
         .select('*')
         .eq('leader_id', info.leaderId)
         .eq('level_position', info.levelPosition)
         .eq('is_active', true)
+        .or(`only_on_date.is.null,only_on_date.eq.${selectedDate}`)
         .order('sort_order', { ascending: true });
 
       if (templateError) throw templateError;
