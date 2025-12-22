@@ -104,39 +104,34 @@ export function DailyTasksView({ selectedDate, selectedDateString }: DailyTasksV
                 </p>
               </div>
 
-              {/* Status buttons */}
-              <div className="flex items-center gap-1.5">
-                {/* Yes button */}
-                <Button
-                  size="sm"
-                  variant={task.status === 'yes' ? 'default' : 'outline'}
-                  className={cn(
-                    "h-8 px-3 gap-1",
-                    task.status === 'yes' 
-                      ? "bg-green-600 hover:bg-green-700 text-white" 
-                      : "hover:bg-green-50 hover:text-green-600 hover:border-green-300"
-                  )}
-                  onClick={() => handleStatusChange(task.id, task.status === 'yes' ? null : 'yes')}
-                >
-                  <CheckCircle className="h-3.5 w-3.5" />
-                  <span className="text-xs">Yes</span>
-                </Button>
-
-                {/* No button */}
-                <Button
-                  size="sm"
-                  variant={task.status === 'no' ? 'default' : 'outline'}
-                  className={cn(
-                    "h-8 px-3 gap-1",
-                    task.status === 'no' 
-                      ? "bg-red-600 hover:bg-red-700 text-white" 
-                      : "hover:bg-red-50 hover:text-red-600 hover:border-red-300"
-                  )}
+              {/* 3-state compact toggle */}
+              <div className="flex items-center bg-muted/50 rounded-full p-0.5 h-7 shrink-0">
+                <button
                   onClick={() => handleStatusChange(task.id, task.status === 'no' ? null : 'no')}
+                  className={cn(
+                    "px-2.5 py-1 rounded-full text-xs font-medium transition-all",
+                    task.status === 'no' 
+                      ? "bg-red-500 text-white" 
+                      : "text-muted-foreground hover:text-red-500"
+                  )}
                 >
-                  <XCircle className="h-3.5 w-3.5" />
-                  <span className="text-xs">No</span>
-                </Button>
+                  No
+                </button>
+                <div className={cn(
+                  "w-1.5 h-1.5 rounded-full mx-1 transition-all",
+                  task.status === null ? "bg-muted-foreground/50" : "bg-transparent"
+                )} />
+                <button
+                  onClick={() => handleStatusChange(task.id, task.status === 'yes' ? null : 'yes')}
+                  className={cn(
+                    "px-2.5 py-1 rounded-full text-xs font-medium transition-all",
+                    task.status === 'yes' 
+                      ? "bg-green-500 text-white" 
+                      : "text-muted-foreground hover:text-green-500"
+                  )}
+                >
+                  Yes
+                </button>
               </div>
             </div>
           ))}
