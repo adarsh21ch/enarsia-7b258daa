@@ -8,7 +8,8 @@ import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
-import { Users, Tag, Copy, Check, Loader2, Eye, EyeOff, X, Plus, Trash2, Star, Layers, CalendarDays, Settings2, Lock, RefreshCw } from 'lucide-react';
+import { Users, Tag, Copy, Check, Loader2, Eye, EyeOff, X, Plus, Trash2, Star, Layers, CalendarDays, Settings2, Lock, RefreshCw, ListTodo } from 'lucide-react';
+import { TodoTemplateManager } from './TodoTemplateManager';
 import { toast } from 'sonner';
 import { Profile, ProfileUpdate } from '@/hooks/useProfile';
 import { useTrackingFormatContext } from '@/contexts/TrackingFormatContext';
@@ -908,6 +909,15 @@ export function LeaderTrackingFormatSettings({
                     className="flex-1 h-8" 
                   />
                   {level.is_default && <Badge variant="outline" className="text-xs shrink-0">Default</Badge>}
+                  <TodoTemplateManager 
+                    levelPosition={level.position} 
+                    levelLabel={level.label}
+                    trigger={
+                      <Button variant="ghost" size="icon" className="h-7 w-7 shrink-0" title="Manage Todo Template">
+                        <ListTodo className="h-3.5 w-3.5 text-primary" />
+                      </Button>
+                    }
+                  />
                   {ownLevels.length > 1 && !level.is_default && (
                     <Button 
                       variant="ghost" 
