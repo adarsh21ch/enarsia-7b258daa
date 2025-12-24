@@ -10,7 +10,7 @@ import { BottomNav } from '@/components/layout/BottomNav';
 import { HeaderBellIcon } from '@/components/layout/HeaderBellIcon';
 import { EditProfileDialog } from '@/components/profile/EditProfileDialog';
 import { ShareProfileDialog } from '@/components/profile/ShareProfileDialog';
-import { LeaderTrackingFormatSettings } from '@/components/profile/LeaderTrackingFormatSettings';
+import { LeaderTrackingFormatDrawer } from '@/components/profile/LeaderTrackingFormatDrawer';
 import { LevelManagement } from '@/components/profile/LevelManagement';
 import { ProfileLevelDropdown } from '@/components/profile/ProfileLevelDropdown';
 
@@ -18,8 +18,7 @@ import { UpgradeCard } from '@/components/subscription/UpgradeCard';
 import { PullToRefreshIndicator } from '@/components/PullToRefreshIndicator';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
-import { User, LogOut, ChevronRight, Phone, Building2, MapPin, Loader2, FileText, Shield, Receipt, Mail, Settings, Users, Copy, ExternalLink } from 'lucide-react';
+import { User, LogOut, ChevronRight, Phone, Building2, MapPin, Loader2, FileText, Shield, Receipt, Mail, Settings, Copy, ExternalLink } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
@@ -208,25 +207,14 @@ export default function Profile() {
           {/* Upgrade Card - Hidden via feature flag, can be re-enabled by setting SHOW_PROFILE_UPGRADE_UI = true */}
           {SHOW_PROFILE_UPGRADE_UI && <UpgradeCard />}
 
-          {/* Leader & Tracking Format Settings - Collapsible */}
-          <Accordion type="single" collapsible className="rounded-2xl border border-border/50 bg-card overflow-hidden">
-            <AccordionItem value="leader-tags" className="border-none">
-              <AccordionTrigger className="px-4 py-3 hover:no-underline hover:bg-muted/30">
-                <div className="flex items-center gap-3">
-                  <div className="p-2 rounded-lg bg-primary/10">
-                    <Users className="h-4 w-4 text-primary" />
-                  </div>
-                  <span className="font-medium">Leader Tracking Format</span>
-                </div>
-              </AccordionTrigger>
-              <AccordionContent className="px-4 pb-4">
-                <LeaderTrackingFormatSettings profile={profile} updating={updating} onUpdateProfile={updateProfile} onUpdateLeaderHierarchy={updateLeaderHierarchy} onClearLeaderHierarchy={clearLeaderHierarchy} />
-                
-                {/* Level Management for root leaders */}
-                {!profile?.use_leader_stages}
-              </AccordionContent>
-            </AccordionItem>
-          </Accordion>
+          {/* Leader & Tracking Format Settings - Opens in Sidebar */}
+          <LeaderTrackingFormatDrawer
+            profile={profile}
+            updating={updating}
+            onUpdateProfile={updateProfile}
+            onUpdateLeaderHierarchy={updateLeaderHierarchy}
+            onClearLeaderHierarchy={clearLeaderHierarchy}
+          />
 
 
           {/* Profile Details */}
