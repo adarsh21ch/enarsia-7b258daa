@@ -13,7 +13,7 @@ import { ShareProfileDialog } from '@/components/profile/ShareProfileDialog';
 import { LeaderTrackingFormatSettings } from '@/components/profile/LeaderTrackingFormatSettings';
 import { LevelManagement } from '@/components/profile/LevelManagement';
 import { ProfileLevelDropdown } from '@/components/profile/ProfileLevelDropdown';
-import { SendMessageSection } from '@/components/profile/SendMessageSection';
+
 import { UpgradeCard } from '@/components/subscription/UpgradeCard';
 import { PullToRefreshIndicator } from '@/components/PullToRefreshIndicator';
 import { Button } from '@/components/ui/button';
@@ -228,8 +228,6 @@ export default function Profile() {
             </AccordionItem>
           </Accordion>
 
-          {/* Send Message to Team - for leaders with direct members */}
-          <SendMessageSection />
 
           {/* Profile Details */}
           {(profile?.phone || profile?.company_name || profile?.city || profile?.bio) && <div className="rounded-2xl p-4 bg-card border border-border/50 space-y-3">
