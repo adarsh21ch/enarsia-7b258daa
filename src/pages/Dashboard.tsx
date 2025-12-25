@@ -132,10 +132,13 @@ export default function Dashboard() {
     { value: 'funnel', label: 'Funnel', icon: Layers },
   ];
 
+  // Calculate header height: logo section (~64px) + tab bar (~44px) = ~108px
+  const headerHeight = 108;
+  
   return (
     <div className="app-layout bg-gradient-to-b from-background via-background to-muted/20">
       {/* Premium Header */}
-      <header className="fixed-header z-40 bg-card/80 backdrop-blur-xl border-b-0">
+      <header className="fixed top-0 left-0 right-0 z-40 bg-card/80 backdrop-blur-xl">
         <div className="flex items-center justify-between px-4 py-3">
           <div className="flex items-center gap-3">
             <img 
@@ -161,18 +164,28 @@ export default function Dashboard() {
         />
       </header>
 
-      <main ref={containerRef} className="scrollable-content relative" style={{ touchAction: 'pan-x pan-y', paddingTop: '104px' }}>
+      <main 
+        ref={containerRef} 
+        className="flex flex-col overflow-hidden" 
+        style={{ 
+          touchAction: 'pan-x pan-y', 
+          paddingTop: `${headerHeight}px`,
+          height: '100dvh'
+        }}
+      >
         <PullToRefreshIndicator isRefreshing={isRefreshing} pullDistance={pullDistance} showIndicator={showIndicator} />
-        <div className="py-3 px-4 pb-20">
-          {/* WhatsApp-style Search Bar */}
-          <div className="mb-3">
-            <SearchBar 
-              value={searchQuery}
-              onChange={setSearchQuery}
-              placeholder="Search name, phone..."
-            />
-          </div>
-          
+        
+        {/* Search Bar - not sticky, scrolls with content but minimal spacing */}
+        <div className="flex-shrink-0 px-4 pt-2 pb-2">
+          <SearchBar 
+            value={searchQuery}
+            onChange={setSearchQuery}
+            placeholder="Search name, phone..."
+          />
+        </div>
+        
+        {/* Table area - takes remaining space, handles its own scroll + sticky bottom */}
+        <div className="flex-1 overflow-hidden px-4 pb-16">
           {mainTab === 'leads' ? (
             <ProspectTable
               prospects={prospects}

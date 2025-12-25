@@ -14,9 +14,20 @@ interface TopTabBarProps {
 }
 
 export function TopTabBar({ options, value, onChange }: TopTabBarProps) {
+  const activeIndex = options.findIndex(opt => opt.value === value);
+  
   return (
-    <div className="sticky top-0 z-20 bg-card/95 backdrop-blur-xl border-b border-border/50">
-      <div className="flex">
+    <div className="bg-card border-b border-border/50">
+      <div className="relative flex">
+        {/* Animated sliding indicator */}
+        <div 
+          className="absolute bottom-0 h-0.5 bg-primary transition-all duration-300 ease-out"
+          style={{ 
+            width: '50%',
+            left: activeIndex === 0 ? '0%' : '50%'
+          }}
+        />
+        
         {options.map((option) => {
           const isActive = value === option.value;
           const Icon = option.icon;
@@ -31,11 +42,11 @@ export function TopTabBar({ options, value, onChange }: TopTabBarProps) {
                   : "text-muted-foreground hover:text-foreground"
               )}
             >
-              <Icon className="h-4 w-4" />
+              <Icon className={cn(
+                "h-4 w-4 transition-transform duration-200",
+                isActive && "scale-110"
+              )} />
               <span>{option.label}</span>
-              {isActive && (
-                <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary" />
-              )}
             </button>
           );
         })}

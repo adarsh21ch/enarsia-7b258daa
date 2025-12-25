@@ -164,9 +164,9 @@ function TableContent({
   onMarkLastContacted,
 }: TableContentProps) {
   return (
-    <div className="relative flex flex-col">
-      {/* Table - no horizontal scroll, fits viewport */}
-      <div className="flex-1 overflow-y-auto pb-10">
+    <div className="relative flex flex-col h-full">
+      {/* Table - scrollable area */}
+      <div className="flex-1 overflow-y-auto min-h-0">
         <table className="w-full text-sm border-collapse bg-card table-fixed">
           {/* Header row */}
           <thead className="sticky top-0 z-10">
@@ -280,8 +280,8 @@ function TableContent({
         </table>
       </div>
       
-      {/* Bottom sticky sheet tabs (Excel-style) */}
-      <div className="sticky bottom-0 left-0 right-0 z-10 bg-card border-t border-border/50 shadow-[0_-2px_8px_rgba(0,0,0,0.1)]">
+      {/* Bottom sticky sheet tabs (Excel-style) - always visible */}
+      <div className="flex-shrink-0 bg-card border-t border-border/50 shadow-[0_-2px_8px_rgba(0,0,0,0.1)]">
         <SheetTabs 
           sheets={sheets} 
           selectedSheetId={selectedSheetId} 
