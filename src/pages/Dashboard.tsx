@@ -8,7 +8,7 @@ import { BottomNav } from '@/components/layout/BottomNav';
 import { HeaderBellIcon } from '@/components/layout/HeaderBellIcon';
 import { ProspectTable } from '@/components/prospects/ProspectTable';
 import { PullToRefreshIndicator } from '@/components/PullToRefreshIndicator';
-import { BottomViewToggle } from '@/components/ui/BottomViewToggle';
+import { TopTabBar } from '@/components/ui/TopTabBar';
 import { FilterTagSetupDialog, useFilterTagSetup } from '@/components/prospects/FilterTagSetupDialog';
 import { SearchBar } from '@/components/ui/SearchBar';
 import { Loader2, Phone, Layers } from 'lucide-react';
@@ -135,7 +135,7 @@ export default function Dashboard() {
   return (
     <div className="app-layout bg-gradient-to-b from-background via-background to-muted/20">
       {/* Premium Header */}
-      <header className="fixed-header z-40 bg-card/80 backdrop-blur-xl border-b border-border/50">
+      <header className="fixed-header z-40 bg-card/80 backdrop-blur-xl border-b-0">
         <div className="flex items-center justify-between px-4 py-3">
           <div className="flex items-center gap-3">
             <img 
@@ -144,9 +144,7 @@ export default function Dashboard() {
               className="h-10 w-10 rounded-xl object-cover shadow-md"
             />
             <div>
-              <h1 className="text-xl font-bold tracking-tight">
-                {mainTab === 'leads' ? 'Leads' : 'Funnel'}
-              </h1>
+              <h1 className="text-xl font-bold tracking-tight">Follow Up</h1>
               <p className="text-xs text-muted-foreground font-medium">
                 Manage your prospects
               </p>
@@ -154,11 +152,18 @@ export default function Dashboard() {
           </div>
           <HeaderBellIcon />
         </div>
+        
+        {/* Sticky Top Tab Bar - Leads / Funnel */}
+        <TopTabBar
+          options={toggleOptions}
+          value={mainTab}
+          onChange={handleTabChange}
+        />
       </header>
 
-      <main ref={containerRef} className="scrollable-content relative" style={{ touchAction: 'pan-x pan-y' }}>
+      <main ref={containerRef} className="scrollable-content relative" style={{ touchAction: 'pan-x pan-y', paddingTop: '104px' }}>
         <PullToRefreshIndicator isRefreshing={isRefreshing} pullDistance={pullDistance} showIndicator={showIndicator} />
-        <div className="py-3 px-4 pb-28">
+        <div className="py-3 px-4 pb-20">
           {/* WhatsApp-style Search Bar */}
           <div className="mb-3">
             <SearchBar 
@@ -216,13 +221,6 @@ export default function Dashboard() {
           )}
         </div>
       </main>
-
-      {/* Fixed Bottom View Toggle */}
-      <BottomViewToggle
-        options={toggleOptions}
-        value={mainTab}
-        onChange={handleTabChange}
-      />
 
       <BottomNav />
 
