@@ -173,7 +173,7 @@ function TableContent({
       <div className="flex-1 overflow-y-auto min-h-0">
         <table className="w-full text-sm border-collapse bg-card table-fixed">
           {/* Header row */}
-          <thead className="sticky top-0 z-10">
+          <thead className="sticky top-0 z-20 shadow-sm">
             <tr className="bg-muted text-xs font-semibold text-muted-foreground border-b border-border">
               {/* Selection checkbox header */}
               {selectionMode.active && <th className="w-10 px-2 py-2.5 bg-muted">

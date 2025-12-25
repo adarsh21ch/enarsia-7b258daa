@@ -53,13 +53,6 @@ export function KPIStrip({ prospects, isCalling }: KPIStripProps) {
         <span className="text-xs font-medium">{kpis.total}</span>
       </div>
 
-      {/* Funnel Leads (only show in Leads view) */}
-      {isCalling && kpis.funnelLeads > 0 && (
-        <div className="flex items-center gap-1.5 shrink-0 bg-yellow-500/10 rounded-full px-2.5 py-1">
-          <Star className="h-3 w-3 text-yellow-500 fill-yellow-500" />
-          <span className="text-xs font-medium text-yellow-600 dark:text-yellow-400">{kpis.funnelLeads}</span>
-        </div>
-      )}
 
       {/* Tracking Tag Counts */}
       {kpis.trackingTags.map(tag => {
