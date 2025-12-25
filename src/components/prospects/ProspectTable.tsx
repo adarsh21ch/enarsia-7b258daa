@@ -164,9 +164,124 @@ function TableContent({
   onMarkLastContacted,
 }: TableContentProps) {
   return (
-    <div className="relative">
-      {/* Sheet tabs row */}
-      <div className="bg-card border-b border-border/50">
+    <div className="relative flex flex-col">
+      {/* Table - no horizontal scroll, fits viewport */}
+      <div className="flex-1 overflow-y-auto pb-10">
+        <table className="w-full text-sm border-collapse bg-card table-fixed">
+          {/* Header row */}
+          <thead className="sticky top-0 z-10">
+            <tr className="bg-muted text-xs font-semibold text-muted-foreground border-b border-border">
+              {/* Selection checkbox header */}
+              {selectionMode.active && (
+                <th className="w-10 px-2 py-2.5 bg-muted">
+                  <Checkbox 
+                    checked={selectedIds.size === selectionProspects.length && selectionProspects.length > 0} 
+                    onCheckedChange={handleSelectAll} 
+                  />
+                </th>
+              )}
+              {COLUMN_ORDER.map(columnId => {
+                const col = COLUMNS.find(c => c.id === columnId);
+                if (!col) return null;
+                
+                return (
+                  <th 
+                    key={columnId}
+                    className={cn(
+                      "px-2 py-2.5 text-left whitespace-nowrap bg-muted select-none",
+                      columnId === 'index' && "text-center",
+                      isMobile && "text-[11px] px-1.5"
+                    )}
+                    style={{ 
+                      width: col.width, 
+                      minWidth: `${col.minWidth}px`,
+                    }}
+                  >
+                    <div className="flex items-center gap-0.5">
+                      <span>{col.label}</span>
+                      {columnId === 'action' && (
+                        <button 
+                          className="p-0.5 rounded hover:bg-muted/50 transition-colors ml-1" 
+                          onClick={(e) => { e.stopPropagation(); onOpenResponseTagsDialog(); }}
+                          title="Manage Response Tags"
+                        >
+                          <Edit className="h-3 w-3 text-muted-foreground" />
+                        </button>
+                      )}
+                      {columnId === 'stage' && (
+                        <button 
+                          className="p-0.5 rounded hover:bg-muted/50 transition-colors ml-1" 
+                          onClick={(e) => { e.stopPropagation(); onOpenStageTagsDialog(); }}
+                          title="Manage Stage Tags"
+                        >
+                          <Edit className="h-3 w-3 text-muted-foreground" />
+                        </button>
+                      )}
+                    </div>
+                  </th>
+                );
+              })}
+            </tr>
+          </thead>
+          {/* Table body */}
+          <tbody>
+            {filteredProspects.length === 0 ? (
+              <tr>
+                <td colSpan={COLUMN_ORDER.length + (selectionMode.active ? 1 : 0)} className="py-12 text-center bg-card">
+                  <Users className="h-10 w-10 mx-auto text-muted-foreground/40 mb-3" />
+                  <p className="text-sm font-medium text-muted-foreground mb-1">
+                    {prospects.length === 0 ? "No leads yet" : selectedSheetId ? "No leads in this sheet" : "No leads match your filters"}
+                  </p>
+                  <p className="text-xs text-muted-foreground/70 mb-3">
+                    {prospects.length === 0 || (selectedSheetId && sheetFilteredProspects.length === 0) ? (
+                      "Import Excel or Add Lead to get started"
+                    ) : (
+                      <button 
+                        onClick={() => setFilters({
+                          search: '',
+                          stages: [],
+                          qualities: [],
+                          actions: [],
+                          incompleteOnly: false
+                        })} 
+                        className="text-accent hover:underline"
+                      >
+                        Clear filters
+                      </button>
+                    )}
+                  </p>
+                </td>
+              </tr>
+            ) : (
+              filteredProspects.map((prospect, index) => (
+                <SortableProspectRow 
+                  key={prospect.id} 
+                  prospect={prospect} 
+                  index={index + 1} 
+                  isCalling={isCalling} 
+                  isExpanded={expandedRowId === prospect.id} 
+                  onToggleExpand={() => handleToggleExpand(prospect.id)} 
+                  onUpdate={handleUpdateWithUndo} 
+                  onDelete={handleDeleteWithUndo} 
+                  isEven={index % 2 === 0} 
+                  columnOrder={COLUMN_ORDER} 
+                  isMobileTable={isMobile}
+                  selectionModeActive={selectionMode.active}
+                  showSelection={selectionMode.active && selectionProspects.some(p => p.id === prospect.id)} 
+                  isSelected={selectedIds.has(prospect.id)} 
+                  onToggleSelect={() => handleToggleSelect(prospect.id)}
+                  disableDrag={!enableDragAndDrop}
+                  isLastContacted={lastContactedId === prospect.id}
+                  onMarkLastContacted={() => onMarkLastContacted(prospect.id)}
+                />
+              ))
+            )}
+          </tbody>
+        </table>
+      </div>
+      
+      {/* Bottom sticky sheet tabs (Excel-style) */}
+      <div className="sticky bottom-0 left-0 right-0 z-10 bg-card border-t border-border/50 shadow-[0_-2px_8px_rgba(0,0,0,0.1)]">
         <SheetTabs 
           sheets={sheets} 
           selectedSheetId={selectedSheetId} 
@@ -178,119 +293,6 @@ function TableContent({
           onDeleteAllInSheet={handleDeleteAllInSheet} 
         />
       </div>
-      
-      {/* Table - no horizontal scroll, fits viewport */}
-      <table className="w-full text-sm border-collapse bg-card table-fixed">
-        {/* Header row */}
-        <thead>
-          <tr className="bg-muted text-xs font-semibold text-muted-foreground border-b border-border">
-            {/* Selection checkbox header */}
-            {selectionMode.active && (
-              <th className="w-10 px-2 py-2.5 bg-muted">
-                <Checkbox 
-                  checked={selectedIds.size === selectionProspects.length && selectionProspects.length > 0} 
-                  onCheckedChange={handleSelectAll} 
-                />
-              </th>
-            )}
-            {COLUMN_ORDER.map(columnId => {
-              const col = COLUMNS.find(c => c.id === columnId);
-              if (!col) return null;
-              
-              return (
-                <th 
-                  key={columnId}
-                  className={cn(
-                    "px-2 py-2.5 text-left whitespace-nowrap bg-muted select-none",
-                    columnId === 'index' && "text-center",
-                    isMobile && "text-[11px] px-1.5"
-                  )}
-                  style={{ 
-                    width: col.width, 
-                    minWidth: `${col.minWidth}px`,
-                  }}
-                >
-                  <div className="flex items-center gap-0.5">
-                    <span>{col.label}</span>
-                    {columnId === 'action' && (
-                      <button 
-                        className="p-0.5 rounded hover:bg-muted/50 transition-colors ml-1" 
-                        onClick={(e) => { e.stopPropagation(); onOpenResponseTagsDialog(); }}
-                        title="Manage Response Tags"
-                      >
-                        <Edit className="h-3 w-3 text-muted-foreground" />
-                      </button>
-                    )}
-                    {columnId === 'stage' && (
-                      <button 
-                        className="p-0.5 rounded hover:bg-muted/50 transition-colors ml-1" 
-                        onClick={(e) => { e.stopPropagation(); onOpenStageTagsDialog(); }}
-                        title="Manage Stage Tags"
-                      >
-                        <Edit className="h-3 w-3 text-muted-foreground" />
-                      </button>
-                    )}
-                  </div>
-                </th>
-              );
-            })}
-          </tr>
-        </thead>
-        {/* Table body */}
-        <tbody>
-          {filteredProspects.length === 0 ? (
-            <tr>
-              <td colSpan={COLUMN_ORDER.length + (selectionMode.active ? 1 : 0)} className="py-12 text-center bg-card">
-                <Users className="h-10 w-10 mx-auto text-muted-foreground/40 mb-3" />
-                <p className="text-sm font-medium text-muted-foreground mb-1">
-                  {prospects.length === 0 ? "No leads yet" : selectedSheetId ? "No leads in this sheet" : "No leads match your filters"}
-                </p>
-                <p className="text-xs text-muted-foreground/70 mb-3">
-                  {prospects.length === 0 || (selectedSheetId && sheetFilteredProspects.length === 0) ? (
-                    "Import Excel or Add Lead to get started"
-                  ) : (
-                    <button 
-                      onClick={() => setFilters({
-                        search: '',
-                        stages: [],
-                        qualities: [],
-                        actions: [],
-                        incompleteOnly: false
-                      })} 
-                      className="text-accent hover:underline"
-                    >
-                      Clear filters
-                    </button>
-                  )}
-                </p>
-              </td>
-            </tr>
-          ) : (
-            filteredProspects.map((prospect, index) => (
-              <SortableProspectRow 
-                key={prospect.id} 
-                prospect={prospect} 
-                index={index + 1} 
-                isCalling={isCalling} 
-                isExpanded={expandedRowId === prospect.id} 
-                onToggleExpand={() => handleToggleExpand(prospect.id)} 
-                onUpdate={handleUpdateWithUndo} 
-                onDelete={handleDeleteWithUndo} 
-                isEven={index % 2 === 0} 
-                columnOrder={COLUMN_ORDER} 
-                isMobileTable={isMobile}
-                selectionModeActive={selectionMode.active}
-                showSelection={selectionMode.active && selectionProspects.some(p => p.id === prospect.id)} 
-                isSelected={selectedIds.has(prospect.id)} 
-                onToggleSelect={() => handleToggleSelect(prospect.id)}
-                disableDrag={!enableDragAndDrop}
-                isLastContacted={lastContactedId === prospect.id}
-                onMarkLastContacted={() => onMarkLastContacted(prospect.id)}
-              />
-            ))
-          )}
-        </tbody>
-      </table>
     </div>
   );
 }
@@ -899,7 +901,7 @@ export function ProspectTable({
       </div>
 
       {/* Table */}
-      <div className="bg-card rounded-xl border border-border/50 overflow-hidden shadow-sm">
+      <div className="bg-card rounded-xl border border-border/50 shadow-sm overflow-hidden flex flex-col" style={{ maxHeight: 'calc(100vh - 280px)' }}>
         {enableDragAndDrop ? (
           <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleRowDragEnd}>
             <SortableContext items={filteredProspects.map(p => p.id)} strategy={verticalListSortingStrategy}>
