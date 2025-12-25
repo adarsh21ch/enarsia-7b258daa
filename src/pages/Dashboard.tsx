@@ -144,9 +144,6 @@ export default function Dashboard() {
     { value: 'leads', label: 'Leads', icon: Phone },
     { value: 'funnel', label: 'Funnel', icon: Layers },
   ];
-
-  // Compact header height: ~52px title + ~40px tabs + ~40px search = ~132px
-  const headerHeight = 108;
   
   return (
     <div className="app-layout bg-gradient-to-b from-background via-background to-muted/20">
@@ -192,18 +189,13 @@ export default function Dashboard() {
 
       <main 
         ref={mainRef} 
-        className="flex flex-col" 
-        style={{ 
-          touchAction: 'pan-x pan-y', 
-          paddingTop: `${headerHeight}px`,
-          height: '100dvh',
-          paddingBottom: '64px' // Space for bottom nav
-        }}
+        className="flex-1 flex flex-col min-h-0 overflow-hidden" 
+        style={{ touchAction: 'pan-x pan-y' }}
       >
         <PullToRefreshIndicator isRefreshing={isRefreshing} pullDistance={pullDistance} showIndicator={showIndicator} />
         
-        {/* Table area - flex-1 and min-h-0 to allow proper flex shrinking with overflow */}
-        <div className="flex-1 min-h-0 px-4">
+        {/* Table area - flex-1 to fill remaining space, pb for bottom nav */}
+        <div className="flex-1 min-h-0 px-4 pb-16 overflow-y-auto">
           {mainTab === 'leads' ? (
             <ProspectTable
               prospects={prospects}
