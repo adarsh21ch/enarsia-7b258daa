@@ -232,18 +232,7 @@ function TableContent({
       
       {/* Bottom sticky sheet tabs (Excel-style) - always visible */}
       <div className="flex-shrink-0 bg-card border-t border-border/50 shadow-[0_-2px_8px_rgba(0,0,0,0.1)]">
-        <SheetTabs 
-          sheets={sheets} 
-          selectedSheetId={selectedSheetId} 
-          onSelectSheet={onSelectSheet} 
-          onAddSheet={onAddSheet} 
-          onUpdateSheet={handleUpdateSheetWithUndo} 
-          onDeleteSheet={onDeleteSheet} 
-          onEnterSelectMode={handleEnterSelectMode} 
-          onDeleteAllInSheet={handleDeleteAllInSheet}
-          onExportSheet={onExportSheet}
-          onExportAll={onExportAll}
-        />
+        <SheetTabs sheets={sheets} selectedSheetId={selectedSheetId} onSelectSheet={onSelectSheet} onAddSheet={onAddSheet} onUpdateSheet={handleUpdateSheetWithUndo} onDeleteSheet={onDeleteSheet} onEnterSelectMode={handleEnterSelectMode} onDeleteAllInSheet={handleDeleteAllInSheet} onExportSheet={onExportSheet} onExportAll={onExportAll} />
       </div>
     </div>;
 }
@@ -511,15 +500,11 @@ export function ProspectTable({
 
   // Export specific sheet
   const exportSheet = async (sheetId: string | null) => {
-    const sheetProspects = sheetId === null 
-      ? baseProspects 
-      : baseProspects.filter(p => p.sheet_id === sheetId);
-    
+    const sheetProspects = sheetId === null ? baseProspects : baseProspects.filter(p => p.sheet_id === sheetId);
     if (sheetProspects.length === 0) {
       toast.error('No data to export in this sheet.');
       return;
     }
-    
     setExporting(true);
     try {
       const exportData = sheetProspects.map((p, i) => ({
@@ -540,17 +525,12 @@ export function ProspectTable({
         'Instagram': p.instagram || '',
         'Date Added': p.date_added ? format(new Date(p.date_added), 'dd/MM/yyyy') : ''
       }));
-      
       const wb = XLSX.utils.book_new();
       const ws = XLSX.utils.json_to_sheet(exportData);
       XLSX.utils.book_append_sheet(wb, ws, 'Prospects');
-      
       const dateStr = format(new Date(), 'yyyy-MM-dd');
-      const sheetName = sheetId 
-        ? sheets.find(s => s.id === sheetId)?.name || 'Sheet'
-        : 'All';
+      const sheetName = sheetId ? sheets.find(s => s.id === sheetId)?.name || 'Sheet' : 'All';
       const filename = `NevorAI_${sheetName}_${dateStr}.xlsx`;
-      
       XLSX.writeFile(wb, filename);
       toast.success(`Exported ${sheetProspects.length} prospects successfully!`);
     } catch (err) {
@@ -677,9 +657,9 @@ export function ProspectTable({
               await onRestoreProspect(prospect);
               toast.success('Restored successfully');
             }
-          },
+          }
         },
-        duration: 5000,
+        duration: 5000
       });
     }
     return result;
@@ -703,9 +683,9 @@ export function ProspectTable({
                 await onRestoreProspects(toDelete);
                 toast.success('Restored successfully');
               }
-            },
+            }
           },
-          duration: 5000,
+          duration: 5000
         });
       }
     } else {
@@ -727,9 +707,9 @@ export function ProspectTable({
                 await onRestoreProspects(toDelete);
                 toast.success('Restored successfully');
               }
-            },
+            }
           },
-          duration: 5000,
+          duration: 5000
         });
       }
     }
@@ -870,24 +850,14 @@ export function ProspectTable({
   return <div className="flex flex-col h-full gap-2">
       {/* KPI Strip - horizontal scrolling on mobile */}
       <div className="flex-shrink-0">
-        <KPIStrip prospects={filteredProspects} isCalling={isCalling} />
+        <KPIStrip prospects={filteredProspects} isCalling={isCalling} className="py-[2px]" />
       </div>
 
       {/* Single Action Bar - Filters left, Actions right */}
       <div className="flex-shrink-0 flex items-center justify-between gap-2">
         {/* Left side - Filters */}
         <div className="flex items-center gap-2 flex-1 min-w-0">
-          <ProspectFilters 
-            filters={filters} 
-            onFiltersChange={setFilters} 
-            onExport={exportToExcel} 
-            exporting={exporting} 
-            filteredCount={filteredProspects.length} 
-            showStagesFilter={!isCalling} 
-            showResponsesFilter={isCalling} 
-            filterTagButton={!isCalling ? <ChangeFilterTagButton /> : undefined} 
-            hideSearch={!!externalSearch} 
-          />
+          <ProspectFilters filters={filters} onFiltersChange={setFilters} onExport={exportToExcel} exporting={exporting} filteredCount={filteredProspects.length} showStagesFilter={!isCalling} showResponsesFilter={isCalling} filterTagButton={!isCalling ? <ChangeFilterTagButton /> : undefined} hideSearch={!!externalSearch} />
         </div>
 
         {/* Right side - Actions */}
@@ -903,16 +873,14 @@ export function ProspectTable({
               </Button>
             </div> : <>
               {/* Undo/Redo buttons - desktop only */}
-              {!isMobile && (
-                <div className="flex items-center">
+              {!isMobile && <div className="flex items-center">
                   <Button variant="ghost" size="icon" onClick={handleUndo} disabled={!canUndo} className="h-8 w-8">
                     <Undo2 className="h-4 w-4" />
                   </Button>
                   <Button variant="ghost" size="icon" onClick={handleRedo} disabled={!canRedo} className="h-8 w-8">
                     <Redo2 className="h-4 w-4" />
                   </Button>
-                </div>
-              )}
+                </div>}
 
               {/* Import & Add buttons - same line */}
               <ImportExcelDialog onImport={handleImportProspects} />
