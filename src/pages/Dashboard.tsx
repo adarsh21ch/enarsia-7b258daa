@@ -10,7 +10,6 @@ import { ProspectTable } from '@/components/prospects/ProspectTable';
 import { PullToRefreshIndicator } from '@/components/PullToRefreshIndicator';
 import { TopTabBar } from '@/components/ui/TopTabBar';
 import { FilterTagSetupDialog, useFilterTagSetup } from '@/components/prospects/FilterTagSetupDialog';
-import { SearchBar } from '@/components/ui/SearchBar';
 import { Loader2, Phone, Layers } from 'lucide-react';
 import nevoraLogo from '@/assets/nevorai-logo.jpeg';
 
@@ -89,8 +88,6 @@ export default function Dashboard() {
   // Main tab state - Calling is default
   const [mainTab, setMainTab] = useState<'leads' | 'funnel'>('leads');
   
-  // Search state
-  const [searchQuery, setSearchQuery] = useState('');
   
   // Filter tag setup dialog
   const { needsSetup, markSetupDone } = useFilterTagSetup();
@@ -176,14 +173,6 @@ export default function Dashboard() {
       >
         <PullToRefreshIndicator isRefreshing={isRefreshing} pullDistance={pullDistance} showIndicator={showIndicator} />
         
-        {/* Search Bar */}
-        <div className="flex-shrink-0 px-4 pt-2 pb-2">
-          <SearchBar 
-            value={searchQuery}
-            onChange={setSearchQuery}
-            placeholder="Search name, phone..."
-          />
-        </div>
         
         {/* Table area - flex-1 and min-h-0 to allow proper flex shrinking with overflow */}
         <div className="flex-1 min-h-0 px-4">
@@ -208,7 +197,6 @@ export default function Dashboard() {
               getOrCreateTodaySheet={getOrCreateTodaySheet}
               filterMode="calling"
               subFilter="all"
-              externalSearch={searchQuery}
             />
           ) : (
             <ProspectTable
@@ -230,7 +218,7 @@ export default function Dashboard() {
               onDeleteSheet={deleteSheet}
               filterMode="funnel"
               subFilter="all"
-              externalSearch={searchQuery}
+              
             />
           )}
         </div>
