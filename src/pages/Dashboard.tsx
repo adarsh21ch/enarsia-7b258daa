@@ -145,24 +145,24 @@ export default function Dashboard() {
     { value: 'funnel', label: 'Funnel', icon: Layers },
   ];
 
-  // Calculate header height: logo section (~56px) + tab bar (~56px) + search (~48px) = ~160px
-  const headerHeight = 160;
+  // Calculate header height: more compact (~52px + ~40px + ~36px) = ~128px
+  const headerHeight = 128;
   
   return (
     <div className="app-layout bg-gradient-to-b from-background via-background to-muted/20">
-      {/* Premium Header - Clean stacked rows */}
-      <header className="fixed top-0 left-0 right-0 z-40 bg-card/95 backdrop-blur-xl border-b border-border/30">
-        {/* Row A: Page title */}
-        <div className="flex items-center justify-between px-4 py-2.5">
-          <div className="flex items-center gap-3">
+      {/* Compact Header - matching To-Do density */}
+      <header className="fixed-header z-40 bg-card/80 backdrop-blur-xl border-b border-border/50">
+        {/* Row A: Page title - compact */}
+        <div className="flex items-center justify-between px-4 py-2">
+          <div className="flex items-center gap-2.5">
             <img 
               src={nevoraLogo} 
               alt="NevorAI Logo" 
               className="h-9 w-9 rounded-xl object-cover shadow-md"
             />
             <div>
-              <h1 className="text-lg font-bold tracking-tight">Follow Up</h1>
-              <p className="text-[11px] text-muted-foreground font-medium">
+              <h1 className="text-lg font-bold tracking-tight leading-tight">Follow Up</h1>
+              <p className="text-[10px] text-muted-foreground font-medium">
                 Manage your prospects
               </p>
             </div>
@@ -170,20 +170,22 @@ export default function Dashboard() {
           <HeaderBellIcon />
         </div>
         
-        {/* Row B: Segmented control - Leads / Funnel */}
-        <TopTabBar
-          options={toggleOptions}
-          value={mainTab}
-          onChange={handleTabChange}
-        />
+        {/* Row B: Segmented control - compact like To-Do */}
+        <div className="px-4 pb-1.5">
+          <TopTabBar
+            options={toggleOptions}
+            value={mainTab}
+            onChange={handleTabChange}
+          />
+        </div>
         
-        {/* Row C: Search Bar - Compact */}
+        {/* Row C: Search Bar - more compact */}
         <div className="px-4 pb-2">
           <SearchBar 
             value={searchQuery}
             onChange={setSearchQuery}
             placeholder="Search name, phone..."
-            className="h-9"
+            className="h-8"
           />
         </div>
       </header>
