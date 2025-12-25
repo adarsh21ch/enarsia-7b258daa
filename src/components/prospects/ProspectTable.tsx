@@ -169,11 +169,11 @@ function TableContent({
   onExportAll
 }: TableContentProps) {
   return <div className="relative flex flex-col h-full">
-      {/* Table - scrollable area */}
-      <div className="flex-1 overflow-y-auto min-h-0">
+      {/* Table - no internal scroll, parent handles it */}
+      <div className="flex-1 min-h-0">
         <table className="w-full text-sm border-collapse bg-card table-fixed">
-          {/* Header row */}
-          <thead className="sticky top-0 z-20 shadow-sm">
+          {/* Header row - sticky below fixed app header (108px) */}
+          <thead className="sticky top-[108px] z-30 shadow-sm">
             <tr className="bg-muted text-xs font-semibold text-muted-foreground border-b border-border">
               {/* Selection checkbox header */}
               {selectionMode.active && <th className="w-10 px-2 py-2.5 bg-muted">
