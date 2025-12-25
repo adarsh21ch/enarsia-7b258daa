@@ -1,3 +1,4 @@
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { cn } from '@/lib/utils';
 import { LucideIcon } from 'lucide-react';
 
@@ -11,41 +12,27 @@ interface TopTabBarProps {
   options: [TabOption, TabOption];
   value: string;
   onChange: (value: string) => void;
+  className?: string;
 }
 
-export function TopTabBar({ options, value, onChange }: TopTabBarProps) {
+export function TopTabBar({ options, value, onChange, className }: TopTabBarProps) {
   return (
-    <div className="px-4 py-2">
-      {/* Segmented control - clean standalone container */}
-      <div className="relative flex h-10 w-full rounded-lg bg-muted p-1">
-        {/* Animated sliding background */}
-        <div 
-          className="absolute top-1 h-8 w-[calc(50%-4px)] rounded-md bg-background shadow-sm transition-all duration-200 ease-out"
-          style={{ 
-            left: value === options[0].value ? '4px' : 'calc(50% + 0px)'
-          }}
-        />
-        
+    <Tabs value={value} onValueChange={onChange} className={cn("w-full", className)}>
+      <TabsList className="grid w-full grid-cols-2 h-9">
         {options.map((option) => {
-          const isActive = value === option.value;
           const Icon = option.icon;
           return (
-            <button
+            <TabsTrigger
               key={option.value}
-              onClick={() => onChange(option.value)}
-              className={cn(
-                "relative z-10 flex-1 flex items-center justify-center gap-2 text-sm font-medium transition-colors duration-200",
-                isActive
-                  ? "text-foreground"
-                  : "text-muted-foreground hover:text-foreground/80"
-              )}
+              value={option.value}
+              className="text-xs font-medium gap-1.5"
             >
-              <Icon className="h-4 w-4" />
-              <span>{option.label}</span>
-            </button>
+              <Icon className="h-3.5 w-3.5" />
+              {option.label}
+            </TabsTrigger>
           );
         })}
-      </div>
-    </div>
+      </TabsList>
+    </Tabs>
   );
 }

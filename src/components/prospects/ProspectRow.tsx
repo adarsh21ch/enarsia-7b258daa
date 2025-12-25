@@ -4,8 +4,8 @@ import { InlineSelect } from './InlineSelect';
 import { StatusBadge, StageBadge, ActionBadge } from './StatusBadge';
 import { InlineReportCard } from './InlineReportCard';
 import { Checkbox } from '@/components/ui/checkbox';
-import { CallIconButton, WhatsAppIconButton } from '@/components/ui/ActionIcons';
-import { ChevronDown } from 'lucide-react';
+import { CallIconButton } from '@/components/ui/ActionIcons';
+import { ChevronRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useTrackingFormatContext } from '@/contexts/TrackingFormatContext';
 
@@ -139,10 +139,6 @@ export const ProspectRow = memo(function ProspectRow({
 
   const cleanPhoneNumber = (phone: string) => phone.replace(/[^0-9+]/g, '');
 
-  const handleWhatsAppClick = useCallback((e: React.MouseEvent) => {
-    onMarkLastContacted?.();
-  }, [onMarkLastContacted]);
-
   const openCall = useCallback((e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
@@ -202,35 +198,40 @@ export const ProspectRow = memo(function ProspectRow({
             onPointerDown={(e) => e.stopPropagation()}
           >
             <div className="flex items-center gap-1.5">
-              {/* Call + WhatsApp icons */}
-              <div className="flex items-center gap-0.5 shrink-0">
-                <CallIconButton onClick={openCall} className={isMobileTable ? "p-0.5 h-6 w-6" : "h-7 w-7"} />
-                <WhatsAppIconButton phone={cleanPhoneNumber(prospect.phone)} onClick={handleWhatsAppClick} className={isMobileTable ? "p-0.5 h-6 w-6" : "h-7 w-7"} />
-              </div>
-              <div className="flex flex-col overflow-hidden min-w-0 flex-1">
-                <button
-                  onClick={onToggleExpand}
-                  className={cn(
-                    "group flex items-center gap-1 text-left font-semibold text-foreground hover:text-primary transition-all duration-200 cursor-pointer bg-transparent border-0 py-0.5 px-1 rounded-md hover:bg-primary/5 active:scale-[0.98]",
-                    isMobileTable && "text-xs py-0.5",
-                    isExpanded && "text-primary bg-primary/10"
-                  )}
-                >
-                  <span className="truncate" title={prospect.name}>{prospect.name}</span>
-                  <span className={cn("transition-transform duration-200 text-muted-foreground group-hover:text-primary shrink-0", isExpanded && "rotate-180")}>
-                    <ChevronDown className={cn("h-3 w-3", isMobileTable && "h-2.5 w-2.5")} />
-                  </span>
-                </button>
-                {/* Phone number below name */}
-                {phoneDisplay && (
-                  <div className={cn(
-                    "text-muted-foreground truncate pl-1",
-                    isMobileTable ? "text-[9px]" : "text-[10px]"
-                  )} title={phoneDisplay}>
-                    {phoneDisplay}
-                  </div>
+              {/* Call icon only */}
+              <CallIconButton onClick={openCall} className={isMobileTable ? "p-0.5 h-6 w-6" : "h-7 w-7"} />
+              <button
+                onClick={onToggleExpand}
+                className={cn(
+                  "group flex items-center gap-1 flex-1 min-w-0 text-left cursor-pointer bg-transparent border-0 py-0.5 px-1 rounded-md hover:bg-primary/5 active:scale-[0.98] transition-all duration-200",
+                  isExpanded && "bg-primary/10"
                 )}
-              </div>
+              >
+                <div className="flex flex-col overflow-hidden min-w-0 flex-1">
+                  <span className={cn(
+                    "font-semibold text-foreground group-hover:text-primary truncate transition-colors",
+                    isMobileTable && "text-xs",
+                    isExpanded && "text-primary"
+                  )} title={prospect.name}>
+                    {prospect.name}
+                  </span>
+                  {/* Phone number below name */}
+                  {phoneDisplay && (
+                    <span className={cn(
+                      "text-muted-foreground truncate",
+                      isMobileTable ? "text-[9px]" : "text-[10px]"
+                    )} title={phoneDisplay}>
+                      {phoneDisplay}
+                    </span>
+                  )}
+                </div>
+                {/* Chevron indicator for expandable */}
+                <ChevronRight className={cn(
+                  "h-3.5 w-3.5 text-muted-foreground/50 group-hover:text-primary shrink-0 transition-transform duration-200",
+                  isMobileTable && "h-3 w-3",
+                  isExpanded && "rotate-90 text-primary"
+                )} />
+              </button>
             </div>
           </td>
         );
