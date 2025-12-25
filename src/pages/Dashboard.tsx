@@ -10,9 +10,10 @@ import { ProspectTable } from '@/components/prospects/ProspectTable';
 import { PullToRefreshIndicator } from '@/components/PullToRefreshIndicator';
 import { TopTabBar } from '@/components/ui/TopTabBar';
 import { FilterTagSetupDialog, useFilterTagSetup } from '@/components/prospects/FilterTagSetupDialog';
-import { CollapsibleSearchBar } from '@/components/prospects/CollapsibleSearchBar';
+import { SearchBar } from '@/components/ui/SearchBar';
 import { Loader2, Phone, Layers } from 'lucide-react';
 import nevoraLogo from '@/assets/nevorai-logo.jpeg';
+
 
 // Pull-to-refresh hook - fixed to not interfere with normal scrolling
 function usePullToRefresh(onRefresh: () => Promise<void>, threshold = 100) {
@@ -90,7 +91,6 @@ export default function Dashboard() {
   
   // Search state
   const [searchQuery, setSearchQuery] = useState('');
-  const [searchExpanded, setSearchExpanded] = useState(false);
   
   // Filter tag setup dialog
   const { needsSetup, markSetupDone } = useFilterTagSetup();
@@ -176,13 +176,11 @@ export default function Dashboard() {
       >
         <PullToRefreshIndicator isRefreshing={isRefreshing} pullDistance={pullDistance} showIndicator={showIndicator} />
         
-        {/* Collapsible Search Bar - icon on mobile, full bar on desktop */}
+        {/* Search Bar */}
         <div className="flex-shrink-0 px-4 pt-2 pb-2">
-          <CollapsibleSearchBar 
+          <SearchBar 
             value={searchQuery}
             onChange={setSearchQuery}
-            isCollapsed={!searchExpanded && !searchQuery}
-            onExpand={() => setSearchExpanded(true)}
             placeholder="Search name, phone..."
           />
         </div>
