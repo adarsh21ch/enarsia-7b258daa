@@ -3,7 +3,7 @@ import { Prospect, FunnelStage, ProspectQuality, Sheet, ExtendedActionTaken, FUN
 import { SortableProspectRow } from './SortableProspectRow';
 import { MobileProspectCard } from './MobileProspectCard';
 import { ProspectFilters } from './ProspectFilters';
-import { FilterBottomSheet } from './FilterBottomSheet';
+import { KPIStrip } from './KPIStrip';
 import { AddProspectDialog } from './AddProspectDialog';
 import { ImportExcelDialog } from './ImportExcelDialog';
 import { SheetTabs } from './SheetTabs';
@@ -14,7 +14,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
-import { Users, LayoutGrid, Table2, Undo2, Redo2, X, Trash2, Edit } from 'lucide-react';
+import { Users, Undo2, Redo2, X, Trash2, Edit, Star } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
@@ -867,11 +867,16 @@ export function ProspectTable({
         </div>
       </div>;
   }
-  return <div className="flex flex-col h-full gap-3">
+  return <div className="flex flex-col h-full gap-2">
+      {/* KPI Strip - horizontal scrolling on mobile */}
+      <div className="flex-shrink-0">
+        <KPIStrip prospects={filteredProspects} isCalling={isCalling} />
+      </div>
+
       {/* Single Action Bar - Filters left, Actions right */}
-      <div className="flex-shrink-0 flex flex-wrap items-center justify-between gap-2">
+      <div className="flex-shrink-0 flex items-center justify-between gap-2">
         {/* Left side - Filters */}
-        <div className="flex items-center gap-2 flex-wrap flex-1">
+        <div className="flex items-center gap-2 flex-1 min-w-0">
           <ProspectFilters 
             filters={filters} 
             onFiltersChange={setFilters} 
@@ -886,21 +891,20 @@ export function ProspectTable({
         </div>
 
         {/* Right side - Actions */}
-        <div className="flex items-center gap-2 shrink-0">
+        <div className="flex items-center gap-1.5 shrink-0">
           {/* Selection mode controls */}
-          {selectionMode.active ? <div className="flex items-center gap-2 bg-muted/50 rounded-lg px-3 py-1.5">
-              <span className="text-sm font-medium">{selectedIds.size} selected</span>
-              <Button variant="destructive" size="sm" onClick={() => setDeleteConfirmOpen(true)} disabled={selectedIds.size === 0}>
-                <Trash2 className="h-4 w-4 mr-1" />
-                Delete
+          {selectionMode.active ? <div className="flex items-center gap-2 bg-muted/50 rounded-lg px-2 py-1">
+              <span className="text-xs font-medium">{selectedIds.size}</span>
+              <Button variant="destructive" size="sm" onClick={() => setDeleteConfirmOpen(true)} disabled={selectedIds.size === 0} className="h-7 px-2">
+                <Trash2 className="h-3.5 w-3.5" />
               </Button>
-              <Button variant="ghost" size="sm" onClick={handleExitSelectMode}>
-                <X className="h-4 w-4" />
+              <Button variant="ghost" size="sm" onClick={handleExitSelectMode} className="h-7 w-7 p-0">
+                <X className="h-3.5 w-3.5" />
               </Button>
             </div> : <>
               {/* Undo/Redo buttons - desktop only */}
               {!isMobile && (
-                <div className="flex items-center gap-0">
+                <div className="flex items-center">
                   <Button variant="ghost" size="icon" onClick={handleUndo} disabled={!canUndo} className="h-8 w-8">
                     <Undo2 className="h-4 w-4" />
                   </Button>
@@ -910,7 +914,7 @@ export function ProspectTable({
                 </div>
               )}
 
-              {/* Import & Add buttons */}
+              {/* Import & Add buttons - same line */}
               <ImportExcelDialog onImport={handleImportProspects} />
               <AddProspectDialog onAdd={handleAddProspect} existingProspects={prospects} />
             </>}

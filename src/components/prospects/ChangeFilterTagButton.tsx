@@ -6,12 +6,14 @@ import { Label } from '@/components/ui/label';
 import { Star } from 'lucide-react';
 import { useTrackingFormatContext } from '@/contexts/TrackingFormatContext';
 import { useProfile } from '@/hooks/useProfile';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 interface ChangeFilterTagButtonProps {
   onTagChanged?: () => void;
 }
 
 export function ChangeFilterTagButton({ onTagChanged }: ChangeFilterTagButtonProps) {
+  const isMobile = useIsMobile();
   const { 
     leadsTrackingTags, 
     leadsStageTag, 
@@ -74,11 +76,16 @@ export function ChangeFilterTagButton({ onTagChanged }: ChangeFilterTagButtonPro
         variant="outline"
         size="sm"
         onClick={handleOpen}
-        className="h-10 sm:h-9 gap-1.5 text-xs font-medium shrink-0"
+        className="h-9 gap-1.5 text-xs font-medium shrink-0"
+        title={`Funnel Tag: ${activeTag || 'Not Set'}`}
       >
         <Star className="h-3.5 w-3.5 text-yellow-500 fill-yellow-500" />
-        <span className="hidden sm:inline">Funnel Tag:</span>
-        <span className="font-semibold truncate max-w-[80px]">{activeTag || 'Not Set'}</span>
+        {!isMobile && (
+          <>
+            <span className="hidden sm:inline">Funnel Tag:</span>
+            <span className="font-semibold truncate max-w-[80px]">{activeTag || 'Not Set'}</span>
+          </>
+        )}
       </Button>
 
       <Dialog open={open} onOpenChange={setOpen}>
