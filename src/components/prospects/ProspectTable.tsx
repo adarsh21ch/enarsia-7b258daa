@@ -25,7 +25,6 @@ import { arrayMove, SortableContext, sortableKeyboardCoordinates, verticalListSo
 import { useCustomOptionsContext } from '@/contexts/CustomOptionsContext';
 import { useTrackingTags } from '@/hooks/useTrackingTags';
 import { useTrackingFormatContext } from '@/contexts/TrackingFormatContext';
-
 interface Filters {
   search: string;
   stages: FunnelStage[];
@@ -33,7 +32,6 @@ interface Filters {
   actions: ExtendedActionTaken[];
   incompleteOnly: boolean;
 }
-
 interface ProspectTableProps {
   prospects: Prospect[];
   loading: boolean;
@@ -72,22 +70,22 @@ const COLUMNS = [{
   id: 'index',
   label: '#',
   width: '10%',
-  minWidth: 40,
+  minWidth: 40
 }, {
   id: 'name',
   label: 'Name',
   width: '55%',
-  minWidth: 160,
+  minWidth: 160
 }, {
   id: 'action',
   label: 'Response',
   width: '35%',
-  minWidth: 100,
+  minWidth: 100
 }, {
   id: 'stage',
   label: 'Stage',
   width: '35%',
-  minWidth: 100,
+  minWidth: 100
 }];
 
 // Column order for Calling tab: #, Name, Response
@@ -99,7 +97,10 @@ const FILTER_COLUMN_ORDER = ['index', 'name', 'stage'];
 interface TableContentProps {
   isMobile: boolean;
   COLUMN_ORDER: string[];
-  selectionMode: { active: boolean; sheetId: string | null };
+  selectionMode: {
+    active: boolean;
+    sheetId: string | null;
+  };
   selectedIds: Set<string>;
   selectionProspects: Prospect[];
   handleSelectAll: () => void;
@@ -129,7 +130,6 @@ interface TableContentProps {
   lastContactedId: string | null;
   onMarkLastContacted: (id: string) => void;
 }
-
 function TableContent({
   isMobile,
   COLUMN_ORDER,
@@ -161,10 +161,9 @@ function TableContent({
   onOpenResponseTagsDialog,
   onOpenStageTagsDialog,
   lastContactedId,
-  onMarkLastContacted,
+  onMarkLastContacted
 }: TableContentProps) {
-  return (
-    <div className="relative flex flex-col h-full">
+  return <div className="relative flex flex-col h-full">
       {/* Table - scrollable area */}
       <div className="flex-1 overflow-y-auto min-h-0">
         <table className="w-full text-sm border-collapse bg-card table-fixed">
@@ -172,131 +171,66 @@ function TableContent({
           <thead className="sticky top-0 z-10">
             <tr className="bg-muted text-xs font-semibold text-muted-foreground border-b border-border">
               {/* Selection checkbox header */}
-              {selectionMode.active && (
-                <th className="w-10 px-2 py-2.5 bg-muted">
-                  <Checkbox 
-                    checked={selectedIds.size === selectionProspects.length && selectionProspects.length > 0} 
-                    onCheckedChange={handleSelectAll} 
-                  />
-                </th>
-              )}
+              {selectionMode.active && <th className="w-10 px-2 py-2.5 bg-muted">
+                  <Checkbox checked={selectedIds.size === selectionProspects.length && selectionProspects.length > 0} onCheckedChange={handleSelectAll} />
+                </th>}
               {COLUMN_ORDER.map(columnId => {
-                const col = COLUMNS.find(c => c.id === columnId);
-                if (!col) return null;
-                
-                return (
-                  <th 
-                    key={columnId}
-                    className={cn(
-                      "px-2 py-2.5 text-left whitespace-nowrap bg-muted select-none",
-                      columnId === 'index' && "text-center",
-                      isMobile && "text-[11px] px-1.5"
-                    )}
-                    style={{ 
-                      width: col.width, 
-                      minWidth: `${col.minWidth}px`,
-                    }}
-                  >
+              const col = COLUMNS.find(c => c.id === columnId);
+              if (!col) return null;
+              return <th key={columnId} className={cn("px-2 py-2.5 text-left whitespace-nowrap bg-muted select-none", columnId === 'index' && "text-center", isMobile && "text-[11px] px-1.5")} style={{
+                width: col.width,
+                minWidth: `${col.minWidth}px`
+              }}>
                     <div className="flex items-center gap-0.5">
                       <span>{col.label}</span>
-                      {columnId === 'action' && (
-                        <button 
-                          className="p-0.5 rounded hover:bg-muted/50 transition-colors ml-1" 
-                          onClick={(e) => { e.stopPropagation(); onOpenResponseTagsDialog(); }}
-                          title="Manage Response Tags"
-                        >
+                      {columnId === 'action' && <button className="p-0.5 rounded hover:bg-muted/50 transition-colors ml-1" onClick={e => {
+                    e.stopPropagation();
+                    onOpenResponseTagsDialog();
+                  }} title="Manage Response Tags">
                           <Edit className="h-3 w-3 text-muted-foreground" />
-                        </button>
-                      )}
-                      {columnId === 'stage' && (
-                        <button 
-                          className="p-0.5 rounded hover:bg-muted/50 transition-colors ml-1" 
-                          onClick={(e) => { e.stopPropagation(); onOpenStageTagsDialog(); }}
-                          title="Manage Stage Tags"
-                        >
+                        </button>}
+                      {columnId === 'stage' && <button className="p-0.5 rounded hover:bg-muted/50 transition-colors ml-1" onClick={e => {
+                    e.stopPropagation();
+                    onOpenStageTagsDialog();
+                  }} title="Manage Stage Tags">
                           <Edit className="h-3 w-3 text-muted-foreground" />
-                        </button>
-                      )}
+                        </button>}
                     </div>
-                  </th>
-                );
-              })}
+                  </th>;
+            })}
             </tr>
           </thead>
           {/* Table body */}
           <tbody>
-            {filteredProspects.length === 0 ? (
-              <tr>
+            {filteredProspects.length === 0 ? <tr>
                 <td colSpan={COLUMN_ORDER.length + (selectionMode.active ? 1 : 0)} className="py-12 text-center bg-card">
                   <Users className="h-10 w-10 mx-auto text-muted-foreground/40 mb-3" />
                   <p className="text-sm font-medium text-muted-foreground mb-1">
                     {prospects.length === 0 ? "No leads yet" : selectedSheetId ? "No leads in this sheet" : "No leads match your filters"}
                   </p>
                   <p className="text-xs text-muted-foreground/70 mb-3">
-                    {prospects.length === 0 || (selectedSheetId && sheetFilteredProspects.length === 0) ? (
-                      "Import Excel or Add Lead to get started"
-                    ) : (
-                      <button 
-                        onClick={() => setFilters({
-                          search: '',
-                          stages: [],
-                          qualities: [],
-                          actions: [],
-                          incompleteOnly: false
-                        })} 
-                        className="text-accent hover:underline"
-                      >
+                    {prospects.length === 0 || selectedSheetId && sheetFilteredProspects.length === 0 ? "Import Excel or Add Lead to get started" : <button onClick={() => setFilters({
+                  search: '',
+                  stages: [],
+                  qualities: [],
+                  actions: [],
+                  incompleteOnly: false
+                })} className="text-accent hover:underline">
                         Clear filters
-                      </button>
-                    )}
+                      </button>}
                   </p>
                 </td>
-              </tr>
-            ) : (
-              filteredProspects.map((prospect, index) => (
-                <SortableProspectRow 
-                  key={prospect.id} 
-                  prospect={prospect} 
-                  index={index + 1} 
-                  isCalling={isCalling} 
-                  isExpanded={expandedRowId === prospect.id} 
-                  onToggleExpand={() => handleToggleExpand(prospect.id)} 
-                  onUpdate={handleUpdateWithUndo} 
-                  onDelete={handleDeleteWithUndo} 
-                  isEven={index % 2 === 0} 
-                  columnOrder={COLUMN_ORDER} 
-                  isMobileTable={isMobile}
-                  selectionModeActive={selectionMode.active}
-                  showSelection={selectionMode.active && selectionProspects.some(p => p.id === prospect.id)} 
-                  isSelected={selectedIds.has(prospect.id)} 
-                  onToggleSelect={() => handleToggleSelect(prospect.id)}
-                  disableDrag={!enableDragAndDrop}
-                  isLastContacted={lastContactedId === prospect.id}
-                  onMarkLastContacted={() => onMarkLastContacted(prospect.id)}
-                />
-              ))
-            )}
+              </tr> : filteredProspects.map((prospect, index) => <SortableProspectRow key={prospect.id} prospect={prospect} index={index + 1} isCalling={isCalling} isExpanded={expandedRowId === prospect.id} onToggleExpand={() => handleToggleExpand(prospect.id)} onUpdate={handleUpdateWithUndo} onDelete={handleDeleteWithUndo} isEven={index % 2 === 0} columnOrder={COLUMN_ORDER} isMobileTable={isMobile} selectionModeActive={selectionMode.active} showSelection={selectionMode.active && selectionProspects.some(p => p.id === prospect.id)} isSelected={selectedIds.has(prospect.id)} onToggleSelect={() => handleToggleSelect(prospect.id)} disableDrag={!enableDragAndDrop} isLastContacted={lastContactedId === prospect.id} onMarkLastContacted={() => onMarkLastContacted(prospect.id)} />)}
           </tbody>
         </table>
       </div>
       
       {/* Bottom sticky sheet tabs (Excel-style) - always visible */}
       <div className="flex-shrink-0 bg-card border-t border-border/50 shadow-[0_-2px_8px_rgba(0,0,0,0.1)]">
-        <SheetTabs 
-          sheets={sheets} 
-          selectedSheetId={selectedSheetId} 
-          onSelectSheet={onSelectSheet} 
-          onAddSheet={onAddSheet} 
-          onUpdateSheet={handleUpdateSheetWithUndo} 
-          onDeleteSheet={onDeleteSheet} 
-          onEnterSelectMode={handleEnterSelectMode} 
-          onDeleteAllInSheet={handleDeleteAllInSheet} 
-        />
+        <SheetTabs sheets={sheets} selectedSheetId={selectedSheetId} onSelectSheet={onSelectSheet} onAddSheet={onAddSheet} onUpdateSheet={handleUpdateSheetWithUndo} onDeleteSheet={onDeleteSheet} onEnterSelectMode={handleEnterSelectMode} onDeleteAllInSheet={handleDeleteAllInSheet} />
       </div>
-    </div>
-  );
+    </div>;
 }
-
 export function ProspectTable({
   prospects,
   loading,
@@ -326,7 +260,7 @@ export function ProspectTable({
     actions: [],
     incompleteOnly: false
   });
-  
+
   // Use external search if provided, otherwise use internal filters.search
   const effectiveSearch = externalSearch || filters.search;
   const [expandedRowId, setExpandedRowId] = useState<string | null>(null);
@@ -344,11 +278,11 @@ export function ProspectTable({
   });
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
-  
+
   // Last contacted tracking - highlight the prospect for 3 seconds after call/WhatsApp
   const [lastContactedId, setLastContactedId] = useState<string | null>(null);
   const lastContactedTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  
+
   // Tag management dialogs
   const [responseTagsDialogOpen, setResponseTagsDialogOpen] = useState(false);
   const [stageTagsDialogOpen, setStageTagsDialogOpen] = useState(false);
@@ -363,23 +297,22 @@ export function ProspectTable({
   } = useUndoRedo();
 
   // Row drag-and-drop sensors - DISABLED on mobile for smooth scrolling
-  const sensors = useSensors(
-    useSensor(PointerSensor, {
-      activationConstraint: {
-        distance: 8
-      }
-    }),
-    useSensor(KeyboardSensor, {
-      coordinateGetter: sortableKeyboardCoordinates
-    })
-  );
-  
+  const sensors = useSensors(useSensor(PointerSensor, {
+    activationConstraint: {
+      distance: 8
+    }
+  }), useSensor(KeyboardSensor, {
+    coordinateGetter: sortableKeyboardCoordinates
+  }));
+
   // Disable drag-and-drop on mobile to prevent scroll interference
   const enableDragAndDrop = !isMobile && !!onReorderProspects;
-  
   const handleRowDragEnd = (event: DragEndEvent) => {
     if (!enableDragAndDrop) return;
-    const { active, over } = event;
+    const {
+      active,
+      over
+    } = event;
     if (over && active.id !== over.id && onReorderProspects) {
       const oldIndex = filteredProspects.findIndex(p => p.id === active.id);
       const newIndex = filteredProspects.findIndex(p => p.id === over.id);
@@ -389,16 +322,21 @@ export function ProspectTable({
   };
 
   // Get the Funnel Tag from TrackingFormatContext (the Response tag with isStageTag = true)
-  const { leadsStageTag } = useTrackingFormatContext();
+  const {
+    leadsStageTag
+  } = useTrackingFormatContext();
 
   // Get tracking tags from profile
-  const { callingTrackingTags, stageTrackingTags } = useTrackingTags();
+  const {
+    callingTrackingTags,
+    stageTrackingTags
+  } = useTrackingTags();
 
   // For DUPLICATING: Calling tab keeps ALL leads in a stable order
   const callingProspects = useMemo(() => {
     return prospects;
   }, [prospects]);
-  
+
   // Funnel tab list order: when a lead gets the Funnel Tag, it should appear as a "new entry"
   // at the bottom (stable order by action_taken_at ASC).
   const funnelProspects = useMemo(() => {
@@ -418,11 +356,9 @@ export function ProspectTable({
       const aTagTime = aTagAt ? new Date(aTagAt).getTime() : 0;
       const bTagTime = bTagAt ? new Date(bTagAt).getTime() : 0;
       if (aTagTime !== bTagTime) return aTagTime - bTagTime;
-
       const aAdded = new Date(a.date_added).getTime();
       const bAdded = new Date(b.date_added).getTime();
       if (aAdded !== bAdded) return aAdded - bAdded;
-
       return a.id.localeCompare(b.id);
     });
   }, [prospects, leadsStageTag]);
@@ -476,7 +412,6 @@ export function ProspectTable({
       return matchesSearch && matchesStage && matchesQuality && matchesAction && matchesIncomplete;
     });
   }, [sheetFilteredProspects, filters, effectiveSearch]);
-
   const getFilterLabel = (): string => {
     if (filters.stages.length > 0) return filters.stages.join('_').replace(/\s+/g, '');
     if (filters.actions.length > 0) return filters.actions.join('_').replace(/\s+/g, '');
@@ -484,7 +419,6 @@ export function ProspectTable({
     if (filters.incompleteOnly) return 'Incomplete';
     return filterMode === 'calling' ? 'Calling' : 'Filter';
   };
-
   const exportToExcel = async () => {
     if (filteredProspects.length === 0) {
       toast.error('No data to export. Apply filters or add prospects first.');
@@ -558,7 +492,6 @@ export function ProspectTable({
       setExporting(false);
     }
   };
-
   const handleAddProspect = async (prospect: Partial<Prospect>) => {
     // Auto-assign to today's date sheet for Leads tab
     if (filterMode === 'calling' && getOrCreateTodaySheet) {
@@ -571,10 +504,9 @@ export function ProspectTable({
     }
     return onAdd(prospect);
   };
-
   const handleImportProspects = async (prospectsData: Partial<Prospect>[], onProgress?: (imported: number, total: number) => void) => {
     let targetSheetId: string | null = null;
-    
+
     // Auto-assign to today's date sheet for Leads tab
     if (filterMode === 'calling' && getOrCreateTodaySheet) {
       targetSheetId = await getOrCreateTodaySheet();
@@ -591,17 +523,14 @@ export function ProspectTable({
         sheet_id: selectedSheetId
       }));
     }
-    
     const result = await onImport(prospectsData, onProgress);
-    
+
     // Switch to the target sheet after successful import
     if (result.imported > 0 && targetSheetId) {
       onSelectSheet(targetSheetId);
     }
-    
     return result;
   };
-
   const handleToggleExpand = useCallback((prospectId: string) => {
     if (expandedRowId && expandedRowId !== prospectId) {
       setExpandedRowId(null);
@@ -631,7 +560,6 @@ export function ProspectTable({
     setSelectedIds(new Set());
     onSelectSheet(sheetId);
   };
-
   const handleExitSelectMode = () => {
     setSelectionMode({
       active: false,
@@ -639,7 +567,6 @@ export function ProspectTable({
     });
     setSelectedIds(new Set());
   };
-
   const handleToggleSelect = (id: string) => {
     setSelectedIds(prev => {
       const next = new Set(prev);
@@ -651,7 +578,6 @@ export function ProspectTable({
       return next;
     });
   };
-
   const handleSelectAll = () => {
     if (selectedIds.size === selectionProspects.length) {
       setSelectedIds(new Set());
@@ -677,7 +603,6 @@ export function ProspectTable({
     }
     return result;
   };
-
   const handleDeleteSelected = async () => {
     if (selectedIds.size === 0) return;
     const toDelete = prospects.filter(p => selectedIds.has(p.id));
@@ -707,7 +632,6 @@ export function ProspectTable({
     handleExitSelectMode();
     setDeleteConfirmOpen(false);
   };
-
   const handleDeleteAllInSheet = async (sheetId: string | null) => {
     const toDelete = sheetId === null ? baseProspects : baseProspects.filter(p => p.sheet_id === sheetId);
     if (toDelete.length === 0) {
@@ -743,12 +667,10 @@ export function ProspectTable({
   const handleUpdateWithUndo = async (id: string, updates: Partial<Prospect>) => {
     const prospect = prospects.find(p => p.id === id);
     if (!prospect) return null;
-
     const oldData: Partial<Prospect> = {};
     for (const key of Object.keys(updates)) {
       (oldData as any)[key] = (prospect as any)[key];
     }
-
     const result = await onUpdate(id, updates);
     if (result) {
       pushAction({
@@ -782,7 +704,6 @@ export function ProspectTable({
   const handleUndo = async () => {
     const action = popUndo();
     if (!action) return;
-
     switch (action.type) {
       case 'delete_prospect':
         if (onRestoreProspect) {
@@ -807,7 +728,6 @@ export function ProspectTable({
   const handleRedo = async () => {
     const action = popRedo();
     if (!action) return;
-
     switch (action.type) {
       case 'delete_prospect':
         await onDelete((action.data as Prospect).id);
@@ -825,52 +745,36 @@ export function ProspectTable({
         break;
     }
   };
-
   const isCalling = filterMode === 'calling';
   const COLUMN_ORDER = isCalling ? CALLING_COLUMN_ORDER : FILTER_COLUMN_ORDER;
 
   // Only show skeleton on initial load when we have no data
   // If we have cached data, show it immediately even while refreshing
   if (loading && prospects.length === 0) {
-    return (
-      <div className="space-y-3">
+    return <div className="space-y-3">
         <div className="flex items-center justify-between">
           <Skeleton className="h-10 w-48" />
           <Skeleton className="h-10 w-24" />
         </div>
         <div className="space-y-2">
-          {Array.from({ length: 5 }).map((_, i) => (
-            <Skeleton key={i} className="h-12 w-full" />
-          ))}
+          {Array.from({
+          length: 5
+        }).map((_, i) => <Skeleton key={i} className="h-12 w-full" />)}
         </div>
-      </div>
-    );
+      </div>;
   }
-
-  return (
-    <div className="flex flex-col h-full gap-3">
+  return <div className="flex flex-col h-full gap-3">
       {/* Single Action Bar - Filters left, Actions right */}
       <div className="flex-shrink-0 flex flex-wrap items-center justify-between gap-2">
         {/* Left side - Filters */}
         <div className="flex items-center gap-2 flex-wrap flex-1">
-          <ProspectFilters
-            filters={filters}
-            onFiltersChange={setFilters}
-            onExport={exportToExcel}
-            exporting={exporting}
-            filteredCount={filteredProspects.length}
-            showStagesFilter={!isCalling}
-            showResponsesFilter={isCalling}
-            filterTagButton={!isCalling ? <ChangeFilterTagButton /> : undefined}
-            hideSearch={!!externalSearch}
-          />
+          <ProspectFilters filters={filters} onFiltersChange={setFilters} onExport={exportToExcel} exporting={exporting} filteredCount={filteredProspects.length} showStagesFilter={!isCalling} showResponsesFilter={isCalling} filterTagButton={!isCalling ? <ChangeFilterTagButton /> : undefined} hideSearch={!!externalSearch} />
         </div>
 
         {/* Right side - Actions */}
         <div className="flex items-center gap-2 shrink-0">
           {/* Selection mode controls */}
-          {selectionMode.active ? (
-            <div className="flex items-center gap-2 bg-muted/50 rounded-lg px-3 py-1.5">
+          {selectionMode.active ? <div className="flex items-center gap-2 bg-muted/50 rounded-lg px-3 py-1.5">
               <span className="text-sm font-medium">{selectedIds.size} selected</span>
               <Button variant="destructive" size="sm" onClick={() => setDeleteConfirmOpen(true)} disabled={selectedIds.size === 0}>
                 <Trash2 className="h-4 w-4 mr-1" />
@@ -879,9 +783,7 @@ export function ProspectTable({
               <Button variant="ghost" size="sm" onClick={handleExitSelectMode}>
                 <X className="h-4 w-4" />
               </Button>
-            </div>
-          ) : (
-            <>
+            </div> : <>
               {/* Undo/Redo buttons - tight pair */}
               <div className="flex items-center gap-0">
                 <Button variant="ghost" size="icon" onClick={handleUndo} disabled={!canUndo} className="h-8 w-8">
@@ -895,95 +797,21 @@ export function ProspectTable({
               {/* Import & Add buttons */}
               <ImportExcelDialog onImport={handleImportProspects} />
               <AddProspectDialog onAdd={handleAddProspect} existingProspects={prospects} />
-            </>
-          )}
+            </>}
         </div>
       </div>
 
       {/* Table */}
       <div className="bg-card rounded-xl border border-border/50 shadow-sm overflow-hidden flex-1 flex flex-col min-h-0">
-        {enableDragAndDrop ? (
-          <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleRowDragEnd}>
+        {enableDragAndDrop ? <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleRowDragEnd}>
             <SortableContext items={filteredProspects.map(p => p.id)} strategy={verticalListSortingStrategy}>
-              <TableContent
-                isMobile={isMobile}
-                COLUMN_ORDER={COLUMN_ORDER}
-                selectionMode={selectionMode}
-                selectedIds={selectedIds}
-                selectionProspects={selectionProspects}
-                handleSelectAll={handleSelectAll}
-                sheets={sheets}
-                selectedSheetId={selectedSheetId}
-                onSelectSheet={onSelectSheet}
-                onAddSheet={onAddSheet}
-                handleUpdateSheetWithUndo={handleUpdateSheetWithUndo}
-                onDeleteSheet={onDeleteSheet}
-                handleEnterSelectMode={handleEnterSelectMode}
-                handleDeleteAllInSheet={handleDeleteAllInSheet}
-                filteredProspects={filteredProspects}
-                prospects={prospects}
-                sheetFilteredProspects={sheetFilteredProspects}
-                setFilters={setFilters}
-                isCalling={isCalling}
-                expandedRowId={expandedRowId}
-                handleToggleExpand={handleToggleExpand}
-                handleUpdateWithUndo={handleUpdateWithUndo}
-                handleDeleteWithUndo={handleDeleteWithUndo}
-                handleToggleSelect={handleToggleSelect}
-                enableDragAndDrop={enableDragAndDrop}
-                callingTrackingTags={callingTrackingTags}
-                stageTrackingTags={stageTrackingTags}
-                onOpenResponseTagsDialog={() => setResponseTagsDialogOpen(true)}
-                onOpenStageTagsDialog={() => setStageTagsDialogOpen(true)}
-                lastContactedId={lastContactedId}
-                onMarkLastContacted={handleMarkLastContacted}
-              />
+              <TableContent isMobile={isMobile} COLUMN_ORDER={COLUMN_ORDER} selectionMode={selectionMode} selectedIds={selectedIds} selectionProspects={selectionProspects} handleSelectAll={handleSelectAll} sheets={sheets} selectedSheetId={selectedSheetId} onSelectSheet={onSelectSheet} onAddSheet={onAddSheet} handleUpdateSheetWithUndo={handleUpdateSheetWithUndo} onDeleteSheet={onDeleteSheet} handleEnterSelectMode={handleEnterSelectMode} handleDeleteAllInSheet={handleDeleteAllInSheet} filteredProspects={filteredProspects} prospects={prospects} sheetFilteredProspects={sheetFilteredProspects} setFilters={setFilters} isCalling={isCalling} expandedRowId={expandedRowId} handleToggleExpand={handleToggleExpand} handleUpdateWithUndo={handleUpdateWithUndo} handleDeleteWithUndo={handleDeleteWithUndo} handleToggleSelect={handleToggleSelect} enableDragAndDrop={enableDragAndDrop} callingTrackingTags={callingTrackingTags} stageTrackingTags={stageTrackingTags} onOpenResponseTagsDialog={() => setResponseTagsDialogOpen(true)} onOpenStageTagsDialog={() => setStageTagsDialogOpen(true)} lastContactedId={lastContactedId} onMarkLastContacted={handleMarkLastContacted} />
             </SortableContext>
-          </DndContext>
-        ) : (
-          <TableContent
-            isMobile={isMobile}
-            COLUMN_ORDER={COLUMN_ORDER}
-            selectionMode={selectionMode}
-            selectedIds={selectedIds}
-            selectionProspects={selectionProspects}
-            handleSelectAll={handleSelectAll}
-            sheets={sheets}
-            selectedSheetId={selectedSheetId}
-            onSelectSheet={onSelectSheet}
-            onAddSheet={onAddSheet}
-            handleUpdateSheetWithUndo={handleUpdateSheetWithUndo}
-            onDeleteSheet={onDeleteSheet}
-            handleEnterSelectMode={handleEnterSelectMode}
-            handleDeleteAllInSheet={handleDeleteAllInSheet}
-            filteredProspects={filteredProspects}
-            prospects={prospects}
-            sheetFilteredProspects={sheetFilteredProspects}
-            setFilters={setFilters}
-            isCalling={isCalling}
-            expandedRowId={expandedRowId}
-            handleToggleExpand={handleToggleExpand}
-            handleUpdateWithUndo={handleUpdateWithUndo}
-            handleDeleteWithUndo={handleDeleteWithUndo}
-            handleToggleSelect={handleToggleSelect}
-            enableDragAndDrop={enableDragAndDrop}
-            callingTrackingTags={callingTrackingTags}
-            stageTrackingTags={stageTrackingTags}
-            onOpenResponseTagsDialog={() => setResponseTagsDialogOpen(true)}
-            onOpenStageTagsDialog={() => setStageTagsDialogOpen(true)}
-            lastContactedId={lastContactedId}
-            onMarkLastContacted={handleMarkLastContacted}
-          />
-        )}
+          </DndContext> : <TableContent isMobile={isMobile} COLUMN_ORDER={COLUMN_ORDER} selectionMode={selectionMode} selectedIds={selectedIds} selectionProspects={selectionProspects} handleSelectAll={handleSelectAll} sheets={sheets} selectedSheetId={selectedSheetId} onSelectSheet={onSelectSheet} onAddSheet={onAddSheet} handleUpdateSheetWithUndo={handleUpdateSheetWithUndo} onDeleteSheet={onDeleteSheet} handleEnterSelectMode={handleEnterSelectMode} handleDeleteAllInSheet={handleDeleteAllInSheet} filteredProspects={filteredProspects} prospects={prospects} sheetFilteredProspects={sheetFilteredProspects} setFilters={setFilters} isCalling={isCalling} expandedRowId={expandedRowId} handleToggleExpand={handleToggleExpand} handleUpdateWithUndo={handleUpdateWithUndo} handleDeleteWithUndo={handleDeleteWithUndo} handleToggleSelect={handleToggleSelect} enableDragAndDrop={enableDragAndDrop} callingTrackingTags={callingTrackingTags} stageTrackingTags={stageTrackingTags} onOpenResponseTagsDialog={() => setResponseTagsDialogOpen(true)} onOpenStageTagsDialog={() => setStageTagsDialogOpen(true)} lastContactedId={lastContactedId} onMarkLastContacted={handleMarkLastContacted} />}
       </div>
 
       {/* Footer info */}
-      <div className="flex-shrink-0 flex items-center justify-between text-xs text-muted-foreground px-1">
-        <span>{filteredProspects.length} leads</span>
-        <Button variant="ghost" size="sm" onClick={exportToExcel} disabled={exporting || filteredProspects.length === 0} className="h-7 text-xs">
-          {exporting ? 'Exporting...' : 'Export Excel'}
-        </Button>
-      </div>
+      
 
       {/* Delete confirmation dialog */}
       <AlertDialog open={deleteConfirmOpen} onOpenChange={setDeleteConfirmOpen}>
@@ -1006,6 +834,5 @@ export function ProspectTable({
       {/* Tag management dialogs */}
       <ManageResponseTagsDialog open={responseTagsDialogOpen} onOpenChange={setResponseTagsDialogOpen} />
       <ManageStageTagsDialog open={stageTagsDialogOpen} onOpenChange={setStageTagsDialogOpen} />
-    </div>
-  );
+    </div>;
 }
