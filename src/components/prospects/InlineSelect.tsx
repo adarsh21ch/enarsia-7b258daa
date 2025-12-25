@@ -155,6 +155,7 @@ export const InlineSelect = memo(function InlineSelect<T extends string>({
             'h-9 sm:h-8 text-xs border-0 bg-transparent hover:bg-muted/50 focus:ring-1 focus:ring-border/30 focus:bg-transparent min-w-[70px]',
             className
           )}
+          hideChevron
         >
           <SelectValue placeholder={placeholder}>
             {value && renderValue ? renderValue(value) : value || placeholder}
