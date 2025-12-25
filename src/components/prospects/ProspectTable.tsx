@@ -872,17 +872,17 @@ export function ProspectTable({
       <div className="flex-shrink-0 flex flex-wrap items-center justify-between gap-2">
         {/* Left side - Filters */}
         <div className="flex items-center gap-2 flex-wrap flex-1">
-          {isMobile ? (
-            <FilterBottomSheet 
-              filters={filters} 
-              onFiltersChange={setFilters} 
-              showStagesFilter={!isCalling} 
-              showResponsesFilter={isCalling} 
-            />
-          ) : (
-            <ProspectFilters filters={filters} onFiltersChange={setFilters} onExport={exportToExcel} exporting={exporting} filteredCount={filteredProspects.length} showStagesFilter={!isCalling} showResponsesFilter={isCalling} filterTagButton={!isCalling ? <ChangeFilterTagButton /> : undefined} hideSearch={!!externalSearch} />
-          )}
-          {!isCalling && <ChangeFilterTagButton />}
+          <ProspectFilters 
+            filters={filters} 
+            onFiltersChange={setFilters} 
+            onExport={exportToExcel} 
+            exporting={exporting} 
+            filteredCount={filteredProspects.length} 
+            showStagesFilter={!isCalling} 
+            showResponsesFilter={isCalling} 
+            filterTagButton={!isCalling ? <ChangeFilterTagButton /> : undefined} 
+            hideSearch={!!externalSearch} 
+          />
         </div>
 
         {/* Right side - Actions */}
