@@ -3,6 +3,7 @@ import { Prospect, FunnelStage, ProspectQuality, Sheet, ExtendedActionTaken, FUN
 import { SortableProspectRow } from './SortableProspectRow';
 import { MobileProspectCard } from './MobileProspectCard';
 import { ProspectFilters } from './ProspectFilters';
+import { FilterBottomSheet } from './FilterBottomSheet';
 import { AddProspectDialog } from './AddProspectDialog';
 import { ImportExcelDialog } from './ImportExcelDialog';
 import { SheetTabs } from './SheetTabs';
@@ -129,6 +130,8 @@ interface TableContentProps {
   onOpenStageTagsDialog: () => void;
   lastContactedId: string | null;
   onMarkLastContacted: (id: string) => void;
+  onExportSheet?: (sheetId: string | null) => void;
+  onExportAll?: () => void;
 }
 function TableContent({
   isMobile,
@@ -161,7 +164,9 @@ function TableContent({
   onOpenResponseTagsDialog,
   onOpenStageTagsDialog,
   lastContactedId,
-  onMarkLastContacted
+  onMarkLastContacted,
+  onExportSheet,
+  onExportAll
 }: TableContentProps) {
   return <div className="relative flex flex-col h-full">
       {/* Table - scrollable area */}
@@ -227,7 +232,18 @@ function TableContent({
       
       {/* Bottom sticky sheet tabs (Excel-style) - always visible */}
       <div className="flex-shrink-0 bg-card border-t border-border/50 shadow-[0_-2px_8px_rgba(0,0,0,0.1)]">
-        <SheetTabs sheets={sheets} selectedSheetId={selectedSheetId} onSelectSheet={onSelectSheet} onAddSheet={onAddSheet} onUpdateSheet={handleUpdateSheetWithUndo} onDeleteSheet={onDeleteSheet} onEnterSelectMode={handleEnterSelectMode} onDeleteAllInSheet={handleDeleteAllInSheet} />
+        <SheetTabs 
+          sheets={sheets} 
+          selectedSheetId={selectedSheetId} 
+          onSelectSheet={onSelectSheet} 
+          onAddSheet={onAddSheet} 
+          onUpdateSheet={handleUpdateSheetWithUndo} 
+          onDeleteSheet={onDeleteSheet} 
+          onEnterSelectMode={handleEnterSelectMode} 
+          onDeleteAllInSheet={handleDeleteAllInSheet}
+          onExportSheet={onExportSheet}
+          onExportAll={onExportAll}
+        />
       </div>
     </div>;
 }
@@ -492,6 +508,58 @@ export function ProspectTable({
       setExporting(false);
     }
   };
+
+  // Export specific sheet
+  const exportSheet = async (sheetId: string | null) => {
+    const sheetProspects = sheetId === null 
+      ? baseProspects 
+      : baseProspects.filter(p => p.sheet_id === sheetId);
+    
+    if (sheetProspects.length === 0) {
+      toast.error('No data to export in this sheet.');
+      return;
+    }
+    
+    setExporting(true);
+    try {
+      const exportData = sheetProspects.map((p, i) => ({
+        '#': i + 1,
+        'Name': p.name || '',
+        'Phone Number': p.phone || '',
+        'Age': p.age_or_dob || '',
+        'Gender': p.gender || '',
+        'Address': p.address || '',
+        'Enrollment Status': p.enrollment_status || (p.funnel_stage ? 'Enrolled' : 'Not Enrolled'),
+        'Funnel Stage': p.funnel_stage || '',
+        'Last Action': p.action_taken || 'No Action',
+        'Last Action Date': p.updated_at ? format(new Date(p.updated_at), 'dd/MM/yyyy HH:mm') : '',
+        'Quality': p.prospect_status || '',
+        'Priority': p.priority || '',
+        'Notes': p.notes || '',
+        'Profession': p.profession || '',
+        'Instagram': p.instagram || '',
+        'Date Added': p.date_added ? format(new Date(p.date_added), 'dd/MM/yyyy') : ''
+      }));
+      
+      const wb = XLSX.utils.book_new();
+      const ws = XLSX.utils.json_to_sheet(exportData);
+      XLSX.utils.book_append_sheet(wb, ws, 'Prospects');
+      
+      const dateStr = format(new Date(), 'yyyy-MM-dd');
+      const sheetName = sheetId 
+        ? sheets.find(s => s.id === sheetId)?.name || 'Sheet'
+        : 'All';
+      const filename = `NevorAI_${sheetName}_${dateStr}.xlsx`;
+      
+      XLSX.writeFile(wb, filename);
+      toast.success(`Exported ${sheetProspects.length} prospects successfully!`);
+    } catch (err) {
+      console.error('Export error:', err);
+      toast.error('Failed to export data. Please try again.');
+    } finally {
+      setExporting(false);
+    }
+  };
   const handleAddProspect = async (prospect: Partial<Prospect>) => {
     // Auto-assign to today's date sheet for Leads tab
     if (filterMode === 'calling' && getOrCreateTodaySheet) {
@@ -586,7 +654,7 @@ export function ProspectTable({
     }
   };
 
-  // Delete with undo support
+  // Delete with undo support - show snackbar with UNDO on mobile
   const handleDeleteWithUndo = async (id: string) => {
     const prospect = prospects.find(p => p.id === id);
     if (!prospect) return false;
@@ -600,12 +668,26 @@ export function ProspectTable({
       if (expandedRowId === id) {
         setExpandedRowId(null);
       }
+      // Show snackbar with undo option
+      toast.success(`Deleted ${prospect.name}`, {
+        action: {
+          label: 'UNDO',
+          onClick: async () => {
+            if (onRestoreProspect) {
+              await onRestoreProspect(prospect);
+              toast.success('Restored successfully');
+            }
+          },
+        },
+        duration: 5000,
+      });
     }
     return result;
   };
   const handleDeleteSelected = async () => {
     if (selectedIds.size === 0) return;
     const toDelete = prospects.filter(p => selectedIds.has(p.id));
+    const count = toDelete.length;
     if (onBulkDelete) {
       const result = await onBulkDelete(Array.from(selectedIds));
       if (result.deleted > 0) {
@@ -613,7 +695,18 @@ export function ProspectTable({
           type: 'delete_prospects',
           data: toDelete
         });
-        toast.success(`Deleted ${result.deleted} prospects`);
+        toast.success(`Deleted ${result.deleted} prospects`, {
+          action: {
+            label: 'UNDO',
+            onClick: async () => {
+              if (onRestoreProspects) {
+                await onRestoreProspects(toDelete);
+                toast.success('Restored successfully');
+              }
+            },
+          },
+          duration: 5000,
+        });
       }
     } else {
       let deleted = 0;
@@ -626,7 +719,18 @@ export function ProspectTable({
           type: 'delete_prospects',
           data: toDelete
         });
-        toast.success(`Deleted ${deleted} prospects`);
+        toast.success(`Deleted ${deleted} prospects`, {
+          action: {
+            label: 'UNDO',
+            onClick: async () => {
+              if (onRestoreProspects) {
+                await onRestoreProspects(toDelete);
+                toast.success('Restored successfully');
+              }
+            },
+          },
+          duration: 5000,
+        });
       }
     }
     handleExitSelectMode();
@@ -768,7 +872,17 @@ export function ProspectTable({
       <div className="flex-shrink-0 flex flex-wrap items-center justify-between gap-2">
         {/* Left side - Filters */}
         <div className="flex items-center gap-2 flex-wrap flex-1">
-          <ProspectFilters filters={filters} onFiltersChange={setFilters} onExport={exportToExcel} exporting={exporting} filteredCount={filteredProspects.length} showStagesFilter={!isCalling} showResponsesFilter={isCalling} filterTagButton={!isCalling ? <ChangeFilterTagButton /> : undefined} hideSearch={!!externalSearch} />
+          {isMobile ? (
+            <FilterBottomSheet 
+              filters={filters} 
+              onFiltersChange={setFilters} 
+              showStagesFilter={!isCalling} 
+              showResponsesFilter={isCalling} 
+            />
+          ) : (
+            <ProspectFilters filters={filters} onFiltersChange={setFilters} onExport={exportToExcel} exporting={exporting} filteredCount={filteredProspects.length} showStagesFilter={!isCalling} showResponsesFilter={isCalling} filterTagButton={!isCalling ? <ChangeFilterTagButton /> : undefined} hideSearch={!!externalSearch} />
+          )}
+          {!isCalling && <ChangeFilterTagButton />}
         </div>
 
         {/* Right side - Actions */}
@@ -784,15 +898,17 @@ export function ProspectTable({
                 <X className="h-4 w-4" />
               </Button>
             </div> : <>
-              {/* Undo/Redo buttons - tight pair */}
-              <div className="flex items-center gap-0">
-                <Button variant="ghost" size="icon" onClick={handleUndo} disabled={!canUndo} className="h-8 w-8">
-                  <Undo2 className="h-4 w-4" />
-                </Button>
-                <Button variant="ghost" size="icon" onClick={handleRedo} disabled={!canRedo} className="h-8 w-8">
-                  <Redo2 className="h-4 w-4" />
-                </Button>
-              </div>
+              {/* Undo/Redo buttons - desktop only */}
+              {!isMobile && (
+                <div className="flex items-center gap-0">
+                  <Button variant="ghost" size="icon" onClick={handleUndo} disabled={!canUndo} className="h-8 w-8">
+                    <Undo2 className="h-4 w-4" />
+                  </Button>
+                  <Button variant="ghost" size="icon" onClick={handleRedo} disabled={!canRedo} className="h-8 w-8">
+                    <Redo2 className="h-4 w-4" />
+                  </Button>
+                </div>
+              )}
 
               {/* Import & Add buttons */}
               <ImportExcelDialog onImport={handleImportProspects} />
@@ -805,9 +921,9 @@ export function ProspectTable({
       <div className="bg-card rounded-xl border border-border/50 shadow-sm overflow-hidden flex-1 flex flex-col min-h-0">
         {enableDragAndDrop ? <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleRowDragEnd}>
             <SortableContext items={filteredProspects.map(p => p.id)} strategy={verticalListSortingStrategy}>
-              <TableContent isMobile={isMobile} COLUMN_ORDER={COLUMN_ORDER} selectionMode={selectionMode} selectedIds={selectedIds} selectionProspects={selectionProspects} handleSelectAll={handleSelectAll} sheets={sheets} selectedSheetId={selectedSheetId} onSelectSheet={onSelectSheet} onAddSheet={onAddSheet} handleUpdateSheetWithUndo={handleUpdateSheetWithUndo} onDeleteSheet={onDeleteSheet} handleEnterSelectMode={handleEnterSelectMode} handleDeleteAllInSheet={handleDeleteAllInSheet} filteredProspects={filteredProspects} prospects={prospects} sheetFilteredProspects={sheetFilteredProspects} setFilters={setFilters} isCalling={isCalling} expandedRowId={expandedRowId} handleToggleExpand={handleToggleExpand} handleUpdateWithUndo={handleUpdateWithUndo} handleDeleteWithUndo={handleDeleteWithUndo} handleToggleSelect={handleToggleSelect} enableDragAndDrop={enableDragAndDrop} callingTrackingTags={callingTrackingTags} stageTrackingTags={stageTrackingTags} onOpenResponseTagsDialog={() => setResponseTagsDialogOpen(true)} onOpenStageTagsDialog={() => setStageTagsDialogOpen(true)} lastContactedId={lastContactedId} onMarkLastContacted={handleMarkLastContacted} />
+              <TableContent isMobile={isMobile} COLUMN_ORDER={COLUMN_ORDER} selectionMode={selectionMode} selectedIds={selectedIds} selectionProspects={selectionProspects} handleSelectAll={handleSelectAll} sheets={sheets} selectedSheetId={selectedSheetId} onSelectSheet={onSelectSheet} onAddSheet={onAddSheet} handleUpdateSheetWithUndo={handleUpdateSheetWithUndo} onDeleteSheet={onDeleteSheet} handleEnterSelectMode={handleEnterSelectMode} handleDeleteAllInSheet={handleDeleteAllInSheet} filteredProspects={filteredProspects} prospects={prospects} sheetFilteredProspects={sheetFilteredProspects} setFilters={setFilters} isCalling={isCalling} expandedRowId={expandedRowId} handleToggleExpand={handleToggleExpand} handleUpdateWithUndo={handleUpdateWithUndo} handleDeleteWithUndo={handleDeleteWithUndo} handleToggleSelect={handleToggleSelect} enableDragAndDrop={enableDragAndDrop} callingTrackingTags={callingTrackingTags} stageTrackingTags={stageTrackingTags} onOpenResponseTagsDialog={() => setResponseTagsDialogOpen(true)} onOpenStageTagsDialog={() => setStageTagsDialogOpen(true)} lastContactedId={lastContactedId} onMarkLastContacted={handleMarkLastContacted} onExportSheet={exportSheet} onExportAll={exportToExcel} />
             </SortableContext>
-          </DndContext> : <TableContent isMobile={isMobile} COLUMN_ORDER={COLUMN_ORDER} selectionMode={selectionMode} selectedIds={selectedIds} selectionProspects={selectionProspects} handleSelectAll={handleSelectAll} sheets={sheets} selectedSheetId={selectedSheetId} onSelectSheet={onSelectSheet} onAddSheet={onAddSheet} handleUpdateSheetWithUndo={handleUpdateSheetWithUndo} onDeleteSheet={onDeleteSheet} handleEnterSelectMode={handleEnterSelectMode} handleDeleteAllInSheet={handleDeleteAllInSheet} filteredProspects={filteredProspects} prospects={prospects} sheetFilteredProspects={sheetFilteredProspects} setFilters={setFilters} isCalling={isCalling} expandedRowId={expandedRowId} handleToggleExpand={handleToggleExpand} handleUpdateWithUndo={handleUpdateWithUndo} handleDeleteWithUndo={handleDeleteWithUndo} handleToggleSelect={handleToggleSelect} enableDragAndDrop={enableDragAndDrop} callingTrackingTags={callingTrackingTags} stageTrackingTags={stageTrackingTags} onOpenResponseTagsDialog={() => setResponseTagsDialogOpen(true)} onOpenStageTagsDialog={() => setStageTagsDialogOpen(true)} lastContactedId={lastContactedId} onMarkLastContacted={handleMarkLastContacted} />}
+          </DndContext> : <TableContent isMobile={isMobile} COLUMN_ORDER={COLUMN_ORDER} selectionMode={selectionMode} selectedIds={selectedIds} selectionProspects={selectionProspects} handleSelectAll={handleSelectAll} sheets={sheets} selectedSheetId={selectedSheetId} onSelectSheet={onSelectSheet} onAddSheet={onAddSheet} handleUpdateSheetWithUndo={handleUpdateSheetWithUndo} onDeleteSheet={onDeleteSheet} handleEnterSelectMode={handleEnterSelectMode} handleDeleteAllInSheet={handleDeleteAllInSheet} filteredProspects={filteredProspects} prospects={prospects} sheetFilteredProspects={sheetFilteredProspects} setFilters={setFilters} isCalling={isCalling} expandedRowId={expandedRowId} handleToggleExpand={handleToggleExpand} handleUpdateWithUndo={handleUpdateWithUndo} handleDeleteWithUndo={handleDeleteWithUndo} handleToggleSelect={handleToggleSelect} enableDragAndDrop={enableDragAndDrop} callingTrackingTags={callingTrackingTags} stageTrackingTags={stageTrackingTags} onOpenResponseTagsDialog={() => setResponseTagsDialogOpen(true)} onOpenStageTagsDialog={() => setStageTagsDialogOpen(true)} lastContactedId={lastContactedId} onMarkLastContacted={handleMarkLastContacted} onExportSheet={exportSheet} onExportAll={exportToExcel} />}
       </div>
 
       {/* Footer info */}

@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from '@/components/ui/dialog';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
-import { Plus, MoreVertical, Pencil, Trash2, FileSpreadsheet, CheckSquare, Trash } from 'lucide-react';
+import { Plus, MoreVertical, Pencil, Trash2, FileSpreadsheet, CheckSquare, Trash, Download } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 
@@ -18,6 +18,8 @@ interface SheetTabsProps {
   onDeleteSheet: (id: string) => Promise<boolean>;
   onEnterSelectMode?: (sheetId: string | null) => void;
   onDeleteAllInSheet?: (sheetId: string | null) => void;
+  onExportSheet?: (sheetId: string | null) => void;
+  onExportAll?: () => void;
 }
 
 export function SheetTabs({
@@ -29,6 +31,8 @@ export function SheetTabs({
   onDeleteSheet,
   onEnterSelectMode,
   onDeleteAllInSheet,
+  onExportSheet,
+  onExportAll,
 }: SheetTabsProps) {
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [isEditOpen, setIsEditOpen] = useState(false);
@@ -95,6 +99,15 @@ export function SheetTabs({
         </button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="bg-popover border-border z-50">
+        {onExportAll && (
+          <>
+            <DropdownMenuItem onClick={onExportAll}>
+              <Download className="h-3.5 w-3.5 mr-2" />
+              Download all sheets
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+          </>
+        )}
         <DropdownMenuItem onClick={() => handleSelectAndDelete(null)}>
           <CheckSquare className="h-3.5 w-3.5 mr-2" />
           Select & Delete
@@ -160,6 +173,15 @@ export function SheetTabs({
                       </button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end" className="bg-popover border-border z-50">
+                      {onExportSheet && (
+                        <>
+                          <DropdownMenuItem onClick={() => onExportSheet(sheet.id)}>
+                            <Download className="h-3.5 w-3.5 mr-2" />
+                            Download this sheet
+                          </DropdownMenuItem>
+                          <DropdownMenuSeparator />
+                        </>
+                      )}
                       <DropdownMenuItem onClick={() => openEditDialog(sheet)}>
                         <Pencil className="h-3.5 w-3.5 mr-2" />
                         Rename
