@@ -850,7 +850,7 @@ export function ProspectTable({
   return <div className="flex flex-col h-full gap-2">
       {/* KPI Strip - horizontal scrolling on mobile */}
       <div className="flex-shrink-0">
-        <KPIStrip prospects={filteredProspects} isCalling={isCalling} className="py-0 my-[6px]" />
+        <KPIStrip prospects={filteredProspects} isCalling={isCalling} className="my-[6px] py-[4px]" />
       </div>
 
       {/* Single Action Bar - Filters left, Actions right */}
