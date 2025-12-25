@@ -10,7 +10,7 @@ import { ProspectTable } from '@/components/prospects/ProspectTable';
 import { PullToRefreshIndicator } from '@/components/PullToRefreshIndicator';
 import { TopTabBar } from '@/components/ui/TopTabBar';
 import { FilterTagSetupDialog, useFilterTagSetup } from '@/components/prospects/FilterTagSetupDialog';
-import { CollapsibleSearchBar } from '@/components/prospects/CollapsibleSearchBar';
+import { SearchBar } from '@/components/ui/SearchBar';
 import { Loader2, Phone, Layers } from 'lucide-react';
 import nevoraLogo from '@/assets/nevorai-logo.jpeg';
 
@@ -176,9 +176,9 @@ export default function Dashboard() {
       >
         <PullToRefreshIndicator isRefreshing={isRefreshing} pullDistance={pullDistance} showIndicator={showIndicator} />
         
-        {/* Collapsible Search Bar */}
+        {/* Search Bar */}
         <div className="flex-shrink-0 px-4 pt-2 pb-2">
-          <CollapsibleSearchBar 
+          <SearchBar 
             value={searchQuery}
             onChange={setSearchQuery}
             placeholder="Search name, phone..."
