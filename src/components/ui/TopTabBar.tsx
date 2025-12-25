@@ -14,17 +14,15 @@ interface TopTabBarProps {
 }
 
 export function TopTabBar({ options, value, onChange }: TopTabBarProps) {
-  const activeIndex = options.findIndex(opt => opt.value === value);
-  
   return (
-    <div className="bg-card border-b border-border/50">
-      <div className="relative flex">
-        {/* Animated sliding indicator */}
+    <div className="bg-card/80 backdrop-blur-xl border-b border-border/50 px-4 py-2">
+      {/* Segmented control - matching To-Do screen style */}
+      <div className="relative flex h-9 w-full rounded-md bg-muted p-1">
+        {/* Animated sliding background */}
         <div 
-          className="absolute bottom-0 h-0.5 bg-primary transition-all duration-300 ease-out"
+          className="absolute top-1 h-7 w-[calc(50%-4px)] rounded-sm bg-background shadow-sm transition-all duration-200 ease-out"
           style={{ 
-            width: '50%',
-            left: activeIndex === 0 ? '0%' : '50%'
+            left: value === options[0].value ? '4px' : 'calc(50% + 0px)'
           }}
         />
         
@@ -36,16 +34,13 @@ export function TopTabBar({ options, value, onChange }: TopTabBarProps) {
               key={option.value}
               onClick={() => onChange(option.value)}
               className={cn(
-                "flex-1 flex items-center justify-center gap-2 py-3 text-sm font-semibold transition-all duration-200 relative",
+                "relative z-10 flex-1 flex items-center justify-center gap-1.5 text-xs font-medium transition-colors duration-200",
                 isActive
-                  ? "text-primary"
-                  : "text-muted-foreground hover:text-foreground"
+                  ? "text-foreground"
+                  : "text-muted-foreground hover:text-foreground/80"
               )}
             >
-              <Icon className={cn(
-                "h-4 w-4 transition-transform duration-200",
-                isActive && "scale-110"
-              )} />
+              <Icon className="h-3.5 w-3.5" />
               <span>{option.label}</span>
             </button>
           );
