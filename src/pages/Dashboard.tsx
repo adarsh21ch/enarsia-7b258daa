@@ -193,14 +193,12 @@ export default function Dashboard() {
       {/* Compact Header - matching To-Do density */}
       <header className="fixed-header z-40 bg-card/80 backdrop-blur-xl border-b border-border/50">
         {/* Row A: Page title - compact */}
-        <div className="flex items-center justify-between px-4 py-[12px]">
-          <div className="flex items-center gap-2.5">
-            <img src={nevoraLogo} alt="NevorAI Logo" className="h-9 w-9 rounded-xl object-cover shadow-md" />
+        <div className="flex items-center justify-between px-4 py-3">
+          <div className="flex items-center gap-3">
+            <img src={nevoraLogo} alt="NevorAI Logo" className="h-10 w-10 rounded-xl object-cover shadow-md" />
             <div>
-              <h1 className="text-lg font-bold tracking-tight leading-tight">Follow Up</h1>
-              <p className="text-[10px] text-muted-foreground font-medium">
-                Manage your prospects
-              </p>
+              <h1 className="text-xl font-bold tracking-tight">Calling</h1>
+              <p className="text-xs text-muted-foreground font-medium">Manage your prospects</p>
             </div>
           </div>
           <HeaderBellIcon />

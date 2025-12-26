@@ -43,7 +43,7 @@ const TodoListIcon = ({ className }: { className?: string }) => (
 // Tab order: Activity, Follow Up, Calling (default), To-Do List, Profile (avatar) - 5 items max
 const navItems = [
   { path: '/home', icon: ActivityIcon, label: 'Activity' },
-  { path: '/listup', icon: FollowUpIcon, label: 'Follow Up' },
+  { path: '/listup', icon: FollowUpIcon, label: 'Calling' },
   { path: '/dashboard', icon: CallingIcon, label: 'Calling' },
   { path: '/action', icon: TodoListIcon, label: 'To-Do List' },
   { path: '/profile', icon: null, label: 'Profile', isProfile: true },
