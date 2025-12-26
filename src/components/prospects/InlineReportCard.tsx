@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { StageBadge, StatusBadge, ActionBadge } from './StatusBadge';
 import { X, Phone, ChevronDown, Instagram, Clock, Trash2 } from 'lucide-react';
-import { WhatsAppIcon } from '@/components/ui/ActionIcons';
+import { WhatsAppOutlineIcon } from '@/components/ui/ActionIcons';
 import { formatDistanceToNow, parseISO, format } from 'date-fns';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
@@ -185,10 +185,10 @@ const [localData, setLocalData] = useState<Partial<Prospect>>({});
                 <Button 
                   variant="ghost" 
                   size="icon" 
-                  className="h-7 w-7 bg-green-500 text-white hover:bg-green-600 rounded-md" 
+                  className="h-7 w-7 text-green-500 hover:text-green-600 hover:bg-green-500/10" 
                   onClick={openWhatsApp}
                 >
-                  <WhatsAppIcon className="h-4 w-4" />
+                  <WhatsAppOutlineIcon className="h-3.5 w-3.5" />
                 </Button>
                 {localData.instagram && (
                   <Button variant="ghost" size="icon" className="h-7 w-7 text-pink-500 hover:text-pink-600 hover:bg-pink-500/10" onClick={openInstagram}>
