@@ -7,7 +7,8 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Button } from '@/components/ui/button';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { StageBadge, StatusBadge, ActionBadge } from './StatusBadge';
-import { X, Phone, MessageCircle, ChevronDown, Instagram, Clock, Trash2 } from 'lucide-react';
+import { X, Phone, ChevronDown, Instagram, Clock, Trash2 } from 'lucide-react';
+import { WhatsAppOutlineIcon } from '@/components/ui/ActionIcons';
 import { formatDistanceToNow, parseISO, format } from 'date-fns';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
@@ -187,7 +188,7 @@ const [localData, setLocalData] = useState<Partial<Prospect>>({});
                   className="h-7 w-7 text-green-500 hover:text-green-600 hover:bg-green-500/10" 
                   onClick={openWhatsApp}
                 >
-                  <MessageCircle className="h-3.5 w-3.5" />
+                  <WhatsAppOutlineIcon className="h-3.5 w-3.5" />
                 </Button>
                 {localData.instagram && (
                   <Button variant="ghost" size="icon" className="h-7 w-7 text-pink-500 hover:text-pink-600 hover:bg-pink-500/10" onClick={openInstagram}>
