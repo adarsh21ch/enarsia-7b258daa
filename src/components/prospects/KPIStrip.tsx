@@ -7,6 +7,7 @@ import { cn } from '@/lib/utils';
 interface KPIStripProps {
   prospects: Prospect[];
   isCalling: boolean;
+  className?: string;
 }
 
 export function KPIStrip({ prospects, isCalling }: KPIStripProps) {
