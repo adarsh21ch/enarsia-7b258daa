@@ -14,6 +14,50 @@ export type Database = {
   }
   public: {
     Tables: {
+      achievements: {
+        Row: {
+          achieved_at: string
+          community_id: string
+          created_at: string
+          created_by: string
+          description: string | null
+          id: string
+          media_url: string | null
+          member_user_id: string
+          title: string
+        }
+        Insert: {
+          achieved_at?: string
+          community_id: string
+          created_at?: string
+          created_by: string
+          description?: string | null
+          id?: string
+          media_url?: string | null
+          member_user_id: string
+          title: string
+        }
+        Update: {
+          achieved_at?: string
+          community_id?: string
+          created_at?: string
+          created_by?: string
+          description?: string | null
+          id?: string
+          media_url?: string | null
+          member_user_id?: string
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "achievements_community_id_fkey"
+            columns: ["community_id"]
+            isOneToOne: false
+            referencedRelation: "communities"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       activity_logs: {
         Row: {
           activity_type: string
@@ -51,6 +95,206 @@ export type Database = {
             columns: ["prospect_id"]
             isOneToOne: false
             referencedRelation: "prospects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      chat_messages: {
+        Row: {
+          body: string | null
+          community_id: string
+          created_at: string
+          created_by: string
+          id: string
+          media_url: string | null
+          message_type: Database["public"]["Enums"]["message_type"]
+        }
+        Insert: {
+          body?: string | null
+          community_id: string
+          created_at?: string
+          created_by: string
+          id?: string
+          media_url?: string | null
+          message_type?: Database["public"]["Enums"]["message_type"]
+        }
+        Update: {
+          body?: string | null
+          community_id?: string
+          created_at?: string
+          created_by?: string
+          id?: string
+          media_url?: string | null
+          message_type?: Database["public"]["Enums"]["message_type"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chat_messages_community_id_fkey"
+            columns: ["community_id"]
+            isOneToOne: false
+            referencedRelation: "communities"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      comments: {
+        Row: {
+          body: string
+          created_at: string
+          deleted_at: string | null
+          id: string
+          post_id: string
+          user_id: string
+        }
+        Insert: {
+          body: string
+          created_at?: string
+          deleted_at?: string | null
+          id?: string
+          post_id: string
+          user_id: string
+        }
+        Update: {
+          body?: string
+          created_at?: string
+          deleted_at?: string | null
+          id?: string
+          post_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "comments_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "feed_posts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      communities: {
+        Row: {
+          chat_mode: string
+          community_id: string
+          created_at: string
+          created_by: string
+          description: string | null
+          id: string
+          logo_url: string | null
+          name: string
+          root_owner_user_id: string
+          slug: string
+          updated_at: string
+        }
+        Insert: {
+          chat_mode?: string
+          community_id: string
+          created_at?: string
+          created_by: string
+          description?: string | null
+          id?: string
+          logo_url?: string | null
+          name: string
+          root_owner_user_id: string
+          slug: string
+          updated_at?: string
+        }
+        Update: {
+          chat_mode?: string
+          community_id?: string
+          created_at?: string
+          created_by?: string
+          description?: string | null
+          id?: string
+          logo_url?: string | null
+          name?: string
+          root_owner_user_id?: string
+          slug?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      community_memberships: {
+        Row: {
+          community_id: string
+          id: string
+          joined_at: string
+          role: Database["public"]["Enums"]["community_role"]
+          root_owner_user_id: string | null
+          status: Database["public"]["Enums"]["membership_status"]
+          upline_leader_id_text: string | null
+          upline_member_user_id: string | null
+          user_id: string
+        }
+        Insert: {
+          community_id: string
+          id?: string
+          joined_at?: string
+          role?: Database["public"]["Enums"]["community_role"]
+          root_owner_user_id?: string | null
+          status?: Database["public"]["Enums"]["membership_status"]
+          upline_leader_id_text?: string | null
+          upline_member_user_id?: string | null
+          user_id: string
+        }
+        Update: {
+          community_id?: string
+          id?: string
+          joined_at?: string
+          role?: Database["public"]["Enums"]["community_role"]
+          root_owner_user_id?: string | null
+          status?: Database["public"]["Enums"]["membership_status"]
+          upline_leader_id_text?: string | null
+          upline_member_user_id?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "community_memberships_community_id_fkey"
+            columns: ["community_id"]
+            isOneToOne: false
+            referencedRelation: "communities"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      competitions: {
+        Row: {
+          community_id: string
+          created_at: string
+          created_by: string
+          description: string | null
+          end_date: string
+          id: string
+          name: string
+          start_date: string
+        }
+        Insert: {
+          community_id: string
+          created_at?: string
+          created_by: string
+          description?: string | null
+          end_date: string
+          id?: string
+          name: string
+          start_date: string
+        }
+        Update: {
+          community_id?: string
+          created_at?: string
+          created_by?: string
+          description?: string | null
+          end_date?: string
+          id?: string
+          name?: string
+          start_date?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "competitions_community_id_fkey"
+            columns: ["community_id"]
+            isOneToOne: false
+            referencedRelation: "communities"
             referencedColumns: ["id"]
           },
         ]
@@ -180,6 +424,50 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      feed_posts: {
+        Row: {
+          body: string | null
+          community_id: string
+          created_at: string
+          created_by: string
+          id: string
+          media_url: string | null
+          title: string | null
+          type: Database["public"]["Enums"]["feed_post_type"]
+          updated_at: string
+        }
+        Insert: {
+          body?: string | null
+          community_id: string
+          created_at?: string
+          created_by: string
+          id?: string
+          media_url?: string | null
+          title?: string | null
+          type?: Database["public"]["Enums"]["feed_post_type"]
+          updated_at?: string
+        }
+        Update: {
+          body?: string | null
+          community_id?: string
+          created_at?: string
+          created_by?: string
+          id?: string
+          media_url?: string | null
+          title?: string | null
+          type?: Database["public"]["Enums"]["feed_post_type"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "feed_posts_community_id_fkey"
+            columns: ["community_id"]
+            isOneToOne: false
+            referencedRelation: "communities"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       funnel_configs: {
         Row: {
@@ -355,6 +643,132 @@ export type Database = {
         }
         Relationships: []
       }
+      learnup_resources: {
+        Row: {
+          body: string | null
+          created_at: string
+          created_by: string
+          id: string
+          link_url: string | null
+          media_url: string | null
+          sort_order: number | null
+          title: string
+          topic_id: string
+        }
+        Insert: {
+          body?: string | null
+          created_at?: string
+          created_by: string
+          id?: string
+          link_url?: string | null
+          media_url?: string | null
+          sort_order?: number | null
+          title: string
+          topic_id: string
+        }
+        Update: {
+          body?: string | null
+          created_at?: string
+          created_by?: string
+          id?: string
+          link_url?: string | null
+          media_url?: string | null
+          sort_order?: number | null
+          title?: string
+          topic_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "learnup_resources_topic_id_fkey"
+            columns: ["topic_id"]
+            isOneToOne: false
+            referencedRelation: "learnup_topics"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      learnup_topics: {
+        Row: {
+          community_id: string
+          created_at: string
+          created_by: string
+          description: string | null
+          id: string
+          name: string
+          sort_order: number | null
+        }
+        Insert: {
+          community_id: string
+          created_at?: string
+          created_by: string
+          description?: string | null
+          id?: string
+          name: string
+          sort_order?: number | null
+        }
+        Update: {
+          community_id?: string
+          created_at?: string
+          created_by?: string
+          description?: string | null
+          id?: string
+          name?: string
+          sort_order?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "learnup_topics_community_id_fkey"
+            columns: ["community_id"]
+            isOneToOne: false
+            referencedRelation: "communities"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      notifications: {
+        Row: {
+          body: string | null
+          community_id: string | null
+          created_at: string
+          id: string
+          is_read: boolean | null
+          link_url: string | null
+          title: string
+          type: Database["public"]["Enums"]["notification_type"]
+          user_id: string
+        }
+        Insert: {
+          body?: string | null
+          community_id?: string | null
+          created_at?: string
+          id?: string
+          is_read?: boolean | null
+          link_url?: string | null
+          title: string
+          type: Database["public"]["Enums"]["notification_type"]
+          user_id: string
+        }
+        Update: {
+          body?: string | null
+          community_id?: string | null
+          created_at?: string
+          id?: string
+          is_read?: boolean | null
+          link_url?: string | null
+          title?: string
+          type?: Database["public"]["Enums"]["notification_type"]
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notifications_community_id_fkey"
+            columns: ["community_id"]
+            isOneToOne: false
+            referencedRelation: "communities"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       payments_log: {
         Row: {
           action_taken: string | null
@@ -399,6 +813,44 @@ export type Database = {
           user_id?: string | null
         }
         Relationships: []
+      }
+      points_entries: {
+        Row: {
+          competition_id: string
+          created_at: string
+          created_by: string
+          id: string
+          points: number
+          reason: string | null
+          user_id: string
+        }
+        Insert: {
+          competition_id: string
+          created_at?: string
+          created_by: string
+          id?: string
+          points?: number
+          reason?: string | null
+          user_id: string
+        }
+        Update: {
+          competition_id?: string
+          created_at?: string
+          created_by?: string
+          id?: string
+          points?: number
+          reason?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "points_entries_competition_id_fkey"
+            columns: ["competition_id"]
+            isOneToOne: false
+            referencedRelation: "competitions"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       profiles: {
         Row: {
@@ -568,6 +1020,112 @@ export type Database = {
             columns: ["sheet_id"]
             isOneToOne: false
             referencedRelation: "sheets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      reactions: {
+        Row: {
+          created_at: string
+          id: string
+          reaction_type: string
+          target_id: string
+          target_type: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          reaction_type?: string
+          target_id: string
+          target_type: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          reaction_type?: string
+          target_id?: string
+          target_type?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      reminder_responses: {
+        Row: {
+          created_at: string
+          id: string
+          reminder_id: string
+          response: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          reminder_id: string
+          response: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          reminder_id?: string
+          response?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reminder_responses_reminder_id_fkey"
+            columns: ["reminder_id"]
+            isOneToOne: false
+            referencedRelation: "reminders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      reminders: {
+        Row: {
+          also_post_to_chat: boolean | null
+          community_id: string
+          created_at: string
+          created_by: string
+          expires_at: string | null
+          id: string
+          message: string | null
+          remind_at: string
+          rsvp_enabled: boolean | null
+          title: string
+        }
+        Insert: {
+          also_post_to_chat?: boolean | null
+          community_id: string
+          created_at?: string
+          created_by: string
+          expires_at?: string | null
+          id?: string
+          message?: string | null
+          remind_at: string
+          rsvp_enabled?: boolean | null
+          title: string
+        }
+        Update: {
+          also_post_to_chat?: boolean | null
+          community_id?: string
+          created_at?: string
+          created_by?: string
+          expires_at?: string | null
+          id?: string
+          message?: string | null
+          remind_at?: string
+          rsvp_enabled?: boolean | null
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reminders_community_id_fkey"
+            columns: ["community_id"]
+            isOneToOne: false
+            referencedRelation: "communities"
             referencedColumns: ["id"]
           },
         ]
@@ -766,6 +1324,50 @@ export type Database = {
         }
         Relationships: []
       }
+      trainings: {
+        Row: {
+          community_id: string
+          created_at: string
+          created_by: string
+          description: string | null
+          duration_minutes: number | null
+          id: string
+          meeting_link: string | null
+          start_at: string
+          title: string
+        }
+        Insert: {
+          community_id: string
+          created_at?: string
+          created_by: string
+          description?: string | null
+          duration_minutes?: number | null
+          id?: string
+          meeting_link?: string | null
+          start_at: string
+          title: string
+        }
+        Update: {
+          community_id?: string
+          created_at?: string
+          created_by?: string
+          description?: string | null
+          duration_minutes?: number | null
+          id?: string
+          meeting_link?: string | null
+          start_at?: string
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "trainings_community_id_fkey"
+            columns: ["community_id"]
+            isOneToOne: false
+            referencedRelation: "communities"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_roles: {
         Row: {
           created_at: string
@@ -880,6 +1482,26 @@ export type Database = {
           user_id: string
         }[]
       }
+      can_access_learnup_resource: {
+        Args: { p_topic_id: string; p_user_id: string }
+        Returns: boolean
+      }
+      can_access_points_entry: {
+        Args: { p_competition_id: string; p_user_id: string }
+        Returns: boolean
+      }
+      can_access_reminder: {
+        Args: { p_reminder_id: string; p_user_id: string }
+        Returns: boolean
+      }
+      can_admin_learnup_resource: {
+        Args: { p_topic_id: string; p_user_id: string }
+        Returns: boolean
+      }
+      can_admin_points_entry: {
+        Args: { p_competition_id: string; p_user_id: string }
+        Returns: boolean
+      }
       generate_neverai_id: { Args: never; Returns: string }
       get_leader_stage_config: {
         Args: { target_leader_id: string }
@@ -915,6 +1537,14 @@ export type Database = {
         }
         Returns: boolean
       }
+      is_community_admin: {
+        Args: { p_community_id: string; p_user_id: string }
+        Returns: boolean
+      }
+      is_community_member: {
+        Args: { p_community_id: string; p_user_id: string }
+        Returns: boolean
+      }
       is_in_downline: {
         Args: { _target_user_id: string; _viewer_id: string }
         Returns: boolean
@@ -932,6 +1562,8 @@ export type Database = {
         | "Busy"
         | "Follow Up Scheduled"
       app_role: "admin" | "user"
+      community_role: "owner" | "admin" | "member"
+      feed_post_type: "activity" | "achievement" | "system"
       funnel_stage:
         | "Enrollment"
         | "Day 1"
@@ -940,6 +1572,9 @@ export type Database = {
         | "Minimum Bill"
         | "Level Up"
         | "2CC"
+      membership_status: "active" | "blocked" | "left"
+      message_type: "text" | "media" | "system"
+      notification_type: "achievement" | "reminder" | "system" | "mention"
       priority_level: "High" | "Medium" | "Low"
       prospect_status: "+VE" | "-VE" | "50-50" | "30-70"
       user_plan: "free" | "pro"
@@ -1078,6 +1713,8 @@ export const Constants = {
         "Follow Up Scheduled",
       ],
       app_role: ["admin", "user"],
+      community_role: ["owner", "admin", "member"],
+      feed_post_type: ["activity", "achievement", "system"],
       funnel_stage: [
         "Enrollment",
         "Day 1",
@@ -1087,6 +1724,9 @@ export const Constants = {
         "Level Up",
         "2CC",
       ],
+      membership_status: ["active", "blocked", "left"],
+      message_type: ["text", "media", "system"],
+      notification_type: ["achievement", "reminder", "system", "mention"],
       priority_level: ["High", "Medium", "Low"],
       prospect_status: ["+VE", "-VE", "50-50", "30-70"],
       user_plan: ["free", "pro"],
