@@ -417,6 +417,53 @@ export function useProspectsQuery() {
     [reorderMutation]
   );
 
+  // Bulk delete - delete multiple prospects
+  const bulkDeleteProspects = useCallback(
+    async (ids: string[]): Promise<{ deleted: number; prospects: Prospect[] }> => {
+      const deletedProspects = prospects.filter(p => ids.includes(p.id));
+      let deleted = 0;
+      try {
+        for (const id of ids) {
+          await deleteMutation.mutateAsync(id);
+          deleted++;
+        }
+      } catch {
+        // partial success
+      }
+      return { deleted, prospects: deletedProspects.slice(0, deleted) };
+    },
+    [deleteMutation, prospects]
+  );
+
+  // Restore - re-add a deleted prospect (used for undo)
+  const restoreProspect = useCallback(
+    async (prospect: Prospect): Promise<Prospect | null> => {
+      try {
+        return await addMutation.mutateAsync(prospect);
+      } catch {
+        return null;
+      }
+    },
+    [addMutation]
+  );
+
+  // Restore multiple prospects
+  const restoreProspects = useCallback(
+    async (prospectsToRestore: Prospect[]): Promise<number> => {
+      let restored = 0;
+      for (const p of prospectsToRestore) {
+        try {
+          await addMutation.mutateAsync(p);
+          restored++;
+        } catch {
+          // continue on error
+        }
+      }
+      return restored;
+    },
+    [addMutation]
+  );
+
   return {
     // Data
     prospects,
@@ -438,6 +485,9 @@ export function useProspectsQuery() {
     addProspect,
     updateProspect,
     deleteProspect,
+    bulkDeleteProspects,
+    restoreProspect,
+    restoreProspects,
     reorderProspects,
     importProspects,
 

@@ -2,7 +2,7 @@
 import { useEffect, useState, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
-import { useGlobalProspects } from '@/contexts/ProspectsContext';
+import { useProspectsQuery } from '@/hooks/useProspectsQuery';
 import { useSheets } from '@/hooks/useSheets';
 import { useSwipeTabs } from '@/hooks/useSwipeTabs';
 import { BottomNav } from '@/components/layout/BottomNav';
@@ -98,11 +98,10 @@ export default function Dashboard() {
     bulkDeleteProspects,
     restoreProspect,
     restoreProspects,
-    importProspects,
     reorderProspects,
-    refetch,
-    optimisticUpdate
-  } = useGlobalProspects();
+    importProspects,
+    refetch
+  } = useProspectsQuery();
   const {
     sheets,
     selectedSheetId,

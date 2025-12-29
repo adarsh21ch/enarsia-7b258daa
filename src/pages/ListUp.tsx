@@ -2,7 +2,7 @@
 import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
-import { useGlobalProspects } from '@/contexts/ProspectsContext';
+import { useProspectsQuery } from '@/hooks/useProspectsQuery';
 import { BottomNav } from '@/components/layout/BottomNav';
 import { HeaderBellIcon } from '@/components/layout/HeaderBellIcon';
 import { PullToRefreshIndicator } from '@/components/PullToRefreshIndicator';
@@ -100,7 +100,7 @@ export default function ListUp() {
     prospects,
     loading: prospectsLoading,
     refetch
-  } = useGlobalProspects();
+  } = useProspectsQuery();
 
   // Lead mode toggle - default to funnel leads
   const [leadMode, setLeadMode] = useState<LeadMode>(() => {

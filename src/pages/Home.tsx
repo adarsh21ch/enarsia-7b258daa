@@ -2,7 +2,7 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
-import { useGlobalProspects } from '@/contexts/ProspectsContext';
+import { useProspectsQuery } from '@/hooks/useProspectsQuery';
 import { useGlobalTodos } from '@/contexts/TodosContext';
 import { BottomNav } from '@/components/layout/BottomNav';
 import { HeaderBellIcon } from '@/components/layout/HeaderBellIcon';
@@ -97,7 +97,7 @@ export default function Home() {
     prospects,
     loading: prospectsLoading,
     refetch
-  } = useGlobalProspects();
+  } = useProspectsQuery();
   const {
     todos,
     refetch: refetchTodos
