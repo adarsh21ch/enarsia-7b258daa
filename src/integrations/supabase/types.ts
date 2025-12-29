@@ -1511,6 +1511,36 @@ export type Database = {
         Args: { p_leader_user_id: string }
         Returns: string
       }
+      get_prospects_paginated: {
+        Args: { p_limit?: number; p_offset?: number; p_user_id: string }
+        Returns: {
+          action_taken: string
+          action_taken_at: string
+          address: string
+          age_or_dob: string
+          batch_date: string
+          date_added: string
+          funnel_stage: string
+          funnel_stage_at: string
+          gender: string
+          id: string
+          instagram: string
+          name: string
+          notes: string
+          personal_tags: Json
+          phone: string
+          priority: string
+          profession: string
+          prospect_status: string
+          sheet_id: string
+          sort_order: number
+          stage_index: number
+          total_count: number
+          updated_at: string
+          user_id: string
+          why_need: string
+        }[]
+      }
       get_user_by_neverai_id: {
         Args: { target_neverai_id: string }
         Returns: {
@@ -1553,6 +1583,7 @@ export type Database = {
         Args: { p_leader_neverai_id: string; p_user_id: string }
         Returns: Json
       }
+      xor_decrypt_phone: { Args: { encrypted_text: string }; Returns: string }
     }
     Enums: {
       action_taken:
