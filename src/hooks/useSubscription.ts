@@ -1,4 +1,4 @@
-import { useCallback, useMemo } from 'react';
+import { useCallback, useMemo, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
@@ -111,6 +111,32 @@ export function useSubscription() {
       return { error };
     }
   }, [upgradeMutation]);
+
+  // Realtime subscription listener for cross-platform sync
+  useEffect(() => {
+    if (!user) return;
+    
+    const channel = supabase
+      .channel(`subscription-${user.id}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'user_subscriptions',
+          filter: `user_id=eq.${user.id}`
+        },
+        () => {
+          // Refetch subscription when it changes (from admin panel, webhook, or other platform)
+          queryClient.invalidateQueries({ queryKey });
+        }
+      )
+      .subscribe();
+    
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [user, queryClient, queryKey]);
 
   return { 
     subscription: subscription ?? null, 
