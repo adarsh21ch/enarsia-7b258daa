@@ -17,3 +17,6 @@ verify_jwt = true
 
 [functions.trackup-sso-link]
 verify_jwt = true
+
+[functions.admin-reset-password]
+verify_jwt = true
