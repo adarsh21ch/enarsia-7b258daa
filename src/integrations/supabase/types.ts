@@ -337,6 +337,36 @@ export type Database = {
         }
         Relationships: []
       }
+      ac_join_requests: {
+        Row: {
+          created_at: string | null
+          entered_upline_leader_id: string
+          id: string
+          status: string
+          updated_at: string | null
+          upline_user_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          entered_upline_leader_id: string
+          id?: string
+          status?: string
+          updated_at?: string | null
+          upline_user_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          entered_upline_leader_id?: string
+          id?: string
+          status?: string
+          updated_at?: string | null
+          upline_user_id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       ac_notifications: {
         Row: {
           announcement_id: string | null
@@ -345,7 +375,9 @@ export type Database = {
           id: string
           is_read: boolean
           link_url: string | null
+          payload_json: Json | null
           read_at: string | null
+          receiver_user_id: string | null
           scheduled_at: string | null
           status: string
           title: string
@@ -359,7 +391,9 @@ export type Database = {
           id?: string
           is_read?: boolean
           link_url?: string | null
+          payload_json?: Json | null
           read_at?: string | null
+          receiver_user_id?: string | null
           scheduled_at?: string | null
           status?: string
           title: string
@@ -373,7 +407,9 @@ export type Database = {
           id?: string
           is_read?: boolean
           link_url?: string | null
+          payload_json?: Json | null
           read_at?: string | null
+          receiver_user_id?: string | null
           scheduled_at?: string | null
           status?: string
           title?: string
@@ -389,6 +425,42 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      ac_profiles: {
+        Row: {
+          city: string
+          created_at: string | null
+          dob: string
+          full_name: string
+          mobile: string
+          onboarding_completed_at: string | null
+          state: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          city: string
+          created_at?: string | null
+          dob: string
+          full_name: string
+          mobile: string
+          onboarding_completed_at?: string | null
+          state: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          city?: string
+          created_at?: string | null
+          dob?: string
+          full_name?: string
+          mobile?: string
+          onboarding_completed_at?: string | null
+          state?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
       }
       ac_resource_groups: {
         Row: {
