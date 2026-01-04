@@ -163,6 +163,34 @@ export default function Home() {
     return activitiesList;
   }, [prospects, todos, calendar.selectedDate, searchQuery]);
 
+  // Refetch on mount and when window gains focus to get latest activities
+  useEffect(() => {
+    // Refetch immediately when page mounts
+    refetch?.();
+    refetchTodos?.();
+
+    // Refetch when window regains focus
+    const handleFocus = () => {
+      refetch?.();
+      refetchTodos?.();
+    };
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        refetch?.();
+        refetchTodos?.();
+      }
+    };
+
+    window.addEventListener('focus', handleFocus);
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    return () => {
+      window.removeEventListener('focus', handleFocus);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [refetch, refetchTodos]);
+
   useEffect(() => {
     if (!user && !authLoading) {
       navigate('/auth');

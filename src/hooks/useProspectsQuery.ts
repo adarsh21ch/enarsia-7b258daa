@@ -283,39 +283,38 @@ export function useProspectsQuery(options: UseProspectsQueryOptions = {}) {
       return mapDbProspect({ ...data, phone: updates.phone || data.phone });
     },
     onMutate: async ({ id, updates }) => {
-      // Cancel outgoing refetches
+      // Cancel outgoing refetches for ALL prospect queries
       await queryClient.cancelQueries({ queryKey: ['prospects', user?.id] });
 
-      // Snapshot previous value
-      const previousData = queryClient.getQueryData(queryKey);
+      // Update ALL cached prospect queries (not just the active one)
+      // This ensures Recent tab sees updates from Leads/Funnel tabs immediately
+      queryClient.setQueriesData(
+        { queryKey: ['prospects', user?.id] },
+        (old: any) => {
+          if (!old) return old;
+          return {
+            ...old,
+            pages: old.pages.map((page: ProspectPage) => ({
+              ...page,
+              prospects: page.prospects.map((p: Prospect) =>
+                p.id === id ? { ...p, ...updates, updated_at: new Date().toISOString() } : p
+              ),
+            })),
+          };
+        }
+      );
 
-      // Optimistically update
-      queryClient.setQueryData(queryKey, (old: any) => {
-        if (!old) return old;
-        return {
-          ...old,
-          pages: old.pages.map((page: ProspectPage) => ({
-            ...page,
-            prospects: page.prospects.map((p: Prospect) =>
-              p.id === id ? { ...p, ...updates } : p
-            ),
-          })),
-        };
-      });
-
-      return { previousData };
+      return {};
     },
-    onError: (err, variables, context) => {
-      // Rollback on error
-      if (context?.previousData) {
-        queryClient.setQueryData(queryKey, context.previousData);
-      }
+    onError: () => {
+      // Refetch all to restore correct state
+      queryClient.invalidateQueries({ queryKey: ['prospects', user?.id] });
       toast.error('Failed to update');
     },
     onSuccess: () => {
       // Invalidate KPI to update tag counts
       queryClient.invalidateQueries({ queryKey: ['prospects-kpi', user?.id] });
-      // Invalidate prospects to get updated_at for Recent tab
+      // Invalidate ALL prospects queries to get updated_at for Recent tab
       queryClient.invalidateQueries({ queryKey: ['prospects', user?.id] });
       // Invalidate tracking stats so tag changes reflect
       queryClient.invalidateQueries({ queryKey: ['tracking-leads', user?.id] });
