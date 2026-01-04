@@ -8,7 +8,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
-import { MessageCircle, Phone, Trash2, Calendar as CalendarIcon, ChevronDown, MapPin, Target, X } from 'lucide-react';
+import { Phone, Trash2, Calendar as CalendarIcon, ChevronDown, MapPin, Target, X } from 'lucide-react';
+import { WhatsAppIcon } from '@/components/ui/ActionIcons';
 import { format, parseISO, formatDistanceToNow } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { useActivityLogs } from '@/hooks/useActivityLogs';
@@ -223,10 +224,10 @@ const [localData, setLocalData] = useState({
             <Button 
               variant="outline" 
               size="icon" 
-              className="h-10 w-10 border-green-200 text-green-500 hover:bg-green-50 hover:text-green-600" 
+              className="h-10 w-10 border-green-500/50 bg-green-500 text-white hover:bg-green-600 dark:hover:bg-green-600" 
               onClick={openWhatsApp}
             >
-              <MessageCircle className="h-4 w-4" />
+              <WhatsAppIcon className="h-5 w-5" />
             </Button>
           </div>
         </div>

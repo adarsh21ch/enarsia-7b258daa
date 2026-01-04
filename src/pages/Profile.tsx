@@ -15,6 +15,7 @@ import { LevelManagement } from '@/components/profile/LevelManagement';
 import { ProfileLevelDropdown } from '@/components/profile/ProfileLevelDropdown';
 
 import { UpgradeCard } from '@/components/subscription/UpgradeCard';
+import { ProfileTrackUp } from '@/components/profile/ProfileTrackUp';
 import { PullToRefreshIndicator } from '@/components/PullToRefreshIndicator';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -207,6 +208,9 @@ export default function Profile() {
           {/* Upgrade Card - Hidden via feature flag, can be re-enabled by setting SHOW_PROFILE_UPGRADE_UI = true */}
           {SHOW_PROFILE_UPGRADE_UI && <UpgradeCard />}
 
+          {/* Personal TrackUp Section - Leads & Funnel Tracking */}
+          <ProfileTrackUp isPro={isPro} />
+
           {/* Leader & Tracking Format Settings - Opens in Sidebar */}
           <LeaderTrackingFormatDrawer
             profile={profile}
@@ -254,7 +258,7 @@ export default function Profile() {
 
           {/* Menu Items */}
           <div className="space-y-2">
-            {/* TrackUp Dashboard */}
+            {/* TrackUp Dashboard - External for team tracking */}
             <button 
               onClick={handleOpenTrackUp}
               className={cn(
@@ -272,7 +276,7 @@ export default function Profile() {
                 </div>
                 <div className="text-left">
                   <span className="font-medium block">TrackUp Dashboard</span>
-                  <span className="text-xs text-muted-foreground">Open web dashboard</span>
+                  <span className="text-xs text-muted-foreground">Team tracking & analytics</span>
                 </div>
               </div>
               <ChevronRight className="h-5 w-5 text-muted-foreground" />

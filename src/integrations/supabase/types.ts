@@ -14,6 +14,681 @@ export type Database = {
   }
   public: {
     Tables: {
+      ac_announcements: {
+        Row: {
+          author_user_id: string | null
+          body: string
+          category: string | null
+          created_at: string
+          id: string
+          image_url: string | null
+          is_pinned: boolean
+          published_at: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          author_user_id?: string | null
+          body: string
+          category?: string | null
+          created_at?: string
+          id?: string
+          image_url?: string | null
+          is_pinned?: boolean
+          published_at?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          author_user_id?: string | null
+          body?: string
+          category?: string | null
+          created_at?: string
+          id?: string
+          image_url?: string | null
+          is_pinned?: boolean
+          published_at?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      ac_chat_messages: {
+        Row: {
+          attachments_json: Json | null
+          created_at: string
+          deleted_at: string | null
+          edited_at: string | null
+          id: string
+          is_pinned: boolean
+          mentioned_user_ids: string[] | null
+          message: string
+          message_type: string
+          poll_id: string | null
+          reply_to_id: string | null
+          room_id: string
+          user_id: string
+        }
+        Insert: {
+          attachments_json?: Json | null
+          created_at?: string
+          deleted_at?: string | null
+          edited_at?: string | null
+          id?: string
+          is_pinned?: boolean
+          mentioned_user_ids?: string[] | null
+          message: string
+          message_type?: string
+          poll_id?: string | null
+          reply_to_id?: string | null
+          room_id?: string
+          user_id: string
+        }
+        Update: {
+          attachments_json?: Json | null
+          created_at?: string
+          deleted_at?: string | null
+          edited_at?: string | null
+          id?: string
+          is_pinned?: boolean
+          mentioned_user_ids?: string[] | null
+          message?: string
+          message_type?: string
+          poll_id?: string | null
+          reply_to_id?: string | null
+          room_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ac_chat_messages_reply_to_id_fkey"
+            columns: ["reply_to_id"]
+            isOneToOne: false
+            referencedRelation: "ac_chat_messages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ac_chat_poll_options: {
+        Row: {
+          id: string
+          label: string
+          poll_id: string
+          sort_order: number
+        }
+        Insert: {
+          id?: string
+          label: string
+          poll_id: string
+          sort_order?: number
+        }
+        Update: {
+          id?: string
+          label?: string
+          poll_id?: string
+          sort_order?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ac_chat_poll_options_poll_id_fkey"
+            columns: ["poll_id"]
+            isOneToOne: false
+            referencedRelation: "ac_chat_polls"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ac_chat_poll_votes: {
+        Row: {
+          created_at: string
+          id: string
+          option_id: string
+          poll_id: string
+          voter_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          option_id: string
+          poll_id: string
+          voter_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          option_id?: string
+          poll_id?: string
+          voter_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ac_chat_poll_votes_option_id_fkey"
+            columns: ["option_id"]
+            isOneToOne: false
+            referencedRelation: "ac_chat_poll_options"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ac_chat_poll_votes_poll_id_fkey"
+            columns: ["poll_id"]
+            isOneToOne: false
+            referencedRelation: "ac_chat_polls"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ac_chat_polls: {
+        Row: {
+          closes_at: string | null
+          created_at: string
+          created_by: string
+          id: string
+          is_closed: boolean
+          question: string
+        }
+        Insert: {
+          closes_at?: string | null
+          created_at?: string
+          created_by: string
+          id?: string
+          is_closed?: boolean
+          question: string
+        }
+        Update: {
+          closes_at?: string | null
+          created_at?: string
+          created_by?: string
+          id?: string
+          is_closed?: boolean
+          question?: string
+        }
+        Relationships: []
+      }
+      ac_chat_read_status: {
+        Row: {
+          id: string
+          last_read_at: string
+          last_read_message_id: string | null
+          room_id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          last_read_at?: string
+          last_read_message_id?: string | null
+          room_id?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          id?: string
+          last_read_at?: string
+          last_read_message_id?: string | null
+          room_id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ac_chat_read_status_last_read_message_id_fkey"
+            columns: ["last_read_message_id"]
+            isOneToOne: false
+            referencedRelation: "ac_chat_messages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ac_event_rsvps: {
+        Row: {
+          checked_in_at: string | null
+          created_at: string
+          event_id: string
+          id: string
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          checked_in_at?: string | null
+          created_at?: string
+          event_id: string
+          id?: string
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          checked_in_at?: string | null
+          created_at?: string
+          event_id?: string
+          id?: string
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ac_event_rsvps_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "ac_events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ac_events: {
+        Row: {
+          all_day: boolean | null
+          capacity: number | null
+          category: string | null
+          created_at: string
+          created_by: string
+          deleted_at: string | null
+          description: string | null
+          end_at: string | null
+          host_name: string | null
+          id: string
+          link: string | null
+          location: string | null
+          start_at: string
+          timezone: string | null
+          title: string
+          updated_at: string
+          visibility: string
+        }
+        Insert: {
+          all_day?: boolean | null
+          capacity?: number | null
+          category?: string | null
+          created_at?: string
+          created_by: string
+          deleted_at?: string | null
+          description?: string | null
+          end_at?: string | null
+          host_name?: string | null
+          id?: string
+          link?: string | null
+          location?: string | null
+          start_at: string
+          timezone?: string | null
+          title: string
+          updated_at?: string
+          visibility?: string
+        }
+        Update: {
+          all_day?: boolean | null
+          capacity?: number | null
+          category?: string | null
+          created_at?: string
+          created_by?: string
+          deleted_at?: string | null
+          description?: string | null
+          end_at?: string | null
+          host_name?: string | null
+          id?: string
+          link?: string | null
+          location?: string | null
+          start_at?: string
+          timezone?: string | null
+          title?: string
+          updated_at?: string
+          visibility?: string
+        }
+        Relationships: []
+      }
+      ac_join_requests: {
+        Row: {
+          created_at: string | null
+          entered_upline_leader_id: string
+          id: string
+          status: string
+          updated_at: string | null
+          upline_user_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          entered_upline_leader_id: string
+          id?: string
+          status?: string
+          updated_at?: string | null
+          upline_user_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          entered_upline_leader_id?: string
+          id?: string
+          status?: string
+          updated_at?: string | null
+          upline_user_id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      ac_notifications: {
+        Row: {
+          announcement_id: string | null
+          body: string | null
+          created_at: string
+          id: string
+          is_read: boolean
+          link_url: string | null
+          payload_json: Json | null
+          read_at: string | null
+          receiver_user_id: string | null
+          scheduled_at: string | null
+          status: string
+          title: string
+          type: string
+          user_id: string | null
+        }
+        Insert: {
+          announcement_id?: string | null
+          body?: string | null
+          created_at?: string
+          id?: string
+          is_read?: boolean
+          link_url?: string | null
+          payload_json?: Json | null
+          read_at?: string | null
+          receiver_user_id?: string | null
+          scheduled_at?: string | null
+          status?: string
+          title: string
+          type: string
+          user_id?: string | null
+        }
+        Update: {
+          announcement_id?: string | null
+          body?: string | null
+          created_at?: string
+          id?: string
+          is_read?: boolean
+          link_url?: string | null
+          payload_json?: Json | null
+          read_at?: string | null
+          receiver_user_id?: string | null
+          scheduled_at?: string | null
+          status?: string
+          title?: string
+          type?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ac_notifications_announcement_id_fkey"
+            columns: ["announcement_id"]
+            isOneToOne: false
+            referencedRelation: "ac_announcements"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ac_profiles: {
+        Row: {
+          city: string
+          created_at: string | null
+          dob: string
+          full_name: string
+          mobile: string
+          onboarding_completed_at: string | null
+          state: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          city: string
+          created_at?: string | null
+          dob: string
+          full_name: string
+          mobile: string
+          onboarding_completed_at?: string | null
+          state: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          city?: string
+          created_at?: string | null
+          dob?: string
+          full_name?: string
+          mobile?: string
+          onboarding_completed_at?: string | null
+          state?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      ac_resource_groups: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          description: string | null
+          id: string
+          sort_order: number
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          sort_order?: number
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          sort_order?: number
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      ac_resource_items: {
+        Row: {
+          created_at: string
+          group_id: string
+          id: string
+          label: string
+          note: string | null
+          sort_order: number
+          title: string
+          type: string
+          url: string
+        }
+        Insert: {
+          created_at?: string
+          group_id: string
+          id?: string
+          label: string
+          note?: string | null
+          sort_order?: number
+          title: string
+          type?: string
+          url: string
+        }
+        Update: {
+          created_at?: string
+          group_id?: string
+          id?: string
+          label?: string
+          note?: string | null
+          sort_order?: number
+          title?: string
+          type?: string
+          url?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ac_resource_items_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "ac_resource_groups"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ac_todo_completions: {
+        Row: {
+          created_at: string
+          date: string
+          done_at: string | null
+          id: string
+          is_done: boolean
+          template_item_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          date: string
+          done_at?: string | null
+          id?: string
+          is_done?: boolean
+          template_item_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          date?: string
+          done_at?: string | null
+          id?: string
+          is_done?: boolean
+          template_item_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ac_todo_completions_template_item_id_fkey"
+            columns: ["template_item_id"]
+            isOneToOne: false
+            referencedRelation: "ac_todo_template_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ac_todo_template_items: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          is_active: boolean
+          is_starred: boolean
+          sort_order: number
+          template_id: string
+          title: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          is_starred?: boolean
+          sort_order?: number
+          template_id: string
+          title: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          is_starred?: boolean
+          sort_order?: number
+          template_id?: string
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ac_todo_template_items_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "ac_todo_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ac_todo_templates: {
+        Row: {
+          active: boolean
+          created_at: string
+          created_by: string
+          group_id: string | null
+          id: string
+          scope: string
+          title: string
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          created_by: string
+          group_id?: string | null
+          id?: string
+          scope?: string
+          title: string
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          created_by?: string
+          group_id?: string | null
+          id?: string
+          scope?: string
+          title?: string
+        }
+        Relationships: []
+      }
+      achievements: {
+        Row: {
+          achieved_at: string
+          community_id: string
+          created_at: string
+          created_by: string
+          description: string | null
+          id: string
+          media_url: string | null
+          member_user_id: string
+          title: string
+        }
+        Insert: {
+          achieved_at?: string
+          community_id: string
+          created_at?: string
+          created_by: string
+          description?: string | null
+          id?: string
+          media_url?: string | null
+          member_user_id: string
+          title: string
+        }
+        Update: {
+          achieved_at?: string
+          community_id?: string
+          created_at?: string
+          created_by?: string
+          description?: string | null
+          id?: string
+          media_url?: string | null
+          member_user_id?: string
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "achievements_community_id_fkey"
+            columns: ["community_id"]
+            isOneToOne: false
+            referencedRelation: "communities"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       activity_logs: {
         Row: {
           activity_type: string
@@ -51,6 +726,206 @@ export type Database = {
             columns: ["prospect_id"]
             isOneToOne: false
             referencedRelation: "prospects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      chat_messages: {
+        Row: {
+          body: string | null
+          community_id: string
+          created_at: string
+          created_by: string
+          id: string
+          media_url: string | null
+          message_type: Database["public"]["Enums"]["message_type"]
+        }
+        Insert: {
+          body?: string | null
+          community_id: string
+          created_at?: string
+          created_by: string
+          id?: string
+          media_url?: string | null
+          message_type?: Database["public"]["Enums"]["message_type"]
+        }
+        Update: {
+          body?: string | null
+          community_id?: string
+          created_at?: string
+          created_by?: string
+          id?: string
+          media_url?: string | null
+          message_type?: Database["public"]["Enums"]["message_type"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chat_messages_community_id_fkey"
+            columns: ["community_id"]
+            isOneToOne: false
+            referencedRelation: "communities"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      comments: {
+        Row: {
+          body: string
+          created_at: string
+          deleted_at: string | null
+          id: string
+          post_id: string
+          user_id: string
+        }
+        Insert: {
+          body: string
+          created_at?: string
+          deleted_at?: string | null
+          id?: string
+          post_id: string
+          user_id: string
+        }
+        Update: {
+          body?: string
+          created_at?: string
+          deleted_at?: string | null
+          id?: string
+          post_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "comments_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "feed_posts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      communities: {
+        Row: {
+          chat_mode: string
+          community_id: string
+          created_at: string
+          created_by: string
+          description: string | null
+          id: string
+          logo_url: string | null
+          name: string
+          root_owner_user_id: string
+          slug: string
+          updated_at: string
+        }
+        Insert: {
+          chat_mode?: string
+          community_id: string
+          created_at?: string
+          created_by: string
+          description?: string | null
+          id?: string
+          logo_url?: string | null
+          name: string
+          root_owner_user_id: string
+          slug: string
+          updated_at?: string
+        }
+        Update: {
+          chat_mode?: string
+          community_id?: string
+          created_at?: string
+          created_by?: string
+          description?: string | null
+          id?: string
+          logo_url?: string | null
+          name?: string
+          root_owner_user_id?: string
+          slug?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      community_memberships: {
+        Row: {
+          community_id: string
+          id: string
+          joined_at: string
+          role: Database["public"]["Enums"]["community_role"]
+          root_owner_user_id: string | null
+          status: Database["public"]["Enums"]["membership_status"]
+          upline_leader_id_text: string | null
+          upline_member_user_id: string | null
+          user_id: string
+        }
+        Insert: {
+          community_id: string
+          id?: string
+          joined_at?: string
+          role?: Database["public"]["Enums"]["community_role"]
+          root_owner_user_id?: string | null
+          status?: Database["public"]["Enums"]["membership_status"]
+          upline_leader_id_text?: string | null
+          upline_member_user_id?: string | null
+          user_id: string
+        }
+        Update: {
+          community_id?: string
+          id?: string
+          joined_at?: string
+          role?: Database["public"]["Enums"]["community_role"]
+          root_owner_user_id?: string | null
+          status?: Database["public"]["Enums"]["membership_status"]
+          upline_leader_id_text?: string | null
+          upline_member_user_id?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "community_memberships_community_id_fkey"
+            columns: ["community_id"]
+            isOneToOne: false
+            referencedRelation: "communities"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      competitions: {
+        Row: {
+          community_id: string
+          created_at: string
+          created_by: string
+          description: string | null
+          end_date: string
+          id: string
+          name: string
+          start_date: string
+        }
+        Insert: {
+          community_id: string
+          created_at?: string
+          created_by: string
+          description?: string | null
+          end_date: string
+          id?: string
+          name: string
+          start_date: string
+        }
+        Update: {
+          community_id?: string
+          created_at?: string
+          created_by?: string
+          description?: string | null
+          end_date?: string
+          id?: string
+          name?: string
+          start_date?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "competitions_community_id_fkey"
+            columns: ["community_id"]
+            isOneToOne: false
+            referencedRelation: "communities"
             referencedColumns: ["id"]
           },
         ]
@@ -180,6 +1055,50 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      feed_posts: {
+        Row: {
+          body: string | null
+          community_id: string
+          created_at: string
+          created_by: string
+          id: string
+          media_url: string | null
+          title: string | null
+          type: Database["public"]["Enums"]["feed_post_type"]
+          updated_at: string
+        }
+        Insert: {
+          body?: string | null
+          community_id: string
+          created_at?: string
+          created_by: string
+          id?: string
+          media_url?: string | null
+          title?: string | null
+          type?: Database["public"]["Enums"]["feed_post_type"]
+          updated_at?: string
+        }
+        Update: {
+          body?: string | null
+          community_id?: string
+          created_at?: string
+          created_by?: string
+          id?: string
+          media_url?: string | null
+          title?: string | null
+          type?: Database["public"]["Enums"]["feed_post_type"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "feed_posts_community_id_fkey"
+            columns: ["community_id"]
+            isOneToOne: false
+            referencedRelation: "communities"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       funnel_configs: {
         Row: {
@@ -355,6 +1274,132 @@ export type Database = {
         }
         Relationships: []
       }
+      learnup_resources: {
+        Row: {
+          body: string | null
+          created_at: string
+          created_by: string
+          id: string
+          link_url: string | null
+          media_url: string | null
+          sort_order: number | null
+          title: string
+          topic_id: string
+        }
+        Insert: {
+          body?: string | null
+          created_at?: string
+          created_by: string
+          id?: string
+          link_url?: string | null
+          media_url?: string | null
+          sort_order?: number | null
+          title: string
+          topic_id: string
+        }
+        Update: {
+          body?: string | null
+          created_at?: string
+          created_by?: string
+          id?: string
+          link_url?: string | null
+          media_url?: string | null
+          sort_order?: number | null
+          title?: string
+          topic_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "learnup_resources_topic_id_fkey"
+            columns: ["topic_id"]
+            isOneToOne: false
+            referencedRelation: "learnup_topics"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      learnup_topics: {
+        Row: {
+          community_id: string
+          created_at: string
+          created_by: string
+          description: string | null
+          id: string
+          name: string
+          sort_order: number | null
+        }
+        Insert: {
+          community_id: string
+          created_at?: string
+          created_by: string
+          description?: string | null
+          id?: string
+          name: string
+          sort_order?: number | null
+        }
+        Update: {
+          community_id?: string
+          created_at?: string
+          created_by?: string
+          description?: string | null
+          id?: string
+          name?: string
+          sort_order?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "learnup_topics_community_id_fkey"
+            columns: ["community_id"]
+            isOneToOne: false
+            referencedRelation: "communities"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      notifications: {
+        Row: {
+          body: string | null
+          community_id: string | null
+          created_at: string
+          id: string
+          is_read: boolean | null
+          link_url: string | null
+          title: string
+          type: Database["public"]["Enums"]["notification_type"]
+          user_id: string
+        }
+        Insert: {
+          body?: string | null
+          community_id?: string | null
+          created_at?: string
+          id?: string
+          is_read?: boolean | null
+          link_url?: string | null
+          title: string
+          type: Database["public"]["Enums"]["notification_type"]
+          user_id: string
+        }
+        Update: {
+          body?: string | null
+          community_id?: string | null
+          created_at?: string
+          id?: string
+          is_read?: boolean | null
+          link_url?: string | null
+          title?: string
+          type?: Database["public"]["Enums"]["notification_type"]
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notifications_community_id_fkey"
+            columns: ["community_id"]
+            isOneToOne: false
+            referencedRelation: "communities"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       payments_log: {
         Row: {
           action_taken: string | null
@@ -399,6 +1444,44 @@ export type Database = {
           user_id?: string | null
         }
         Relationships: []
+      }
+      points_entries: {
+        Row: {
+          competition_id: string
+          created_at: string
+          created_by: string
+          id: string
+          points: number
+          reason: string | null
+          user_id: string
+        }
+        Insert: {
+          competition_id: string
+          created_at?: string
+          created_by: string
+          id?: string
+          points?: number
+          reason?: string | null
+          user_id: string
+        }
+        Update: {
+          competition_id?: string
+          created_at?: string
+          created_by?: string
+          id?: string
+          points?: number
+          reason?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "points_entries_competition_id_fkey"
+            columns: ["competition_id"]
+            isOneToOne: false
+            referencedRelation: "competitions"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       profiles: {
         Row: {
@@ -568,6 +1651,112 @@ export type Database = {
             columns: ["sheet_id"]
             isOneToOne: false
             referencedRelation: "sheets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      reactions: {
+        Row: {
+          created_at: string
+          id: string
+          reaction_type: string
+          target_id: string
+          target_type: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          reaction_type?: string
+          target_id: string
+          target_type: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          reaction_type?: string
+          target_id?: string
+          target_type?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      reminder_responses: {
+        Row: {
+          created_at: string
+          id: string
+          reminder_id: string
+          response: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          reminder_id: string
+          response: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          reminder_id?: string
+          response?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reminder_responses_reminder_id_fkey"
+            columns: ["reminder_id"]
+            isOneToOne: false
+            referencedRelation: "reminders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      reminders: {
+        Row: {
+          also_post_to_chat: boolean | null
+          community_id: string
+          created_at: string
+          created_by: string
+          expires_at: string | null
+          id: string
+          message: string | null
+          remind_at: string
+          rsvp_enabled: boolean | null
+          title: string
+        }
+        Insert: {
+          also_post_to_chat?: boolean | null
+          community_id: string
+          created_at?: string
+          created_by: string
+          expires_at?: string | null
+          id?: string
+          message?: string | null
+          remind_at: string
+          rsvp_enabled?: boolean | null
+          title: string
+        }
+        Update: {
+          also_post_to_chat?: boolean | null
+          community_id?: string
+          created_at?: string
+          created_by?: string
+          expires_at?: string | null
+          id?: string
+          message?: string | null
+          remind_at?: string
+          rsvp_enabled?: boolean | null
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reminders_community_id_fkey"
+            columns: ["community_id"]
+            isOneToOne: false
+            referencedRelation: "communities"
             referencedColumns: ["id"]
           },
         ]
@@ -766,6 +1955,50 @@ export type Database = {
         }
         Relationships: []
       }
+      trainings: {
+        Row: {
+          community_id: string
+          created_at: string
+          created_by: string
+          description: string | null
+          duration_minutes: number | null
+          id: string
+          meeting_link: string | null
+          start_at: string
+          title: string
+        }
+        Insert: {
+          community_id: string
+          created_at?: string
+          created_by: string
+          description?: string | null
+          duration_minutes?: number | null
+          id?: string
+          meeting_link?: string | null
+          start_at: string
+          title: string
+        }
+        Update: {
+          community_id?: string
+          created_at?: string
+          created_by?: string
+          description?: string | null
+          duration_minutes?: number | null
+          id?: string
+          meeting_link?: string | null
+          start_at?: string
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "trainings_community_id_fkey"
+            columns: ["community_id"]
+            isOneToOne: false
+            referencedRelation: "communities"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_roles: {
         Row: {
           created_at: string
@@ -880,6 +2113,30 @@ export type Database = {
           user_id: string
         }[]
       }
+      batch_reorder_prospects: {
+        Args: { p_updates: Json; p_user_id: string }
+        Returns: boolean
+      }
+      can_access_learnup_resource: {
+        Args: { p_topic_id: string; p_user_id: string }
+        Returns: boolean
+      }
+      can_access_points_entry: {
+        Args: { p_competition_id: string; p_user_id: string }
+        Returns: boolean
+      }
+      can_access_reminder: {
+        Args: { p_reminder_id: string; p_user_id: string }
+        Returns: boolean
+      }
+      can_admin_learnup_resource: {
+        Args: { p_topic_id: string; p_user_id: string }
+        Returns: boolean
+      }
+      can_admin_points_entry: {
+        Args: { p_competition_id: string; p_user_id: string }
+        Returns: boolean
+      }
       generate_neverai_id: { Args: never; Returns: string }
       get_leader_stage_config: {
         Args: { target_leader_id: string }
@@ -888,6 +2145,36 @@ export type Database = {
       get_or_create_default_level: {
         Args: { p_leader_user_id: string }
         Returns: string
+      }
+      get_prospects_paginated: {
+        Args: { p_limit?: number; p_offset?: number; p_user_id: string }
+        Returns: {
+          action_taken: string
+          action_taken_at: string
+          address: string
+          age_or_dob: string
+          batch_date: string
+          date_added: string
+          funnel_stage: string
+          funnel_stage_at: string
+          gender: string
+          id: string
+          instagram: string
+          name: string
+          notes: string
+          personal_tags: Json
+          phone: string
+          priority: string
+          profession: string
+          prospect_status: string
+          sheet_id: string
+          sort_order: number
+          stage_index: number
+          total_count: number
+          updated_at: string
+          user_id: string
+          why_need: string
+        }[]
       }
       get_user_by_neverai_id: {
         Args: { target_neverai_id: string }
@@ -915,6 +2202,16 @@ export type Database = {
         }
         Returns: boolean
       }
+      is_ac_admin: { Args: { user_uuid: string }; Returns: boolean }
+      is_ac_member: { Args: { user_uuid: string }; Returns: boolean }
+      is_community_admin: {
+        Args: { p_community_id: string; p_user_id: string }
+        Returns: boolean
+      }
+      is_community_member: {
+        Args: { p_community_id: string; p_user_id: string }
+        Returns: boolean
+      }
       is_in_downline: {
         Args: { _target_user_id: string; _viewer_id: string }
         Returns: boolean
@@ -923,6 +2220,7 @@ export type Database = {
         Args: { p_leader_neverai_id: string; p_user_id: string }
         Returns: Json
       }
+      xor_decrypt_phone: { Args: { encrypted_text: string }; Returns: string }
     }
     Enums: {
       action_taken:
@@ -932,6 +2230,8 @@ export type Database = {
         | "Busy"
         | "Follow Up Scheduled"
       app_role: "admin" | "user"
+      community_role: "owner" | "admin" | "member"
+      feed_post_type: "activity" | "achievement" | "system"
       funnel_stage:
         | "Enrollment"
         | "Day 1"
@@ -940,6 +2240,9 @@ export type Database = {
         | "Minimum Bill"
         | "Level Up"
         | "2CC"
+      membership_status: "active" | "blocked" | "left"
+      message_type: "text" | "media" | "system"
+      notification_type: "achievement" | "reminder" | "system" | "mention"
       priority_level: "High" | "Medium" | "Low"
       prospect_status: "+VE" | "-VE" | "50-50" | "30-70"
       user_plan: "free" | "pro"
@@ -1078,6 +2381,8 @@ export const Constants = {
         "Follow Up Scheduled",
       ],
       app_role: ["admin", "user"],
+      community_role: ["owner", "admin", "member"],
+      feed_post_type: ["activity", "achievement", "system"],
       funnel_stage: [
         "Enrollment",
         "Day 1",
@@ -1087,6 +2392,9 @@ export const Constants = {
         "Level Up",
         "2CC",
       ],
+      membership_status: ["active", "blocked", "left"],
+      message_type: ["text", "media", "system"],
+      notification_type: ["achievement", "reminder", "system", "mention"],
       priority_level: ["High", "Medium", "Low"],
       prospect_status: ["+VE", "-VE", "50-50", "30-70"],
       user_plan: ["free", "pro"],

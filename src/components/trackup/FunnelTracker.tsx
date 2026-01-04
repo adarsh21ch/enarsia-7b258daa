@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { format } from 'date-fns';
 import { useProspectFunnelStats, FunnelStats } from '@/hooks/useProspectFunnelStats';
 import { useFunnelConfig } from '@/hooks/useFunnelConfig';
-import { useGlobalProspects } from '@/contexts/ProspectsContext';
+import { useProspectsQuery } from '@/hooks/useProspectsQuery';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ChevronDown, ChevronUp, Flame, TrendingUp, TrendingDown, Minus, Sparkles, Users, Grid3X3, Settings2, CalendarDays, Lock } from 'lucide-react';
@@ -88,7 +88,7 @@ export function FunnelTracker({
   teamProspects,
   leaderFunnelConfig 
 }: FunnelTrackerProps) {
-  const { prospects, loading: prospectsLoading } = useGlobalProspects();
+  const { prospects, loading: prospectsLoading } = useProspectsQuery();
   const { config, loading: configLoading, saveConfig, getEffectiveConfig, isReadOnly, leaderName, hasLeaderConfig } = useFunnelConfig();
   
   const [fromStage, setFromStage] = useState<StageKey>('enrollment');

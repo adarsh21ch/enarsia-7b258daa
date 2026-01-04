@@ -3,16 +3,14 @@ import { useNavigate } from 'react-router-dom';
 import { format } from 'date-fns';
 import { useAuth } from '@/contexts/AuthContext';
 import { BottomNav } from '@/components/layout/BottomNav';
-import { FunnelTracker } from '@/components/trackup/FunnelTracker';
-import { LeadsTracker } from '@/components/trackup/LeadsTracker';
+import { DynamicFunnelTracker } from '@/components/tracking/DynamicFunnelTracker';
+import { DynamicLeadsTracker } from '@/components/tracking/DynamicLeadsTracker';
 import { UpgradeBar } from '@/components/subscription/UpgradeBar';
 import { PullToRefreshIndicator } from '@/components/PullToRefreshIndicator';
 import { BottomViewToggle } from '@/components/ui/BottomViewToggle';
 import { Day1SetupDialog } from '@/components/trackup/Day1SetupDialog';
 import { Loader2, TrendingUp, Calendar, Lock, RefreshCw } from 'lucide-react';
-import { useGlobalProspects } from '@/contexts/ProspectsContext';
 import { useSubscription } from '@/hooks/useSubscription';
-import { useProspectLimit } from '@/hooks/useProspectLimit';
 import { useFunnelConfig } from '@/hooks/useFunnelConfig';
 import { cn } from '@/lib/utils';
 import nevoraLogo from '@/assets/nevorai-logo.jpeg';
@@ -67,9 +65,7 @@ function usePullToRefresh(onRefresh: () => Promise<void>, threshold = 80) {
 export default function Tracking() {
   const navigate = useNavigate();
   const { user, loading: authLoading } = useAuth();
-  const { prospects, refetch } = useGlobalProspects();
   const { isPro, loading: subLoading } = useSubscription();
-  const prospectLimit = useProspectLimit(prospects, isPro);
   const { config, loading: configLoading, saveConfig, getEffectiveConfig, isReadOnly: isFunnelReadOnly, leaderName: funnelLeaderName } = useFunnelConfig();
   const effectiveConfig = getEffectiveConfig();
   const [activeTab, setActiveTab] = useState('leads');
@@ -96,18 +92,11 @@ export default function Tracking() {
   // Show Pro gate if user is not Pro
   const showProGate = !isPro;
 
-  // Pull-to-refresh
+  // Pull-to-refresh (no-op since dynamic trackers handle their own data)
   const handleRefresh = useCallback(async () => {
-    await refetch?.();
-  }, [refetch]);
+    // Dynamic trackers handle their own refetch
+  }, []);
   const { containerRef, isRefreshing, pullDistance, showIndicator } = usePullToRefresh(handleRefresh);
-
-  // Calculate Total CC: 2CC counts as 2, Level Up as 1
-  const totalCC = prospects.reduce((sum, p) => {
-    if (p.funnel_stage === '2CC') return sum + 2;
-    if (p.funnel_stage === 'Level Up') return sum + 1;
-    return sum;
-  }, 0);
 
   useEffect(() => {
     if (!user && !authLoading) {
@@ -175,12 +164,12 @@ export default function Tracking() {
             </div>
           )}
 
-          {/* Content based on active tab - always show real data */}
+          {/* Content based on active tab - uses dynamic tag-based trackers */}
           <div className="flex-1 min-h-0">
             {activeTab === 'funnel' ? (
-              <FunnelTracker isPro={true} />
+              <DynamicFunnelTracker isPro={true} />
             ) : (
-              <LeadsTracker isPro={true} />
+              <DynamicLeadsTracker isPro={true} />
             )}
           </div>
         </div>
