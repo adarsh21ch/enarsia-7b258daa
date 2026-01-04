@@ -64,7 +64,20 @@ export default function Auth() {
     
     const { error } = await signIn(email, password);
     if (error) {
-      toast.error(error.message || 'Sign in failed');
+      // Handle specific error cases with user-friendly messages
+      const errorMessage = error.message?.toLowerCase() || '';
+      
+      if (errorMessage.includes('invalid login credentials') || errorMessage.includes('invalid credentials')) {
+        toast.error('Invalid email or password. Please check your credentials or use "Forgot Password" to reset.');
+      } else if (errorMessage.includes('email not confirmed')) {
+        toast.error('Please confirm your email before signing in. Check your inbox for the confirmation link.');
+      } else if (errorMessage.includes('user not found')) {
+        toast.error('No account found with this email. Please sign up first.');
+      } else if (errorMessage.includes('too many requests')) {
+        toast.error('Too many login attempts. Please wait a few minutes and try again.');
+      } else {
+        toast.error(error.message || 'Sign in failed. Please try again.');
+      }
     } else {
       // Store leader param for processing
       if (leaderParam) {
@@ -93,7 +106,18 @@ export default function Auth() {
     setIsSubmitting(true);
     const { error } = await signUp(emailOrLeaderId, password);
     if (error) {
-      toast.error(error.message || 'Sign up failed');
+      const errorMessage = error.message?.toLowerCase() || '';
+      
+      if (errorMessage.includes('user already registered') || errorMessage.includes('already exists')) {
+        toast.error('An account with this email already exists. Please sign in instead.');
+        setIsSignUp(false); // Switch to sign-in mode
+      } else if (errorMessage.includes('invalid email')) {
+        toast.error('Please enter a valid email address.');
+      } else if (errorMessage.includes('password')) {
+        toast.error('Password must be at least 6 characters long.');
+      } else {
+        toast.error(error.message || 'Sign up failed. Please try again.');
+      }
     } else {
       // Store leader param for processing after profile is created
       if (leaderParam) {

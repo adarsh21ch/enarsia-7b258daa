@@ -32,6 +32,8 @@ export function AdminAnalyticsDashboard() {
         weekSignups={analytics.weekSignups}
         monthSignups={analytics.monthSignups}
         totalRevenue={analytics.totalRevenue}
+        totalUsers={analytics.totalUsers}
+        neveraiUsers={analytics.neveraiUsers}
       />
 
       <Tabs defaultValue="signups" className="w-full">
