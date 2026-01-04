@@ -86,11 +86,19 @@ export function decrypt(encryptedText: string): string {
 export function encryptFields<T extends { phone?: string; email?: string }>(data: T): T {
   if (!hasEncryptionKey()) return data;
   
-  return {
-    ...data,
-    phone: data.phone ? encrypt(data.phone) : data.phone,
-    email: data.email ? encrypt(data.email) : data.email,
-  };
+  const result = { ...data };
+  
+  // Only encrypt phone if it exists in the original data
+  if ('phone' in data && data.phone) {
+    result.phone = encrypt(data.phone);
+  }
+  
+  // Only encrypt email if it exists in the original data
+  if ('email' in data && data.email) {
+    result.email = encrypt(data.email);
+  }
+  
+  return result;
 }
 
 /**
@@ -99,11 +107,19 @@ export function encryptFields<T extends { phone?: string; email?: string }>(data
 export function decryptFields<T extends { phone?: string; email?: string }>(data: T): T {
   if (!hasEncryptionKey()) return data;
   
-  return {
-    ...data,
-    phone: data.phone ? decrypt(data.phone) : data.phone,
-    email: data.email ? decrypt(data.email) : data.email,
-  };
+  const result = { ...data };
+  
+  // Only decrypt phone if it exists in the original data
+  if ('phone' in data && data.phone) {
+    result.phone = decrypt(data.phone);
+  }
+  
+  // Only decrypt email if it exists in the original data
+  if ('email' in data && data.email) {
+    result.email = decrypt(data.email);
+  }
+  
+  return result;
 }
 
 /**
