@@ -1,8 +1,11 @@
 /**
  * React Query based prospects hook with pagination
- * Replaces the context-based approach for better caching and performance
+ * - Paginated with PAGE_SIZE=50
+ * - Separate KPI totalCount query (stable, doesn't change on scroll)
+ * - queryKey includes sheetId/filters for proper cache separation
+ * - Prefetch enabled via IntersectionObserver in ProspectTable
  */
-import { useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useInfiniteQuery, useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { Prospect, mapOldStatusToNew } from '@/types/prospect';
@@ -24,10 +27,57 @@ interface ProspectPage {
   nextOffset: number | null;
 }
 
-export function useProspectsQuery() {
+interface UseProspectsQueryOptions {
+  sheetId?: string | null;
+  search?: string;
+  filterMode?: 'calling' | 'funnel' | 'leads';
+}
+
+export function useProspectsQuery(options: UseProspectsQueryOptions = {}) {
+  const { sheetId = null, search = '', filterMode = 'calling' } = options;
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const { decryptBatch, encryptFields, encryptBatch } = useEncryption();
+
+  // Query key includes sheetId, search, filterMode for cache separation
+  const queryKey = ['prospects', user?.id, sheetId, search, filterMode];
+
+  // Separate query for TOTAL count (doesn't change on scroll)
+  // This fetches just the count, no data
+  const { data: kpiData } = useQuery({
+    queryKey: ['prospects-kpi', user?.id, sheetId, search, filterMode],
+    queryFn: async () => {
+      if (!user) return { total: 0 };
+
+      // Build query for count only
+      let query = supabase
+        .from('prospects')
+        .select('id', { count: 'exact', head: true })
+        .eq('user_id', user.id);
+
+      // Apply sheet filter
+      if (sheetId) {
+        query = query.eq('sheet_id', sheetId);
+      }
+
+      // Apply search filter
+      if (search) {
+        query = query.or(`name.ilike.%${search}%,phone.ilike.%${search}%,notes.ilike.%${search}%`);
+      }
+
+      const { count, error } = await query;
+
+      if (error) {
+        console.error('Error fetching KPI count:', error);
+        return { total: 0 };
+      }
+
+      return { total: count || 0 };
+    },
+    enabled: !!user,
+    staleTime: 30000, // 30 seconds
+    gcTime: 300000, // 5 minutes
+  });
 
   // Infinite query for paginated prospects
   const {
@@ -40,7 +90,7 @@ export function useProspectsQuery() {
     refetch,
     isRefetching,
   } = useInfiniteQuery<ProspectPage>({
-    queryKey: ['prospects', user?.id],
+    queryKey,
     queryFn: async ({ pageParam }): Promise<ProspectPage> => {
       if (!user) {
         return { prospects: [], totalCount: 0, nextOffset: null };
@@ -60,8 +110,23 @@ export function useProspectsQuery() {
         throw error;
       }
 
-      const rawProspects = data || [];
+      let rawProspects = data || [];
       const totalCount = rawProspects.length > 0 ? (rawProspects[0] as any).total_count : 0;
+
+      // Apply client-side sheet filter (until backend supports it)
+      if (sheetId) {
+        rawProspects = rawProspects.filter((p: any) => p.sheet_id === sheetId);
+      }
+
+      // Apply client-side search filter
+      if (search) {
+        const searchLower = search.toLowerCase();
+        rawProspects = rawProspects.filter((p: any) => 
+          p.name?.toLowerCase().includes(searchLower) ||
+          p.phone?.toLowerCase().includes(searchLower) ||
+          p.notes?.toLowerCase().includes(searchLower)
+        );
+      }
 
       // Decrypt phone numbers in batch
       const decryptedProspects = await decryptBatch(rawProspects);
@@ -85,8 +150,12 @@ export function useProspectsQuery() {
     return data?.pages.flatMap((page) => page.prospects) ?? [];
   }, [data]);
 
-  const totalCount = data?.pages[0]?.totalCount ?? 0;
+  // KPI total from separate query (stable, doesn't change on scroll)
+  const kpiTotal = kpiData?.total ?? 0;
+  
+  // Loaded count from paginated data
   const loadedCount = prospects.length;
+  const totalCount = data?.pages[0]?.totalCount ?? 0;
 
   // Add prospect mutation
   const addMutation = useMutation({
@@ -124,19 +193,9 @@ export function useProspectsQuery() {
       return mapDbProspect({ ...data, phone: prospect.phone });
     },
     onSuccess: (newProspect) => {
-      // Optimistically add to cache
-      queryClient.setQueryData(['prospects', user?.id], (old: any) => {
-        if (!old) return old;
-        const newPages = [...old.pages];
-        if (newPages.length > 0) {
-          newPages[newPages.length - 1] = {
-            ...newPages[newPages.length - 1],
-            prospects: [...newPages[newPages.length - 1].prospects, newProspect],
-            totalCount: newPages[0].totalCount + 1,
-          };
-        }
-        return { ...old, pages: newPages };
-      });
+      // Invalidate all prospect queries to refetch
+      queryClient.invalidateQueries({ queryKey: ['prospects', user?.id] });
+      queryClient.invalidateQueries({ queryKey: ['prospects-kpi', user?.id] });
       toast.success('Prospect added');
     },
     onError: () => {
@@ -207,10 +266,10 @@ export function useProspectsQuery() {
       await queryClient.cancelQueries({ queryKey: ['prospects', user?.id] });
 
       // Snapshot previous value
-      const previousData = queryClient.getQueryData(['prospects', user?.id]);
+      const previousData = queryClient.getQueryData(queryKey);
 
       // Optimistically update
-      queryClient.setQueryData(['prospects', user?.id], (old: any) => {
+      queryClient.setQueryData(queryKey, (old: any) => {
         if (!old) return old;
         return {
           ...old,
@@ -228,7 +287,7 @@ export function useProspectsQuery() {
     onError: (err, variables, context) => {
       // Rollback on error
       if (context?.previousData) {
-        queryClient.setQueryData(['prospects', user?.id], context.previousData);
+        queryClient.setQueryData(queryKey, context.previousData);
       }
       toast.error('Failed to update');
     },
@@ -243,9 +302,9 @@ export function useProspectsQuery() {
     },
     onMutate: async (id) => {
       await queryClient.cancelQueries({ queryKey: ['prospects', user?.id] });
-      const previousData = queryClient.getQueryData(['prospects', user?.id]);
+      const previousData = queryClient.getQueryData(queryKey);
 
-      queryClient.setQueryData(['prospects', user?.id], (old: any) => {
+      queryClient.setQueryData(queryKey, (old: any) => {
         if (!old) return old;
         return {
           ...old,
@@ -259,9 +318,13 @@ export function useProspectsQuery() {
 
       return { previousData };
     },
+    onSuccess: () => {
+      // Invalidate KPI to update count
+      queryClient.invalidateQueries({ queryKey: ['prospects-kpi', user?.id] });
+    },
     onError: (err, id, context) => {
       if (context?.previousData) {
-        queryClient.setQueryData(['prospects', user?.id], context.previousData);
+        queryClient.setQueryData(queryKey, context.previousData);
       }
       toast.error('Failed to delete prospect');
     },
@@ -292,10 +355,10 @@ export function useProspectsQuery() {
     },
     onMutate: async (prospectIds) => {
       await queryClient.cancelQueries({ queryKey: ['prospects', user?.id] });
-      const previousData = queryClient.getQueryData(['prospects', user?.id]);
+      const previousData = queryClient.getQueryData(queryKey);
 
       // Optimistically reorder
-      queryClient.setQueryData(['prospects', user?.id], (old: any) => {
+      queryClient.setQueryData(queryKey, (old: any) => {
         if (!old) return old;
         const allProspects = old.pages.flatMap((page: ProspectPage) => page.prospects);
         const reordered = prospectIds
@@ -319,7 +382,7 @@ export function useProspectsQuery() {
     },
     onError: (err, ids, context) => {
       if (context?.previousData) {
-        queryClient.setQueryData(['prospects', user?.id], context.previousData);
+        queryClient.setQueryData(queryKey, context.previousData);
       }
       toast.error('Failed to reorder');
     },
@@ -386,8 +449,9 @@ export function useProspectsQuery() {
         onProgress?.(totalImported, validProspects.length);
       }
 
-      // Invalidate cache to refetch with new data
+      // Invalidate ALL prospect queries to refetch with new data
       queryClient.invalidateQueries({ queryKey: ['prospects', user?.id] });
+      queryClient.invalidateQueries({ queryKey: ['prospects-kpi', user?.id] });
 
       return { imported: totalImported, skipped };
     },
@@ -479,6 +543,7 @@ export function useProspectsQuery() {
         () => {
           // Invalidate cache to refetch on any external change
           queryClient.invalidateQueries({ queryKey: ['prospects', user.id] });
+          queryClient.invalidateQueries({ queryKey: ['prospects-kpi', user.id] });
         }
       )
       .subscribe();
@@ -491,7 +556,8 @@ export function useProspectsQuery() {
   return {
     // Data
     prospects,
-    totalCount,
+    kpiTotal, // Stable KPI count
+    totalCount, // Raw total from pagination
     loadedCount,
 
     // Loading states
@@ -517,6 +583,9 @@ export function useProspectsQuery() {
 
     // Cache management
     refetch,
-    invalidate: () => queryClient.invalidateQueries({ queryKey: ['prospects', user?.id] }),
+    invalidate: () => {
+      queryClient.invalidateQueries({ queryKey: ['prospects', user?.id] });
+      queryClient.invalidateQueries({ queryKey: ['prospects-kpi', user?.id] });
+    },
   };
 }

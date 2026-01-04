@@ -2,7 +2,7 @@
 import { useEffect, useState, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
-import { useGlobalProspects } from '@/contexts/ProspectsContext';
+import { useProspectsQuery } from '@/hooks/useProspectsQuery';
 import { useSheets } from '@/hooks/useSheets';
 import { useSwipeTabs } from '@/hooks/useSwipeTabs';
 import { BottomNav } from '@/components/layout/BottomNav';
@@ -83,25 +83,21 @@ function usePullToRefresh(onRefresh: () => Promise<void>, threshold = 100) {
     showIndicator: pullDistance > 30 || isRefreshing
   };
 }
+
 export default function Dashboard() {
   const navigate = useNavigate();
   const {
     user,
     loading: authLoading
   } = useAuth();
-  const {
-    prospects,
-    loading,
-    addProspect,
-    updateProspect,
-    deleteProspect,
-    bulkDeleteProspects,
-    restoreProspect,
-    restoreProspects,
-    reorderProspects,
-    importProspects,
-    refetch
-  } = useGlobalProspects();
+
+  // Main tab state - Calling is default
+  const [mainTab, setMainTab] = useState<'leads' | 'funnel'>('leads');
+
+  // Search state
+  const [searchQuery, setSearchQuery] = useState('');
+
+  // Sheets
   const {
     sheets,
     selectedSheetId,
@@ -113,11 +109,32 @@ export default function Dashboard() {
     getOrCreateTodaySheet
   } = useSheets();
 
-  // Main tab state - Calling is default
-  const [mainTab, setMainTab] = useState<'leads' | 'funnel'>('leads');
-
-  // Search state
-  const [searchQuery, setSearchQuery] = useState('');
+  // Use paginated query with sheet/search/filterMode for proper cache separation
+  // Map 'leads' tab to 'calling' filterMode for backend
+  const queryFilterMode = mainTab === 'leads' ? 'calling' : 'funnel';
+  
+  const {
+    prospects,
+    loading,
+    kpiTotal,
+    addProspect,
+    updateProspect,
+    deleteProspect,
+    bulkDeleteProspects,
+    restoreProspect,
+    restoreProspects,
+    reorderProspects,
+    importProspects,
+    refetch,
+    hasNextPage,
+    fetchNextPage,
+    isFetchingNextPage,
+    loadedCount
+  } = useProspectsQuery({
+    sheetId: selectedSheetId,
+    search: searchQuery,
+    filterMode: queryFilterMode
+  });
 
   // Filter tag setup dialog
   const {
@@ -125,6 +142,20 @@ export default function Dashboard() {
     markSetupDone
   } = useFilterTagSetup();
   const [showFilterSetup, setShowFilterSetup] = useState(false);
+
+  // Ref to track previous sheet for scroll reset
+  const prevSheetIdRef = useRef<string | null>(selectedSheetId);
+  const prevTabRef = useRef<string>(mainTab);
+  const tableScrollKey = useRef(0);
+
+  // Increment scroll key when sheet or tab changes to trigger scroll reset
+  useEffect(() => {
+    if (prevSheetIdRef.current !== selectedSheetId || prevTabRef.current !== mainTab) {
+      tableScrollKey.current += 1;
+      prevSheetIdRef.current = selectedSheetId;
+      prevTabRef.current = mainTab;
+    }
+  }, [selectedSheetId, mainTab]);
 
   // Handle tab change - show setup dialog when switching to Stages for first time
   const handleTabChange = (newTab: string) => {
@@ -158,6 +189,7 @@ export default function Dashboard() {
     (pullRef as React.MutableRefObject<HTMLDivElement | null>).current = node;
     (swipeRef as React.MutableRefObject<HTMLDivElement | null>).current = node;
   }, [pullRef, swipeRef]);
+
   useEffect(() => {
     if (!user && !authLoading) {
       navigate('/auth');
@@ -171,6 +203,7 @@ export default function Dashboard() {
       </div>;
   }
   if (!user) return null;
+
   const toggleOptions: [{
     value: string;
     label: string;
@@ -188,6 +221,7 @@ export default function Dashboard() {
     label: 'Funnel',
     icon: Layers
   }];
+
   return <div className="app-layout bg-gradient-to-b from-background via-background to-muted/20">
       {/* Compact Header - matching To-Do density */}
       <header className="fixed-header z-40 bg-card/80 backdrop-blur-xl border-b border-border/50">
@@ -221,7 +255,64 @@ export default function Dashboard() {
         
         {/* Table area - flex-1 to fill remaining space, pb for bottom nav */}
         <div className="flex-1 min-h-0 px-4 pb-16 overflow-y-auto">
-          {mainTab === 'leads' ? <ProspectTable prospects={prospects} loading={loading} onAdd={addProspect} onUpdate={updateProspect} onDelete={deleteProspect} onBulkDelete={bulkDeleteProspects} onRestoreProspect={restoreProspect} onRestoreProspects={restoreProspects} onImport={importProspects} onReorderProspects={reorderProspects} sheets={sheets} selectedSheetId={selectedSheetId} onSelectSheet={setSelectedSheetId} onAddSheet={addSheet} onUpdateSheet={updateSheet} onDeleteSheet={deleteSheet} getOrCreateTodaySheet={getOrCreateTodaySheet} filterMode="calling" subFilter="all" externalSearch={searchQuery} /> : <ProspectTable prospects={prospects} loading={loading} onAdd={addProspect} onUpdate={updateProspect} onDelete={deleteProspect} onBulkDelete={bulkDeleteProspects} onRestoreProspect={restoreProspect} onRestoreProspects={restoreProspects} onImport={importProspects} onReorderProspects={reorderProspects} sheets={sheets} selectedSheetId={selectedSheetId} onSelectSheet={setSelectedSheetId} onAddSheet={addSheet} onUpdateSheet={updateSheet} onDeleteSheet={deleteSheet} filterMode="funnel" subFilter="all" externalSearch={searchQuery} />}
+          {mainTab === 'leads' ? (
+            <ProspectTable 
+              key={`leads-${tableScrollKey.current}`}
+              prospects={prospects} 
+              loading={loading} 
+              onAdd={addProspect} 
+              onUpdate={updateProspect} 
+              onDelete={deleteProspect} 
+              onBulkDelete={bulkDeleteProspects} 
+              onRestoreProspect={restoreProspect} 
+              onRestoreProspects={restoreProspects} 
+              onImport={importProspects} 
+              onReorderProspects={reorderProspects} 
+              sheets={sheets} 
+              selectedSheetId={selectedSheetId} 
+              onSelectSheet={setSelectedSheetId} 
+              onAddSheet={addSheet} 
+              onUpdateSheet={updateSheet} 
+              onDeleteSheet={deleteSheet} 
+              getOrCreateTodaySheet={getOrCreateTodaySheet} 
+              filterMode="calling" 
+              subFilter="all" 
+              externalSearch={searchQuery}
+              hasNextPage={hasNextPage}
+              onLoadMore={fetchNextPage}
+              isLoadingMore={isFetchingNextPage}
+              kpiTotal={kpiTotal}
+              loadedCount={loadedCount}
+            />
+          ) : (
+            <ProspectTable 
+              key={`funnel-${tableScrollKey.current}`}
+              prospects={prospects} 
+              loading={loading} 
+              onAdd={addProspect} 
+              onUpdate={updateProspect} 
+              onDelete={deleteProspect} 
+              onBulkDelete={bulkDeleteProspects} 
+              onRestoreProspect={restoreProspect} 
+              onRestoreProspects={restoreProspects} 
+              onImport={importProspects} 
+              onReorderProspects={reorderProspects} 
+              sheets={sheets} 
+              selectedSheetId={selectedSheetId} 
+              onSelectSheet={setSelectedSheetId} 
+              onAddSheet={addSheet} 
+              onUpdateSheet={updateSheet} 
+              onDeleteSheet={deleteSheet} 
+              filterMode="funnel" 
+              subFilter="all" 
+              externalSearch={searchQuery}
+              hasNextPage={hasNextPage}
+              onLoadMore={fetchNextPage}
+              isLoadingMore={isFetchingNextPage}
+              kpiTotal={kpiTotal}
+              loadedCount={loadedCount}
+            />
+          )}
         </div>
       </main>
 
