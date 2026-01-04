@@ -95,7 +95,6 @@ export default function Home() {
   } = useAuth();
   const {
     prospects,
-    loading: prospectsLoading,
     refetch
   } = useProspectsQuery();
   const {
@@ -117,26 +116,9 @@ export default function Home() {
     pullDistance,
     showIndicator
   } = usePullToRefresh(handleRefresh);
-  useEffect(() => {
-    if (!user && !authLoading) {
-      navigate('/auth');
-    }
-  }, [user, authLoading, navigate]);
-  const cleanPhoneNumber = (phone: string) => phone.replace(/[^0-9+]/g, '');
-  const handleWhatsApp = (phone: string) => {
-    window.open(`https://wa.me/${cleanPhoneNumber(phone)}`, '_blank');
-  };
-  const handleCall = (phone: string) => {
-    window.open(`tel:${cleanPhoneNumber(phone)}`, '_self');
-  };
-  if (authLoading) {
-    return <div className="min-h-screen flex items-center justify-center bg-background">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>;
-  }
-  if (!user) return null;
-
+  
   // Compute dates that have activities (for calendar indicator dots)
+  // MUST be before any early returns to respect React hooks rules
   const datesWithActivities = useMemo(() => {
     const dateSet = new Set<string>();
     prospects.forEach(p => {
@@ -149,6 +131,7 @@ export default function Home() {
   }, [prospects, todos]);
 
   // Get personal activities for the selected date (memoized for performance)
+  // MUST be before any early returns to respect React hooks rules
   const activities = useMemo(() => {
     const prospectActivities = prospects.filter(p => isSameDay(parseISO(p.updated_at), calendar.selectedDate)).map(p => ({
       id: p.id,
@@ -179,6 +162,28 @@ export default function Home() {
     }
     return activitiesList;
   }, [prospects, todos, calendar.selectedDate, searchQuery]);
+
+  useEffect(() => {
+    if (!user && !authLoading) {
+      navigate('/auth');
+    }
+  }, [user, authLoading, navigate]);
+  
+  const cleanPhoneNumber = (phone: string) => phone.replace(/[^0-9+]/g, '');
+  const handleWhatsApp = (phone: string) => {
+    window.open(`https://wa.me/${cleanPhoneNumber(phone)}`, '_blank');
+  };
+  const handleCall = (phone: string) => {
+    window.open(`tel:${cleanPhoneNumber(phone)}`, '_self');
+  };
+  
+  // Early returns AFTER all hooks
+  if (authLoading) {
+    return <div className="min-h-screen flex items-center justify-center bg-background">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>;
+  }
+  if (!user) return null;
   return <div className="app-layout bg-gradient-to-b from-background via-background to-muted/20">
       <header className="fixed-header z-40 bg-card/80 backdrop-blur-xl border-b border-border/50">
         <div className="flex items-center justify-between px-4 py-3">
