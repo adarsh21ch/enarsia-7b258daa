@@ -117,6 +117,7 @@ export default function Dashboard() {
     prospects,
     loading,
     kpiTotal,
+    kpiTagCounts,
     addProspect,
     updateProspect,
     deleteProspect,
@@ -125,6 +126,7 @@ export default function Dashboard() {
     restoreProspects,
     reorderProspects,
     importProspects,
+    fetchAllForExport,
     refetch,
     hasNextPage,
     fetchNextPage,
@@ -282,7 +284,9 @@ export default function Dashboard() {
               onLoadMore={fetchNextPage}
               isLoadingMore={isFetchingNextPage}
               kpiTotal={kpiTotal}
+              kpiTagCounts={kpiTagCounts}
               loadedCount={loadedCount}
+              fetchAllForExport={fetchAllForExport}
             />
           ) : (
             <ProspectTable 
@@ -310,7 +314,9 @@ export default function Dashboard() {
               onLoadMore={fetchNextPage}
               isLoadingMore={isFetchingNextPage}
               kpiTotal={kpiTotal}
+              kpiTagCounts={kpiTagCounts}
               loadedCount={loadedCount}
+              fetchAllForExport={fetchAllForExport}
             />
           )}
         </div>

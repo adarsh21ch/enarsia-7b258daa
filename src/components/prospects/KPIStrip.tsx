@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { Prospect } from '@/types/prospect';
 import { useTrackingFormatContext } from '@/contexts/TrackingFormatContext';
-import { Star, Users, MessageCircle } from 'lucide-react';
+import { Star, Users } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface KPIStripProps {
@@ -9,16 +9,17 @@ interface KPIStripProps {
   isCalling: boolean;
   className?: string;
   kpiTotal?: number; // Stable total from separate query (doesn't change on scroll)
+  kpiTagCounts?: Record<string, number>; // Per-tag counts from separate query
 }
 
-export function KPIStrip({ prospects, isCalling, kpiTotal }: KPIStripProps) {
+export function KPIStrip({ prospects, isCalling, kpiTotal, kpiTagCounts }: KPIStripProps) {
   const {
     leadsTrackingTagNames,
     stageTagNames,
     leadsStageTag,
   } = useTrackingFormatContext();
 
-  // Calculate KPIs
+  // Calculate KPIs - prefer stable server-side counts if available
   const kpis = useMemo(() => {
     // Use stable kpiTotal if provided (doesn't change on scroll), otherwise fallback to loaded count
     const totalLeads = kpiTotal !== undefined ? kpiTotal : prospects.length;
@@ -29,15 +30,22 @@ export function KPIStrip({ prospects, isCalling, kpiTotal }: KPIStripProps) {
     const tagCounts: Record<string, number> = {};
     trackingTags.forEach(tag => {
       if (isCalling) {
-        tagCounts[tag] = prospects.filter(p => p.action_taken === tag).length;
+        // Use server-side counts if available, otherwise fallback to loaded data
+        const serverCount = kpiTagCounts?.[`action:${tag}`];
+        tagCounts[tag] = serverCount !== undefined 
+          ? serverCount 
+          : prospects.filter(p => p.action_taken === tag).length;
       } else {
-        tagCounts[tag] = prospects.filter(p => p.funnel_stage === tag).length;
+        const serverCount = kpiTagCounts?.[`stage:${tag}`];
+        tagCounts[tag] = serverCount !== undefined 
+          ? serverCount 
+          : prospects.filter(p => p.funnel_stage === tag).length;
       }
     });
 
     // Count funnel leads (leads with the funnel tag)
     const funnelLeads = leadsStageTag 
-      ? prospects.filter(p => p.action_taken === leadsStageTag).length 
+      ? (kpiTagCounts?.[`action:${leadsStageTag}`] ?? prospects.filter(p => p.action_taken === leadsStageTag).length)
       : 0;
 
     return {
@@ -46,7 +54,7 @@ export function KPIStrip({ prospects, isCalling, kpiTotal }: KPIStripProps) {
       tagCounts,
       trackingTags,
     };
-  }, [prospects, isCalling, leadsTrackingTagNames, stageTagNames, leadsStageTag, kpiTotal]);
+  }, [prospects, isCalling, leadsTrackingTagNames, stageTagNames, leadsStageTag, kpiTotal, kpiTagCounts]);
 
   return (
     <div className="flex items-center gap-3 overflow-x-auto pb-1 -mx-1 px-1 scrollbar-hide">

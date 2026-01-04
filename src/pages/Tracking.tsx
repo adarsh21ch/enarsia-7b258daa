@@ -7,7 +7,7 @@ import { DynamicFunnelTracker } from '@/components/tracking/DynamicFunnelTracker
 import { DynamicLeadsTracker } from '@/components/tracking/DynamicLeadsTracker';
 import { UpgradeBar } from '@/components/subscription/UpgradeBar';
 import { PullToRefreshIndicator } from '@/components/PullToRefreshIndicator';
-import { BottomViewToggle } from '@/components/ui/BottomViewToggle';
+import { TopTabBar } from '@/components/ui/TopTabBar';
 import { Day1SetupDialog } from '@/components/trackup/Day1SetupDialog';
 import { Loader2, TrendingUp, Calendar, Lock, RefreshCw, ArrowLeft } from 'lucide-react';
 import { useSubscription } from '@/hooks/useSubscription';
@@ -121,7 +121,7 @@ export default function Tracking() {
 
   return (
     <div className="app-layout bg-gradient-to-b from-background via-background to-muted/20">
-      {/* Premium Header with Back Button */}
+      {/* Premium Header with Back Button + Leads/Funnel Switch */}
       <header className="fixed-header z-40 bg-card/80 backdrop-blur-xl border-b border-border/50">
         <div className="flex items-center justify-between px-4 py-3">
           <div className="flex items-center gap-3">
@@ -149,6 +149,11 @@ export default function Tracking() {
               <p className="text-xs text-muted-foreground font-medium">Track Your Numbers</p>
             </div>
           </div>
+        </div>
+        
+        {/* Leads/Funnel Segmented Switch - TOP, sticky in header */}
+        <div className="px-4 pb-2">
+          <TopTabBar options={toggleOptions} value={activeTab} onChange={handleTabChange} />
         </div>
       </header>
 
@@ -193,13 +198,6 @@ export default function Tracking() {
       <Day1SetupDialog 
         open={showDay1Setup} 
         onSave={handleDay1Save} 
-      />
-
-      {/* Fixed Bottom View Toggle */}
-      <BottomViewToggle
-        options={toggleOptions}
-        value={activeTab}
-        onChange={handleTabChange}
       />
 
       {/* Upgrade Bar only for Free Users */}

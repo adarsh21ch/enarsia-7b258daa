@@ -72,6 +72,9 @@ interface ProspectTableProps {
   loadedCount?: number;
   // Stable KPI total from separate query
   kpiTotal?: number;
+  kpiTagCounts?: Record<string, number>;
+  // Fetch all prospects for export (bypasses pagination)
+  fetchAllForExport?: (sheetId?: string | null) => Promise<Prospect[]>;
 }
 
 // Simplified column configuration - only 3 columns, no horizontal scroll needed
@@ -295,7 +298,9 @@ export function ProspectTable({
   isLoadingMore,
   totalCount,
   loadedCount,
-  kpiTotal
+  kpiTotal,
+  kpiTagCounts,
+  fetchAllForExport
 }: ProspectTableProps) {
   const [filters, setFilters] = useState<Filters>({
     search: '',
@@ -495,13 +500,23 @@ export function ProspectTable({
     return filterMode === 'calling' ? 'Calling' : 'Filter';
   };
   const exportToExcel = async () => {
-    if (filteredProspects.length === 0) {
-      toast.error('No data to export. Apply filters or add prospects first.');
-      return;
-    }
     setExporting(true);
     try {
-      const exportData = filteredProspects.map((p, i) => ({
+      // Use fetchAllForExport if available to get ALL prospects (bypasses pagination)
+      let allProspects: Prospect[];
+      if (fetchAllForExport) {
+        allProspects = await fetchAllForExport(null); // null = all sheets
+      } else {
+        allProspects = filteredProspects;
+      }
+      
+      if (allProspects.length === 0) {
+        toast.error('No data to export. Apply filters or add prospects first.');
+        setExporting(false);
+        return;
+      }
+      
+      const exportData = allProspects.map((p, i) => ({
         '#': i + 1,
         'Name': p.name || '',
         'Phone Number': p.phone || '',
@@ -559,7 +574,7 @@ export function ProspectTable({
       const filterLabel = getFilterLabel();
       const filename = `NevorAI_Prospects_${dateStr}_${filterLabel}.xlsx`;
       XLSX.writeFile(wb, filename);
-      toast.success(`Exported ${filteredProspects.length} prospects successfully!`);
+      toast.success(`Exported ${allProspects.length} prospects successfully!`);
     } catch (err) {
       console.error('Export error:', err);
       toast.error('Failed to export data. Please try again.');
@@ -568,15 +583,25 @@ export function ProspectTable({
     }
   };
 
-  // Export specific sheet
+  // Export specific sheet - fetches ALL data from DB, not just loaded pages
   const exportSheet = async (sheetId: string | null) => {
-    const sheetProspects = sheetId === null ? baseProspects : baseProspects.filter(p => p.sheet_id === sheetId);
-    if (sheetProspects.length === 0) {
-      toast.error('No data to export in this sheet.');
-      return;
-    }
     setExporting(true);
     try {
+      // Use fetchAllForExport if available to get ALL prospects (bypasses pagination)
+      let sheetProspects: Prospect[];
+      if (fetchAllForExport) {
+        sheetProspects = await fetchAllForExport(sheetId);
+      } else {
+        // Fallback to loaded data
+        sheetProspects = sheetId === null ? baseProspects : baseProspects.filter(p => p.sheet_id === sheetId);
+      }
+      
+      if (sheetProspects.length === 0) {
+        toast.error('No data to export in this sheet.');
+        setExporting(false);
+        return;
+      }
+      
       const exportData = sheetProspects.map((p, i) => ({
         '#': i + 1,
         'Name': p.name || '',
@@ -920,7 +945,7 @@ export function ProspectTable({
   return <div className="flex flex-col h-full gap-2">
       {/* KPI Strip - horizontal scrolling on mobile */}
       <div className="flex-shrink-0">
-        <KPIStrip prospects={filteredProspects} isCalling={isCalling} className="my-0 py-[2px]" kpiTotal={kpiTotal} />
+        <KPIStrip prospects={filteredProspects} isCalling={isCalling} className="my-0 py-[2px]" kpiTotal={kpiTotal} kpiTagCounts={kpiTagCounts} />
       </div>
 
       {/* Single Action Bar - Filters left, Actions right */}

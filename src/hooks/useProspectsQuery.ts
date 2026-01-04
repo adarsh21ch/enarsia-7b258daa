@@ -43,17 +43,18 @@ export function useProspectsQuery(options: UseProspectsQueryOptions = {}) {
   // This ensures each sheet has its own cached pages - switching sheets starts fresh
   const queryKey = ['prospects', user?.id, sheetId, search, filterMode];
 
-  // Separate query for TOTAL count (doesn't change on scroll)
+  // Separate query for KPI totals WITH per-tag counts (doesn't change on scroll)
   // Uses SERVER-SIDE filtering for accurate sheet-specific counts
   const { data: kpiData } = useQuery({
     queryKey: ['prospects-kpi', user?.id, sheetId, search, filterMode],
     queryFn: async () => {
-      if (!user) return { total: 0 };
+      if (!user) return { total: 0, tagCounts: {} };
 
-      // Build query for count only WITH SHEET FILTER
+      // Fetch all prospects for this sheet/filter to compute tag counts
+      // This is necessary because we need to count by action_taken/funnel_stage
       let query = supabase
         .from('prospects')
-        .select('id', { count: 'exact', head: true })
+        .select('id, action_taken, funnel_stage')
         .eq('user_id', user.id);
 
       // Apply sheet filter SERVER-SIDE
@@ -66,14 +67,27 @@ export function useProspectsQuery(options: UseProspectsQueryOptions = {}) {
         query = query.or(`name.ilike.%${search}%,phone.ilike.%${search}%,notes.ilike.%${search}%`);
       }
 
-      const { count, error } = await query;
+      const { data: prospects, error } = await query;
 
       if (error) {
-        console.error('Error fetching KPI count:', error);
-        return { total: 0 };
+        console.error('Error fetching KPI data:', error);
+        return { total: 0, tagCounts: {} };
       }
 
-      return { total: count || 0 };
+      const total = prospects?.length || 0;
+      
+      // Count by action_taken (response tags) and funnel_stage (stage tags)
+      const tagCounts: Record<string, number> = {};
+      prospects?.forEach(p => {
+        if (p.action_taken) {
+          tagCounts[`action:${p.action_taken}`] = (tagCounts[`action:${p.action_taken}`] || 0) + 1;
+        }
+        if (p.funnel_stage) {
+          tagCounts[`stage:${p.funnel_stage}`] = (tagCounts[`stage:${p.funnel_stage}`] || 0) + 1;
+        }
+      });
+
+      return { total, tagCounts };
     },
     enabled: !!user,
     staleTime: 30000, // 30 seconds
@@ -156,8 +170,9 @@ export function useProspectsQuery(options: UseProspectsQueryOptions = {}) {
     return data?.pages.flatMap((page) => page.prospects) ?? [];
   }, [data]);
 
-  // KPI total from separate query (stable, doesn't change on scroll)
+  // KPI data from separate query (stable, doesn't change on scroll)
   const kpiTotal = kpiData?.total ?? 0;
+  const kpiTagCounts = kpiData?.tagCounts ?? {};
   
   // Loaded count from paginated data
   const loadedCount = prospects.length;
@@ -538,6 +553,67 @@ export function useProspectsQuery(options: UseProspectsQueryOptions = {}) {
     [addMutation]
   );
 
+  // Fetch ALL prospects for export (bypasses pagination)
+  const fetchAllForExport = useCallback(
+    async (exportSheetId?: string | null): Promise<Prospect[]> => {
+      if (!user) return [];
+
+      const targetSheetId = exportSheetId !== undefined ? exportSheetId : sheetId;
+      const allProspects: Prospect[] = [];
+      const CHUNK_SIZE = 1000;
+      let offset = 0;
+      let hasMore = true;
+
+      while (hasMore) {
+        let query = supabase
+          .from('prospects')
+          .select('*')
+          .eq('user_id', user.id);
+
+        // Apply sheet filter
+        if (targetSheetId) {
+          query = query.eq('sheet_id', targetSheetId);
+        }
+
+        // Apply search filter
+        if (search) {
+          query = query.or(`name.ilike.%${search}%,phone.ilike.%${search}%,notes.ilike.%${search}%`);
+        }
+
+        // Stable ordering
+        query = query
+          .order('sort_order', { ascending: true, nullsFirst: false })
+          .order('date_added', { ascending: false })
+          .order('id', { ascending: true })
+          .range(offset, offset + CHUNK_SIZE - 1);
+
+        const { data: rawProspects, error } = await query;
+
+        if (error) {
+          console.error('Error fetching prospects for export:', error);
+          break;
+        }
+
+        if (!rawProspects || rawProspects.length === 0) {
+          hasMore = false;
+        } else {
+          // Decrypt phone numbers
+          const decrypted = await decryptBatch(rawProspects);
+          allProspects.push(...decrypted.map(mapDbProspect));
+          
+          if (rawProspects.length < CHUNK_SIZE) {
+            hasMore = false;
+          } else {
+            offset += CHUNK_SIZE;
+          }
+        }
+      }
+
+      return allProspects;
+    },
+    [user, sheetId, search, decryptBatch]
+  );
+
   // Realtime subscription for cross-tab/device sync
   useEffect(() => {
     if (!user) return;
@@ -569,6 +645,7 @@ export function useProspectsQuery(options: UseProspectsQueryOptions = {}) {
     // Data
     prospects,
     kpiTotal, // Stable KPI count
+    kpiTagCounts, // Per-tag counts for KPI display
     totalCount, // Raw total from pagination
     loadedCount,
 
@@ -592,6 +669,7 @@ export function useProspectsQuery(options: UseProspectsQueryOptions = {}) {
     restoreProspects,
     reorderProspects,
     importProspects,
+    fetchAllForExport, // Fetch all prospects for export (bypasses pagination)
 
     // Cache management
     refetch,
