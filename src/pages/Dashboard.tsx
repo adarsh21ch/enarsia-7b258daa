@@ -2,7 +2,7 @@
 import { useEffect, useState, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
-import { useProspectsQuery } from '@/hooks/useProspectsQuery';
+import { useGlobalProspects } from '@/contexts/ProspectsContext';
 import { useSheets } from '@/hooks/useSheets';
 import { useSwipeTabs } from '@/hooks/useSwipeTabs';
 import { BottomNav } from '@/components/layout/BottomNav';
@@ -100,14 +100,8 @@ export default function Dashboard() {
     restoreProspects,
     reorderProspects,
     importProspects,
-    refetch,
-    // Pagination
-    hasNextPage,
-    fetchNextPage,
-    isFetchingNextPage,
-    totalCount,
-    loadedCount
-  } = useProspectsQuery();
+    refetch
+  } = useGlobalProspects();
   const {
     sheets,
     selectedSheetId,
@@ -227,7 +221,7 @@ export default function Dashboard() {
         
         {/* Table area - flex-1 to fill remaining space, pb for bottom nav */}
         <div className="flex-1 min-h-0 px-4 pb-16 overflow-y-auto">
-          {mainTab === 'leads' ? <ProspectTable prospects={prospects} loading={loading} onAdd={addProspect} onUpdate={updateProspect} onDelete={deleteProspect} onBulkDelete={bulkDeleteProspects} onRestoreProspect={restoreProspect} onRestoreProspects={restoreProspects} onImport={importProspects} onReorderProspects={reorderProspects} sheets={sheets} selectedSheetId={selectedSheetId} onSelectSheet={setSelectedSheetId} onAddSheet={addSheet} onUpdateSheet={updateSheet} onDeleteSheet={deleteSheet} getOrCreateTodaySheet={getOrCreateTodaySheet} filterMode="calling" subFilter="all" externalSearch={searchQuery} hasNextPage={hasNextPage} onLoadMore={fetchNextPage} isLoadingMore={isFetchingNextPage} totalCount={totalCount} loadedCount={loadedCount} /> : <ProspectTable prospects={prospects} loading={loading} onAdd={addProspect} onUpdate={updateProspect} onDelete={deleteProspect} onBulkDelete={bulkDeleteProspects} onRestoreProspect={restoreProspect} onRestoreProspects={restoreProspects} onImport={importProspects} onReorderProspects={reorderProspects} sheets={sheets} selectedSheetId={selectedSheetId} onSelectSheet={setSelectedSheetId} onAddSheet={addSheet} onUpdateSheet={updateSheet} onDeleteSheet={deleteSheet} filterMode="funnel" subFilter="all" externalSearch={searchQuery} hasNextPage={hasNextPage} onLoadMore={fetchNextPage} isLoadingMore={isFetchingNextPage} totalCount={totalCount} loadedCount={loadedCount} />}
+          {mainTab === 'leads' ? <ProspectTable prospects={prospects} loading={loading} onAdd={addProspect} onUpdate={updateProspect} onDelete={deleteProspect} onBulkDelete={bulkDeleteProspects} onRestoreProspect={restoreProspect} onRestoreProspects={restoreProspects} onImport={importProspects} onReorderProspects={reorderProspects} sheets={sheets} selectedSheetId={selectedSheetId} onSelectSheet={setSelectedSheetId} onAddSheet={addSheet} onUpdateSheet={updateSheet} onDeleteSheet={deleteSheet} getOrCreateTodaySheet={getOrCreateTodaySheet} filterMode="calling" subFilter="all" externalSearch={searchQuery} /> : <ProspectTable prospects={prospects} loading={loading} onAdd={addProspect} onUpdate={updateProspect} onDelete={deleteProspect} onBulkDelete={bulkDeleteProspects} onRestoreProspect={restoreProspect} onRestoreProspects={restoreProspects} onImport={importProspects} onReorderProspects={reorderProspects} sheets={sheets} selectedSheetId={selectedSheetId} onSelectSheet={setSelectedSheetId} onAddSheet={addSheet} onUpdateSheet={updateSheet} onDeleteSheet={deleteSheet} filterMode="funnel" subFilter="all" externalSearch={searchQuery} />}
         </div>
       </main>
 
