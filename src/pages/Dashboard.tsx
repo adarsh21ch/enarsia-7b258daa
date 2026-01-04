@@ -5,6 +5,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useProspectsQuery } from '@/hooks/useProspectsQuery';
 import { useSheets } from '@/hooks/useSheets';
 import { useSwipeTabs } from '@/hooks/useSwipeTabs';
+import { useTrackingFormatContext } from '@/contexts/TrackingFormatContext';
 import { BottomNav } from '@/components/layout/BottomNav';
 import { HeaderBellIcon } from '@/components/layout/HeaderBellIcon';
 import { ProspectTable } from '@/components/prospects/ProspectTable';
@@ -109,9 +110,15 @@ export default function Dashboard() {
     getOrCreateTodaySheet
   } = useSheets();
 
+  // Get the funnel tag for server-side filtering
+  const { leadsStageTag } = useTrackingFormatContext();
+
   // Use paginated query with sheet/search/filterMode for proper cache separation
   // Map 'leads' tab to 'calling' filterMode for backend
   const queryFilterMode = mainTab === 'leads' ? 'calling' : 'funnel';
+  
+  // Pass funnelTag for server-side filtering in funnel mode
+  const funnelTag = mainTab === 'funnel' ? leadsStageTag : null;
   
   const {
     prospects,
@@ -135,7 +142,8 @@ export default function Dashboard() {
   } = useProspectsQuery({
     sheetId: selectedSheetId,
     search: searchQuery,
-    filterMode: queryFilterMode
+    filterMode: queryFilterMode,
+    funnelTag
   });
 
   // Filter tag setup dialog

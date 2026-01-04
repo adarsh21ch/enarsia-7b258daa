@@ -31,22 +31,23 @@ interface UseProspectsQueryOptions {
   sheetId?: string | null;
   search?: string;
   filterMode?: 'calling' | 'funnel' | 'leads';
+  funnelTag?: string | null; // The action_taken tag that marks prospects as "in funnel"
 }
 
 export function useProspectsQuery(options: UseProspectsQueryOptions = {}) {
-  const { sheetId = null, search = '', filterMode = 'calling' } = options;
+  const { sheetId = null, search = '', filterMode = 'calling', funnelTag = null } = options;
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const { decryptBatch, encryptFields, encryptBatch } = useEncryption();
 
-  // Query key includes sheetId, search, filterMode for PROPER cache separation per sheet
-  // This ensures each sheet has its own cached pages - switching sheets starts fresh
-  const queryKey = ['prospects', user?.id, sheetId, search, filterMode];
+  // Query key includes sheetId, search, filterMode, funnelTag for PROPER cache separation
+  // This ensures each sheet/filter has its own cached pages
+  const queryKey = ['prospects', user?.id, sheetId, search, filterMode, funnelTag];
 
   // Separate query for KPI totals WITH per-tag counts (doesn't change on scroll)
   // Uses SERVER-SIDE filtering for accurate sheet-specific counts
   const { data: kpiData } = useQuery({
-    queryKey: ['prospects-kpi', user?.id, sheetId, search, filterMode],
+    queryKey: ['prospects-kpi', user?.id, sheetId, search, filterMode, funnelTag],
     queryFn: async () => {
       if (!user) return { total: 0, tagCounts: {} };
 
@@ -60,6 +61,11 @@ export function useProspectsQuery(options: UseProspectsQueryOptions = {}) {
       // Apply sheet filter SERVER-SIDE
       if (sheetId) {
         query = query.eq('sheet_id', sheetId);
+      }
+
+      // Apply funnel filter SERVER-SIDE for funnel mode
+      if (filterMode === 'funnel' && funnelTag) {
+        query = query.eq('action_taken', funnelTag);
       }
 
       // Apply search filter
@@ -123,6 +129,12 @@ export function useProspectsQuery(options: UseProspectsQueryOptions = {}) {
       // Apply sheet filter SERVER-SIDE (before pagination)
       if (sheetId) {
         query = query.eq('sheet_id', sheetId);
+      }
+
+      // Apply funnel filter SERVER-SIDE for funnel mode
+      // This ensures we load 50 funnel prospects, not 50 random prospects then filter client-side
+      if (filterMode === 'funnel' && funnelTag) {
+        query = query.eq('action_taken', funnelTag);
       }
 
       // Apply search filter SERVER-SIDE

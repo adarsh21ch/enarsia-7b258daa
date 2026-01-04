@@ -417,20 +417,11 @@ export function ProspectTable({
     return prospects;
   }, [prospects]);
 
-  // Funnel tab list order: when a lead gets the Funnel Tag, it should appear as a "new entry"
-  // at the bottom (stable order by action_taken_at ASC).
+  // Funnel tab: Server-side filtering now handles the funnel tag filter
+  // We just need to sort by action_taken_at for stable funnel ordering
   const funnelProspects = useMemo(() => {
-    const base = (() => {
-      if (!leadsStageTag) {
-        // No funnel tag set - show empty or fallback to old behavior
-        return prospects.filter(p => p.enrollment_status === 'Enrolled' || p.funnel_stage);
-      }
-      // New behavior: show only leads with the Funnel Tag as their Response
-      return prospects.filter(p => p.action_taken === leadsStageTag);
-    })();
-
-    // Stable funnel ordering: oldest tagged first, newest tagged last (bottom)
-    return [...base].sort((a, b) => {
+    // Server-side already filtered by funnelTag, just sort
+    return [...prospects].sort((a, b) => {
       const aTagAt = (a as any).action_taken_at as string | null | undefined;
       const bTagAt = (b as any).action_taken_at as string | null | undefined;
       const aTagTime = aTagAt ? new Date(aTagAt).getTime() : 0;
@@ -441,7 +432,7 @@ export function ProspectTable({
       if (aAdded !== bAdded) return aAdded - bAdded;
       return a.id.localeCompare(b.id);
     });
-  }, [prospects, leadsStageTag]);
+  }, [prospects]);
 
   // Get base prospects based on filter mode
   const baseProspects = useMemo(() => {
