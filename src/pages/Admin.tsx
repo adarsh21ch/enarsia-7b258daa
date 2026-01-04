@@ -24,7 +24,7 @@ const DURATION_OPTIONS = [
 export default function Admin() {
   const navigate = useNavigate();
   const { user, loading: authLoading } = useAuth();
-  const { isAdmin, users, loading, fetchAllUsers, updateUserSubscription } = useAdmin();
+  const { isAdmin, users, loading, searching, fetchAllUsers, updateUserSubscription } = useAdmin();
   const [searchQuery, setSearchQuery] = useState('');
   const [pendingChanges, setPendingChanges] = useState<Record<string, { plan: 'free' | 'pro'; duration: string }>>({});
   const [savingUserId, setSavingUserId] = useState<string | null>(null);
@@ -178,8 +178,11 @@ export default function Admin() {
               placeholder="Search by email or name..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10"
+              className="pl-10 pr-10"
             />
+            {searching && (
+              <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin text-muted-foreground" />
+            )}
           </div>
 
           {/* User List */}
