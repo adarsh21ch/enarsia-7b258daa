@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 
@@ -16,13 +16,15 @@ export function useAdmin() {
   const { user } = useAuth();
   const [isAdmin, setIsAdmin] = useState(false);
   const [users, setUsers] = useState<UserWithSubscription[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [initialLoading, setInitialLoading] = useState(true);
+  const [searching, setSearching] = useState(false);
+  const isFirstLoad = useRef(true);
 
   // Check if current user is admin using server-side has_role() function
   const checkIsAdmin = useCallback(async () => {
     if (!user) {
       setIsAdmin(false);
-      setLoading(false);
+      setInitialLoading(false);
       return false;
     }
     
@@ -43,7 +45,7 @@ export function useAdmin() {
       setIsAdmin(false);
     }
     
-    setLoading(false);
+    setInitialLoading(false);
   }, [user]);
 
   useEffect(() => {
@@ -54,17 +56,20 @@ export function useAdmin() {
   const fetchAllUsers = useCallback(async (searchQuery: string = '') => {
     if (!isAdmin) return;
 
-    setLoading(true);
+    // Only show full loading on first load
+    if (isFirstLoad.current) {
+      setInitialLoading(true);
+    } else {
+      setSearching(true);
+    }
     
     try {
-      // Use server-side search function for case-insensitive partial matching
       const { data, error } = await supabase.rpc('admin_search_users', {
         search_query: searchQuery
       });
 
       if (error) {
         console.error('Error fetching users:', error);
-        setLoading(false);
         return;
       }
 
@@ -79,10 +84,12 @@ export function useAdmin() {
       }));
 
       setUsers(usersWithSubs);
+      isFirstLoad.current = false;
     } catch (err) {
       console.error('Error in fetchAllUsers:', err);
     } finally {
-      setLoading(false);
+      setInitialLoading(false);
+      setSearching(false);
     }
   }, [isAdmin]);
 
@@ -121,5 +128,13 @@ export function useAdmin() {
     return updateUserSubscription(userId, grantPro ? 'pro' : 'free', grantPro ? 30 : undefined);
   };
 
-  return { isAdmin, users, loading, fetchAllUsers, toggleUserAccess, updateUserSubscription };
+  return { 
+    isAdmin, 
+    users, 
+    loading: initialLoading, 
+    searching,
+    fetchAllUsers, 
+    toggleUserAccess, 
+    updateUserSubscription 
+  };
 }
