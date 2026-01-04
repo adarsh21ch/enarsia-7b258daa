@@ -312,6 +312,15 @@ export function useProspectsQuery(options: UseProspectsQueryOptions = {}) {
       }
       toast.error('Failed to update');
     },
+    onSuccess: () => {
+      // Invalidate KPI to update tag counts
+      queryClient.invalidateQueries({ queryKey: ['prospects-kpi', user?.id] });
+      // Invalidate prospects to get updated_at for Recent tab
+      queryClient.invalidateQueries({ queryKey: ['prospects', user?.id] });
+      // Invalidate tracking stats so tag changes reflect
+      queryClient.invalidateQueries({ queryKey: ['tracking-leads', user?.id] });
+      queryClient.invalidateQueries({ queryKey: ['tracking-funnel', user?.id] });
+    },
   });
 
   // Delete prospect mutation
