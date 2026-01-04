@@ -6,29 +6,6 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-// Simple in-memory rate limiter
-const rateLimitMap = new Map<string, { count: number; resetAt: number }>();
-const RATE_LIMIT_WINDOW_MS = 60 * 1000; // 1 minute
-const RATE_LIMIT_MAX_REQUESTS = 10; // 10 requests per minute per user
-
-function checkRateLimit(userId: string): boolean {
-  const now = Date.now();
-  const entry = rateLimitMap.get(userId);
-  
-  if (!entry || now > entry.resetAt) {
-    rateLimitMap.set(userId, { count: 1, resetAt: now + RATE_LIMIT_WINDOW_MS });
-    return true;
-  }
-  
-  if (entry.count >= RATE_LIMIT_MAX_REQUESTS) {
-    console.warn(`Rate limit exceeded for user: ${userId}`);
-    return false;
-  }
-  
-  entry.count++;
-  return true;
-}
-
 const PLAN_CONFIG = {
   monthly: {
     amount: 24900,
@@ -60,6 +37,7 @@ async function verifySignature(orderId: string, paymentId: string, signature: st
 }
 
 serve(async (req) => {
+  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
@@ -88,16 +66,9 @@ serve(async (req) => {
       );
     }
 
-    // Rate limiting check
-    if (!checkRateLimit(user_id)) {
-      return new Response(
-        JSON.stringify({ error: 'Too many requests. Please wait a moment before trying again.' }),
-        { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
-
     console.log(`Verifying payment for user: ${user_id}, payment_id: ${razorpay_payment_id}`);
 
+    // Verify the signature
     const isValid = await verifySignature(
       razorpay_order_id,
       razorpay_payment_id,
@@ -115,6 +86,7 @@ serve(async (req) => {
 
     console.log('Signature verified successfully');
 
+    // Fetch order details from Razorpay to get the plan type and amount
     const authHeader = btoa(`${RAZORPAY_KEY_ID}:${RAZORPAY_KEY_SECRET}`);
     let planType = 'monthly';
     let durationDays = 30;
@@ -147,8 +119,10 @@ serve(async (req) => {
       console.error('Error fetching order details, defaulting to monthly:', orderError);
     }
 
+    // Create Supabase client with service role
     const supabase = createClient(SUPABASE_URL!, SUPABASE_SERVICE_ROLE_KEY!);
 
+    // Activate Pro subscription
     const now = new Date();
     const expiresAt = new Date(now);
     expiresAt.setDate(expiresAt.getDate() + durationDays);
@@ -174,6 +148,7 @@ serve(async (req) => {
 
     console.log(`Pro subscription activated for user: ${user_id}, plan: ${planType}, expires: ${expiresAt.toISOString()}`);
 
+    // Log the payment
     await supabase.from('payments_log').insert({
       event_type: 'payment_verified',
       user_id: user_id,

@@ -8,10 +8,9 @@ interface KPIStripProps {
   prospects: Prospect[];
   isCalling: boolean;
   className?: string;
-  kpiTotal?: number; // Stable total from separate query (doesn't change on scroll)
 }
 
-export function KPIStrip({ prospects, isCalling, kpiTotal }: KPIStripProps) {
+export function KPIStrip({ prospects, isCalling }: KPIStripProps) {
   const {
     leadsTrackingTagNames,
     stageTagNames,
@@ -20,8 +19,7 @@ export function KPIStrip({ prospects, isCalling, kpiTotal }: KPIStripProps) {
 
   // Calculate KPIs
   const kpis = useMemo(() => {
-    // Use stable kpiTotal if provided (doesn't change on scroll), otherwise fallback to loaded count
-    const totalLeads = kpiTotal !== undefined ? kpiTotal : prospects.length;
+    const totalLeads = prospects.length;
     
     // Count by tracking tags (Response tags for Leads, Stage tags for Funnel)
     const trackingTags = isCalling ? leadsTrackingTagNames : stageTagNames;
@@ -46,7 +44,7 @@ export function KPIStrip({ prospects, isCalling, kpiTotal }: KPIStripProps) {
       tagCounts,
       trackingTags,
     };
-  }, [prospects, isCalling, leadsTrackingTagNames, stageTagNames, leadsStageTag, kpiTotal]);
+  }, [prospects, isCalling, leadsTrackingTagNames, stageTagNames, leadsStageTag]);
 
   return (
     <div className="flex items-center gap-3 overflow-x-auto pb-1 -mx-1 px-1 scrollbar-hide">

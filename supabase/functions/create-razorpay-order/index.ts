@@ -6,38 +6,15 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-// Simple in-memory rate limiter (per-isolate, resets on cold start)
-const rateLimitMap = new Map<string, { count: number; resetAt: number }>();
-const RATE_LIMIT_WINDOW_MS = 60 * 1000; // 1 minute
-const RATE_LIMIT_MAX_REQUESTS = 5; // 5 requests per minute per user
-
-function checkRateLimit(userId: string): boolean {
-  const now = Date.now();
-  const entry = rateLimitMap.get(userId);
-  
-  if (!entry || now > entry.resetAt) {
-    rateLimitMap.set(userId, { count: 1, resetAt: now + RATE_LIMIT_WINDOW_MS });
-    return true;
-  }
-  
-  if (entry.count >= RATE_LIMIT_MAX_REQUESTS) {
-    console.warn(`Rate limit exceeded for user: ${userId}`);
-    return false;
-  }
-  
-  entry.count++;
-  return true;
-}
-
 const PLAN_CONFIG = {
   monthly: {
-    amount: 24900,
+    amount: 24900, // ₹249 in paise
     duration_days: 30,
     description: 'NevorAI Pro Monthly',
   },
   yearly: {
-    amount: 299900,
-    discountedAmount: 199900,
+    amount: 299900, // ₹2,999 in paise
+    discountedAmount: 199900, // ₹1,999 in paise (with coupon)
     duration_days: 365,
     description: 'NevorAI Pro Yearly',
   },
@@ -45,13 +22,14 @@ const PLAN_CONFIG = {
 
 const VALID_COUPONS: Record<string, { discount: number; applicablePlans: string[]; maxUses: number }> = {
   'DECEMBER1000': {
-    discount: 100000,
+    discount: 100000, // ₹1,000 in paise
     applicablePlans: ['yearly'],
     maxUses: 50,
   },
 };
 
 serve(async (req) => {
+  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
@@ -89,18 +67,12 @@ serve(async (req) => {
       );
     }
 
-    // Rate limiting check
-    if (!checkRateLimit(user_id)) {
-      return new Response(
-        JSON.stringify({ error: 'Too many requests. Please wait a moment before trying again.' }),
-        { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
-
+    // Validate plan type
     const validPlanTypes = ['monthly', 'yearly'];
     const selectedPlan = validPlanTypes.includes(plan_type) ? plan_type : 'monthly';
     const planConfig = PLAN_CONFIG[selectedPlan as keyof typeof PLAN_CONFIG];
 
+    // Calculate amount with coupon if applicable
     let finalAmount = planConfig.amount;
     let appliedCoupon: string | null = null;
 
@@ -109,6 +81,7 @@ serve(async (req) => {
       const couponConfig = VALID_COUPONS[upperCoupon];
       
       if (couponConfig && couponConfig.applicablePlans.includes(selectedPlan)) {
+        // Check usage limit
         const { count, error: countError } = await supabase
           .from('coupon_usages')
           .select('*', { count: 'exact', head: true })
@@ -128,6 +101,7 @@ serve(async (req) => {
           );
         }
 
+        // Check if user already used this coupon
         const { data: existingUsage } = await supabase
           .from('coupon_usages')
           .select('id')
@@ -157,6 +131,8 @@ serve(async (req) => {
 
     console.log(`Creating Razorpay order for user: ${user_email}, plan: ${selectedPlan}, amount: ${finalAmount}, coupon: ${appliedCoupon}`);
 
+    // Create Razorpay order via API
+    // Receipt must be max 40 chars - use short user_id prefix + timestamp
     const shortUserId = user_id.slice(0, 8);
     const orderPayload = {
       amount: finalAmount,
@@ -197,6 +173,7 @@ serve(async (req) => {
     const order = await razorpayResponse.json();
     console.log(`Order created successfully: ${order.id}, plan: ${selectedPlan}, amount: ${finalAmount}`);
 
+    // Record coupon usage if coupon was applied (will be finalized on payment success)
     if (appliedCoupon) {
       const { error: insertError } = await supabase
         .from('coupon_usages')
@@ -207,6 +184,7 @@ serve(async (req) => {
 
       if (insertError) {
         console.error('Error recording coupon usage:', insertError);
+        // Don't fail the order creation, just log the error
       } else {
         console.log(`Coupon usage recorded for user ${user_id}, coupon ${appliedCoupon}`);
       }

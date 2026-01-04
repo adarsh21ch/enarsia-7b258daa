@@ -6,30 +6,8 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-// Simple in-memory rate limiter for admin actions
-const rateLimitMap = new Map<string, { count: number; resetAt: number }>();
-const RATE_LIMIT_WINDOW_MS = 60 * 1000; // 1 minute
-const RATE_LIMIT_MAX_REQUESTS = 20; // 20 requests per minute for admins
-
-function checkRateLimit(userId: string): boolean {
-  const now = Date.now();
-  const entry = rateLimitMap.get(userId);
-  
-  if (!entry || now > entry.resetAt) {
-    rateLimitMap.set(userId, { count: 1, resetAt: now + RATE_LIMIT_WINDOW_MS });
-    return true;
-  }
-  
-  if (entry.count >= RATE_LIMIT_MAX_REQUESTS) {
-    console.warn(`Rate limit exceeded for admin: ${userId}`);
-    return false;
-  }
-  
-  entry.count++;
-  return true;
-}
-
 serve(async (req) => {
+  // Handle CORS preflight
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
@@ -38,6 +16,7 @@ serve(async (req) => {
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     
+    // Get auth header to verify caller
     const authHeader = req.headers.get('Authorization');
     if (!authHeader) {
       return new Response(
@@ -46,10 +25,12 @@ serve(async (req) => {
       );
     }
 
+    // Create client with user's token to verify they're admin
     const supabaseUser = createClient(supabaseUrl, Deno.env.get('SUPABASE_ANON_KEY')!, {
       global: { headers: { Authorization: authHeader } }
     });
 
+    // Get current user
     const { data: { user }, error: userError } = await supabaseUser.auth.getUser();
     if (userError || !user) {
       return new Response(
@@ -58,14 +39,7 @@ serve(async (req) => {
       );
     }
 
-    // Rate limiting check
-    if (!checkRateLimit(user.id)) {
-      return new Response(
-        JSON.stringify({ error: 'Too many requests. Please wait a moment before trying again.' }),
-        { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
-
+    // Check if user is admin using RPC
     const { data: isAdmin, error: adminError } = await supabaseUser.rpc('has_role', {
       _user_id: user.id,
       _role: 'admin'
@@ -79,6 +53,7 @@ serve(async (req) => {
       );
     }
 
+    // Parse request body
     const { user_id, plan, duration_days } = await req.json();
 
     if (!user_id) {
@@ -95,8 +70,10 @@ serve(async (req) => {
       );
     }
 
+    // Use service role client for updates
     const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
 
+    // Calculate expiry date
     let expiresAt: string | null = null;
     if (plan === 'pro' && duration_days) {
       const expiry = new Date();
@@ -104,6 +81,7 @@ serve(async (req) => {
       expiresAt = expiry.toISOString();
     }
 
+    // Check if subscription exists
     const { data: existing } = await supabaseAdmin
       .from('user_subscriptions')
       .select('id')
@@ -121,6 +99,7 @@ serve(async (req) => {
     };
 
     if (existing) {
+      // Update existing subscription
       const { data, error } = await supabaseAdmin
         .from('user_subscriptions')
         .update(updateData)
@@ -131,6 +110,7 @@ serve(async (req) => {
       if (error) throw error;
       result = data;
     } else {
+      // Create new subscription
       const { data, error } = await supabaseAdmin
         .from('user_subscriptions')
         .insert({ user_id, ...updateData })

@@ -7,12 +7,10 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import { Loader2, Shield, Users, Crown, ArrowLeft, Search, Save, Calendar, BarChart3, ChevronDown } from 'lucide-react';
+import { Loader2, Shield, Users, Crown, ArrowLeft, Search, Save, Calendar } from 'lucide-react';
 import { format, addDays, addYears } from 'date-fns';
 import { toast } from 'sonner';
 import nevoraLogo from '@/assets/nevorai-logo.jpeg';
-import { AdminAnalyticsDashboard } from '@/components/admin/AdminAnalyticsDashboard';
 
 const DURATION_OPTIONS = [
   { value: '30', label: '30 days' },
@@ -188,20 +186,6 @@ export default function Admin() {
               </p>
             </div>
           </div>
-
-          {/* Analytics Dashboard - Collapsible */}
-          <Collapsible defaultOpen>
-            <CollapsibleTrigger className="flex items-center justify-between w-full rounded-xl p-4 bg-card border border-border/50 hover:bg-muted/50 transition-colors">
-              <div className="flex items-center gap-2">
-                <BarChart3 className="h-5 w-5 text-primary" />
-                <span className="font-semibold">Analytics Dashboard</span>
-              </div>
-              <ChevronDown className="h-4 w-4 text-muted-foreground transition-transform duration-200 [[data-state=open]>&]:rotate-180" />
-            </CollapsibleTrigger>
-            <CollapsibleContent className="pt-3">
-              <AdminAnalyticsDashboard />
-            </CollapsibleContent>
-          </Collapsible>
 
           {/* Search Bar */}
           <div className="relative">

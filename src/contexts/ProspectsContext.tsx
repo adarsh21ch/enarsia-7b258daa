@@ -5,7 +5,6 @@ import { Prospect, mapOldStatusToNew } from '@/types/prospect';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
 import { useEncryption } from '@/hooks/useEncryption';
-import { encrypt as clientEncrypt, hasEncryptionKey } from '@/lib/encryption';
 
 // Map database prospect to app prospect
 const mapDbProspect = (dbProspect: any): Prospect => ({
@@ -82,7 +81,7 @@ export function ProspectsProvider({ children }: { children: ReactNode }) {
   const currentUserId = useRef<string | null>(null);
   const isRefreshing = useRef(false);
   
-  const { encryptFields, decryptBatch } = useEncryption();
+  const { encryptFields, decryptBatch, encryptBatch } = useEncryption();
 
   // Save to cache on change
   useEffect(() => {
@@ -507,23 +506,22 @@ export function ProspectsProvider({ children }: { children: ReactNode }) {
     for (let chunkIndex = 0; chunkIndex < chunks.length; chunkIndex++) {
       const chunk = chunks[chunkIndex];
       
-      // Encrypt phone field only using client-side encryption
-      const encryptedChunk = chunk.map(record => {
-        const encrypted = { ...record };
-        if (record.phone && hasEncryptionKey()) {
-          encrypted.phone = clientEncrypt(record.phone);
-        }
-        return encrypted;
-      });
+      // Encrypt chunk
+      let encryptedChunk = chunk;
+      try {
+        encryptedChunk = await encryptBatch(chunk);
+      } catch (err) {
+        console.error('Failed to encrypt batch:', err);
+      }
 
       // Insert chunk
       const { data, error } = await supabase
         .from('prospects')
-        .insert(encryptedChunk)
+        .insert(encryptedChunk as any)
         .select();
 
       if (error) {
-        console.error('Failed to import chunk:', error, 'Sample record:', JSON.stringify(encryptedChunk[0]));
+        console.error('Failed to import chunk:', error);
         continue;
       }
 
@@ -540,12 +538,9 @@ export function ProspectsProvider({ children }: { children: ReactNode }) {
     }
     
     // Append all imported to end for stable ordering
-    if (allImported.length > 0) {
-      setProspects(prev => [...prev, ...allImported]);
-    }
-    
+    setProspects(prev => [...prev, ...allImported]);
     return { imported: totalImported, skipped };
-  }, [user]);
+  }, [user, encryptBatch]);
 
   const reorderProspects = useCallback(async (prospectIds: string[]) => {
     if (!user) return false;
