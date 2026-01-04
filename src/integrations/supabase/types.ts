@@ -2118,6 +2118,19 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      admin_get_analytics: {
+        Args: never
+        Returns: {
+          active_pro_users: number
+          month_leads: number
+          neverai_today_active: number
+          neverai_total_users: number
+          neverai_week_active: number
+          today_leads: number
+          total_leads: number
+          week_leads: number
+        }[]
+      }
       admin_get_app_user_counts: {
         Args: never
         Returns: {
@@ -2146,6 +2159,20 @@ export type Database = {
           subscription_expires_at: string
           subscription_plan: string
           subscription_status: string
+          user_id: string
+        }[]
+      }
+      admin_search_users: {
+        Args: { search_query?: string }
+        Returns: {
+          created_at: string
+          display_name: string
+          email: string
+          expires_at: string
+          is_admin_override: boolean
+          phone: string
+          plan: string
+          subscribed_at: string
           user_id: string
         }[]
       }

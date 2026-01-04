@@ -50,58 +50,34 @@ export function useAdmin() {
     checkIsAdmin();
   }, [checkIsAdmin]);
 
-  const fetchAllUsers = useCallback(async () => {
+  // Server-side search for users
+  const fetchAllUsers = useCallback(async (searchQuery: string = '') => {
     if (!isAdmin) return;
 
     setLoading(true);
     
     try {
-      // Fetch all profiles (admin can see all via RLS policy)
-      const { data: profiles, error: profilesError } = await supabase
-        .from('profiles')
-        .select('user_id, display_name');
+      // Use server-side search function for case-insensitive partial matching
+      const { data, error } = await supabase.rpc('admin_search_users', {
+        search_query: searchQuery
+      });
 
-      if (profilesError) {
-        console.error('Error fetching profiles:', profilesError);
+      if (error) {
+        console.error('Error fetching users:', error);
         setLoading(false);
         return;
       }
 
-      // Fetch all subscriptions (admin can see all via RLS policy)
-      const { data: subscriptions, error: subsError } = await supabase
-        .from('user_subscriptions')
-        .select('*');
+      const usersWithSubs: UserWithSubscription[] = (data || []).map((row: any) => ({
+        id: row.user_id,
+        email: row.email || row.display_name || `User ${row.user_id?.slice(0, 8)}`,
+        name: row.display_name,
+        plan: (row.plan || 'free') as 'free' | 'pro',
+        is_admin_override: row.is_admin_override || false,
+        subscribed_at: row.subscribed_at || null,
+        expires_at: row.expires_at || null,
+      }));
 
-      if (subsError) {
-        console.error('Error fetching subscriptions:', subsError);
-      }
-
-      console.log('Fetched subscriptions:', subscriptions);
-
-      // Fetch emails for each user using security definer function
-      const usersWithSubs: UserWithSubscription[] = await Promise.all(
-        (profiles || []).map(async (profile: any) => {
-          const sub = subscriptions?.find((s: any) => s.user_id === profile.user_id);
-          
-          // Get email via security definer function
-          const { data: emailData } = await supabase
-            .rpc('get_user_email_for_admin', { target_user_id: profile.user_id });
-          
-          const email = emailData || profile.display_name || `User ${profile.user_id.slice(0, 8)}`;
-          
-          return {
-            id: profile.user_id,
-            email,
-            name: profile.display_name,
-            plan: (sub?.plan || 'free') as 'free' | 'pro',
-            is_admin_override: sub?.is_admin_override || false,
-            subscribed_at: sub?.subscribed_at || null,
-            expires_at: sub?.expires_at || null,
-          };
-        })
-      );
-
-      console.log('Setting users:', usersWithSubs);
       setUsers(usersWithSubs);
     } catch (err) {
       console.error('Error in fetchAllUsers:', err);

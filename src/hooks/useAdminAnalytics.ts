@@ -22,26 +22,19 @@ export interface PaymentLog {
   event_type: string;
 }
 
-export interface AppUserCounts {
-  app: string;
-  total_users: number;
-  today_active: number;
-  week_active: number;
-}
-
 export interface AdminAnalytics {
   dailySignups: DailySignup[];
   subscriptionBreakdown: SubscriptionBreakdown[];
   recentPayments: PaymentLog[];
-  todaySignups: number;
-  weekSignups: number;
-  monthSignups: number;
-  totalRevenue: number;
-  // Real user counts from database
-  totalUsers: number;
-  // App-specific counts
-  appCounts: AppUserCounts[];
-  neveraiUsers: number;
+  // Core metrics from single source of truth
+  neveraiTotalUsers: number;
+  neveraiTodayActive: number;
+  neveraiWeekActive: number;
+  activeProUsers: number;
+  totalLeads: number;
+  todayLeads: number;
+  weekLeads: number;
+  monthLeads: number;
 }
 
 export function useAdminAnalytics() {
@@ -51,12 +44,13 @@ export function useAdminAnalytics() {
     queryKey: ['admin-analytics', user?.id],
     queryFn: async (): Promise<AdminAnalytics> => {
       const now = new Date();
-      const today = now.toISOString().split('T')[0];
-      const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000).toISOString();
       const monthAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000).toISOString();
 
       // Fetch all data in parallel
-      const [profilesRes, allProfilesCountRes, subscriptionsRes, paymentsRes, appCountsRes] = await Promise.all([
+      const [analyticsRes, profilesRes, subscriptionsRes, paymentsRes] = await Promise.all([
+        // Get core metrics from single source of truth function
+        supabase.rpc('admin_get_analytics'),
+        
         // Get profiles for signup analysis (last 30 days)
         supabase
           .from('profiles')
@@ -64,57 +58,40 @@ export function useAdminAnalytics() {
           .gte('created_at', monthAgo)
           .order('created_at', { ascending: true }),
         
-        // Get TOTAL count of all profiles (not just last 30 days)
-        supabase
-          .from('profiles')
-          .select('id', { count: 'exact', head: true }),
-        
         // Get subscription breakdown
         supabase
           .from('user_subscriptions')
           .select('plan, expires_at'),
         
-        // Get recent successful payments
+        // Get recent payments (empty for now - payments not enabled)
         supabase
           .from('payments_log')
           .select('id, created_at, user_email, amount, status, event_type')
           .order('created_at', { ascending: false })
           .limit(20),
-        
-        // Get app-specific user counts
-        supabase.rpc('admin_get_app_user_counts')
       ]);
 
-      // Get real total users count
-      const totalUsers = allProfilesCountRes.count || 0;
+      // Extract core metrics from single source
+      const metrics = analyticsRes.data?.[0] || {
+        neverai_total_users: 0,
+        neverai_today_active: 0,
+        neverai_week_active: 0,
+        active_pro_users: 0,
+        total_leads: 0,
+        today_leads: 0,
+        week_leads: 0,
+        month_leads: 0,
+      };
 
-      // Process app-specific counts
-      const appCounts: AppUserCounts[] = (appCountsRes.data || []).map((row: any) => ({
-        app: row.app,
-        total_users: Number(row.total_users) || 0,
-        today_active: Number(row.today_active) || 0,
-        week_active: Number(row.week_active) || 0,
-      }));
-      
-      // Get NeverAI specific count
-      const neveraiData = appCounts.find(a => a.app === 'neverai');
-      const neveraiUsers = neveraiData?.total_users || 0;
-
-      // Process daily signups
+      // Process daily signups for chart
+      const today = now.toISOString().split('T')[0];
       const signupsByDate: Record<string, number> = {};
-      let todaySignups = 0;
-      let weekSignups = 0;
-      let monthSignups = 0;
 
       if (profilesRes.data) {
         profilesRes.data.forEach(profile => {
           const date = profile.created_at?.split('T')[0];
           if (date) {
             signupsByDate[date] = (signupsByDate[date] || 0) + 1;
-            monthSignups++;
-            
-            if (date === today) todaySignups++;
-            if (new Date(profile.created_at) >= new Date(weekAgo)) weekSignups++;
           }
         });
       }
@@ -156,30 +133,22 @@ export function useAdminAnalytics() {
         ([plan, data]) => ({ plan, ...data })
       );
 
-      // Calculate total revenue from successful payments
-      let totalRevenue = 0;
-      const recentPayments: PaymentLog[] = [];
-      
-      if (paymentsRes.data) {
-        paymentsRes.data.forEach(payment => {
-          recentPayments.push(payment as PaymentLog);
-          if (payment.status === 'success' && payment.amount) {
-            totalRevenue += payment.amount;
-          }
-        });
-      }
+      // Recent payments (empty or actual)
+      const recentPayments: PaymentLog[] = (paymentsRes.data || []) as PaymentLog[];
 
       return {
         dailySignups,
         subscriptionBreakdown,
         recentPayments,
-        todaySignups,
-        weekSignups,
-        monthSignups,
-        totalRevenue,
-        totalUsers,
-        appCounts,
-        neveraiUsers
+        // Core metrics from single source of truth
+        neveraiTotalUsers: Number(metrics.neverai_total_users) || 0,
+        neveraiTodayActive: Number(metrics.neverai_today_active) || 0,
+        neveraiWeekActive: Number(metrics.neverai_week_active) || 0,
+        activeProUsers: Number(metrics.active_pro_users) || 0,
+        totalLeads: Number(metrics.total_leads) || 0,
+        todayLeads: Number(metrics.today_leads) || 0,
+        weekLeads: Number(metrics.week_leads) || 0,
+        monthLeads: Number(metrics.month_leads) || 0,
       };
     },
     enabled: !!user,

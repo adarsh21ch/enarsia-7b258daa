@@ -28,19 +28,19 @@ export function AdminAnalyticsDashboard() {
   return (
     <div className="space-y-4">
       <StatsGrid
-        todaySignups={analytics.todaySignups}
-        weekSignups={analytics.weekSignups}
-        monthSignups={analytics.monthSignups}
-        totalRevenue={analytics.totalRevenue}
-        totalUsers={analytics.totalUsers}
-        neveraiUsers={analytics.neveraiUsers}
+        neveraiTotalUsers={analytics.neveraiTotalUsers}
+        neveraiTodayActive={analytics.neveraiTodayActive}
+        neveraiWeekActive={analytics.neveraiWeekActive}
+        activeProUsers={analytics.activeProUsers}
+        totalLeads={analytics.totalLeads}
+        todayLeads={analytics.todayLeads}
+        weekLeads={analytics.weekLeads}
       />
 
       <Tabs defaultValue="signups" className="w-full">
-        <TabsList className="w-full grid grid-cols-3">
+        <TabsList className="w-full grid grid-cols-2">
           <TabsTrigger value="signups" className="text-xs">Signups</TabsTrigger>
           <TabsTrigger value="subscriptions" className="text-xs">Plans</TabsTrigger>
-          <TabsTrigger value="payments" className="text-xs">Payments</TabsTrigger>
         </TabsList>
 
         <TabsContent value="signups" className="mt-3">
@@ -49,10 +49,6 @@ export function AdminAnalyticsDashboard() {
 
         <TabsContent value="subscriptions" className="mt-3">
           <SubscriptionPieChart data={analytics.subscriptionBreakdown} />
-        </TabsContent>
-
-        <TabsContent value="payments" className="mt-3">
-          <PaymentHistoryTable payments={analytics.recentPayments} />
         </TabsContent>
       </Tabs>
     </div>

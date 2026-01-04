@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useAdmin } from '@/hooks/useAdmin';
@@ -9,7 +9,7 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { Loader2, Shield, Users, Crown, ArrowLeft, Search, Save, Calendar, BarChart3, ChevronDown } from 'lucide-react';
-import { format, addDays, addYears } from 'date-fns';
+import { format, addDays } from 'date-fns';
 import { toast } from 'sonner';
 import nevoraLogo from '@/assets/nevorai-logo.jpeg';
 import { AdminAnalyticsDashboard } from '@/components/admin/AdminAnalyticsDashboard';
@@ -35,27 +35,15 @@ export default function Admin() {
     }
   }, [user, authLoading, navigate]);
 
+  // Fetch users on mount and when search changes (debounced)
   useEffect(() => {
     if (isAdmin) {
-      fetchAllUsers();
+      const timer = setTimeout(() => {
+        fetchAllUsers(searchQuery);
+      }, 300); // 300ms debounce for search
+      return () => clearTimeout(timer);
     }
-  }, [isAdmin, fetchAllUsers]);
-
-  // Filter users by search query (email or name)
-  const filteredUsers = useMemo(() => {
-    console.log('Recomputing filteredUsers, users count:', users.length);
-    if (!searchQuery.trim()) return users;
-    const query = searchQuery.toLowerCase();
-    return users.filter(u => 
-      u.email.toLowerCase().includes(query) ||
-      (u.name && u.name.toLowerCase().includes(query))
-    );
-  }, [users, searchQuery]);
-
-  // Debug: log when users change
-  useEffect(() => {
-    console.log('Users state updated:', users.map(u => ({ id: u.id, plan: u.plan, expires_at: u.expires_at })));
-  }, [users]);
+  }, [isAdmin, fetchAllUsers, searchQuery]);
 
   // Check if user's Pro is expired
   const isExpired = (expiresAt: string | null) => {
@@ -169,26 +157,6 @@ export default function Admin() {
 
       <main className="scrollable-content">
         <div className="container py-4 px-4 pb-24 space-y-5">
-          {/* Stats */}
-          <div className="grid grid-cols-2 gap-3 shrink-0">
-            <div className="rounded-xl p-4 bg-card border border-border/50">
-              <div className="flex items-center gap-2 mb-2">
-                <Users className="h-5 w-5 text-primary" />
-                <span className="text-sm text-muted-foreground">Total Users</span>
-              </div>
-              <p className="text-2xl font-bold">{users.length}</p>
-            </div>
-            <div className="rounded-xl p-4 bg-card border border-border/50">
-              <div className="flex items-center gap-2 mb-2">
-                <Crown className="h-5 w-5 text-amber-500" />
-                <span className="text-sm text-muted-foreground">Active Pro</span>
-              </div>
-              <p className="text-2xl font-bold">
-                {users.filter(u => getEffectiveStatus(u) === 'pro').length}
-              </p>
-            </div>
-          </div>
-
           {/* Analytics Dashboard - Collapsible */}
           <Collapsible defaultOpen>
             <CollapsibleTrigger className="flex items-center justify-between w-full rounded-xl p-4 bg-card border border-border/50 hover:bg-muted/50 transition-colors">
@@ -218,17 +186,17 @@ export default function Admin() {
           <div className="rounded-2xl bg-card border border-border/50 overflow-hidden flex flex-col">
             <div className="px-4 py-3 border-b border-border/50 bg-muted/30 shrink-0">
               <h3 className="font-semibold">
-                {searchQuery ? `Results (${filteredUsers.length})` : 'All Users'}
+                {searchQuery ? `Results (${users.length})` : 'All Users'}
               </h3>
             </div>
             <div className="divide-y divide-border/50 overflow-y-auto max-h-[60vh]">
-              {filteredUsers.length === 0 ? (
+              {users.length === 0 ? (
                 <div className="p-8 text-center text-muted-foreground">
                   <Users className="h-12 w-12 mx-auto mb-3 opacity-30" />
                   <p>{searchQuery ? 'No users match your search' : 'No users found'}</p>
                 </div>
               ) : (
-                filteredUsers.map((u) => {
+                users.map((u) => {
                   const effectiveStatus = getEffectiveStatus(u);
                   const pending = pendingChanges[u.id];
                   const currentPlan = pending?.plan ?? u.plan;
