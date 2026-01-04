@@ -1,13 +1,22 @@
-import { TrendingUp, Calendar, CalendarDays, IndianRupee } from 'lucide-react';
+import { TrendingUp, Calendar, CalendarDays, IndianRupee, Users } from 'lucide-react';
 
 interface StatsGridProps {
   todaySignups: number;
   weekSignups: number;
   monthSignups: number;
   totalRevenue: number;
+  totalUsers?: number;
+  neveraiUsers?: number;
 }
 
-export function StatsGrid({ todaySignups, weekSignups, monthSignups, totalRevenue }: StatsGridProps) {
+export function StatsGrid({ 
+  todaySignups, 
+  weekSignups, 
+  monthSignups, 
+  totalRevenue,
+  totalUsers = 0,
+  neveraiUsers = 0
+}: StatsGridProps) {
   const formatCurrency = (amount: number) => {
     if (amount >= 100000) {
       return `₹${(amount / 100000).toFixed(1)}L`;
@@ -18,6 +27,20 @@ export function StatsGrid({ todaySignups, weekSignups, monthSignups, totalRevenu
   };
 
   const stats = [
+    {
+      label: 'Total Users',
+      value: totalUsers,
+      icon: Users,
+      color: 'text-primary',
+      bgColor: 'bg-primary/10'
+    },
+    {
+      label: 'NeverAI',
+      value: neveraiUsers,
+      icon: Users,
+      color: 'text-cyan-500',
+      bgColor: 'bg-cyan-500/10'
+    },
     {
       label: 'Today',
       value: todaySignups,
@@ -49,7 +72,7 @@ export function StatsGrid({ todaySignups, weekSignups, monthSignups, totalRevenu
   ];
 
   return (
-    <div className="grid grid-cols-4 gap-2">
+    <div className="grid grid-cols-3 gap-2">
       {stats.map((stat) => (
         <div 
           key={stat.label}

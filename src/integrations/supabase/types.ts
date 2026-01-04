@@ -1494,6 +1494,7 @@ export type Database = {
           display_name: string | null
           email: string | null
           id: string
+          leader_code_seq: number | null
           leader_prompt_completed: boolean
           leaders_id_of_my_leader: string | null
           level_id: string | null
@@ -1518,6 +1519,7 @@ export type Database = {
           display_name?: string | null
           email?: string | null
           id?: string
+          leader_code_seq?: number | null
           leader_prompt_completed?: boolean
           leaders_id_of_my_leader?: string | null
           level_id?: string | null
@@ -1542,6 +1544,7 @@ export type Database = {
           display_name?: string | null
           email?: string | null
           id?: string
+          leader_code_seq?: number | null
           leader_prompt_completed?: boolean
           leaders_id_of_my_leader?: string | null
           level_id?: string | null
@@ -1999,6 +2002,30 @@ export type Database = {
           },
         ]
       }
+      user_app_access: {
+        Row: {
+          app: string
+          first_seen_at: string
+          id: string
+          last_seen_at: string
+          user_id: string
+        }
+        Insert: {
+          app: string
+          first_seen_at?: string
+          id?: string
+          last_seen_at?: string
+          user_id: string
+        }
+        Update: {
+          app?: string
+          first_seen_at?: string
+          id?: string
+          last_seen_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string
@@ -2091,6 +2118,15 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      admin_get_app_user_counts: {
+        Args: never
+        Returns: {
+          app: string
+          today_active: number
+          total_users: number
+          week_active: number
+        }[]
+      }
       admin_get_stats: {
         Args: never
         Returns: {
@@ -2138,6 +2174,7 @@ export type Database = {
         Returns: boolean
       }
       generate_neverai_id: { Args: never; Returns: string }
+      generate_simple_neverai_id: { Args: never; Returns: string }
       get_leader_stage_config: {
         Args: { target_leader_id: string }
         Returns: Json
@@ -2216,6 +2253,7 @@ export type Database = {
         Args: { _target_user_id: string; _viewer_id: string }
         Returns: boolean
       }
+      record_app_access: { Args: { p_app: string }; Returns: undefined }
       update_leader_hierarchy: {
         Args: { p_leader_neverai_id: string; p_user_id: string }
         Returns: Json

@@ -22,6 +22,7 @@ import { User, LogOut, ChevronRight, Phone, Building2, MapPin, Loader2, FileText
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
+import { formatLeaderId } from '@/lib/leaderIdFormat';
 import nevoraLogo from '@/assets/nevorai-logo.jpeg';
 
 // Pull-to-refresh hook
@@ -112,9 +113,44 @@ export default function Profile() {
   } = useTrackingFormatContext();
   const [editOpen, setEditOpen] = useState(false);
 
-  // Handle TrackUp Dashboard - open directly in browser
-  const handleOpenTrackUp = () => {
-    window.open('https://nevorai.com/trackup', '_blank');
+  const [ssoLoading, setSsoLoading] = useState(false);
+
+  // Handle TrackUp Dashboard - SSO seamless login
+  const handleOpenTrackUp = async () => {
+    if (ssoLoading) return;
+    
+    setSsoLoading(true);
+    try {
+      // Call the SSO edge function to get a magic link
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        // Not logged in - just open TrackUp normally
+        window.open('https://nevorai.com/trackup', '_blank');
+        return;
+      }
+
+      const { data, error } = await supabase.functions.invoke('trackup-sso-link');
+      
+      if (error) {
+        console.error('SSO error:', error);
+        // Fallback to direct URL
+        window.open('https://nevorai.com/trackup', '_blank');
+        return;
+      }
+
+      if (data?.action_link) {
+        // Open the magic link which will automatically sign them in
+        window.open(data.action_link, '_blank');
+      } else {
+        // Fallback
+        window.open('https://nevorai.com/trackup', '_blank');
+      }
+    } catch (err) {
+      console.error('SSO failed:', err);
+      window.open('https://nevorai.com/trackup', '_blank');
+    } finally {
+      setSsoLoading(false);
+    }
   };
 
   // Process pending leader ID from share links
@@ -185,12 +221,14 @@ export default function Profile() {
                 </div>
                 {profile?.neverai_id && <div className="flex items-center gap-1.5 mt-2">
                     <p className="text-xs text-primary font-medium">
-                      Your Leader ID: <span className="font-mono">{profile.neverai_id}</span>
+                      Your NevorAI ID: <span className="font-mono">{formatLeaderId(profile.neverai_id, profile.leader_code_seq)}</span>
                     </p>
                     <button onClick={async () => {
-                  await navigator.clipboard.writeText(profile.neverai_id || '');
-                  toast.success('Leader ID copied');
-                }} className="p-1 rounded hover:bg-primary/10 transition-colors" title="Copy Leader ID">
+                  // Copy the formatted ID
+                  const displayId = formatLeaderId(profile.neverai_id, profile.leader_code_seq);
+                  await navigator.clipboard.writeText(displayId);
+                  toast.success('NevorAI ID copied');
+                }} className="p-1 rounded hover:bg-primary/10 transition-colors" title="Copy NevorAI ID">
                       <Copy className="h-3 w-3 text-primary" />
                     </button>
                   </div>}
@@ -278,25 +316,33 @@ export default function Profile() {
               <ChevronRight className="h-5 w-5 text-muted-foreground" />
             </button>
 
-            {/* TrackUp Dashboard - External for team tracking */}
+            {/* TrackUp Dashboard - External for team tracking with SSO */}
             <button 
               onClick={handleOpenTrackUp}
+              disabled={ssoLoading}
               className={cn(
                 "w-full relative overflow-hidden rounded-xl p-4",
                 "bg-gradient-to-r backdrop-blur-sm",
                 "border border-border/50 shadow-sm",
                 "flex items-center justify-between",
                 "transition-all duration-300 hover:shadow-md hover:scale-[1.01]",
-                "from-emerald-500/20 to-emerald-500/5"
+                "from-emerald-500/20 to-emerald-500/5",
+                ssoLoading && "opacity-70"
               )}
             >
               <div className="flex items-center gap-3">
                 <div className="p-2 rounded-lg bg-emerald-500/10">
-                  <ExternalLink className="h-5 w-5 text-emerald-500" />
+                  {ssoLoading ? (
+                    <Loader2 className="h-5 w-5 text-emerald-500 animate-spin" />
+                  ) : (
+                    <ExternalLink className="h-5 w-5 text-emerald-500" />
+                  )}
                 </div>
                 <div className="text-left">
                   <span className="font-medium block">TrackUp Dashboard</span>
-                  <span className="text-xs text-muted-foreground">Team tracking & analytics</span>
+                  <span className="text-xs text-muted-foreground">
+                    {ssoLoading ? 'Opening...' : 'Team tracking & analytics'}
+                  </span>
                 </div>
               </div>
               <ChevronRight className="h-5 w-5 text-muted-foreground" />

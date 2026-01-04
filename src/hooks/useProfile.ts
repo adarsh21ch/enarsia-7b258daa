@@ -15,6 +15,7 @@ export interface Profile {
   bio: string | null;
   avatar_url: string | null;
   neverai_id: string | null;
+  leader_code_seq: number | null;
   level_id: string | null;
   created_at: string;
   updated_at: string;

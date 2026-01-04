@@ -9,6 +9,7 @@ import { TodosProvider } from "@/contexts/TodosContext";
 import { Toaster } from "sonner";
 import { InstallPromptBanner } from "@/components/pwa/InstallPromptBanner";
 import { UpdateBanner } from "@/components/pwa/UpdateBanner";
+import { AppAccessTracker } from "@/components/AppAccessTracker";
 
 // Direct imports
 import Auth from "./pages/Auth";
@@ -83,6 +84,7 @@ function App() {
                     <Toaster position="top-center" />
                     <InstallPromptBanner />
                     <UpdateBanner />
+                    <AppAccessTracker />
                     <Routes>
                       <Route path="/" element={<Index />} />
                       <Route path="/auth" element={<Auth />} />

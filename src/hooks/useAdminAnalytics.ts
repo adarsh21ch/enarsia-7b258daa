@@ -22,6 +22,13 @@ export interface PaymentLog {
   event_type: string;
 }
 
+export interface AppUserCounts {
+  app: string;
+  total_users: number;
+  today_active: number;
+  week_active: number;
+}
+
 export interface AdminAnalytics {
   dailySignups: DailySignup[];
   subscriptionBreakdown: SubscriptionBreakdown[];
@@ -30,6 +37,11 @@ export interface AdminAnalytics {
   weekSignups: number;
   monthSignups: number;
   totalRevenue: number;
+  // Real user counts from database
+  totalUsers: number;
+  // App-specific counts
+  appCounts: AppUserCounts[];
+  neveraiUsers: number;
 }
 
 export function useAdminAnalytics() {
@@ -44,13 +56,18 @@ export function useAdminAnalytics() {
       const monthAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000).toISOString();
 
       // Fetch all data in parallel
-      const [profilesRes, subscriptionsRes, paymentsRes] = await Promise.all([
-        // Get all profiles for signup analysis
+      const [profilesRes, allProfilesCountRes, subscriptionsRes, paymentsRes, appCountsRes] = await Promise.all([
+        // Get profiles for signup analysis (last 30 days)
         supabase
           .from('profiles')
           .select('created_at')
           .gte('created_at', monthAgo)
           .order('created_at', { ascending: true }),
+        
+        // Get TOTAL count of all profiles (not just last 30 days)
+        supabase
+          .from('profiles')
+          .select('id', { count: 'exact', head: true }),
         
         // Get subscription breakdown
         supabase
@@ -62,8 +79,26 @@ export function useAdminAnalytics() {
           .from('payments_log')
           .select('id, created_at, user_email, amount, status, event_type')
           .order('created_at', { ascending: false })
-          .limit(20)
+          .limit(20),
+        
+        // Get app-specific user counts
+        supabase.rpc('admin_get_app_user_counts')
       ]);
+
+      // Get real total users count
+      const totalUsers = allProfilesCountRes.count || 0;
+
+      // Process app-specific counts
+      const appCounts: AppUserCounts[] = (appCountsRes.data || []).map((row: any) => ({
+        app: row.app,
+        total_users: Number(row.total_users) || 0,
+        today_active: Number(row.today_active) || 0,
+        week_active: Number(row.week_active) || 0,
+      }));
+      
+      // Get NeverAI specific count
+      const neveraiData = appCounts.find(a => a.app === 'neverai');
+      const neveraiUsers = neveraiData?.total_users || 0;
 
       // Process daily signups
       const signupsByDate: Record<string, number> = {};
@@ -141,7 +176,10 @@ export function useAdminAnalytics() {
         todaySignups,
         weekSignups,
         monthSignups,
-        totalRevenue
+        totalRevenue,
+        totalUsers,
+        appCounts,
+        neveraiUsers
       };
     },
     enabled: !!user,

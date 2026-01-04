@@ -6,6 +6,7 @@ import { Bell, Send } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { SendMessageDrawer } from './SendMessageDrawer';
 import { InboxDrawer } from './InboxDrawer';
+import { HeaderRefreshIcon } from './HeaderRefreshIcon';
 import {
   Tooltip,
   TooltipContent,
@@ -29,6 +30,9 @@ export function HeaderBellIcon() {
   return (
     <TooltipProvider delayDuration={300}>
       <div className="flex items-center gap-1">
+        {/* Refresh Icon - Always visible */}
+        <HeaderRefreshIcon />
+
         {/* Send Message Icon - Only for leaders with direct team */}
         {showSendMessage && (
           <>
