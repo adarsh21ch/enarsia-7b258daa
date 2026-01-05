@@ -2386,6 +2386,7 @@ export type Database = {
         Args: { target_user_id: string; viewer_user_id: string }
         Returns: boolean
       }
+      normalize_leader_id: { Args: { id: string }; Returns: string }
       record_app_access: { Args: { p_app: string }; Returns: undefined }
       update_leader_hierarchy: {
         Args: { p_leader_neverai_id: string; p_user_id: string }
