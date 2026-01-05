@@ -114,9 +114,9 @@ export default function Profile() {
   } = useTrackingFormatContext();
   const [editOpen, setEditOpen] = useState(false);
 
-  // Handle TrackUp Dashboard - Navigate to internal tracking page
+  // Handle TrackUp Dashboard - Open nevorai.com TrackUp
   const handleOpenTrackUp = () => {
-    navigate('/tracking');
+    window.open('https://nevorai.com/auth?redirect=/trackup', '_blank');
   };
 
   // Process pending leader ID from share links
@@ -300,10 +300,10 @@ export default function Profile() {
                 </div>
                 <div className="text-left">
                   <span className="font-medium block">TrackUp Dashboard</span>
-                  <span className="text-xs text-muted-foreground">Team tracking & analytics</span>
+                  <span className="text-xs text-muted-foreground">Open TrackUp on nevorai.com</span>
                 </div>
               </div>
-              <ChevronRight className="h-5 w-5 text-muted-foreground" />
+              <ExternalLink className="h-5 w-5 text-muted-foreground" />
             </button>
 
             <button onClick={() => setEditOpen(true)} className={cn("w-full relative overflow-hidden rounded-xl p-4", "bg-gradient-to-r backdrop-blur-sm", "border border-border/50 shadow-sm", "flex items-center justify-between", "transition-all duration-300 hover:shadow-md hover:scale-[1.01]", "from-blue-500/20 to-blue-500/5")}>
