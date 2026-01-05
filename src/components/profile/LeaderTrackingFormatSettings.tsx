@@ -594,10 +594,34 @@ export function LeaderTrackingFormatSettings({
                   )}
                 </div>
               </div>
-              <Button variant="ghost" size="sm" onClick={handleClearLeader} disabled={updating}>
-                <X className="h-4 w-4 mr-1" />
-                Disconnect
-              </Button>
+              <div className="flex items-center gap-1">
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  onClick={async () => {
+                    if (!profile?.leaders_id_of_my_leader) return;
+                    setSavingLeader(true);
+                    const result = await onUpdateLeaderHierarchy(profile.leaders_id_of_my_leader);
+                    if (result.success) {
+                      await refetchLeaderConnection();
+                      refreshFormat();
+                      toast.success('Leader data synced! Your tracking format is now up to date.');
+                    } else {
+                      toast.error(result.error || 'Failed to sync leader data');
+                    }
+                    setSavingLeader(false);
+                  }} 
+                  disabled={updating || savingLeader}
+                  title="Sync leader data to fix any format issues"
+                >
+                  {savingLeader ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
+                  <span className="ml-1 hidden sm:inline">Sync</span>
+                </Button>
+                <Button variant="ghost" size="sm" onClick={handleClearLeader} disabled={updating}>
+                  <X className="h-4 w-4 mr-1" />
+                  Disconnect
+                </Button>
+              </div>
             </div>
             
             {/* Visibility Toggle */}
