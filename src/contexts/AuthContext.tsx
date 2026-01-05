@@ -32,20 +32,45 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return;
     }
 
-    // Set up auth state listener FIRST
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
-        setSession(session);
-        setUser(session?.user ?? null);
+    const applySession = async (nextSession: Session | null) => {
+      // No session → logged out
+      if (!nextSession?.access_token) {
+        setSession(null);
+        setUser(null);
         setLoading(false);
+        return;
       }
-    );
+
+      // Validate the token with the backend. This prevents a stale local session
+      // (e.g., user deleted by admin) from being treated as authenticated.
+      const { data: userData, error: userError } = await supabase.auth.getUser(nextSession.access_token);
+
+      if (userError || !userData?.user) {
+        console.warn('Invalid session detected; clearing local auth state');
+        try {
+          await supabase.auth.signOut();
+        } catch {
+          // ignore
+        }
+        setSession(null);
+        setUser(null);
+        setLoading(false);
+        return;
+      }
+
+      setSession(nextSession);
+      setUser(userData.user);
+      setLoading(false);
+    };
+
+    // Set up auth state listener FIRST
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, nextSession) => {
+      void applySession(nextSession);
+    });
 
     // THEN check for existing session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      setLoading(false);
+    supabase.auth.getSession().then(({ data: { session: nextSession } }) => {
+      void applySession(nextSession);
     });
 
     return () => subscription.unsubscribe();
