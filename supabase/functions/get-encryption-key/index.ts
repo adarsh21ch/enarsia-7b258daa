@@ -17,13 +17,22 @@ Deno.serve(async (req) => {
     if (!authHeader) {
       console.log('No authorization header provided');
       return new Response(
-        JSON.stringify({ error: 'No authorization header' }),
+        JSON.stringify({ error: 'No authorization header', code: 'NO_AUTH' }),
         { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
     // Extract token from Bearer header
     const token = authHeader.replace('Bearer ', '');
+    
+    // Check if token is empty or just the anon key (not a user token)
+    if (!token || token.length < 100) {
+      console.log('Invalid token format');
+      return new Response(
+        JSON.stringify({ error: 'Invalid token format', code: 'INVALID_TOKEN' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
     
     // Create Supabase admin client to verify the token
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
@@ -42,7 +51,7 @@ Deno.serve(async (req) => {
     if (authError || !user) {
       console.log('Auth error:', authError?.message || 'No user found');
       return new Response(
-        JSON.stringify({ error: 'Invalid or expired token' }),
+        JSON.stringify({ error: 'Invalid or expired token', code: 'TOKEN_EXPIRED' }),
         { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
