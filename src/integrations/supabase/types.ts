@@ -609,6 +609,47 @@ export type Database = {
           },
         ]
       }
+      ac_todo_day_highlights: {
+        Row: {
+          created_at: string | null
+          created_by: string
+          date: string
+          group_id: string | null
+          highlight_title_override: string | null
+          id: string
+          send_notification: boolean
+          template_item_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          created_by: string
+          date: string
+          group_id?: string | null
+          highlight_title_override?: string | null
+          id?: string
+          send_notification?: boolean
+          template_item_id: string
+        }
+        Update: {
+          created_at?: string | null
+          created_by?: string
+          date?: string
+          group_id?: string | null
+          highlight_title_override?: string | null
+          id?: string
+          send_notification?: boolean
+          template_item_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ac_todo_day_highlights_template_item_id_fkey"
+            columns: ["template_item_id"]
+            isOneToOne: false
+            referencedRelation: "ac_todo_template_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ac_todo_template_items: {
         Row: {
           created_at: string
