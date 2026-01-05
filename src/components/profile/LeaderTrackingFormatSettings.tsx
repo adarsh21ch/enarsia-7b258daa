@@ -12,7 +12,6 @@ import { Users, Tag, Copy, Check, Loader2, Eye, EyeOff, X, Plus, Trash2, Star, L
 import { TodoTemplateManager } from './TodoTemplateManager';
 import { toast } from 'sonner';
 import { Profile, ProfileUpdate } from '@/hooks/useProfile';
-import { formatLeaderId } from '@/lib/leaderIdFormat';
 import { useTrackingFormatContext } from '@/contexts/TrackingFormatContext';
 import { useLeaderLevels } from '@/hooks/useLeaderLevels';
 import { useFunnelConfig } from '@/hooks/useFunnelConfig';
@@ -332,7 +331,7 @@ export function LeaderTrackingFormatSettings({
 
   const handleCopyLeaderId = async () => {
     if (profile?.neverai_id) {
-      await navigator.clipboard.writeText(formatLeaderId(profile.neverai_id, profile.leader_code_seq));
+      await navigator.clipboard.writeText(profile.neverai_id);
       setCopiedId(true);
       toast.success('Leader ID copied');
       setTimeout(() => setCopiedId(false), 2000);
@@ -545,7 +544,7 @@ export function LeaderTrackingFormatSettings({
             </div>
             <div>
               <p className="text-xs text-muted-foreground">Your Leader ID</p>
-              <p className="text-sm font-mono font-semibold">{formatLeaderId(profile?.neverai_id, profile?.leader_code_seq) || 'Loading...'}</p>
+              <p className="text-sm font-mono font-semibold">{profile?.neverai_id || 'Loading...'}</p>
             </div>
           </div>
           <Button variant="ghost" size="icon" onClick={handleCopyLeaderId} className="h-9 w-9" disabled={!profile?.neverai_id}>
@@ -594,34 +593,10 @@ export function LeaderTrackingFormatSettings({
                   )}
                 </div>
               </div>
-              <div className="flex items-center gap-1">
-                <Button 
-                  variant="ghost" 
-                  size="sm" 
-                  onClick={async () => {
-                    if (!profile?.leaders_id_of_my_leader) return;
-                    setSavingLeader(true);
-                    const result = await onUpdateLeaderHierarchy(profile.leaders_id_of_my_leader);
-                    if (result.success) {
-                      await refetchLeaderConnection();
-                      refreshFormat();
-                      toast.success('Leader data synced! Your tracking format is now up to date.');
-                    } else {
-                      toast.error(result.error || 'Failed to sync leader data');
-                    }
-                    setSavingLeader(false);
-                  }} 
-                  disabled={updating || savingLeader}
-                  title="Sync leader data to fix any format issues"
-                >
-                  {savingLeader ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
-                  <span className="ml-1 hidden sm:inline">Sync</span>
-                </Button>
-                <Button variant="ghost" size="sm" onClick={handleClearLeader} disabled={updating}>
-                  <X className="h-4 w-4 mr-1" />
-                  Disconnect
-                </Button>
-              </div>
+              <Button variant="ghost" size="sm" onClick={handleClearLeader} disabled={updating}>
+                <X className="h-4 w-4 mr-1" />
+                Disconnect
+              </Button>
             </div>
             
             {/* Visibility Toggle */}

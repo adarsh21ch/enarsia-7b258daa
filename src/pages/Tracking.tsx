@@ -89,8 +89,8 @@ export default function Tracking() {
     setShowDay1Setup(false);
   };
 
-  // Pro gate disabled for now
-  const showProGate = false;
+  // Show Pro gate if user is not Pro
+  const showProGate = !isPro;
 
   // Pull-to-refresh (no-op since dynamic trackers handle their own data)
   const handleRefresh = useCallback(async () => {

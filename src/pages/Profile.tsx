@@ -10,7 +10,6 @@ import { BottomNav } from '@/components/layout/BottomNav';
 import { HeaderBellIcon } from '@/components/layout/HeaderBellIcon';
 import { EditProfileDialog } from '@/components/profile/EditProfileDialog';
 import { ShareProfileDialog } from '@/components/profile/ShareProfileDialog';
-import { ChangePasswordDialog } from '@/components/profile/ChangePasswordDialog';
 import { LeaderTrackingFormatDrawer } from '@/components/profile/LeaderTrackingFormatDrawer';
 import { LevelManagement } from '@/components/profile/LevelManagement';
 import { ProfileLevelDropdown } from '@/components/profile/ProfileLevelDropdown';
@@ -114,9 +113,44 @@ export default function Profile() {
   } = useTrackingFormatContext();
   const [editOpen, setEditOpen] = useState(false);
 
-  // Handle TrackUp Dashboard - Open nevorai.com TrackUp
-  const handleOpenTrackUp = () => {
-    window.open('https://nevorai.com/auth?redirect=/trackup', '_blank');
+  const [ssoLoading, setSsoLoading] = useState(false);
+
+  // Handle TrackUp Dashboard - SSO seamless login
+  const handleOpenTrackUp = async () => {
+    if (ssoLoading) return;
+    
+    setSsoLoading(true);
+    try {
+      // Call the SSO edge function to get a magic link
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        // Not logged in - just open TrackUp normally
+        window.open('https://nevorai.com/trackup', '_blank');
+        return;
+      }
+
+      const { data, error } = await supabase.functions.invoke('trackup-sso-link');
+      
+      if (error) {
+        console.error('SSO error:', error);
+        // Fallback to direct URL
+        window.open('https://nevorai.com/trackup', '_blank');
+        return;
+      }
+
+      if (data?.action_link) {
+        // Open the magic link which will automatically sign them in
+        window.open(data.action_link, '_blank');
+      } else {
+        // Fallback
+        window.open('https://nevorai.com/trackup', '_blank');
+      }
+    } catch (err) {
+      console.error('SSO failed:', err);
+      window.open('https://nevorai.com/trackup', '_blank');
+    } finally {
+      setSsoLoading(false);
+    }
   };
 
   // Process pending leader ID from share links
@@ -282,28 +316,36 @@ export default function Profile() {
               <ChevronRight className="h-5 w-5 text-muted-foreground" />
             </button>
 
-            {/* TrackUp Dashboard - Navigate to internal tracking */}
+            {/* TrackUp Dashboard - External for team tracking with SSO */}
             <button 
               onClick={handleOpenTrackUp}
+              disabled={ssoLoading}
               className={cn(
                 "w-full relative overflow-hidden rounded-xl p-4",
                 "bg-gradient-to-r backdrop-blur-sm",
                 "border border-border/50 shadow-sm",
                 "flex items-center justify-between",
                 "transition-all duration-300 hover:shadow-md hover:scale-[1.01]",
-                "from-emerald-500/20 to-emerald-500/5"
+                "from-emerald-500/20 to-emerald-500/5",
+                ssoLoading && "opacity-70"
               )}
             >
               <div className="flex items-center gap-3">
                 <div className="p-2 rounded-lg bg-emerald-500/10">
-                  <BarChart3 className="h-5 w-5 text-emerald-500" />
+                  {ssoLoading ? (
+                    <Loader2 className="h-5 w-5 text-emerald-500 animate-spin" />
+                  ) : (
+                    <ExternalLink className="h-5 w-5 text-emerald-500" />
+                  )}
                 </div>
                 <div className="text-left">
                   <span className="font-medium block">TrackUp Dashboard</span>
-                  <span className="text-xs text-muted-foreground">Open TrackUp on nevorai.com</span>
+                  <span className="text-xs text-muted-foreground">
+                    {ssoLoading ? 'Opening...' : 'Team tracking & analytics'}
+                  </span>
                 </div>
               </div>
-              <ExternalLink className="h-5 w-5 text-muted-foreground" />
+              <ChevronRight className="h-5 w-5 text-muted-foreground" />
             </button>
 
             <button onClick={() => setEditOpen(true)} className={cn("w-full relative overflow-hidden rounded-xl p-4", "bg-gradient-to-r backdrop-blur-sm", "border border-border/50 shadow-sm", "flex items-center justify-between", "transition-all duration-300 hover:shadow-md hover:scale-[1.01]", "from-blue-500/20 to-blue-500/5")}>
@@ -315,9 +357,6 @@ export default function Profile() {
               </div>
               <ChevronRight className="h-5 w-5 text-muted-foreground" />
             </button>
-
-            {/* Change Password */}
-            <ChangePasswordDialog />
 
             {/* Admin Panel Link - Only visible to admin */}
             {isAdmin && <Link to="/admin" className={cn("w-full relative overflow-hidden rounded-xl p-4", "bg-gradient-to-r backdrop-blur-sm", "border border-destructive/30 shadow-sm", "flex items-center justify-between", "transition-all duration-300 hover:shadow-md hover:scale-[1.01]", "from-destructive/20 to-destructive/5")}>

@@ -9,7 +9,6 @@ import { useTeamAccess, AVAILABLE_TABS, TabPermission } from '@/hooks/useTeamAcc
 import { toast } from 'sonner';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { formatLeaderId } from '@/lib/leaderIdFormat';
 
 const TAB_LABELS: Record<TabPermission, string> = {
   calling: 'Calling',
@@ -23,7 +22,6 @@ export function ShareProfileDialog() {
   const { 
     myNevorId, 
     myDisplayName,
-    myLeaderCodeSeq,
     teamMembers, 
     sharedWithMe, 
     pendingRequests,
@@ -48,7 +46,7 @@ export function ShareProfileDialog() {
 
   const handleCopyId = async () => {
     if (myNevorId) {
-      await navigator.clipboard.writeText(formatLeaderId(myNevorId, myLeaderCodeSeq));
+      await navigator.clipboard.writeText(myNevorId);
       setCopied(true);
       toast.success('Leader ID copied');
       setTimeout(() => setCopied(false), 2000);
@@ -133,7 +131,7 @@ export function ShareProfileDialog() {
             <Label className="text-sm font-medium">Your Leader ID</Label>
             <div className="flex items-center gap-2">
               <div className="flex-1 px-3 py-2 bg-muted rounded-md font-mono text-sm">
-                {formatLeaderId(myNevorId, myLeaderCodeSeq) || 'Loading...'}
+                {myNevorId || 'Loading...'}
               </div>
               <Button 
                 variant="outline" 
@@ -176,7 +174,7 @@ export function ShareProfileDialog() {
 
             <div className="flex items-center gap-2">
               <Input
-                placeholder="Enter Leader's ID (e.g., NVR000123)"
+                placeholder="Enter Leader's ID (e.g., NVR-XXXXX)"
                 value={leaderIdInput}
                 onChange={(e) => setLeaderIdInput(e.target.value.toUpperCase())}
                 className="flex-1 font-mono"

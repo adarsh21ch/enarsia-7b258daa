@@ -10,7 +10,6 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Users, Tag, Copy, Check, Loader2, Eye, EyeOff, X, Plus, Trash2, Phone, Layers } from 'lucide-react';
 import { toast } from 'sonner';
 import { Profile, ProfileUpdate } from '@/hooks/useProfile';
-import { formatLeaderId } from '@/lib/leaderIdFormat';
 
 interface LeaderStagesSettingsProps {
   profile: Profile | null;
@@ -66,7 +65,7 @@ export function LeaderStagesSettings({
 
   const handleCopyLeaderId = async () => {
     if (profile?.neverai_id) {
-      await navigator.clipboard.writeText(formatLeaderId(profile.neverai_id, profile.leader_code_seq));
+      await navigator.clipboard.writeText(profile.neverai_id);
       setCopiedId(true);
       toast.success('Leader ID copied');
       setTimeout(() => setCopiedId(false), 2000);
@@ -200,7 +199,7 @@ export function LeaderStagesSettings({
             </div>
             <div>
               <p className="text-xs text-muted-foreground">Your Leader ID</p>
-              <p className="text-sm font-mono font-semibold">{formatLeaderId(profile?.neverai_id, profile?.leader_code_seq) || 'Loading...'}</p>
+              <p className="text-sm font-mono font-semibold">{profile?.neverai_id || 'Loading...'}</p>
             </div>
           </div>
           <Button 
@@ -258,7 +257,7 @@ export function LeaderStagesSettings({
           <div className="space-y-2">
             <div className="flex gap-2">
               <Input
-                placeholder="Enter Leader's ID (e.g., NVR000123)"
+                placeholder="Enter Leader's ID (e.g., NVR-XXXXX)"
                 value={leaderIdInput}
                 onChange={(e) => setLeaderIdInput(e.target.value.toUpperCase())}
                 className="flex-1 font-mono"

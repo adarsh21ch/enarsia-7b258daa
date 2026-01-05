@@ -1,7 +1,6 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
-import { getPublishedAppUrl } from '@/config/siteUrl';
 
 interface AuthContextType {
   user: User | null;
@@ -20,57 +19,33 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const liveUrl = getPublishedAppUrl();
-
-    // Check if we're on a preview URL with auth tokens - redirect to live domain
-    const isPreviewUrl = window.location.hostname.endsWith('.lovable.app') && window.location.origin !== liveUrl;
+    const liveUrl = 'https://wpczgwxsriezaubncuom.lovable.app';
+    
+    // Check if we're on a preview URL with OAuth tokens - redirect to live domain
+    const currentUrl = window.location.href;
+    const isPreviewUrl = currentUrl.includes('.lovable.app') && !currentUrl.includes('wpczgwxsriezaubncuom');
     const hasAuthToken = window.location.hash.includes('access_token');
-
+    
     if (isPreviewUrl && hasAuthToken) {
-      // Redirect to live domain preserving the current route + hash (works for password recovery too)
-      window.location.href = `${liveUrl}${window.location.pathname}${window.location.search}${window.location.hash}`;
+      // Redirect to live domain with the same hash
+      window.location.href = `${liveUrl}/home${window.location.hash}`;
       return;
     }
 
-    const applySession = async (nextSession: Session | null) => {
-      // No session → logged out
-      if (!nextSession?.access_token) {
-        setSession(null);
-        setUser(null);
-        setLoading(false);
-        return;
-      }
-
-      // Validate the token with the backend. This prevents a stale local session
-      // (e.g., user deleted by admin) from being treated as authenticated.
-      const { data: userData, error: userError } = await supabase.auth.getUser(nextSession.access_token);
-
-      if (userError || !userData?.user) {
-        console.warn('Invalid session detected; clearing local auth state');
-        try {
-          await supabase.auth.signOut();
-        } catch {
-          // ignore
-        }
-        setSession(null);
-        setUser(null);
-        setLoading(false);
-        return;
-      }
-
-      setSession(nextSession);
-      setUser(userData.user);
-      setLoading(false);
-    };
-
     // Set up auth state listener FIRST
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, nextSession) => {
-      void applySession(nextSession);
-    });
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (event, session) => {
+        setSession(session);
+        setUser(session?.user ?? null);
+        setLoading(false);
+      }
+    );
 
     // THEN check for existing session
-    supabase.auth.getSession().then(({ data: { session: nextSession } }) => {
-      void applySession(nextSession);
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+      setUser(session?.user ?? null);
+      setLoading(false);
     });
 
     return () => subscription.unsubscribe();
@@ -78,7 +53,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signUp = async (email: string, password: string) => {
     // Use live domain for email redirect to avoid preview shell issues
-    const liveUrl = getPublishedAppUrl();
+    const liveUrl = 'https://wpczgwxsriezaubncuom.lovable.app';
     const { error } = await supabase.auth.signUp({
       email,
       password,

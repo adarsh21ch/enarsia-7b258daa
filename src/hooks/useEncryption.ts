@@ -31,20 +31,10 @@ export function useEncryption() {
 
     const fetchKey = async () => {
       try {
-        // Get current session to ensure we have a valid token
-        const { data: sessionData } = await supabase.auth.getSession();
-        if (!sessionData?.session?.access_token) {
-          console.log('No valid session for encryption key fetch');
-          return;
-        }
-
         const { data, error } = await supabase.functions.invoke('get-encryption-key');
         
         if (error) {
-          // Don't log warning for expected auth errors
-          if (!error.message?.includes('401')) {
-            console.warn('Failed to fetch encryption key:', error.message);
-          }
+          console.warn('Failed to fetch encryption key, falling back to edge function:', error.message);
           return;
         }
 

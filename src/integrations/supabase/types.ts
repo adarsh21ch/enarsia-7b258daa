@@ -14,41 +14,6 @@ export type Database = {
   }
   public: {
     Tables: {
-      ac_announcement_media: {
-        Row: {
-          announcement_id: string
-          created_at: string
-          id: string
-          media_type: string
-          media_url: string
-          sort_order: number
-        }
-        Insert: {
-          announcement_id: string
-          created_at?: string
-          id?: string
-          media_type?: string
-          media_url: string
-          sort_order?: number
-        }
-        Update: {
-          announcement_id?: string
-          created_at?: string
-          id?: string
-          media_type?: string
-          media_url?: string
-          sort_order?: number
-        }
-        Relationships: [
-          {
-            foreignKeyName: "ac_announcement_media_announcement_id_fkey"
-            columns: ["announcement_id"]
-            isOneToOne: false
-            referencedRelation: "ac_announcements"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       ac_announcements: {
         Row: {
           author_user_id: string | null
@@ -602,47 +567,6 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "ac_todo_completions_template_item_id_fkey"
-            columns: ["template_item_id"]
-            isOneToOne: false
-            referencedRelation: "ac_todo_template_items"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      ac_todo_day_highlights: {
-        Row: {
-          created_at: string | null
-          created_by: string
-          date: string
-          group_id: string | null
-          highlight_title_override: string | null
-          id: string
-          send_notification: boolean
-          template_item_id: string
-        }
-        Insert: {
-          created_at?: string | null
-          created_by: string
-          date: string
-          group_id?: string | null
-          highlight_title_override?: string | null
-          id?: string
-          send_notification?: boolean
-          template_item_id: string
-        }
-        Update: {
-          created_at?: string | null
-          created_by?: string
-          date?: string
-          group_id?: string | null
-          highlight_title_override?: string | null
-          id?: string
-          send_notification?: boolean
-          template_item_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "ac_todo_day_highlights_template_item_id_fkey"
             columns: ["template_item_id"]
             isOneToOne: false
             referencedRelation: "ac_todo_template_items"
@@ -2191,35 +2115,7 @@ export type Database = {
       }
     }
     Views: {
-      ac_user_full_profile: {
-        Row: {
-          avatar_url: string | null
-          city: string | null
-          created_at: string | null
-          dob: string | null
-          email: string | null
-          full_name: string | null
-          leader_id: string | null
-          leaders_id_of_my_leader: string | null
-          level_id: string | null
-          mobile: string | null
-          nevorai_display_name: string | null
-          onboarding_completed_at: string | null
-          root_leader_id: string | null
-          state: string | null
-          updated_at: string | null
-          user_id: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "profiles_level_id_fkey"
-            columns: ["level_id"]
-            isOneToOne: false
-            referencedRelation: "leader_levels"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
+      [_ in never]: never
     }
     Functions: {
       admin_get_analytics: {
@@ -2363,8 +2259,6 @@ export type Database = {
         Args: { target_user_id: string }
         Returns: string
       }
-      get_user_leader_id: { Args: { user_uuid: string }; Returns: string }
-      has_nevorai_profile: { Args: { user_uuid: string }; Returns: boolean }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -2383,10 +2277,9 @@ export type Database = {
         Returns: boolean
       }
       is_in_downline: {
-        Args: { target_user_id: string; viewer_user_id: string }
+        Args: { _target_user_id: string; _viewer_id: string }
         Returns: boolean
       }
-      normalize_leader_id: { Args: { id: string }; Returns: string }
       record_app_access: { Args: { p_app: string }; Returns: undefined }
       update_leader_hierarchy: {
         Args: { p_leader_neverai_id: string; p_user_id: string }

@@ -3,21 +3,23 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Users, Copy, Check, X, UserPlus, Eye, EyeOff } from 'lucide-react';
+import { Users, Copy, Check, X, UserPlus, Bell, Eye, EyeOff } from 'lucide-react';
 import { useTeamAccess } from '@/hooks/useTeamAccess';
 import { toast } from 'sonner';
+import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { formatLeaderId } from '@/lib/leaderIdFormat';
 
 export function TeamAccessDialog() {
   const { 
     myNevorId, 
     myDisplayName,
-    myLeaderCodeSeq,
     teamMembers, 
     sharedWithMe, 
+    pendingRequests,
     loading, 
     shareWithLeader,
+    acceptShareRequest,
+    rejectShareRequest,
     stopSharingWithLeader,
     removeFromTeam
   } = useTeamAccess();
@@ -29,7 +31,7 @@ export function TeamAccessDialog() {
 
   const handleCopyId = async () => {
     if (myNevorId) {
-      await navigator.clipboard.writeText(formatLeaderId(myNevorId, myLeaderCodeSeq));
+      await navigator.clipboard.writeText(myNevorId);
       setCopied(true);
       toast.success('Leader ID copied');
       setTimeout(() => setCopied(false), 2000);
@@ -50,6 +52,14 @@ export function TeamAccessDialog() {
     }
   };
 
+  const handleAccept = async (requestId: string) => {
+    await acceptShareRequest(requestId);
+  };
+
+  const handleReject = async (requestId: string) => {
+    await rejectShareRequest(requestId);
+  };
+
   const handleStopSharing = async (accessId: string) => {
     await stopSharingWithLeader(accessId);
   };
@@ -64,6 +74,11 @@ export function TeamAccessDialog() {
         <Button variant="outline" size="sm" className="gap-2">
           <Users className="h-4 w-4" />
           Team
+          {pendingRequests.length > 0 && (
+            <Badge variant="destructive" className="ml-1 h-5 w-5 p-0 flex items-center justify-center text-xs">
+              {pendingRequests.length}
+            </Badge>
+          )}
         </Button>
       </DialogTrigger>
       <DialogContent className="max-w-md max-h-[85vh] overflow-y-auto">
@@ -80,7 +95,7 @@ export function TeamAccessDialog() {
             <Label className="text-sm font-medium">Your Leader ID</Label>
             <div className="flex items-center gap-2">
               <div className="flex-1 px-3 py-2 bg-muted rounded-md font-mono text-sm">
-                {formatLeaderId(myNevorId, myLeaderCodeSeq) || 'Loading...'}
+                {myNevorId || 'Loading...'}
               </div>
               <Button 
                 variant="outline" 
@@ -106,7 +121,7 @@ export function TeamAccessDialog() {
             </Label>
             <div className="flex items-center gap-2">
               <Input
-                placeholder="Enter Leader's ID (e.g., NVR000123)"
+                placeholder="Enter Leader's ID (e.g., NVR-XXXXX)"
                 value={leaderTrackUpId}
                 onChange={(e) => setLeaderTrackUpId(e.target.value.toUpperCase())}
                 className="flex-1 font-mono"
@@ -120,10 +135,52 @@ export function TeamAccessDialog() {
               </Button>
             </div>
             <p className="text-xs text-muted-foreground">
-              Share your Follow Up list with your leader. They will be able to view your data immediately (read-only).
+              Share your Follow Up list with your leader. They must accept before they can view your data (read-only).
             </p>
           </div>
 
+          {/* Pending Share Requests (for leaders) */}
+          {pendingRequests.length > 0 && (
+            <>
+              <Separator />
+              <div className="space-y-2">
+                <Label className="text-sm font-medium flex items-center gap-2">
+                  <Bell className="h-4 w-4 text-orange-500" />
+                  Share Requests
+                  <Badge variant="secondary">{pendingRequests.length}</Badge>
+                </Label>
+                <div className="space-y-2">
+                  {pendingRequests.map(request => (
+                    <div key={request.id} className="flex items-center justify-between p-3 bg-orange-50 dark:bg-orange-950/20 border border-orange-200 dark:border-orange-800 rounded-lg">
+                      <div className="flex-1">
+                        <p className="text-sm font-medium">{request.owner_display_name || 'Unknown'}</p>
+                        <p className="text-xs text-muted-foreground font-mono">{request.owner_nevorid}</p>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          wants to share their Follow Up list with you (read-only)
+                        </p>
+                      </div>
+                      <div className="flex gap-2 ml-2">
+                        <Button 
+                          variant="default" 
+                          size="sm"
+                          onClick={() => handleAccept(request.id)}
+                        >
+                          Accept
+                        </Button>
+                        <Button 
+                          variant="ghost" 
+                          size="sm"
+                          onClick={() => handleReject(request.id)}
+                        >
+                          Ignore
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </>
+          )}
 
           {/* Team Members Sharing with Me (I can view their data) */}
           {sharedWithMe.length > 0 && (
@@ -160,7 +217,7 @@ export function TeamAccessDialog() {
           )}
 
           {/* Leaders I'm Sharing With */}
-          {teamMembers.filter(m => m.status === 'active').length > 0 && (
+          {teamMembers.filter(m => m.status === 'active' || m.status === 'pending').length > 0 && (
             <>
               <Separator />
               <div className="space-y-2">
@@ -169,14 +226,22 @@ export function TeamAccessDialog() {
                   You're sharing with
                 </Label>
                 <div className="space-y-2">
-                  {teamMembers.filter(m => m.status === 'active').map(member => (
+                  {teamMembers.filter(m => m.status === 'active' || m.status === 'pending').map(member => (
                     <div key={member.id} className="flex items-center justify-between p-3 bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 rounded-lg">
                       <div>
-                        <p className="text-sm font-medium">
+                        <p className="text-sm font-medium flex items-center gap-2">
                           {member.display_name || 'Unknown'}
+                          {member.status === 'pending' && (
+                            <Badge variant="secondary" className="text-xs">Pending</Badge>
+                          )}
                         </p>
                         <p className="text-xs text-muted-foreground font-mono">{member.nevorid}</p>
-                        <p className="text-xs text-muted-foreground">Can view your Follow Up list</p>
+                        {member.status === 'active' && (
+                          <p className="text-xs text-muted-foreground">Can view your Follow Up list</p>
+                        )}
+                        {member.status === 'pending' && (
+                          <p className="text-xs text-muted-foreground">Waiting for them to accept</p>
+                        )}
                       </div>
                       <Button 
                         variant="ghost" 
@@ -197,7 +262,7 @@ export function TeamAccessDialog() {
             <p className="text-sm text-muted-foreground text-center py-4">Loading...</p>
           )}
 
-          {!loading && sharedWithMe.length === 0 && teamMembers.length === 0 && (
+          {!loading && pendingRequests.length === 0 && sharedWithMe.length === 0 && teamMembers.length === 0 && (
             <div className="text-center py-4 text-muted-foreground">
               <Users className="h-8 w-8 mx-auto mb-2 opacity-50" />
               <p className="text-sm">No team connections yet</p>
