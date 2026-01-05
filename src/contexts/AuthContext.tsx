@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
+import { getPublishedAppUrl } from '@/config/siteUrl';
 
 interface AuthContextType {
   user: User | null;
@@ -19,16 +20,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const liveUrl = 'https://wpczgwxsriezaubncuom.lovable.app';
-    
-    // Check if we're on a preview URL with OAuth tokens - redirect to live domain
-    const currentUrl = window.location.href;
-    const isPreviewUrl = currentUrl.includes('.lovable.app') && !currentUrl.includes('wpczgwxsriezaubncuom');
+    const liveUrl = getPublishedAppUrl();
+
+    // Check if we're on a preview URL with auth tokens - redirect to live domain
+    const isPreviewUrl = window.location.hostname.endsWith('.lovable.app') && window.location.origin !== liveUrl;
     const hasAuthToken = window.location.hash.includes('access_token');
-    
+
     if (isPreviewUrl && hasAuthToken) {
-      // Redirect to live domain with the same hash
-      window.location.href = `${liveUrl}/home${window.location.hash}`;
+      // Redirect to live domain preserving the current route + hash (works for password recovery too)
+      window.location.href = `${liveUrl}${window.location.pathname}${window.location.search}${window.location.hash}`;
       return;
     }
 
@@ -53,7 +53,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signUp = async (email: string, password: string) => {
     // Use live domain for email redirect to avoid preview shell issues
-    const liveUrl = 'https://wpczgwxsriezaubncuom.lovable.app';
+    const liveUrl = getPublishedAppUrl();
     const { error } = await supabase.auth.signUp({
       email,
       password,

@@ -9,6 +9,7 @@ import { toast } from 'sonner';
 import { Loader2, Mail, Lock, Eye, EyeOff, ArrowLeft, User } from 'lucide-react';
 import nevoraLogo from '@/assets/nevorai-logo.jpeg';
 import { formatLeaderId } from '@/lib/leaderIdFormat';
+import { getPasswordRecoveryRedirectUrl } from '@/config/siteUrl';
 
 export default function Auth() {
   const navigate = useNavigate();
@@ -142,7 +143,7 @@ export default function Auth() {
     }
     setIsSubmitting(true);
     const { error } = await supabase.auth.resetPasswordForEmail(emailOrLeaderId, {
-      redirectTo: `${window.location.origin}/reset-password`,
+      redirectTo: getPasswordRecoveryRedirectUrl(),
     });
     if (error) {
       toast.error(error.message || 'Failed to send reset email');
