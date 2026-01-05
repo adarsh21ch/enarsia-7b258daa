@@ -2383,7 +2383,7 @@ export type Database = {
         Returns: boolean
       }
       is_in_downline: {
-        Args: { _target_user_id: string; _viewer_id: string }
+        Args: { target_user_id: string; viewer_user_id: string }
         Returns: boolean
       }
       record_app_access: { Args: { p_app: string }; Returns: undefined }
