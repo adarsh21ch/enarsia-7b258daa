@@ -12,6 +12,7 @@ import { Users, Tag, Copy, Check, Loader2, Eye, EyeOff, X, Plus, Trash2, Star, L
 import { TodoTemplateManager } from './TodoTemplateManager';
 import { toast } from 'sonner';
 import { Profile, ProfileUpdate } from '@/hooks/useProfile';
+import { formatLeaderId } from '@/lib/leaderIdFormat';
 import { useTrackingFormatContext } from '@/contexts/TrackingFormatContext';
 import { useLeaderLevels } from '@/hooks/useLeaderLevels';
 import { useFunnelConfig } from '@/hooks/useFunnelConfig';
@@ -331,7 +332,7 @@ export function LeaderTrackingFormatSettings({
 
   const handleCopyLeaderId = async () => {
     if (profile?.neverai_id) {
-      await navigator.clipboard.writeText(profile.neverai_id);
+      await navigator.clipboard.writeText(formatLeaderId(profile.neverai_id, profile.leader_code_seq));
       setCopiedId(true);
       toast.success('Leader ID copied');
       setTimeout(() => setCopiedId(false), 2000);
@@ -544,7 +545,7 @@ export function LeaderTrackingFormatSettings({
             </div>
             <div>
               <p className="text-xs text-muted-foreground">Your Leader ID</p>
-              <p className="text-sm font-mono font-semibold">{profile?.neverai_id || 'Loading...'}</p>
+              <p className="text-sm font-mono font-semibold">{formatLeaderId(profile?.neverai_id, profile?.leader_code_seq) || 'Loading...'}</p>
             </div>
           </div>
           <Button variant="ghost" size="icon" onClick={handleCopyLeaderId} className="h-9 w-9" disabled={!profile?.neverai_id}>

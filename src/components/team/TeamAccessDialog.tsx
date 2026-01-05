@@ -8,11 +8,13 @@ import { useTeamAccess } from '@/hooks/useTeamAccess';
 import { toast } from 'sonner';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
+import { formatLeaderId } from '@/lib/leaderIdFormat';
 
 export function TeamAccessDialog() {
   const { 
     myNevorId, 
     myDisplayName,
+    myLeaderCodeSeq,
     teamMembers, 
     sharedWithMe, 
     pendingRequests,
@@ -31,7 +33,7 @@ export function TeamAccessDialog() {
 
   const handleCopyId = async () => {
     if (myNevorId) {
-      await navigator.clipboard.writeText(myNevorId);
+      await navigator.clipboard.writeText(formatLeaderId(myNevorId, myLeaderCodeSeq));
       setCopied(true);
       toast.success('Leader ID copied');
       setTimeout(() => setCopied(false), 2000);
@@ -95,7 +97,7 @@ export function TeamAccessDialog() {
             <Label className="text-sm font-medium">Your Leader ID</Label>
             <div className="flex items-center gap-2">
               <div className="flex-1 px-3 py-2 bg-muted rounded-md font-mono text-sm">
-                {myNevorId || 'Loading...'}
+                {formatLeaderId(myNevorId, myLeaderCodeSeq) || 'Loading...'}
               </div>
               <Button 
                 variant="outline" 
@@ -121,7 +123,7 @@ export function TeamAccessDialog() {
             </Label>
             <div className="flex items-center gap-2">
               <Input
-                placeholder="Enter Leader's ID (e.g., NVR-XXXXX)"
+                placeholder="Enter Leader's ID (e.g., NVR000123)"
                 value={leaderTrackUpId}
                 onChange={(e) => setLeaderTrackUpId(e.target.value.toUpperCase())}
                 className="flex-1 font-mono"
