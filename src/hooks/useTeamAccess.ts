@@ -38,8 +38,9 @@ interface PendingRequest {
 
 export function useTeamAccess() {
   const { user } = useAuth();
-  const [myNevorId, setMyNevorId] = useState<string | null>(null);
+const [myNevorId, setMyNevorId] = useState<string | null>(null);
   const [myDisplayName, setMyDisplayName] = useState<string | null>(null);
+  const [myLeaderCodeSeq, setMyLeaderCodeSeq] = useState<number | null>(null);
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
   const [sharedWithMe, setSharedWithMe] = useState<SharedAccess[]>([]);
   const [pendingRequests, setPendingRequests] = useState<PendingRequest[]>([]);
@@ -50,13 +51,14 @@ export function useTeamAccess() {
     
     const { data } = await supabase
       .from('profiles')
-      .select('neverai_id, display_name')
+      .select('neverai_id, display_name, leader_code_seq')
       .eq('user_id', user.id)
       .single();
     
     if (data) {
       setMyNevorId(data.neverai_id);
       setMyDisplayName(data.display_name);
+      setMyLeaderCodeSeq(data.leader_code_seq);
     }
   }, [user]);
 
@@ -343,6 +345,7 @@ export function useTeamAccess() {
   return {
     myNevorId,
     myDisplayName,
+    myLeaderCodeSeq,
     teamMembers,
     sharedWithMe,
     pendingRequests,
