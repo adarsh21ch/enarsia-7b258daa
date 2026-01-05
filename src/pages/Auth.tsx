@@ -8,6 +8,8 @@ import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
 import { Loader2, Mail, Lock, Eye, EyeOff, ArrowLeft, User } from 'lucide-react';
 import nevoraLogo from '@/assets/nevorai-logo.jpeg';
+import { formatLeaderId } from '@/lib/leaderIdFormat';
+import { getPasswordRecoveryRedirectUrl } from '@/config/siteUrl';
 
 export default function Auth() {
   const navigate = useNavigate();
@@ -141,7 +143,7 @@ export default function Auth() {
     }
     setIsSubmitting(true);
     const { error } = await supabase.auth.resetPasswordForEmail(emailOrLeaderId, {
-      redirectTo: `${window.location.origin}/reset-password`,
+      redirectTo: getPasswordRecoveryRedirectUrl(),
     });
     if (error) {
       toast.error(error.message || 'Failed to send reset email');
@@ -230,7 +232,7 @@ export default function Auth() {
         {leaderParam && (
           <div className="mb-4 p-3 bg-primary/10 border border-primary/20 rounded-lg text-center">
             <p className="text-sm text-primary">
-              You're joining via Leader ID: <span className="font-mono font-semibold">{leaderParam}</span>
+              You're joining via Leader ID: <span className="font-mono font-semibold">{formatLeaderId(leaderParam)}</span>
             </p>
           </div>
         )}
@@ -267,7 +269,7 @@ export default function Auth() {
                 type={isSignUp ? 'email' : 'text'}
                 value={emailOrLeaderId}
                 onChange={(e) => setEmailOrLeaderId(e.target.value)}
-                placeholder={isSignUp ? 'you@example.com' : 'you@example.com or NVR-XXXXX'}
+                placeholder={isSignUp ? 'you@example.com' : 'you@example.com or NVR000123'}
                 className="pl-10"
                 required
               />

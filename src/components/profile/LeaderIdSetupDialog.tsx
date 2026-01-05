@@ -110,12 +110,12 @@ export function LeaderIdSetupDialog({ onComplete }: LeaderIdSetupDialogProps) {
                   id="leader-id"
                   value={leaderIdInput}
                   onChange={(e) => setLeaderIdInput(e.target.value.toUpperCase())}
-                  placeholder="NVR-XXXXX"
+                  placeholder="NVR000123"
                   className="font-mono"
                   disabled={saving}
                 />
                 <p className="text-xs text-muted-foreground">
-                  Your leader's ID looks like NVR-XXXXX. Ask your leader if you don't have it.
+                  Your leader's ID looks like NVR000123. Ask your leader if you don't have it.
                 </p>
               </div>
             </div>

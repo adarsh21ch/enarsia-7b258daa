@@ -38,8 +38,9 @@ interface PendingRequest {
 
 export function useTeamAccess() {
   const { user } = useAuth();
-  const [myNevorId, setMyNevorId] = useState<string | null>(null);
+const [myNevorId, setMyNevorId] = useState<string | null>(null);
   const [myDisplayName, setMyDisplayName] = useState<string | null>(null);
+  const [myLeaderCodeSeq, setMyLeaderCodeSeq] = useState<number | null>(null);
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
   const [sharedWithMe, setSharedWithMe] = useState<SharedAccess[]>([]);
   const [pendingRequests, setPendingRequests] = useState<PendingRequest[]>([]);
@@ -50,17 +51,18 @@ export function useTeamAccess() {
     
     const { data } = await supabase
       .from('profiles')
-      .select('neverai_id, display_name')
+      .select('neverai_id, display_name, leader_code_seq')
       .eq('user_id', user.id)
       .single();
     
     if (data) {
       setMyNevorId(data.neverai_id);
       setMyDisplayName(data.display_name);
+      setMyLeaderCodeSeq(data.leader_code_seq);
     }
   }, [user]);
 
-  // Fetch people I'm sharing my data WITH (I am owner, they are viewer)
+  // Fetch people I'm sharing my data WITH (I am owner, they are viewer) - ACTIVE only
   const fetchTeamMembers = useCallback(async () => {
     if (!user) return;
     
@@ -68,7 +70,7 @@ export function useTeamAccess() {
       .from('team_access')
       .select('id, shared_with_user_id, status, allowed_tabs')
       .eq('owner_user_id', user.id)
-      .in('status', ['pending', 'active']);
+      .eq('status', 'active');
     
     if (accessRecords && accessRecords.length > 0) {
       const userIds = accessRecords.map(r => r.shared_with_user_id);
@@ -85,7 +87,7 @@ export function useTeamAccess() {
             user_id: p.user_id,
             display_name: p.display_name,
             nevorid: p.neverai_id,
-            status: record?.status || 'pending',
+            status: record?.status || 'active',
             allowed_tabs: record?.allowed_tabs as TabPermission[] | null
           };
         }));
@@ -174,6 +176,7 @@ export function useTeamAccess() {
   }, [refetch]);
 
   // Member initiates sharing with a leader by entering leader's Leader ID
+  // Auto-approves the connection and sends notification to leader
   const shareWithLeader = async (leaderNeveraiId: string, allowedTabs?: TabPermission[] | null) => {
     if (!user) return { success: false, error: 'Not authenticated' };
     
@@ -204,46 +207,68 @@ export function useTeamAccess() {
       if (existing.status === 'active') {
         return { success: false, error: 'Already sharing with this leader' };
       }
-      if (existing.status === 'pending') {
-        return { success: false, error: 'Share request already pending' };
+      // If pending or revoked, update to active (auto-approve)
+      const { error } = await supabase
+        .from('team_access')
+        .update({ 
+          status: 'active',
+          allowed_tabs: allowedTabs === undefined ? null : allowedTabs
+        })
+        .eq('id', existing.id);
+      
+      if (error) {
+        return { success: false, error: 'Failed to connect with leader' };
       }
-      // If revoked, update back to pending with new tab permissions
-      if (existing.status === 'revoked') {
-        const { error } = await supabase
-          .from('team_access')
-          .update({ 
-            status: 'pending',
-            allowed_tabs: allowedTabs === undefined ? null : allowedTabs
-          })
-          .eq('id', existing.id);
-        
-        if (error) {
-          return { success: false, error: 'Failed to send share request' };
-        }
-        
-        await fetchTeamMembers();
-        toast.success(`Share request sent to ${leaderName}`);
-        return { success: true };
-      }
+      
+      // Send notification to leader
+      await sendConnectionNotification(leaderUserId);
+      
+      await fetchTeamMembers();
+      toast.success(`Connected with ${leaderName}`);
+      return { success: true };
     }
 
-    // Create new share request with allowed_tabs (null means all tabs)
+    // Create new share request with status 'active' (auto-approved)
     const { error } = await supabase
       .from('team_access')
       .insert({
         owner_user_id: user.id,
         shared_with_user_id: leaderUserId,
-        status: 'pending',
+        status: 'active',
         allowed_tabs: allowedTabs === undefined ? null : allowedTabs
       });
 
     if (error) {
-      return { success: false, error: 'Failed to send share request' };
+      return { success: false, error: 'Failed to connect with leader' };
     }
 
+    // Send notification to leader
+    await sendConnectionNotification(leaderUserId);
+
     await fetchTeamMembers();
-    toast.success(`Share request sent to ${leaderName}. They must accept before they can view your data.`);
+    toast.success(`Connected with ${leaderName}. They can now view your Follow Up list.`);
     return { success: true };
+  };
+
+  // Send notification to leader when someone connects
+  const sendConnectionNotification = async (leaderUserId: string) => {
+    try {
+      const memberName = myDisplayName || 'A team member';
+      const memberId = myNevorId || '';
+      
+      await supabase
+        .from('inbox_messages')
+        .insert({
+          sender_user_id: user!.id,
+          recipient_user_id: leaderUserId,
+          title: 'New Team Connection',
+          body: `${memberName} (${memberId}) has connected with you and is now sharing their Follow Up list.`,
+          message_type: 'team_connection',
+          deep_link_route: '/listup'
+        });
+    } catch (err) {
+      console.error('Failed to send connection notification:', err);
+    }
   };
 
   // Leader accepts a pending share request
@@ -343,6 +368,7 @@ export function useTeamAccess() {
   return {
     myNevorId,
     myDisplayName,
+    myLeaderCodeSeq,
     teamMembers,
     sharedWithMe,
     pendingRequests,
