@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -125,6 +125,7 @@ export function ShareProfileDialog() {
             <Share2 className="h-5 w-5" />
             Share Your Profile
           </DialogTitle>
+          <DialogDescription>Share your profile data with leaders or manage team connections.</DialogDescription>
         </DialogHeader>
 
         <div className="space-y-6">

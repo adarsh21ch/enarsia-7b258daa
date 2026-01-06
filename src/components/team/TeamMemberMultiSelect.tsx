@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 import { cn } from '@/lib/utils';
 import { useMemberAliases } from '@/hooks/useMemberAliases';
 import { toast } from 'sonner';
@@ -151,7 +151,10 @@ export function TeamMemberMultiSelect({
 
       <Dialog open={!!editingMember} onOpenChange={(open) => !open && setEditingMember(null)}>
         <DialogContent className="sm:max-w-[340px]">
-          <DialogHeader><DialogTitle className="text-base">Rename Team Member</DialogTitle></DialogHeader>
+          <DialogHeader>
+            <DialogTitle className="text-base">Rename Team Member</DialogTitle>
+            <DialogDescription>Set a custom label for this team member that only you will see.</DialogDescription>
+          </DialogHeader>
           <div className="space-y-3 py-2">
             <div>
               <p className="text-xs text-muted-foreground mb-1">Real Name</p>
