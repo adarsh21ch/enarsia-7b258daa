@@ -1578,6 +1578,7 @@ export type Database = {
           phone: string | null
           response_labels: Json | null
           root_leader_id: string | null
+          source_app: string | null
           stage_count: number
           stage_labels: Json | null
           tags_refresh_token: string | null
@@ -1603,6 +1604,7 @@ export type Database = {
           phone?: string | null
           response_labels?: Json | null
           root_leader_id?: string | null
+          source_app?: string | null
           stage_count?: number
           stage_labels?: Json | null
           tags_refresh_token?: string | null
@@ -1628,6 +1630,7 @@ export type Database = {
           phone?: string | null
           response_labels?: Json | null
           root_leader_id?: string | null
+          source_app?: string | null
           stage_count?: number
           stage_labels?: Json | null
           tags_refresh_token?: string | null
