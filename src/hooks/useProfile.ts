@@ -178,7 +178,7 @@ export function useProfile() {
 
       const { data, error } = await supabase.rpc('update_leader_hierarchy', {
         p_user_id: user.id,
-        p_leader_neverai_id: leaderNeveraiId
+        p_leader_id: leaderNeveraiId
       });
 
       if (error) throw error;
