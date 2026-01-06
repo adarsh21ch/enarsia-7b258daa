@@ -331,8 +331,9 @@ export function LeaderTrackingFormatSettings({
   }, [autoSaveFormat]);
 
   const handleCopyLeaderId = async () => {
-    if (profile?.neverai_id) {
-      await navigator.clipboard.writeText(formatLeaderId(profile.neverai_id, profile.leader_code_seq));
+    const leaderId = profile?.leader_id || (profile as any)?.neverai_id;
+    if (leaderId) {
+      await navigator.clipboard.writeText(formatLeaderId(leaderId, profile?.leader_code_seq));
       setCopiedId(true);
       toast.success('Leader ID copied');
       setTimeout(() => setCopiedId(false), 2000);
@@ -545,10 +546,10 @@ export function LeaderTrackingFormatSettings({
             </div>
             <div>
               <p className="text-xs text-muted-foreground">Your Leader ID</p>
-              <p className="text-sm font-mono font-semibold">{formatLeaderId(profile?.neverai_id, profile?.leader_code_seq) || 'Loading...'}</p>
+              <p className="text-sm font-mono font-semibold">{formatLeaderId(profile?.leader_id || (profile as any)?.neverai_id, profile?.leader_code_seq) || 'Loading...'}</p>
             </div>
           </div>
-          <Button variant="ghost" size="icon" onClick={handleCopyLeaderId} className="h-9 w-9" disabled={!profile?.neverai_id}>
+          <Button variant="ghost" size="icon" onClick={handleCopyLeaderId} className="h-9 w-9" disabled={!profile?.leader_id && !(profile as any)?.neverai_id}>
             {copiedId ? <Check className="h-4 w-4 text-green-500" /> : <Copy className="h-4 w-4" />}
           </Button>
         </div>

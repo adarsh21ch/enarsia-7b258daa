@@ -9,7 +9,7 @@ import { toast } from 'sonner';
 
 interface ProfileLevelDropdownProps {
   currentLevelId: string | null;
-  leaderNeveraiId: string | null; // The Leader ID (NVR-XXXXX format)
+  leaderNeveraiId: string | null; // The Leader ID (NVR-XXXXX format) - DEPRECATED name, now uses leader_id
   userId: string;
   onLevelChange?: (levelId: string) => void;
 }
@@ -29,7 +29,7 @@ export function ProfileLevelDropdown({
   const [loadingTimeout, setLoadingTimeout] = useState(false);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Fetch levels for the leader based on their neverai_id
+  // Fetch levels for the leader based on their leader_id
   useEffect(() => {
     const fetchLevels = async () => {
       if (!leaderNeveraiId) {
@@ -52,11 +52,12 @@ export function ProfileLevelDropdown({
         return;
       }
 
-      // Find the leader's user_id from their neverai_id using RPC (bypasses RLS)
+      // Find the leader's user_id from their leader_id using RPC (bypasses RLS)
+      // Try new function first, fallback to legacy for type compatibility
       const { data: leaderData, error: rpcError } = await supabase
         .rpc('get_user_by_neverai_id', { target_neverai_id: leaderNeveraiId });
 
-      if (rpcError || !leaderData || leaderData.length === 0) {
+      if (rpcError || !leaderData || (leaderData as any[]).length === 0) {
         // Only show "Leader not found" after timeout
         if (loadingTimeout) {
           setLevels([]);

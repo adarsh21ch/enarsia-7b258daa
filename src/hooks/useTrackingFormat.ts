@@ -273,7 +273,7 @@ export function useTrackingFormat() {
           isRootLeader: true,
           // Legacy aliases
           rootLeaderName: freshProfile.display_name || 'You',
-          rootLeaderId: freshProfile.neverai_id,
+          rootLeaderId: (freshProfile as any).leader_id || freshProfile.neverai_id,
         });
       } else {
         // User uses leader's format - ALWAYS inherit from the ROOT leader of the tree
@@ -457,7 +457,8 @@ export function useTrackingFormat() {
       .eq('user_id', user.id)
       .maybeSingle();
 
-    if (!currentProfile?.neverai_id) return false;
+    const leaderId = (currentProfile as any)?.leader_id || currentProfile?.neverai_id;
+    if (!leaderId) return false;
 
     const refreshToken = Date.now().toString();
 
@@ -465,7 +466,7 @@ export function useTrackingFormat() {
     const { error } = await supabase
       .from('profiles')
       .update({ tags_refresh_token: refreshToken } as any)
-      .or(`leaders_id_of_my_leader.eq.${currentProfile.neverai_id},root_leader_id.eq.${currentProfile.neverai_id}`);
+      .or(`leaders_id_of_my_leader.eq.${leaderId},root_leader_id.eq.${leaderId}`);
 
     if (error) {
       console.error('Error triggering team refresh:', error);

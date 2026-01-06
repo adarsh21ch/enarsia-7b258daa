@@ -185,13 +185,13 @@ export default function Profile() {
                   {/* Level dropdown in top-right */}
                   <ProfileLevelDropdown currentLevelId={profile?.level_id || null} leaderNeveraiId={profile?.root_leader_id || profile?.leaders_id_of_my_leader || null} userId={user.id} onLevelChange={() => refetch?.()} />
                 </div>
-                {profile?.neverai_id && <div className="flex items-center gap-1.5 mt-2">
+                {(profile?.leader_id || profile?.neverai_id) && <div className="flex items-center gap-1.5 mt-2">
                     <p className="text-xs text-primary font-medium">
-                      Your NevorAI ID: <span className="font-mono">{formatLeaderId(profile.neverai_id, profile.leader_code_seq)}</span>
+                      Your NevorAI ID: <span className="font-mono">{formatLeaderId(profile.leader_id || profile.neverai_id, profile.leader_code_seq)}</span>
                     </p>
                     <button onClick={async () => {
                   // Copy the formatted ID
-                  const displayId = formatLeaderId(profile.neverai_id, profile.leader_code_seq);
+                  const displayId = formatLeaderId(profile.leader_id || profile.neverai_id, profile.leader_code_seq);
                   await navigator.clipboard.writeText(displayId);
                   toast.success('NevorAI ID copied');
                 }} className="p-1 rounded hover:bg-primary/10 transition-colors" title="Copy NevorAI ID">

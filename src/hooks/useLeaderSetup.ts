@@ -26,7 +26,7 @@ export function useLeaderSetup() {
     }
 
     // Don't set if trying to set self as leader
-    if (pendingLeaderId.toUpperCase() === profile.neverai_id?.toUpperCase()) {
+    if (pendingLeaderId.toUpperCase() === profile.leader_id?.toUpperCase()) {
       sessionStorage.removeItem('pending_leader_id');
       return;
     }

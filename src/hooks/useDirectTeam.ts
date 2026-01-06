@@ -17,7 +17,7 @@ export function useDirectTeam() {
   const { profile } = useProfile();
 
   const fetchDirectTeam = useCallback(async () => {
-    if (!user || !profile?.neverai_id) {
+    if (!user || !profile?.leader_id) {
       setMembers([]);
       setLoading(false);
       return;
@@ -25,12 +25,12 @@ export function useDirectTeam() {
 
     setLoading(true);
     
-    // Get all profiles where leaders_id_of_my_leader matches current user's neverai_id
+    // Get all profiles where leaders_id_of_my_leader matches current user's leader_id
     // Use eq for exact match since IDs are now normalized in database
     const { data, error } = await supabase
       .from('profiles')
       .select('user_id, display_name, level_id')
-      .eq('leaders_id_of_my_leader', profile.neverai_id);
+      .eq('leaders_id_of_my_leader', profile.leader_id);
 
     if (error) {
       console.error('Error fetching direct team:', error);
@@ -64,7 +64,7 @@ export function useDirectTeam() {
       setMembers(membersWithPosition);
     }
     setLoading(false);
-  }, [user, profile?.neverai_id]);
+  }, [user, profile?.leader_id]);
 
   useEffect(() => {
     fetchDirectTeam();
