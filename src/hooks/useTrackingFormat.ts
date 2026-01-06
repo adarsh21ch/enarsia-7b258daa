@@ -462,10 +462,11 @@ export function useTrackingFormat() {
     const refreshToken = Date.now().toString();
 
     // Update all team members in this leader's tree (and direct followers)
+    // Use ilike for case-insensitive matching
     const { error } = await supabase
       .from('profiles')
       .update({ tags_refresh_token: refreshToken } as any)
-      .or(`leaders_id_of_my_leader.eq.${currentProfile.neverai_id},root_leader_id.eq.${currentProfile.neverai_id}`);
+      .or(`leaders_id_of_my_leader.ilike.${currentProfile.neverai_id},root_leader_id.ilike.${currentProfile.neverai_id}`);
 
     if (error) {
       console.error('Error triggering team refresh:', error);
