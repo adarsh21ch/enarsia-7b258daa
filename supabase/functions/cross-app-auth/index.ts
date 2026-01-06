@@ -109,10 +109,16 @@ serve(async (req) => {
       const foundCount = results.filter(r => r.leader_id !== null).length;
       console.log(`Batch complete: ${foundCount}/${emails.length} users found`);
 
+      // Format for Achievers Club compatibility - only include found users with leader_ids
+      const leader_ids = results
+        .filter(r => r.leader_id !== null)
+        .map(r => ({ email: r.email, leader_id: r.leader_id }));
+
       // Always return 200 with partial results
       return new Response(
         JSON.stringify({
           success: true,
+          leader_ids,
           results,
           summary: {
             requested: emails.length,
