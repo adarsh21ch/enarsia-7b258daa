@@ -35,7 +35,7 @@ serve(async (req) => {
 
     // Parse request body
     const body = await req.json();
-    const { email, nevorai_user_id, action } = body;
+    const { email, emails, nevorai_user_id, action } = body;
 
     console.log('cross-app-auth called with action:', action);
 
@@ -47,10 +47,10 @@ serve(async (req) => {
       );
     }
 
-    // Validate input - need either email or nevorai_user_id
-    if (!email && !nevorai_user_id) {
+    // Validate input - need either email, emails array, or nevorai_user_id
+    if (!email && !nevorai_user_id && (!emails || !Array.isArray(emails) || emails.length === 0)) {
       return new Response(
-        JSON.stringify({ success: false, error: 'Either email or nevorai_user_id is required' }),
+        JSON.stringify({ success: false, error: 'Either email, emails array, or nevorai_user_id is required' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
@@ -60,7 +60,71 @@ serve(async (req) => {
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
 
-    // Build query based on input
+    // BATCH MODE: Process multiple emails
+    if (emails && Array.isArray(emails) && emails.length > 0) {
+      console.log(`Batch lookup for ${emails.length} emails`);
+      
+      // Normalize emails
+      const normalizedEmails = emails.map((e: string) => e.toLowerCase().trim());
+      
+      // Single query for all emails using .in()
+      const { data: profiles, error: batchError } = await supabaseAdmin
+        .from('profiles')
+        .select('user_id, neverai_id, email, display_name')
+        .in('email', normalizedEmails);
+
+      if (batchError) {
+        console.error('Batch database error:', batchError.message);
+        return new Response(
+          JSON.stringify({ success: false, error: 'Database lookup failed' }),
+          { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      // Create a map of found profiles by email
+      const profileMap = new Map(
+        (profiles || []).map(p => [p.email?.toLowerCase(), p])
+      );
+
+      // Build results array - include ALL requested emails (even if not found)
+      const results = normalizedEmails.map((requestedEmail: string) => {
+        const profile = profileMap.get(requestedEmail);
+        if (profile) {
+          return {
+            email: requestedEmail,
+            nevorai_user_id: profile.user_id,
+            leader_id: profile.neverai_id,
+            display_name: profile.display_name
+          };
+        } else {
+          return {
+            email: requestedEmail,
+            nevorai_user_id: null,
+            leader_id: null,
+            display_name: null
+          };
+        }
+      });
+
+      const foundCount = results.filter(r => r.leader_id !== null).length;
+      console.log(`Batch complete: ${foundCount}/${emails.length} users found`);
+
+      // Always return 200 with partial results
+      return new Response(
+        JSON.stringify({
+          success: true,
+          results,
+          summary: {
+            requested: emails.length,
+            found: foundCount,
+            not_found: emails.length - foundCount
+          }
+        }),
+        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // SINGLE MODE: Process single email or nevorai_user_id (backward compatible)
     let query = supabaseAdmin
       .from('profiles')
       .select('user_id, neverai_id, email, display_name');
