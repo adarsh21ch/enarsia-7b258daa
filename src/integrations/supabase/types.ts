@@ -463,35 +463,35 @@ export type Database = {
       }
       ac_profiles: {
         Row: {
-          city: string
+          city: string | null
           created_at: string | null
-          dob: string
-          full_name: string
-          mobile: string
+          dob: string | null
+          full_name: string | null
+          mobile: string | null
           onboarding_completed_at: string | null
-          state: string
+          state: string | null
           updated_at: string | null
           user_id: string
         }
         Insert: {
-          city: string
+          city?: string | null
           created_at?: string | null
-          dob: string
-          full_name: string
-          mobile: string
+          dob?: string | null
+          full_name?: string | null
+          mobile?: string | null
           onboarding_completed_at?: string | null
-          state: string
+          state?: string | null
           updated_at?: string | null
           user_id: string
         }
         Update: {
-          city?: string
+          city?: string | null
           created_at?: string | null
-          dob?: string
-          full_name?: string
-          mobile?: string
+          dob?: string | null
+          full_name?: string | null
+          mobile?: string | null
           onboarding_completed_at?: string | null
-          state?: string
+          state?: string | null
           updated_at?: string | null
           user_id?: string
         }
@@ -2307,6 +2307,7 @@ export type Database = {
         Args: { p_competition_id: string; p_user_id: string }
         Returns: boolean
       }
+      ensure_ac_profile_exists: { Args: never; Returns: Json }
       generate_neverai_id: { Args: never; Returns: string }
       generate_simple_neverai_id: { Args: never; Returns: string }
       get_leader_stage_config: {
