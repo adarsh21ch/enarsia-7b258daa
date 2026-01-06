@@ -2392,7 +2392,7 @@ export type Database = {
       normalize_leader_id: { Args: { id: string }; Returns: string }
       record_app_access: { Args: { p_app: string }; Returns: undefined }
       update_leader_hierarchy: {
-        Args: { p_leader_neverai_id: string; p_user_id: string }
+        Args: { p_leader_id: string; p_user_id: string }
         Returns: Json
       }
       xor_decrypt_phone: { Args: { encrypted_text: string }; Returns: string }
