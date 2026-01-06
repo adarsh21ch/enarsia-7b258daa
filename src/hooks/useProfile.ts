@@ -14,7 +14,8 @@ export interface Profile {
   city: string | null;
   bio: string | null;
   avatar_url: string | null;
-  neverai_id: string | null;
+  leader_id: string | null; // Canonical field
+  neverai_id: string | null; // DEPRECATED - use leader_id
   leader_code_seq: number | null;
   level_id: string | null;
   created_at: string;
@@ -84,8 +85,10 @@ export function useProfile() {
           throw insertError;
         }
 
+        const p = newProfile as any;
         return {
           ...newProfile,
+          leader_id: p.leader_id || p.neverai_id || null,
           stage_labels: newProfile.stage_labels || [],
           response_labels: newProfile.response_labels || [],
         } as Profile;
@@ -101,8 +104,10 @@ export function useProfile() {
         }
       }
 
+      const p = data as any;
       return {
         ...data,
+        leader_id: p.leader_id || p.neverai_id || null,
         stage_labels: data.stage_labels || [],
         response_labels: data.response_labels || [],
       } as Profile;
@@ -173,12 +178,12 @@ export function useProfile() {
 
   // Leader hierarchy mutation
   const leaderMutation = useMutation({
-    mutationFn: async (leaderNeveraiId: string) => {
+    mutationFn: async (leaderId: string) => {
       if (!user) throw new Error('Not authenticated');
 
       const { data, error } = await supabase.rpc('update_leader_hierarchy', {
         p_user_id: user.id,
-        p_leader_neverai_id: leaderNeveraiId
+        p_leader_id: leaderId
       });
 
       if (error) throw error;
@@ -253,14 +258,14 @@ export function useProfile() {
     }
   }, [clearLeaderMutation]);
 
-  const getLeaderStageConfig = useCallback(async (leaderNeveraiId: string) => {
-    if (!leaderNeveraiId) return null;
+  const getLeaderStageConfig = useCallback(async (leaderId: string) => {
+    if (!leaderId) return null;
     
     try {
       const { data, error } = await supabase
         .from('profiles')
         .select('user_id, stage_count, stage_labels, response_labels')
-        .ilike('neverai_id', leaderNeveraiId)
+        .ilike('leader_id', leaderId)
         .maybeSingle();
 
       if (error || !data) return null;
