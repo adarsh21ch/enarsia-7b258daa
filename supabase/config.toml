@@ -23,3 +23,6 @@ verify_jwt = true
 
 [functions.admin-delete-user]
 verify_jwt = false
+
+[functions.cross-app-auth]
+verify_jwt = false
