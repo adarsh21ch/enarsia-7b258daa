@@ -2307,6 +2307,10 @@ export type Database = {
         Args: { p_competition_id: string; p_user_id: string }
         Returns: boolean
       }
+      can_leader_view_member: {
+        Args: { p_leader_user_id: string; p_member_user_id: string }
+        Returns: boolean
+      }
       ensure_ac_profile_exists: { Args: never; Returns: Json }
       generate_neverai_id: { Args: never; Returns: string }
       generate_simple_neverai_id: { Args: never; Returns: string }
