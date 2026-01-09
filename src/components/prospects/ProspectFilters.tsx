@@ -56,11 +56,12 @@ export function ProspectFilters({
   const [showResponseTagsDialog, setShowResponseTagsDialog] = useState(false);
   const [showStageTagsDialog, setShowStageTagsDialog] = useState(false);
 
-  // Build options from TrackingFormatContext (single source of truth)
-  const hasLeadsTrackingTags = leadsTrackingTagNames.length > 0;
-  const actionOptions = hasLeadsTrackingTags ? [...leadsTrackingTagNames, ...leadsNonTrackingTags] as ExtendedActionTaken[] : EXTENDED_ACTIONS as ExtendedActionTaken[];
-  const hasStageTrackingTags = stageTagNames.length > 0;
-  const stageOptions = hasStageTrackingTags ? [...stageTagNames, ...stageNonTrackingTags] as FunnelStage[] : FUNNEL_STAGES as FunnelStage[];
+  // Build options: merge tracking + personal tags, fallback only when BOTH empty
+  const combinedLeadsOptions = [...leadsTrackingTagNames, ...leadsNonTrackingTags] as ExtendedActionTaken[];
+  const actionOptions = combinedLeadsOptions.length > 0 ? combinedLeadsOptions : EXTENDED_ACTIONS as ExtendedActionTaken[];
+  
+  const combinedStageOptions = [...stageTagNames, ...stageNonTrackingTags] as FunnelStage[];
+  const stageOptions = combinedStageOptions.length > 0 ? combinedStageOptions : FUNNEL_STAGES as FunnelStage[];
   
   const clearFilters = () => {
     onFiltersChange({

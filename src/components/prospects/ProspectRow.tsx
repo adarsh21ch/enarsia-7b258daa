@@ -83,16 +83,20 @@ export const ProspectRow = memo(function ProspectRow({
     loading: formatLoading 
   } = useTrackingFormatContext();
 
-  // Build dropdown options ONLY from TrackingFormatContext (no custom_options fallback)
-  const hasLeadsTrackingTags = leadsTrackingTagNames.length > 0;
-  const actionOptions = hasLeadsTrackingTags 
-    ? [...leadsTrackingTagNames, ...leadsNonTrackingTags]
+  // Build dropdown options: merge tracking + personal, fallback only when BOTH empty
+  const combinedLeadsOptions = [...leadsTrackingTagNames, ...leadsNonTrackingTags];
+  const actionOptions = combinedLeadsOptions.length > 0 
+    ? combinedLeadsOptions
     : EXTENDED_ACTIONS;
   
-  const hasStageTrackingTags = stageTagNames.length > 0;
-  const stageOptions = hasStageTrackingTags
-    ? [...stageTagNames, ...stageNonTrackingTags]
+  const combinedStageOptions = [...stageTagNames, ...stageNonTrackingTags];
+  const stageOptions = combinedStageOptions.length > 0
+    ? combinedStageOptions
     : FUNNEL_STAGES;
+  
+  // Show tag separation when we have any configured tags (tracking or personal)
+  const showLeadsTagSeparation = leadsTrackingTagNames.length > 0 || leadsNonTrackingTags.length > 0;
+  const showStageTagSeparation = stageTagNames.length > 0 || stageNonTrackingTags.length > 0;
 
   // Clear optimistic state when prospect updates from server
   useEffect(() => {
@@ -250,7 +254,7 @@ export const ProspectRow = memo(function ProspectRow({
               onChange={handleActionChange} 
               placeholder="Select..." 
               renderValue={(value) => <ActionBadge action={value} />} 
-              showTagSeparation={hasLeadsTrackingTags}
+              showTagSeparation={showLeadsTagSeparation}
               trackingOptions={leadsTrackingTagNames}
               nonTrackingOptions={leadsNonTrackingTags}
               finalTargetTag={leadsFinalTargetTag}
@@ -273,7 +277,7 @@ export const ProspectRow = memo(function ProspectRow({
               onChange={handleStageChange} 
               renderValue={(value) => <StageBadge stage={value} />} 
               placeholder="Select..." 
-              showTagSeparation={hasStageTrackingTags}
+              showTagSeparation={showStageTagSeparation}
               trackingOptions={stageTagNames}
               nonTrackingOptions={stageNonTrackingTags}
               finalTargetTag={stageFinalTargetTag}
