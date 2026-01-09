@@ -29,7 +29,7 @@ export function useEncryption() {
       return;
     }
 
-    const fetchKey = async () => {
+    const fetchKey = async (retryCount = 0) => {
       try {
         // Get current session to ensure we have a valid token
         const { data: sessionData } = await supabase.auth.getSession();
@@ -41,10 +41,21 @@ export function useEncryption() {
         const { data, error } = await supabase.functions.invoke('get-encryption-key');
         
         if (error) {
-          // Don't log warning for expected auth errors
-          if (!error.message?.includes('401')) {
-            console.warn('Failed to fetch encryption key:', error.message);
+          // Handle token expired - try to refresh session once
+          if (error.message?.includes('401') || error.message?.includes('TOKEN_EXPIRED')) {
+            if (retryCount === 0) {
+              console.log('Token expired, refreshing session...');
+              const { error: refreshError } = await supabase.auth.refreshSession();
+              if (!refreshError) {
+                // Retry with refreshed token
+                return fetchKey(1);
+              }
+            }
+            // After retry or if refresh failed, don't block - proceed without encryption key
+            console.log('Could not refresh token, proceeding without client-side encryption');
+            return;
           }
+          console.warn('Failed to fetch encryption key:', error.message);
           return;
         }
 
