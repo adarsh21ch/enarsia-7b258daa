@@ -17,6 +17,7 @@ export function useEncryption() {
 
   // Fetch encryption key once when user logs in
   useEffect(() => {
+    // No user - clear key and don't fetch
     if (!user) {
       clearEncryptionKey();
       setIsReady(false);
@@ -29,46 +30,73 @@ export function useEncryption() {
       return;
     }
 
+    let isCancelled = false;
+
     const fetchKey = async (retryCount = 0) => {
       try {
         // Get current session to ensure we have a valid token
         const { data: sessionData } = await supabase.auth.getSession();
+        
+        // No valid session - don't attempt fetch (prevents 401 on auth pages)
         if (!sessionData?.session?.access_token) {
-          console.log('No valid session for encryption key fetch');
           return;
         }
 
+        // Check if session is about to expire (within 60 seconds)
+        const expiresAt = sessionData.session.expires_at;
+        if (expiresAt && (expiresAt * 1000) - Date.now() < 60000) {
+          // Try to refresh first
+          const { error: refreshError } = await supabase.auth.refreshSession();
+          if (refreshError) {
+            console.log('Session expiring soon and refresh failed, skipping encryption key fetch');
+            return;
+          }
+        }
+
+        if (isCancelled) return;
+
         const { data, error } = await supabase.functions.invoke('get-encryption-key');
         
+        if (isCancelled) return;
+
         if (error) {
           // Handle token expired - try to refresh session once
           if (error.message?.includes('401') || error.message?.includes('TOKEN_EXPIRED')) {
             if (retryCount === 0) {
-              console.log('Token expired, refreshing session...');
               const { error: refreshError } = await supabase.auth.refreshSession();
-              if (!refreshError) {
+              if (!refreshError && !isCancelled) {
                 // Retry with refreshed token
                 return fetchKey(1);
               }
             }
-            // After retry or if refresh failed, don't block - proceed without encryption key
-            console.log('Could not refresh token, proceeding without client-side encryption');
+            // After retry or if refresh failed, proceed without encryption key
             return;
           }
           console.warn('Failed to fetch encryption key:', error.message);
           return;
         }
 
-        if (data?.key) {
+        if (data?.key && !isCancelled) {
           setEncryptionKey(data.key);
           setIsReady(true);
         }
       } catch (err) {
-        console.warn('Error fetching encryption key:', err);
+        // Silently handle errors to prevent blank screens
+        if (!isCancelled) {
+          console.warn('Error fetching encryption key:', err);
+        }
       }
     };
 
-    fetchKey();
+    // Small delay to ensure auth state is fully settled
+    const timeoutId = setTimeout(() => {
+      fetchKey();
+    }, 100);
+
+    return () => {
+      isCancelled = true;
+      clearTimeout(timeoutId);
+    };
   }, [user]);
 
   // Client-side encryption (instant, no network call)
