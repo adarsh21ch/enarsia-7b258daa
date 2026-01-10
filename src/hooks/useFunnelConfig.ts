@@ -72,46 +72,36 @@ export function useFunnelConfig() {
     }
   }, [user]);
 
-  // Internal function to fetch leader's funnel config
+  // Internal function to fetch leader's funnel config using RPC (bypasses RLS)
   const fetchLeaderConfigInternal = async (leaderNeveraiId: string) => {
     if (!leaderNeveraiId) return null;
     
-    // Get the leader's profile using RPC (bypasses RLS)
-    const { data: leaderData, error: rpcError } = await supabase
+    // Get the leader's display name first
+    const { data: leaderData } = await supabase
       .rpc('get_user_by_neverai_id', { target_neverai_id: leaderNeveraiId });
     
-    if (rpcError || !leaderData || leaderData.length === 0) {
-      console.error('Error fetching leader profile:', rpcError);
-      return null;
+    if (leaderData && leaderData.length > 0) {
+      setLeaderName(leaderData[0].display_name);
+      setLeaderUserId(leaderData[0].user_id);
     }
     
-    const leaderUserId = leaderData[0].user_id;
-    const leaderDisplayName = leaderData[0].display_name;
-    
-    setLeaderName(leaderDisplayName);
-    setLeaderUserId(leaderUserId);
-    
-    // Fetch their funnel config
+    // Use RPC to fetch leader's funnel config (bypasses RLS)
     const { data, error } = await supabase
-      .from('funnel_configs')
-      .select('*')
-      .eq('user_id', leaderUserId)
-      .order('created_at', { ascending: false })
-      .limit(1)
-      .maybeSingle();
+      .rpc('get_leader_funnel_config', { target_neverai_id: leaderNeveraiId });
       
     if (error) {
       console.error('Error fetching leader funnel config:', error);
       return null;
     }
     
-    if (data) {
+    if (data && data.length > 0) {
+      const configData = data[0];
       const leaderFunnelConfig: FunnelConfig = {
-        id: data.id,
-        funnel_name: data.funnel_name,
-        funnel_length: data.funnel_length,
-        day_1_start: data.day_1_start,
-        user_id: data.user_id,
+        id: configData.id,
+        funnel_name: configData.funnel_name,
+        funnel_length: configData.funnel_length,
+        day_1_start: configData.day_1_start,
+        user_id: configData.user_id,
       };
       setLeaderConfig(leaderFunnelConfig);
       return leaderFunnelConfig;
