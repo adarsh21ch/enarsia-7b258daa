@@ -190,12 +190,14 @@ export function LeaderTrackingFormatSettings({
     }
   }, [profile]);
 
-  // Fetch leader's funnel config when connected
+  // Fetch leader's funnel config when connected - use root_leader_id for consistency
   useEffect(() => {
-    if (profile?.leaders_id_of_my_leader) {
-      fetchLeaderConfig(profile.leaders_id_of_my_leader);
+    // Use root_leader_id (tracking format owner) first, fallback to direct leader
+    const configLeaderId = profile?.root_leader_id || profile?.leaders_id_of_my_leader;
+    if (configLeaderId && profile?.use_leader_stages) {
+      fetchLeaderConfig(configLeaderId);
     }
-  }, [profile?.leaders_id_of_my_leader, fetchLeaderConfig]);
+  }, [profile?.root_leader_id, profile?.leaders_id_of_my_leader, profile?.use_leader_stages, fetchLeaderConfig]);
 
   // Initialize funnel config from saved data
   useEffect(() => {
