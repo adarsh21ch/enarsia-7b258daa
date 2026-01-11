@@ -6,6 +6,8 @@ import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
 import { useEncryption } from '@/hooks/useEncryption';
 import { encrypt as clientEncrypt, hasEncryptionKey } from '@/lib/encryption';
+import { useDailyTrackingLog } from '@/hooks/useDailyTrackingLog';
+import { useTrackingFormat } from '@/hooks/useTrackingFormat';
 
 // Map database prospect to app prospect
 const mapDbProspect = (dbProspect: any): Prospect => ({
@@ -83,6 +85,21 @@ export function ProspectsProvider({ children }: { children: ReactNode }) {
   const isRefreshing = useRef(false);
   
   const { encryptFields, decryptBatch } = useEncryption();
+  const { logDailyTracking } = useDailyTrackingLog();
+  const { leadsTrackingTagNames, stageTagNames, leadsFinalTargetTag, stageFinalTargetTag } = useTrackingFormat();
+  
+  // Debounce ref to prevent multiple log writes in quick succession
+  const logDebounceRef = useRef<NodeJS.Timeout | null>(null);
+  
+  // Function to trigger daily tracking log write (debounced)
+  const triggerDailyLog = useCallback(() => {
+    if (logDebounceRef.current) {
+      clearTimeout(logDebounceRef.current);
+    }
+    logDebounceRef.current = setTimeout(() => {
+      logDailyTracking(leadsTrackingTagNames, stageTagNames, leadsFinalTargetTag, stageFinalTargetTag);
+    }, 500); // 500ms debounce to batch rapid updates
+  }, [logDailyTracking, leadsTrackingTagNames, stageTagNames, leadsFinalTargetTag, stageFinalTargetTag]);
 
   // Save to cache on change
   useEffect(() => {
@@ -223,8 +240,12 @@ export function ProspectsProvider({ children }: { children: ReactNode }) {
     // Append to end for stable ordering
     setProspects(prev => [...prev, newProspect]);
     toast.success('Prospect added');
+    
+    // Trigger daily tracking log for new lead
+    triggerDailyLog();
+    
     return newProspect;
-  }, [user, encryptFields]);
+  }, [user, encryptFields, triggerDailyLog]);
 
   const updateProspect = useCallback(async (id: string, updates: Partial<Prospect>) => {
     if (!user) return null;
@@ -311,8 +332,13 @@ export function ProspectsProvider({ children }: { children: ReactNode }) {
       p.id === id ? updatedProspect : p
     ));
     
+    // Trigger daily tracking log if tracking fields changed
+    if (updates.action_taken !== undefined || updates.funnel_stage !== undefined) {
+      triggerDailyLog();
+    }
+    
     return updatedProspect as Prospect;
-  }, [user, encryptFields, prospects]);
+  }, [user, encryptFields, prospects, triggerDailyLog]);
 
   // Batch update multiple prospects in a single operation (much faster than sequential updates)
   const batchUpdateProspects = useCallback(async (updates: Array<{ id: string; changes: Partial<Prospect> }>) => {
@@ -374,8 +400,16 @@ export function ProspectsProvider({ children }: { children: ReactNode }) {
       return false;
     }
 
+    // Trigger daily tracking log if any tracking fields changed
+    const hasTrackingChanges = updates.some(
+      u => u.changes.action_taken !== undefined || u.changes.funnel_stage !== undefined
+    );
+    if (hasTrackingChanges) {
+      triggerDailyLog();
+    }
+
     return true;
-  }, [user, prospects]);
+  }, [user, prospects, triggerDailyLog]);
 
   const deleteProspect = useCallback(async (id: string) => {
     const { error } = await supabase
@@ -389,8 +423,12 @@ export function ProspectsProvider({ children }: { children: ReactNode }) {
     }
 
     setProspects(prev => prev.filter(p => p.id !== id));
+    
+    // Trigger daily tracking log after delete
+    triggerDailyLog();
+    
     return true;
-  }, []);
+  }, [triggerDailyLog]);
 
   const bulkDeleteProspects = useCallback(async (ids: string[]) => {
     if (!user || ids.length === 0) return { deleted: 0, prospects: [] };
@@ -408,8 +446,12 @@ export function ProspectsProvider({ children }: { children: ReactNode }) {
     }
 
     setProspects(prev => prev.filter(p => !ids.includes(p.id)));
+    
+    // Trigger daily tracking log after bulk delete
+    triggerDailyLog();
+    
     return { deleted: toDelete.length, prospects: toDelete };
-  }, [user, prospects]);
+  }, [user, prospects, triggerDailyLog]);
 
   const restoreProspect = useCallback(async (prospect: Prospect) => {
     if (!user) return null;
@@ -455,8 +497,12 @@ export function ProspectsProvider({ children }: { children: ReactNode }) {
     const restoredProspect = mapDbProspect({ ...data, phone: prospect.phone });
     // Append to end for stable ordering
     setProspects(prev => [...prev, restoredProspect]);
+    
+    // Trigger daily tracking log after restore
+    triggerDailyLog();
+    
     return restoredProspect;
-  }, [user, encryptFields]);
+  }, [user, encryptFields, triggerDailyLog]);
 
   const restoreProspects = useCallback(async (prospectsToRestore: Prospect[]) => {
     if (!user || prospectsToRestore.length === 0) return 0;
@@ -542,10 +588,12 @@ export function ProspectsProvider({ children }: { children: ReactNode }) {
     // Append all imported to end for stable ordering
     if (allImported.length > 0) {
       setProspects(prev => [...prev, ...allImported]);
+      // Trigger daily tracking log after import
+      triggerDailyLog();
     }
     
     return { imported: totalImported, skipped };
-  }, [user]);
+  }, [user, triggerDailyLog]);
 
   const reorderProspects = useCallback(async (prospectIds: string[]) => {
     if (!user) return false;
