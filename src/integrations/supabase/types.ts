@@ -1132,6 +1132,57 @@ export type Database = {
         }
         Relationships: []
       }
+      daily_tracking_logs: {
+        Row: {
+          created_at: string | null
+          enrolled_count: number | null
+          final_stage_tag: string | null
+          final_tag: string | null
+          id: string
+          leads_count: number | null
+          log_date: string
+          no_contact_count: number | null
+          response_tags: Json | null
+          responses_count: number | null
+          stage_tags: Json | null
+          updated_at: string | null
+          user_id: string
+          video_sent_count: number | null
+        }
+        Insert: {
+          created_at?: string | null
+          enrolled_count?: number | null
+          final_stage_tag?: string | null
+          final_tag?: string | null
+          id?: string
+          leads_count?: number | null
+          log_date: string
+          no_contact_count?: number | null
+          response_tags?: Json | null
+          responses_count?: number | null
+          stage_tags?: Json | null
+          updated_at?: string | null
+          user_id: string
+          video_sent_count?: number | null
+        }
+        Update: {
+          created_at?: string | null
+          enrolled_count?: number | null
+          final_stage_tag?: string | null
+          final_tag?: string | null
+          id?: string
+          leads_count?: number | null
+          log_date?: string
+          no_contact_count?: number | null
+          response_tags?: Json | null
+          responses_count?: number | null
+          stage_tags?: Json | null
+          updated_at?: string | null
+          user_id?: string
+          video_sent_count?: number | null
+        }
+        Relationships: []
+      }
       feed_posts: {
         Row: {
           body: string | null
@@ -2314,6 +2365,16 @@ export type Database = {
       ensure_ac_profile_exists: { Args: never; Returns: Json }
       generate_neverai_id: { Args: never; Returns: string }
       generate_simple_neverai_id: { Args: never; Returns: string }
+      get_leader_funnel_config: {
+        Args: { target_neverai_id: string }
+        Returns: {
+          day_1_start: string
+          funnel_length: number
+          funnel_name: string
+          id: string
+          user_id: string
+        }[]
+      }
       get_leader_stage_config: {
         Args: { target_leader_id: string }
         Returns: Json
