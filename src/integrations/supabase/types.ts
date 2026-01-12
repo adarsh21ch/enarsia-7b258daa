@@ -1572,63 +1572,6 @@ export type Database = {
         }
         Relationships: []
       }
-      personal_snapshot_v2: {
-        Row: {
-          created_at: string
-          date: string
-          final_tag: string | null
-          final_tag_count: number
-          funnel_day: number | null
-          funnel_start_date: string | null
-          funnel_tag: string | null
-          funnel_tag_count: number
-          response_tags: Json
-          snapshot_id: string
-          source: Database["public"]["Enums"]["snapshot_source"]
-          stage_tags: Json
-          total_leads: number
-          total_responses: number
-          upline_leader_id: string | null
-          user_id: string
-        }
-        Insert: {
-          created_at?: string
-          date: string
-          final_tag?: string | null
-          final_tag_count?: number
-          funnel_day?: number | null
-          funnel_start_date?: string | null
-          funnel_tag?: string | null
-          funnel_tag_count?: number
-          response_tags?: Json
-          snapshot_id?: string
-          source?: Database["public"]["Enums"]["snapshot_source"]
-          stage_tags?: Json
-          total_leads?: number
-          total_responses?: number
-          upline_leader_id?: string | null
-          user_id: string
-        }
-        Update: {
-          created_at?: string
-          date?: string
-          final_tag?: string | null
-          final_tag_count?: number
-          funnel_day?: number | null
-          funnel_start_date?: string | null
-          funnel_tag?: string | null
-          funnel_tag_count?: number
-          response_tags?: Json
-          snapshot_id?: string
-          source?: Database["public"]["Enums"]["snapshot_source"]
-          stage_tags?: Json
-          total_leads?: number
-          total_responses?: number
-          upline_leader_id?: string | null
-          user_id?: string
-        }
-        Relationships: []
-      }
       points_entries: {
         Row: {
           competition_id: string
@@ -1999,63 +1942,6 @@ export type Database = {
           shared_with_user_id?: string
           status?: string
           updated_at?: string
-        }
-        Relationships: []
-      }
-      team_snapshot_v2: {
-        Row: {
-          created_at: string
-          date: string
-          final_tag: string | null
-          final_tag_count: number
-          funnel_day: number | null
-          funnel_start_date: string | null
-          funnel_tag: string | null
-          funnel_tag_count: number
-          leader_user_id: string
-          member_breakdown: Json | null
-          response_tags: Json
-          snapshot_id: string
-          source: Database["public"]["Enums"]["team_snapshot_source"]
-          stage_tags: Json
-          total_leads: number
-          total_responses: number
-        }
-        Insert: {
-          created_at?: string
-          date: string
-          final_tag?: string | null
-          final_tag_count?: number
-          funnel_day?: number | null
-          funnel_start_date?: string | null
-          funnel_tag?: string | null
-          funnel_tag_count?: number
-          leader_user_id: string
-          member_breakdown?: Json | null
-          response_tags?: Json
-          snapshot_id?: string
-          source?: Database["public"]["Enums"]["team_snapshot_source"]
-          stage_tags?: Json
-          total_leads?: number
-          total_responses?: number
-        }
-        Update: {
-          created_at?: string
-          date?: string
-          final_tag?: string | null
-          final_tag_count?: number
-          funnel_day?: number | null
-          funnel_start_date?: string | null
-          funnel_tag?: string | null
-          funnel_tag_count?: number
-          leader_user_id?: string
-          member_breakdown?: Json | null
-          response_tags?: Json
-          snapshot_id?: string
-          source?: Database["public"]["Enums"]["team_snapshot_source"]
-          stage_tags?: Json
-          total_leads?: number
-          total_responses?: number
         }
         Relationships: []
       }
@@ -2600,8 +2486,6 @@ export type Database = {
       notification_type: "achievement" | "reminder" | "system" | "mention"
       priority_level: "High" | "Medium" | "Low"
       prospect_status: "+VE" | "-VE" | "50-50" | "30-70"
-      snapshot_source: "MANUAL" | "APPLICATION"
-      team_snapshot_source: "MANUAL" | "TEAM_MEMBERS"
       user_plan: "free" | "pro"
     }
     CompositeTypes: {
@@ -2754,8 +2638,6 @@ export const Constants = {
       notification_type: ["achievement", "reminder", "system", "mention"],
       priority_level: ["High", "Medium", "Low"],
       prospect_status: ["+VE", "-VE", "50-50", "30-70"],
-      snapshot_source: ["MANUAL", "APPLICATION"],
-      team_snapshot_source: ["MANUAL", "TEAM_MEMBERS"],
       user_plan: ["free", "pro"],
     },
   },
