@@ -2,9 +2,12 @@ import { useState } from 'react';
 import { LeadsTracker } from '@/components/trackup/LeadsTracker';
 import { FunnelTracker } from '@/components/trackup/FunnelTracker';
 import { Button } from '@/components/ui/button';
-import { BarChart3, Layers, Lock, Crown, Zap, ExternalLink } from 'lucide-react';
+import { BarChart3, Layers, Lock, Crown, Zap } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { usePaymentLinks } from '@/hooks/usePaymentLinks';
+import { PLAN_CONFIG } from '@/hooks/usePaymentLinks';
+import { useRazorpay } from '@/hooks/useRazorpay';
+import { useToast } from '@/hooks/use-toast';
+import { useSubscription } from '@/hooks/useSubscription';
 
 interface ProfileTrackUpProps {
   /** Whether user has Pro plan (full access) */
@@ -17,10 +20,28 @@ type TrackUpTab = 'leads' | 'funnel';
 
 export function ProfileTrackUp({ isPro, isMini = false }: ProfileTrackUpProps) {
   const [activeTab, setActiveTab] = useState<TrackUpTab>('leads');
-  const { openPaymentLink, PLAN_CONFIG } = usePaymentLinks();
+  const { initiatePayment, loading: paymentLoading } = useRazorpay();
+  const { toast } = useToast();
+  const { refetch } = useSubscription();
   
   // Mini and Pro users have access to personal tracking
   const hasAccess = isPro || isMini;
+
+  const handleUpgrade = (plan: 'mini' | 'pro') => {
+    initiatePayment({
+      planType: plan,
+      onSuccess: () => {
+        toast({
+          title: "Pro Activated 🎉",
+          description: "Welcome to premium! All features are now unlocked.",
+        });
+        refetch();
+      },
+      onError: (error) => {
+        console.error('Payment error:', error);
+      }
+    });
+  };
 
   return (
     <div className="rounded-2xl bg-card border border-border/50 overflow-hidden">
@@ -82,22 +103,22 @@ export function ProfileTrackUp({ isPro, isMini = false }: ProfileTrackUpProps) {
               <div className="flex flex-col gap-2">
                 <Button 
                   size="sm" 
-                  onClick={() => openPaymentLink('pro')}
+                  onClick={() => handleUpgrade('pro')}
                   className="gap-1"
+                  disabled={paymentLoading}
                 >
                   <Crown className="h-4 w-4" />
-                  Get Pro – ₹{PLAN_CONFIG.pro.price}/mo
-                  <ExternalLink className="h-3 w-3" />
+                  {paymentLoading ? 'Processing...' : `Get Pro – ₹${PLAN_CONFIG.pro.price}/mo`}
                 </Button>
                 <Button 
                   size="sm" 
                   variant="outline"
-                  onClick={() => openPaymentLink('mini')}
+                  onClick={() => handleUpgrade('mini')}
                   className="gap-1"
+                  disabled={paymentLoading}
                 >
                   <Zap className="h-4 w-4" />
-                  Get Mini – ₹{PLAN_CONFIG.mini.price}/mo
-                  <ExternalLink className="h-3 w-3" />
+                  {paymentLoading ? 'Processing...' : `Get Mini – ₹${PLAN_CONFIG.mini.price}/mo`}
                 </Button>
               </div>
             </div>

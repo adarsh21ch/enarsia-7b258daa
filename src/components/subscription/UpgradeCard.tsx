@@ -1,9 +1,11 @@
-import { Crown, Sparkles, Check, Calendar, Star, ExternalLink, Zap } from 'lucide-react';
+import { Crown, Sparkles, Check, Calendar, Star, Zap } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useSubscription } from '@/hooks/useSubscription';
-import { usePaymentLinks, PlanType } from '@/hooks/usePaymentLinks';
+import { PLAN_CONFIG, PlanType } from '@/hooks/usePaymentLinks';
+import { useRazorpay } from '@/hooks/useRazorpay';
 import { format } from 'date-fns';
 import { useState } from 'react';
+import { useToast } from '@/hooks/use-toast';
 
 interface UpgradeCardProps {
   /** Which app is showing this card - affects which plans are shown */
@@ -11,9 +13,26 @@ interface UpgradeCardProps {
 }
 
 export function UpgradeCard({ appContext = 'neverai' }: UpgradeCardProps) {
-  const { plan, isPro, isMini, isPaid, isAdminOverride, daysRemaining, subscription, loading } = useSubscription();
-  const { openPaymentLink, PLAN_CONFIG } = usePaymentLinks();
+  const { plan, isPro, isMini, isPaid, isAdminOverride, daysRemaining, subscription, loading, refetch } = useSubscription();
+  const { initiatePayment, loading: paymentLoading } = useRazorpay();
+  const { toast } = useToast();
   const [selectedPlan, setSelectedPlan] = useState<PlanType>('pro');
+
+  const handleUpgrade = (planType: PlanType) => {
+    initiatePayment({
+      planType,
+      onSuccess: () => {
+        toast({
+          title: "Pro Activated 🎉",
+          description: "Welcome to premium! All features are now unlocked.",
+        });
+        refetch();
+      },
+      onError: (error) => {
+        console.error('Payment error:', error);
+      }
+    });
+  };
 
   if (loading) return null;
 
@@ -61,13 +80,13 @@ export function UpgradeCard({ appContext = 'neverai' }: UpgradeCardProps) {
               Upgrade to Pro for team sync and advanced features
             </p>
             <Button 
-              onClick={() => openPaymentLink('pro')}
+              onClick={() => handleUpgrade('pro')}
               className="w-full"
               variant="outline"
+              disabled={paymentLoading}
             >
               <Crown className="h-4 w-4 mr-2" />
-              Upgrade to Pro – ₹299/month
-              <ExternalLink className="h-4 w-4 ml-2" />
+              {paymentLoading ? 'Processing...' : 'Upgrade to Pro – ₹299/month'}
             </Button>
           </div>
         )}
@@ -167,10 +186,13 @@ export function UpgradeCard({ appContext = 'neverai' }: UpgradeCardProps) {
       </div>
 
       <Button 
-        onClick={() => openPaymentLink(selectedPlan)}
+        onClick={() => handleUpgrade(selectedPlan)}
         className="w-full h-12 text-base font-semibold shadow-lg shadow-primary/30"
+        disabled={paymentLoading}
       >
-        {selectedPlan === 'pro' ? (
+        {paymentLoading ? (
+          'Opening payment...'
+        ) : selectedPlan === 'pro' ? (
           <>
             <Crown className="h-5 w-5 mr-2" />
             Get {PLAN_CONFIG.pro.name} – ₹{PLAN_CONFIG.pro.price}/month
@@ -181,7 +203,6 @@ export function UpgradeCard({ appContext = 'neverai' }: UpgradeCardProps) {
             Get {PLAN_CONFIG.mini.name} – ₹{PLAN_CONFIG.mini.price}/month
           </>
         )}
-        <ExternalLink className="h-4 w-4 ml-2" />
       </Button>
       
       <p className="text-xs text-center text-muted-foreground mt-3">

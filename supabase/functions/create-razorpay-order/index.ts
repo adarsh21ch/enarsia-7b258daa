@@ -30,24 +30,17 @@ function checkRateLimit(userId: string): boolean {
 }
 
 const PLAN_CONFIG = {
-  monthly: {
-    amount: 24900,
+  mini: {
+    amount: 2900, // ₹29 in paise
     duration_days: 30,
-    description: 'NevorAI Pro Monthly',
+    plan_name: 'mini',
+    description: 'TrackUp Mini',
   },
-  yearly: {
-    amount: 299900,
-    discountedAmount: 199900,
-    duration_days: 365,
-    description: 'NevorAI Pro Yearly',
-  },
-};
-
-const VALID_COUPONS: Record<string, { discount: number; applicablePlans: string[]; maxUses: number }> = {
-  'DECEMBER1000': {
-    discount: 100000,
-    applicablePlans: ['yearly'],
-    maxUses: 50,
+  pro: {
+    amount: 29900, // ₹299 in paise
+    duration_days: 30,
+    plan_name: 'pro',
+    description: 'NeverAI Pro',
   },
 };
 
@@ -80,7 +73,7 @@ serve(async (req) => {
 
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
-    const { user_id, user_email, plan_type = 'monthly', coupon_code } = await req.json();
+    const { user_id, user_email, plan_type = 'pro' } = await req.json();
 
     if (!user_id || !user_email) {
       return new Response(
@@ -97,78 +90,24 @@ serve(async (req) => {
       );
     }
 
-    const validPlanTypes = ['monthly', 'yearly'];
-    const selectedPlan = validPlanTypes.includes(plan_type) ? plan_type : 'monthly';
+    const validPlanTypes = ['mini', 'pro'];
+    const selectedPlan = validPlanTypes.includes(plan_type) ? plan_type : 'pro';
     const planConfig = PLAN_CONFIG[selectedPlan as keyof typeof PLAN_CONFIG];
 
-    let finalAmount = planConfig.amount;
-    let appliedCoupon: string | null = null;
+    const finalAmount = planConfig.amount;
 
-    if (coupon_code) {
-      const upperCoupon = coupon_code.toUpperCase();
-      const couponConfig = VALID_COUPONS[upperCoupon];
-      
-      if (couponConfig && couponConfig.applicablePlans.includes(selectedPlan)) {
-        const { count, error: countError } = await supabase
-          .from('coupon_usages')
-          .select('*', { count: 'exact', head: true })
-          .eq('coupon_code', upperCoupon);
-
-        if (countError) {
-          console.error('Error checking coupon usage:', countError);
-        }
-
-        const currentUsage = count || 0;
-        
-        if (currentUsage >= couponConfig.maxUses) {
-          console.log(`Coupon ${upperCoupon} has reached usage limit (${currentUsage}/${couponConfig.maxUses})`);
-          return new Response(
-            JSON.stringify({ error: 'This coupon has reached its usage limit.' }),
-            { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-          );
-        }
-
-        const { data: existingUsage } = await supabase
-          .from('coupon_usages')
-          .select('id')
-          .eq('coupon_code', upperCoupon)
-          .eq('user_id', user_id)
-          .single();
-
-        if (existingUsage) {
-          console.log(`User ${user_id} has already used coupon ${upperCoupon}`);
-          return new Response(
-            JSON.stringify({ error: 'You have already used this coupon.' }),
-            { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-          );
-        }
-
-        finalAmount = planConfig.amount - couponConfig.discount;
-        appliedCoupon = upperCoupon;
-        console.log(`Coupon ${upperCoupon} applied, discount: ${couponConfig.discount} paise, usage: ${currentUsage + 1}/${couponConfig.maxUses}`);
-      } else {
-        console.log(`Invalid or non-applicable coupon: ${coupon_code}`);
-        return new Response(
-          JSON.stringify({ error: 'Invalid coupon code. Please check and try again.' }),
-          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        );
-      }
-    }
-
-    console.log(`Creating Razorpay order for user: ${user_email}, plan: ${selectedPlan}, amount: ${finalAmount}, coupon: ${appliedCoupon}`);
+    console.log(`Creating Razorpay order for user: ${user_email}, plan: ${selectedPlan}, amount: ${finalAmount}`);
 
     const shortUserId = user_id.slice(0, 8);
     const orderPayload = {
       amount: finalAmount,
       currency: 'INR',
-      receipt: `pro_${selectedPlan.slice(0, 1)}_${shortUserId}_${Date.now()}`,
+      receipt: `${selectedPlan}_${shortUserId}_${Date.now()}`,
       notes: {
         user_id: user_id,
         user_email: user_email,
-        plan: 'pro',
-        plan_type: selectedPlan,
+        plan: selectedPlan,
         duration_days: planConfig.duration_days,
-        coupon_applied: appliedCoupon || 'none',
         original_amount: planConfig.amount,
         final_amount: finalAmount,
       }
@@ -197,21 +136,6 @@ serve(async (req) => {
     const order = await razorpayResponse.json();
     console.log(`Order created successfully: ${order.id}, plan: ${selectedPlan}, amount: ${finalAmount}`);
 
-    if (appliedCoupon) {
-      const { error: insertError } = await supabase
-        .from('coupon_usages')
-        .insert({
-          coupon_code: appliedCoupon,
-          user_id: user_id,
-        });
-
-      if (insertError) {
-        console.error('Error recording coupon usage:', insertError);
-      } else {
-        console.log(`Coupon usage recorded for user ${user_id}, coupon ${appliedCoupon}`);
-      }
-    }
-
     return new Response(
       JSON.stringify({
         order_id: order.id,
@@ -219,7 +143,6 @@ serve(async (req) => {
         currency: order.currency,
         key_id: RAZORPAY_KEY_ID,
         plan_type: selectedPlan,
-        coupon_applied: appliedCoupon,
       }),
       { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
