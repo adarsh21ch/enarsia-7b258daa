@@ -81,7 +81,7 @@ function usePullToRefresh(onRefresh: () => Promise<void>, threshold = 80) {
   };
 }
 // Feature flag: Set to true to show upgrade UI in Profile tab
-const SHOW_PROFILE_UPGRADE_UI = false;
+const SHOW_PROFILE_UPGRADE_UI = true;
 
 export default function Profile() {
   const navigate = useNavigate();
@@ -208,8 +208,8 @@ export default function Profile() {
           {/* Share Profile Button - Prominent */}
           <ShareProfileDialog />
 
-          {/* Upgrade Card - Hidden via feature flag, can be re-enabled by setting SHOW_PROFILE_UPGRADE_UI = true */}
-          {SHOW_PROFILE_UPGRADE_UI && <UpgradeCard />}
+          {/* Upgrade Card - Shows subscription status and upgrade options */}
+          {SHOW_PROFILE_UPGRADE_UI && <UpgradeCard appContext="neverai" />}
 
           {/* Leader & Tracking Format Settings - Opens in Sidebar */}
           <LeaderTrackingFormatDrawer

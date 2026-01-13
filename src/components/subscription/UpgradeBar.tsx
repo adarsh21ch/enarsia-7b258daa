@@ -1,26 +1,31 @@
-import { Lock, Sparkles, Loader2 } from 'lucide-react';
+import { Lock, Crown, Zap, ExternalLink } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useSubscription } from '@/hooks/useSubscription';
-import { useRazorpay } from '@/hooks/useRazorpay';
+import { usePaymentLinks, PlanType } from '@/hooks/usePaymentLinks';
 
 interface UpgradeBarProps {
+  /** Which app context - affects messaging and plan suggestion */
+  appContext?: 'neverai' | 'trackup';
+  /** Whether to suggest Pro (for team features) or Mini (for basics) */
+  suggestPro?: boolean;
   onUpgrade?: () => void;
 }
 
-export function UpgradeBar({ onUpgrade }: UpgradeBarProps) {
-  const { isPro, loading } = useSubscription();
-  const { initiatePayment, loading: paymentLoading } = useRazorpay();
+export function UpgradeBar({ appContext = 'neverai', suggestPro = true, onUpgrade }: UpgradeBarProps) {
+  const { isPaid, loading } = useSubscription();
+  const { openPaymentLink, PLAN_CONFIG } = usePaymentLinks();
 
   const handleSubscribe = () => {
-    initiatePayment({
-      planType: 'monthly',
-      onSuccess: () => {
-        if (onUpgrade) onUpgrade();
-      },
-    });
+    const plan: PlanType = suggestPro || appContext === 'neverai' ? 'pro' : 'mini';
+    openPaymentLink(plan);
+    onUpgrade?.();
   };
 
-  if (loading || isPro) return null;
+  if (loading || isPaid) return null;
+
+  const plan: PlanType = suggestPro || appContext === 'neverai' ? 'pro' : 'mini';
+  const planConfig = PLAN_CONFIG[plan];
+  const PlanIcon = plan === 'pro' ? Crown : Zap;
 
   return (
     <div className="fixed bottom-20 left-0 right-0 z-50 px-4 pb-2">
@@ -35,25 +40,19 @@ export function UpgradeBar({ onUpgrade }: UpgradeBarProps) {
                 🔒 Upgrade to unlock this feature
               </p>
               <p className="text-xs text-primary-foreground/80">
-                Monthly ₹249 (non-refundable) | Yearly ₹2,999 (7-day refund)
+                {planConfig.name} – ₹{planConfig.price}/month
               </p>
             </div>
           </div>
           <Button 
             onClick={handleSubscribe}
-            disabled={paymentLoading}
             variant="secondary"
             size="sm"
             className="shrink-0 font-semibold"
           >
-            {paymentLoading ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
-            ) : (
-              <>
-                <Sparkles className="h-4 w-4 mr-1" />
-                Unlock Pro
-              </>
-            )}
+            <PlanIcon className="h-4 w-4 mr-1" />
+            Unlock
+            <ExternalLink className="h-3 w-3 ml-1" />
           </Button>
         </div>
       </div>

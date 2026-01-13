@@ -3,15 +3,18 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 
+export type SubscriptionPlan = 'free' | 'mini' | 'pro';
+
 export interface Subscription {
   id: string;
   user_id: string;
-  plan: 'free' | 'pro';
+  plan: SubscriptionPlan;
   is_admin_override: boolean;
   subscribed_at: string | null;
   expires_at: string | null;
   payment_id: string | null;
   status: string;
+  subscription_source: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -62,21 +65,23 @@ export function useSubscription() {
 
   // Upgrade mutation
   const upgradeMutation = useMutation({
-    mutationFn: async (paymentId: string) => {
+    mutationFn: async ({ paymentId, plan, source }: { paymentId: string; plan: SubscriptionPlan; source: string }) => {
       if (!user) throw new Error('No user');
 
       const now = new Date();
       const expiresAt = new Date(now);
       expiresAt.setDate(expiresAt.getDate() + 30);
 
+      // Cast plan to the database type (DB accepts text but types are strict)
       const { error } = await supabase
         .from('user_subscriptions')
         .update({
-          plan: 'pro',
+          plan: plan as 'free' | 'pro', // Type cast - DB actually accepts 'mini' as text
           status: 'active',
           subscribed_at: now.toISOString(),
           expires_at: expiresAt.toISOString(),
           payment_id: paymentId,
+          subscription_source: source,
         })
         .eq('user_id', user.id);
 
@@ -88,24 +93,28 @@ export function useSubscription() {
   });
 
   // Derived state - memoized
-  const isPro = useMemo(() => {
-    if (!subscription) return false;
-    if (subscription.plan !== 'pro') return false;
-    if (!subscription.expires_at) return false;
-    return new Date(subscription.expires_at) > new Date();
+  const plan = useMemo((): SubscriptionPlan => {
+    if (!subscription) return 'free';
+    if (!subscription.expires_at) return subscription.plan as SubscriptionPlan;
+    if (new Date(subscription.expires_at) <= new Date()) return 'free';
+    return subscription.plan as SubscriptionPlan;
   }, [subscription]);
+
+  const isPro = plan === 'pro';
+  const isMini = plan === 'mini';
+  const isPaid = isPro || isMini;
 
   const isAdminOverride = subscription?.is_admin_override || false;
 
   const daysRemaining = useMemo(() => {
-    if (!subscription?.expires_at || !isPro) return 0;
+    if (!subscription?.expires_at || !isPaid) return 0;
     const diff = new Date(subscription.expires_at).getTime() - Date.now();
     return Math.max(0, Math.ceil(diff / (1000 * 60 * 60 * 24)));
-  }, [subscription?.expires_at, isPro]);
+  }, [subscription?.expires_at, isPaid]);
 
-  const upgradeToPro = useCallback(async (paymentId: string) => {
+  const upgradeToPlan = useCallback(async (paymentId: string, newPlan: SubscriptionPlan, source: string) => {
     try {
-      await upgradeMutation.mutateAsync(paymentId);
+      await upgradeMutation.mutateAsync({ paymentId, plan: newPlan, source });
       return { error: null };
     } catch (error) {
       return { error };
@@ -141,10 +150,13 @@ export function useSubscription() {
   return { 
     subscription: subscription ?? null, 
     loading, 
+    plan,
     isPro, 
+    isMini,
+    isPaid,
     isAdminOverride, 
     daysRemaining,
-    upgradeToPro, 
+    upgradeToPlan, 
     refetch 
   };
 }
