@@ -1,73 +1,49 @@
-import { Crown, Sparkles, Check, Calendar, Loader2, Star, Tag } from 'lucide-react';
+import { Crown, Sparkles, Check, Calendar, Star, ExternalLink, Zap } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { useSubscription } from '@/hooks/useSubscription';
-import { useRazorpay } from '@/hooks/useRazorpay';
+import { usePaymentLinks, PlanType } from '@/hooks/usePaymentLinks';
 import { format } from 'date-fns';
 import { useState } from 'react';
 
-type PlanType = 'monthly' | 'yearly';
+interface UpgradeCardProps {
+  /** Which app is showing this card - affects which plans are shown */
+  appContext?: 'neverai' | 'trackup';
+}
 
-export function UpgradeCard() {
-  const { isPro, isAdminOverride, daysRemaining, subscription, loading, refetch } = useSubscription();
-  const { initiatePayment, loading: paymentLoading } = useRazorpay();
-  const [selectedPlan, setSelectedPlan] = useState<PlanType>('yearly');
-  const [couponCode, setCouponCode] = useState('');
-  const [couponApplied, setCouponApplied] = useState(false);
-  const [couponError, setCouponError] = useState('');
-
-  const normalizedCoupon = couponCode.trim().toUpperCase();
-  const isValidCoupon = normalizedCoupon === 'DECEMBER1000';
-  const yearlyPrice = couponApplied ? 1999 : 2999;
-  const yearlyPricePerMonth = Math.round(yearlyPrice / 12);
-
-  const handleApplyCoupon = () => {
-    setCouponError('');
-    if (isValidCoupon) {
-      setCouponApplied(true);
-    } else {
-      setCouponError('Invalid coupon code. Please check and try again.');
-    }
-  };
-
-  const handleSubscribe = (plan: PlanType) => {
-    initiatePayment({
-      planType: plan,
-      couponCode: plan === 'yearly' && couponApplied ? 'DECEMBER1000' : undefined,
-      onSuccess: () => {
-        refetch();
-      },
-      onError: (error) => {
-        if (error?.includes('usage limit')) {
-          setCouponError('This coupon has reached its usage limit.');
-          setCouponApplied(false);
-        }
-      },
-    });
-  };
+export function UpgradeCard({ appContext = 'neverai' }: UpgradeCardProps) {
+  const { plan, isPro, isMini, isPaid, isAdminOverride, daysRemaining, subscription, loading } = useSubscription();
+  const { openPaymentLink, PLAN_CONFIG } = usePaymentLinks();
+  const [selectedPlan, setSelectedPlan] = useState<PlanType>('pro');
 
   if (loading) return null;
 
-  if (isPro) {
+  // If user has active paid plan, show status
+  if (isPaid) {
     const expiryDate = subscription?.expires_at 
       ? format(new Date(subscription.expires_at), 'MMM d, yyyy')
       : null;
+
+    const planName = isPro ? 'NeverAI Pro' : 'TrackUp Mini';
+    const planIcon = isPro ? Crown : Zap;
+    const PlanIcon = planIcon;
 
     return (
       <div className="rounded-2xl p-5 bg-gradient-to-br from-emerald-500/20 via-emerald-500/10 to-transparent border border-emerald-500/20">
         <div className="flex items-center gap-3 mb-3">
           <div className="p-2 rounded-xl bg-emerald-500/20">
-            <Crown className="h-6 w-6 text-emerald-500" />
+            <PlanIcon className="h-6 w-6 text-emerald-500" />
           </div>
           <div>
-            <h3 className="font-bold text-lg">Pro Plan Active</h3>
+            <h3 className="font-bold text-lg">{planName} Active</h3>
             {isAdminOverride && (
               <span className="text-xs text-amber-500 font-medium">Admin Override</span>
             )}
           </div>
         </div>
         <p className="text-sm text-muted-foreground mb-3">
-          You have full access to all premium features including Track Up and Action Up.
+          {isPro 
+            ? 'Full access to team sync, analytics, and all premium features.'
+            : 'Manual personal and team tracking enabled.'}
         </p>
         {expiryDate && !isAdminOverride && (
           <div className="flex items-center gap-2 text-sm bg-emerald-500/10 rounded-lg p-2">
@@ -77,9 +53,32 @@ export function UpgradeCard() {
             </span>
           </div>
         )}
+        
+        {/* Mini users can upgrade to Pro */}
+        {isMini && (
+          <div className="mt-4 pt-4 border-t border-border/50">
+            <p className="text-sm text-muted-foreground mb-3">
+              Upgrade to Pro for team sync and advanced features
+            </p>
+            <Button 
+              onClick={() => openPaymentLink('pro')}
+              className="w-full"
+              variant="outline"
+            >
+              <Crown className="h-4 w-4 mr-2" />
+              Upgrade to Pro – ₹299/month
+              <ExternalLink className="h-4 w-4 ml-2" />
+            </Button>
+          </div>
+        )}
       </div>
     );
   }
+
+  // Free user - show upgrade options
+  // NeverAI app: Show ONLY Pro
+  // TrackUp app: Show both Mini and Pro
+  const showMini = appContext === 'trackup';
 
   return (
     <div className="rounded-2xl p-5 bg-gradient-to-br from-primary/20 via-primary/10 to-transparent border border-primary/20">
@@ -88,156 +87,106 @@ export function UpgradeCard() {
           <Sparkles className="h-6 w-6 text-primary" />
         </div>
         <div>
-          <h3 className="font-bold text-lg">Unlock Pro Features</h3>
-          <p className="text-xs text-muted-foreground">Get the most out of NevorAI</p>
-        </div>
-      </div>
-
-      <div className="space-y-2 mb-5">
-        <div className="flex items-center gap-2 text-sm">
-          <Check className="h-4 w-4 text-primary" />
-          <span>Track Up - Funnel & Leads Tracker</span>
-        </div>
-        <div className="flex items-center gap-2 text-sm">
-          <Check className="h-4 w-4 text-primary" />
-          <span>Action Up - Activity Center & AI Insights</span>
-        </div>
-        <div className="flex items-center gap-2 text-sm">
-          <Check className="h-4 w-4 text-primary" />
-          <span>Advanced Analytics & Reports</span>
+          <h3 className="font-bold text-lg">Unlock Premium Features</h3>
+          <p className="text-xs text-muted-foreground">Choose a plan that works for you</p>
         </div>
       </div>
 
       <div className="space-y-3 mb-4">
+        {/* NeverAI Pro Plan - Always shown */}
         <button
           type="button"
-          onClick={() => setSelectedPlan('yearly')}
+          onClick={() => setSelectedPlan('pro')}
           className={`w-full p-4 rounded-xl border-2 transition-all text-left relative ${
-            selectedPlan === 'yearly'
+            selectedPlan === 'pro'
               ? 'border-primary bg-primary/10'
               : 'border-border bg-card hover:border-primary/50'
           }`}
         >
           <div className="absolute -top-2.5 right-3 px-2 py-0.5 bg-amber-500 text-white text-xs font-semibold rounded-full flex items-center gap-1">
             <Star className="h-3 w-3" />
-            Best Value
+            Recommended
           </div>
-          <div className="flex justify-between items-center">
-            <div>
-              <p className="font-semibold text-foreground">Pro Yearly</p>
-              <p className="text-xs text-muted-foreground">12 months of Pro access</p>
-              <p className="text-[10px] text-emerald-600 mt-0.5">7-day refund available</p>
+          <div className="flex justify-between items-start">
+            <div className="flex-1">
+              <div className="flex items-center gap-2 mb-1">
+                <Crown className="h-4 w-4 text-primary" />
+                <p className="font-semibold text-foreground">{PLAN_CONFIG.pro.name}</p>
+              </div>
+              <p className="text-xs text-muted-foreground mb-2">{PLAN_CONFIG.pro.description}</p>
+              <div className="space-y-1">
+                {PLAN_CONFIG.pro.features.slice(0, 4).map((feature, i) => (
+                  <div key={i} className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                    <Check className="h-3 w-3 text-primary shrink-0" />
+                    <span>{feature}</span>
+                  </div>
+                ))}
+              </div>
             </div>
-            <div className="text-right">
-              {couponApplied ? (
-                <>
-                  <p className="font-bold text-lg text-foreground">₹1,999</p>
-                  <p className="text-xs text-muted-foreground line-through">₹2,999</p>
-                </>
-              ) : (
-                <>
-                  <p className="font-bold text-lg text-foreground">₹2,999</p>
-                  <p className="text-xs text-muted-foreground">₹{yearlyPricePerMonth}/month</p>
-                </>
-              )}
-            </div>
-          </div>
-        </button>
-
-        <button
-          type="button"
-          onClick={() => setSelectedPlan('monthly')}
-          className={`w-full p-4 rounded-xl border-2 transition-all text-left ${
-            selectedPlan === 'monthly'
-              ? 'border-primary bg-primary/10'
-              : 'border-border bg-card hover:border-primary/50'
-          }`}
-        >
-          <div className="flex justify-between items-center">
-            <div>
-              <p className="font-semibold text-foreground">Pro Monthly</p>
-              <p className="text-xs text-muted-foreground">1 month of Pro access</p>
-              <p className="text-[10px] text-amber-600 mt-0.5">Non-refundable</p>
-            </div>
-            <div className="text-right">
-              <p className="font-bold text-lg text-foreground">₹249</p>
+            <div className="text-right shrink-0 ml-3">
+              <p className="font-bold text-xl text-foreground">₹299</p>
               <p className="text-xs text-muted-foreground">/month</p>
             </div>
           </div>
         </button>
+
+        {/* TrackUp Mini Plan - Only in TrackUp app */}
+        {showMini && (
+          <button
+            type="button"
+            onClick={() => setSelectedPlan('mini')}
+            className={`w-full p-4 rounded-xl border-2 transition-all text-left ${
+              selectedPlan === 'mini'
+                ? 'border-primary bg-primary/10'
+                : 'border-border bg-card hover:border-primary/50'
+            }`}
+          >
+            <div className="flex justify-between items-start">
+              <div className="flex-1">
+                <div className="flex items-center gap-2 mb-1">
+                  <Zap className="h-4 w-4 text-amber-500" />
+                  <p className="font-semibold text-foreground">{PLAN_CONFIG.mini.name}</p>
+                </div>
+                <p className="text-xs text-muted-foreground mb-2">{PLAN_CONFIG.mini.description}</p>
+                <div className="space-y-1">
+                  {PLAN_CONFIG.mini.features.map((feature, i) => (
+                    <div key={i} className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                      <Check className="h-3 w-3 text-amber-500 shrink-0" />
+                      <span>{feature}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+              <div className="text-right shrink-0 ml-3">
+                <p className="font-bold text-xl text-foreground">₹29</p>
+                <p className="text-xs text-muted-foreground">/month</p>
+              </div>
+            </div>
+          </button>
+        )}
       </div>
 
-      {selectedPlan === 'yearly' && (
-        <div className="mb-4 p-3 rounded-lg bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800">
-          <div className="flex items-center gap-2 mb-2">
-            <Tag className="h-4 w-4 text-amber-600" />
-            <span className="text-xs font-medium text-amber-700 dark:text-amber-400">
-              Have a coupon code? Enter it below to unlock special discounts on Pro Yearly.
-            </span>
-          </div>
-          {!couponApplied ? (
-            <div className="space-y-2">
-              <div className="flex gap-2">
-                <Input
-                  placeholder="Enter coupon code"
-                  value={couponCode}
-                  onChange={(e) => {
-                    setCouponCode(e.target.value);
-                    setCouponError('');
-                  }}
-                  className="h-9 text-sm"
-                />
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  onClick={handleApplyCoupon}
-                  disabled={!couponCode.trim()}
-                  className="shrink-0"
-                >
-                  Apply
-                </Button>
-              </div>
-              {couponError && (
-                <p className="text-xs text-destructive">{couponError}</p>
-              )}
-            </div>
-          ) : (
-            <div className="flex items-center justify-between">
-              <span className="text-sm font-medium text-emerald-600">
-                ✓ Coupon applied – ₹1,000 OFF!
-              </span>
-              <button 
-                type="button"
-                onClick={() => { setCouponApplied(false); setCouponCode(''); setCouponError(''); }}
-                className="text-xs text-muted-foreground underline"
-              >
-                Remove
-              </button>
-            </div>
-          )}
-        </div>
-      )}
-
       <Button 
-        onClick={() => handleSubscribe(selectedPlan)}
-        disabled={paymentLoading}
+        onClick={() => openPaymentLink(selectedPlan)}
         className="w-full h-12 text-base font-semibold shadow-lg shadow-primary/30"
       >
-        {paymentLoading ? (
+        {selectedPlan === 'pro' ? (
           <>
-            <Loader2 className="h-5 w-5 mr-2 animate-spin" />
-            Processing...
+            <Crown className="h-5 w-5 mr-2" />
+            Get {PLAN_CONFIG.pro.name} – ₹{PLAN_CONFIG.pro.price}/month
           </>
         ) : (
           <>
-            <Crown className="h-5 w-5 mr-2" />
-            {selectedPlan === 'yearly' 
-              ? `Unlock Pro Yearly – ₹${yearlyPrice.toLocaleString()}` 
-              : 'Unlock Pro Monthly – ₹249'
-            }
+            <Zap className="h-5 w-5 mr-2" />
+            Get {PLAN_CONFIG.mini.name} – ₹{PLAN_CONFIG.mini.price}/month
           </>
         )}
+        <ExternalLink className="h-4 w-4 ml-2" />
       </Button>
+      
+      <p className="text-xs text-center text-muted-foreground mt-3">
+        Secure payment via Razorpay • Cancel anytime
+      </p>
     </div>
   );
 }
