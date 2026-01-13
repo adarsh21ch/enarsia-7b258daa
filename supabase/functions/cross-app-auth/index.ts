@@ -154,10 +154,96 @@ serve(async (req) => {
         return jsonResponse({ success: true, leader_id: newId, is_new: true });
       }
 
+      // ACTION: get_subscription (check subscription status for TrackUp)
+      case 'get_subscription': {
+        const { email } = requestBody;
+        
+        if (!email) {
+          return jsonResponse({ success: false, error: 'email required' }, 400);
+        }
+
+        const normalizedEmail = email.toLowerCase().trim();
+
+        // Get user_id from profiles
+        const { data: profile, error: profileError } = await supabase
+          .from('profiles')
+          .select('user_id')
+          .eq('email', normalizedEmail)
+          .maybeSingle();
+
+        if (profileError) {
+          console.error('Profile lookup error:', profileError);
+          return jsonResponse({ success: false, error: profileError.message }, 500);
+        }
+
+        if (!profile) {
+          console.log('No profile found for email:', normalizedEmail);
+          return jsonResponse({ 
+            success: true, 
+            subscription: {
+              plan: 'free',
+              status: 'active',
+              expires_at: null,
+              is_admin_override: false,
+              isPro: false,
+              isMini: false
+            }
+          });
+        }
+
+        // Fetch subscription
+        const { data: subscription, error: subError } = await supabase
+          .from('user_subscriptions')
+          .select('*')
+          .eq('user_id', profile.user_id)
+          .maybeSingle();
+
+        if (subError) {
+          console.error('Subscription lookup error:', subError);
+          return jsonResponse({ success: false, error: subError.message }, 500);
+        }
+
+        // Default to free if no subscription record
+        if (!subscription) {
+          console.log('No subscription found for user:', profile.user_id);
+          return jsonResponse({ 
+            success: true, 
+            subscription: {
+              plan: 'free',
+              status: 'active',
+              expires_at: null,
+              is_admin_override: false,
+              isPro: false,
+              isMini: false
+            }
+          });
+        }
+
+        // Check if subscription is expired
+        let effectivePlan = subscription.plan;
+        if (subscription.expires_at && new Date(subscription.expires_at) <= new Date()) {
+          effectivePlan = 'free';
+        }
+
+        console.log('Subscription found for', normalizedEmail, ':', effectivePlan, 'expires:', subscription.expires_at);
+        
+        return jsonResponse({ 
+          success: true, 
+          subscription: {
+            plan: effectivePlan,
+            status: subscription.status,
+            expires_at: subscription.expires_at,
+            is_admin_override: subscription.is_admin_override,
+            isPro: effectivePlan === 'pro',
+            isMini: effectivePlan === 'mini'
+          }
+        });
+      }
+
       default:
         return jsonResponse({ 
           success: false, 
-          error: 'Invalid action. Use: get_leader_ids, provision_leader_id' 
+          error: 'Invalid action. Use: get_leader_ids, provision_leader_id, get_subscription' 
         }, 400);
     }
 
