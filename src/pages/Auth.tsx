@@ -70,6 +70,31 @@ export default function Auth() {
       const errorMessage = error.message?.toLowerCase() || '';
       
       if (errorMessage.includes('invalid login credentials') || errorMessage.includes('invalid credentials')) {
+        // Check if this is a provisioned user who needs to set their password
+        try {
+          const { data: provisionedData } = await supabase.rpc('check_provisioned_user', {
+            target_email: email
+          });
+          
+          if (provisionedData && provisionedData.length > 0 && provisionedData[0].is_provisioned) {
+            // This user was provisioned from another app - auto-send password reset
+            const { error: resetError } = await supabase.auth.resetPasswordForEmail(email, {
+              redirectTo: getPasswordRecoveryRedirectUrl(),
+            });
+            
+            if (!resetError) {
+              toast.success(
+                `Your account was created via ${provisionedData[0].source_app === 'achievers_club' ? 'Achievers Club' : 'another app'}. We've sent you an email to set your password. Please check your inbox!`,
+                { duration: 8000 }
+              );
+              setIsSubmitting(false);
+              return;
+            }
+          }
+        } catch (checkError) {
+          console.error('Error checking provisioned user:', checkError);
+        }
+        
         toast.error('Invalid email or password. Please check your credentials or use "Forgot Password" to reset.');
       } else if (errorMessage.includes('email not confirmed')) {
         toast.error('Please confirm your email before signing in. Check your inbox for the confirmation link.');
