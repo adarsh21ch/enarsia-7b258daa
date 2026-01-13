@@ -17,16 +17,19 @@ interface RazorpayOptions {
   onError?: (error: string) => void;
 }
 
+// Toggle this flag for testing (set to false for production)
+const TEST_MODE = true;
+
 const PLAN_CONFIG = {
   mini: {
-    amount: 2900, // ₹29 in paise
+    amount: TEST_MODE ? 100 : 2900, // ₹1 test or ₹29 production (in paise)
     duration_days: 30,
-    description: 'TrackUp Mini – ₹29 / month',
+    description: TEST_MODE ? 'TrackUp Mini – ₹1 (TEST)' : 'TrackUp Mini – ₹29 / month',
   },
   pro: {
-    amount: 29900, // ₹299 in paise
+    amount: TEST_MODE ? 100 : 29900, // ₹1 test or ₹299 production (in paise)
     duration_days: 30,
-    description: 'NeverAI Pro – ₹299 / month',
+    description: TEST_MODE ? 'NeverAI Pro – ₹1 (TEST)' : 'NeverAI Pro – ₹299 / month',
   },
 };
 
