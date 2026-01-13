@@ -4,7 +4,6 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useProspectsQuery } from '@/hooks/useProspectsQuery';
 import { useSheets } from '@/hooks/useSheets';
-import { useSwipeTabs } from '@/hooks/useSwipeTabs';
 import { useTrackingFormatContext } from '@/contexts/TrackingFormatContext';
 import { BottomNav } from '@/components/layout/BottomNav';
 import { HeaderBellIcon } from '@/components/layout/HeaderBellIcon';
@@ -175,14 +174,6 @@ export default function Dashboard() {
     setMainTab(newTab as 'leads' | 'funnel');
   };
 
-  // Swipe to switch tabs
-  const {
-    containerRef: swipeRef
-  } = useSwipeTabs({
-    onSwipeLeft: () => handleTabChange('funnel'),
-    onSwipeRight: () => handleTabChange('leads')
-  });
-
   // Pull-to-refresh
   const handleRefresh = useCallback(async () => {
     await Promise.all([refetch?.(), refetchSheets?.()]);
@@ -193,12 +184,6 @@ export default function Dashboard() {
     pullDistance,
     showIndicator
   } = usePullToRefresh(handleRefresh);
-
-  // Combine refs for swipe and pull-to-refresh
-  const mainRef = useCallback((node: HTMLDivElement | null) => {
-    (pullRef as React.MutableRefObject<HTMLDivElement | null>).current = node;
-    (swipeRef as React.MutableRefObject<HTMLDivElement | null>).current = node;
-  }, [pullRef, swipeRef]);
 
   useEffect(() => {
     if (!user && !authLoading) {
@@ -258,7 +243,7 @@ export default function Dashboard() {
         </div>
       </header>
 
-      <main ref={mainRef} className="flex-1 flex flex-col min-h-0 overflow-hidden" style={{
+      <main ref={pullRef} className="flex-1 flex flex-col min-h-0 overflow-hidden" style={{
       touchAction: 'pan-x pan-y'
     }}>
         <PullToRefreshIndicator isRefreshing={isRefreshing} pullDistance={pullDistance} showIndicator={showIndicator} />
