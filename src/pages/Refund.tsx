@@ -1,10 +1,8 @@
 import { Link } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
-
 export default function Refund() {
-  return (
-    <div className="h-screen flex flex-col bg-background">
+  return <div className="h-screen flex flex-col bg-background">
       <div className="max-w-3xl mx-auto px-4 py-4 flex-shrink-0">
         <Link to="/" className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground mb-4">
           <ArrowLeft className="h-4 w-4 mr-1" />
@@ -33,7 +31,7 @@ export default function Refund() {
               
               <div className="space-y-4">
                 <div className="p-3 rounded-lg bg-background border border-border">
-                  <h3 className="font-semibold text-foreground mb-2">Monthly Plan (₹249/month)</h3>
+                  <h3 className="font-semibold text-foreground mb-2">Monthly Plan (₹299/month)</h3>
                   <p className="text-muted-foreground text-sm">
                     Payments for the NevorAI Pro Monthly plan are <strong className="text-destructive">NON-REFUNDABLE</strong>. Once you subscribe to the monthly plan, you will have access for the full month, but no refunds will be issued regardless of cancellation timing.
                   </p>
@@ -133,6 +131,5 @@ export default function Refund() {
           </div>
         </div>
       </ScrollArea>
-    </div>
-  );
+    </div>;
 }
