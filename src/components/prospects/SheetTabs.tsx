@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Sheet } from '@/types/prospect';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -8,7 +8,6 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Plus, MoreVertical, Pencil, Trash2, FileSpreadsheet, CheckSquare, Trash, Download } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
-
 interface SheetTabsProps {
   sheets: Sheet[];
   selectedSheetId: string | null;
@@ -39,6 +38,18 @@ export function SheetTabs({
   const [newSheetName, setNewSheetName] = useState('');
   const [editingSheet, setEditingSheet] = useState<Sheet | null>(null);
   const [deleteAllConfirmSheet, setDeleteAllConfirmSheet] = useState<{ id: string | null; name: string } | null>(null);
+  
+  // Refs for auto-scrolling to selected sheet
+  const sheetRefs = useRef<Map<string, HTMLDivElement>>(new Map());
+  const scrollAreaRef = useRef<HTMLDivElement>(null);
+
+  // Auto-scroll to selected sheet when it changes
+  useEffect(() => {
+    if (selectedSheetId && sheetRefs.current.has(selectedSheetId)) {
+      const sheetElement = sheetRefs.current.get(selectedSheetId);
+      sheetElement?.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+    }
+  }, [selectedSheetId]);
 
   const handleAddSheet = async () => {
     if (!newSheetName.trim()) return;
@@ -146,10 +157,17 @@ export function SheetTabs({
 
         {/* Scrollable sheet tabs area */}
         {sheets.length > 0 && (
-          <ScrollArea className="flex-1 whitespace-nowrap">
+          <ScrollArea className="flex-1 whitespace-nowrap" ref={scrollAreaRef}>
             <div className="flex items-center">
               {sheets.map((sheet) => (
-                <div key={sheet.id} className="flex items-center border-r border-border/50">
+                <div 
+                  key={sheet.id} 
+                  className="flex items-center border-r border-border/50"
+                  ref={(el) => {
+                    if (el) sheetRefs.current.set(sheet.id, el);
+                    else sheetRefs.current.delete(sheet.id);
+                  }}
+                >
                   <button
                     onClick={() => onSelectSheet(sheet.id)}
                     className={cn(
