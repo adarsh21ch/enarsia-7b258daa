@@ -29,15 +29,18 @@ function checkRateLimit(userId: string): boolean {
   return true;
 }
 
+// Toggle this flag for testing (set to false for production)
+const TEST_MODE = true;
+
 const PLAN_CONFIG = {
   mini: {
-    amount: 2900, // ₹29 in paise
+    amount: TEST_MODE ? 100 : 2900, // ₹1 test or ₹29 production (in paise)
     duration_days: 30,
     plan_name: 'mini',
     description: 'TrackUp Mini',
   },
   pro: {
-    amount: 29900, // ₹299 in paise
+    amount: TEST_MODE ? 100 : 29900, // ₹1 test or ₹299 production (in paise)
     duration_days: 30,
     plan_name: 'pro',
     description: 'NeverAI Pro',
