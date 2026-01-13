@@ -2476,6 +2476,13 @@ export type Database = {
         Args: { p_leader_user_id: string; p_member_user_id: string }
         Returns: boolean
       }
+      check_provisioned_user: {
+        Args: { target_email: string }
+        Returns: {
+          is_provisioned: boolean
+          source_app: string
+        }[]
+      }
       ensure_ac_profile_exists: { Args: never; Returns: Json }
       generate_neverai_id: { Args: never; Returns: string }
       generate_simple_neverai_id: { Args: never; Returns: string }
