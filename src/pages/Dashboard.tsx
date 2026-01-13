@@ -249,7 +249,7 @@ export default function Dashboard() {
         <PullToRefreshIndicator isRefreshing={isRefreshing} pullDistance={pullDistance} showIndicator={showIndicator} />
         
         {/* Table area - flex-1 to fill remaining space, pb for bottom nav */}
-        <div className="flex-1 min-h-0 px-4 pb-24 overflow-y-auto">
+        <div className="flex-1 min-h-0 px-4 pb-16 md:pb-24 lg:pb-16 overflow-y-auto">
           {mainTab === 'leads' ? (
             <ProspectTable 
               key={`leads-${tableScrollKey.current}`}
