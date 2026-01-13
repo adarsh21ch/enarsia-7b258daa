@@ -18,7 +18,7 @@ interface RazorpayOptions {
 }
 
 // Toggle this flag for testing (set to false for production)
-const TEST_MODE = true;
+const TEST_MODE = false;
 
 const PLAN_CONFIG = {
   mini: {
