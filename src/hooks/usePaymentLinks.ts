@@ -15,7 +15,7 @@ export interface PlanConfig {
 
 export const PAYMENT_LINKS = {
   mini: 'https://rzp.io/rzp/SKlPxwfs',
-  pro: 'https://rzp.io/rzp/CPQRHdp',
+  pro: 'https://rzp.io/rzp/qDqiN2o',
 } as const;
 
 export const PLAN_CONFIG: Record<PlanType, PlanConfig> = {
