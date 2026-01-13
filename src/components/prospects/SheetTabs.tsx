@@ -43,13 +43,17 @@ export function SheetTabs({
   const sheetRefs = useRef<Map<string, HTMLDivElement>>(new Map());
   const scrollAreaRef = useRef<HTMLDivElement>(null);
 
-  // Auto-scroll to selected sheet when it changes
+  // Auto-scroll to selected sheet when it changes or on initial mount
   useEffect(() => {
     if (selectedSheetId && sheetRefs.current.has(selectedSheetId)) {
-      const sheetElement = sheetRefs.current.get(selectedSheetId);
-      sheetElement?.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+      // Small delay to ensure DOM is ready
+      const timeoutId = setTimeout(() => {
+        const sheetElement = sheetRefs.current.get(selectedSheetId);
+        sheetElement?.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+      }, 100);
+      return () => clearTimeout(timeoutId);
     }
-  }, [selectedSheetId]);
+  }, [selectedSheetId, sheets]); // Also trigger when sheets load
 
   const handleAddSheet = async () => {
     if (!newSheetName.trim()) return;

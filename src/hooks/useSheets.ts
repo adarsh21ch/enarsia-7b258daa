@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Sheet } from '@/types/prospect';
@@ -7,13 +7,36 @@ import { toast } from 'sonner';
 import { format } from 'date-fns';
 
 const getTodaySheetName = () => format(new Date(), 'd MMM');
+const SELECTED_SHEET_KEY = 'trackup_selected_sheet_id';
 
 export function useSheets() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
-  const [selectedSheetId, setSelectedSheetId] = useState<string | null>(null);
+  
+  // Initialize from localStorage
+  const [selectedSheetId, setSelectedSheetIdState] = useState<string | null>(() => {
+    try {
+      return localStorage.getItem(SELECTED_SHEET_KEY);
+    } catch {
+      return null;
+    }
+  });
   const [todaySheetId, setTodaySheetId] = useState<string | null>(null);
   const creatingSheetRef = useRef(false);
+
+  // Persist selected sheet to localStorage
+  const setSelectedSheetId = useCallback((id: string | null) => {
+    setSelectedSheetIdState(id);
+    try {
+      if (id) {
+        localStorage.setItem(SELECTED_SHEET_KEY, id);
+      } else {
+        localStorage.removeItem(SELECTED_SHEET_KEY);
+      }
+    } catch {
+      // localStorage not available
+    }
+  }, []);
 
   const queryKey = ['sheets', user?.id];
 
