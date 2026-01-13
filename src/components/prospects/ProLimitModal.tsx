@@ -19,7 +19,7 @@ export function ProLimitModal({ open, onClose, currentCount, hasTeamFeatures }: 
       onClose={onClose}
       currentLeadCount={currentCount}
       hasTeamFeatures={hasTeamFeatures}
-      appContext="neverai"
+      appContext="nevorai"
     />
   );
 }

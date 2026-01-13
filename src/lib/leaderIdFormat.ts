@@ -1,5 +1,5 @@
 /**
- * Format a NeverAI Leader ID for display
+ * Format a NevorAI Leader ID for display
  * Old format: NVR-XXXXX (with random alphanumeric characters)
  * New format: NVR###### (6-digit zero-padded number, no dash)
  * 

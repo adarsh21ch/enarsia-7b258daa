@@ -2,6 +2,7 @@ import { useState, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
+import { BRAND_NAME, PLAN_NAME_PRO, PLAN_NAME_MINI } from '@/config/brand';
 
 declare global {
   interface Window {
@@ -24,12 +25,12 @@ const PLAN_CONFIG = {
   mini: {
     amount: TEST_MODE ? 100 : 2900, // ₹1 test or ₹29 production (in paise)
     duration_days: 30,
-    description: TEST_MODE ? 'TrackUp Mini – ₹1 (TEST)' : 'TrackUp Mini – ₹29 / month',
+    description: TEST_MODE ? `${PLAN_NAME_MINI} – ₹1 (TEST)` : `${PLAN_NAME_MINI} – ₹29 / month`,
   },
   pro: {
     amount: TEST_MODE ? 100 : 29900, // ₹1 test or ₹299 production (in paise)
     duration_days: 30,
-    description: TEST_MODE ? 'NeverAI Pro – ₹1 (TEST)' : 'NeverAI Pro – ₹299 / month',
+    description: TEST_MODE ? `${PLAN_NAME_PRO} – ₹1 (TEST)` : `${PLAN_NAME_PRO} – ₹299 / month`,
   },
 };
 
@@ -107,7 +108,7 @@ export function useRazorpay() {
         key: key_id,
         amount: amount,
         currency: currency,
-        name: 'NevorAI',
+        name: BRAND_NAME,
         description: description,
         order_id: order_id,
         prefill: {

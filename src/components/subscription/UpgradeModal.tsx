@@ -14,7 +14,7 @@ interface UpgradeModalProps {
   /** Whether user has team/leader features - suggests Pro instead of Mini */
   hasTeamFeatures?: boolean;
   /** Which app context - affects which plans to show */
-  appContext?: 'neverai' | 'trackup';
+  appContext?: 'nevorai' | 'trackup';
   /** Optional custom title */
   title?: string;
   /** Optional custom description */
@@ -26,7 +26,7 @@ export function UpgradeModal({
   onClose, 
   currentLeadCount,
   hasTeamFeatures = false,
-  appContext = 'neverai',
+  appContext = 'nevorai',
   title,
   description,
 }: UpgradeModalProps) {
@@ -127,7 +127,7 @@ export function UpgradeModal({
               disabled={paymentLoading}
             >
               <Crown className="h-4 w-4 mr-2" />
-              Or get NeverAI Pro – ₹299/mo
+              Or get NevorAI Pro – ₹299/mo
             </Button>
           )}
 

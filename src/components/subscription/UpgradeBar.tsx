@@ -7,19 +7,19 @@ import { useToast } from '@/hooks/use-toast';
 
 interface UpgradeBarProps {
   /** Which app context - affects messaging and plan suggestion */
-  appContext?: 'neverai' | 'trackup';
+  appContext?: 'nevorai' | 'trackup';
   /** Whether to suggest Pro (for team features) or Mini (for basics) */
   suggestPro?: boolean;
   onUpgrade?: () => void;
 }
 
-export function UpgradeBar({ appContext = 'neverai', suggestPro = true, onUpgrade }: UpgradeBarProps) {
+export function UpgradeBar({ appContext = 'nevorai', suggestPro = true, onUpgrade }: UpgradeBarProps) {
   const { isPaid, loading, refetch } = useSubscription();
   const { initiatePayment, loading: paymentLoading } = useRazorpay();
   const { toast } = useToast();
 
   const handleSubscribe = () => {
-    const plan: PlanType = suggestPro || appContext === 'neverai' ? 'pro' : 'mini';
+    const plan: PlanType = suggestPro || appContext === 'nevorai' ? 'pro' : 'mini';
     initiatePayment({
       planType: plan,
       onSuccess: () => {
@@ -38,7 +38,7 @@ export function UpgradeBar({ appContext = 'neverai', suggestPro = true, onUpgrad
 
   if (loading || isPaid) return null;
 
-  const plan: PlanType = suggestPro || appContext === 'neverai' ? 'pro' : 'mini';
+  const plan: PlanType = suggestPro || appContext === 'nevorai' ? 'pro' : 'mini';
   const planConfig = PLAN_CONFIG[plan];
   const PlanIcon = plan === 'pro' ? Crown : Zap;
 

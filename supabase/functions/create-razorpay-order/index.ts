@@ -43,7 +43,7 @@ const PLAN_CONFIG = {
     amount: TEST_MODE ? 100 : 29900, // ₹1 test or ₹299 production (in paise)
     duration_days: 30,
     plan_name: 'pro',
-    description: 'NeverAI Pro',
+    description: 'NevorAI Pro',
   },
 };
 
