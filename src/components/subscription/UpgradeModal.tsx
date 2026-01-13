@@ -139,7 +139,7 @@ export function UpgradeModal({
               disabled={paymentLoading}
             >
               <Zap className="h-4 w-4 mr-2" />
-              Just need basics? TrackUp Mini – ₹29/mo
+              Just need basics? TrackUp Mini – ₹99/mo
             </Button>
           )}
 

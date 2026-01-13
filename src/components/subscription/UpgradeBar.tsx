@@ -4,6 +4,7 @@ import { useSubscription } from '@/hooks/useSubscription';
 import { PLAN_CONFIG, PlanType } from '@/hooks/usePaymentLinks';
 import { useRazorpay } from '@/hooks/useRazorpay';
 import { useToast } from '@/hooks/use-toast';
+import { useLeadLimit } from '@/hooks/useLeadLimit';
 
 interface UpgradeBarProps {
   /** Which app context - affects messaging and plan suggestion */
@@ -13,8 +14,11 @@ interface UpgradeBarProps {
   onUpgrade?: () => void;
 }
 
+const UPGRADE_THRESHOLD = 450;
+
 export function UpgradeBar({ appContext = 'nevorai', suggestPro = true, onUpgrade }: UpgradeBarProps) {
   const { isPaid, loading, refetch } = useSubscription();
+  const { currentCount } = useLeadLimit();
   const { initiatePayment, loading: paymentLoading } = useRazorpay();
   const { toast } = useToast();
 
@@ -36,7 +40,8 @@ export function UpgradeBar({ appContext = 'nevorai', suggestPro = true, onUpgrad
     });
   };
 
-  if (loading || isPaid) return null;
+  // Hide upgrade bar for paid users OR free users with less than 450 leads
+  if (loading || isPaid || currentCount < UPGRADE_THRESHOLD) return null;
 
   const plan: PlanType = suggestPro || appContext === 'nevorai' ? 'pro' : 'mini';
   const planConfig = PLAN_CONFIG[plan];

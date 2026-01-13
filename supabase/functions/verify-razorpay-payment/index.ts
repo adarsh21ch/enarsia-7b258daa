@@ -30,14 +30,15 @@ function checkRateLimit(userId: string): boolean {
 }
 
 const PLAN_CONFIG = {
-  monthly: {
-    amount: 24900,
+  mini: {
+    amount: 9900,
     duration_days: 30,
+    plan_name: 'mini',
   },
-  yearly: {
-    amount: 299900,
-    discountedAmount: 199900,
-    duration_days: 365,
+  pro: {
+    amount: 29900,
+    duration_days: 30,
+    plan_name: 'pro',
   },
 };
 
@@ -116,10 +117,9 @@ serve(async (req) => {
     console.log('Signature verified successfully');
 
     const authHeader = btoa(`${RAZORPAY_KEY_ID}:${RAZORPAY_KEY_SECRET}`);
-    let planType = 'monthly';
+    let purchasedPlan: 'mini' | 'pro' = 'pro'; // Default to pro
     let durationDays = 30;
-    let amount = 24900;
-    let couponApplied = 'none';
+    let amount = 29900;
 
     try {
       const orderResponse = await fetch(`https://api.razorpay.com/v1/orders/${razorpay_order_id}`, {
@@ -130,21 +130,20 @@ serve(async (req) => {
       
       if (orderResponse.ok) {
         const orderDetails = await orderResponse.json();
-        const orderPlanType = orderDetails.notes?.plan_type;
+        const orderPlan = orderDetails.notes?.plan;
         const orderDurationDays = orderDetails.notes?.duration_days;
-        const orderCoupon = orderDetails.notes?.coupon_applied;
         const orderAmount = orderDetails.notes?.final_amount;
         
-        if (orderPlanType && PLAN_CONFIG[orderPlanType as keyof typeof PLAN_CONFIG]) {
-          planType = orderPlanType;
-          durationDays = parseInt(orderDurationDays) || PLAN_CONFIG[planType as keyof typeof PLAN_CONFIG].duration_days;
+        // Use plan from order notes (set during order creation)
+        if (orderPlan === 'mini' || orderPlan === 'pro') {
+          purchasedPlan = orderPlan;
+          durationDays = parseInt(orderDurationDays) || PLAN_CONFIG[purchasedPlan].duration_days;
           amount = parseInt(orderAmount) || orderDetails.amount;
-          couponApplied = orderCoupon || 'none';
         }
-        console.log(`Order details: plan_type=${planType}, duration_days=${durationDays}, amount=${amount}, coupon=${couponApplied}`);
+        console.log(`Order details: plan=${purchasedPlan}, duration_days=${durationDays}, amount=${amount}`);
       }
     } catch (orderError) {
-      console.error('Error fetching order details, defaulting to monthly:', orderError);
+      console.error('Error fetching order details, defaulting to pro:', orderError);
     }
 
     const supabase = createClient(SUPABASE_URL!, SUPABASE_SERVICE_ROLE_KEY!);
@@ -156,7 +155,7 @@ serve(async (req) => {
     const { error: updateError } = await supabase
       .from('user_subscriptions')
       .update({
-        plan: 'pro',
+        plan: purchasedPlan, // Use actual purchased plan (mini or pro)
         status: 'active',
         subscribed_at: now.toISOString(),
         expires_at: expiresAt.toISOString(),
@@ -172,7 +171,7 @@ serve(async (req) => {
       );
     }
 
-    console.log(`Pro subscription activated for user: ${user_id}, plan: ${planType}, expires: ${expiresAt.toISOString()}`);
+    console.log(`${purchasedPlan} subscription activated for user: ${user_id}, expires: ${expiresAt.toISOString()}`);
 
     await supabase.from('payments_log').insert({
       event_type: 'payment_verified',
@@ -181,16 +180,15 @@ serve(async (req) => {
       amount: amount,
       status: 'success',
       found_user: true,
-      action_taken: `subscription_activated_${planType}${couponApplied !== 'none' ? `_coupon_${couponApplied}` : ''}`,
+      action_taken: `subscription_activated_${purchasedPlan}`,
     });
 
     return new Response(
       JSON.stringify({ 
         success: true, 
-        message: 'Pro subscription activated successfully',
-        plan_type: planType,
+        message: `${purchasedPlan === 'pro' ? 'Pro' : 'Mini'} subscription activated successfully`,
+        plan: purchasedPlan,
         duration_days: durationDays,
-        coupon_applied: couponApplied,
         expires_at: expiresAt.toISOString()
       }),
       { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }

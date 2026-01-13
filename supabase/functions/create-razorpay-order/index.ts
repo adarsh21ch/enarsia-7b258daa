@@ -34,7 +34,7 @@ const TEST_MODE = false;
 
 const PLAN_CONFIG = {
   mini: {
-    amount: TEST_MODE ? 100 : 2900, // ₹1 test or ₹29 production (in paise)
+    amount: TEST_MODE ? 100 : 9900, // ₹1 test or ₹99 production (in paise)
     duration_days: 30,
     plan_name: 'mini',
     description: 'TrackUp Mini',
