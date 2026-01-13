@@ -3,6 +3,8 @@
  * These are pre-created Razorpay payment links.
  */
 
+import { PLAN_NAME_PRO, PLAN_NAME_MINI } from '@/config/brand';
+
 export type PlanType = 'mini' | 'pro';
 
 export interface PlanConfig {
@@ -20,7 +22,7 @@ export const PAYMENT_LINKS = {
 
 export const PLAN_CONFIG: Record<PlanType, PlanConfig> = {
   mini: {
-    name: 'TrackUp Mini',
+    name: PLAN_NAME_MINI,
     price: 29,
     paymentLink: PAYMENT_LINKS.mini,
     description: 'Manual personal & team tracking',
@@ -31,7 +33,7 @@ export const PLAN_CONFIG: Record<PlanType, PlanConfig> = {
     ],
   },
   pro: {
-    name: 'NeverAI Pro',
+    name: PLAN_NAME_PRO,
     price: 299,
     paymentLink: PAYMENT_LINKS.pro,
     description: 'Full team sync & analytics',

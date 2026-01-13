@@ -6,13 +6,14 @@ import { useRazorpay } from '@/hooks/useRazorpay';
 import { format } from 'date-fns';
 import { useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
+import { PLAN_NAME_PRO, PLAN_NAME_MINI } from '@/config/brand';
 
 interface UpgradeCardProps {
   /** Which app is showing this card - affects which plans are shown */
-  appContext?: 'neverai' | 'trackup';
+  appContext?: 'nevorai' | 'trackup';
 }
 
-export function UpgradeCard({ appContext = 'neverai' }: UpgradeCardProps) {
+export function UpgradeCard({ appContext = 'nevorai' }: UpgradeCardProps) {
   const { plan, isPro, isMini, isPaid, isAdminOverride, daysRemaining, subscription, loading, refetch } = useSubscription();
   const { initiatePayment, loading: paymentLoading } = useRazorpay();
   const { toast } = useToast();
@@ -42,7 +43,7 @@ export function UpgradeCard({ appContext = 'neverai' }: UpgradeCardProps) {
       ? format(new Date(subscription.expires_at), 'MMM d, yyyy')
       : null;
 
-    const planName = isPro ? 'NeverAI Pro' : 'TrackUp Mini';
+    const planName = isPro ? PLAN_NAME_PRO : PLAN_NAME_MINI;
     const planIcon = isPro ? Crown : Zap;
     const PlanIcon = planIcon;
 
@@ -95,7 +96,7 @@ export function UpgradeCard({ appContext = 'neverai' }: UpgradeCardProps) {
   }
 
   // Free user - show upgrade options
-  // NeverAI app: Show ONLY Pro
+  // NevorAI app: Show ONLY Pro
   // TrackUp app: Show both Mini and Pro
   const showMini = appContext === 'trackup';
 
@@ -112,7 +113,7 @@ export function UpgradeCard({ appContext = 'neverai' }: UpgradeCardProps) {
       </div>
 
       <div className="space-y-3 mb-4">
-        {/* NeverAI Pro Plan - Always shown */}
+        {/* NevorAI Pro Plan - Always shown */}
         <button
           type="button"
           onClick={() => setSelectedPlan('pro')}

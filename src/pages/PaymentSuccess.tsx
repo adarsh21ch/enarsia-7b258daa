@@ -66,7 +66,7 @@ export default function PaymentSuccess() {
       
       toast({
         title: "Pro Plan Activated!",
-        description: "Welcome to NevorAI Pro. Enjoy all premium features for 30 days!",
+        description: "Welcome to NevorAI Pro! Enjoy all premium features for 30 days.",
       });
     } catch (err: any) {
       console.error('Activation error:', err);

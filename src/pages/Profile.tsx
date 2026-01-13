@@ -209,7 +209,7 @@ export default function Profile() {
           <ShareProfileDialog />
 
           {/* Upgrade Card - Shows subscription status and upgrade options */}
-          {SHOW_PROFILE_UPGRADE_UI && <UpgradeCard appContext="neverai" />}
+          {SHOW_PROFILE_UPGRADE_UI && <UpgradeCard appContext="nevorai" />}
 
           {/* Leader & Tracking Format Settings - Opens in Sidebar */}
           <LeaderTrackingFormatDrawer

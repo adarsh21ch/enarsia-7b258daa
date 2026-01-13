@@ -1,5 +1,5 @@
 /**
- * Hook to record and track app access for NeverAI
+ * Hook to record and track app access for NevorAI
  * This enables app-specific user counting for admin dashboards
  */
 import { useEffect } from 'react';
