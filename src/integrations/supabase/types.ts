@@ -2163,6 +2163,63 @@ export type Database = {
         }
         Relationships: []
       }
+      total_snapshot_v2: {
+        Row: {
+          created_at: string
+          date: string
+          final_tag: string | null
+          final_tag_count: number
+          funnel_day: number | null
+          funnel_start_date: string | null
+          funnel_tag: string | null
+          funnel_tag_count: number
+          response_tags: Json
+          snapshot_id: string
+          stage_tags: Json
+          total_leads: number
+          total_responses: number
+          updated_at: string
+          upline_leader_id: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          date: string
+          final_tag?: string | null
+          final_tag_count?: number
+          funnel_day?: number | null
+          funnel_start_date?: string | null
+          funnel_tag?: string | null
+          funnel_tag_count?: number
+          response_tags?: Json
+          snapshot_id?: string
+          stage_tags?: Json
+          total_leads?: number
+          total_responses?: number
+          updated_at?: string
+          upline_leader_id?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          date?: string
+          final_tag?: string | null
+          final_tag_count?: number
+          funnel_day?: number | null
+          funnel_start_date?: string | null
+          funnel_tag?: string | null
+          funnel_tag_count?: number
+          response_tags?: Json
+          snapshot_id?: string
+          stage_tags?: Json
+          total_leads?: number
+          total_responses?: number
+          updated_at?: string
+          upline_leader_id?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       tracking_overrides: {
         Row: {
           created_at: string | null
@@ -2198,6 +2255,33 @@ export type Database = {
           stage_values?: Json | null
           target_user_id?: string
           updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      tracking_source_preferences: {
+        Row: {
+          created_at: string
+          id: string
+          personal_source: string
+          team_source: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          personal_source?: string
+          team_source?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          personal_source?: string
+          team_source?: string
+          updated_at?: string
           user_id?: string
         }
         Relationships: []
