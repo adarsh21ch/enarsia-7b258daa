@@ -5,11 +5,11 @@ import { useProfile } from '@/hooks/useProfile';
 import { useAdmin } from '@/hooks/useAdmin';
 import { useSubscription } from '@/hooks/useSubscription';
 import { useLeaderSetup } from '@/hooks/useLeaderSetup';
+import { useLeadLimit } from '@/hooks/useLeadLimit';
 import { useTrackingFormatContext } from '@/contexts/TrackingFormatContext';
 import { BottomNav } from '@/components/layout/BottomNav';
 import { HeaderBellIcon } from '@/components/layout/HeaderBellIcon';
 import { EditProfileDialog } from '@/components/profile/EditProfileDialog';
-import { ShareProfileDialog } from '@/components/profile/ShareProfileDialog';
 import { ChangePasswordDialog } from '@/components/profile/ChangePasswordDialog';
 import { LeaderTrackingFormatDrawer } from '@/components/profile/LeaderTrackingFormatDrawer';
 import { LevelManagement } from '@/components/profile/LevelManagement';
@@ -80,8 +80,8 @@ function usePullToRefresh(onRefresh: () => Promise<void>, threshold = 80) {
     showIndicator: pullDistance > 20 || isRefreshing
   };
 }
-// Feature flag: Set to true to show upgrade UI in Profile tab
-const SHOW_PROFILE_UPGRADE_UI = true;
+// Threshold for showing upgrade UI (500 leads)
+const UPGRADE_UI_LEAD_THRESHOLD = 500;
 
 export default function Profile() {
   const navigate = useNavigate();
@@ -112,6 +112,7 @@ export default function Profile() {
   const {
     refreshFormat
   } = useTrackingFormatContext();
+  const { currentCount: totalLeads } = useLeadLimit();
   const [editOpen, setEditOpen] = useState(false);
 
   // Handle TrackUp Dashboard - Open nevorai.com TrackUp
@@ -205,11 +206,9 @@ export default function Profile() {
             <div className="absolute -right-4 -top-4 w-16 h-16 rounded-full bg-primary/5" />
           </div>
 
-          {/* Share Profile Button - Prominent */}
-          <ShareProfileDialog />
-
           {/* Upgrade Card - Shows subscription status and upgrade options */}
-          {SHOW_PROFILE_UPGRADE_UI && <UpgradeCard appContext="nevorai" />}
+          {/* Only show when user has 500+ leads */}
+          {totalLeads >= UPGRADE_UI_LEAD_THRESHOLD && <UpgradeCard appContext="nevorai" />}
 
           {/* Leader & Tracking Format Settings - Opens in Sidebar */}
           <LeaderTrackingFormatDrawer

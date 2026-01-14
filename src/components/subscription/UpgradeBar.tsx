@@ -14,7 +14,7 @@ interface UpgradeBarProps {
   onUpgrade?: () => void;
 }
 
-const UPGRADE_THRESHOLD = 450;
+const UPGRADE_THRESHOLD = 500;
 
 export function UpgradeBar({ appContext = 'nevorai', suggestPro = true, onUpgrade }: UpgradeBarProps) {
   const { isPaid, loading, refetch } = useSubscription();
