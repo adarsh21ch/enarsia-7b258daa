@@ -39,6 +39,35 @@ export default function Auth() {
   // Helper to check if input is an email
   const isEmail = (input: string) => input.includes('@');
 
+  // State for magic link flow
+  const [showMagicLinkOption, setShowMagicLinkOption] = useState(false);
+  const [pendingEmail, setPendingEmail] = useState('');
+
+  const handleSendMagicLink = async (email: string) => {
+    setIsSubmitting(true);
+    try {
+      const { error } = await supabase.auth.signInWithOtp({
+        email,
+        options: {
+          emailRedirectTo: window.location.origin + '/home',
+        },
+      });
+      
+      if (error) {
+        toast.error('Failed to send login link. Please try again.');
+      } else {
+        toast.success(
+          'Login link sent! Check your email inbox and click the link to sign in instantly.',
+          { duration: 8000 }
+        );
+        setShowMagicLinkOption(false);
+      }
+    } catch (err) {
+      toast.error('Failed to send login link');
+    }
+    setIsSubmitting(false);
+  };
+
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!emailOrLeaderId || !password) {
@@ -77,19 +106,11 @@ export default function Auth() {
           });
           
           if (provisionedData && provisionedData.length > 0 && provisionedData[0].is_provisioned) {
-            // This user was provisioned from another app - auto-send password reset
-            const { error: resetError } = await supabase.auth.resetPasswordForEmail(email, {
-              redirectTo: getPasswordRecoveryRedirectUrl(),
-            });
-            
-            if (!resetError) {
-              toast.success(
-                `Your account was created via ${provisionedData[0].source_app === 'achievers_club' ? 'Achievers Club' : 'another app'}. We've sent you an email to set your password. Please check your inbox!`,
-                { duration: 8000 }
-              );
-              setIsSubmitting(false);
-              return;
-            }
+            // This user was provisioned from another app - show magic link option
+            setPendingEmail(email);
+            setShowMagicLinkOption(true);
+            setIsSubmitting(false);
+            return;
           }
         } catch (checkError) {
           console.error('Error checking provisioned user:', checkError);
@@ -240,6 +261,86 @@ export default function Auth() {
               )}
             </Button>
           </form>
+        </div>
+      </div>
+    );
+  }
+
+  // Show magic link option for provisioned users from Achievers Club
+  if (showMagicLinkOption && pendingEmail) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background p-4">
+        <div className="w-full max-w-md bg-card rounded-2xl shadow-xl border border-border p-8">
+          <div className="text-center mb-8">
+            <img src={nevoraLogo} alt="NevorAI Logo" className="w-16 h-16 mx-auto mb-3 rounded-xl" />
+            <h1 className="text-2xl font-bold text-foreground">NevorAI</h1>
+            <p className="text-muted-foreground text-sm mt-1">Never miss a followup Again</p>
+          </div>
+
+          <div className="space-y-4">
+            <div className="p-4 bg-primary/10 border border-primary/20 rounded-lg">
+              <h3 className="font-semibold text-foreground mb-2">Account Found!</h3>
+              <p className="text-sm text-muted-foreground">
+                Your account was created via <span className="font-medium text-primary">Achievers Club</span>. 
+                You can sign in instantly using a magic link sent to your email.
+              </p>
+            </div>
+
+            <div className="text-center text-sm text-muted-foreground py-2">
+              Email: <span className="font-medium text-foreground">{pendingEmail}</span>
+            </div>
+
+            <Button 
+              onClick={() => handleSendMagicLink(pendingEmail)} 
+              className="w-full"
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Sending...
+                </>
+              ) : (
+                <>
+                  <Mail className="mr-2 h-4 w-4" />
+                  Send Magic Login Link
+                </>
+              )}
+            </Button>
+
+            <div className="relative my-4">
+              <div className="absolute inset-0 flex items-center">
+                <div className="w-full border-t border-border" />
+              </div>
+              <div className="relative flex justify-center text-xs uppercase">
+                <span className="bg-card px-2 text-muted-foreground">or</span>
+              </div>
+            </div>
+
+            <Button 
+              variant="outline" 
+              onClick={() => {
+                setShowMagicLinkOption(false);
+                setIsForgotPassword(true);
+              }}
+              className="w-full"
+            >
+              <Lock className="mr-2 h-4 w-4" />
+              Set a New Password
+            </Button>
+
+            <button
+              type="button"
+              onClick={() => {
+                setShowMagicLinkOption(false);
+                setPendingEmail('');
+              }}
+              className="w-full text-sm text-muted-foreground hover:text-foreground"
+            >
+              <ArrowLeft className="inline h-4 w-4 mr-1" />
+              Back to Sign In
+            </button>
+          </div>
         </div>
       </div>
     );

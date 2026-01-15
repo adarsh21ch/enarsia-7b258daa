@@ -121,7 +121,7 @@ serve(async (req) => {
           // No profile - create auth user (trigger will create profile)
           const { data: newUser, error: createError } = await supabase.auth.admin.createUser({
             email: normalizedEmail,
-            password: crypto.randomUUID(),
+            password: crypto.randomUUID(), // Random password - user will use magic link or set password
             email_confirm: true,
             user_metadata: { display_name, provisioned_by: 'achievers_club' }
           });
@@ -146,6 +146,22 @@ serve(async (req) => {
 
           if (profileUpdateError) {
             console.error('Profile update after creation failed:', profileUpdateError);
+          }
+
+          // Generate password recovery link so user can set their own password
+          // This allows them to log in to NevorAI/TrackUp with a known password
+          try {
+            await supabase.auth.admin.generateLink({
+              type: 'recovery',
+              email: normalizedEmail,
+              options: {
+                redirectTo: 'https://nevorai.lovable.app/reset-password'
+              }
+            });
+            console.log('Password setup link generated for:', normalizedEmail);
+          } catch (linkError) {
+            console.error('Failed to generate password link:', linkError);
+            // Non-blocking - user can still use magic link
           }
           
           console.log('Created new user with leader_id:', normalizedEmail, '->', newId);
