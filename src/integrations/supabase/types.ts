@@ -1690,6 +1690,7 @@ export type Database = {
           stage_count: number
           stage_labels: Json | null
           tags_refresh_token: string | null
+          total_leads_added: number
           updated_at: string
           use_leader_stages: boolean
           user_id: string
@@ -1716,6 +1717,7 @@ export type Database = {
           stage_count?: number
           stage_labels?: Json | null
           tags_refresh_token?: string | null
+          total_leads_added?: number
           updated_at?: string
           use_leader_stages?: boolean
           user_id: string
@@ -1742,6 +1744,7 @@ export type Database = {
           stage_count?: number
           stage_labels?: Json | null
           tags_refresh_token?: string | null
+          total_leads_added?: number
           updated_at?: string
           use_leader_stages?: boolean
           user_id?: string
@@ -2648,6 +2651,10 @@ export type Database = {
           _user_id: string
         }
         Returns: boolean
+      }
+      increment_leads_added: {
+        Args: { count?: number; user_uuid: string }
+        Returns: number
       }
       is_ac_admin: { Args: { user_uuid: string }; Returns: boolean }
       is_ac_member: { Args: { user_uuid: string }; Returns: boolean }

@@ -9,6 +9,8 @@ import { Prospect } from '@/types/prospect';
 import { toast } from 'sonner';
 import { sanitizeImportString, validateImportedProspect } from '@/lib/validations';
 import { cn } from '@/lib/utils';
+import { useLifetimeLeadLimit } from '@/hooks/useLifetimeLeadLimit';
+import { LeadLimitModal } from '@/components/subscription/LeadLimitModal';
 
 interface ImportExcelDialogProps {
   onImport: (prospects: Partial<Prospect>[], onProgress?: (imported: number, total: number) => void) => Promise<{ imported: number; skipped: number }>;
@@ -62,6 +64,9 @@ export function ImportExcelDialog({ onImport }: ImportExcelDialogProps) {
   const [isImporting, setIsImporting] = useState(false);
   const [importProgress, setImportProgress] = useState<{ current: number; total: number } | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [showLimitModal, setShowLimitModal] = useState(false);
+  
+  const { isAtLimit, canAddLeads, remaining, incrementLeadCount, isPaid } = useLifetimeLeadLimit();
   
   // Resizable columns state for preview table
   const [previewColumnWidths, setPreviewColumnWidths] = useState<Record<string, number>>({});
@@ -223,6 +228,12 @@ export function ImportExcelDialog({ onImport }: ImportExcelDialogProps) {
   const handleImport = async () => {
     if (!mapping.name || !mapping.phone) {
       setError('Name and Phone columns are required');
+      return;
+    }
+
+    // Check lead limit before importing
+    if (isAtLimit) {
+      setShowLimitModal(true);
       return;
     }
 

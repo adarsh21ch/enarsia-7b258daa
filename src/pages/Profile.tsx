@@ -5,7 +5,7 @@ import { useProfile } from '@/hooks/useProfile';
 import { useAdmin } from '@/hooks/useAdmin';
 import { useSubscription } from '@/hooks/useSubscription';
 import { useLeaderSetup } from '@/hooks/useLeaderSetup';
-import { useLeadLimit } from '@/hooks/useLeadLimit';
+import { useLifetimeLeadLimit } from '@/hooks/useLifetimeLeadLimit';
 import { useTrackingFormatContext } from '@/contexts/TrackingFormatContext';
 import { BottomNav } from '@/components/layout/BottomNav';
 import { HeaderBellIcon } from '@/components/layout/HeaderBellIcon';
@@ -15,7 +15,8 @@ import { LeaderTrackingFormatDrawer } from '@/components/profile/LeaderTrackingF
 import { LevelManagement } from '@/components/profile/LevelManagement';
 import { ProfileLevelDropdown } from '@/components/profile/ProfileLevelDropdown';
 
-import { UpgradeCard } from '@/components/subscription/UpgradeCard';
+import { UpgradeDrawer } from '@/components/subscription/UpgradeDrawer';
+import { LeadLimitWarningBanner } from '@/components/subscription/LeadLimitWarningBanner';
 import { PullToRefreshIndicator } from '@/components/PullToRefreshIndicator';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -80,8 +81,7 @@ function usePullToRefresh(onRefresh: () => Promise<void>, threshold = 80) {
     showIndicator: pullDistance > 20 || isRefreshing
   };
 }
-// Threshold for showing upgrade UI (500 leads)
-const UPGRADE_UI_LEAD_THRESHOLD = 500;
+// Removed - no longer used
 
 export default function Profile() {
   const navigate = useNavigate();
@@ -112,7 +112,7 @@ export default function Profile() {
   const {
     refreshFormat
   } = useTrackingFormatContext();
-  const { currentCount: totalLeads } = useLeadLimit();
+  const { showWarning: showLeadWarning, isPaid } = useLifetimeLeadLimit();
   const [editOpen, setEditOpen] = useState(false);
 
   // Handle TrackUp Dashboard - Open nevorai.com TrackUp
@@ -206,8 +206,11 @@ export default function Profile() {
             <div className="absolute -right-4 -top-4 w-16 h-16 rounded-full bg-primary/5" />
           </div>
 
-          {/* Upgrade Card - Shows subscription status and upgrade options */}
-          <UpgradeCard appContext="nevorai" />
+          {/* Lead Limit Warning Banner - Shows at 450+ leads for free users */}
+          <LeadLimitWarningBanner />
+
+          {/* Upgrade CTA - Minimal button that opens drawer/sheet */}
+          {!isPaid && <UpgradeDrawer variant="prominent" />}
 
           {/* Leader & Tracking Format Settings - Opens in Sidebar */}
           <LeaderTrackingFormatDrawer

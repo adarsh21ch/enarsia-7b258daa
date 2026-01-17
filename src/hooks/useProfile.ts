@@ -27,6 +27,8 @@ export interface Profile {
   stage_count: number;
   stage_labels: string[];
   response_labels: string[];
+  /** Monotonic counter for lifetime leads added - never decreases */
+  total_leads_added: number;
 }
 
 export interface ProfileUpdate {
@@ -91,6 +93,7 @@ export function useProfile() {
           ...retryData,
           stage_labels: retryData.stage_labels || [],
           response_labels: retryData.response_labels || [],
+          total_leads_added: retryData.total_leads_added ?? 0,
         } as Profile;
       }
 
@@ -108,6 +111,7 @@ export function useProfile() {
         ...data,
         stage_labels: data.stage_labels || [],
         response_labels: data.response_labels || [],
+        total_leads_added: data.total_leads_added ?? 0,
       } as Profile;
     },
     enabled: !!user,

@@ -6,6 +6,8 @@ import { Label } from '@/components/ui/label';
 import { Plus, AlertTriangle } from 'lucide-react';
 import { Prospect } from '@/types/prospect';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { useLifetimeLeadLimit } from '@/hooks/useLifetimeLeadLimit';
+import { LeadLimitModal } from '@/components/subscription/LeadLimitModal';
 import { cn } from '@/lib/utils';
 
 interface AddProspectDialogProps {
@@ -22,7 +24,9 @@ export function AddProspectDialog({ onAdd, existingProspects = [] }: AddProspect
   const [phone, setPhone] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errors, setErrors] = useState<{ name?: string; phone?: string }>({});
+  const [showLimitModal, setShowLimitModal] = useState(false);
   const isMobile = useIsMobile();
+  const { isAtLimit, canAddLead, incrementLeadCount, isPaid } = useLifetimeLeadLimit();
 
   // Check for duplicate phone number
   const duplicateProspect = useMemo(() => {
@@ -38,6 +42,12 @@ export function AddProspectDialog({ onAdd, existingProspects = [] }: AddProspect
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrors({});
+
+    // Check lead limit before submitting
+    if (!canAddLead) {
+      setShowLimitModal(true);
+      return;
+    }
 
     const trimmedName = name.trim();
     const trimmedPhone = phone.trim();
@@ -63,6 +73,8 @@ export function AddProspectDialog({ onAdd, existingProspects = [] }: AddProspect
     });
 
     if (prospectResult) {
+      // Increment lifetime lead counter on successful add
+      await incrementLeadCount(1);
       setName('');
       setPhone('');
       setErrors({});
@@ -71,83 +83,101 @@ export function AddProspectDialog({ onAdd, existingProspects = [] }: AddProspect
     setIsSubmitting(false);
   };
 
+  // Handle dialog open - check limit first
+  const handleOpenChange = (isOpen: boolean) => {
+    if (isOpen && isAtLimit) {
+      setShowLimitModal(true);
+      return;
+    }
+    setOpen(isOpen);
+  };
+
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button size="sm" className="h-8 gap-1 text-xs px-2">
-          <Plus className="h-3.5 w-3.5" />
-          <span className="hidden sm:inline">Add</span>
-        </Button>
-      </DialogTrigger>
-      <DialogContent className="sm:max-w-md bg-card border-border">
-        <DialogHeader>
-          <DialogTitle>Add New Lead</DialogTitle>
-          <DialogDescription>Enter the name and phone number of your new lead.</DialogDescription>
-        </DialogHeader>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="name">Name *</Label>
-            <Input
-              id="name"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder="Enter name"
-              maxLength={100}
-              className={errors.name ? 'border-destructive' : ''}
-            />
-            {errors.name && (
-              <p className="text-xs text-destructive">{errors.name}</p>
-            )}
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="phone">Phone *</Label>
-            <Input
-              id="phone"
-              value={phone}
-              onChange={(e) => setPhone(e.target.value)}
-              placeholder="Enter phone number"
-              maxLength={20}
-              className={cn(
-                errors.phone ? 'border-destructive' : '',
-                duplicateProspect ? 'border-yellow-500 focus-visible:ring-yellow-500' : ''
+    <>
+      <Dialog open={open} onOpenChange={handleOpenChange}>
+        <DialogTrigger asChild>
+          <Button size="sm" className="h-8 gap-1 text-xs px-2">
+            <Plus className="h-3.5 w-3.5" />
+            <span className="hidden sm:inline">Add</span>
+          </Button>
+        </DialogTrigger>
+        <DialogContent className="sm:max-w-md bg-card border-border">
+          <DialogHeader>
+            <DialogTitle>Add New Lead</DialogTitle>
+            <DialogDescription>Enter the name and phone number of your new lead.</DialogDescription>
+          </DialogHeader>
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="name">Name *</Label>
+              <Input
+                id="name"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder="Enter name"
+                maxLength={100}
+                className={errors.name ? 'border-destructive' : ''}
+              />
+              {errors.name && (
+                <p className="text-xs text-destructive">{errors.name}</p>
               )}
-            />
-            {errors.phone && (
-              <p className="text-xs text-destructive">{errors.phone}</p>
-            )}
-            {/* Duplicate warning */}
-            {duplicateProspect && !errors.phone && (
-              <div className="flex items-start gap-2 p-2 bg-yellow-500/10 border border-yellow-500/30 rounded-md">
-                <AlertTriangle className="h-4 w-4 text-yellow-500 shrink-0 mt-0.5" />
-                <div className="text-xs">
-                  <p className="font-medium text-yellow-600">Lead already exists!</p>
-                  <p className="text-muted-foreground">
-                    <span className="font-medium">{duplicateProspect.name}</span>
-                    {duplicateProspect.action_taken && (
-                      <span> • Response: <span className="font-medium">{duplicateProspect.action_taken}</span></span>
-                    )}
-                    {duplicateProspect.funnel_stage && (
-                      <span> • Stage: <span className="font-medium">{duplicateProspect.funnel_stage}</span></span>
-                    )}
-                  </p>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="phone">Phone *</Label>
+              <Input
+                id="phone"
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
+                placeholder="Enter phone number"
+                maxLength={20}
+                className={cn(
+                  errors.phone ? 'border-destructive' : '',
+                  duplicateProspect ? 'border-yellow-500 focus-visible:ring-yellow-500' : ''
+                )}
+              />
+              {errors.phone && (
+                <p className="text-xs text-destructive">{errors.phone}</p>
+              )}
+              {/* Duplicate warning */}
+              {duplicateProspect && !errors.phone && (
+                <div className="flex items-start gap-2 p-2 bg-yellow-500/10 border border-yellow-500/30 rounded-md">
+                  <AlertTriangle className="h-4 w-4 text-yellow-500 shrink-0 mt-0.5" />
+                  <div className="text-xs">
+                    <p className="font-medium text-yellow-600">Lead already exists!</p>
+                    <p className="text-muted-foreground">
+                      <span className="font-medium">{duplicateProspect.name}</span>
+                      {duplicateProspect.action_taken && (
+                        <span> • Response: <span className="font-medium">{duplicateProspect.action_taken}</span></span>
+                      )}
+                      {duplicateProspect.funnel_stage && (
+                        <span> • Stage: <span className="font-medium">{duplicateProspect.funnel_stage}</span></span>
+                      )}
+                    </p>
+                  </div>
                 </div>
-              </div>
-            )}
-          </div>
-          <div className="flex justify-end gap-2 pt-2">
-            <Button type="button" variant="outline" onClick={() => setOpen(false)}>
-              Cancel
-            </Button>
-            <Button 
-              type="submit" 
-              disabled={isSubmitting}
-              variant={duplicateProspect ? 'outline' : 'default'}
-            >
-              {isSubmitting ? 'Adding...' : duplicateProspect ? 'Add Anyway' : 'Add Lead'}
-            </Button>
-          </div>
-        </form>
-      </DialogContent>
-    </Dialog>
+              )}
+            </div>
+            <div className="flex justify-end gap-2 pt-2">
+              <Button type="button" variant="outline" onClick={() => setOpen(false)}>
+                Cancel
+              </Button>
+              <Button 
+                type="submit" 
+                disabled={isSubmitting}
+                variant={duplicateProspect ? 'outline' : 'default'}
+              >
+                {isSubmitting ? 'Adding...' : duplicateProspect ? 'Add Anyway' : 'Add Lead'}
+              </Button>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
+      
+      {/* Lead Limit Modal - shown when user hits the limit */}
+      <LeadLimitModal 
+        open={showLimitModal} 
+        onClose={() => setShowLimitModal(false)} 
+        context="add"
+      />
+    </>
   );
 }
