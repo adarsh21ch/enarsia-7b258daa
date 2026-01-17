@@ -95,11 +95,7 @@ export function UpgradeCard({ appContext = 'nevorai' }: UpgradeCardProps) {
     );
   }
 
-  // Free user - show upgrade options
-  // NevorAI app: Show ONLY Pro
-  // TrackUp app: Show both Mini and Pro
-  const showMini = appContext === 'trackup';
-
+  // Free user - show upgrade options - Always show both plans
   return (
     <div className="rounded-2xl p-5 bg-gradient-to-br from-primary/20 via-primary/10 to-transparent border border-primary/20">
       <div className="flex items-center gap-3 mb-4">
@@ -113,7 +109,7 @@ export function UpgradeCard({ appContext = 'nevorai' }: UpgradeCardProps) {
       </div>
 
       <div className="space-y-3 mb-4">
-        {/* NevorAI Pro Plan - Always shown */}
+        {/* 4-Month Plan - Best Value */}
         <button
           type="button"
           onClick={() => setSelectedPlan('pro')}
@@ -125,7 +121,7 @@ export function UpgradeCard({ appContext = 'nevorai' }: UpgradeCardProps) {
         >
           <div className="absolute -top-2.5 right-3 px-2 py-0.5 bg-amber-500 text-white text-xs font-semibold rounded-full flex items-center gap-1">
             <Star className="h-3 w-3" />
-            Recommended
+            Best Value
           </div>
           <div className="flex justify-between items-start">
             <div className="flex-1">
@@ -145,45 +141,43 @@ export function UpgradeCard({ appContext = 'nevorai' }: UpgradeCardProps) {
             </div>
             <div className="text-right shrink-0 ml-3">
               <p className="font-bold text-xl text-foreground">₹299</p>
-              <p className="text-xs text-muted-foreground">/month</p>
+              <p className="text-xs text-muted-foreground">for 4 months</p>
             </div>
           </div>
         </button>
 
-        {/* TrackUp Mini Plan - Only in TrackUp app */}
-        {showMini && (
-          <button
-            type="button"
-            onClick={() => setSelectedPlan('mini')}
-            className={`w-full p-4 rounded-xl border-2 transition-all text-left ${
-              selectedPlan === 'mini'
-                ? 'border-primary bg-primary/10'
-                : 'border-border bg-card hover:border-primary/50'
-            }`}
-          >
-            <div className="flex justify-between items-start">
-              <div className="flex-1">
-                <div className="flex items-center gap-2 mb-1">
-                  <Zap className="h-4 w-4 text-amber-500" />
-                  <p className="font-semibold text-foreground">{PLAN_CONFIG.mini.name}</p>
-                </div>
-                <p className="text-xs text-muted-foreground mb-2">{PLAN_CONFIG.mini.description}</p>
-                <div className="space-y-1">
-                  {PLAN_CONFIG.mini.features.map((feature, i) => (
-                    <div key={i} className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                      <Check className="h-3 w-3 text-amber-500 shrink-0" />
-                      <span>{feature}</span>
-                    </div>
-                  ))}
-                </div>
+        {/* Monthly Plan */}
+        <button
+          type="button"
+          onClick={() => setSelectedPlan('mini')}
+          className={`w-full p-4 rounded-xl border-2 transition-all text-left ${
+            selectedPlan === 'mini'
+              ? 'border-primary bg-primary/10'
+              : 'border-border bg-card hover:border-primary/50'
+          }`}
+        >
+          <div className="flex justify-between items-start">
+            <div className="flex-1">
+              <div className="flex items-center gap-2 mb-1">
+                <Zap className="h-4 w-4 text-amber-500" />
+                <p className="font-semibold text-foreground">{PLAN_CONFIG.mini.name}</p>
               </div>
-              <div className="text-right shrink-0 ml-3">
-                <p className="font-bold text-xl text-foreground">₹29</p>
-                <p className="text-xs text-muted-foreground">/month</p>
+              <p className="text-xs text-muted-foreground mb-2">{PLAN_CONFIG.mini.description}</p>
+              <div className="space-y-1">
+                {PLAN_CONFIG.mini.features.map((feature, i) => (
+                  <div key={i} className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                    <Check className="h-3 w-3 text-amber-500 shrink-0" />
+                    <span>{feature}</span>
+                  </div>
+                ))}
               </div>
             </div>
-          </button>
-        )}
+            <div className="text-right shrink-0 ml-3">
+              <p className="font-bold text-xl text-foreground">₹99</p>
+              <p className="text-xs text-muted-foreground">for 1 month</p>
+            </div>
+          </div>
+        </button>
       </div>
 
       <Button 
@@ -196,12 +190,12 @@ export function UpgradeCard({ appContext = 'nevorai' }: UpgradeCardProps) {
         ) : selectedPlan === 'pro' ? (
           <>
             <Crown className="h-5 w-5 mr-2" />
-            Get {PLAN_CONFIG.pro.name} – ₹{PLAN_CONFIG.pro.price}/month
+            Get {PLAN_CONFIG.pro.name} – ₹{PLAN_CONFIG.pro.price}
           </>
         ) : (
           <>
             <Zap className="h-5 w-5 mr-2" />
-            Get {PLAN_CONFIG.mini.name} – ₹{PLAN_CONFIG.mini.price}/month
+            Get {PLAN_CONFIG.mini.name} – ₹{PLAN_CONFIG.mini.price}
           </>
         )}
       </Button>

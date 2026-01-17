@@ -3,8 +3,6 @@
  * These are pre-created Razorpay payment links.
  */
 
-import { PLAN_NAME_PRO, PLAN_NAME_MINI } from '@/config/brand';
-
 export type PlanType = 'mini' | 'pro';
 
 export interface PlanConfig {
@@ -22,10 +20,10 @@ export const PAYMENT_LINKS = {
 
 export const PLAN_CONFIG: Record<PlanType, PlanConfig> = {
   mini: {
-    name: PLAN_NAME_MINI,
+    name: 'Monthly Plan',
     price: 99,
     paymentLink: PAYMENT_LINKS.mini,
-    description: 'Manual personal & team tracking',
+    description: '1 Month Access',
     features: [
       'Manual personal tracking',
       'Manual team tracking (self-entered)',
@@ -33,17 +31,17 @@ export const PLAN_CONFIG: Record<PlanType, PlanConfig> = {
     ],
   },
   pro: {
-    name: PLAN_NAME_PRO,
+    name: '4-Month Plan',
     price: 299,
     paymentLink: PAYMENT_LINKS.pro,
-    description: 'Full team sync & analytics',
+    description: '4 Months Access – Best Value',
     features: [
-      'Everything in Mini',
+      'Everything in Monthly Plan',
       'Auto-sync from teammates',
       'View team member tracking',
       'Team actions & dashboards',
       'Switch tracking source',
-      'Frontline team gets Mini FREE',
+      'Frontline team gets access FREE',
     ],
   },
 };
