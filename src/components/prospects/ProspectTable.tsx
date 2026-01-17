@@ -10,6 +10,7 @@ import { SheetTabs } from './SheetTabs';
 import { ManageResponseTagsDialog } from './ManageResponseTagsDialog';
 import { ManageStageTagsDialog } from './ManageStageTagsDialog';
 import { ChangeFilterTagButton } from './ChangeFilterTagButton';
+import { LeadLimitWarningBanner } from '@/components/subscription/LeadLimitWarningBanner';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -938,6 +939,9 @@ export function ProspectTable({
       <div className="flex-shrink-0">
         <KPIStrip prospects={filteredProspects} isCalling={isCalling} className="my-0 py-[2px]" kpiTotal={kpiTotal} kpiTagCounts={kpiTagCounts} />
       </div>
+
+      {/* Lead Limit Warning Banner - positioned below KPI, above actions */}
+      <LeadLimitWarningBanner />
 
       {/* Single Action Bar - Filters left, Actions right */}
       <div className="flex-shrink-0 flex items-center justify-between gap-2">

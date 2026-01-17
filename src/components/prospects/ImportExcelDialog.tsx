@@ -148,6 +148,11 @@ export function ImportExcelDialog({ onImport }: ImportExcelDialogProps) {
   };
 
   const handleOpenChange = (isOpen: boolean) => {
+    // Check lead limit BEFORE opening the dialog (block immediately)
+    if (isOpen && isAtLimit) {
+      setShowLimitModal(true);
+      return; // Don't open the dialog
+    }
     setOpen(isOpen);
     if (!isOpen) resetState();
   };
@@ -483,6 +488,13 @@ export function ImportExcelDialog({ onImport }: ImportExcelDialogProps) {
           </div>
         )}
       </DialogContent>
+      
+      {/* Lead Limit Modal - shown when user hits the limit */}
+      <LeadLimitModal 
+        open={showLimitModal} 
+        onClose={() => setShowLimitModal(false)} 
+        context="import"
+      />
     </Dialog>
   );
 }
