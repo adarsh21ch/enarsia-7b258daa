@@ -283,10 +283,24 @@ export function ImportExcelDialog({ onImport }: ImportExcelDialogProps) {
       return;
     }
 
+    // Check if importing would exceed limit (for free users)
+    if (!isPaid && !canAddLeads(prospects.length)) {
+      setError(`Cannot import ${prospects.length} leads. You have ${remaining} leads remaining in your free plan. Upgrade to Pro for unlimited leads.`);
+      setIsImporting(false);
+      setImportProgress(null);
+      setShowLimitModal(true);
+      return;
+    }
+
     // Import with progress callback
     const result = await onImport(prospects, (imported, total) => {
       setImportProgress({ current: imported, total });
     });
+    
+    // Increment lifetime lead counter after successful import
+    if (result.imported > 0) {
+      await incrementLeadCount(result.imported);
+    }
     
     toast.success(`${result.imported} leads imported, ${result.skipped + skippedCount} rows skipped`);
     
