@@ -11,7 +11,7 @@ import { useState } from 'react';
 
 interface UpgradeDrawerProps {
   /** Trigger button variant */
-  variant?: 'default' | 'prominent';
+  variant?: 'default' | 'prominent' | 'compact';
   /** Custom trigger text */
   triggerText?: string;
 }
@@ -47,7 +47,15 @@ export function UpgradeDrawer({ variant = 'default', triggerText }: UpgradeDrawe
 
   const buttonText = triggerText || 'Upgrade to Pro';
 
-  const TriggerButton = (
+  const TriggerButton = variant === 'compact' ? (
+    <Button
+      variant="ghost"
+      size="sm"
+      className="h-6 px-2 text-xs font-medium text-amber-700 dark:text-amber-400 hover:bg-amber-500/20"
+    >
+      {buttonText}
+    </Button>
+  ) : (
     <Button
       variant={variant === 'prominent' ? 'default' : 'outline'}
       size="sm"
