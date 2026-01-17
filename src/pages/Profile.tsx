@@ -112,7 +112,7 @@ export default function Profile() {
   const {
     refreshFormat
   } = useTrackingFormatContext();
-  const { showWarning: showLeadWarning, isPaid } = useLifetimeLeadLimit();
+  const { showWarning: showLeadWarning, isPaid, isAtLimit } = useLifetimeLeadLimit();
   const [editOpen, setEditOpen] = useState(false);
 
   // Handle TrackUp Dashboard - Open nevorai.com TrackUp
@@ -206,11 +206,16 @@ export default function Profile() {
             <div className="absolute -right-4 -top-4 w-16 h-16 rounded-full bg-primary/5" />
           </div>
 
-          {/* Lead Limit Warning Banner - Shows at 450+ leads for free users */}
-          <LeadLimitWarningBanner />
-
-          {/* Upgrade CTA - Minimal button that opens drawer/sheet */}
-          {!isPaid && <UpgradeDrawer variant="prominent" />}
+          {/* Single Upgrade Section - Contextual based on lead count */}
+          {!isPaid && (
+            showLeadWarning ? (
+              // At 450+ leads: Show warning banner with integrated upgrade CTA
+              <LeadLimitWarningBanner context="profile" />
+            ) : (
+              // Under 450 leads: Show simple upgrade button only
+              <UpgradeDrawer variant="prominent" />
+            )
+          )}
 
           {/* Leader & Tracking Format Settings - Opens in Sidebar */}
           <LeaderTrackingFormatDrawer

@@ -142,6 +142,7 @@ export function UpgradeCard({ appContext = 'nevorai' }: UpgradeCardProps) {
             <div className="text-right shrink-0 ml-3">
               <p className="font-bold text-xl text-foreground">₹299</p>
               <p className="text-xs text-muted-foreground">for 4 months</p>
+              <p className="text-xs text-primary font-medium">Just ₹75 / month</p>
             </div>
           </div>
         </button>

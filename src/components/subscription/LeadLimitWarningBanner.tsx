@@ -5,23 +5,43 @@ import { useLifetimeLeadLimit, FREE_LIFETIME_LEAD_LIMIT } from '@/hooks/useLifet
 interface LeadLimitWarningBannerProps {
   /** Compact mode for inline display in action bars */
   compact?: boolean;
+  /** Context where banner is displayed - affects messaging */
+  context?: 'profile' | 'calling';
 }
 
 /**
  * Warning banner shown when free user is approaching lead limit.
  * Shows at 450+ leads with upgrade CTA.
  */
-export function LeadLimitWarningBanner({ compact = false }: LeadLimitWarningBannerProps) {
+export function LeadLimitWarningBanner({ compact = false, context = 'calling' }: LeadLimitWarningBannerProps) {
   const { showWarning, lifetimeCount, remaining, isAtLimit, isPaid } = useLifetimeLeadLimit();
 
   // Don't show for paid users or if not near limit
   if (isPaid || !showWarning) return null;
 
-  const warningText = isAtLimit
-    ? `You've reached the free limit of ${FREE_LIFETIME_LEAD_LIMIT} prospects.`
-    : `⚠️ You're close to your free limit (${remaining} of ${FREE_LIFETIME_LEAD_LIMIT} left).`;
+  // Profile-specific messaging
+  const getWarningText = () => {
+    if (context === 'profile') {
+      return isAtLimit
+        ? `You've reached the free limit of ${FREE_LIFETIME_LEAD_LIMIT} prospects.`
+        : `You are about to reach your free limit of ${FREE_LIFETIME_LEAD_LIMIT} prospects.`;
+    }
+    return isAtLimit
+      ? `You've reached the free limit of ${FREE_LIFETIME_LEAD_LIMIT} prospects.`
+      : `⚠️ You're close to your free limit (${remaining} of ${FREE_LIFETIME_LEAD_LIMIT} left).`;
+  };
 
-  const subText = 'Upgrade to Pro for unlimited prospects.';
+  const getSubText = () => {
+    if (context === 'profile') {
+      return isAtLimit
+        ? 'Upgrade to Pro to continue using NevorAI.'
+        : 'Upgrade to Pro for unlimited access.';
+    }
+    return 'Upgrade to Pro for unlimited prospects.';
+  };
+
+  const warningText = getWarningText();
+  const subText = getSubText();
 
   // Compact inline banner for action bars
   if (compact) {
