@@ -2437,6 +2437,71 @@ export type Database = {
         }
         Relationships: []
       }
+      user_daily_task_status: {
+        Row: {
+          date: string
+          id: string
+          status: string | null
+          task_id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          date: string
+          id?: string
+          status?: string | null
+          task_id: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          date?: string
+          id?: string
+          status?: string | null
+          task_id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_daily_task_status_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "user_daily_tasks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_daily_tasks: {
+        Row: {
+          created_at: string
+          id: string
+          is_active: boolean
+          sort_order: number
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          sort_order?: number
+          title: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          sort_order?: number
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string
