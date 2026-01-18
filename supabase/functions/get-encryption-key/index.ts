@@ -46,18 +46,18 @@ Deno.serve(async (req) => {
       }
     });
 
-    // Verify the user's JWT token using getClaims
-    const { data, error: authError } = await supabase.auth.getClaims(token);
+    // Use getUser() to validate the token - this makes a request to Supabase Auth
+    const { data: userData, error: authError } = await supabase.auth.getUser();
     
-    if (authError || !data?.claims?.sub) {
-      console.log('Auth error:', authError?.message || 'No claims found');
+    if (authError || !userData?.user) {
+      console.log('Auth error:', authError?.message || 'No user found');
       return new Response(
         JSON.stringify({ error: 'Invalid or expired token', code: 'TOKEN_EXPIRED' }),
         { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    console.log('Verified user:', data.claims.sub);
+    console.log('Verified user:', userData.user.id);
 
     // Return the encryption key
     const encryptionKey = Deno.env.get('ENCRYPTION_KEY');
