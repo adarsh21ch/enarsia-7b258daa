@@ -2680,6 +2680,19 @@ export type Database = {
           user_id: string
         }[]
       }
+      admin_get_free_users_paginated: {
+        Args: { page_offset?: number; page_size?: number }
+        Returns: {
+          created_at: string
+          display_name: string
+          email: string
+          last_active: string
+          leads_count: number
+          neverai_id: string
+          total_count: number
+          user_id: string
+        }[]
+      }
       admin_get_power_users: {
         Args: { limit_count?: number }
         Returns: {
@@ -2766,20 +2779,40 @@ export type Database = {
           user_id: string
         }[]
       }
-      admin_search_users: {
-        Args: { search_query?: string }
-        Returns: {
-          created_at: string
-          display_name: string
-          email: string
-          expires_at: string
-          is_admin_override: boolean
-          phone: string
-          plan: string
-          subscribed_at: string
-          user_id: string
-        }[]
-      }
+      admin_search_users:
+        | {
+            Args: { search_query?: string }
+            Returns: {
+              created_at: string
+              display_name: string
+              email: string
+              expires_at: string
+              is_admin_override: boolean
+              phone: string
+              plan: string
+              subscribed_at: string
+              user_id: string
+            }[]
+          }
+        | {
+            Args: {
+              page_offset?: number
+              page_size?: number
+              search_query?: string
+            }
+            Returns: {
+              created_at: string
+              display_name: string
+              email: string
+              expires_at: string
+              is_admin_override: boolean
+              phone: string
+              plan: string
+              subscribed_at: string
+              total_count: number
+              user_id: string
+            }[]
+          }
       batch_reorder_prospects: {
         Args: { p_updates: Json; p_user_id: string }
         Returns: boolean
