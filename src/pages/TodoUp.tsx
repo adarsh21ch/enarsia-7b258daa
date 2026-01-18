@@ -3,6 +3,7 @@ import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useGlobalTodos } from '@/contexts/TodosContext';
+import { useUserDailyTasks } from '@/hooks/useUserDailyTasks';
 import { useSwipeTabs } from '@/hooks/useSwipeTabs';
 import { BottomNav } from '@/components/layout/BottomNav';
 import { HeaderBellIcon } from '@/components/layout/HeaderBellIcon';
@@ -74,13 +75,16 @@ export default function TodoUp() {
   const { user, loading: authLoading } = useAuth();
   const { todos, loading: todosLoading, addTodo, updateTodo, toggleTodo, deleteTodo, refetch: refetchTodos } = useGlobalTodos();
   
+  // Calendar strip state
+  const calendar = useCalendarStrip();
+  
+  // User daily tasks hook for recurring tasks
+  const { addTask: addDailyTask, refetch: refetchDailyTasks } = useUserDailyTasks(calendar.selectedDateString);
+  
   const [viewMode, setViewMode] = useState<ViewMode>('daily-tasks');
   const [newTodoInput, setNewTodoInput] = useState('');
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editingTitle, setEditingTitle] = useState('');
-
-  // Calendar strip state
-  const calendar = useCalendarStrip();
 
   // Swipe to switch tabs
   const { containerRef: swipeRef } = useSwipeTabs({
@@ -90,8 +94,8 @@ export default function TodoUp() {
 
   // Pull-to-refresh
   const handleRefresh = useCallback(async () => {
-    await refetchTodos?.();
-  }, [refetchTodos]);
+    await Promise.all([refetchTodos?.(), refetchDailyTasks?.()]);
+  }, [refetchTodos, refetchDailyTasks]);
   const { containerRef: pullRef, isRefreshing, pullDistance, showIndicator } = usePullToRefresh(handleRefresh);
 
   // Combine refs
@@ -141,14 +145,22 @@ export default function TodoUp() {
     [filteredTodos]
   );
 
-  const handleAddTodo = async () => {
-    const todoText = newTodoInput.trim();
-    if (!todoText) return;
+  const handleAddTask = async () => {
+    const taskText = newTodoInput.trim();
+    if (!taskText) return;
     
-    // Add todo with selected date
-    const result = await addTodo(todoText, calendar.selectedDateString);
-    if (result) {
-      setNewTodoInput('');
+    if (viewMode === 'daily-tasks') {
+      // Add recurring daily task
+      const result = await addDailyTask(taskText);
+      if (result) {
+        setNewTodoInput('');
+      }
+    } else {
+      // Add one-time todo with selected date
+      const result = await addTodo(taskText, calendar.selectedDateString);
+      if (result) {
+        setNewTodoInput('');
+      }
     }
   };
 
@@ -406,16 +418,16 @@ export default function TodoUp() {
             <input
               id="todo-input"
               type="text"
-              placeholder={`Add task for ${format(calendar.selectedDate, 'MMM d')}...`}
+              placeholder={viewMode === 'daily-tasks' ? 'Add recurring daily task...' : `Add task for ${format(calendar.selectedDate, 'MMM d')}...`}
               value={newTodoInput}
               onChange={(e) => setNewTodoInput(e.target.value)}
               onKeyDown={(e) => {
-                if (e.key === 'Enter') handleAddTodo();
+                if (e.key === 'Enter') handleAddTask();
               }}
               className="flex-1 bg-transparent border-0 outline-none text-sm placeholder:text-muted-foreground/60"
             />
             <Button
-              onClick={handleAddTodo}
+              onClick={handleAddTask}
               disabled={!newTodoInput.trim()}
               size="icon"
               className="h-8 w-8 rounded-full shrink-0"
