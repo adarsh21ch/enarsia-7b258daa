@@ -6,16 +6,17 @@ import { useProspectsQuery } from '@/hooks/useProspectsQuery';
 import { BottomNav } from '@/components/layout/BottomNav';
 import { HeaderBellIcon } from '@/components/layout/HeaderBellIcon';
 import { PullToRefreshIndicator } from '@/components/PullToRefreshIndicator';
+import { TopTabBar } from '@/components/ui/TopTabBar';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Loader2, Filter, ChevronDown, ChevronUp, Tags, X, Eye, Search } from 'lucide-react';
+import { Loader2, Filter, ChevronDown, ChevronUp, Tags, X, Eye, Search, Phone, Layers } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
 import { getTagStyle } from '@/lib/tagColors';
 import nevoraLogo from '@/assets/nevorai-logo.jpeg';
 import { Prospect } from '@/types/prospect';
 
-type LeadMode = 'funnel' | 'response';
+type LeadMode = 'leads' | 'funnel';
 
 // WhatsApp outline icon
 const WhatsAppIcon = ({
@@ -102,11 +103,19 @@ export default function ListUp() {
     refetch
   } = useProspectsQuery();
 
-  // Lead mode toggle - default to funnel leads
+  // Lead mode toggle - default to leads
   const [leadMode, setLeadMode] = useState<LeadMode>(() => {
     const saved = sessionStorage.getItem('listup-mode');
-    return (saved as LeadMode) || 'funnel';
+    // Migrate old 'response' value to 'leads'
+    if (saved === 'response') return 'leads';
+    return (saved as LeadMode) || 'leads';
   });
+
+  // Toggle options for TopTabBar (same as Calling and Tracking tabs)
+  const toggleOptions: [{ value: string; label: string; icon: typeof Phone }, { value: string; label: string; icon: typeof Layers }] = [
+    { value: 'leads', label: 'Leads', icon: Phone },
+    { value: 'funnel', label: 'Funnel', icon: Layers }
+  ];
   
   // Show all tags toggle (including empty ones)
   const [showAllTags, setShowAllTags] = useState(false);
@@ -167,7 +176,7 @@ export default function ListUp() {
       // Funnel leads: prospects that have a funnel_stage set
       return prospects.filter(p => p.funnel_stage && p.funnel_stage.trim() !== '');
     } else {
-      // Response leads: prospects that have action_taken set
+      // Leads mode: prospects that have action_taken (response) set
       return prospects.filter(p => p.action_taken && p.action_taken.trim() !== '');
     }
   }, [prospects, leadMode]);
@@ -352,6 +361,11 @@ export default function ListUp() {
             <HeaderBellIcon />
           </div>
         </div>
+        
+        {/* TopTabBar - same as Calling and Tracking tabs */}
+        <div className="px-4 pb-2">
+          <TopTabBar options={toggleOptions} value={leadMode} onChange={(v) => handleModeChange(v as LeadMode)} />
+        </div>
       </header>
 
       <main ref={containerRef} className="scrollable-content relative pb-20">
@@ -378,51 +392,24 @@ export default function ListUp() {
             )}
           </div>
 
-          {/* Tag Filters with Compact Mode Toggle */}
+          {/* Tag Filters */}
           <div className="bg-card rounded-xl p-3 border border-border/50 space-y-3">
-            {/* Header Row with Toggle */}
+            {/* Header Row */}
             <div className="flex items-center justify-between gap-2">
               <div className="flex items-center gap-2">
                 <Filter className="h-4 w-4 text-muted-foreground" />
                 <span className="text-sm font-medium">Filter by Tags</span>
               </div>
-              <div className="flex items-center gap-2">
-                {/* Show All Tags Toggle */}
-                <button
-                  onClick={() => setShowAllTags(!showAllTags)}
-                  className={cn(
-                    "flex items-center gap-1 text-xs transition-colors",
-                    showAllTags ? "text-primary" : "text-muted-foreground hover:text-foreground"
-                  )}
-                >
-                  <Eye className="h-3 w-3" />
-                </button>
-                {/* Compact Funnel/Response Toggle */}
-                <div className="flex bg-muted rounded-md p-0.5">
-                  <button
-                    onClick={() => handleModeChange('funnel')}
-                    className={cn(
-                      "px-2 py-1 text-xs font-medium rounded transition-all",
-                      leadMode === 'funnel'
-                        ? "bg-primary text-primary-foreground shadow-sm"
-                        : "text-muted-foreground hover:text-foreground"
-                    )}
-                  >
-                    Funnel
-                  </button>
-                  <button
-                    onClick={() => handleModeChange('response')}
-                    className={cn(
-                      "px-2 py-1 text-xs font-medium rounded transition-all",
-                      leadMode === 'response'
-                        ? "bg-primary text-primary-foreground shadow-sm"
-                        : "text-muted-foreground hover:text-foreground"
-                    )}
-                  >
-                    Response
-                  </button>
-                </div>
-              </div>
+              {/* Show All Tags Toggle */}
+              <button
+                onClick={() => setShowAllTags(!showAllTags)}
+                className={cn(
+                  "flex items-center gap-1 text-xs transition-colors",
+                  showAllTags ? "text-primary" : "text-muted-foreground hover:text-foreground"
+                )}
+              >
+                <Eye className="h-3 w-3" />
+              </button>
             </div>
 
             {/* Tags based on mode */}
