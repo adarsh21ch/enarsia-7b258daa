@@ -182,7 +182,7 @@ export default function Profile() {
                     <div className="flex items-center gap-2">
                       <p className="font-semibold text-lg truncate">{displayName}</p>
                       {isPro && (
-                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-primary/15 text-primary border border-primary/20">
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-orange-500/15 text-orange-600 dark:text-orange-400 border border-orange-500/30">
                           PRO
                         </span>
                       )}
