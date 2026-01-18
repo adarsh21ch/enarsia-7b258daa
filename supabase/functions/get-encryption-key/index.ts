@@ -34,29 +34,30 @@ Deno.serve(async (req) => {
       );
     }
     
-    // Create Supabase admin client to verify the token
+    // Create Supabase client with the user's token for validation
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+    const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY')!;
     
-    const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey, {
+    const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+      global: { headers: { Authorization: authHeader } },
       auth: {
         autoRefreshToken: false,
         persistSession: false
       }
     });
 
-    // Verify the user's JWT token
-    const { data: { user }, error: authError } = await supabaseAdmin.auth.getUser(token);
+    // Verify the user's JWT token using getClaims
+    const { data, error: authError } = await supabase.auth.getClaims(token);
     
-    if (authError || !user) {
-      console.log('Auth error:', authError?.message || 'No user found');
+    if (authError || !data?.claims?.sub) {
+      console.log('Auth error:', authError?.message || 'No claims found');
       return new Response(
         JSON.stringify({ error: 'Invalid or expired token', code: 'TOKEN_EXPIRED' }),
         { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    console.log('Verified user:', user.id);
+    console.log('Verified user:', data.claims.sub);
 
     // Return the encryption key
     const encryptionKey = Deno.env.get('ENCRYPTION_KEY');
