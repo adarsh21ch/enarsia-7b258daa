@@ -27,6 +27,7 @@ import { arrayMove, SortableContext, sortableKeyboardCoordinates, verticalListSo
 import { useCustomOptionsContext } from '@/contexts/CustomOptionsContext';
 import { useTrackingTags } from '@/hooks/useTrackingTags';
 import { useTrackingFormatContext } from '@/contexts/TrackingFormatContext';
+import { useActivityLog } from '@/hooks/useActivityLog';
 interface Filters {
   search: string;
   stages: FunnelStage[];
@@ -303,6 +304,8 @@ export function ProspectTable({
   kpiTagCounts,
   fetchAllForExport
 }: ProspectTableProps) {
+  const { logBulkActivity } = useActivityLog();
+  
   const [filters, setFilters] = useState<Filters>({
     search: '',
     stages: [],
@@ -758,6 +761,8 @@ export function ProspectTable({
     if (onBulkDelete) {
       const result = await onBulkDelete(Array.from(selectedIds));
       if (result.deleted > 0) {
+        // Log SINGLE bulk delete activity
+        await logBulkActivity('bulk_delete', result.deleted);
         pushAction({
           type: 'delete_prospects',
           data: toDelete
@@ -782,6 +787,8 @@ export function ProspectTable({
         if (result) deleted++;
       }
       if (deleted > 0) {
+        // Log SINGLE bulk delete activity
+        await logBulkActivity('bulk_delete', deleted);
         pushAction({
           type: 'delete_prospects',
           data: toDelete
@@ -812,6 +819,8 @@ export function ProspectTable({
     if (onBulkDelete) {
       const result = await onBulkDelete(toDelete.map(p => p.id));
       if (result.deleted > 0) {
+        // Log SINGLE bulk delete activity
+        await logBulkActivity('bulk_delete', result.deleted);
         pushAction({
           type: 'delete_prospects',
           data: toDelete
@@ -825,6 +834,8 @@ export function ProspectTable({
         if (result) deleted++;
       }
       if (deleted > 0) {
+        // Log SINGLE bulk delete activity
+        await logBulkActivity('bulk_delete', deleted);
         pushAction({
           type: 'delete_prospects',
           data: toDelete

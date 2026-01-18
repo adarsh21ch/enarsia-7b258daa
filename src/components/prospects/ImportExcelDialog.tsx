@@ -11,6 +11,7 @@ import { sanitizeImportString, validateImportedProspect } from '@/lib/validation
 import { cn } from '@/lib/utils';
 import { useLifetimeLeadLimit } from '@/hooks/useLifetimeLeadLimit';
 import { LeadLimitModal } from '@/components/subscription/LeadLimitModal';
+import { useActivityLog } from '@/hooks/useActivityLog';
 
 interface ImportExcelDialogProps {
   onImport: (prospects: Partial<Prospect>[], onProgress?: (imported: number, total: number) => void) => Promise<{ imported: number; skipped: number }>;
@@ -48,6 +49,7 @@ const FIELD_PLACEHOLDERS: Record<keyof ColumnMapping, string> = {
 
 export function ImportExcelDialog({ onImport }: ImportExcelDialogProps) {
   const [open, setOpen] = useState(false);
+  const { logBulkActivity } = useActivityLog();
   const [step, setStep] = useState<'upload' | 'mapping'>('upload');
   const [columns, setColumns] = useState<string[]>([]);
   const [previewData, setPreviewData] = useState<Record<string, string>[]>([]);
@@ -305,6 +307,8 @@ export function ImportExcelDialog({ onImport }: ImportExcelDialogProps) {
     // Increment lifetime lead counter after successful import
     if (result.imported > 0) {
       await incrementLeadCount(result.imported);
+      // Log SINGLE bulk import activity (not individual entries)
+      await logBulkActivity('bulk_import', result.imported);
     }
     
     toast.success(`${result.imported} leads imported, ${result.skipped + skippedCount} rows skipped`);

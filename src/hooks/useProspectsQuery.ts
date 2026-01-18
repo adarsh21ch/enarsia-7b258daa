@@ -526,22 +526,48 @@ export function useProspectsQuery(options: UseProspectsQueryOptions = {}) {
     [reorderMutation]
   );
 
-  // Bulk delete - delete multiple prospects
+  // Bulk delete - delete multiple prospects in a SINGLE database operation
   const bulkDeleteProspects = useCallback(
     async (ids: string[]): Promise<{ deleted: number; prospects: Prospect[] }> => {
+      if (!user || ids.length === 0) return { deleted: 0, prospects: [] };
+      
       const deletedProspects = prospects.filter(p => ids.includes(p.id));
-      let deleted = 0;
-      try {
-        for (const id of ids) {
-          await deleteMutation.mutateAsync(id);
-          deleted++;
-        }
-      } catch {
-        // partial success
+      
+      // Cancel any in-flight queries
+      await queryClient.cancelQueries({ queryKey: ['prospects', user?.id] });
+      
+      // Single bulk delete operation - NO LOOPING
+      const { error } = await supabase
+        .from('prospects')
+        .delete()
+        .in('id', ids);
+      
+      if (error) {
+        toast.error('Failed to delete prospects');
+        return { deleted: 0, prospects: [] };
       }
-      return { deleted, prospects: deletedProspects.slice(0, deleted) };
+      
+      // Optimistically update cache
+      queryClient.setQueryData(queryKey, (old: any) => {
+        if (!old) return old;
+        return {
+          ...old,
+          pages: old.pages.map((page: ProspectPage) => ({
+            ...page,
+            prospects: page.prospects.filter((p: Prospect) => !ids.includes(p.id)),
+            totalCount: Math.max(0, page.totalCount - ids.length),
+          })),
+        };
+      });
+      
+      // Invalidate queries to refresh data
+      queryClient.invalidateQueries({ queryKey: ['prospects-kpi', user?.id] });
+      queryClient.invalidateQueries({ queryKey: ['tracking-leads', user?.id] });
+      queryClient.invalidateQueries({ queryKey: ['tracking-funnel', user?.id] });
+      
+      return { deleted: deletedProspects.length, prospects: deletedProspects };
     },
-    [deleteMutation, prospects]
+    [user, prospects, queryClient, queryKey]
   );
 
   // Restore - re-add a deleted prospect (used for undo)
