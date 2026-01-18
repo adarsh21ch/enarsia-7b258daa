@@ -285,49 +285,25 @@ export function useProUsers() {
   return useQuery({
     queryKey: ['admin-pro-users', user?.id],
     queryFn: async (): Promise<ProUser[]> => {
-      console.log('[useProUsers] Fetching pro users...');
       const { data, error } = await supabase.rpc('admin_get_pro_users');
-      
-      if (error) {
-        console.error('[useProUsers] Error:', error);
-        throw error;
-      }
-      
-      console.log('[useProUsers] Got data:', data?.length || 0, 'users');
+      if (error) throw error;
       return (data || []) as ProUser[];
     },
     enabled: !!user,
-    staleTime: 30 * 1000, // 30 seconds - shorter for real-time updates after admin actions
-    refetchOnWindowFocus: true,
+    staleTime: 2 * 60 * 1000,
   });
 }
 
-// Hook for Free Users list with pagination
-export function useFreeUsers(pageSize: number = 50, pageOffset: number = 0) {
+// Hook for Free Users list
+export function useFreeUsers() {
   const { user } = useAuth();
 
   return useQuery({
-    queryKey: ['admin-free-users', user?.id, pageSize, pageOffset],
-    queryFn: async (): Promise<{ users: FreeUser[]; totalCount: number }> => {
-      const { data, error } = await supabase.rpc('admin_get_free_users_paginated', {
-        page_size: pageSize,
-        page_offset: pageOffset
-      });
+    queryKey: ['admin-free-users', user?.id],
+    queryFn: async (): Promise<FreeUser[]> => {
+      const { data, error } = await supabase.rpc('admin_get_free_users');
       if (error) throw error;
-      
-      const users = (data || []).map((u: any) => ({
-        user_id: u.user_id,
-        display_name: u.display_name,
-        email: u.email,
-        neverai_id: u.neverai_id,
-        leads_count: u.leads_count,
-        last_active: u.last_active,
-        created_at: u.created_at,
-      }));
-      
-      const totalCount = data?.[0]?.total_count || 0;
-      
-      return { users, totalCount };
+      return (data || []) as FreeUser[];
     },
     enabled: !!user,
     staleTime: 2 * 60 * 1000,

@@ -57,12 +57,7 @@ export default function Admin() {
   // Get effective status considering expiry
   const getEffectiveStatus = (u: typeof users[0]) => {
     if (u.plan !== 'pro') return 'free';
-    // Admin override users with no expiry date are always pro
-    if (u.is_admin_override && !u.expires_at) return 'pro';
-    // Users with no expiry date are considered pro (lifetime/admin)
-    if (!u.expires_at) return 'pro';
-    // Only check expiry if there's an actual expiry date
-    if (isExpired(u.expires_at)) return 'expired';
+    if (!u.expires_at || isExpired(u.expires_at)) return 'expired';
     return 'pro';
   };
 
