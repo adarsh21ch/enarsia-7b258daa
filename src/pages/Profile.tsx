@@ -206,15 +206,9 @@ export default function Profile() {
             <div className="absolute -right-4 -top-4 w-16 h-16 rounded-full bg-primary/5" />
           </div>
 
-          {/* Single Upgrade Section - Contextual based on lead count */}
-          {!isPaid && (
-            showLeadWarning ? (
-              // At 450+ leads: Show warning banner with integrated upgrade CTA
-              <LeadLimitWarningBanner context="profile" />
-            ) : (
-              // Under 450 leads: Show simple upgrade button only
-              <UpgradeDrawer variant="prominent" />
-            )
+          {/* Upgrade CTA - Only shown when approaching or at lead limit (450+) */}
+          {!isPaid && showLeadWarning && (
+            <LeadLimitWarningBanner context="profile" />
           )}
 
           {/* Leader & Tracking Format Settings - Opens in Sidebar */}
