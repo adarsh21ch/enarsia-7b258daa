@@ -1,19 +1,36 @@
 // Daily Tasks View - Shows leader-assigned tasks + user's recurring daily tasks
 import { useDailyTasks } from '@/hooks/useDailyTasks';
-import { useUserDailyTasks } from '@/hooks/useUserDailyTasks';
 import { Button } from '@/components/ui/button';
 import { Loader2, ClipboardList, Trash2, ListTodo } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 
+interface UserDailyTaskWithStatus {
+  id: string;
+  title: string;
+  is_active: boolean;
+  sort_order: number;
+  status: 'yes' | 'no' | null;
+}
+
 interface DailyTasksViewProps {
   selectedDate: Date;
   selectedDateString: string;
+  userTasks: UserDailyTaskWithStatus[];
+  userTasksLoading: boolean;
+  markUserTask: (taskId: string, status: 'yes' | 'no' | null) => Promise<void>;
+  deleteUserTask: (taskId: string) => Promise<void>;
 }
 
-export function DailyTasksView({ selectedDate, selectedDateString }: DailyTasksViewProps) {
+export function DailyTasksView({ 
+  selectedDate, 
+  selectedDateString,
+  userTasks,
+  userTasksLoading,
+  markUserTask,
+  deleteUserTask
+}: DailyTasksViewProps) {
   const { tasks: leaderTasks, templateName, loading: leaderLoading, hasLeader, markTask: markLeaderTask } = useDailyTasks(selectedDateString);
-  const { tasks: userTasks, loading: userLoading, markTask: markUserTask, deleteTask } = useUserDailyTasks(selectedDateString);
 
   const leaderCompletedCount = leaderTasks.filter(t => t.status === 'yes').length;
   const leaderTotalCount = leaderTasks.length;
@@ -29,7 +46,7 @@ export function DailyTasksView({ selectedDate, selectedDateString }: DailyTasksV
     await markUserTask(taskId, newStatus);
   };
 
-  if (leaderLoading || userLoading) {
+  if (leaderLoading || userTasksLoading) {
     return (
       <div className="flex justify-center py-8">
         <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
@@ -206,7 +223,7 @@ export function DailyTasksView({ selectedDate, selectedDateString }: DailyTasksV
                     variant="ghost"
                     size="icon"
                     className="h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity shrink-0"
-                    onClick={() => deleteTask(task.id)}
+                    onClick={() => deleteUserTask(task.id)}
                   >
                     <Trash2 className="h-3.5 w-3.5 text-gray-500" />
                   </Button>

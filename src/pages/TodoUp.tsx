@@ -79,7 +79,14 @@ export default function TodoUp() {
   const calendar = useCalendarStrip();
   
   // User daily tasks hook for recurring tasks
-  const { addTask: addDailyTask, refetch: refetchDailyTasks } = useUserDailyTasks(calendar.selectedDateString);
+  const { 
+    tasks: userDailyTasks, 
+    loading: userDailyTasksLoading, 
+    addTask: addDailyTask, 
+    deleteTask: deleteDailyTask,
+    markTask: markDailyTask,
+    refetch: refetchDailyTasks 
+  } = useUserDailyTasks(calendar.selectedDateString);
   
   const [viewMode, setViewMode] = useState<ViewMode>('daily-tasks');
   const [newTodoInput, setNewTodoInput] = useState('');
@@ -253,6 +260,10 @@ export default function TodoUp() {
             <DailyTasksView 
               selectedDate={calendar.selectedDate} 
               selectedDateString={calendar.selectedDateString}
+              userTasks={userDailyTasks}
+              userTasksLoading={userDailyTasksLoading}
+              markUserTask={markDailyTask}
+              deleteUserTask={deleteDailyTask}
             />
           )}
 
