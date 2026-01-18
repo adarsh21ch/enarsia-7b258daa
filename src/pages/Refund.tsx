@@ -38,7 +38,7 @@ export default function Refund() {
                 </div>
                 
                 <div className="p-3 rounded-lg bg-background border border-border">
-                  <h3 className="font-semibold text-foreground mb-2">Yearly Plan (₹2,999/year)</h3>
+                  <h3 className="font-semibold text-foreground mb-2">Yearly Plan (₹999/year)</h3>
                   <p className="text-muted-foreground text-sm">
                     Payments for NevorAI Pro Yearly plans (including discounted offers such as Achievers Club pricing) are eligible for a <strong className="text-emerald-600">full refund within 7 days</strong> of the purchase date. After 7 days from the purchase date, yearly payments become <strong className="text-destructive">NON-REFUNDABLE</strong>.
                   </p>
