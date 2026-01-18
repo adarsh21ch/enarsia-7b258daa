@@ -8,11 +8,13 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import { Loader2, Shield, Users, Crown, ArrowLeft, Search, Save, Calendar, BarChart3, ChevronDown } from 'lucide-react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Loader2, Shield, Users, Crown, ArrowLeft, Search, Save, Calendar, BarChart3, ChevronDown, MessageSquare } from 'lucide-react';
 import { format, addDays } from 'date-fns';
 import { toast } from 'sonner';
 import nevoraLogo from '@/assets/nevorai-logo.jpeg';
 import { AdminAnalyticsDashboard } from '@/components/admin/AdminAnalyticsDashboard';
+import { AdminSupportPanel } from '@/components/admin/AdminSupportPanel';
 
 const DURATION_OPTIONS = [
   { value: '30', label: '30 days' },
@@ -157,21 +159,35 @@ export default function Admin() {
 
       <main className="scrollable-content">
         <div className="container py-4 px-4 pb-24 space-y-5">
-          {/* Analytics Dashboard - Collapsible */}
-          <Collapsible defaultOpen>
-            <CollapsibleTrigger className="flex items-center justify-between w-full rounded-xl p-4 bg-card border border-border/50 hover:bg-muted/50 transition-colors">
-              <div className="flex items-center gap-2">
-                <BarChart3 className="h-5 w-5 text-primary" />
-                <span className="font-semibold">Analytics Dashboard</span>
-              </div>
-              <ChevronDown className="h-4 w-4 text-muted-foreground transition-transform duration-200 [[data-state=open]>&]:rotate-180" />
-            </CollapsibleTrigger>
-            <CollapsibleContent className="pt-3">
-              <AdminAnalyticsDashboard />
-            </CollapsibleContent>
-          </Collapsible>
+          {/* Admin Tabs */}
+          <Tabs defaultValue="users" className="w-full">
+            <TabsList className="w-full grid grid-cols-3">
+              <TabsTrigger value="users" className="text-xs">
+                <Users className="h-4 w-4 mr-1" />
+                Users
+              </TabsTrigger>
+              <TabsTrigger value="analytics" className="text-xs">
+                <BarChart3 className="h-4 w-4 mr-1" />
+                Analytics
+              </TabsTrigger>
+              <TabsTrigger value="support" className="text-xs">
+                <MessageSquare className="h-4 w-4 mr-1" />
+                Support
+              </TabsTrigger>
+            </TabsList>
 
-          {/* Search Bar */}
+            {/* Analytics Tab */}
+            <TabsContent value="analytics" className="mt-4">
+              <AdminAnalyticsDashboard />
+            </TabsContent>
+
+            {/* Support Tab */}
+            <TabsContent value="support" className="mt-4">
+              <AdminSupportPanel />
+            </TabsContent>
+
+            {/* Users Tab */}
+            <TabsContent value="users" className="mt-4 space-y-4">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
@@ -311,6 +327,9 @@ export default function Admin() {
               )}
             </div>
           </div>
+
+          </TabsContent>
+          </Tabs>
 
           <Link to="/profile">
             <Button variant="outline" className="w-full">

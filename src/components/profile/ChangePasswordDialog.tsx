@@ -6,7 +6,6 @@ import { Label } from '@/components/ui/label';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { Lock, ChevronRight, Eye, EyeOff, Loader2 } from 'lucide-react';
-import { cn } from '@/lib/utils';
 
 export function ChangePasswordDialog() {
   const [open, setOpen] = useState(false);
@@ -59,22 +58,13 @@ export function ChangePasswordDialog() {
     }}>
       <DialogTrigger asChild>
         <button
-          className={cn(
-            "w-full relative overflow-hidden rounded-xl p-4",
-            "bg-gradient-to-r backdrop-blur-sm",
-            "border border-border/50 shadow-sm",
-            "flex items-center justify-between",
-            "transition-all duration-300 hover:shadow-md hover:scale-[1.01]",
-            "from-amber-500/20 to-amber-500/5"
-          )}
+          className="w-full flex items-center justify-between p-3 rounded-lg hover:bg-muted/50 transition-colors"
         >
           <div className="flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-amber-500/10">
-              <Lock className="h-5 w-5 text-amber-500" />
-            </div>
-            <span className="font-medium">Change Password</span>
+            <Lock className="h-4 w-4 text-muted-foreground" />
+            <span className="text-sm">Change Password</span>
           </div>
-          <ChevronRight className="h-5 w-5 text-muted-foreground" />
+          <ChevronRight className="h-4 w-4 text-muted-foreground" />
         </button>
       </DialogTrigger>
       

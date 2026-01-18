@@ -12,16 +12,15 @@ import { HeaderBellIcon } from '@/components/layout/HeaderBellIcon';
 import { EditProfileDialog } from '@/components/profile/EditProfileDialog';
 import { ChangePasswordDialog } from '@/components/profile/ChangePasswordDialog';
 import { LeaderTrackingFormatDrawer } from '@/components/profile/LeaderTrackingFormatDrawer';
-import { LevelManagement } from '@/components/profile/LevelManagement';
 import { ProfileLevelDropdown } from '@/components/profile/ProfileLevelDropdown';
+import { HelpSupportDrawer } from '@/components/profile/HelpSupportDrawer';
 
-import { UpgradeDrawer } from '@/components/subscription/UpgradeDrawer';
 import { LeadLimitWarningBanner } from '@/components/subscription/LeadLimitWarningBanner';
 import { PullToRefreshIndicator } from '@/components/PullToRefreshIndicator';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { User, LogOut, ChevronRight, Phone, Building2, MapPin, Loader2, FileText, Shield, Receipt, Mail, Settings, Copy, ExternalLink, BarChart3 } from 'lucide-react';
-import { supabase } from '@/integrations/supabase/client';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { User, LogOut, ChevronRight, ChevronDown, Phone, Building2, MapPin, Loader2, FileText, Shield, Receipt, Mail, Settings, Copy, ExternalLink, BarChart3, Lock } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { formatLeaderId } from '@/lib/leaderIdFormat';
@@ -256,39 +255,37 @@ export default function Profile() {
                 </div>}
             </div>}
 
-          {/* Menu Items */}
+          {/* Tracking Section */}
           <div className="space-y-2">
-            {/* My Tracking / Track Up - Personal tracking page */}
+            {/* My Tracking - Simple neutral item */}
             <button 
               onClick={() => navigate('/tracking')}
               className={cn(
-                "w-full relative overflow-hidden rounded-xl p-4",
-                "bg-gradient-to-r backdrop-blur-sm",
-                "border border-border/50 shadow-sm",
+                "w-full rounded-xl p-4",
+                "bg-card border border-border/50",
                 "flex items-center justify-between",
-                "transition-all duration-300 hover:shadow-md hover:scale-[1.01]",
-                "from-primary/20 to-primary/5"
+                "transition-all duration-200 hover:bg-muted/50"
               )}
             >
               <div className="flex items-center gap-3">
-                <div className="p-2 rounded-lg bg-primary/10">
-                  <BarChart3 className="h-5 w-5 text-primary" />
+                <div className="p-2 rounded-lg bg-muted">
+                  <BarChart3 className="h-5 w-5 text-muted-foreground" />
                 </div>
                 <div className="text-left">
-                  <span className="font-medium block">My Tracking / Track Up</span>
+                  <span className="font-medium block">My Tracking</span>
                   <span className="text-xs text-muted-foreground">Personal leads & funnel analytics</span>
                 </div>
               </div>
               <ChevronRight className="h-5 w-5 text-muted-foreground" />
             </button>
 
-            {/* TrackUp Dashboard - Navigate to internal tracking */}
+            {/* TrackUp Dashboard - Highlighted primary action */}
             <button 
               onClick={handleOpenTrackUp}
               className={cn(
                 "w-full relative overflow-hidden rounded-xl p-4",
                 "bg-gradient-to-r backdrop-blur-sm",
-                "border border-border/50 shadow-sm",
+                "border border-emerald-500/30 shadow-sm",
                 "flex items-center justify-between",
                 "transition-all duration-300 hover:shadow-md hover:scale-[1.01]",
                 "from-emerald-500/20 to-emerald-500/5"
@@ -305,31 +302,64 @@ export default function Profile() {
               </div>
               <ExternalLink className="h-5 w-5 text-muted-foreground" />
             </button>
+          </div>
 
-            <button onClick={() => setEditOpen(true)} className={cn("w-full relative overflow-hidden rounded-xl p-4", "bg-gradient-to-r backdrop-blur-sm", "border border-border/50 shadow-sm", "flex items-center justify-between", "transition-all duration-300 hover:shadow-md hover:scale-[1.01]", "from-blue-500/20 to-blue-500/5")}>
+          {/* Settings Section - Collapsible */}
+          <Collapsible className="rounded-2xl bg-card border border-border/50 overflow-hidden">
+            <CollapsibleTrigger className="w-full p-4 flex items-center justify-between hover:bg-muted/50 transition-colors">
               <div className="flex items-center gap-3">
-                <div className="p-2 rounded-lg bg-card/50">
-                  <User className="h-5 w-5" />
+                <div className="p-2 rounded-lg bg-muted">
+                  <Settings className="h-5 w-5 text-muted-foreground" />
                 </div>
-                <span className="font-medium">Edit Profile</span>
+                <span className="font-semibold">Settings</span>
+              </div>
+              <ChevronDown className="h-5 w-5 text-muted-foreground transition-transform [[data-state=open]>&]:rotate-180" />
+            </CollapsibleTrigger>
+            <CollapsibleContent>
+              <div className="px-4 pb-4 space-y-1">
+                {/* Edit Profile - Neutral list item */}
+                <button 
+                  onClick={() => setEditOpen(true)} 
+                  className="w-full flex items-center justify-between p-3 rounded-lg hover:bg-muted/50 transition-colors"
+                >
+                  <div className="flex items-center gap-3">
+                    <User className="h-4 w-4 text-muted-foreground" />
+                    <span className="text-sm">Edit Profile</span>
+                  </div>
+                  <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                </button>
+
+                {/* Change Password - Neutral list item */}
+                <ChangePasswordDialog />
+              </div>
+            </CollapsibleContent>
+          </Collapsible>
+
+          {/* Help & Support */}
+          <HelpSupportDrawer />
+
+          {/* Admin Panel Link - Only visible to admin */}
+          {isAdmin && (
+            <Link 
+              to="/admin" 
+              className={cn(
+                "w-full relative overflow-hidden rounded-xl p-4 block",
+                "bg-gradient-to-r backdrop-blur-sm",
+                "border border-destructive/30 shadow-sm",
+                "flex items-center justify-between",
+                "transition-all duration-300 hover:shadow-md hover:scale-[1.01]",
+                "from-destructive/20 to-destructive/5"
+              )}
+            >
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-lg bg-destructive/10">
+                  <Shield className="h-5 w-5 text-destructive" />
+                </div>
+                <span className="font-medium">Admin Panel</span>
               </div>
               <ChevronRight className="h-5 w-5 text-muted-foreground" />
-            </button>
-
-            {/* Change Password */}
-            <ChangePasswordDialog />
-
-            {/* Admin Panel Link - Only visible to admin */}
-            {isAdmin && <Link to="/admin" className={cn("w-full relative overflow-hidden rounded-xl p-4", "bg-gradient-to-r backdrop-blur-sm", "border border-destructive/30 shadow-sm", "flex items-center justify-between", "transition-all duration-300 hover:shadow-md hover:scale-[1.01]", "from-destructive/20 to-destructive/5")}>
-                <div className="flex items-center gap-3">
-                  <div className="p-2 rounded-lg bg-destructive/10">
-                    <Settings className="h-5 w-5 text-destructive" />
-                  </div>
-                  <span className="font-medium">Admin Panel</span>
-                </div>
-                <ChevronRight className="h-5 w-5 text-muted-foreground" />
-              </Link>}
-          </div>
+            </Link>
+          )}
 
           {/* Contact Us */}
           <div className="rounded-2xl p-4 bg-card border border-border/50">
