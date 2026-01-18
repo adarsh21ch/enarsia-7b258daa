@@ -399,34 +399,32 @@ export default function TodoUp() {
         </div>
       </main>
 
-      {/* Fixed bottom chat-style input - only show for To-Do List view */}
-      {viewMode === 'todo-list' && (
-        <div className="fixed bottom-14 left-0 right-0 z-30 px-4 pb-3 pt-2 pointer-events-none">
-          <div className="pointer-events-auto max-w-lg mx-auto">
-            <div className="flex items-center gap-2 bg-card/95 backdrop-blur-xl border border-border/50 rounded-full px-4 py-2 shadow-lg">
-              <input
-                id="todo-input"
-                type="text"
-                placeholder={`Add task for ${format(calendar.selectedDate, 'MMM d')}...`}
-                value={newTodoInput}
-                onChange={(e) => setNewTodoInput(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') handleAddTodo();
-                }}
-                className="flex-1 bg-transparent border-0 outline-none text-sm placeholder:text-muted-foreground/60"
-              />
-              <Button
-                onClick={handleAddTodo}
-                disabled={!newTodoInput.trim()}
-                size="icon"
-                className="h-8 w-8 rounded-full shrink-0"
-              >
-                <Send className="h-4 w-4" />
-              </Button>
-            </div>
+      {/* Fixed bottom chat-style input - show for both views */}
+      <div className="fixed bottom-14 left-0 right-0 z-30 px-4 pb-3 pt-2 pointer-events-none">
+        <div className="pointer-events-auto max-w-lg mx-auto">
+          <div className="flex items-center gap-2 bg-card/95 backdrop-blur-xl border border-border/50 rounded-full px-4 py-2 shadow-lg">
+            <input
+              id="todo-input"
+              type="text"
+              placeholder={`Add task for ${format(calendar.selectedDate, 'MMM d')}...`}
+              value={newTodoInput}
+              onChange={(e) => setNewTodoInput(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') handleAddTodo();
+              }}
+              className="flex-1 bg-transparent border-0 outline-none text-sm placeholder:text-muted-foreground/60"
+            />
+            <Button
+              onClick={handleAddTodo}
+              disabled={!newTodoInput.trim()}
+              size="icon"
+              className="h-8 w-8 rounded-full shrink-0"
+            >
+              <Send className="h-4 w-4" />
+            </Button>
           </div>
         </div>
-      )}
+      </div>
 
       <BottomNav />
     </div>
