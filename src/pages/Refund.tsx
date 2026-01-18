@@ -31,7 +31,7 @@ export default function Refund() {
               
               <div className="space-y-4">
                 <div className="p-3 rounded-lg bg-background border border-border">
-                  <h3 className="font-semibold text-foreground mb-2">Monthly Plan (₹299/month)</h3>
+                  <h3 className="font-semibold text-foreground mb-2">Monthly Plan (₹99/month)</h3>
                   <p className="text-muted-foreground text-sm">
                     Payments for the NevorAI Pro Monthly plan are <strong className="text-destructive">NON-REFUNDABLE</strong>. Once you subscribe to the monthly plan, you will have access for the full month, but no refunds will be issued regardless of cancellation timing.
                   </p>
