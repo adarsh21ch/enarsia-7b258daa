@@ -225,8 +225,13 @@ export function RevenueAnalytics({ revenue, recentPayments }: RevenueAnalyticsPr
                 recentPayments.map((payment) => (
                   <div key={payment.id} className="flex items-center justify-between p-2 rounded-lg border text-sm">
                     <div className="flex-1 min-w-0">
-                      <p className="truncate font-medium">{payment.user_email || 'Unknown'}</p>
+                      <p className="truncate font-medium">
+                        {payment.user_display_name || payment.user_email || 'Unknown'}
+                      </p>
                       <p className="text-xs text-muted-foreground">
+                        {payment.user_display_name && payment.user_email && (
+                          <span className="block truncate">{payment.user_email}</span>
+                        )}
                         {format(new Date(payment.created_at), 'MMM d, h:mm a')}
                       </p>
                     </div>

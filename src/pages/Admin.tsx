@@ -28,6 +28,7 @@ export default function Admin() {
   const { user, loading: authLoading } = useAuth();
   const { isAdmin, users, loading, searching, fetchAllUsers, updateUserSubscription } = useAdmin();
   const [searchQuery, setSearchQuery] = useState('');
+  const [userFilter, setUserFilter] = useState<'all' | 'free' | 'pro'>('all');
   const [pendingChanges, setPendingChanges] = useState<Record<string, { plan: 'free' | 'pro'; duration: string }>>({});
   const [savingUserId, setSavingUserId] = useState<string | null>(null);
 
@@ -188,34 +189,64 @@ export default function Admin() {
 
             {/* Users Tab */}
             <TabsContent value="users" className="mt-4 space-y-4">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="Search by email or name..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10 pr-10"
-            />
-            {searching && (
-              <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin text-muted-foreground" />
-            )}
+          {/* Filters Row */}
+          <div className="flex gap-2">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Search by email or name..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-10 pr-10"
+              />
+              {searching && (
+                <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin text-muted-foreground" />
+              )}
+            </div>
+            <Select value={userFilter} onValueChange={(value) => setUserFilter(value as 'all' | 'free' | 'pro')}>
+              <SelectTrigger className="w-28">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Users</SelectItem>
+                <SelectItem value="free">Free</SelectItem>
+                <SelectItem value="pro">Pro</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
 
           {/* User List */}
           <div className="rounded-2xl bg-card border border-border/50 overflow-hidden flex flex-col">
             <div className="px-4 py-3 border-b border-border/50 bg-muted/30 shrink-0">
               <h3 className="font-semibold">
-                {searchQuery ? `Results (${users.length})` : 'All Users'}
+                {searchQuery || userFilter !== 'all' 
+                  ? `Results (${users.filter(u => {
+                      if (userFilter === 'all') return true;
+                      const effectiveStatus = getEffectiveStatus(u);
+                      if (userFilter === 'pro') return effectiveStatus === 'pro';
+                      return effectiveStatus === 'free' || effectiveStatus === 'expired';
+                    }).length})` 
+                  : 'All Users'}
               </h3>
             </div>
             <div className="divide-y divide-border/50 overflow-y-auto max-h-[60vh]">
-              {users.length === 0 ? (
+              {users.filter(u => {
+                if (userFilter === 'all') return true;
+                const effectiveStatus = getEffectiveStatus(u);
+                if (userFilter === 'pro') return effectiveStatus === 'pro';
+                return effectiveStatus === 'free' || effectiveStatus === 'expired';
+              }).length === 0 ? (
                 <div className="p-8 text-center text-muted-foreground">
                   <Users className="h-12 w-12 mx-auto mb-3 opacity-30" />
-                  <p>{searchQuery ? 'No users match your search' : 'No users found'}</p>
+                  <p>{searchQuery || userFilter !== 'all' ? 'No users match your filters' : 'No users found'}</p>
                 </div>
               ) : (
-                users.map((u) => {
+                users.filter(u => {
+                  if (userFilter === 'all') return true;
+                  const effectiveStatus = getEffectiveStatus(u);
+                  if (userFilter === 'pro') return effectiveStatus === 'pro';
+                  return effectiveStatus === 'free' || effectiveStatus === 'expired';
+                }).map((u) => {
                   const effectiveStatus = getEffectiveStatus(u);
                   const pending = pendingChanges[u.id];
                   const currentPlan = pending?.plan ?? u.plan;

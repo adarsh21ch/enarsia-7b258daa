@@ -2708,6 +2708,19 @@ export type Database = {
           user_id: string
         }[]
       }
+      admin_get_recent_payments: {
+        Args: { limit_count?: number }
+        Returns: {
+          amount: number
+          created_at: string
+          event_type: string
+          id: string
+          razorpay_payment_id: string
+          status: string
+          user_display_name: string
+          user_email: string
+        }[]
+      }
       admin_get_revenue_stats: {
         Args: never
         Returns: {

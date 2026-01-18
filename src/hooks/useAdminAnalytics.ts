@@ -17,9 +17,11 @@ export interface PaymentLog {
   id: string;
   created_at: string;
   user_email: string | null;
+  user_display_name: string | null;
   amount: number | null;
   status: string | null;
   event_type: string;
+  razorpay_payment_id: string | null;
 }
 
 export interface RevenueStats {
@@ -139,12 +141,8 @@ export function useAdminAnalytics() {
           .from('user_subscriptions')
           .select('plan, expires_at'),
         
-        // Get recent payments
-        supabase
-          .from('payments_log')
-          .select('id, created_at, user_email, amount, status, event_type')
-          .order('created_at', { ascending: false })
-          .limit(50),
+        // Get recent payments with user info (deduplicated, from Jan 17, 2026)
+        supabase.rpc('admin_get_recent_payments', { limit_count: 50 }),
         
         // Get total signups count
         supabase
