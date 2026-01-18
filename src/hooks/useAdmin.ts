@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
+import { useQueryClient } from '@tanstack/react-query';
 
 interface UserWithSubscription {
   id: string;
@@ -14,6 +15,7 @@ interface UserWithSubscription {
 
 export function useAdmin() {
   const { user } = useAuth();
+  const queryClient = useQueryClient();
   const [isAdmin, setIsAdmin] = useState(false);
   const [users, setUsers] = useState<UserWithSubscription[]>([]);
   const [initialLoading, setInitialLoading] = useState(true);
@@ -114,7 +116,14 @@ export function useAdmin() {
       
       // Wait a bit for database to sync, then refetch
       await new Promise(resolve => setTimeout(resolve, 500));
+      
+      // Refetch user list
       await fetchAllUsers();
+      
+      // Invalidate the pro-users and analytics queries so they refetch
+      await queryClient.invalidateQueries({ queryKey: ['admin-pro-users'] });
+      await queryClient.invalidateQueries({ queryKey: ['admin-free-users'] });
+      await queryClient.invalidateQueries({ queryKey: ['admin-analytics'] });
       
       return { error: null, data };
     } catch (err: any) {

@@ -77,8 +77,10 @@ export function EnhancedStatsGrid({
   const [freeDrawerOpen, setFreeDrawerOpen] = useState(false);
   
   const { data: proUsers, isLoading: proLoading } = useProUsers();
-  const { data: freeUsers, isLoading: freeLoading } = useFreeUsers();
+  const { data: freeUsersData, isLoading: freeLoading } = useFreeUsers();
   const { data: expiringUsers } = useExpiringSubscriptions(7);
+  
+  const freeUsers = freeUsersData?.users || [];
 
   const formatRevenue = (amount: number) => {
     return `₹${(amount / 100).toLocaleString('en-IN')}`;
@@ -172,11 +174,17 @@ export function EnhancedStatsGrid({
         open={proDrawerOpen}
         onOpenChange={setProDrawerOpen}
         users={(proUsers || []).map(u => ({
-          ...u,
           user_id: u.user_id,
           display_name: u.display_name,
           email: u.email,
           neverai_id: u.neverai_id,
+          plan: u.plan,
+          subscribed_at: u.subscribed_at,
+          expires_at: u.expires_at,
+          is_admin_override: u.is_admin_override,
+          is_expired: u.is_expired,
+          days_remaining: u.days_remaining,
+          payment_amount: u.payment_amount,
         }))}
         loading={proLoading}
       />
@@ -184,7 +192,7 @@ export function EnhancedStatsGrid({
       <FreeUserDrawer
         open={freeDrawerOpen}
         onOpenChange={setFreeDrawerOpen}
-        users={(freeUsers || []).map(u => ({
+        users={freeUsers.map(u => ({
           ...u,
           user_id: u.user_id,
           display_name: u.display_name,
@@ -192,6 +200,7 @@ export function EnhancedStatsGrid({
           neverai_id: u.neverai_id,
         }))}
         loading={freeLoading}
+        totalCount={freeUsersData?.totalCount || 0}
       />
     </>
   );
