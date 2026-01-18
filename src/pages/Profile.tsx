@@ -179,7 +179,14 @@ export default function Profile() {
               <div className="flex-1 min-w-0">
                 <div className="flex items-start justify-between gap-2">
                   <div className="min-w-0">
-                    <p className="font-semibold text-lg truncate">{displayName}</p>
+                    <div className="flex items-center gap-2">
+                      <p className="font-semibold text-lg truncate">{displayName}</p>
+                      {isPro && (
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-primary/15 text-primary border border-primary/20">
+                          PRO
+                        </span>
+                      )}
+                    </div>
                     <p className="text-sm text-muted-foreground truncate">{user.email}</p>
                   </div>
                   {/* Level dropdown in top-right */}
