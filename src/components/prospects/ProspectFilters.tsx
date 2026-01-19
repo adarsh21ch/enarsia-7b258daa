@@ -9,7 +9,6 @@ import { useTrackingFormatContext } from '@/contexts/TrackingFormatContext';
 import { cn } from '@/lib/utils';
 import { ManageResponseTagsDialog } from './ManageResponseTagsDialog';
 import { ManageStageTagsDialog } from './ManageStageTagsDialog';
-
 interface Filters {
   search: string;
   stages: FunnelStage[];
@@ -17,7 +16,6 @@ interface Filters {
   actions: ExtendedActionTaken[];
   incompleteOnly: boolean;
 }
-
 interface ProspectFiltersProps {
   filters: Filters;
   onFiltersChange: (filters: Filters) => void;
@@ -29,7 +27,6 @@ interface ProspectFiltersProps {
   filterTagButton?: React.ReactNode;
   hideSearch?: boolean;
 }
-
 export function ProspectFilters({
   filters,
   onFiltersChange,
@@ -59,10 +56,8 @@ export function ProspectFilters({
   // Build options: merge tracking + personal tags, fallback only when BOTH empty
   const combinedLeadsOptions = [...leadsTrackingTagNames, ...leadsNonTrackingTags] as ExtendedActionTaken[];
   const actionOptions = combinedLeadsOptions.length > 0 ? combinedLeadsOptions : EXTENDED_ACTIONS as ExtendedActionTaken[];
-  
   const combinedStageOptions = [...stageTagNames, ...stageNonTrackingTags] as FunnelStage[];
   const stageOptions = combinedStageOptions.length > 0 ? combinedStageOptions : FUNNEL_STAGES as FunnelStage[];
-  
   const clearFilters = () => {
     onFiltersChange({
       search: '',
@@ -72,7 +67,6 @@ export function ProspectFilters({
       incompleteOnly: false
     });
   };
-  
   const toggleStage = (stage: FunnelStage) => {
     const newStages = filters.stages.includes(stage) ? filters.stages.filter(s => s !== stage) : [...filters.stages, stage];
     onFiltersChange({
@@ -80,7 +74,6 @@ export function ProspectFilters({
       stages: newStages
     });
   };
-  
   const toggleAction = (action: ExtendedActionTaken) => {
     const newActions = filters.actions.includes(action) ? filters.actions.filter(a => a !== action) : [...filters.actions, action];
     onFiltersChange({
@@ -88,19 +81,16 @@ export function ProspectFilters({
       actions: newActions
     });
   };
-  
   const getStagesLabel = () => {
     if (filters.stages.length === 0) return 'All Stages';
     if (filters.stages.length === 1) return filters.stages[0];
     return `${filters.stages.length} Stages`;
   };
-  
   const getActionsLabel = () => {
     if (filters.actions.length === 0) return 'Retargeting';
     if (filters.actions.length === 1) return filters.actions[0];
     return `${filters.actions.length} Responses`;
   };
-  
   return <>
     <div className="flex flex-col gap-2 w-full">
       {/* Filters row - compact on mobile */}
@@ -136,7 +126,7 @@ export function ProspectFilters({
         {/* Multi-select Responses Filter - only show if showResponsesFilter is true */}
         {showResponsesFilter && <Popover>
           <PopoverTrigger asChild>
-            <Button variant="outline" className={cn("h-9 min-w-[90px] w-auto text-xs shrink-0 justify-between gap-1", filters.actions.length > 0 && "border-primary/50 bg-primary/5")}>
+            <Button variant="outline" className={cn("h-9 min-w-[90px] w-auto shrink-0 justify-between gap-1 text-sm", filters.actions.length > 0 && "border-primary/50 bg-primary/5")}>
               <span className="truncate">{getActionsLabel()}</span>
               <ChevronDown className="h-3.5 w-3.5 opacity-50" />
             </Button>
@@ -170,12 +160,10 @@ export function ProspectFilters({
         </Button>}
 
         {/* Export button - desktop only, moved to sheet menu on mobile */}
-        {!isMobile && (
-          <Button variant="outline" size="sm" onClick={onExport} disabled={exporting || filteredCount === 0} className="h-9 gap-1.5 shrink-0">
+        {!isMobile && <Button variant="outline" size="sm" onClick={onExport} disabled={exporting || filteredCount === 0} className="h-9 gap-1.5 shrink-0">
             {exporting ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Download className="h-3.5 w-3.5" />}
             {exporting ? 'Exporting...' : `Export${filteredCount > 0 ? ` (${filteredCount})` : ''}`}
-          </Button>
-        )}
+          </Button>}
       </div>
     </div>
 
