@@ -2783,6 +2783,7 @@ export type Database = {
         Args: {
           page_offset?: number
           page_size?: number
+          plan_filter?: string
           search_query?: string
         }
         Returns: {
@@ -2791,10 +2792,9 @@ export type Database = {
           email: string
           expires_at: string
           is_admin_override: boolean
-          phone: string
+          neverai_id: string
           plan: string
           subscribed_at: string
-          total_count: number
           user_id: string
         }[]
       }
