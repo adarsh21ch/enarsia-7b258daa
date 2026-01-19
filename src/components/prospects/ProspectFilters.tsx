@@ -96,7 +96,7 @@ export function ProspectFilters({
   };
   
   const getActionsLabel = () => {
-    if (filters.actions.length === 0) return 'All Responses';
+    if (filters.actions.length === 0) return 'Retargeting';
     if (filters.actions.length === 1) return filters.actions[0];
     return `${filters.actions.length} Responses`;
   };
