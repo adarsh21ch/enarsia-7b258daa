@@ -2721,6 +2721,14 @@ export type Database = {
           user_id: string
         }[]
       }
+      admin_get_prospect_distribution: {
+        Args: never
+        Returns: {
+          threshold: number
+          threshold_label: string
+          user_count: number
+        }[]
+      }
       admin_get_recent_payments: {
         Args: { limit_count?: number }
         Returns: {
@@ -2763,6 +2771,18 @@ export type Database = {
           active_pro_users: number
           total_payments: number
           total_users: number
+        }[]
+      }
+      admin_get_users_by_prospect_threshold: {
+        Args: { p_threshold: number }
+        Returns: {
+          display_name: string
+          email: string
+          last_active: string
+          neverai_id: string
+          plan: string
+          prospect_count: number
+          user_id: string
         }[]
       }
       admin_list_all_profiles: {

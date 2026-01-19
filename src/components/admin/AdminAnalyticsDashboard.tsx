@@ -4,6 +4,7 @@ import { SignupTrendChart } from './SignupTrendChart';
 import { SubscriptionPieChart } from './SubscriptionPieChart';
 import { RevenueAnalytics } from './RevenueAnalytics';
 import { UsageAnalytics } from './UsageAnalytics';
+import { ProspectDistributionSection } from './ProspectDistributionSection';
 import { Loader2 } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
@@ -61,8 +62,9 @@ export function AdminAnalyticsDashboard() {
           />
         </TabsContent>
 
-        <TabsContent value="usage" className="mt-3">
+        <TabsContent value="usage" className="mt-3 space-y-6">
           <UsageAnalytics activeUsage={analytics.activeUsage} />
+          <ProspectDistributionSection />
         </TabsContent>
       </Tabs>
     </div>
