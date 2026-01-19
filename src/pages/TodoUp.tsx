@@ -88,7 +88,7 @@ export default function TodoUp() {
     refetch: refetchDailyTasks 
   } = useUserDailyTasks(calendar.selectedDateString);
   
-  const [viewMode, setViewMode] = useState<ViewMode>('daily-tasks');
+  const [viewMode, setViewMode] = useState<ViewMode>('todo-list');
   const [newTodoInput, setNewTodoInput] = useState('');
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editingTitle, setEditingTitle] = useState('');
@@ -227,11 +227,11 @@ export default function TodoUp() {
         <div className="px-4 pb-2">
           <Tabs value={viewMode} onValueChange={(v) => setViewMode(v as ViewMode)} className="w-full">
             <TabsList className="grid w-full grid-cols-2 h-9">
-              <TabsTrigger value="daily-tasks" className="text-xs font-medium">
-                Daily Tasks
-              </TabsTrigger>
               <TabsTrigger value="todo-list" className="text-xs font-medium">
                 To-Do List
+              </TabsTrigger>
+              <TabsTrigger value="daily-tasks" className="text-xs font-medium">
+                Daily Tasks
               </TabsTrigger>
             </TabsList>
           </Tabs>
