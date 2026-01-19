@@ -54,8 +54,8 @@ export function useAdmin() {
     checkIsAdmin();
   }, [checkIsAdmin]);
 
-  // Server-side search for users
-  const fetchAllUsers = useCallback(async (searchQuery: string = '') => {
+  // Server-side search for users with plan filter
+  const fetchAllUsers = useCallback(async (searchQuery: string = '', planFilter?: 'all' | 'free' | 'pro') => {
     if (!isAdmin) return;
 
     // Only show full loading on first load
@@ -67,7 +67,8 @@ export function useAdmin() {
     
     try {
       const { data, error } = await supabase.rpc('admin_search_users', {
-        search_query: searchQuery
+        search_query: searchQuery,
+        plan_filter: planFilter === 'all' ? null : planFilter
       });
 
       if (error) {

@@ -38,15 +38,15 @@ export default function Admin() {
     }
   }, [user, authLoading, navigate]);
 
-  // Fetch users on mount and when search changes (debounced)
+  // Fetch users on mount and when search/filter changes (debounced)
   useEffect(() => {
     if (isAdmin) {
       const timer = setTimeout(() => {
-        fetchAllUsers(searchQuery);
+        fetchAllUsers(searchQuery, userFilter);
       }, 300); // 300ms debounce for search
       return () => clearTimeout(timer);
     }
-  }, [isAdmin, fetchAllUsers, searchQuery]);
+  }, [isAdmin, fetchAllUsers, searchQuery, userFilter]);
 
   // Check if user's Pro is expired
   const isExpired = (expiresAt: string | null) => {
@@ -225,33 +225,18 @@ export default function Admin() {
             <div className="px-4 py-3 border-b border-border/50 bg-muted/30 shrink-0">
               <h3 className="font-semibold">
                 {searchQuery || userFilter !== 'all' 
-                  ? `Results (${users.filter(u => {
-                      if (userFilter === 'all') return true;
-                      const effectiveStatus = getEffectiveStatus(u);
-                      if (userFilter === 'pro') return effectiveStatus === 'pro';
-                      return effectiveStatus === 'free' || effectiveStatus === 'expired';
-                    }).length})` 
+                  ? `Results (${users.length})` 
                   : 'All Users'}
               </h3>
             </div>
             <div className="divide-y divide-border/50 overflow-y-auto max-h-[60vh]">
-              {users.filter(u => {
-                if (userFilter === 'all') return true;
-                const effectiveStatus = getEffectiveStatus(u);
-                if (userFilter === 'pro') return effectiveStatus === 'pro';
-                return effectiveStatus === 'free' || effectiveStatus === 'expired';
-              }).length === 0 ? (
+              {users.length === 0 ? (
                 <div className="p-8 text-center text-muted-foreground">
                   <Users className="h-12 w-12 mx-auto mb-3 opacity-30" />
                   <p>{searchQuery || userFilter !== 'all' ? 'No users match your filters' : 'No users found'}</p>
                 </div>
               ) : (
-                users.filter(u => {
-                  if (userFilter === 'all') return true;
-                  const effectiveStatus = getEffectiveStatus(u);
-                  if (userFilter === 'pro') return effectiveStatus === 'pro';
-                  return effectiveStatus === 'free' || effectiveStatus === 'expired';
-                }).map((u) => {
+                users.map((u) => {
                   const effectiveStatus = getEffectiveStatus(u);
                   const pending = pendingChanges[u.id];
                   const currentPlan = pending?.plan ?? u.plan;
