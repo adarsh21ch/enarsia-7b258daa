@@ -99,7 +99,7 @@ export function ProspectFilters({
         {showStagesFilter && <Popover>
           <PopoverTrigger asChild>
             <Button variant="outline" className={cn("h-9 min-w-[90px] w-auto text-xs shrink-0 justify-between gap-1", filters.stages.length > 0 && "border-primary/50 bg-primary/5")}>
-              <span className="truncate">{getStagesLabel()}</span>
+              <span className="truncate text-sm">{getStagesLabel()}</span>
               <ChevronDown className="h-3.5 w-3.5 opacity-50" />
             </Button>
           </PopoverTrigger>
