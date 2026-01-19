@@ -25,14 +25,18 @@ async function verifySignature(payload: string, signature: string, secret: strin
 }
 
 // Get plan duration based on amount
+// IMPORTANT: Both amounts grant PRO access, only duration differs
 function getPlanDuration(amountInPaise: number): number {
-  // ₹249 (24900 paise) = monthly (30 days)
-  // ₹1999 (199900 paise) = yearly discounted (365 days)
-  // ₹2999 (299900 paise) = yearly (365 days)
+  // ₹99 (9900 paise) = 30 days (1 month)
+  // ₹299 (29900 paise) = 120 days (4 months)
+  // Any higher amount = yearly (365 days)
   if (amountInPaise >= 199900) {
-    return 365; // yearly
+    return 365; // yearly for legacy/future plans
   }
-  return 30; // monthly
+  if (amountInPaise >= 29900) {
+    return 120; // 4 months for ₹299
+  }
+  return 30; // 1 month for ₹99 and below
 }
 
 // Log payment to database
