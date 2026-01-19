@@ -29,15 +29,15 @@ function checkRateLimit(userId: string): boolean {
   return true;
 }
 
-// IMPORTANT: Both payment amounts grant PRO access, only duration differs
-// ₹99 (9900 paise) = Pro 1 month, ₹299 (29900 paise) = Pro 4 months
 const PLAN_CONFIG = {
-  '9900': { // ₹99
+  mini: {
+    amount: 9900,
     duration_days: 30,
-    plan_name: 'pro',
+    plan_name: 'mini',
   },
-  '29900': { // ₹299
-    duration_days: 120,
+  pro: {
+    amount: 29900,
+    duration_days: 30,
     plan_name: 'pro',
   },
 };
@@ -117,8 +117,9 @@ serve(async (req) => {
     console.log('Signature verified successfully');
 
     const authHeader = btoa(`${RAZORPAY_KEY_ID}:${RAZORPAY_KEY_SECRET}`);
-    let durationDays = 30; // Default
-    let amount = 9900;
+    let purchasedPlan: 'mini' | 'pro' = 'pro'; // Default to pro
+    let durationDays = 30;
+    let amount = 29900;
 
     try {
       const orderResponse = await fetch(`https://api.razorpay.com/v1/orders/${razorpay_order_id}`, {
@@ -129,26 +130,20 @@ serve(async (req) => {
       
       if (orderResponse.ok) {
         const orderDetails = await orderResponse.json();
+        const orderPlan = orderDetails.notes?.plan;
         const orderDurationDays = orderDetails.notes?.duration_days;
         const orderAmount = orderDetails.notes?.final_amount;
         
-        // Get duration from order notes
-        if (orderDurationDays) {
-          durationDays = parseInt(orderDurationDays);
-        } else if (orderAmount) {
-          // Fallback: determine duration from amount
-          const amountStr = String(orderAmount);
-          const config = PLAN_CONFIG[amountStr as keyof typeof PLAN_CONFIG];
-          if (config) {
-            durationDays = config.duration_days;
-          }
+        // Use plan from order notes (set during order creation)
+        if (orderPlan === 'mini' || orderPlan === 'pro') {
+          purchasedPlan = orderPlan;
+          durationDays = parseInt(orderDurationDays) || PLAN_CONFIG[purchasedPlan].duration_days;
+          amount = parseInt(orderAmount) || orderDetails.amount;
         }
-        
-        amount = parseInt(orderDetails.notes?.final_amount) || orderDetails.amount || 9900;
-        console.log(`Order details: plan=pro, duration_days=${durationDays}, amount=${amount}`);
+        console.log(`Order details: plan=${purchasedPlan}, duration_days=${durationDays}, amount=${amount}`);
       }
     } catch (orderError) {
-      console.error('Error fetching order details, defaulting to 30 days:', orderError);
+      console.error('Error fetching order details, defaulting to pro:', orderError);
     }
 
     const supabase = createClient(SUPABASE_URL!, SUPABASE_SERVICE_ROLE_KEY!);
@@ -160,7 +155,7 @@ serve(async (req) => {
     const { error: updateError } = await supabase
       .from('user_subscriptions')
       .update({
-        plan: 'pro', // ALWAYS pro - both ₹99 and ₹299 grant pro access
+        plan: purchasedPlan, // Use actual purchased plan (mini or pro)
         status: 'active',
         subscribed_at: now.toISOString(),
         expires_at: expiresAt.toISOString(),
@@ -176,7 +171,7 @@ serve(async (req) => {
       );
     }
 
-    console.log(`Pro subscription activated for user: ${user_id}, duration: ${durationDays} days, expires: ${expiresAt.toISOString()}`);
+    console.log(`${purchasedPlan} subscription activated for user: ${user_id}, expires: ${expiresAt.toISOString()}`);
 
     await supabase.from('payments_log').insert({
       event_type: 'payment_verified',
@@ -185,14 +180,14 @@ serve(async (req) => {
       amount: amount,
       status: 'success',
       found_user: true,
-      action_taken: `subscription_activated_pro_${durationDays}d`,
+      action_taken: `subscription_activated_${purchasedPlan}`,
     });
 
     return new Response(
       JSON.stringify({ 
         success: true, 
-        message: `Pro subscription activated successfully (${durationDays} days)`,
-        plan: 'pro',
+        message: `${purchasedPlan === 'pro' ? 'Pro' : 'Mini'} subscription activated successfully`,
+        plan: purchasedPlan,
         duration_days: durationDays,
         expires_at: expiresAt.toISOString()
       }),

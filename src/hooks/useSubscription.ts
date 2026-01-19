@@ -93,27 +93,16 @@ export function useSubscription() {
   });
 
   // Derived state - memoized
-  // IMPORTANT: Both 'pro' and 'mini' (legacy) are treated as Pro access
   const plan = useMemo((): SubscriptionPlan => {
     if (!subscription) return 'free';
-    
-    // If no expiry set (admin override), use stored plan
-    if (!subscription.expires_at) {
-      // Treat 'mini' as 'pro' for access purposes
-      return subscription.plan === 'mini' ? 'pro' : (subscription.plan as SubscriptionPlan);
-    }
-    
-    // If expired, treat as free
+    if (!subscription.expires_at) return subscription.plan as SubscriptionPlan;
     if (new Date(subscription.expires_at) <= new Date()) return 'free';
-    
-    // Treat 'mini' as 'pro' for access purposes
-    return subscription.plan === 'mini' ? 'pro' : (subscription.plan as SubscriptionPlan);
+    return subscription.plan as SubscriptionPlan;
   }, [subscription]);
 
-  // isPro now includes both 'pro' and legacy 'mini' plans
-  const isPro = plan === 'pro' || subscription?.plan === 'mini';
-  const isMini = subscription?.plan === 'mini'; // Legacy check only
-  const isPaid = isPro; // Simplified - both grant pro access
+  const isPro = plan === 'pro';
+  const isMini = plan === 'mini';
+  const isPaid = isPro || isMini;
 
   const isAdminOverride = subscription?.is_admin_override || false;
 

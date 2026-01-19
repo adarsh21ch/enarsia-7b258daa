@@ -32,33 +32,18 @@ function checkRateLimit(userId: string): boolean {
 // Toggle this flag for testing (set to false for production)
 const TEST_MODE = false;
 
-// IMPORTANT: Both plans are PRO access, only duration differs
-// ₹99 = Pro 1 month, ₹299 = Pro 4 months
 const PLAN_CONFIG = {
-  '1month': {
+  mini: {
     amount: TEST_MODE ? 100 : 9900, // ₹1 test or ₹99 production (in paise)
     duration_days: 30,
-    plan_name: 'pro', // Always 'pro' access
-    description: 'Pro – 1 Month',
-  },
-  '4months': {
-    amount: TEST_MODE ? 100 : 29900, // ₹1 test or ₹299 production (in paise)
-    duration_days: 120,
-    plan_name: 'pro', // Always 'pro' access
-    description: 'Pro – 4 Months',
-  },
-  // Legacy support - map old plan names to new ones
-  mini: {
-    amount: TEST_MODE ? 100 : 9900,
-    duration_days: 30,
-    plan_name: 'pro',
-    description: 'Pro – 1 Month',
+    plan_name: 'mini',
+    description: 'TrackUp Mini',
   },
   pro: {
-    amount: TEST_MODE ? 100 : 29900,
-    duration_days: 120,
+    amount: TEST_MODE ? 100 : 29900, // ₹1 test or ₹299 production (in paise)
+    duration_days: 30,
     plan_name: 'pro',
-    description: 'Pro – 4 Months',
+    description: 'NevorAI Pro',
   },
 };
 
@@ -108,24 +93,23 @@ serve(async (req) => {
       );
     }
 
-    const validPlanTypes = ['1month', '4months', 'mini', 'pro'];
-    const selectedPlanKey = validPlanTypes.includes(plan_type) ? plan_type : '4months';
-    const planConfig = PLAN_CONFIG[selectedPlanKey as keyof typeof PLAN_CONFIG];
+    const validPlanTypes = ['mini', 'pro'];
+    const selectedPlan = validPlanTypes.includes(plan_type) ? plan_type : 'pro';
+    const planConfig = PLAN_CONFIG[selectedPlan as keyof typeof PLAN_CONFIG];
 
     const finalAmount = planConfig.amount;
 
-    console.log(`Creating Razorpay order for user: ${user_email}, plan_key: ${selectedPlanKey}, plan: ${planConfig.plan_name}, duration: ${planConfig.duration_days} days, amount: ${finalAmount}`);
+    console.log(`Creating Razorpay order for user: ${user_email}, plan: ${selectedPlan}, amount: ${finalAmount}`);
 
     const shortUserId = user_id.slice(0, 8);
     const orderPayload = {
       amount: finalAmount,
       currency: 'INR',
-      receipt: `pro_${planConfig.duration_days}d_${shortUserId}_${Date.now()}`,
+      receipt: `${selectedPlan}_${shortUserId}_${Date.now()}`,
       notes: {
         user_id: user_id,
         user_email: user_email,
-        plan: 'pro', // ALWAYS pro - both plans grant pro access
-        plan_key: selectedPlanKey, // For reference
+        plan: selectedPlan,
         duration_days: planConfig.duration_days,
         original_amount: planConfig.amount,
         final_amount: finalAmount,
@@ -153,7 +137,7 @@ serve(async (req) => {
     }
 
     const order = await razorpayResponse.json();
-    console.log(`Order created successfully: ${order.id}, plan: pro, duration: ${planConfig.duration_days} days, amount: ${finalAmount}`);
+    console.log(`Order created successfully: ${order.id}, plan: ${selectedPlan}, amount: ${finalAmount}`);
 
     return new Response(
       JSON.stringify({
@@ -161,9 +145,7 @@ serve(async (req) => {
         amount: order.amount,
         currency: order.currency,
         key_id: RAZORPAY_KEY_ID,
-        plan_type: 'pro', // Always pro
-        plan_key: selectedPlanKey,
-        duration_days: planConfig.duration_days,
+        plan_type: selectedPlan,
       }),
       { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
