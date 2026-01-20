@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { LeadsTracker } from '@/components/trackup/LeadsTracker';
 import { FunnelTracker } from '@/components/trackup/FunnelTracker';
 import { Button } from '@/components/ui/button';
-import { BarChart3, Layers, Lock, Crown, Zap } from 'lucide-react';
+import { BarChart3, Layers, Lock, Crown } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { PLAN_CONFIG } from '@/hooks/usePaymentLinks';
 import { useRazorpay } from '@/hooks/useRazorpay';
@@ -12,24 +12,19 @@ import { useSubscription } from '@/hooks/useSubscription';
 interface ProfileTrackUpProps {
   /** Whether user has Pro plan (full access) */
   isPro: boolean;
-  /** Whether user has Mini plan (limited access) */
-  isMini?: boolean;
 }
 
 type TrackUpTab = 'leads' | 'funnel';
 
-export function ProfileTrackUp({ isPro, isMini = false }: ProfileTrackUpProps) {
+export function ProfileTrackUp({ isPro }: ProfileTrackUpProps) {
   const [activeTab, setActiveTab] = useState<TrackUpTab>('leads');
   const { initiatePayment, loading: paymentLoading } = useRazorpay();
   const { toast } = useToast();
   const { refetch } = useSubscription();
-  
-  // Mini and Pro users have access to personal tracking
-  const hasAccess = isPro || isMini;
 
-  const handleUpgrade = (plan: 'mini' | 'pro') => {
+  const handleUpgrade = () => {
     initiatePayment({
-      planType: plan,
+      planType: 'quarterly', // Default to best value plan
       onSuccess: () => {
         toast({
           title: "Pro Activated 🎉",
@@ -90,7 +85,7 @@ export function ProfileTrackUp({ isPro, isMini = false }: ProfileTrackUpProps) {
       {/* Content Area */}
       <div className="relative">
         {/* Pro Lock Overlay - Only show for free users */}
-        {!hasAccess && (
+        {!isPro && (
           <div className="absolute inset-0 z-10 bg-background/80 backdrop-blur-sm flex flex-col items-center justify-center gap-3 p-4">
             <div className="p-3 rounded-full bg-primary/10">
               <Lock className="h-6 w-6 text-primary" />
@@ -100,33 +95,21 @@ export function ProfileTrackUp({ isPro, isMini = false }: ProfileTrackUpProps) {
               <p className="text-xs text-muted-foreground mt-1 mb-3">
                 Upgrade to unlock personal tracking analytics
               </p>
-              <div className="flex flex-col gap-2">
-                <Button 
-                  size="sm" 
-                  onClick={() => handleUpgrade('pro')}
-                  className="gap-1"
-                  disabled={paymentLoading}
-                >
-                  <Crown className="h-4 w-4" />
-                  {paymentLoading ? 'Processing...' : `Get Pro – ₹${PLAN_CONFIG.pro.price}/mo`}
-                </Button>
-                <Button 
-                  size="sm" 
-                  variant="outline"
-                  onClick={() => handleUpgrade('mini')}
-                  className="gap-1"
-                  disabled={paymentLoading}
-                >
-                  <Zap className="h-4 w-4" />
-                  {paymentLoading ? 'Processing...' : `Get Mini – ₹${PLAN_CONFIG.mini.price}/mo`}
-                </Button>
-              </div>
+              <Button 
+                size="sm" 
+                onClick={handleUpgrade}
+                className="gap-1"
+                disabled={paymentLoading}
+              >
+                <Crown className="h-4 w-4" />
+                {paymentLoading ? 'Processing...' : `Get Pro – ₹${PLAN_CONFIG.quarterly.price}`}
+              </Button>
             </div>
           </div>
         )}
 
         {/* Tab Content */}
-        <div className={cn("p-3", !hasAccess && "blur-sm pointer-events-none")}>
+        <div className={cn("p-3", !isPro && "blur-sm pointer-events-none")}>
           {activeTab === 'leads' ? (
             <LeadsTracker isPro={isPro} />
           ) : (

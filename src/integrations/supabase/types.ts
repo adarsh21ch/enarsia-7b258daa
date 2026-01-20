@@ -2747,10 +2747,10 @@ export type Database = {
         Returns: {
           failed_payments: number
           last_month_revenue: number
-          mini_plan_count: number
-          mini_plan_revenue: number
-          pro_plan_count: number
-          pro_plan_revenue: number
+          monthly_plan_count: number
+          monthly_plan_revenue: number
+          quarterly_plan_count: number
+          quarterly_plan_revenue: number
           successful_payments: number
           this_month_revenue: number
           total_payments: number

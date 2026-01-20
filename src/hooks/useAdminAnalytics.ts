@@ -31,10 +31,10 @@ export interface RevenueStats {
   totalPayments: number;
   successfulPayments: number;
   failedPayments: number;
-  miniPlanRevenue: number;
-  proPlanRevenue: number;
-  miniPlanCount: number;
-  proPlanCount: number;
+  monthlyPlanRevenue: number;
+  quarterlyPlanRevenue: number;
+  monthlyPlanCount: number;
+  quarterlyPlanCount: number;
 }
 
 export interface ProUser {
@@ -239,10 +239,10 @@ export function useAdminAnalytics() {
         totalPayments: Number(revenueData.total_payments) || 0,
         successfulPayments: Number(revenueData.successful_payments) || 0,
         failedPayments: Number(revenueData.failed_payments) || 0,
-        miniPlanRevenue: Number(revenueData.mini_plan_revenue) || 0,
-        proPlanRevenue: Number(revenueData.pro_plan_revenue) || 0,
-        miniPlanCount: Number(revenueData.mini_plan_count) || 0,
-        proPlanCount: Number(revenueData.pro_plan_count) || 0,
+        monthlyPlanRevenue: Number(revenueData.monthly_plan_revenue) || 0,
+        quarterlyPlanRevenue: Number(revenueData.quarterly_plan_revenue) || 0,
+        monthlyPlanCount: Number(revenueData.monthly_plan_count) || 0,
+        quarterlyPlanCount: Number(revenueData.quarterly_plan_count) || 0,
       };
 
       // Active usage stats
