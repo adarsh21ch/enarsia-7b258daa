@@ -99,6 +99,25 @@ export function useEncryption() {
     };
   }, [user]);
 
+  // Helper to ensure valid session before edge function calls
+  const ensureValidSession = useCallback(async (): Promise<boolean> => {
+    try {
+      const { data: sessionData } = await supabase.auth.getSession();
+      if (!sessionData?.session?.access_token) {
+        return false;
+      }
+      // Check if session is about to expire (within 60 seconds)
+      const expiresAt = sessionData.session.expires_at;
+      if (expiresAt && (expiresAt * 1000) - Date.now() < 60000) {
+        const { error: refreshError } = await supabase.auth.refreshSession();
+        return !refreshError;
+      }
+      return true;
+    } catch {
+      return false;
+    }
+  }, []);
+
   // Client-side encryption (instant, no network call)
   const encryptFields = useCallback(async (data: { phone?: string; email?: string }) => {
     // Use client-side encryption if key is available
@@ -106,8 +125,11 @@ export function useEncryption() {
       return clientEncryptFields(data);
     }
     
-    // Fallback to edge function if key not available
+    // Fallback to edge function if key not available - but validate session first
     try {
+      const hasSession = await ensureValidSession();
+      if (!hasSession) return data; // Return original data gracefully
+      
       const { data: result, error } = await supabase.functions.invoke('encrypt-data', {
         body: { action: 'encrypt', data }
       });
@@ -116,7 +138,7 @@ export function useEncryption() {
     } catch {
       return data;
     }
-  }, []);
+  }, [ensureValidSession]);
 
   // Client-side decryption (instant, no network call)
   const decryptFields = useCallback(async (data: { phone?: string; email?: string }) => {
@@ -125,8 +147,11 @@ export function useEncryption() {
       return clientDecryptFields(data);
     }
     
-    // Fallback to edge function if key not available
+    // Fallback to edge function if key not available - but validate session first
     try {
+      const hasSession = await ensureValidSession();
+      if (!hasSession) return data; // Return original data gracefully
+      
       const { data: result, error } = await supabase.functions.invoke('encrypt-data', {
         body: { action: 'decrypt', data }
       });
@@ -135,7 +160,7 @@ export function useEncryption() {
     } catch {
       return data;
     }
-  }, []);
+  }, [ensureValidSession]);
 
   // Batch decryption (instant, no network call)
   const decryptBatch = useCallback(async <T extends { phone?: string; email?: string }>(records: T[]): Promise<T[]> => {
@@ -146,8 +171,11 @@ export function useEncryption() {
       return clientDecryptBatch(records);
     }
     
-    // Fallback to edge function if key not available
+    // Fallback to edge function if key not available - but validate session first
     try {
+      const hasSession = await ensureValidSession();
+      if (!hasSession) return records; // Return original records gracefully
+      
       const { data: result, error } = await supabase.functions.invoke('encrypt-data', {
         body: { action: 'decrypt-batch', data: { records } }
       });
@@ -156,7 +184,7 @@ export function useEncryption() {
     } catch {
       return records;
     }
-  }, []);
+  }, [ensureValidSession]);
 
   // Batch encryption (instant, no network call)
   const encryptBatch = useCallback(async <T extends { phone?: string; email?: string }>(records: T[]): Promise<T[]> => {
@@ -167,8 +195,11 @@ export function useEncryption() {
       return clientEncryptBatch(records);
     }
     
-    // Fallback to edge function if key not available
+    // Fallback to edge function if key not available - but validate session first
     try {
+      const hasSession = await ensureValidSession();
+      if (!hasSession) return records; // Return original records gracefully
+      
       const { data: result, error } = await supabase.functions.invoke('encrypt-data', {
         body: { action: 'encrypt-batch', data: { records } }
       });
@@ -177,7 +208,7 @@ export function useEncryption() {
     } catch {
       return records;
     }
-  }, []);
+  }, [ensureValidSession]);
 
   return { 
     encryptFields, 
