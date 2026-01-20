@@ -570,6 +570,73 @@ export function useProspectsQuery(options: UseProspectsQueryOptions = {}) {
     [user, prospects, queryClient, queryKey]
   );
 
+  // Bulk delete by sheet - deletes ALL prospects in a sheet directly on server (bypasses pagination)
+  const bulkDeleteBySheet = useCallback(
+    async (sheetId: string | null): Promise<{ deleted: number }> => {
+      if (!user) return { deleted: 0 };
+      
+      // First, get the count of prospects to delete
+      let countQuery = supabase
+        .from('prospects')
+        .select('id', { count: 'exact', head: true })
+        .eq('user_id', user.id);
+      
+      if (sheetId !== null) {
+        countQuery = countQuery.eq('sheet_id', sheetId);
+      }
+      
+      const { count: totalToDelete } = await countQuery;
+      
+      if (!totalToDelete || totalToDelete === 0) {
+        return { deleted: 0 };
+      }
+      
+      // Cancel any in-flight queries
+      await queryClient.cancelQueries({ queryKey: ['prospects', user?.id] });
+      
+      // Delete directly by sheet_id on server - no ID list needed
+      let deleteQuery = supabase
+        .from('prospects')
+        .delete()
+        .eq('user_id', user.id);
+      
+      if (sheetId !== null) {
+        deleteQuery = deleteQuery.eq('sheet_id', sheetId);
+      }
+      
+      const { error } = await deleteQuery;
+      
+      if (error) {
+        toast.error('Failed to delete prospects');
+        return { deleted: 0 };
+      }
+      
+      // Clear cache and refetch
+      queryClient.setQueryData(queryKey, (old: any) => {
+        if (!old) return old;
+        return {
+          ...old,
+          pages: old.pages.map((page: ProspectPage) => ({
+            ...page,
+            prospects: sheetId === null 
+              ? [] 
+              : page.prospects.filter((p: Prospect) => p.sheet_id !== sheetId),
+            totalCount: 0,
+          })),
+        };
+      });
+      
+      // Invalidate queries to refresh data
+      queryClient.invalidateQueries({ queryKey: ['prospects', user?.id] });
+      queryClient.invalidateQueries({ queryKey: ['prospects-kpi', user?.id] });
+      queryClient.invalidateQueries({ queryKey: ['tracking-leads', user?.id] });
+      queryClient.invalidateQueries({ queryKey: ['tracking-funnel', user?.id] });
+      
+      return { deleted: totalToDelete };
+    },
+    [user, queryClient, queryKey]
+  );
+
   // Restore - re-add a deleted prospect (used for undo)
   const restoreProspect = useCallback(
     async (prospect: Prospect): Promise<Prospect | null> => {
@@ -711,6 +778,7 @@ export function useProspectsQuery(options: UseProspectsQueryOptions = {}) {
     updateProspect,
     deleteProspect,
     bulkDeleteProspects,
+    bulkDeleteBySheet, // Delete all prospects in a sheet directly on server
     restoreProspect,
     restoreProspects,
     reorderProspects,

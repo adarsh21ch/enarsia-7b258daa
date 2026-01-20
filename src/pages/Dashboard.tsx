@@ -128,6 +128,7 @@ export default function Dashboard() {
     updateProspect,
     deleteProspect,
     bulkDeleteProspects,
+    bulkDeleteBySheet,
     restoreProspect,
     restoreProspects,
     reorderProspects,
@@ -259,10 +260,11 @@ export default function Dashboard() {
               onUpdate={updateProspect} 
               onDelete={deleteProspect} 
               onBulkDelete={bulkDeleteProspects} 
+              onBulkDeleteBySheet={bulkDeleteBySheet}
               onRestoreProspect={restoreProspect} 
               onRestoreProspects={restoreProspects} 
               onImport={importProspects} 
-              onReorderProspects={reorderProspects} 
+              onReorderProspects={reorderProspects}
               sheets={sheets} 
               selectedSheetId={selectedSheetId} 
               onSelectSheet={setSelectedSheetId} 
@@ -290,10 +292,11 @@ export default function Dashboard() {
               onUpdate={updateProspect} 
               onDelete={deleteProspect} 
               onBulkDelete={bulkDeleteProspects} 
+              onBulkDeleteBySheet={bulkDeleteBySheet}
               onRestoreProspect={restoreProspect} 
               onRestoreProspects={restoreProspects} 
               onImport={importProspects} 
-              onReorderProspects={reorderProspects} 
+              onReorderProspects={reorderProspects}
               sheets={sheets} 
               selectedSheetId={selectedSheetId} 
               onSelectSheet={setSelectedSheetId} 

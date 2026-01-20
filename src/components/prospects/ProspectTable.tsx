@@ -53,6 +53,7 @@ interface ProspectTableProps {
     deleted: number;
     prospects: Prospect[];
   }>;
+  onBulkDeleteBySheet?: (sheetId: string | null) => Promise<{ deleted: number }>;
   // Sheet props
   sheets: Sheet[];
   selectedSheetId: string | null;
@@ -286,6 +287,7 @@ export function ProspectTable({
   onRestoreProspect,
   onRestoreProspects,
   onBulkDelete,
+  onBulkDeleteBySheet,
   sheets,
   selectedSheetId,
   onSelectSheet,
@@ -812,6 +814,22 @@ export function ProspectTable({
     setDeleteConfirmOpen(false);
   };
   const handleDeleteAllInSheet = async (sheetId: string | null) => {
+    // Use server-side bulk delete by sheet if available (deletes ALL, not just loaded)
+    if (onBulkDeleteBySheet) {
+      const result = await onBulkDeleteBySheet(sheetId);
+      if (result.deleted > 0) {
+        // Log SINGLE bulk delete activity
+        await logBulkActivity('bulk_delete', result.deleted);
+        // Note: We can't push undo action here since we don't have the deleted prospects
+        // This is a trade-off for being able to delete all prospects, not just loaded ones
+        toast.success(`Deleted ${result.deleted} prospects`);
+      } else {
+        toast.info('No prospects to delete');
+      }
+      return;
+    }
+    
+    // Fallback to old behavior using loaded prospects only
     const toDelete = sheetId === null ? baseProspects : baseProspects.filter(p => p.sheet_id === sheetId);
     if (toDelete.length === 0) {
       toast.info('No prospects to delete');
