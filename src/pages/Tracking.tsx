@@ -1,69 +1,102 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { format } from 'date-fns';
 import { useAuth } from '@/contexts/AuthContext';
 import { BottomNav } from '@/components/layout/BottomNav';
-import { TrackingReadView } from '@/components/tracking/TrackingReadView';
-import { UpdateTrackingModal } from '@/components/tracking/UpdateTrackingModal';
+import { DynamicFunnelTracker } from '@/components/tracking/DynamicFunnelTracker';
+import { DynamicLeadsTracker } from '@/components/tracking/DynamicLeadsTracker';
 import { UpgradeBar } from '@/components/subscription/UpgradeBar';
+import { PullToRefreshIndicator } from '@/components/PullToRefreshIndicator';
 import { TopTabBar } from '@/components/ui/TopTabBar';
-import { Button } from '@/components/ui/button';
-import { Calendar as CalendarComponent } from '@/components/ui/calendar';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Loader2, User, Users, ArrowLeft, Pencil, Calendar, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Day1SetupDialog } from '@/components/trackup/Day1SetupDialog';
+import { Loader2, TrendingUp, Calendar, Lock, RefreshCw, ArrowLeft } from 'lucide-react';
 import { useSubscription } from '@/hooks/useSubscription';
-import { useQueryClient } from '@tanstack/react-query';
+import { useFunnelConfig } from '@/hooks/useFunnelConfig';
 import { cn } from '@/lib/utils';
 import nevoraLogo from '@/assets/nevorai-logo.jpeg';
 
-type MainTab = 'personal' | 'total';
-type SubTab = 'leads' | 'funnel';
+// Pull-to-refresh hook
+function usePullToRefresh(onRefresh: () => Promise<void>, threshold = 80) {
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [pullDistance, setPullDistance] = useState(0);
+  const startY = useRef(0);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  const handleTouchStart = useCallback((e: TouchEvent) => {
+    if (containerRef.current && containerRef.current.scrollTop === 0) {
+      startY.current = e.touches[0].clientY;
+    }
+  }, []);
+
+  const handleTouchMove = useCallback((e: TouchEvent) => {
+    if (!startY.current || isRefreshing) return;
+    const currentY = e.touches[0].clientY;
+    const diff = currentY - startY.current;
+    if (diff > 0 && containerRef.current && containerRef.current.scrollTop === 0) {
+      setPullDistance(Math.min(diff * 0.5, threshold * 1.5));
+    }
+  }, [isRefreshing, threshold]);
+
+  const handleTouchEnd = useCallback(async () => {
+    if (pullDistance >= threshold && !isRefreshing) {
+      setIsRefreshing(true);
+      try { await onRefresh(); } finally { setIsRefreshing(false); }
+    }
+    setPullDistance(0);
+    startY.current = 0;
+  }, [pullDistance, threshold, isRefreshing, onRefresh]);
+
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+    container.addEventListener('touchstart', handleTouchStart, { passive: true });
+    container.addEventListener('touchmove', handleTouchMove, { passive: true });
+    container.addEventListener('touchend', handleTouchEnd);
+    return () => {
+      container.removeEventListener('touchstart', handleTouchStart);
+      container.removeEventListener('touchmove', handleTouchMove);
+      container.removeEventListener('touchend', handleTouchEnd);
+    };
+  }, [handleTouchStart, handleTouchMove, handleTouchEnd]);
+
+  return { containerRef, isRefreshing, pullDistance, showIndicator: pullDistance > 20 || isRefreshing };
+}
 
 export default function Tracking() {
   const navigate = useNavigate();
   const { user, loading: authLoading } = useAuth();
   const { isPro, loading: subLoading } = useSubscription();
-  const queryClient = useQueryClient();
-  
-  // Main tabs: Personal vs Total
-  const [mainTab, setMainTab] = useState<MainTab>('total');
-  const [subTab, setSubTab] = useState<SubTab>('leads');
-  const [selectedDate, setSelectedDate] = useState<Date>(new Date());
-  const [isCalendarOpen, setIsCalendarOpen] = useState(false);
-  const [isUpdateModalOpen, setIsUpdateModalOpen] = useState(false);
-  const [refreshKey, setRefreshKey] = useState(0);
+  const { config, loading: configLoading, saveConfig, getEffectiveConfig, isReadOnly: isFunnelReadOnly, leaderName: funnelLeaderName } = useFunnelConfig();
+  const effectiveConfig = getEffectiveConfig();
+  const [activeTab, setActiveTab] = useState('leads');
+  const [showDay1Setup, setShowDay1Setup] = useState(false);
+
+  // Handle tab change - show Day 1 setup if switching to funnel with no config (and not read-only from leader)
+  const handleTabChange = (newTab: string) => {
+    if (newTab === 'funnel' && !effectiveConfig && !configLoading && !isFunnelReadOnly) {
+      setShowDay1Setup(true);
+    }
+    setActiveTab(newTab);
+  };
+
+  // Save Day 1 date from setup dialog
+  const handleDay1Save = async (date: Date) => {
+    await saveConfig({
+      funnel_name: 'Default Funnel',
+      funnel_length: 3, // Fixed 3-day funnel
+      day_1_start: format(date, 'yyyy-MM-dd'),
+    });
+    setShowDay1Setup(false);
+  };
 
   // Pro gate disabled for now
   const showProGate = false;
 
-  const handleSaveComplete = useCallback(() => {
-    // Invalidate queries to refresh data
-    queryClient.invalidateQueries({ queryKey: ['personal_snapshot_v2'] });
-    queryClient.invalidateQueries({ queryKey: ['total_snapshot_v2'] });
-    // Force re-render of the read view
-    setRefreshKey(prev => prev + 1);
-  }, [queryClient]);
-
-  const goToPreviousDay = () => {
-    setSelectedDate(prev => {
-      const newDate = new Date(prev);
-      newDate.setDate(newDate.getDate() - 1);
-      return newDate;
-    });
-  };
-
-  const goToNextDay = () => {
-    const tomorrow = new Date();
-    if (format(selectedDate, 'yyyy-MM-dd') < format(tomorrow, 'yyyy-MM-dd')) {
-      setSelectedDate(prev => {
-        const newDate = new Date(prev);
-        newDate.setDate(newDate.getDate() + 1);
-        return newDate;
-      });
-    }
-  };
-
-  const isToday = format(selectedDate, 'yyyy-MM-dd') === format(new Date(), 'yyyy-MM-dd');
+  // Pull-to-refresh (no-op since dynamic trackers handle their own data)
+  const handleRefresh = useCallback(async () => {
+    // Dynamic trackers handle their own refetch
+  }, []);
+  const { containerRef, isRefreshing, pullDistance, showIndicator } = usePullToRefresh(handleRefresh);
 
   useEffect(() => {
     if (!user && !authLoading) {
@@ -71,7 +104,7 @@ export default function Tracking() {
     }
   }, [user, authLoading, navigate]);
 
-  if (authLoading || subLoading) {
+  if (authLoading || subLoading || configLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -81,17 +114,18 @@ export default function Tracking() {
 
   if (!user) return null;
 
-  const mainTabOptions: [{ value: string; label: string; icon: typeof User }, { value: string; label: string; icon: typeof Users }] = [
-    { value: 'personal', label: 'Personal', icon: User },
-    { value: 'total', label: 'Total', icon: Users },
+  const toggleOptions: [{ value: string; label: string; icon: typeof Calendar }, { value: string; label: string; icon: typeof TrendingUp }] = [
+    { value: 'leads', label: 'Leads', icon: Calendar },
+    { value: 'funnel', label: 'Funnel', icon: TrendingUp },
   ];
 
   return (
     <div className="app-layout bg-gradient-to-b from-background via-background to-muted/20">
-      {/* Header */}
+      {/* Premium Header with Back Button + Leads/Funnel Switch */}
       <header className="fixed-header z-40 bg-card/80 backdrop-blur-xl border-b border-border/50">
         <div className="flex items-center justify-between px-4 py-3">
           <div className="flex items-center gap-3">
+            {/* Back Button */}
             <button
               onClick={() => {
                 if (window.history.length > 1) {
@@ -112,106 +146,58 @@ export default function Tracking() {
             />
             <div>
               <h1 className="text-xl font-bold tracking-tight">Track Up</h1>
-              <p className="text-xs text-muted-foreground font-medium">
-                {mainTab === 'personal' ? 'Your Personal Numbers' : 'Team Total Numbers'}
-              </p>
+              <p className="text-xs text-muted-foreground font-medium">Track Your Numbers</p>
             </div>
           </div>
         </div>
         
-        {/* Personal / Total Switch */}
-        <div className="px-4 pb-3">
-          <TopTabBar 
-            options={mainTabOptions} 
-            value={mainTab} 
-            onChange={(v) => setMainTab(v as MainTab)} 
-          />
-        </div>
-
-        {/* Date Navigator */}
-        <div className="px-4 pb-3 flex items-center justify-between">
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-8 w-8"
-            onClick={goToPreviousDay}
-          >
-            <ChevronLeft className="h-4 w-4" />
-          </Button>
-
-          <Popover open={isCalendarOpen} onOpenChange={setIsCalendarOpen}>
-            <PopoverTrigger asChild>
-              <Button 
-                variant="outline" 
-                className={cn(
-                  "h-9 px-4 font-medium",
-                  isToday && "border-primary/50 bg-primary/5"
-                )}
-              >
-                <Calendar className="mr-2 h-4 w-4" />
-                {isToday ? "Today" : format(selectedDate, 'EEE, MMM d')}
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-auto p-0" align="center">
-              <CalendarComponent
-                mode="single"
-                selected={selectedDate}
-                onSelect={(date) => {
-                  if (date) {
-                    setSelectedDate(date);
-                    setIsCalendarOpen(false);
-                  }
-                }}
-                disabled={(date) => date > new Date()}
-                initialFocus
-              />
-            </PopoverContent>
-          </Popover>
-
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-8 w-8"
-            onClick={goToNextDay}
-            disabled={isToday}
-          >
-            <ChevronRight className="h-4 w-4" />
-          </Button>
+        {/* Leads/Funnel Segmented Switch - TOP, sticky in header */}
+        <div className="px-4 pb-2">
+          <TopTabBar options={toggleOptions} value={activeTab} onChange={handleTabChange} />
         </div>
       </header>
 
-      <main className="scrollable-content relative">
-        <div className={cn("container py-4 px-4 h-full", showProGate ? "pb-36" : "pb-28")}>
-          {/* Read View */}
-          <TrackingReadView
-            key={refreshKey}
-            mainTab={mainTab}
-            subTab={subTab}
-            onMainTabChange={setMainTab}
-            onSubTabChange={setSubTab}
-            selectedDate={selectedDate}
-          />
-        </div>
+      <main ref={containerRef} className="scrollable-content relative">
+        <PullToRefreshIndicator isRefreshing={isRefreshing} pullDistance={pullDistance} showIndicator={showIndicator} />
+        <div className={cn("container py-2 px-3 h-full flex flex-col", showProGate ? "pb-36" : "pb-24")}>
+          {/* Pro gate - show when user is not Pro */}
+          {showProGate && (
+            <div className="relative mb-4">
+              <div className="absolute inset-0 flex flex-col items-center justify-center z-10 bg-background/80 backdrop-blur-sm rounded-xl py-8">
+                <div className="p-3 rounded-full bg-muted mb-3">
+                  <Lock className="h-10 w-10 text-muted-foreground" />
+                </div>
+                <h3 className="text-lg font-semibold mb-1">Pro Feature</h3>
+                <p className="text-sm text-muted-foreground max-w-sm text-center px-4">
+                  TrackUp is a Pro feature. Subscribe to Pro Monthly (₹249) or Pro Yearly (₹2,999) to unlock team tracking and advanced analytics.
+                </p>
+              </div>
+            </div>
+          )}
 
-        {/* Floating Action Button */}
-        <Button
-          onClick={() => setIsUpdateModalOpen(true)}
-          className="fixed bottom-24 right-4 h-14 px-5 rounded-full shadow-lg z-30 gap-2"
-          size="lg"
-        >
-          <Pencil className="h-5 w-5" />
-          <span className="font-semibold">Update</span>
-        </Button>
+          {/* Sync indicator for connected members */}
+          {activeTab === 'funnel' && isFunnelReadOnly && funnelLeaderName && (
+            <div className="text-xs text-muted-foreground text-center mb-2 flex items-center justify-center gap-1.5 bg-muted/50 py-1.5 px-3 rounded-full mx-auto w-fit">
+              <RefreshCw className="h-3 w-3" />
+              Synced with {funnelLeaderName}
+            </div>
+          )}
+
+          {/* Content based on active tab - uses dynamic tag-based trackers */}
+          <div className="flex-1 min-h-0">
+            {activeTab === 'funnel' ? (
+              <DynamicFunnelTracker isPro={true} />
+            ) : (
+              <DynamicLeadsTracker isPro={true} />
+            )}
+          </div>
+        </div>
       </main>
 
-      {/* Update Tracking Modal */}
-      <UpdateTrackingModal
-        open={isUpdateModalOpen}
-        onOpenChange={setIsUpdateModalOpen}
-        initialMainTab={mainTab}
-        initialSubTab={subTab}
-        initialDate={selectedDate}
-        onSaveComplete={handleSaveComplete}
+      {/* Day 1 Setup Dialog */}
+      <Day1SetupDialog 
+        open={showDay1Setup} 
+        onSave={handleDay1Save} 
       />
 
       {/* Upgrade Bar only for Free Users */}
