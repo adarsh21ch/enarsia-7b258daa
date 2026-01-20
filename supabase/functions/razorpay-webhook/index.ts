@@ -25,14 +25,13 @@ async function verifySignature(payload: string, signature: string, secret: strin
 }
 
 // Get plan duration based on amount
+// ₹99 (9900 paise) = 30 days
+// ₹299 (29900 paise) = 120 days
 function getPlanDuration(amountInPaise: number): number {
-  // ₹249 (24900 paise) = monthly (30 days)
-  // ₹1999 (199900 paise) = yearly discounted (365 days)
-  // ₹2999 (299900 paise) = yearly (365 days)
-  if (amountInPaise >= 199900) {
-    return 365; // yearly
+  if (amountInPaise >= 29900) {
+    return 120; // 4 months
   }
-  return 30; // monthly
+  return 30; // 1 month
 }
 
 // Log payment to database
@@ -156,21 +155,23 @@ Deno.serve(async (req) => {
         });
       }
 
-      // Find the user by email
-      const { data: userData, error: userError } = await supabase.auth.admin.listUsers();
+      // Find the user by email using profiles table (more reliable than auth.admin.listUsers)
+      const { data: profileData, error: profileError } = await supabase
+        .from('profiles')
+        .select('user_id')
+        .ilike('email', email)
+        .maybeSingle();
       
-      if (userError) {
-        console.error('Error fetching users:', userError);
-        await logPayment(supabase, 'payment.captured', email, paymentId, amount, 'error', 'Failed to fetch users', null, false, payload);
-        return new Response(JSON.stringify({ error: 'Failed to fetch users' }), {
+      if (profileError) {
+        console.error('Error fetching profile:', profileError);
+        await logPayment(supabase, 'payment.captured', email, paymentId, amount, 'error', 'Failed to fetch profile', null, false, payload);
+        return new Response(JSON.stringify({ error: 'Failed to fetch user profile' }), {
           status: 500,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' }
         });
       }
 
-      const user = userData.users.find(u => u.email?.toLowerCase() === email.toLowerCase());
-      
-      if (!user) {
+      if (!profileData) {
         console.error(`User not found for email: ${email}`);
         await logPayment(supabase, 'payment.captured', email, paymentId, amount, 'error', 'User not found', null, false, payload);
         // Return 200 to prevent retries
@@ -180,58 +181,57 @@ Deno.serve(async (req) => {
         });
       }
 
-      console.log(`Found user: ${user.id} for email: ${email}`);
+      const userId = profileData.user_id;
+      console.log(`Found user: ${userId} for email: ${email}`);
 
-      // Calculate expiration based on plan duration
+      // Calculate expiration based on plan duration from notes or amount
       const durationDays = notes.duration_days ? parseInt(notes.duration_days) : getPlanDuration(amount);
       const now = new Date();
       const expiresAt = new Date(now);
       expiresAt.setDate(expiresAt.getDate() + durationDays);
 
-      // Store payment reference (last 4 chars for support)
+      // Store payment reference
       const paymentReference = paymentId;
 
-      // Update or insert subscription
+      // Update or insert subscription - ALWAYS Pro
       const { data: existingSub } = await supabase
         .from('user_subscriptions')
         .select('id')
-        .eq('user_id', user.id)
+        .eq('user_id', userId)
         .maybeSingle();
-
-      const planLabel = durationDays > 30 ? 'yearly' : 'monthly';
 
       if (existingSub) {
         // Update existing subscription
         const { error: updateError } = await supabase
           .from('user_subscriptions')
           .update({
-            plan: 'pro',
+            plan: 'pro', // Always Pro
             status: 'active',
             subscribed_at: now.toISOString(),
             expires_at: expiresAt.toISOString(),
             payment_id: paymentReference,
             updated_at: now.toISOString()
           })
-          .eq('user_id', user.id);
+          .eq('user_id', userId);
 
         if (updateError) {
           console.error('Error updating subscription:', updateError);
-          await logPayment(supabase, 'payment.captured', email, paymentId, amount, 'error', 'Failed to update subscription', user.id, true, null);
+          await logPayment(supabase, 'payment.captured', email, paymentId, amount, 'error', 'Failed to update subscription', userId, true, null);
           return new Response(JSON.stringify({ error: 'Failed to update subscription' }), {
             status: 500,
             headers: { ...corsHeaders, 'Content-Type': 'application/json' }
           });
         }
 
-        console.log(`Updated subscription to Pro (${durationDays} days) for user: ${user.id}`);
-        await logPayment(supabase, 'payment.captured', email, paymentId, amount, 'success', `Updated to Pro (${durationDays} days)`, user.id, true, null);
+        console.log(`Updated subscription to Pro (${durationDays} days) for user: ${userId}`);
+        await logPayment(supabase, 'payment.captured', email, paymentId, amount, 'success', `Updated to Pro (${durationDays} days)`, userId, true, null);
       } else {
         // Insert new subscription
         const { error: insertError } = await supabase
           .from('user_subscriptions')
           .insert({
-            user_id: user.id,
-            plan: 'pro',
+            user_id: userId,
+            plan: 'pro', // Always Pro
             status: 'active',
             subscribed_at: now.toISOString(),
             expires_at: expiresAt.toISOString(),
@@ -240,22 +240,23 @@ Deno.serve(async (req) => {
 
         if (insertError) {
           console.error('Error inserting subscription:', insertError);
-          await logPayment(supabase, 'payment.captured', email, paymentId, amount, 'error', 'Failed to create subscription', user.id, true, null);
+          await logPayment(supabase, 'payment.captured', email, paymentId, amount, 'error', 'Failed to create subscription', userId, true, null);
           return new Response(JSON.stringify({ error: 'Failed to create subscription' }), {
             status: 500,
             headers: { ...corsHeaders, 'Content-Type': 'application/json' }
           });
         }
 
-        console.log(`Created Pro subscription (${durationDays} days) for user: ${user.id}`);
-        await logPayment(supabase, 'payment.captured', email, paymentId, amount, 'success', `Created Pro (${durationDays} days)`, user.id, true, null);
+        console.log(`Created Pro subscription (${durationDays} days) for user: ${userId}`);
+        await logPayment(supabase, 'payment.captured', email, paymentId, amount, 'success', `Created Pro (${durationDays} days)`, userId, true, null);
       }
 
       return new Response(JSON.stringify({ 
         success: true, 
         message: 'User marked as Pro',
-        user_id: user.id,
-        plan: planLabel,
+        user_id: userId,
+        plan: 'pro',
+        duration_days: durationDays,
         expires_at: expiresAt.toISOString()
       }), {
         status: 200,

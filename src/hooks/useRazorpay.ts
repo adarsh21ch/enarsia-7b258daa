@@ -2,7 +2,7 @@ import { useState, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
-import { BRAND_NAME, PLAN_NAME_PRO, PLAN_NAME_MINI } from '@/config/brand';
+import { BRAND_NAME } from '@/config/brand';
 
 declare global {
   interface Window {
@@ -10,7 +10,7 @@ declare global {
   }
 }
 
-export type PlanType = 'mini' | 'pro';
+export type PlanType = 'monthly' | 'quarterly';
 
 interface RazorpayOptions {
   planType?: PlanType;
@@ -22,15 +22,15 @@ interface RazorpayOptions {
 const TEST_MODE = false;
 
 const PLAN_CONFIG = {
-  mini: {
+  monthly: {
     amount: TEST_MODE ? 100 : 9900, // ₹1 test or ₹99 production (in paise)
     duration_days: 30,
-    description: TEST_MODE ? `${PLAN_NAME_MINI} – ₹1 (TEST)` : `${PLAN_NAME_MINI} – ₹99 / month`,
+    description: TEST_MODE ? `Pro Monthly – ₹1 (TEST)` : `Pro Monthly – ₹99`,
   },
-  pro: {
+  quarterly: {
     amount: TEST_MODE ? 100 : 29900, // ₹1 test or ₹299 production (in paise)
-    duration_days: 30,
-    description: TEST_MODE ? `${PLAN_NAME_PRO} – ₹1 (TEST)` : `${PLAN_NAME_PRO} – ₹299 / month`,
+    duration_days: 120,
+    description: TEST_MODE ? `Pro 4-Month – ₹1 (TEST)` : `Pro 4-Month – ₹299`,
   },
 };
 
@@ -64,7 +64,7 @@ export function useRazorpay() {
       return;
     }
 
-    const planType = options?.planType || 'pro';
+    const planType = options?.planType || 'quarterly';
     const planConfig = PLAN_CONFIG[planType];
     const description = planConfig.description;
 

@@ -1,4 +1,4 @@
-import { Crown, Sparkles, Check, Star, Zap } from 'lucide-react';
+import { Crown, Sparkles, Check, Star } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerTrigger } from '@/components/ui/drawer';
@@ -23,7 +23,7 @@ export function UpgradeDrawer({ variant = 'default', triggerText }: UpgradeDrawe
   const { refetch } = useSubscription();
   const isMobile = useIsMobile();
   const [open, setOpen] = useState(false);
-  const [selectedPlan, setSelectedPlan] = useState<PlanType>('pro');
+  const [selectedPlan, setSelectedPlan] = useState<PlanType>('quarterly');
 
   const handleUpgrade = (planType: PlanType) => {
     initiatePayment({
@@ -76,7 +76,7 @@ export function UpgradeDrawer({ variant = 'default', triggerText }: UpgradeDrawe
           <Sparkles className="h-6 w-6 text-primary" />
         </div>
         <div>
-          <h3 className="font-bold text-lg">Unlock Premium Features</h3>
+          <h3 className="font-bold text-lg">Unlock Pro Features</h3>
           <p className="text-xs text-muted-foreground">Choose a plan that works for you</p>
         </div>
       </div>
@@ -85,9 +85,9 @@ export function UpgradeDrawer({ variant = 'default', triggerText }: UpgradeDrawe
         {/* 4-Month Plan - Best Value */}
         <button
           type="button"
-          onClick={() => setSelectedPlan('pro')}
+          onClick={() => setSelectedPlan('quarterly')}
           className={`w-full p-4 rounded-xl border-2 transition-all text-left relative ${
-            selectedPlan === 'pro'
+            selectedPlan === 'quarterly'
               ? 'border-primary bg-primary/10'
               : 'border-border bg-card hover:border-primary/50'
           }`}
@@ -100,11 +100,11 @@ export function UpgradeDrawer({ variant = 'default', triggerText }: UpgradeDrawe
             <div className="flex-1">
               <div className="flex items-center gap-2 mb-1">
                 <Crown className="h-4 w-4 text-primary" />
-                <p className="font-semibold text-foreground">{PLAN_CONFIG.pro.name}</p>
+                <p className="font-semibold text-foreground">{PLAN_CONFIG.quarterly.name}</p>
               </div>
-              <p className="text-xs text-muted-foreground mb-2">{PLAN_CONFIG.pro.description}</p>
+              <p className="text-xs text-muted-foreground mb-2">{PLAN_CONFIG.quarterly.description}</p>
               <div className="space-y-1">
-                {PLAN_CONFIG.pro.features.slice(0, 3).map((feature, i) => (
+                {PLAN_CONFIG.quarterly.features.slice(0, 3).map((feature, i) => (
                   <div key={i} className="flex items-center gap-1.5 text-xs text-muted-foreground">
                     <Check className="h-3 w-3 text-primary shrink-0" />
                     <span>{feature}</span>
@@ -123,9 +123,9 @@ export function UpgradeDrawer({ variant = 'default', triggerText }: UpgradeDrawe
         {/* Monthly Plan */}
         <button
           type="button"
-          onClick={() => setSelectedPlan('mini')}
+          onClick={() => setSelectedPlan('monthly')}
           className={`w-full p-4 rounded-xl border-2 transition-all text-left ${
-            selectedPlan === 'mini'
+            selectedPlan === 'monthly'
               ? 'border-primary bg-primary/10'
               : 'border-border bg-card hover:border-primary/50'
           }`}
@@ -133,14 +133,14 @@ export function UpgradeDrawer({ variant = 'default', triggerText }: UpgradeDrawe
           <div className="flex justify-between items-start">
             <div className="flex-1">
               <div className="flex items-center gap-2 mb-1">
-                <Zap className="h-4 w-4 text-amber-500" />
-                <p className="font-semibold text-foreground">{PLAN_CONFIG.mini.name}</p>
+                <Crown className="h-4 w-4 text-primary" />
+                <p className="font-semibold text-foreground">{PLAN_CONFIG.monthly.name}</p>
               </div>
-              <p className="text-xs text-muted-foreground mb-2">{PLAN_CONFIG.mini.description}</p>
+              <p className="text-xs text-muted-foreground mb-2">{PLAN_CONFIG.monthly.description}</p>
               <div className="space-y-1">
-                {PLAN_CONFIG.mini.features.map((feature, i) => (
+                {PLAN_CONFIG.monthly.features.slice(0, 3).map((feature, i) => (
                   <div key={i} className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                    <Check className="h-3 w-3 text-amber-500 shrink-0" />
+                    <Check className="h-3 w-3 text-primary shrink-0" />
                     <span>{feature}</span>
                   </div>
                 ))}
@@ -161,15 +161,10 @@ export function UpgradeDrawer({ variant = 'default', triggerText }: UpgradeDrawe
       >
         {paymentLoading ? (
           'Opening payment...'
-        ) : selectedPlan === 'pro' ? (
-          <>
-            <Crown className="h-5 w-5 mr-2" />
-            Get {PLAN_CONFIG.pro.name} – ₹{PLAN_CONFIG.pro.price}
-          </>
         ) : (
           <>
-            <Zap className="h-5 w-5 mr-2" />
-            Get {PLAN_CONFIG.mini.name} – ₹{PLAN_CONFIG.mini.price}
+            <Crown className="h-5 w-5 mr-2" />
+            Get {PLAN_CONFIG[selectedPlan].name} – ₹{PLAN_CONFIG[selectedPlan].price}
           </>
         )}
       </Button>

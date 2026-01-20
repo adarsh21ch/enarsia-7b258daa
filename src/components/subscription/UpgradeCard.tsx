@@ -1,4 +1,4 @@
-import { Crown, Sparkles, Check, Calendar, Star, Zap } from 'lucide-react';
+import { Crown, Sparkles, Check, Calendar, Star } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useSubscription } from '@/hooks/useSubscription';
 import { PLAN_CONFIG, PlanType } from '@/hooks/usePaymentLinks';
@@ -6,7 +6,6 @@ import { useRazorpay } from '@/hooks/useRazorpay';
 import { format } from 'date-fns';
 import { useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
-import { PLAN_NAME_PRO, PLAN_NAME_MINI } from '@/config/brand';
 
 interface UpgradeCardProps {
   /** Which app is showing this card - affects which plans are shown */
@@ -14,10 +13,10 @@ interface UpgradeCardProps {
 }
 
 export function UpgradeCard({ appContext = 'nevorai' }: UpgradeCardProps) {
-  const { plan, isPro, isMini, isPaid, isAdminOverride, daysRemaining, subscription, loading, refetch } = useSubscription();
+  const { isPro, isPaid, isAdminOverride, daysRemaining, subscription, loading, refetch } = useSubscription();
   const { initiatePayment, loading: paymentLoading } = useRazorpay();
   const { toast } = useToast();
-  const [selectedPlan, setSelectedPlan] = useState<PlanType>('pro');
+  const [selectedPlan, setSelectedPlan] = useState<PlanType>('quarterly');
 
   const handleUpgrade = (planType: PlanType) => {
     initiatePayment({
@@ -43,27 +42,21 @@ export function UpgradeCard({ appContext = 'nevorai' }: UpgradeCardProps) {
       ? format(new Date(subscription.expires_at), 'MMM d, yyyy')
       : null;
 
-    const planName = isPro ? PLAN_NAME_PRO : PLAN_NAME_MINI;
-    const planIcon = isPro ? Crown : Zap;
-    const PlanIcon = planIcon;
-
     return (
       <div className="rounded-2xl p-5 bg-gradient-to-br from-emerald-500/20 via-emerald-500/10 to-transparent border border-emerald-500/20">
         <div className="flex items-center gap-3 mb-3">
           <div className="p-2 rounded-xl bg-emerald-500/20">
-            <PlanIcon className="h-6 w-6 text-emerald-500" />
+            <Crown className="h-6 w-6 text-emerald-500" />
           </div>
           <div>
-            <h3 className="font-bold text-lg">{planName} Active</h3>
+            <h3 className="font-bold text-lg">Pro Active</h3>
             {isAdminOverride && (
               <span className="text-xs text-amber-500 font-medium">Admin Override</span>
             )}
           </div>
         </div>
         <p className="text-sm text-muted-foreground mb-3">
-          {isPro 
-            ? 'Full access to team sync, analytics, and all premium features.'
-            : 'Manual personal and team tracking enabled.'}
+          Full access to team sync, analytics, and all premium features.
         </p>
         {expiryDate && !isAdminOverride && (
           <div className="flex items-center gap-2 text-sm bg-emerald-500/10 rounded-lg p-2">
@@ -73,29 +66,11 @@ export function UpgradeCard({ appContext = 'nevorai' }: UpgradeCardProps) {
             </span>
           </div>
         )}
-        
-        {/* Mini users can upgrade to Pro */}
-        {isMini && (
-          <div className="mt-4 pt-4 border-t border-border/50">
-            <p className="text-sm text-muted-foreground mb-3">
-              Upgrade to Pro for team sync and advanced features
-            </p>
-            <Button 
-              onClick={() => handleUpgrade('pro')}
-              className="w-full"
-              variant="outline"
-              disabled={paymentLoading}
-            >
-              <Crown className="h-4 w-4 mr-2" />
-              {paymentLoading ? 'Processing...' : 'Upgrade to Pro – ₹299/month'}
-            </Button>
-          </div>
-        )}
       </div>
     );
   }
 
-  // Free user - show upgrade options - Always show both plans
+  // Free user - show upgrade options
   return (
     <div className="rounded-2xl p-5 bg-gradient-to-br from-primary/20 via-primary/10 to-transparent border border-primary/20">
       <div className="flex items-center gap-3 mb-4">
@@ -103,7 +78,7 @@ export function UpgradeCard({ appContext = 'nevorai' }: UpgradeCardProps) {
           <Sparkles className="h-6 w-6 text-primary" />
         </div>
         <div>
-          <h3 className="font-bold text-lg">Unlock Premium Features</h3>
+          <h3 className="font-bold text-lg">Unlock Pro Features</h3>
           <p className="text-xs text-muted-foreground">Choose a plan that works for you</p>
         </div>
       </div>
@@ -112,9 +87,9 @@ export function UpgradeCard({ appContext = 'nevorai' }: UpgradeCardProps) {
         {/* 4-Month Plan - Best Value */}
         <button
           type="button"
-          onClick={() => setSelectedPlan('pro')}
+          onClick={() => setSelectedPlan('quarterly')}
           className={`w-full p-4 rounded-xl border-2 transition-all text-left relative ${
-            selectedPlan === 'pro'
+            selectedPlan === 'quarterly'
               ? 'border-primary bg-primary/10'
               : 'border-border bg-card hover:border-primary/50'
           }`}
@@ -127,11 +102,11 @@ export function UpgradeCard({ appContext = 'nevorai' }: UpgradeCardProps) {
             <div className="flex-1">
               <div className="flex items-center gap-2 mb-1">
                 <Crown className="h-4 w-4 text-primary" />
-                <p className="font-semibold text-foreground">{PLAN_CONFIG.pro.name}</p>
+                <p className="font-semibold text-foreground">{PLAN_CONFIG.quarterly.name}</p>
               </div>
-              <p className="text-xs text-muted-foreground mb-2">{PLAN_CONFIG.pro.description}</p>
+              <p className="text-xs text-muted-foreground mb-2">{PLAN_CONFIG.quarterly.description}</p>
               <div className="space-y-1">
-                {PLAN_CONFIG.pro.features.slice(0, 4).map((feature, i) => (
+                {PLAN_CONFIG.quarterly.features.slice(0, 4).map((feature, i) => (
                   <div key={i} className="flex items-center gap-1.5 text-xs text-muted-foreground">
                     <Check className="h-3 w-3 text-primary shrink-0" />
                     <span>{feature}</span>
@@ -150,9 +125,9 @@ export function UpgradeCard({ appContext = 'nevorai' }: UpgradeCardProps) {
         {/* Monthly Plan */}
         <button
           type="button"
-          onClick={() => setSelectedPlan('mini')}
+          onClick={() => setSelectedPlan('monthly')}
           className={`w-full p-4 rounded-xl border-2 transition-all text-left ${
-            selectedPlan === 'mini'
+            selectedPlan === 'monthly'
               ? 'border-primary bg-primary/10'
               : 'border-border bg-card hover:border-primary/50'
           }`}
@@ -160,14 +135,14 @@ export function UpgradeCard({ appContext = 'nevorai' }: UpgradeCardProps) {
           <div className="flex justify-between items-start">
             <div className="flex-1">
               <div className="flex items-center gap-2 mb-1">
-                <Zap className="h-4 w-4 text-amber-500" />
-                <p className="font-semibold text-foreground">{PLAN_CONFIG.mini.name}</p>
+                <Crown className="h-4 w-4 text-primary" />
+                <p className="font-semibold text-foreground">{PLAN_CONFIG.monthly.name}</p>
               </div>
-              <p className="text-xs text-muted-foreground mb-2">{PLAN_CONFIG.mini.description}</p>
+              <p className="text-xs text-muted-foreground mb-2">{PLAN_CONFIG.monthly.description}</p>
               <div className="space-y-1">
-                {PLAN_CONFIG.mini.features.map((feature, i) => (
+                {PLAN_CONFIG.monthly.features.slice(0, 3).map((feature, i) => (
                   <div key={i} className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                    <Check className="h-3 w-3 text-amber-500 shrink-0" />
+                    <Check className="h-3 w-3 text-primary shrink-0" />
                     <span>{feature}</span>
                   </div>
                 ))}
@@ -188,15 +163,10 @@ export function UpgradeCard({ appContext = 'nevorai' }: UpgradeCardProps) {
       >
         {paymentLoading ? (
           'Opening payment...'
-        ) : selectedPlan === 'pro' ? (
-          <>
-            <Crown className="h-5 w-5 mr-2" />
-            Get {PLAN_CONFIG.pro.name} – ₹{PLAN_CONFIG.pro.price}
-          </>
         ) : (
           <>
-            <Zap className="h-5 w-5 mr-2" />
-            Get {PLAN_CONFIG.mini.name} – ₹{PLAN_CONFIG.mini.price}
+            <Crown className="h-5 w-5 mr-2" />
+            Get {PLAN_CONFIG[selectedPlan].name} – ₹{PLAN_CONFIG[selectedPlan].price}
           </>
         )}
       </Button>
