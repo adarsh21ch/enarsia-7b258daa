@@ -1,100 +1,69 @@
-import { useEffect, useState, useRef, useCallback } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { format } from 'date-fns';
 import { useAuth } from '@/contexts/AuthContext';
 import { BottomNav } from '@/components/layout/BottomNav';
-import { DynamicFunnelTracker } from '@/components/tracking/DynamicFunnelTracker';
-import { DynamicLeadsTracker } from '@/components/tracking/DynamicLeadsTracker';
-import { PersonalTrackingForm } from '@/components/tracking/PersonalTrackingForm';
-import { TotalTrackingForm } from '@/components/tracking/TotalTrackingForm';
+import { TrackingReadView } from '@/components/tracking/TrackingReadView';
+import { UpdateTrackingModal } from '@/components/tracking/UpdateTrackingModal';
 import { UpgradeBar } from '@/components/subscription/UpgradeBar';
-import { PullToRefreshIndicator } from '@/components/PullToRefreshIndicator';
 import { TopTabBar } from '@/components/ui/TopTabBar';
-import { Day1SetupDialog } from '@/components/trackup/Day1SetupDialog';
-import { Loader2, TrendingUp, Calendar, User, Users, ArrowLeft } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Calendar as CalendarComponent } from '@/components/ui/calendar';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Loader2, User, Users, ArrowLeft, Pencil, Calendar, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useSubscription } from '@/hooks/useSubscription';
-import { useFunnelConfig } from '@/hooks/useFunnelConfig';
+import { useQueryClient } from '@tanstack/react-query';
 import { cn } from '@/lib/utils';
 import nevoraLogo from '@/assets/nevorai-logo.jpeg';
 
-// Pull-to-refresh hook
-function usePullToRefresh(onRefresh: () => Promise<void>, threshold = 80) {
-  const [isRefreshing, setIsRefreshing] = useState(false);
-  const [pullDistance, setPullDistance] = useState(0);
-  const startY = useRef(0);
-  const containerRef = useRef<HTMLDivElement>(null);
-
-  const handleTouchStart = useCallback((e: TouchEvent) => {
-    if (containerRef.current && containerRef.current.scrollTop === 0) {
-      startY.current = e.touches[0].clientY;
-    }
-  }, []);
-
-  const handleTouchMove = useCallback((e: TouchEvent) => {
-    if (!startY.current || isRefreshing) return;
-    const currentY = e.touches[0].clientY;
-    const diff = currentY - startY.current;
-    if (diff > 0 && containerRef.current && containerRef.current.scrollTop === 0) {
-      setPullDistance(Math.min(diff * 0.5, threshold * 1.5));
-    }
-  }, [isRefreshing, threshold]);
-
-  const handleTouchEnd = useCallback(async () => {
-    if (pullDistance >= threshold && !isRefreshing) {
-      setIsRefreshing(true);
-      try { await onRefresh(); } finally { setIsRefreshing(false); }
-    }
-    setPullDistance(0);
-    startY.current = 0;
-  }, [pullDistance, threshold, isRefreshing, onRefresh]);
-
-  useEffect(() => {
-    const container = containerRef.current;
-    if (!container) return;
-    container.addEventListener('touchstart', handleTouchStart, { passive: true });
-    container.addEventListener('touchmove', handleTouchMove, { passive: true });
-    container.addEventListener('touchend', handleTouchEnd);
-    return () => {
-      container.removeEventListener('touchstart', handleTouchStart);
-      container.removeEventListener('touchmove', handleTouchMove);
-      container.removeEventListener('touchend', handleTouchEnd);
-    };
-  }, [handleTouchStart, handleTouchMove, handleTouchEnd]);
-
-  return { containerRef, isRefreshing, pullDistance, showIndicator: pullDistance > 20 || isRefreshing };
-}
-
 type MainTab = 'personal' | 'total';
+type SubTab = 'leads' | 'funnel';
 
 export default function Tracking() {
   const navigate = useNavigate();
   const { user, loading: authLoading } = useAuth();
   const { isPro, loading: subLoading } = useSubscription();
-  const { config, loading: configLoading, saveConfig, getEffectiveConfig, isReadOnly: isFunnelReadOnly, leaderName: funnelLeaderName } = useFunnelConfig();
-  const effectiveConfig = getEffectiveConfig();
+  const queryClient = useQueryClient();
   
   // Main tabs: Personal vs Total
-  const [mainTab, setMainTab] = useState<MainTab>('personal');
-  const [showDay1Setup, setShowDay1Setup] = useState(false);
-
-  // Save Day 1 date from setup dialog
-  const handleDay1Save = async (date: Date) => {
-    await saveConfig({
-      funnel_name: 'Default Funnel',
-      funnel_length: 3,
-      day_1_start: format(date, 'yyyy-MM-dd'),
-    });
-    setShowDay1Setup(false);
-  };
+  const [mainTab, setMainTab] = useState<MainTab>('total');
+  const [subTab, setSubTab] = useState<SubTab>('leads');
+  const [selectedDate, setSelectedDate] = useState<Date>(new Date());
+  const [isCalendarOpen, setIsCalendarOpen] = useState(false);
+  const [isUpdateModalOpen, setIsUpdateModalOpen] = useState(false);
+  const [refreshKey, setRefreshKey] = useState(0);
 
   // Pro gate disabled for now
   const showProGate = false;
 
-  // Pull-to-refresh
-  const handleRefresh = useCallback(async () => {
-    // Components handle their own refetch
-  }, []);
-  const { containerRef, isRefreshing, pullDistance, showIndicator } = usePullToRefresh(handleRefresh);
+  const handleSaveComplete = useCallback(() => {
+    // Invalidate queries to refresh data
+    queryClient.invalidateQueries({ queryKey: ['personal_snapshot_v2'] });
+    queryClient.invalidateQueries({ queryKey: ['total_snapshot_v2'] });
+    // Force re-render of the read view
+    setRefreshKey(prev => prev + 1);
+  }, [queryClient]);
+
+  const goToPreviousDay = () => {
+    setSelectedDate(prev => {
+      const newDate = new Date(prev);
+      newDate.setDate(newDate.getDate() - 1);
+      return newDate;
+    });
+  };
+
+  const goToNextDay = () => {
+    const tomorrow = new Date();
+    if (format(selectedDate, 'yyyy-MM-dd') < format(tomorrow, 'yyyy-MM-dd')) {
+      setSelectedDate(prev => {
+        const newDate = new Date(prev);
+        newDate.setDate(newDate.getDate() + 1);
+        return newDate;
+      });
+    }
+  };
+
+  const isToday = format(selectedDate, 'yyyy-MM-dd') === format(new Date(), 'yyyy-MM-dd');
 
   useEffect(() => {
     if (!user && !authLoading) {
@@ -102,7 +71,7 @@ export default function Tracking() {
     }
   }, [user, authLoading, navigate]);
 
-  if (authLoading || subLoading || configLoading) {
+  if (authLoading || subLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -151,33 +120,98 @@ export default function Tracking() {
         </div>
         
         {/* Personal / Total Switch */}
-        <div className="px-4 pb-2">
+        <div className="px-4 pb-3">
           <TopTabBar 
             options={mainTabOptions} 
             value={mainTab} 
             onChange={(v) => setMainTab(v as MainTab)} 
           />
         </div>
+
+        {/* Date Navigator */}
+        <div className="px-4 pb-3 flex items-center justify-between">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8"
+            onClick={goToPreviousDay}
+          >
+            <ChevronLeft className="h-4 w-4" />
+          </Button>
+
+          <Popover open={isCalendarOpen} onOpenChange={setIsCalendarOpen}>
+            <PopoverTrigger asChild>
+              <Button 
+                variant="outline" 
+                className={cn(
+                  "h-9 px-4 font-medium",
+                  isToday && "border-primary/50 bg-primary/5"
+                )}
+              >
+                <Calendar className="mr-2 h-4 w-4" />
+                {isToday ? "Today" : format(selectedDate, 'EEE, MMM d')}
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-0" align="center">
+              <CalendarComponent
+                mode="single"
+                selected={selectedDate}
+                onSelect={(date) => {
+                  if (date) {
+                    setSelectedDate(date);
+                    setIsCalendarOpen(false);
+                  }
+                }}
+                disabled={(date) => date > new Date()}
+                initialFocus
+              />
+            </PopoverContent>
+          </Popover>
+
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8"
+            onClick={goToNextDay}
+            disabled={isToday}
+          >
+            <ChevronRight className="h-4 w-4" />
+          </Button>
+        </div>
       </header>
 
-      <main ref={containerRef} className="scrollable-content relative">
-        <PullToRefreshIndicator isRefreshing={isRefreshing} pullDistance={pullDistance} showIndicator={showIndicator} />
-        <div className={cn("container py-2 px-3 h-full flex flex-col", showProGate ? "pb-36" : "pb-24")}>
-          {/* Content based on main tab */}
-          <div className="flex-1 min-h-0">
-            {mainTab === 'personal' ? (
-              <PersonalTrackingForm />
-            ) : (
-              <TotalTrackingForm />
-            )}
-          </div>
+      <main className="scrollable-content relative">
+        <div className={cn("container py-4 px-4 h-full", showProGate ? "pb-36" : "pb-28")}>
+          {/* Read View */}
+          <TrackingReadView
+            key={refreshKey}
+            mainTab={mainTab}
+            subTab={subTab}
+            onMainTabChange={setMainTab}
+            onSubTabChange={setSubTab}
+            selectedDate={selectedDate}
+          />
         </div>
+
+        {/* Floating Action Button */}
+        <Button
+          onClick={() => setIsUpdateModalOpen(true)}
+          className="fixed bottom-24 right-4 h-14 px-5 rounded-full shadow-lg z-30 gap-2"
+          size="lg"
+        >
+          <Pencil className="h-5 w-5" />
+          <span className="font-semibold">Update</span>
+        </Button>
       </main>
 
-      {/* Day 1 Setup Dialog */}
-      <Day1SetupDialog 
-        open={showDay1Setup} 
-        onSave={handleDay1Save} 
+      {/* Update Tracking Modal */}
+      <UpdateTrackingModal
+        open={isUpdateModalOpen}
+        onOpenChange={setIsUpdateModalOpen}
+        initialMainTab={mainTab}
+        initialSubTab={subTab}
+        initialDate={selectedDate}
+        onSaveComplete={handleSaveComplete}
       />
 
       {/* Upgrade Bar only for Free Users */}
