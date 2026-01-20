@@ -1,9 +1,9 @@
 /**
  * Payment links for subscription plans.
- * These are pre-created Razorpay payment links.
+ * Both plans grant Pro access with different durations.
  */
 
-export type PlanType = 'mini' | 'pro';
+export type PlanType = 'monthly' | 'quarterly';
 
 export interface PlanConfig {
   name: string;
@@ -11,37 +11,41 @@ export interface PlanConfig {
   paymentLink: string;
   features: string[];
   description: string;
+  durationDays: number;
 }
 
 export const PAYMENT_LINKS = {
-  mini: 'https://rzp.io/rzp/HhAdokE',
-  pro: 'https://rzp.io/rzp/CPQRHdp',
+  monthly: 'https://rzp.io/rzp/HhAdokE',
+  quarterly: 'https://rzp.io/rzp/CPQRHdp',
 } as const;
 
 export const PLAN_CONFIG: Record<PlanType, PlanConfig> = {
-  mini: {
-    name: 'Monthly Plan',
-    price: 99,
-    paymentLink: PAYMENT_LINKS.mini,
-    description: '1 Month Access',
-    features: [
-      'Manual personal tracking',
-      'Manual team tracking (self-entered)',
-      'Auto-calculated totals',
-    ],
-  },
-  pro: {
-    name: '4-Month Plan',
+  quarterly: {
+    name: 'Pro 4-Month',
     price: 299,
-    paymentLink: PAYMENT_LINKS.pro,
+    paymentLink: PAYMENT_LINKS.quarterly,
     description: '4 Months Access – Best Value',
+    durationDays: 120,
     features: [
-      'Everything in Monthly Plan',
+      'Unlimited prospects',
       'Auto-sync from teammates',
       'View team member tracking',
       'Team actions & dashboards',
       'Switch tracking source',
       'Frontline team gets access FREE',
+    ],
+  },
+  monthly: {
+    name: 'Pro Monthly',
+    price: 99,
+    paymentLink: PAYMENT_LINKS.monthly,
+    description: '1 Month Access',
+    durationDays: 30,
+    features: [
+      'Unlimited prospects',
+      'Manual personal tracking',
+      'Manual team tracking (self-entered)',
+      'Auto-calculated totals',
     ],
   },
 };

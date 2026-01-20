@@ -25,10 +25,10 @@ export function RevenueAnalytics({ revenue, recentPayments }: RevenueAnalyticsPr
     payments: item.payment_count,
   }));
 
-  // Pie chart data for plan breakdown
+  // Pie chart data for plan breakdown (both are Pro with different durations)
   const planBreakdown = [
-    { name: '1-Month (₹99)', value: revenue.miniPlanCount, color: 'hsl(var(--primary))' },
-    { name: '4-Month (₹299)', value: revenue.proPlanCount, color: 'hsl(var(--chart-2))' },
+    { name: 'Pro Monthly (₹99)', value: revenue.miniPlanCount, color: 'hsl(var(--primary))' },
+    { name: 'Pro 4-Month (₹299)', value: revenue.proPlanCount, color: 'hsl(var(--chart-2))' },
   ].filter(item => item.value > 0);
 
   const monthChange = revenue.lastMonthRevenue > 0 
@@ -195,12 +195,12 @@ export function RevenueAnalytics({ revenue, recentPayments }: RevenueAnalyticsPr
           </CardHeader>
           <CardContent className="pb-3 space-y-3">
             <div className="p-2 rounded-lg bg-primary/10">
-              <p className="text-xs text-muted-foreground">1-Month Plan</p>
+              <p className="text-xs text-muted-foreground">Pro Monthly (₹99)</p>
               <p className="font-bold">{formatAmount(revenue.miniPlanRevenue)}</p>
               <p className="text-xs text-muted-foreground">{revenue.miniPlanCount} subscriptions</p>
             </div>
             <div className="p-2 rounded-lg bg-chart-2/10">
-              <p className="text-xs text-muted-foreground">4-Month Plan</p>
+              <p className="text-xs text-muted-foreground">Pro 4-Month (₹299)</p>
               <p className="font-bold">{formatAmount(revenue.proPlanRevenue)}</p>
               <p className="text-xs text-muted-foreground">{revenue.proPlanCount} subscriptions</p>
             </div>

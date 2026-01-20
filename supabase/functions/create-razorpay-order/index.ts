@@ -32,18 +32,19 @@ function checkRateLimit(userId: string): boolean {
 // Toggle this flag for testing (set to false for production)
 const TEST_MODE = false;
 
+// Both plans grant Pro access with different durations
 const PLAN_CONFIG = {
-  mini: {
+  monthly: {
     amount: TEST_MODE ? 100 : 9900, // ₹1 test or ₹99 production (in paise)
     duration_days: 30,
-    plan_name: 'mini',
-    description: 'TrackUp Mini',
+    plan_name: 'pro', // Always Pro
+    description: 'Pro Monthly',
   },
-  pro: {
+  quarterly: {
     amount: TEST_MODE ? 100 : 29900, // ₹1 test or ₹299 production (in paise)
-    duration_days: 30,
-    plan_name: 'pro',
-    description: 'NevorAI Pro',
+    duration_days: 120,
+    plan_name: 'pro', // Always Pro
+    description: 'Pro 4-Month',
   },
 };
 
@@ -76,7 +77,7 @@ serve(async (req) => {
 
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
-    const { user_id, user_email, plan_type = 'pro' } = await req.json();
+    const { user_id, user_email, plan_type = 'quarterly' } = await req.json();
 
     if (!user_id || !user_email) {
       return new Response(
@@ -93,23 +94,25 @@ serve(async (req) => {
       );
     }
 
-    const validPlanTypes = ['mini', 'pro'];
-    const selectedPlan = validPlanTypes.includes(plan_type) ? plan_type : 'pro';
+    // Map plan types - both grant Pro access
+    const validPlanTypes = ['monthly', 'quarterly'];
+    const selectedPlan = validPlanTypes.includes(plan_type) ? plan_type : 'quarterly';
     const planConfig = PLAN_CONFIG[selectedPlan as keyof typeof PLAN_CONFIG];
 
     const finalAmount = planConfig.amount;
 
-    console.log(`Creating Razorpay order for user: ${user_email}, plan: ${selectedPlan}, amount: ${finalAmount}`);
+    console.log(`Creating Razorpay order for user: ${user_email}, plan: ${selectedPlan}, amount: ${finalAmount}, duration: ${planConfig.duration_days} days`);
 
     const shortUserId = user_id.slice(0, 8);
     const orderPayload = {
       amount: finalAmount,
       currency: 'INR',
-      receipt: `${selectedPlan}_${shortUserId}_${Date.now()}`,
+      receipt: `pro_${shortUserId}_${Date.now()}`,
       notes: {
         user_id: user_id,
         user_email: user_email,
-        plan: selectedPlan,
+        plan: 'pro', // Always Pro
+        plan_variant: selectedPlan, // 'monthly' or 'quarterly' for reference
         duration_days: planConfig.duration_days,
         original_amount: planConfig.amount,
         final_amount: finalAmount,
@@ -137,7 +140,7 @@ serve(async (req) => {
     }
 
     const order = await razorpayResponse.json();
-    console.log(`Order created successfully: ${order.id}, plan: ${selectedPlan}, amount: ${finalAmount}`);
+    console.log(`Order created successfully: ${order.id}, plan: pro (${selectedPlan}), amount: ${finalAmount}, duration: ${planConfig.duration_days} days`);
 
     return new Response(
       JSON.stringify({

@@ -1,6 +1,6 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Crown, AlertTriangle, Zap, Check, Star } from 'lucide-react';
+import { Crown, AlertTriangle, Check, Star } from 'lucide-react';
 import { PLAN_CONFIG, PlanType } from '@/hooks/usePaymentLinks';
 import { useRazorpay } from '@/hooks/useRazorpay';
 import { useToast } from '@/hooks/use-toast';
@@ -30,7 +30,7 @@ export function LeadLimitModal({
   const { initiatePayment, loading: paymentLoading } = useRazorpay();
   const { toast } = useToast();
   const { refetch } = useSubscription();
-  const [selectedPlan, setSelectedPlan] = useState<PlanType>('pro');
+  const [selectedPlan, setSelectedPlan] = useState<PlanType>('quarterly');
 
   const handleUpgrade = (plan: PlanType) => {
     initiatePayment({
@@ -70,9 +70,9 @@ export function LeadLimitModal({
           {/* 4-Month Plan - Best Value */}
           <button
             type="button"
-            onClick={() => setSelectedPlan('pro')}
+            onClick={() => setSelectedPlan('quarterly')}
             className={`w-full p-4 rounded-xl border-2 transition-all text-left relative ${
-              selectedPlan === 'pro'
+              selectedPlan === 'quarterly'
                 ? 'border-primary bg-primary/10'
                 : 'border-border bg-card hover:border-primary/50'
             }`}
@@ -85,7 +85,7 @@ export function LeadLimitModal({
               <div className="flex-1">
                 <div className="flex items-center gap-2 mb-1">
                   <Crown className="h-4 w-4 text-primary" />
-                  <p className="font-semibold text-foreground">{PLAN_CONFIG.pro.name}</p>
+                  <p className="font-semibold text-foreground">{PLAN_CONFIG.quarterly.name}</p>
                 </div>
                 <p className="text-xs text-muted-foreground">Unlimited leads • Team sync • Analytics</p>
               </div>
@@ -99,17 +99,17 @@ export function LeadLimitModal({
           {/* Monthly Plan */}
           <button
             type="button"
-            onClick={() => setSelectedPlan('mini')}
+            onClick={() => setSelectedPlan('monthly')}
             className={`w-full p-3 rounded-xl border-2 transition-all text-left ${
-              selectedPlan === 'mini'
+              selectedPlan === 'monthly'
                 ? 'border-primary bg-primary/10'
                 : 'border-border bg-card hover:border-primary/50'
             }`}
           >
             <div className="flex justify-between items-center">
               <div className="flex items-center gap-2">
-                <Zap className="h-4 w-4 text-amber-500" />
-                <p className="font-semibold text-foreground">{PLAN_CONFIG.mini.name}</p>
+                <Crown className="h-4 w-4 text-primary" />
+                <p className="font-semibold text-foreground">{PLAN_CONFIG.monthly.name}</p>
               </div>
               <div className="text-right">
                 <span className="font-bold text-foreground">₹99</span>

@@ -1,4 +1,4 @@
-import { Lock, Crown, Zap } from 'lucide-react';
+import { Lock, Crown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useSubscription } from '@/hooks/useSubscription';
 import { PLAN_CONFIG, PlanType } from '@/hooks/usePaymentLinks';
@@ -23,7 +23,7 @@ export function UpgradeBar({ appContext = 'nevorai', suggestPro = true, onUpgrad
   const { toast } = useToast();
 
   const handleSubscribe = () => {
-    const plan: PlanType = suggestPro || appContext === 'nevorai' ? 'pro' : 'mini';
+    const plan: PlanType = 'quarterly'; // Always suggest quarterly (best value)
     initiatePayment({
       planType: plan,
       onSuccess: () => {
@@ -43,9 +43,7 @@ export function UpgradeBar({ appContext = 'nevorai', suggestPro = true, onUpgrad
   // Hide upgrade bar for paid users OR free users with less than 450 leads
   if (loading || isPaid || currentCount < UPGRADE_THRESHOLD) return null;
 
-  const plan: PlanType = suggestPro || appContext === 'nevorai' ? 'pro' : 'mini';
-  const planConfig = PLAN_CONFIG[plan];
-  const PlanIcon = plan === 'pro' ? Crown : Zap;
+  const planConfig = PLAN_CONFIG.quarterly;
 
   return (
     <div className="fixed bottom-20 left-0 right-0 z-50 px-4 pb-2">
@@ -60,7 +58,7 @@ export function UpgradeBar({ appContext = 'nevorai', suggestPro = true, onUpgrad
                 🔒 Upgrade to unlock this feature
               </p>
               <p className="text-xs text-primary-foreground/80">
-                {planConfig.name} – ₹{planConfig.price}/month
+                {planConfig.name} – ₹{planConfig.price} for 4 months
               </p>
             </div>
           </div>
@@ -71,7 +69,7 @@ export function UpgradeBar({ appContext = 'nevorai', suggestPro = true, onUpgrad
             className="shrink-0 font-semibold"
             disabled={paymentLoading}
           >
-            <PlanIcon className="h-4 w-4 mr-1" />
+            <Crown className="h-4 w-4 mr-1" />
             {paymentLoading ? '...' : 'Unlock'}
           </Button>
         </div>

@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 
-export type SubscriptionPlan = 'free' | 'mini' | 'pro';
+export type SubscriptionPlan = 'free' | 'pro';
 
 export interface Subscription {
   id: string;
@@ -72,11 +72,10 @@ export function useSubscription() {
       const expiresAt = new Date(now);
       expiresAt.setDate(expiresAt.getDate() + 30);
 
-      // Cast plan to the database type (DB accepts text but types are strict)
       const { error } = await supabase
         .from('user_subscriptions')
         .update({
-          plan: plan as 'free' | 'pro', // Type cast - DB actually accepts 'mini' as text
+          plan: plan as 'free' | 'pro',
           status: 'active',
           subscribed_at: now.toISOString(),
           expires_at: expiresAt.toISOString(),
@@ -97,12 +96,14 @@ export function useSubscription() {
     if (!subscription) return 'free';
     if (!subscription.expires_at) return subscription.plan as SubscriptionPlan;
     if (new Date(subscription.expires_at) <= new Date()) return 'free';
+    // Treat both 'pro' and legacy 'mini' as pro
+    const currentPlan = subscription.plan as string;
+    if (currentPlan === 'pro' || currentPlan === 'mini') return 'pro';
     return subscription.plan as SubscriptionPlan;
   }, [subscription]);
 
   const isPro = plan === 'pro';
-  const isMini = plan === 'mini';
-  const isPaid = isPro || isMini;
+  const isPaid = isPro; // Simplified - only Pro exists now
 
   const isAdminOverride = subscription?.is_admin_override || false;
 
@@ -152,7 +153,6 @@ export function useSubscription() {
     loading, 
     plan,
     isPro, 
-    isMini,
     isPaid,
     isAdminOverride, 
     daysRemaining,
