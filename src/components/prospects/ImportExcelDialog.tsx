@@ -10,7 +10,7 @@ import { toast } from 'sonner';
 import { sanitizeImportString, validateImportedProspect } from '@/lib/validations';
 import { cn } from '@/lib/utils';
 import { useLifetimeLeadLimit } from '@/hooks/useLifetimeLeadLimit';
-import { LeadLimitModal } from '@/components/subscription/LeadLimitModal';
+import { HardLimitModal } from '@/components/subscription/HardLimitModal';
 import { useActivityLog } from '@/hooks/useActivityLog';
 
 interface ImportExcelDialogProps {
@@ -493,11 +493,10 @@ export function ImportExcelDialog({ onImport }: ImportExcelDialogProps) {
         )}
       </DialogContent>
       
-      {/* Lead Limit Modal - shown when user hits the limit */}
-      <LeadLimitModal 
-        open={showLimitModal} 
+      {/* Hard Limit Modal - shown when user hits the limit */}
+      <HardLimitModal 
+        forceOpen={showLimitModal} 
         onClose={() => setShowLimitModal(false)} 
-        context="import"
       />
     </Dialog>
   );

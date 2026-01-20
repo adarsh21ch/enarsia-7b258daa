@@ -7,7 +7,7 @@ import { Plus, AlertTriangle } from 'lucide-react';
 import { Prospect } from '@/types/prospect';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useLifetimeLeadLimit } from '@/hooks/useLifetimeLeadLimit';
-import { LeadLimitModal } from '@/components/subscription/LeadLimitModal';
+import { HardLimitModal } from '@/components/subscription/HardLimitModal';
 import { cn } from '@/lib/utils';
 
 interface AddProspectDialogProps {
@@ -172,11 +172,10 @@ export function AddProspectDialog({ onAdd, existingProspects = [] }: AddProspect
         </DialogContent>
       </Dialog>
       
-      {/* Lead Limit Modal - shown when user hits the limit */}
-      <LeadLimitModal 
-        open={showLimitModal} 
+      {/* Hard Limit Modal - shown when user hits the limit */}
+      <HardLimitModal 
+        forceOpen={showLimitModal} 
         onClose={() => setShowLimitModal(false)} 
-        context="add"
       />
     </>
   );

@@ -15,7 +15,7 @@ import { LeaderTrackingFormatDrawer } from '@/components/profile/LeaderTrackingF
 import { ProfileLevelDropdown } from '@/components/profile/ProfileLevelDropdown';
 import { HelpSupportDrawer } from '@/components/profile/HelpSupportDrawer';
 
-import { LeadLimitWarningBanner } from '@/components/subscription/LeadLimitWarningBanner';
+import { ProgressiveNudgeBanner } from '@/components/subscription/ProgressiveNudgeBanner';
 import { PullToRefreshIndicator } from '@/components/PullToRefreshIndicator';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -111,7 +111,7 @@ export default function Profile() {
   const {
     refreshFormat
   } = useTrackingFormatContext();
-  const { showWarning: showLeadWarning, isPaid, isAtLimit } = useLifetimeLeadLimit();
+  const { isPaid } = useLifetimeLeadLimit();
   const [editOpen, setEditOpen] = useState(false);
 
   // Handle TrackUp Dashboard - Open nevorai.com TrackUp
@@ -212,10 +212,8 @@ export default function Profile() {
             <div className="absolute -right-4 -top-4 w-16 h-16 rounded-full bg-primary/5" />
           </div>
 
-          {/* Upgrade CTA - Only shown when approaching or at lead limit (450+) */}
-          {!isPaid && showLeadWarning && (
-            <LeadLimitWarningBanner context="profile" />
-          )}
+          {/* Progressive Upgrade Nudge Banner - non-spammy, stage-based */}
+          {!isPaid && <ProgressiveNudgeBanner context="profile" />}
 
           {/* Leader & Tracking Format Settings - Opens in Sidebar */}
           <LeaderTrackingFormatDrawer
