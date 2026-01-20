@@ -5,11 +5,13 @@ import { useAuth } from '@/contexts/AuthContext';
 import { BottomNav } from '@/components/layout/BottomNav';
 import { DynamicFunnelTracker } from '@/components/tracking/DynamicFunnelTracker';
 import { DynamicLeadsTracker } from '@/components/tracking/DynamicLeadsTracker';
+import { PersonalTrackingForm } from '@/components/tracking/PersonalTrackingForm';
+import { TotalTrackingForm } from '@/components/tracking/TotalTrackingForm';
 import { UpgradeBar } from '@/components/subscription/UpgradeBar';
 import { PullToRefreshIndicator } from '@/components/PullToRefreshIndicator';
 import { TopTabBar } from '@/components/ui/TopTabBar';
 import { Day1SetupDialog } from '@/components/trackup/Day1SetupDialog';
-import { Loader2, TrendingUp, Calendar, Lock, RefreshCw, ArrowLeft } from 'lucide-react';
+import { Loader2, TrendingUp, Calendar, User, Users, ArrowLeft } from 'lucide-react';
 import { useSubscription } from '@/hooks/useSubscription';
 import { useFunnelConfig } from '@/hooks/useFunnelConfig';
 import { cn } from '@/lib/utils';
@@ -62,28 +64,24 @@ function usePullToRefresh(onRefresh: () => Promise<void>, threshold = 80) {
   return { containerRef, isRefreshing, pullDistance, showIndicator: pullDistance > 20 || isRefreshing };
 }
 
+type MainTab = 'personal' | 'total';
+
 export default function Tracking() {
   const navigate = useNavigate();
   const { user, loading: authLoading } = useAuth();
   const { isPro, loading: subLoading } = useSubscription();
   const { config, loading: configLoading, saveConfig, getEffectiveConfig, isReadOnly: isFunnelReadOnly, leaderName: funnelLeaderName } = useFunnelConfig();
   const effectiveConfig = getEffectiveConfig();
-  const [activeTab, setActiveTab] = useState('leads');
+  
+  // Main tabs: Personal vs Total
+  const [mainTab, setMainTab] = useState<MainTab>('personal');
   const [showDay1Setup, setShowDay1Setup] = useState(false);
-
-  // Handle tab change - show Day 1 setup if switching to funnel with no config (and not read-only from leader)
-  const handleTabChange = (newTab: string) => {
-    if (newTab === 'funnel' && !effectiveConfig && !configLoading && !isFunnelReadOnly) {
-      setShowDay1Setup(true);
-    }
-    setActiveTab(newTab);
-  };
 
   // Save Day 1 date from setup dialog
   const handleDay1Save = async (date: Date) => {
     await saveConfig({
       funnel_name: 'Default Funnel',
-      funnel_length: 3, // Fixed 3-day funnel
+      funnel_length: 3,
       day_1_start: format(date, 'yyyy-MM-dd'),
     });
     setShowDay1Setup(false);
@@ -92,9 +90,9 @@ export default function Tracking() {
   // Pro gate disabled for now
   const showProGate = false;
 
-  // Pull-to-refresh (no-op since dynamic trackers handle their own data)
+  // Pull-to-refresh
   const handleRefresh = useCallback(async () => {
-    // Dynamic trackers handle their own refetch
+    // Components handle their own refetch
   }, []);
   const { containerRef, isRefreshing, pullDistance, showIndicator } = usePullToRefresh(handleRefresh);
 
@@ -114,18 +112,17 @@ export default function Tracking() {
 
   if (!user) return null;
 
-  const toggleOptions: [{ value: string; label: string; icon: typeof Calendar }, { value: string; label: string; icon: typeof TrendingUp }] = [
-    { value: 'leads', label: 'Leads', icon: Calendar },
-    { value: 'funnel', label: 'Funnel', icon: TrendingUp },
+  const mainTabOptions: [{ value: string; label: string; icon: typeof User }, { value: string; label: string; icon: typeof Users }] = [
+    { value: 'personal', label: 'Personal', icon: User },
+    { value: 'total', label: 'Total', icon: Users },
   ];
 
   return (
     <div className="app-layout bg-gradient-to-b from-background via-background to-muted/20">
-      {/* Premium Header with Back Button + Leads/Funnel Switch */}
+      {/* Header */}
       <header className="fixed-header z-40 bg-card/80 backdrop-blur-xl border-b border-border/50">
         <div className="flex items-center justify-between px-4 py-3">
           <div className="flex items-center gap-3">
-            {/* Back Button */}
             <button
               onClick={() => {
                 if (window.history.length > 1) {
@@ -146,49 +143,32 @@ export default function Tracking() {
             />
             <div>
               <h1 className="text-xl font-bold tracking-tight">Track Up</h1>
-              <p className="text-xs text-muted-foreground font-medium">Track Your Numbers</p>
+              <p className="text-xs text-muted-foreground font-medium">
+                {mainTab === 'personal' ? 'Your Personal Numbers' : 'Team Total Numbers'}
+              </p>
             </div>
           </div>
         </div>
         
-        {/* Leads/Funnel Segmented Switch - TOP, sticky in header */}
+        {/* Personal / Total Switch */}
         <div className="px-4 pb-2">
-          <TopTabBar options={toggleOptions} value={activeTab} onChange={handleTabChange} />
+          <TopTabBar 
+            options={mainTabOptions} 
+            value={mainTab} 
+            onChange={(v) => setMainTab(v as MainTab)} 
+          />
         </div>
       </header>
 
       <main ref={containerRef} className="scrollable-content relative">
         <PullToRefreshIndicator isRefreshing={isRefreshing} pullDistance={pullDistance} showIndicator={showIndicator} />
         <div className={cn("container py-2 px-3 h-full flex flex-col", showProGate ? "pb-36" : "pb-24")}>
-          {/* Pro gate - show when user is not Pro */}
-          {showProGate && (
-            <div className="relative mb-4">
-              <div className="absolute inset-0 flex flex-col items-center justify-center z-10 bg-background/80 backdrop-blur-sm rounded-xl py-8">
-                <div className="p-3 rounded-full bg-muted mb-3">
-                  <Lock className="h-10 w-10 text-muted-foreground" />
-                </div>
-                <h3 className="text-lg font-semibold mb-1">Pro Feature</h3>
-                <p className="text-sm text-muted-foreground max-w-sm text-center px-4">
-                  TrackUp is a Pro feature. Subscribe to Pro Monthly (₹249) or Pro Yearly (₹2,999) to unlock team tracking and advanced analytics.
-                </p>
-              </div>
-            </div>
-          )}
-
-          {/* Sync indicator for connected members */}
-          {activeTab === 'funnel' && isFunnelReadOnly && funnelLeaderName && (
-            <div className="text-xs text-muted-foreground text-center mb-2 flex items-center justify-center gap-1.5 bg-muted/50 py-1.5 px-3 rounded-full mx-auto w-fit">
-              <RefreshCw className="h-3 w-3" />
-              Synced with {funnelLeaderName}
-            </div>
-          )}
-
-          {/* Content based on active tab - uses dynamic tag-based trackers */}
+          {/* Content based on main tab */}
           <div className="flex-1 min-h-0">
-            {activeTab === 'funnel' ? (
-              <DynamicFunnelTracker isPro={true} />
+            {mainTab === 'personal' ? (
+              <PersonalTrackingForm />
             ) : (
-              <DynamicLeadsTracker isPro={true} />
+              <TotalTrackingForm />
             )}
           </div>
         </div>
