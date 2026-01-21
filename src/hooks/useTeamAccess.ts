@@ -1,5 +1,4 @@
 import { useState, useEffect, useCallback } from 'react';
-import { normalizeLeaderIdForLookup } from '@/lib/leaderIdFormat';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
@@ -35,14 +34,16 @@ interface PendingRequest {
   owner_user_id: string;
   owner_display_name: string | null;
   owner_nevorid: string | null;
+  owner_email: string | null;
   created_at: string;
   allowed_tabs: TabPermission[] | null;
 }
 
 export function useTeamAccess() {
   const { user } = useAuth();
-const [myNevorId, setMyNevorId] = useState<string | null>(null);
+  const [myNevorId, setMyNevorId] = useState<string | null>(null);
   const [myDisplayName, setMyDisplayName] = useState<string | null>(null);
+  const [myEmail, setMyEmail] = useState<string | null>(null);
   const [myLeaderCodeSeq, setMyLeaderCodeSeq] = useState<number | null>(null);
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
   const [sharedWithMe, setSharedWithMe] = useState<SharedAccess[]>([]);
@@ -54,7 +55,7 @@ const [myNevorId, setMyNevorId] = useState<string | null>(null);
     
     const { data } = await supabase
       .from('profiles')
-      .select('neverai_id, display_name, leader_code_seq')
+      .select('neverai_id, display_name, leader_code_seq, email')
       .eq('user_id', user.id)
       .single();
     
@@ -62,6 +63,7 @@ const [myNevorId, setMyNevorId] = useState<string | null>(null);
       setMyNevorId(data.neverai_id);
       setMyDisplayName(data.display_name);
       setMyLeaderCodeSeq(data.leader_code_seq);
+      setMyEmail(data.email);
     }
   }, [user]);
 
@@ -147,7 +149,7 @@ const [myNevorId, setMyNevorId] = useState<string | null>(null);
       const ownerIds = accessRecords.map(r => r.owner_user_id);
       const { data: profiles } = await supabase
         .from('profiles')
-        .select('user_id, display_name, neverai_id')
+        .select('user_id, display_name, neverai_id, email')
         .in('user_id', ownerIds);
       
       if (profiles) {
@@ -156,6 +158,7 @@ const [myNevorId, setMyNevorId] = useState<string | null>(null);
           owner_user_id: r.owner_user_id,
           owner_display_name: profiles.find(p => p.user_id === r.owner_user_id)?.display_name || 'Unknown',
           owner_nevorid: profiles.find(p => p.user_id === r.owner_user_id)?.neverai_id || null,
+          owner_email: profiles.find(p => p.user_id === r.owner_user_id)?.email || null,
           created_at: r.created_at,
           allowed_tabs: r.allowed_tabs as TabPermission[] | null
         })));
@@ -180,200 +183,7 @@ const [myNevorId, setMyNevorId] = useState<string | null>(null);
     refetch();
   }, [refetch]);
 
-  // Member initiates sharing with a leader by entering leader's Leader ID
-  // Auto-approves the connection and sends notification to leader
-  const shareWithLeader = async (leaderNeveraiId: string, allowedTabs?: TabPermission[] | null) => {
-    if (!user) return { success: false, error: 'Not authenticated' };
-    
-    // Normalize the Leader ID before lookup
-    const normalizedId = normalizeLeaderIdForLookup(leaderNeveraiId);
-    
-    // Look up leader by Leader ID (using normalized ID)
-    const { data: foundUser, error: lookupError } = await supabase
-      .rpc('get_user_by_neverai_id', { target_neverai_id: normalizedId });
-    
-    if (lookupError || !foundUser || foundUser.length === 0) {
-      return { success: false, error: 'Leader ID not found' };
-    }
-
-    const leaderUserId = foundUser[0].user_id;
-    const leaderName = foundUser[0].display_name || 'Leader';
-    
-    if (leaderUserId === user.id) {
-      return { success: false, error: 'Cannot share with yourself' };
-    }
-
-    // Check if already exists
-    const { data: existing } = await supabase
-      .from('team_access')
-      .select('id, status')
-      .eq('owner_user_id', user.id)
-      .eq('shared_with_user_id', leaderUserId)
-      .maybeSingle();
-    
-    if (existing) {
-      if (existing.status === 'active') {
-        return { success: false, error: 'Already sharing with this leader' };
-      }
-      // If pending or revoked, update to active (auto-approve)
-      const { error } = await supabase
-        .from('team_access')
-        .update({ 
-          status: 'active',
-          allowed_tabs: allowedTabs === undefined ? null : allowedTabs
-        })
-        .eq('id', existing.id);
-      
-      if (error) {
-        return { success: false, error: 'Failed to connect with leader' };
-      }
-      
-      // Send notification to leader
-      await sendConnectionNotification(leaderUserId);
-      
-      await fetchTeamMembers();
-      toast.success(`Connected with ${leaderName}`);
-      return { success: true };
-    }
-
-    // Create new share request with status 'active' (auto-approved)
-    const { error } = await supabase
-      .from('team_access')
-      .insert({
-        owner_user_id: user.id,
-        shared_with_user_id: leaderUserId,
-        status: 'active',
-        allowed_tabs: allowedTabs === undefined ? null : allowedTabs
-      });
-
-    if (error) {
-      return { success: false, error: 'Failed to connect with leader' };
-    }
-
-    // Send notification to leader
-    await sendConnectionNotification(leaderUserId);
-
-    await fetchTeamMembers();
-    toast.success(`Connected with ${leaderName}. They can now view your Follow Up list.`);
-    return { success: true };
-  };
-
-  // Send notification to leader when someone connects
-  const sendConnectionNotification = async (leaderUserId: string) => {
-    try {
-      const memberName = myDisplayName || 'A team member';
-      const memberId = myNevorId || '';
-      
-      await supabase
-        .from('inbox_messages')
-        .insert({
-          sender_user_id: user!.id,
-          recipient_user_id: leaderUserId,
-          title: 'New Team Connection',
-          body: `${memberName} (${memberId}) has connected with you and is now sharing their Follow Up list.`,
-          message_type: 'team_connection',
-          deep_link_route: '/listup'
-        });
-    } catch (err) {
-      console.error('Failed to send connection notification:', err);
-    }
-  };
-
-  // Leader accepts a pending share request
-  const acceptShareRequest = async (requestId: string) => {
-    const { error } = await supabase
-      .from('team_access')
-      .update({ status: 'active' })
-      .eq('id', requestId);
-
-    if (error) {
-      toast.error('Failed to accept request');
-      return false;
-    }
-
-    await Promise.all([fetchSharedWithMe(), fetchPendingRequests()]);
-    toast.success('Share request accepted. You can now view their Follow Up list.');
-    return true;
-  };
-
-  // Leader rejects/ignores a pending share request
-  const rejectShareRequest = async (requestId: string) => {
-    const { error } = await supabase
-      .from('team_access')
-      .update({ status: 'revoked' })
-      .eq('id', requestId);
-
-    if (error) {
-      toast.error('Failed to reject request');
-      return false;
-    }
-
-    await fetchPendingRequests();
-    toast.success('Share request declined');
-    return true;
-  };
-
-  // Member stops sharing with a leader
-  const stopSharingWithLeader = async (accessId: string) => {
-    const { error } = await supabase
-      .from('team_access')
-      .update({ status: 'revoked' })
-      .eq('id', accessId);
-
-    if (error) {
-      toast.error('Failed to stop sharing');
-      return false;
-    }
-
-    await fetchTeamMembers();
-    toast.success('Stopped sharing your Follow Up list');
-    return true;
-  };
-
-  // Leader removes a member from their team view
-  const removeFromTeam = async (accessId: string) => {
-    const { error } = await supabase
-      .from('team_access')
-      .update({ status: 'revoked' })
-      .eq('id', accessId);
-
-    if (error) {
-      toast.error('Failed to remove from team');
-      return false;
-    }
-
-    await fetchSharedWithMe();
-    toast.success('Removed from your team view');
-    return true;
-  };
-
-  // Legacy function for backward compatibility
-  const addTeamMember = async (nevorId: string) => {
-    return shareWithLeader(nevorId);
-  };
-
-  const removeTeamMember = async (accessId: string) => {
-    return stopSharingWithLeader(accessId);
-  };
-
-  // Update tab permissions for a team member (owner can control what viewer sees)
-  const updateTabPermissions = async (accessId: string, allowedTabs: TabPermission[] | null) => {
-    const { error } = await supabase
-      .from('team_access')
-      .update({ allowed_tabs: allowedTabs })
-      .eq('id', accessId);
-
-    if (error) {
-      toast.error('Failed to update permissions');
-      return false;
-    }
-
-    await fetchTeamMembers();
-    toast.success('Permissions updated');
-    return true;
-  };
-
-  // Share with upline by email (NEW - preferred method)
+  // Share with upline by email (PRIMARY method)
   const shareWithUpline = async (uplineEmail: string, allowedTabs?: TabPermission[] | null) => {
     if (!user) return { success: false, error: 'Not authenticated' };
     
@@ -436,9 +246,132 @@ const [myNevorId, setMyNevorId] = useState<string | null>(null);
     return { success: true };
   };
 
+  // Send notification to upline when someone connects
+  const sendConnectionNotification = async (uplineUserId: string) => {
+    try {
+      const memberName = myDisplayName || 'A team member';
+      const memberEmail = myEmail || '';
+      
+      await supabase
+        .from('inbox_messages')
+        .insert({
+          sender_user_id: user!.id,
+          recipient_user_id: uplineUserId,
+          title: 'New Team Connection',
+          body: `${memberName} (${memberEmail}) has connected with you and is now sharing their Follow Up list.`,
+          message_type: 'team_connection',
+          deep_link_route: '/listup'
+        });
+    } catch (err) {
+      console.error('Failed to send connection notification:', err);
+    }
+  };
+
+  // Legacy function - kept for backward compatibility
+  const shareWithLeader = async (leaderNeveraiId: string, allowedTabs?: TabPermission[] | null) => {
+    // Redirect to email-based lookup
+    console.warn('shareWithLeader is deprecated, use shareWithUpline instead');
+    return { success: false, error: 'Please use email address instead of Leader ID' };
+  };
+
+  // Upline accepts a pending share request
+  const acceptShareRequest = async (requestId: string) => {
+    const { error } = await supabase
+      .from('team_access')
+      .update({ status: 'active' })
+      .eq('id', requestId);
+
+    if (error) {
+      toast.error('Failed to accept request');
+      return false;
+    }
+
+    await Promise.all([fetchSharedWithMe(), fetchPendingRequests()]);
+    toast.success('Share request accepted. You can now view their Follow Up list.');
+    return true;
+  };
+
+  // Upline rejects/ignores a pending share request
+  const rejectShareRequest = async (requestId: string) => {
+    const { error } = await supabase
+      .from('team_access')
+      .update({ status: 'revoked' })
+      .eq('id', requestId);
+
+    if (error) {
+      toast.error('Failed to reject request');
+      return false;
+    }
+
+    await fetchPendingRequests();
+    toast.success('Share request declined');
+    return true;
+  };
+
+  // Member stops sharing with an upline
+  const stopSharingWithLeader = async (accessId: string) => {
+    const { error } = await supabase
+      .from('team_access')
+      .update({ status: 'revoked' })
+      .eq('id', accessId);
+
+    if (error) {
+      toast.error('Failed to stop sharing');
+      return false;
+    }
+
+    await fetchTeamMembers();
+    toast.success('Stopped sharing your Follow Up list');
+    return true;
+  };
+
+  // Upline removes a member from their team view
+  const removeFromTeam = async (accessId: string) => {
+    const { error } = await supabase
+      .from('team_access')
+      .update({ status: 'revoked' })
+      .eq('id', accessId);
+
+    if (error) {
+      toast.error('Failed to remove from team');
+      return false;
+    }
+
+    await fetchSharedWithMe();
+    toast.success('Removed from your team view');
+    return true;
+  };
+
+  // Legacy function for backward compatibility
+  const addTeamMember = async (nevorId: string) => {
+    return shareWithLeader(nevorId);
+  };
+
+  const removeTeamMember = async (accessId: string) => {
+    return stopSharingWithLeader(accessId);
+  };
+
+  // Update tab permissions for a team member (owner can control what viewer sees)
+  const updateTabPermissions = async (accessId: string, allowedTabs: TabPermission[] | null) => {
+    const { error } = await supabase
+      .from('team_access')
+      .update({ allowed_tabs: allowedTabs })
+      .eq('id', accessId);
+
+    if (error) {
+      toast.error('Failed to update permissions');
+      return false;
+    }
+
+    await fetchTeamMembers();
+    toast.success('Permissions updated');
+    return true;
+  };
+
   return {
     myNevorId,
     myDisplayName,
+    myEmail,
     myLeaderCodeSeq,
     teamMembers,
     sharedWithMe,

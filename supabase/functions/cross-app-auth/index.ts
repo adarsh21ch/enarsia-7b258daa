@@ -36,7 +36,7 @@ serve(async (req) => {
     console.log('cross-app-auth action:', action);
 
     switch (action) {
-      // ACTION: get_leader_ids (batch lookup - READ ONLY)
+      // ACTION: get_leader_ids (batch lookup - READ ONLY) - Legacy support
       case 'get_leader_ids': {
         const { emails } = requestBody;
         
@@ -66,7 +66,81 @@ serve(async (req) => {
         return jsonResponse({ success: true, leader_ids });
       }
 
-      // ACTION: provision_leader_id (idempotent create)
+      // ACTION: get_user_by_email (NEW - lookup user by email)
+      case 'get_user_by_email': {
+        const { email } = requestBody;
+        
+        if (!email) {
+          return jsonResponse({ success: false, error: 'email required' }, 400);
+        }
+
+        const normalizedEmail = email.toLowerCase().trim();
+        
+        const { data: profile, error } = await supabase
+          .from('profiles')
+          .select('user_id, email, display_name, neverai_id')
+          .eq('email', normalizedEmail)
+          .maybeSingle();
+
+        if (error) {
+          console.error('Query error:', error);
+          return jsonResponse({ success: false, error: error.message }, 500);
+        }
+
+        if (!profile) {
+          return jsonResponse({ success: false, error: 'User not found' }, 404);
+        }
+
+        console.log('Found user by email:', normalizedEmail);
+        return jsonResponse({ 
+          success: true, 
+          user: {
+            user_id: profile.user_id,
+            email: profile.email,
+            display_name: profile.display_name,
+            leader_id: profile.neverai_id // For backward compatibility
+          }
+        });
+      }
+
+      // ACTION: set_upline_by_email (NEW - set upline relationship using email)
+      case 'set_upline_by_email': {
+        const { user_email, upline_email } = requestBody;
+        
+        if (!user_email || !upline_email) {
+          return jsonResponse({ success: false, error: 'user_email and upline_email required' }, 400);
+        }
+
+        const normalizedUserEmail = user_email.toLowerCase().trim();
+        const normalizedUplineEmail = upline_email.toLowerCase().trim();
+
+        // Get user's profile
+        const { data: userProfile } = await supabase
+          .from('profiles')
+          .select('user_id')
+          .eq('email', normalizedUserEmail)
+          .maybeSingle();
+
+        if (!userProfile) {
+          return jsonResponse({ success: false, error: 'User not found' }, 404);
+        }
+
+        // Call the RPC to update upline
+        const { data, error } = await supabase.rpc('update_upline_by_email', {
+          p_user_id: userProfile.user_id,
+          p_upline_email: normalizedUplineEmail
+        });
+
+        if (error) {
+          console.error('Update error:', error);
+          return jsonResponse({ success: false, error: error.message }, 500);
+        }
+
+        console.log('Set upline for', normalizedUserEmail, 'to', normalizedUplineEmail);
+        return jsonResponse(data);
+      }
+
+      // ACTION: provision_leader_id (idempotent create) - Legacy support
       case 'provision_leader_id': {
         const { email, display_name } = requestBody;
         
@@ -243,7 +317,7 @@ serve(async (req) => {
       default:
         return jsonResponse({ 
           success: false, 
-          error: 'Invalid action. Use: get_leader_ids, provision_leader_id, get_subscription' 
+          error: 'Invalid action. Use: get_leader_ids, get_user_by_email, set_upline_by_email, provision_leader_id, get_subscription' 
         }, 400);
     }
 

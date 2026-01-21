@@ -61,11 +61,6 @@ export function ProspectDistributionDrawer({
                       <div className="text-sm text-muted-foreground truncate">
                         {user.email || "No email"}
                       </div>
-                      {user.neverai_id && (
-                        <div className="text-xs text-muted-foreground mt-0.5">
-                          ID: {user.neverai_id}
-                        </div>
-                      )}
                     </div>
                     <div className="text-right shrink-0">
                       <div className="text-lg font-bold text-primary">
