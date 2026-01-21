@@ -92,8 +92,8 @@ serve(async (req) => {
           });
         }
 
-        // Generate new neverai_id
-        const { data: newId, error: genError } = await supabase.rpc('generate_neverai_id');
+        // Generate new sequential neverai_id (uses the same sequence as handle_new_user trigger)
+        const { data: newId, error: genError } = await supabase.rpc('generate_sequential_neverai_id');
         
         if (genError || !newId) {
           console.error('ID generation failed:', genError);

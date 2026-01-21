@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { normalizeLeaderIdForLookup } from '@/lib/leaderIdFormat';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
@@ -180,9 +181,12 @@ const [myNevorId, setMyNevorId] = useState<string | null>(null);
   const shareWithLeader = async (leaderNeveraiId: string, allowedTabs?: TabPermission[] | null) => {
     if (!user) return { success: false, error: 'Not authenticated' };
     
-    // Look up leader by Leader ID
+    // Normalize the Leader ID before lookup
+    const normalizedId = normalizeLeaderIdForLookup(leaderNeveraiId);
+    
+    // Look up leader by Leader ID (using normalized ID)
     const { data: foundUser, error: lookupError } = await supabase
-      .rpc('get_user_by_neverai_id', { target_neverai_id: leaderNeveraiId });
+      .rpc('get_user_by_neverai_id', { target_neverai_id: normalizedId });
     
     if (lookupError || !foundUser || foundUser.length === 0) {
       return { success: false, error: 'Leader ID not found' };

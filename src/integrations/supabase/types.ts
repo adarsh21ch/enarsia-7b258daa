@@ -2855,6 +2855,7 @@ export type Database = {
       }
       ensure_ac_profile_exists: { Args: never; Returns: Json }
       generate_neverai_id: { Args: never; Returns: string }
+      generate_sequential_neverai_id: { Args: never; Returns: string }
       generate_simple_neverai_id: { Args: never; Returns: string }
       get_leader_funnel_config: {
         Args: { target_neverai_id: string }

@@ -44,9 +44,25 @@ export function isValidLeaderId(id: string): boolean {
 
 /**
  * Normalize a Leader ID for database lookup
- * This ensures both old and new formats can be used for lookups
+ * This converts any Leader ID format to the canonical NVR###### format
+ * to ensure both old (NVR-XXXXX) and new (NVR######) formats work for lookups
  */
 export function normalizeLeaderIdForLookup(id: string): string {
   if (!id) return '';
-  return id.toUpperCase().trim();
+  
+  const trimmed = id.toUpperCase().trim();
+  
+  // Extract just the numeric portion
+  const numericPart = trimmed.replace(/[^0-9]/g, '');
+  
+  if (numericPart && numericPart.length > 0) {
+    const num = parseInt(numericPart, 10);
+    if (!isNaN(num) && num > 0) {
+      // Return in canonical format: NVR + 6-digit zero-padded number
+      return `NVR${String(num).padStart(6, '0')}`;
+    }
+  }
+  
+  // Fallback: return uppercase trimmed (for non-numeric legacy IDs)
+  return trimmed;
 }
