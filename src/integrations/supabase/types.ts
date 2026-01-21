@@ -2995,6 +2995,10 @@ export type Database = {
         Args: { p_upline_email: string; p_user_id: string }
         Returns: Json
       }
+      upline_set_member_level: {
+        Args: { p_level_id: string; p_member_user_id: string }
+        Returns: Json
+      }
       xor_decrypt_phone: { Args: { encrypted_text: string }; Returns: string }
     }
     Enums: {
