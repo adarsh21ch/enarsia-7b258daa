@@ -12,7 +12,7 @@ interface LeaderTrackingFormatDrawerProps {
   profile: Profile | null;
   updating: boolean;
   onUpdateProfile: (updates: ProfileUpdate) => Promise<{ error: any }>;
-  onUpdateLeaderHierarchy: (leaderId: string) => Promise<{ success: boolean; error?: string }>;
+  onUpdateUplineByEmail: (email: string) => Promise<{ success: boolean; error?: string }>;
   onClearLeaderHierarchy: () => Promise<{ success: boolean; error?: string }>;
 }
 
@@ -20,7 +20,7 @@ export function LeaderTrackingFormatDrawer({
   profile,
   updating,
   onUpdateProfile,
-  onUpdateLeaderHierarchy,
+  onUpdateUplineByEmail,
   onClearLeaderHierarchy
 }: LeaderTrackingFormatDrawerProps) {
   const [open, setOpen] = useState(false);
@@ -48,7 +48,7 @@ export function LeaderTrackingFormatDrawer({
           profile={profile}
           updating={updating}
           onUpdateProfile={onUpdateProfile}
-          onUpdateLeaderHierarchy={onUpdateLeaderHierarchy}
+          onUpdateUplineByEmail={onUpdateUplineByEmail}
           onClearLeaderHierarchy={onClearLeaderHierarchy}
         />
       </div>

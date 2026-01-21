@@ -12,7 +12,6 @@ import { Users, Tag, Copy, Check, Loader2, Eye, EyeOff, X, Plus, Trash2, Star, L
 import { TodoTemplateManager } from './TodoTemplateManager';
 import { toast } from 'sonner';
 import { Profile, ProfileUpdate } from '@/hooks/useProfile';
-import { formatLeaderId } from '@/lib/leaderIdFormat';
 import { useTrackingFormatContext } from '@/contexts/TrackingFormatContext';
 import { useLeaderLevels } from '@/hooks/useLeaderLevels';
 import { useFunnelConfig } from '@/hooks/useFunnelConfig';
@@ -28,7 +27,7 @@ interface LeaderTrackingFormatSettingsProps {
   onUpdateProfile: (updates: ProfileUpdate) => Promise<{
     error: any;
   }>;
-  onUpdateLeaderHierarchy: (leaderId: string) => Promise<{
+  onUpdateUplineByEmail: (email: string) => Promise<{
     success: boolean;
     error?: string;
   }>;
@@ -53,7 +52,7 @@ export function LeaderTrackingFormatSettings({
   profile,
   updating,
   onUpdateProfile,
-  onUpdateLeaderHierarchy,
+  onUpdateUplineByEmail,
   onClearLeaderHierarchy
 }: LeaderTrackingFormatSettingsProps) {
   const {
@@ -332,22 +331,15 @@ export function LeaderTrackingFormatSettings({
     }, 800);
   }, [autoSaveFormat]);
 
-  const handleCopyLeaderId = async () => {
-    if (profile?.neverai_id) {
-      await navigator.clipboard.writeText(formatLeaderId(profile.neverai_id, profile.leader_code_seq));
-      setCopiedId(true);
-      toast.success('Leader ID copied');
-      setTimeout(() => setCopiedId(false), 2000);
-    }
-  };
+  // Removed - no longer using leader ID copy functionality
 
-  const handleSaveLeaderId = async () => {
+  const handleConnectUpline = async () => {
     if (!leaderIdInput.trim()) return;
     setSavingLeader(true);
-    const result = await onUpdateLeaderHierarchy(leaderIdInput.trim().toUpperCase());
+    const result = await onUpdateUplineByEmail(leaderIdInput.trim().toLowerCase());
     if (result.success) {
       // Clear old custom_options for action_taken and funnel_stage
-      // when connecting to a leader (they'll use leader's tracking tags instead)
+      // when connecting to an upline (they'll use upline's tracking tags instead)
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
         await supabase
@@ -363,11 +355,13 @@ export function LeaderTrackingFormatSettings({
         use_leader_stages: true
       });
       
-      // Refresh funnel config to get leader's settings
+      // Refresh funnel config to get upline's settings
       await refetchLeaderConnection();
       
       refreshFormat();
-      toast.success('Connected to leader. You are now using their tracking format and funnel configuration.');
+      toast.success('Connected to upline. You are now using their tracking format and funnel configuration.');
+    } else {
+      toast.error(result.error || 'Failed to connect to upline');
     }
     setSavingLeader(false);
   };
@@ -538,7 +532,7 @@ export function LeaderTrackingFormatSettings({
 
   return (
     <div className="space-y-6">
-      {/* Your Leader ID Section */}
+      {/* Your Email Section - Share with team */}
       <div className="rounded-2xl p-4 bg-gradient-to-r from-primary/10 to-primary/5 border border-primary/20">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
@@ -546,27 +540,34 @@ export function LeaderTrackingFormatSettings({
               <Users className="h-4 w-4 text-primary" />
             </div>
             <div>
-              <p className="text-xs text-muted-foreground">Your Leader ID</p>
-              <p className="text-sm font-mono font-semibold">{formatLeaderId(profile?.neverai_id, profile?.leader_code_seq) || 'Loading...'}</p>
+              <p className="text-xs text-muted-foreground">Your Email</p>
+              <p className="text-sm font-semibold">{profile?.email || 'Loading...'}</p>
             </div>
           </div>
-          <Button variant="ghost" size="icon" onClick={handleCopyLeaderId} className="h-9 w-9" disabled={!profile?.neverai_id}>
+          <Button variant="ghost" size="icon" onClick={async () => {
+            if (profile?.email) {
+              await navigator.clipboard.writeText(profile.email);
+              setCopiedId(true);
+              toast.success('Email copied');
+              setTimeout(() => setCopiedId(false), 2000);
+            }
+          }} className="h-9 w-9" disabled={!profile?.email}>
             {copiedId ? <Check className="h-4 w-4 text-green-500" /> : <Copy className="h-4 w-4" />}
           </Button>
         </div>
         <p className="text-xs text-muted-foreground mt-2">
-          Share this ID with your team so they can use your tracking format.
+          Share your email with your team so they can connect to your tracking format.
         </p>
       </div>
 
       <Separator />
 
-      {/* Leader ID Input Section - MOVED ABOVE FUNNEL CONFIG */}
+      {/* Upline Connection Section */}
       <div className="rounded-2xl p-4 bg-card border border-border/50 space-y-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Tag className="h-4 w-4 text-primary" />
-            <Label className="text-sm font-semibold">Your Leader ID</Label>
+            <Label className="text-sm font-semibold">Connect to Upline</Label>
           </div>
           {autoSaveStatus === 'saving' && (
             <span className="text-xs text-muted-foreground flex items-center gap-1">
@@ -581,16 +582,16 @@ export function LeaderTrackingFormatSettings({
         </div>
         
         <p className="text-xs text-muted-foreground">
-          Enter your leader's ID to use their tracking format (tags, levels, and funnel logic).
+          Enter your upline's Gmail address to use their tracking format (tags, levels, and funnel logic).
         </p>
 
         {hasLeader ? (
           <div className="space-y-4">
             <div className="flex items-center justify-between p-3 bg-primary/10 rounded-lg border border-primary/20">
               <div>
-                <p className="text-xs text-muted-foreground">Connected to Leader</p>
+                <p className="text-xs text-muted-foreground">Connected to Upline</p>
                 <div className="flex items-center gap-2">
-                  <p className="font-mono font-semibold text-primary">{profile?.leaders_id_of_my_leader}</p>
+                  <p className="font-semibold text-primary">{profile?.upline_email || profile?.leaders_id_of_my_leader}</p>
                   {directLeaderName && (
                     <span className="text-sm text-foreground font-medium">({directLeaderName})</span>
                   )}
@@ -601,20 +602,21 @@ export function LeaderTrackingFormatSettings({
                   variant="ghost" 
                   size="sm" 
                   onClick={async () => {
-                    if (!profile?.leaders_id_of_my_leader) return;
+                    const uplineEmail = profile?.upline_email;
+                    if (!uplineEmail) return;
                     setSavingLeader(true);
-                    const result = await onUpdateLeaderHierarchy(profile.leaders_id_of_my_leader);
+                    const result = await onUpdateUplineByEmail(uplineEmail);
                     if (result.success) {
                       await refetchLeaderConnection();
                       refreshFormat();
-                      toast.success('Leader data synced! Your tracking format is now up to date.');
+                      toast.success('Upline data synced! Your tracking format is now up to date.');
                     } else {
-                      toast.error(result.error || 'Failed to sync leader data');
+                      toast.error(result.error || 'Failed to sync upline data');
                     }
                     setSavingLeader(false);
                   }} 
-                  disabled={updating || savingLeader}
-                  title="Sync leader data to fix any format issues"
+                  disabled={updating || savingLeader || !profile?.upline_email}
+                  title="Sync upline data to fix any format issues"
                 >
                   {savingLeader ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
                   <span className="ml-1 hidden sm:inline">Sync</span>
@@ -714,15 +716,18 @@ export function LeaderTrackingFormatSettings({
           <div className="space-y-2">
             <div className="flex gap-2">
               <Input 
-                placeholder="Enter Leader ID…" 
+                placeholder="Enter upline's Gmail address…" 
                 value={leaderIdInput} 
-                onChange={e => setLeaderIdInput(e.target.value.toUpperCase())} 
-                className="font-mono" 
+                onChange={e => setLeaderIdInput(e.target.value.toLowerCase())} 
+                type="email"
               />
-              <Button onClick={handleSaveLeaderId} disabled={!leaderIdInput.trim() || savingLeader} size="sm">
+              <Button onClick={handleConnectUpline} disabled={!leaderIdInput.trim() || savingLeader} size="sm">
                 {savingLeader ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Connect'}
               </Button>
             </div>
+            <p className="text-xs text-muted-foreground">
+              Your upline must have an account with this email for the connection to work.
+            </p>
           </div>
         )}
       </div>

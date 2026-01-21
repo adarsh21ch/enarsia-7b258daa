@@ -8,7 +8,6 @@ import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
 import { Loader2, Mail, Lock, Eye, EyeOff, ArrowLeft, User } from 'lucide-react';
 import nevoraLogo from '@/assets/nevorai-logo.jpeg';
-import { formatLeaderId } from '@/lib/leaderIdFormat';
 import { getPasswordRecoveryRedirectUrl } from '@/config/siteUrl';
 
 export default function Auth() {
@@ -23,21 +22,18 @@ export default function Auth() {
   const [isSignUp, setIsSignUp] = useState(true);
   const [isForgotPassword, setIsForgotPassword] = useState(false);
   
-  // Get leader parameter from share link
-  const leaderParam = searchParams.get('leader');
+  // Get upline parameter from share link (email-based)
+  const uplineParam = searchParams.get('upline');
 
   useEffect(() => {
     if (user && !authLoading) {
-      // If there's a leader param, store it for processing after profile is ready
-      if (leaderParam) {
-        sessionStorage.setItem('pending_leader_id', leaderParam);
+      // If there's an upline param, store it for processing after profile is ready
+      if (uplineParam) {
+        sessionStorage.setItem('pending_upline_email', uplineParam);
       }
       navigate('/home');
     }
-  }, [user, authLoading, navigate, leaderParam]);
-
-  // Helper to check if input is an email
-  const isEmail = (input: string) => input.includes('@');
+  }, [user, authLoading, navigate, uplineParam]);
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -47,22 +43,7 @@ export default function Auth() {
     }
     setIsSubmitting(true);
     
-    let email = emailOrLeaderId;
-    
-    // If not an email, look up by Leader ID
-    if (!isEmail(emailOrLeaderId)) {
-      const { data, error } = await supabase.rpc('get_user_email_by_leader_id', {
-        target_leader_id: emailOrLeaderId.trim()
-      });
-      
-      if (error || !data || data.length === 0) {
-        toast.error('Leader ID not found. Check the ID or use your email instead.');
-        setIsSubmitting(false);
-        return;
-      }
-      
-      email = data[0].email;
-    }
+    const email = emailOrLeaderId.trim().toLowerCase();
     
     const { error } = await signIn(email, password);
     if (error) {
@@ -106,9 +87,9 @@ export default function Auth() {
         toast.error(error.message || 'Sign in failed. Please try again.');
       }
     } else {
-      // Store leader param for processing
-      if (leaderParam) {
-        sessionStorage.setItem('pending_leader_id', leaderParam);
+      // Store upline param for processing
+      if (uplineParam) {
+        sessionStorage.setItem('pending_upline_email', uplineParam);
       }
       toast.success('Welcome back!');
       navigate('/home');
@@ -122,7 +103,7 @@ export default function Auth() {
       toast.error('Please fill in all fields');
       return;
     }
-    if (!isEmail(emailOrLeaderId)) {
+    if (!emailOrLeaderId.includes('@')) {
       toast.error('Please enter a valid email address for sign up');
       return;
     }
@@ -146,9 +127,9 @@ export default function Auth() {
         toast.error(error.message || 'Sign up failed. Please try again.');
       }
     } else {
-      // Store leader param for processing after profile is created
-      if (leaderParam) {
-        sessionStorage.setItem('pending_leader_id', leaderParam);
+      // Store upline param for processing after profile is created
+      if (uplineParam) {
+        sessionStorage.setItem('pending_upline_email', uplineParam);
       }
       toast.success('Account created! You can now sign in.');
       navigate('/home');
@@ -162,7 +143,7 @@ export default function Auth() {
       toast.error('Please enter your email');
       return;
     }
-    if (!isEmail(emailOrLeaderId)) {
+    if (!emailOrLeaderId.includes('@')) {
       toast.error('Please enter a valid email address');
       return;
     }
@@ -254,10 +235,10 @@ export default function Auth() {
           <p className="text-muted-foreground text-sm mt-1">Never miss a followup Again</p>
         </div>
 
-        {leaderParam && (
+        {uplineParam && (
           <div className="mb-4 p-3 bg-primary/10 border border-primary/20 rounded-lg text-center">
             <p className="text-sm text-primary">
-              You're joining via Leader ID: <span className="font-mono font-semibold">{formatLeaderId(leaderParam)}</span>
+              You're joining via upline: <span className="font-semibold">{uplineParam}</span>
             </p>
           </div>
         )}
@@ -286,24 +267,19 @@ export default function Auth() {
           )}
 
           <div className="space-y-2">
-            <Label htmlFor="email">{isSignUp ? 'Email' : 'Email or Leader ID'}</Label>
+            <Label htmlFor="email">Email</Label>
             <div className="relative">
               <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
                 id="email"
-                type={isSignUp ? 'email' : 'text'}
+                type="email"
                 value={emailOrLeaderId}
                 onChange={(e) => setEmailOrLeaderId(e.target.value)}
-                placeholder={isSignUp ? 'you@example.com' : 'you@example.com or NVR000123'}
+                placeholder="you@example.com"
                 className="pl-10"
                 required
               />
             </div>
-            {!isSignUp && (
-              <p className="text-xs text-muted-foreground">
-                Sign in with your email or Leader ID
-              </p>
-            )}
           </div>
 
           <div className="space-y-2">

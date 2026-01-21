@@ -31,6 +31,8 @@ export interface Profile {
   total_leads_added: number;
   /** Upline's email address (new simplified identifier) */
   upline_email: string | null;
+  /** User's email address for display */
+  email: string | null;
 }
 
 export interface ProfileUpdate {

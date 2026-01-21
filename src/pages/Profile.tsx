@@ -20,10 +20,9 @@ import { PullToRefreshIndicator } from '@/components/PullToRefreshIndicator';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import { User, LogOut, ChevronRight, ChevronDown, Phone, Building2, MapPin, Loader2, FileText, Shield, Receipt, Mail, Settings, Copy, ExternalLink, BarChart3, Lock, Crown } from 'lucide-react';
+import { User, LogOut, ChevronRight, ChevronDown, Phone, Building2, MapPin, Loader2, FileText, Shield, Receipt, Mail, Settings, ExternalLink, BarChart3, Crown } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
-import { formatLeaderId } from '@/lib/leaderIdFormat';
 import nevoraLogo from '@/assets/nevorai-logo.jpeg';
 
 // Pull-to-refresh hook
@@ -94,7 +93,7 @@ export default function Profile() {
     loading: profileLoading,
     updating,
     updateProfile,
-    updateLeaderHierarchy,
+    updateUplineByEmail,
     clearLeaderHierarchy,
     refetch
   } = useProfile();
@@ -193,19 +192,12 @@ export default function Profile() {
                   {/* Level dropdown in top-right */}
                   <ProfileLevelDropdown currentLevelId={profile?.level_id || null} leaderNeveraiId={profile?.root_leader_id || profile?.leaders_id_of_my_leader || null} userId={user.id} onLevelChange={() => refetch?.()} />
                 </div>
-                {profile?.neverai_id && <div className="flex items-center gap-1.5 mt-2">
-                    <p className="text-xs text-primary font-medium">
-                      Your NevorAI ID: <span className="font-mono">{formatLeaderId(profile.neverai_id, profile.leader_code_seq)}</span>
-                    </p>
-                    <button onClick={async () => {
-                  // Copy the formatted ID
-                  const displayId = formatLeaderId(profile.neverai_id, profile.leader_code_seq);
-                  await navigator.clipboard.writeText(displayId);
-                  toast.success('NevorAI ID copied');
-                }} className="p-1 rounded hover:bg-primary/10 transition-colors" title="Copy NevorAI ID">
-                      <Copy className="h-3 w-3 text-primary" />
-                    </button>
-                  </div>}
+                {/* Show connected upline email if exists */}
+                {profile?.upline_email && (
+                  <p className="text-xs text-muted-foreground mt-2">
+                    Connected to: <span className="text-primary font-medium">{profile.upline_email}</span>
+                  </p>
+                )}
               </div>
             </div>
             {/* Decorative elements */}
@@ -216,12 +208,12 @@ export default function Profile() {
           {/* Progressive Upgrade Nudge Banner - non-spammy, stage-based */}
           {!isPaid && <ProgressiveNudgeBanner context="profile" />}
 
-          {/* Leader & Tracking Format Settings - Opens in Sidebar */}
+          {/* Upline & Tracking Format Settings - Opens in Sidebar */}
           <LeaderTrackingFormatDrawer
             profile={profile}
             updating={updating}
             onUpdateProfile={updateProfile}
-            onUpdateLeaderHierarchy={updateLeaderHierarchy}
+            onUpdateUplineByEmail={updateUplineByEmail}
             onClearLeaderHierarchy={clearLeaderHierarchy}
           />
 
