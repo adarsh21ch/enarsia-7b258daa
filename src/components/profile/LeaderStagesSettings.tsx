@@ -7,16 +7,15 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
-import { Users, Tag, Copy, Check, Loader2, Eye, EyeOff, X, Plus, Trash2, Phone, Layers } from 'lucide-react';
+import { Users, Tag, Loader2, Eye, EyeOff, X, Plus, Trash2, Phone, Layers, Mail } from 'lucide-react';
 import { toast } from 'sonner';
 import { Profile, ProfileUpdate } from '@/hooks/useProfile';
-import { formatLeaderId } from '@/lib/leaderIdFormat';
 
 interface LeaderStagesSettingsProps {
   profile: Profile | null;
   updating: boolean;
   onUpdateProfile: (updates: ProfileUpdate) => Promise<{ error: any }>;
-  onUpdateLeaderHierarchy: (leaderId: string) => Promise<{ success: boolean; error?: string }>;
+  onUpdateUplineByEmail: (email: string) => Promise<{ success: boolean; error?: string; uplineName?: string }>;
   onClearLeaderHierarchy: () => Promise<{ success: boolean; error?: string }>;
   onGetLeaderStageConfig: (leaderId: string) => Promise<{ stage_count: number; stage_labels: string[]; response_labels: string[] } | null>;
 }
@@ -25,13 +24,12 @@ export function LeaderStagesSettings({
   profile,
   updating,
   onUpdateProfile,
-  onUpdateLeaderHierarchy,
+  onUpdateUplineByEmail,
   onClearLeaderHierarchy,
   onGetLeaderStageConfig
 }: LeaderStagesSettingsProps) {
-  const [copiedId, setCopiedId] = useState(false);
-  const [leaderIdInput, setLeaderIdInput] = useState('');
-  const [savingLeader, setSavingLeader] = useState(false);
+  const [uplineEmailInput, setUplineEmailInput] = useState('');
+  const [savingUpline, setSavingUpline] = useState(false);
   const [tagMode, setTagMode] = useState<'leader' | 'own'>('leader');
   
   // Own tags state
@@ -64,37 +62,41 @@ export function LeaderStagesSettings({
     }
   }, [profile, onGetLeaderStageConfig]);
 
-  const handleCopyLeaderId = async () => {
-    if (profile?.neverai_id) {
-      await navigator.clipboard.writeText(formatLeaderId(profile.neverai_id, profile.leader_code_seq));
-      setCopiedId(true);
-      toast.success('Leader ID copied');
-      setTimeout(() => setCopiedId(false), 2000);
-    }
-  };
-
-  const handleSaveLeaderId = async () => {
-    if (!leaderIdInput.trim()) return;
+  const handleSaveUpline = async () => {
+    if (!uplineEmailInput.trim()) return;
     
-    setSavingLeader(true);
-    const result = await onUpdateLeaderHierarchy(leaderIdInput.trim().toUpperCase());
+    // Basic email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(uplineEmailInput.trim())) {
+      toast.error('Please enter a valid email address');
+      return;
+    }
+    
+    setSavingUpline(true);
+    const result = await onUpdateUplineByEmail(uplineEmailInput.trim().toLowerCase());
     
     if (result.success) {
-      setLeaderIdInput('');
-      // Fetch the leader's tag config
-      const config = await onGetLeaderStageConfig(leaderIdInput.trim().toUpperCase());
-      if (config) {
-        setLeaderCallingTags(config.response_labels || []);
-        setLeaderStageTags(config.stage_labels || []);
+      setUplineEmailInput('');
+      toast.success(`Connected to ${result.uplineName || uplineEmailInput}`);
+      // Fetch the leader's tag config if they have leader_id
+      if (profile?.leaders_id_of_my_leader) {
+        const config = await onGetLeaderStageConfig(profile.leaders_id_of_my_leader);
+        if (config) {
+          setLeaderCallingTags(config.response_labels || []);
+          setLeaderStageTags(config.stage_labels || []);
+        }
       }
+    } else {
+      toast.error(result.error || 'Failed to connect');
     }
-    setSavingLeader(false);
+    setSavingUpline(false);
   };
 
-  const handleClearLeader = async () => {
+  const handleClearUpline = async () => {
     await onClearLeaderHierarchy();
     setLeaderCallingTags([]);
     setLeaderStageTags([]);
+    toast.success('Disconnected from upline');
   };
 
   const handleToggleVisibility = async (value: boolean) => {
@@ -117,7 +119,7 @@ export function LeaderStagesSettings({
     setSavingTags(true);
     await onUpdateProfile({ use_leader_stages: true });
     setSavingTags(false);
-    toast.success('Now using leader tracking tags. Your custom tags are saved for reference.');
+    toast.success('Now using upline tracking tags. Your custom tags are saved for reference.');
   };
 
   // Calling tags handlers
@@ -186,53 +188,26 @@ export function LeaderStagesSettings({
     setSavingTags(true);
     await onUpdateProfile({ use_leader_stages: true });
     setSavingTags(false);
-    toast.success('Now using leader tracking tags');
+    toast.success('Now using upline tracking tags');
   };
 
   return (
     <div className="space-y-6">
-      {/* Your Leader ID Section */}
-      <div className="rounded-2xl p-4 bg-gradient-to-r from-primary/10 to-primary/5 border border-primary/20">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-primary/20">
-              <Users className="h-4 w-4 text-primary" />
-            </div>
-            <div>
-              <p className="text-xs text-muted-foreground">Your Leader ID</p>
-              <p className="text-sm font-mono font-semibold">{formatLeaderId(profile?.neverai_id, profile?.leader_code_seq) || 'Loading...'}</p>
-            </div>
-          </div>
-          <Button 
-            variant="ghost" 
-            size="icon"
-            onClick={handleCopyLeaderId}
-            className="h-9 w-9"
-            disabled={!profile?.neverai_id}
-          >
-            {copiedId ? <Check className="h-4 w-4 text-green-500" /> : <Copy className="h-4 w-4" />}
-          </Button>
-        </div>
-        <p className="text-xs text-muted-foreground mt-2">
-          Share this ID with your team so they can connect with you.
-        </p>
-      </div>
-
-      {/* Your Leader's ID Section */}
+      {/* Your Upline Section */}
       <div className="rounded-2xl p-4 bg-card border border-border/50 space-y-4">
         <div className="flex items-center gap-2">
           <Users className="h-4 w-4 text-muted-foreground" />
-          <Label className="text-sm font-semibold">Your Leader's ID</Label>
+          <Label className="text-sm font-semibold">Your Upline</Label>
         </div>
 
-        {profile?.leaders_id_of_my_leader ? (
+        {profile?.upline_email ? (
           <div className="space-y-3">
             <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
               <div>
-                <p className="text-xs text-muted-foreground">Connected to Leader</p>
-                <p className="font-mono font-semibold">{profile.leaders_id_of_my_leader}</p>
+                <p className="text-xs text-muted-foreground">Connected to</p>
+                <p className="font-medium text-sm">{profile.upline_email}</p>
               </div>
-              <Button variant="ghost" size="sm" onClick={handleClearLeader} disabled={updating}>
+              <Button variant="ghost" size="sm" onClick={handleClearUpline} disabled={updating}>
                 <X className="h-4 w-4" />
               </Button>
             </div>
@@ -245,7 +220,7 @@ export function LeaderStagesSettings({
                 ) : (
                   <EyeOff className="h-4 w-4 text-muted-foreground" />
                 )}
-                <span className="text-sm">Allow leader to see my tracking data</span>
+                <span className="text-sm">Allow upline to see my tracking data</span>
               </div>
               <Switch
                 checked={profile.allow_leader_to_view}
@@ -257,22 +232,26 @@ export function LeaderStagesSettings({
         ) : (
           <div className="space-y-2">
             <div className="flex gap-2">
-              <Input
-                placeholder="Enter Leader's ID (e.g., NVR000123)"
-                value={leaderIdInput}
-                onChange={(e) => setLeaderIdInput(e.target.value.toUpperCase())}
-                className="flex-1 font-mono"
-              />
+              <div className="relative flex-1">
+                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Enter Upline's Gmail Address"
+                  value={uplineEmailInput}
+                  onChange={(e) => setUplineEmailInput(e.target.value.toLowerCase())}
+                  className="pl-10"
+                  type="email"
+                />
+              </div>
               <Button 
-                onClick={handleSaveLeaderId}
-                disabled={savingLeader || !leaderIdInput.trim()}
+                onClick={handleSaveUpline}
+                disabled={savingUpline || !uplineEmailInput.trim()}
                 size="sm"
               >
-                {savingLeader ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Save'}
+                {savingUpline ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Connect'}
               </Button>
             </div>
             <p className="text-xs text-muted-foreground">
-              Enter the Leader ID of your team leader to connect and optionally use their tracking tags.
+              Enter your upline's Gmail address to connect and optionally use their tracking tags.
             </p>
           </div>
         )}
@@ -300,10 +279,10 @@ export function LeaderStagesSettings({
             <RadioGroupItem value="leader" id="leader-tags" className="mt-1" />
             <div className="flex-1">
               <Label htmlFor="leader-tags" className="font-medium cursor-pointer">
-                Use leader tracking tags + my custom tags
+                Use upline tracking tags + my custom tags
               </Label>
               <p className="text-xs text-muted-foreground mt-1">
-                Use your leader's tracking tags for Calling List and Sales Stages, and add your own custom tags that are visible only in your account.
+                Use your upline's tracking tags for Calling List and Sales Stages, and add your own custom tags that are visible only in your account.
               </p>
             </div>
           </div>
@@ -324,7 +303,7 @@ export function LeaderStagesSettings({
         {/* Leader Tags Display */}
         {tagMode === 'leader' && (
           <div className="space-y-4 mt-4">
-            {profile?.leaders_id_of_my_leader ? (
+            {profile?.upline_email ? (
               (leaderCallingTags.length > 0 || leaderStageTags.length > 0) ? (
                 <div className="space-y-4">
                   {/* Leader Calling Tags */}
@@ -368,17 +347,17 @@ export function LeaderStagesSettings({
                     className="mt-2"
                   >
                     {savingTags ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
-                    {profile.use_leader_stages ? 'Currently Using Leader Tags' : 'Use These Tags'}
+                    {profile.use_leader_stages ? 'Currently Using Upline Tags' : 'Use These Tags'}
                   </Button>
                 </div>
               ) : (
                 <p className="text-sm text-muted-foreground p-3 bg-muted/30 rounded-lg">
-                  Your leader hasn't configured their tracking tags yet.
+                  Your upline hasn't configured their tracking tags yet.
                 </p>
               )
             ) : (
               <p className="text-sm text-muted-foreground p-3 bg-muted/30 rounded-lg">
-                Add your Leader's ID above, or ask your leader to configure Tracking Tags so you can use them here.
+                Connect to your upline above to use their tracking tags.
               </p>
             )}
           </div>
@@ -486,15 +465,15 @@ export function LeaderStagesSettings({
       <AlertDialog open={showSwitchConfirm} onOpenChange={setShowSwitchConfirm}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Switch to Leader Tracking Tags?</AlertDialogTitle>
+            <AlertDialogTitle>Switch to Upline Tracking Tags?</AlertDialogTitle>
             <AlertDialogDescription>
-              Your custom tracking tags will be kept as personal reference, but the leader's tracking tags will become your official tracked tags. Future analytics will only count the leader's tracking tags.
+              Your custom tracking tags will be kept as personal reference, but the upline's tracking tags will become your official tracked tags. Future analytics will only count the upline's tracking tags.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction onClick={confirmSwitchToLeader}>
-              Switch to Leader Tracking Tags
+              Switch to Upline Tracking Tags
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

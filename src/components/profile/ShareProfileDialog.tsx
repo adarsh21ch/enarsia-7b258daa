@@ -4,12 +4,11 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Share2, Copy, Check, Users, Bell, Eye, EyeOff, Settings2, X } from 'lucide-react';
+import { Share2, Copy, Check, Users, Bell, Eye, EyeOff, Settings2, X, Mail } from 'lucide-react';
 import { useTeamAccess, AVAILABLE_TABS, TabPermission } from '@/hooks/useTeamAccess';
 import { toast } from 'sonner';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { formatLeaderId } from '@/lib/leaderIdFormat';
 
 const TAB_LABELS: Record<TabPermission, string> = {
   calling: 'Calling',
@@ -21,14 +20,13 @@ const TAB_LABELS: Record<TabPermission, string> = {
 
 export function ShareProfileDialog() {
   const { 
-    myNevorId, 
+    myEmail,
     myDisplayName,
-    myLeaderCodeSeq,
     teamMembers, 
     sharedWithMe, 
     pendingRequests,
     loading, 
-    shareWithLeader,
+    shareWithUpline,
     acceptShareRequest,
     rejectShareRequest,
     stopSharingWithLeader,
@@ -37,7 +35,7 @@ export function ShareProfileDialog() {
   } = useTeamAccess();
   
   const [open, setOpen] = useState(false);
-  const [leaderIdInput, setLeaderIdInput] = useState('');
+  const [uplineEmailInput, setUplineEmailInput] = useState('');
   const [sharing, setSharing] = useState(false);
   const [copied, setCopied] = useState(false);
   const [editingPermissions, setEditingPermissions] = useState<string | null>(null);
@@ -46,26 +44,33 @@ export function ShareProfileDialog() {
   // Tabs to share when creating a new share
   const [shareWithTabs, setShareWithTabs] = useState<TabPermission[]>([...AVAILABLE_TABS]);
 
-  const handleCopyId = async () => {
-    if (myNevorId) {
-      await navigator.clipboard.writeText(formatLeaderId(myNevorId, myLeaderCodeSeq));
+  const handleCopyEmail = async () => {
+    if (myEmail) {
+      await navigator.clipboard.writeText(myEmail);
       setCopied(true);
-      toast.success('Leader ID copied');
+      toast.success('Email copied');
       setTimeout(() => setCopied(false), 2000);
     }
   };
 
-  const handleShareWithLeader = async () => {
-    if (!leaderIdInput.trim()) return;
+  const handleShareWithUpline = async () => {
+    if (!uplineEmailInput.trim()) return;
+    
+    // Basic email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(uplineEmailInput.trim())) {
+      toast.error('Please enter a valid email address');
+      return;
+    }
     
     setSharing(true);
     // Pass the selected tabs (null if all selected)
     const tabsToShare = shareWithTabs.length === AVAILABLE_TABS.length ? null : shareWithTabs;
-    const result = await shareWithLeader(leaderIdInput.trim().toUpperCase(), tabsToShare);
+    const result = await shareWithUpline(uplineEmailInput.trim().toLowerCase(), tabsToShare);
     setSharing(false);
     
     if (result.success) {
-      setLeaderIdInput('');
+      setUplineEmailInput('');
       // Reset tab selection to all for next share
       setShareWithTabs([...AVAILABLE_TABS]);
     } else {
@@ -125,38 +130,38 @@ export function ShareProfileDialog() {
             <Share2 className="h-5 w-5" />
             Share Your Profile
           </DialogTitle>
-          <DialogDescription>Share your profile data with leaders or manage team connections.</DialogDescription>
+          <DialogDescription>Share your profile data with your upline or manage team connections.</DialogDescription>
         </DialogHeader>
 
         <div className="space-y-6">
-          {/* My Leader ID */}
+          {/* My Email (Share Link) */}
           <div className="space-y-2">
-            <Label className="text-sm font-medium">Your Leader ID</Label>
+            <Label className="text-sm font-medium">Your Email</Label>
             <div className="flex items-center gap-2">
-              <div className="flex-1 px-3 py-2 bg-muted rounded-md font-mono text-sm">
-                {formatLeaderId(myNevorId, myLeaderCodeSeq) || 'Loading...'}
+              <div className="flex-1 px-3 py-2 bg-muted rounded-md text-sm truncate">
+                {myEmail || 'Loading...'}
               </div>
               <Button 
                 variant="outline" 
                 size="icon" 
-                onClick={handleCopyId}
-                disabled={!myNevorId}
+                onClick={handleCopyEmail}
+                disabled={!myEmail}
               >
                 {copied ? <Check className="h-4 w-4 text-green-500" /> : <Copy className="h-4 w-4" />}
               </Button>
             </div>
             <p className="text-xs text-muted-foreground">
-              Share this Leader ID so others can share their data with you.
+              Share your email so others can connect with you as their upline.
             </p>
           </div>
 
           <Separator />
 
-          {/* Share with Leader - with Tab Selection */}
+          {/* Share with Upline - with Tab Selection */}
           <div className="space-y-3">
             <Label className="text-sm font-medium flex items-center gap-2">
               <Users className="h-4 w-4" />
-              Share with Leader/Senior
+              Share with Your Upline
             </Label>
             
             {/* Tab selection for new share */}
@@ -176,26 +181,30 @@ export function ShareProfileDialog() {
             </div>
 
             <div className="flex items-center gap-2">
-              <Input
-                placeholder="Enter Leader's ID (e.g., NVR000123)"
-                value={leaderIdInput}
-                onChange={(e) => setLeaderIdInput(e.target.value.toUpperCase())}
-                className="flex-1 font-mono"
-              />
+              <div className="relative flex-1">
+                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Enter Upline's Gmail Address"
+                  value={uplineEmailInput}
+                  onChange={(e) => setUplineEmailInput(e.target.value.toLowerCase())}
+                  className="pl-10"
+                  type="email"
+                />
+              </div>
               <Button 
-                onClick={handleShareWithLeader}
-                disabled={sharing || !leaderIdInput.trim() || shareWithTabs.length === 0}
+                onClick={handleShareWithUpline}
+                disabled={sharing || !uplineEmailInput.trim() || shareWithTabs.length === 0}
                 size="sm"
               >
                 Share
               </Button>
             </div>
             <p className="text-xs text-muted-foreground">
-              Share selected tabs with your leader. They must accept to view.
+              Share selected tabs with your upline. They can view your data once connected.
             </p>
           </div>
 
-          {/* Pending Share Requests (for leaders) */}
+          {/* Pending Share Requests (for uplines) */}
           {pendingRequests.length > 0 && (
             <>
               <Separator />
@@ -211,7 +220,7 @@ export function ShareProfileDialog() {
                       <div className="flex items-start justify-between">
                         <div className="flex-1">
                           <p className="text-sm font-medium">{request.owner_display_name || 'Unknown'}</p>
-                          <p className="text-xs text-muted-foreground font-mono">{request.owner_nevorid}</p>
+                          <p className="text-xs text-muted-foreground">{request.owner_email || 'No email'}</p>
                           <p className="text-xs text-muted-foreground mt-1">
                             wants to share their data with you
                           </p>
@@ -264,7 +273,7 @@ export function ShareProfileDialog() {
                       <div className="flex items-center justify-between">
                         <div>
                           <p className="text-sm font-medium">{access.owner_display_name}</p>
-                          <p className="text-xs text-muted-foreground font-mono">{access.owner_nevorid}</p>
+                          <p className="text-xs text-muted-foreground">{access.owner_email || 'No email'}</p>
                         </div>
                         <Button 
                           variant="ghost" 
@@ -291,7 +300,7 @@ export function ShareProfileDialog() {
             </>
           )}
 
-          {/* Leaders I'm Sharing With + Tab Permission Controls */}
+          {/* Uplines I'm Sharing With + Tab Permission Controls */}
           {teamMembers.filter(m => m.status === 'active' || m.status === 'pending').length > 0 && (
             <>
               <Separator />
@@ -311,7 +320,7 @@ export function ShareProfileDialog() {
                               <Badge variant="secondary" className="text-xs">Pending</Badge>
                             )}
                           </p>
-                          <p className="text-xs text-muted-foreground font-mono">{member.nevorid}</p>
+                          <p className="text-xs text-muted-foreground">{member.email || 'No email'}</p>
                         </div>
                         <div className="flex items-center gap-1">
                           {member.status === 'active' && (
@@ -395,7 +404,7 @@ export function ShareProfileDialog() {
             <div className="text-center py-4 text-muted-foreground">
               <Users className="h-8 w-8 mx-auto mb-2 opacity-50" />
               <p className="text-sm">No team connections yet</p>
-              <p className="text-xs">Share your Leader ID with your team to get started.</p>
+              <p className="text-xs">Share your email with your team to get started.</p>
             </div>
           )}
         </div>

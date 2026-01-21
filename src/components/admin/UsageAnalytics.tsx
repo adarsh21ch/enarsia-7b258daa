@@ -112,7 +112,7 @@ export function UsageAnalytics({ activeUsage }: UsageAnalyticsProps) {
                         {user.display_name || 'No Name'}
                       </p>
                       <p className="text-xs text-muted-foreground truncate">
-                        {user.email || user.neverai_id || 'Unknown'}
+                        {user.email || 'Unknown'}
                       </p>
                     </div>
                     

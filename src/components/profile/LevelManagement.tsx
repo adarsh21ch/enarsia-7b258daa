@@ -71,7 +71,7 @@ export function LevelManagement() {
         
         <div className="mt-4 space-y-4">
           <p className="text-xs text-muted-foreground">
-            Define levels for your team members. Each new member who joins with your Leader ID will be assigned the default level (marked with a star).
+            Define levels for your team members. Each new member who connects with you will be assigned the default level (marked with a star).
           </p>
 
           {/* Add new level */}
