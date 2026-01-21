@@ -375,6 +375,7 @@ export type Database = {
       ac_join_requests: {
         Row: {
           created_at: string | null
+          entered_upline_email: string | null
           entered_upline_leader_id: string
           id: string
           status: string
@@ -384,6 +385,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string | null
+          entered_upline_email?: string | null
           entered_upline_leader_id: string
           id?: string
           status?: string
@@ -393,6 +395,7 @@ export type Database = {
         }
         Update: {
           created_at?: string | null
+          entered_upline_email?: string | null
           entered_upline_leader_id?: string
           id?: string
           status?: string
@@ -929,6 +932,7 @@ export type Database = {
           role: Database["public"]["Enums"]["community_role"]
           root_owner_user_id: string | null
           status: Database["public"]["Enums"]["membership_status"]
+          upline_email: string | null
           upline_leader_id_text: string | null
           upline_member_user_id: string | null
           user_id: string
@@ -940,6 +944,7 @@ export type Database = {
           role?: Database["public"]["Enums"]["community_role"]
           root_owner_user_id?: string | null
           status?: Database["public"]["Enums"]["membership_status"]
+          upline_email?: string | null
           upline_leader_id_text?: string | null
           upline_member_user_id?: string | null
           user_id: string
@@ -951,6 +956,7 @@ export type Database = {
           role?: Database["public"]["Enums"]["community_role"]
           root_owner_user_id?: string | null
           status?: Database["public"]["Enums"]["membership_status"]
+          upline_email?: string | null
           upline_leader_id_text?: string | null
           upline_member_user_id?: string | null
           user_id?: string
@@ -2802,26 +2808,40 @@ export type Database = {
           user_id: string
         }[]
       }
-      admin_search_users: {
-        Args: {
-          page_offset?: number
-          page_size?: number
-          plan_filter?: string
-          search_query?: string
-        }
-        Returns: {
-          created_at: string
-          display_name: string
-          email: string
-          expires_at: string
-          is_admin_override: boolean
-          neverai_id: string
-          plan: string
-          subscribed_at: string
-          upline_email: string
-          user_id: string
-        }[]
-      }
+      admin_search_users:
+        | {
+            Args: {
+              page_offset?: number
+              page_size?: number
+              plan_filter?: string
+              search_query?: string
+            }
+            Returns: {
+              created_at: string
+              display_name: string
+              email: string
+              expires_at: string
+              is_admin_override: boolean
+              neverai_id: string
+              plan: string
+              subscribed_at: string
+              upline_email: string
+              user_id: string
+            }[]
+          }
+        | {
+            Args: { plan_filter?: string; search_query?: string }
+            Returns: {
+              display_name: string
+              email: string
+              expires_at: string
+              is_admin_override: boolean
+              plan: string
+              subscribed_at: string
+              upline_email: string
+              user_id: string
+            }[]
+          }
       batch_reorder_prospects: {
         Args: { p_updates: Json; p_user_id: string }
         Returns: boolean
