@@ -172,10 +172,14 @@ export function useTrackingFormat() {
     if (configError || !config || (config as any).found === false) {
       console.error('Error fetching leader stage config:', configError);
       // Still return leader identity so UI can show “Connected to …” even if tags are empty
+      // Use display_name or email prefix (never full email, never "Unnamed")
+      const errorCleanName = leaderUser.display_name && leaderUser.display_name.trim() && leaderUser.display_name.toLowerCase() !== 'unnamed'
+        ? leaderUser.display_name
+        : (leaderUser.email ? leaderUser.email.split('@')[0].charAt(0).toUpperCase() + leaderUser.email.split('@')[0].slice(1) : 'Leader');
       return {
         leaderUserId: leaderUser.user_id,
         leaderId: leaderUser.neverai_id || leaderNeveraiId,
-        leaderName: leaderUser.display_name || 'Leader',
+        leaderName: errorCleanName,
         leadsTracking: [],
         stageTags: [],
         levels: [],
@@ -194,10 +198,14 @@ export function useTrackingFormat() {
       .eq('leader_id', leaderUser.user_id)
       .order('position', { ascending: true });
 
+    // Use display_name or email prefix (never full email, never "Unnamed")
+    const cleanLeaderName = leaderUser.display_name && leaderUser.display_name.trim() && leaderUser.display_name.toLowerCase() !== 'unnamed'
+      ? leaderUser.display_name
+      : (leaderUser.email ? leaderUser.email.split('@')[0].charAt(0).toUpperCase() + leaderUser.email.split('@')[0].slice(1) : 'Leader');
     return {
       leaderUserId: leaderUser.user_id,
       leaderId: leaderUser.neverai_id || leaderNeveraiId,
-      leaderName: leaderUser.display_name || 'Leader',
+      leaderName: cleanLeaderName,
       leadsTracking,
       stageTags,
       levels: (levels || []).map((l: any) => ({

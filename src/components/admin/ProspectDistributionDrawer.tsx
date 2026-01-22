@@ -56,10 +56,10 @@ export function ProspectDistributionDrawer({
                   <div className="flex items-start justify-between gap-2">
                     <div className="min-w-0 flex-1">
                       <div className="font-medium text-foreground truncate">
-                        {user.display_name || "Unnamed User"}
+                        {user.display_name || (user.email ? user.email.split('@')[0].charAt(0).toUpperCase() + user.email.split('@')[0].slice(1) : 'User')}
                       </div>
                       <div className="text-sm text-muted-foreground truncate">
-                        {user.email || "No email"}
+                        {user.email ? user.email.split('@')[0] : ''}
                       </div>
                     </div>
                     <div className="text-right shrink-0">

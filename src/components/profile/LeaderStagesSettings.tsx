@@ -205,7 +205,9 @@ export function LeaderStagesSettings({
             <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
               <div>
                 <p className="text-xs text-muted-foreground">Connected to</p>
-                <p className="font-medium text-sm">{profile.upline_email}</p>
+                <p className="font-medium text-sm">
+                  {profile.upline_email.split('@')[0].charAt(0).toUpperCase() + profile.upline_email.split('@')[0].slice(1)}
+                </p>
               </div>
               <Button variant="ghost" size="sm" onClick={handleClearUpline} disabled={updating}>
                 <X className="h-4 w-4" />

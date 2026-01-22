@@ -591,10 +591,9 @@ export function LeaderTrackingFormatSettings({
               <div>
                 <p className="text-xs text-muted-foreground">Connected to Upline</p>
                 <div className="flex items-center gap-2">
-                  <p className="font-semibold text-primary">{profile?.upline_email}</p>
-                  {directLeaderName && (
-                    <span className="text-sm text-foreground font-medium">({directLeaderName})</span>
-                  )}
+                  <p className="font-semibold text-primary">
+                    {directLeaderName || (profile?.upline_email ? profile.upline_email.split('@')[0].charAt(0).toUpperCase() + profile.upline_email.split('@')[0].slice(1) : 'Upline')}
+                  </p>
                 </div>
               </div>
               <div className="flex items-center gap-1">
