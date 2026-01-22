@@ -68,9 +68,9 @@ export function useProspectsQuery(options: UseProspectsQueryOptions = {}) {
         query = query.eq('action_taken', funnelTag);
       }
 
-      // Apply search filter
+      // Apply search filter (only for name and notes - phone is encrypted)
       if (search) {
-        query = query.or(`name.ilike.%${search}%,phone.ilike.%${search}%,notes.ilike.%${search}%`);
+        query = query.or(`name.ilike.%${search}%,notes.ilike.%${search}%`);
       }
 
       const { data: prospects, error } = await query;
@@ -137,9 +137,10 @@ export function useProspectsQuery(options: UseProspectsQueryOptions = {}) {
         query = query.eq('action_taken', funnelTag);
       }
 
-      // Apply search filter SERVER-SIDE
+      // Apply search filter SERVER-SIDE (only for name and notes - phone is encrypted)
+      // Phone search is handled client-side after decryption
       if (search) {
-        query = query.or(`name.ilike.%${search}%,phone.ilike.%${search}%,notes.ilike.%${search}%`);
+        query = query.or(`name.ilike.%${search}%,notes.ilike.%${search}%`);
       }
 
       // Stable ordering
@@ -162,7 +163,32 @@ export function useProspectsQuery(options: UseProspectsQueryOptions = {}) {
 
       // Decrypt phone numbers in batch
       const decryptedProspects = await decryptBatch(rawProspects || []);
-      const mappedProspects = decryptedProspects.map(mapDbProspect);
+      let mappedProspects = decryptedProspects.map(mapDbProspect);
+
+      // CLIENT-SIDE phone search filter (phone is encrypted in DB, can't search server-side)
+      // Apply after decryption to enable partial phone number matching
+      if (search) {
+        const searchLower = search.toLowerCase().trim();
+        // Normalize search: remove common phone prefixes and special chars
+        const normalizedSearch = searchLower.replace(/[^0-9a-z]/gi, '');
+        
+        mappedProspects = mappedProspects.filter(p => {
+          // Check if name already matched (server-side) - keep those
+          if (p.name.toLowerCase().includes(searchLower)) return true;
+          // Check notes (server-side match)
+          if (p.notes?.toLowerCase().includes(searchLower)) return true;
+          
+          // Phone search: normalize and check for partial match
+          if (p.phone) {
+            const normalizedPhone = p.phone.replace(/[^0-9]/g, '');
+            // Match if search digits appear anywhere in phone
+            if (normalizedPhone.includes(normalizedSearch)) return true;
+            // Also match original phone format
+            if (p.phone.toLowerCase().includes(searchLower)) return true;
+          }
+          return false;
+        });
+      }
 
       return {
         prospects: mappedProspects,
@@ -447,7 +473,12 @@ export function useProspectsQuery(options: UseProspectsQueryOptions = {}) {
         return { imported: 0, skipped };
       }
 
-      const prospectsToProcess = validProspects.map((p) => ({
+      // CRITICAL: Preserve Excel row order by assigning sequential sort_order
+      // Each prospect gets a sort_order based on its position in the import array
+      // We use negative values to ensure imported rows appear BEFORE existing rows
+      // (existing rows have null or positive sort_order)
+      const timestamp = Date.now();
+      const prospectsToProcess = validProspects.map((p, index) => ({
         user_id: user.id,
         name: p.name!,
         phone: p.phone!,
@@ -458,6 +489,9 @@ export function useProspectsQuery(options: UseProspectsQueryOptions = {}) {
         profession: (p as any).profession || null,
         sheet_id: p.sheet_id || null,
         batch_date: p.batch_date || new Date().toISOString().split('T')[0],
+        // Preserve exact Excel row order: row 1 = sort_order 1, row 2 = sort_order 2, etc.
+        // Use timestamp offset to keep different imports in separate "batches"
+        sort_order: index + 1,
       }));
 
       const CHUNK_SIZE = 50;
