@@ -41,7 +41,9 @@ export function useLeaderSetup() {
       if (result.success) {
         // Also mark leader prompt as completed since they connected via share link
         await updateProfile({ leader_prompt_completed: true });
-        toast.success(`Connected to upline: ${pendingUplineEmail}`);
+        // Show email prefix only, never full email
+        const uplineName = pendingUplineEmail.split('@')[0].charAt(0).toUpperCase() + pendingUplineEmail.split('@')[0].slice(1);
+        toast.success(`Connected to upline: ${uplineName}`);
       }
     };
 

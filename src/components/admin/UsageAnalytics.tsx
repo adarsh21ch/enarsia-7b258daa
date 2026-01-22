@@ -109,10 +109,10 @@ export function UsageAnalytics({ activeUsage }: UsageAnalyticsProps) {
                     
                     <div className="flex-1 min-w-0">
                       <p className="font-medium text-sm truncate">
-                        {user.display_name || 'No Name'}
+                        {user.display_name || (user.email ? user.email.split('@')[0].charAt(0).toUpperCase() + user.email.split('@')[0].slice(1) : 'User')}
                       </p>
                       <p className="text-xs text-muted-foreground truncate">
-                        {user.email || 'Unknown'}
+                        {user.email ? user.email.split('@')[0] : ''}
                       </p>
                     </div>
                     

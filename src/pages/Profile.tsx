@@ -192,10 +192,12 @@ export default function Profile() {
                   {/* Level dropdown in top-right */}
                   <ProfileLevelDropdown currentLevelId={profile?.level_id || null} uplineEmail={profile?.upline_email || null} userId={user.id} onLevelChange={() => refetch?.()} />
                 </div>
-                {/* Show connected upline email if exists */}
+                {/* Show connected upline - display name or email prefix, never full email */}
                 {profile?.upline_email && (
                   <p className="text-xs text-muted-foreground mt-2">
-                    Connected to: <span className="text-primary font-medium">{profile.upline_email}</span>
+                    Connected to: <span className="text-primary font-medium">
+                      {profile.upline_email.split('@')[0].charAt(0).toUpperCase() + profile.upline_email.split('@')[0].slice(1)}
+                    </span>
                   </p>
                 )}
               </div>

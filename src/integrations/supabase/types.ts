@@ -2882,6 +2882,10 @@ export type Database = {
       generate_neverai_id: { Args: never; Returns: string }
       generate_sequential_neverai_id: { Args: never; Returns: string }
       generate_simple_neverai_id: { Args: never; Returns: string }
+      get_clean_display_name: {
+        Args: { p_display_name: string; p_email: string }
+        Returns: string
+      }
       get_leader_funnel_config: {
         Args: { target_neverai_id: string }
         Returns: {
