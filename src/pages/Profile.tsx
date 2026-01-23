@@ -14,6 +14,7 @@ import { ChangePasswordDialog } from '@/components/profile/ChangePasswordDialog'
 import { LeaderTrackingFormatDrawer } from '@/components/profile/LeaderTrackingFormatDrawer';
 import { ProfileLevelDropdown } from '@/components/profile/ProfileLevelDropdown';
 import { HelpSupportDrawer } from '@/components/profile/HelpSupportDrawer';
+import { UserGuideDrawer } from '@/components/profile/UserGuideDrawer';
 
 import { ProgressiveNudgeBanner } from '@/components/subscription/ProgressiveNudgeBanner';
 import { PullToRefreshIndicator } from '@/components/PullToRefreshIndicator';
@@ -334,6 +335,9 @@ export default function Profile() {
               </div>
             </CollapsibleContent>
           </Collapsible>
+
+          {/* User Guide - Video tutorials & help */}
+          <UserGuideDrawer />
 
           {/* Help & Support */}
           <HelpSupportDrawer />
