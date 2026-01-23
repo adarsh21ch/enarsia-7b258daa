@@ -36,7 +36,16 @@ import {
   X,
   ExternalLink,
   LayoutDashboard,
-  Image as ImageIcon,
+  Sparkles,
+  Clock,
+  Target,
+  FolderOpen,
+  Zap,
+  Eye,
+  Edit,
+  Trash2,
+  Link,
+  ArrowRight,
 } from 'lucide-react';
 
 // ============ Helper Components ============
@@ -113,16 +122,23 @@ function GifDemo({ src, alt }: GifDemoProps) {
   );
 }
 
-// Placeholder for screenshots - shows a styled box with description
-interface ScreenshotPlaceholderProps {
-  description: string;
+// Feature highlight chips with icons (compact visual representation)
+interface FeatureHighlightProps {
+  features: { icon: React.ElementType; label: string }[];
 }
 
-function ScreenshotPlaceholder({ description }: ScreenshotPlaceholderProps) {
+function FeatureHighlight({ features }: FeatureHighlightProps) {
   return (
-    <div className="rounded-lg border-2 border-dashed border-muted-foreground/20 bg-muted/30 p-4 my-3 flex flex-col items-center justify-center gap-2 min-h-[100px]">
-      <ImageIcon className="h-8 w-8 text-muted-foreground/40" />
-      <p className="text-xs text-muted-foreground text-center">{description}</p>
+    <div className="flex flex-wrap gap-2 my-2">
+      {features.map((feature, index) => {
+        const Icon = feature.icon;
+        return (
+          <div key={index} className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-full bg-primary/10 text-primary text-xs font-medium">
+            <Icon className="h-3.5 w-3.5" />
+            <span>{feature.label}</span>
+          </div>
+        );
+      })}
     </div>
   );
 }
@@ -198,7 +214,12 @@ const GUIDE_SECTIONS: GuideSection[] = [
         <p className="text-sm text-muted-foreground">
           Welcome to the app! This guide will help you get started with managing your leads and tracking your progress.
         </p>
-        <ScreenshotPlaceholder description="Screenshot: App overview with tabs highlighted" />
+        <FeatureHighlight features={[
+          { icon: Phone, label: 'Follow Up' },
+          { icon: List, label: 'ListUp' },
+          { icon: BarChart3, label: 'TrackUp' },
+          { icon: CheckSquare, label: 'TodoUp' },
+        ]} />
         <h4 className="font-medium text-sm">First Steps</h4>
         <StepList
           steps={[
@@ -223,7 +244,12 @@ const GUIDE_SECTIONS: GuideSection[] = [
         <p className="text-sm text-muted-foreground">
           The Follow Up tab is your main workspace for managing leads and tracking call responses.
         </p>
-        <ScreenshotPlaceholder description="Screenshot: Follow Up tab with leads list" />
+        <FeatureHighlight features={[
+          { icon: Plus, label: 'Add Lead' },
+          { icon: Search, label: 'Search' },
+          { icon: Filter, label: 'Filter' },
+          { icon: FileSpreadsheet, label: 'Import Excel' },
+        ]} />
         
         <h4 className="font-medium text-sm flex items-center gap-2">
           <Plus className="h-4 w-4" /> Adding a New Lead
@@ -237,7 +263,7 @@ const GUIDE_SECTIONS: GuideSection[] = [
             'Tap Save to add the lead',
           ]}
         />
-        <ScreenshotPlaceholder description="Screenshot: Add lead dialog" />
+        
 
         <h4 className="font-medium text-sm flex items-center gap-2">
           <FileSpreadsheet className="h-4 w-4" /> Importing from Excel
@@ -254,7 +280,7 @@ const GUIDE_SECTIONS: GuideSection[] = [
             'Your leads will be added with original order preserved',
           ]}
         />
-        <ScreenshotPlaceholder description="Screenshot: Excel import column mapping" />
+        
         <TipBox>
           Make sure your Excel file has at least Name and Phone columns. The app will try to auto-detect column mappings.
         </TipBox>
@@ -270,7 +296,7 @@ const GUIDE_SECTIONS: GuideSection[] = [
             'Clear filters to see all leads again',
           ]}
         />
-        <ScreenshotPlaceholder description="Screenshot: Filter bottom sheet with tag options" />
+        
       </div>
     ),
   },
@@ -283,7 +309,11 @@ const GUIDE_SECTIONS: GuideSection[] = [
         <p className="text-sm text-muted-foreground">
           ListUp gives you a quick view of your leads organized by response tags. Perfect for quick follow-ups!
         </p>
-        <ScreenshotPlaceholder description="Screenshot: ListUp tab showing leads by tag" />
+        <FeatureHighlight features={[
+          { icon: Tags, label: 'By Tags' },
+          { icon: Phone, label: 'Quick Call' },
+          { icon: ArrowRight, label: 'Swipe Actions' },
+        ]} />
         <h4 className="font-medium text-sm">How to Use</h4>
         <StepList
           steps={[
@@ -308,7 +338,11 @@ const GUIDE_SECTIONS: GuideSection[] = [
         <p className="text-sm text-muted-foreground">
           Track your progress with visual analytics and see how your leads move through the funnel.
         </p>
-        <ScreenshotPlaceholder description="Screenshot: TrackUp tab with leads and funnel tracker" />
+        <FeatureHighlight features={[
+          { icon: BarChart3, label: 'Analytics' },
+          { icon: Target, label: 'Funnel' },
+          { icon: Clock, label: 'Daily Stats' },
+        ]} />
         
         <h4 className="font-medium text-sm">Leads Tracker</h4>
         <p className="text-sm text-muted-foreground">
@@ -340,7 +374,11 @@ const GUIDE_SECTIONS: GuideSection[] = [
         <p className="text-sm text-muted-foreground">
           TrackUp Dashboard shows your team's combined tracking data including leads, responses, and funnel stages. Leaders can see their entire team's progress at a glance.
         </p>
-        <ScreenshotPlaceholder description="Screenshot: TrackUp Dashboard on website" />
+        <FeatureHighlight features={[
+          { icon: Users, label: 'Team View' },
+          { icon: BarChart3, label: 'Analytics' },
+          { icon: ExternalLink, label: 'Website' },
+        ]} />
 
         <h4 className="font-medium text-sm">How to Access</h4>
         <StepList
@@ -376,7 +414,11 @@ const GUIDE_SECTIONS: GuideSection[] = [
         <p className="text-sm text-muted-foreground">
           The Activity tab shows your daily timeline of lead activities and status changes.
         </p>
-        <ScreenshotPlaceholder description="Screenshot: Activity tab with calendar strip" />
+        <FeatureHighlight features={[
+          { icon: Calendar, label: 'Calendar Strip' },
+          { icon: Clock, label: 'Timeline' },
+          { icon: Eye, label: 'Activity Log' },
+        ]} />
         
         <h4 className="font-medium text-sm">Calendar Strip</h4>
         <p className="text-sm text-muted-foreground">
@@ -404,7 +446,11 @@ const GUIDE_SECTIONS: GuideSection[] = [
         <p className="text-sm text-muted-foreground">
           Manage your daily tasks and stay organized with the built-in to-do system.
         </p>
-        <ScreenshotPlaceholder description="Screenshot: TodoUp tab with daily tasks" />
+        <FeatureHighlight features={[
+          { icon: Plus, label: 'Add Task' },
+          { icon: CheckSquare, label: 'Check Off' },
+          { icon: Calendar, label: 'Due Dates' },
+        ]} />
         
         <h4 className="font-medium text-sm">Adding Tasks</h4>
         <StepList
@@ -432,7 +478,11 @@ const GUIDE_SECTIONS: GuideSection[] = [
         <p className="text-sm text-muted-foreground">
           Understanding tags is key to getting the most out of the app.
         </p>
-        <ScreenshotPlaceholder description="Screenshot: Tracking Format Settings page" />
+        <FeatureHighlight features={[
+          { icon: Tags, label: 'Leads Tags' },
+          { icon: Zap, label: 'Funnel Tag' },
+          { icon: Target, label: 'Stage Tags' },
+        ]} />
         
         <h4 className="font-medium text-sm">Tracking Tags (Leader's Tags)</h4>
         <p className="text-sm text-muted-foreground">
@@ -443,7 +493,11 @@ const GUIDE_SECTIONS: GuideSection[] = [
           <li><strong>Funnel Tag:</strong> One special tag (marked with ⚡) that moves leads to the Funnel tab</li>
           <li><strong>Stage Tags:</strong> Funnel stages like "Day1", "Day2", "Day3"</li>
         </ul>
-        <ScreenshotPlaceholder description="Screenshot: Manage Response Tags dialog" />
+        <FeatureHighlight features={[
+          { icon: Plus, label: 'Add Tag' },
+          { icon: Edit, label: 'Edit' },
+          { icon: Trash2, label: 'Delete' },
+        ]} />
 
         <h4 className="font-medium text-sm">Personal Tags (Your Own)</h4>
         <p className="text-sm text-muted-foreground">
@@ -482,7 +536,10 @@ const GUIDE_SECTIONS: GuideSection[] = [
         <p className="text-sm text-muted-foreground">
           Your upline is your team leader or mentor. When connected, you'll share the same tracking tags, making team reporting consistent.
         </p>
-        <ScreenshotPlaceholder description="Screenshot: Upline connection section in Profile" />
+        <FeatureHighlight features={[
+          { icon: Users, label: 'Team Leader' },
+          { icon: Link, label: 'Connect' },
+        ]} />
 
         <h4 className="font-medium text-sm">How to Connect</h4>
         <StepList
@@ -494,7 +551,7 @@ const GUIDE_SECTIONS: GuideSection[] = [
             'Once approved, their tracking tags sync to your account',
           ]}
         />
-        <ScreenshotPlaceholder description="Screenshot: Connect with Upline dialog" />
+        
 
         <h4 className="font-medium text-sm">What Syncs from Upline</h4>
         <ul className="list-disc list-inside text-sm text-muted-foreground space-y-1 ml-2">
@@ -532,7 +589,10 @@ const GUIDE_SECTIONS: GuideSection[] = [
         <p className="text-sm text-muted-foreground">
           Create different sheets for different lead sources or campaigns. This helps keep your workspace organized and makes filtering easier.
         </p>
-        <ScreenshotPlaceholder description="Screenshot: Sheet tabs and sheet management" />
+        <FeatureHighlight features={[
+          { icon: FolderOpen, label: 'Sheets' },
+          { icon: Filter, label: 'Filters' },
+        ]} />
 
         <h4 className="font-medium text-sm">Using Filters Effectively</h4>
         <StepList
@@ -634,13 +694,6 @@ export function UserGuideDrawer() {
               );
             })}
           </Accordion>
-
-          {/* Footer with video placeholder note */}
-          <div className="text-center py-4 border-t mt-4">
-            <p className="text-xs text-muted-foreground">
-              📹 Video tutorials & screenshots coming soon!
-            </p>
-          </div>
         </div>
       </DrawerContent>
     </Drawer>
