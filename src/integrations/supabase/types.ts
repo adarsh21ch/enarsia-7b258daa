@@ -1489,6 +1489,247 @@ export type Database = {
           },
         ]
       }
+      nevorai_form_fields: {
+        Row: {
+          created_at: string
+          field_key: string
+          field_type: string
+          form_id: string
+          id: string
+          label: string
+          options: Json | null
+          position: number
+          required: boolean
+        }
+        Insert: {
+          created_at?: string
+          field_key: string
+          field_type: string
+          form_id: string
+          id?: string
+          label: string
+          options?: Json | null
+          position?: number
+          required?: boolean
+        }
+        Update: {
+          created_at?: string
+          field_key?: string
+          field_type?: string
+          form_id?: string
+          id?: string
+          label?: string
+          options?: Json | null
+          position?: number
+          required?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: "nevorai_form_fields_form_id_fkey"
+            columns: ["form_id"]
+            isOneToOne: false
+            referencedRelation: "nevorai_forms"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      nevorai_form_shares: {
+        Row: {
+          created_at: string
+          created_by: string
+          expires_at: string | null
+          form_id: string
+          id: string
+          token: string
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          expires_at?: string | null
+          form_id: string
+          id?: string
+          token?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          expires_at?: string | null
+          form_id?: string
+          id?: string
+          token?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "nevorai_form_shares_form_id_fkey"
+            columns: ["form_id"]
+            isOneToOne: false
+            referencedRelation: "nevorai_forms"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      nevorai_form_submissions: {
+        Row: {
+          created_at: string
+          form_id: string
+          id: string
+          share_id: string | null
+          submitter_email: string
+          submitter_user_id: string
+        }
+        Insert: {
+          created_at?: string
+          form_id: string
+          id?: string
+          share_id?: string | null
+          submitter_email: string
+          submitter_user_id: string
+        }
+        Update: {
+          created_at?: string
+          form_id?: string
+          id?: string
+          share_id?: string | null
+          submitter_email?: string
+          submitter_user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "nevorai_form_submissions_form_id_fkey"
+            columns: ["form_id"]
+            isOneToOne: false
+            referencedRelation: "nevorai_forms"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "nevorai_form_submissions_share_id_fkey"
+            columns: ["share_id"]
+            isOneToOne: false
+            referencedRelation: "nevorai_form_shares"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      nevorai_forms: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          is_public: boolean
+          owner_user_id: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_public?: boolean
+          owner_user_id: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_public?: boolean
+          owner_user_id?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      nevorai_submission_answers: {
+        Row: {
+          created_at: string
+          field_id: string | null
+          field_key: string
+          id: string
+          submission_id: string
+          value: string | null
+          value_json: Json | null
+        }
+        Insert: {
+          created_at?: string
+          field_id?: string | null
+          field_key: string
+          id?: string
+          submission_id: string
+          value?: string | null
+          value_json?: Json | null
+        }
+        Update: {
+          created_at?: string
+          field_id?: string | null
+          field_key?: string
+          id?: string
+          submission_id?: string
+          value?: string | null
+          value_json?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "nevorai_submission_answers_field_id_fkey"
+            columns: ["field_id"]
+            isOneToOne: false
+            referencedRelation: "nevorai_form_fields"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "nevorai_submission_answers_submission_id_fkey"
+            columns: ["submission_id"]
+            isOneToOne: false
+            referencedRelation: "nevorai_form_submissions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      nevorai_submission_attachments: {
+        Row: {
+          content_type: string | null
+          created_at: string
+          field_id: string | null
+          id: string
+          size: number | null
+          storage_path: string
+          submission_id: string
+        }
+        Insert: {
+          content_type?: string | null
+          created_at?: string
+          field_id?: string | null
+          id?: string
+          size?: number | null
+          storage_path: string
+          submission_id: string
+        }
+        Update: {
+          content_type?: string | null
+          created_at?: string
+          field_id?: string | null
+          id?: string
+          size?: number | null
+          storage_path?: string
+          submission_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "nevorai_submission_attachments_field_id_fkey"
+            columns: ["field_id"]
+            isOneToOne: false
+            referencedRelation: "nevorai_form_fields"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "nevorai_submission_attachments_submission_id_fkey"
+            columns: ["submission_id"]
+            isOneToOne: false
+            referencedRelation: "nevorai_form_submissions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       notifications: {
         Row: {
           body: string | null
@@ -2988,6 +3229,61 @@ export type Database = {
       is_in_downline: {
         Args: { target_user_id: string; viewer_user_id: string }
         Returns: boolean
+      }
+      nevorai_create_share_token: {
+        Args: { p_expires_at?: string; p_form_id: string }
+        Returns: {
+          expires_at: string
+          share_id: string
+          token: string
+        }[]
+      }
+      nevorai_get_form_by_token: {
+        Args: { p_token: string }
+        Returns: {
+          description: string
+          fields: Json
+          form_id: string
+          is_expired: boolean
+          owner_user_id: string
+          share_id: string
+          title: string
+        }[]
+      }
+      nevorai_get_submission_answers: {
+        Args: { p_submission_id: string }
+        Returns: {
+          answer_id: string
+          attachments: Json
+          field_id: string
+          field_key: string
+          field_label: string
+          field_type: string
+          value: string
+          value_json: Json
+        }[]
+      }
+      nevorai_list_submissions: {
+        Args: { p_form_id: string; p_limit?: number; p_offset?: number }
+        Returns: {
+          created_at: string
+          submission_id: string
+          submitter_email: string
+          submitter_user_id: string
+          total_count: number
+        }[]
+      }
+      nevorai_submit_form: {
+        Args: {
+          p_answers_json: Json
+          p_attachments_json?: Json
+          p_token: string
+        }
+        Returns: {
+          message: string
+          submission_id: string
+          success: boolean
+        }[]
       }
       normalize_leader_id: { Args: { id: string }; Returns: string }
       record_app_access: { Args: { p_app: string }; Returns: undefined }
