@@ -3235,11 +3235,7 @@ export type Database = {
       }
       nevorai_create_share_token: {
         Args: { p_expires_at?: string; p_form_id: string }
-        Returns: {
-          expires_at: string
-          share_id: string
-          token: string
-        }[]
+        Returns: string
       }
       nevorai_get_form_by_token: {
         Args: { p_token: string }
