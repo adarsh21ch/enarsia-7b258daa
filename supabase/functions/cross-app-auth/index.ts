@@ -140,7 +140,7 @@ serve(async (req) => {
         return jsonResponse(data);
       }
 
-      // ACTION: provision_leader_id (idempotent create) - Legacy support
+      // ACTION: provision_leader_id - Now just stores in pending table (no auth creation)
       case 'provision_leader_id': {
         const { email, display_name } = requestBody;
         
@@ -150,10 +150,10 @@ serve(async (req) => {
 
         const normalizedEmail = email.toLowerCase().trim();
 
-        // Check if exists
+        // Check if user already has a NeverAI account
         const { data: existing } = await supabase
           .from('profiles')
-          .select('neverai_id, user_id, display_name')
+          .select('neverai_id')
           .eq('email', normalizedEmail)
           .maybeSingle();
 
@@ -166,7 +166,23 @@ serve(async (req) => {
           });
         }
 
-        // Generate new sequential neverai_id (uses the same sequence as handle_new_user trigger)
+        // Check if already in pending table
+        const { data: pendingRecord } = await supabase
+          .from('achievers_club_pending')
+          .select('leader_id')
+          .eq('email', normalizedEmail)
+          .maybeSingle();
+
+        if (pendingRecord?.leader_id) {
+          console.log('Already pending for', normalizedEmail, ':', pendingRecord.leader_id);
+          return jsonResponse({ 
+            success: true, 
+            leader_id: pendingRecord.leader_id, 
+            is_new: false 
+          });
+        }
+
+        // Generate new sequential neverai_id
         const { data: newId, error: genError } = await supabase.rpc('generate_sequential_neverai_id');
         
         if (genError || !newId) {
@@ -174,58 +190,46 @@ serve(async (req) => {
           return jsonResponse({ success: false, error: 'Failed to generate ID' }, 500);
         }
 
-        if (existing) {
-          // Profile exists but no neverai_id - update it
-          const { error: updateError } = await supabase
-            .from('profiles')
-            .update({ 
-              neverai_id: newId,
-              display_name: display_name || existing.display_name,
-              source_app: 'achievers_club'
-            })
-            .eq('user_id', existing.user_id);
-
-          if (updateError) {
-            console.error('Update failed:', updateError);
-            return jsonResponse({ success: false, error: 'Update failed' }, 500);
-          }
-          
-          console.log('Updated existing profile with leader_id:', normalizedEmail, '->', newId);
-        } else {
-          // No profile - create auth user (trigger will create profile)
-          const { data: newUser, error: createError } = await supabase.auth.admin.createUser({
+        // Store in pending table instead of creating auth user
+        const { error: insertError } = await supabase
+          .from('achievers_club_pending')
+          .insert({
             email: normalizedEmail,
-            password: crypto.randomUUID(),
-            email_confirm: true,
-            user_metadata: { display_name, provisioned_by: 'achievers_club' }
+            leader_id: newId,
+            display_name: display_name || null
           });
 
-          if (createError) {
-            console.error('User creation failed:', createError);
-            return jsonResponse({ success: false, error: createError.message }, 500);
-          }
+        if (insertError) {
+          console.error('Insert to pending failed:', insertError);
+          return jsonResponse({ success: false, error: 'Failed to store pending record' }, 500);
+        }
+        
+        console.log('Stored pending AC member:', normalizedEmail, '->', newId);
+        return jsonResponse({ success: true, leader_id: newId, is_new: true });
+      }
 
-          // Wait for trigger to create profile, then update it
-          await new Promise(r => setTimeout(r, 100));
-          
-          const { error: profileUpdateError } = await supabase
-            .from('profiles')
-            .update({ 
-              email: normalizedEmail,
-              neverai_id: newId,
-              display_name,
-              source_app: 'achievers_club'
-            })
-            .eq('user_id', newUser.user!.id);
-
-          if (profileUpdateError) {
-            console.error('Profile update after creation failed:', profileUpdateError);
-          }
-          
-          console.log('Created new user with leader_id:', normalizedEmail, '->', newId);
+      // ACTION: check_achievers_club_membership (NEW)
+      case 'check_achievers_club_membership': {
+        const { email } = requestBody;
+        
+        if (!email) {
+          return jsonResponse({ success: false, error: 'email required' }, 400);
         }
 
-        return jsonResponse({ success: true, leader_id: newId, is_new: true });
+        const normalizedEmail = email.toLowerCase().trim();
+        
+        const { data } = await supabase
+          .from('achievers_club_pending')
+          .select('leader_id, display_name')
+          .eq('email', normalizedEmail)
+          .is('claimed_at', null)
+          .maybeSingle();
+
+        return jsonResponse({ 
+          success: true, 
+          is_member: !!data,
+          leader_id: data?.leader_id || null
+        });
       }
 
       // ACTION: get_subscription (check subscription status for TrackUp)

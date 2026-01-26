@@ -1,10 +1,11 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useNavigate, Link, useSearchParams } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { InputOTP, InputOTPGroup, InputOTPSlot } from '@/components/ui/input-otp';
 import { toast } from 'sonner';
 import { Loader2, Mail, Lock, Eye, EyeOff, ArrowLeft, User } from 'lucide-react';
 import nevoraLogo from '@/assets/nevorai-logo.jpeg';
@@ -13,7 +14,7 @@ import { getPasswordRecoveryRedirectUrl } from '@/config/siteUrl';
 export default function Auth() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const { user, signIn, signUp, loading: authLoading } = useAuth();
+  const { user, signIn, loading: authLoading } = useAuth();
   const [emailOrLeaderId, setEmailOrLeaderId] = useState('');
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
@@ -21,6 +22,18 @@ export default function Auth() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSignUp, setIsSignUp] = useState(true);
   const [isForgotPassword, setIsForgotPassword] = useState(false);
+  
+  // OTP verification state
+  const [signupStep, setSignupStep] = useState<'form' | 'otp'>('form');
+  const [pendingSignupData, setPendingSignupData] = useState<{
+    email: string;
+    password: string;
+    name: string;
+  } | null>(null);
+  const [otpCode, setOtpCode] = useState('');
+  const [otpSending, setOtpSending] = useState(false);
+  const [otpVerifying, setOtpVerifying] = useState(false);
+  const [resendCooldown, setResendCooldown] = useState(0);
   
   // Get upline parameter from share link (email-based)
   const uplineParam = searchParams.get('upline');
@@ -34,6 +47,14 @@ export default function Auth() {
       navigate('/home');
     }
   }, [user, authLoading, navigate, uplineParam]);
+
+  // Resend cooldown timer
+  useEffect(() => {
+    if (resendCooldown > 0) {
+      const timer = setTimeout(() => setResendCooldown(resendCooldown - 1), 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [resendCooldown]);
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -97,6 +118,20 @@ export default function Auth() {
     setIsSubmitting(false);
   };
 
+  const handleSendOtp = useCallback(async (emailToSend: string) => {
+    const { data, error } = await supabase.functions.invoke('send-otp', {
+      body: { email: emailToSend }
+    });
+
+    if (error || !data?.success) {
+      toast.error(data?.error || 'Failed to send verification code');
+      return false;
+    }
+    
+    toast.success('Verification code sent to your email!');
+    return true;
+  }, []);
+
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!name || !emailOrLeaderId || !password) {
@@ -111,30 +146,95 @@ export default function Auth() {
       toast.error('Password must be at least 6 characters');
       return;
     }
-    setIsSubmitting(true);
-    const { error } = await signUp(emailOrLeaderId, password);
-    if (error) {
-      const errorMessage = error.message?.toLowerCase() || '';
-      
-      if (errorMessage.includes('user already registered') || errorMessage.includes('already exists')) {
-        toast.error('An account with this email already exists. Please sign in instead.');
-        setIsSignUp(false); // Switch to sign-in mode
-      } else if (errorMessage.includes('invalid email')) {
-        toast.error('Please enter a valid email address.');
-      } else if (errorMessage.includes('password')) {
-        toast.error('Password must be at least 6 characters long.');
-      } else {
-        toast.error(error.message || 'Sign up failed. Please try again.');
+    
+    setOtpSending(true);
+    
+    const email = emailOrLeaderId.trim().toLowerCase();
+    const success = await handleSendOtp(email);
+    
+    if (success) {
+      // Store data and show OTP input
+      setPendingSignupData({
+        email,
+        password,
+        name: name.trim()
+      });
+      setSignupStep('otp');
+      setResendCooldown(60);
+    }
+    
+    setOtpSending(false);
+  };
+
+  const handleVerifyOtp = async () => {
+    if (!pendingSignupData) return;
+    
+    if (otpCode.length !== 4) {
+      toast.error('Please enter the 4-digit verification code');
+      return;
+    }
+    
+    setOtpVerifying(true);
+    
+    const { data, error } = await supabase.functions.invoke('verify-otp-and-signup', {
+      body: {
+        email: pendingSignupData.email,
+        otp_code: otpCode,
+        password: pendingSignupData.password,
+        name: pendingSignupData.name
       }
+    });
+    
+    if (error || !data?.success) {
+      toast.error(data?.error || 'Verification failed. Please try again.');
+      setOtpVerifying(false);
+      return;
+    }
+    
+    // Account created!
+    if (data.is_achievers_club_member) {
+      toast.success('Welcome! Your Achievers Club membership has been linked!', { duration: 5000 });
     } else {
-      // Store upline param for processing after profile is created
-      if (uplineParam) {
-        sessionStorage.setItem('pending_upline_email', uplineParam);
-      }
-      toast.success('Account created! You can now sign in.');
+      toast.success('Account created successfully!');
+    }
+    
+    // Store upline param for processing
+    if (uplineParam) {
+      sessionStorage.setItem('pending_upline_email', uplineParam);
+    }
+    
+    // Auto sign in
+    const { error: loginError } = await signIn(pendingSignupData.email, pendingSignupData.password);
+    
+    if (loginError) {
+      toast.info('Account created! Please sign in.');
+      setSignupStep('form');
+      setIsSignUp(false);
+    } else {
       navigate('/home');
     }
-    setIsSubmitting(false);
+    
+    setOtpVerifying(false);
+  };
+
+  const handleResendOtp = async () => {
+    if (!pendingSignupData || resendCooldown > 0) return;
+    
+    setOtpSending(true);
+    const success = await handleSendOtp(pendingSignupData.email);
+    
+    if (success) {
+      setResendCooldown(60);
+      setOtpCode('');
+    }
+    
+    setOtpSending(false);
+  };
+
+  const handleBackFromOtp = () => {
+    setSignupStep('form');
+    setOtpCode('');
+    setPendingSignupData(null);
   };
 
   const handleForgotPassword = async (e: React.FormEvent) => {
@@ -221,6 +321,87 @@ export default function Auth() {
               )}
             </Button>
           </form>
+        </div>
+      </div>
+    );
+  }
+
+  // OTP Verification View
+  if (signupStep === 'otp' && pendingSignupData) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background p-4">
+        <div className="w-full max-w-md bg-card rounded-2xl shadow-xl border border-border p-8">
+          <div className="text-center mb-8">
+            <img src={nevoraLogo} alt="NevorAI Logo" className="w-16 h-16 mx-auto mb-3 rounded-xl" />
+            <h1 className="text-2xl font-bold text-foreground">NevorAI</h1>
+            <p className="text-muted-foreground text-sm mt-1">Never miss a followup Again</p>
+          </div>
+
+          <button
+            type="button"
+            onClick={handleBackFromOtp}
+            className="flex items-center text-sm text-muted-foreground hover:text-foreground mb-4"
+          >
+            <ArrowLeft className="h-4 w-4 mr-1" />
+            Back
+          </button>
+
+          <div className="text-center mb-6">
+            <h2 className="text-xl font-semibold text-foreground mb-2">Verify Your Email</h2>
+            <p className="text-sm text-muted-foreground">
+              We sent a 4-digit code to
+            </p>
+            <p className="text-sm font-medium text-foreground">{pendingSignupData.email}</p>
+          </div>
+
+          <div className="flex justify-center mb-6">
+            <InputOTP 
+              maxLength={4} 
+              value={otpCode} 
+              onChange={setOtpCode}
+              className="gap-2"
+            >
+              <InputOTPGroup className="gap-2">
+                <InputOTPSlot index={0} className="w-12 h-14 text-xl font-semibold" />
+                <InputOTPSlot index={1} className="w-12 h-14 text-xl font-semibold" />
+                <InputOTPSlot index={2} className="w-12 h-14 text-xl font-semibold" />
+                <InputOTPSlot index={3} className="w-12 h-14 text-xl font-semibold" />
+              </InputOTPGroup>
+            </InputOTP>
+          </div>
+
+          <Button 
+            onClick={handleVerifyOtp} 
+            className="w-full mb-4" 
+            disabled={otpVerifying || otpCode.length !== 4}
+          >
+            {otpVerifying ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Verifying...
+              </>
+            ) : (
+              'Verify & Create Account'
+            )}
+          </Button>
+
+          <div className="text-center">
+            <p className="text-sm text-muted-foreground mb-2">Didn't receive the code?</p>
+            <button
+              type="button"
+              onClick={handleResendOtp}
+              disabled={resendCooldown > 0 || otpSending}
+              className="text-sm text-primary hover:underline font-medium disabled:text-muted-foreground disabled:no-underline disabled:cursor-not-allowed"
+            >
+              {otpSending ? (
+                'Sending...'
+              ) : resendCooldown > 0 ? (
+                `Resend in ${resendCooldown}s`
+              ) : (
+                'Resend Code'
+              )}
+            </button>
+          </div>
         </div>
       </div>
     );
@@ -316,11 +497,11 @@ export default function Auth() {
             </div>
           </div>
 
-          <Button type="submit" className="w-full" disabled={isSubmitting}>
-            {isSubmitting ? (
+          <Button type="submit" className="w-full" disabled={isSubmitting || otpSending}>
+            {isSubmitting || otpSending ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                {isSignUp ? 'Creating account...' : 'Signing in...'}
+                {isSignUp ? 'Sending verification code...' : 'Signing in...'}
               </>
             ) : (
               isSignUp ? 'Sign Up' : 'Sign In'

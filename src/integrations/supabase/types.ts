@@ -768,6 +768,36 @@ export type Database = {
           },
         ]
       }
+      achievers_club_pending: {
+        Row: {
+          claimed_at: string | null
+          claimed_user_id: string | null
+          created_at: string | null
+          display_name: string | null
+          email: string
+          id: string
+          leader_id: string | null
+        }
+        Insert: {
+          claimed_at?: string | null
+          claimed_user_id?: string | null
+          created_at?: string | null
+          display_name?: string | null
+          email: string
+          id?: string
+          leader_id?: string | null
+        }
+        Update: {
+          claimed_at?: string | null
+          claimed_user_id?: string | null
+          created_at?: string | null
+          display_name?: string | null
+          email?: string
+          id?: string
+          leader_id?: string | null
+        }
+        Relationships: []
+      }
       activity_logs: {
         Row: {
           activity_type: string
@@ -1186,6 +1216,36 @@ export type Database = {
           updated_at?: string | null
           user_id?: string
           video_sent_count?: number | null
+        }
+        Relationships: []
+      }
+      email_otps: {
+        Row: {
+          attempts: number | null
+          created_at: string | null
+          email: string
+          expires_at: string
+          id: string
+          otp_code: string
+          verified: boolean | null
+        }
+        Insert: {
+          attempts?: number | null
+          created_at?: string | null
+          email: string
+          expires_at?: string
+          id?: string
+          otp_code: string
+          verified?: boolean | null
+        }
+        Update: {
+          attempts?: number | null
+          created_at?: string | null
+          email?: string
+          expires_at?: string
+          id?: string
+          otp_code?: string
+          verified?: boolean | null
         }
         Relationships: []
       }

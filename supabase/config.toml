@@ -26,3 +26,9 @@ verify_jwt = false
 
 [functions.cross-app-auth]
 verify_jwt = false
+
+[functions.send-otp]
+verify_jwt = false
+
+[functions.verify-otp-and-signup]
+verify_jwt = false
