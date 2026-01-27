@@ -173,7 +173,10 @@ export function useLeadsTrackingStats(): TrackingStatsResult {
   return {
     dailyMetrics: data?.dailyMetrics || [],
     totals: data?.totals || { leads: 0, responses: 0, tagCounts: {} },
-    loading: isLoading,
+    // IMPORTANT: when the query is disabled (enabled: false), React Query reports isLoading=false.
+    // If we don't include formatLoading here, TrackUp renders a partial/blank grid first, then "refreshes"
+    // once tracking tags load. This prevents that intermediate UI.
+    loading: isLoading || formatLoading,
     monthYear,
     changeMonth,
     daysInMonth,
@@ -326,7 +329,8 @@ export function useFunnelTrackingStats(): TrackingStatsResult {
   return {
     dailyMetrics: data?.dailyMetrics || [],
     totals: data?.totals || { leads: 0, responses: 0, tagCounts: {} },
-    loading: isLoading,
+    // See note in useLeadsTrackingStats(): avoid partial/blank grid render before tags are ready.
+    loading: isLoading || formatLoading,
     monthYear,
     changeMonth,
     daysInMonth,
