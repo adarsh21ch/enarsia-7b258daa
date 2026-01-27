@@ -1,6 +1,7 @@
 /**
  * Dynamic Leads Tracker - Dashboard-style transposed layout
  * Rows = Metrics, Columns = Dates (horizontal scroll)
+ * Compact KPIs in single row, no scrolling
  */
 import { useLeadsTrackingStats } from '@/hooks/useTrackingStats';
 import { useTrackingFormat } from '@/hooks/useTrackingFormat';
@@ -37,7 +38,7 @@ export function DynamicLeadsTracker({ isPro = true }: DynamicLeadsTrackerProps) 
   if (loading) {
     return (
       <div className="space-y-3">
-        <Skeleton className="h-24 rounded-xl" />
+        <Skeleton className="h-16 rounded-xl" />
         <Skeleton className="h-64 w-full rounded-xl" />
       </div>
     );
@@ -58,51 +59,48 @@ export function DynamicLeadsTracker({ isPro = true }: DynamicLeadsTrackerProps) 
 
   return (
     <div className="flex flex-col h-full animate-fade-in space-y-3">
-      {/* Summary Header Cards */}
+      {/* Compact KPI Row - Single line, no scroll */}
       <div className="bg-card rounded-xl p-3 border border-border/50">
-        <div className="flex items-center justify-between mb-2">
-          <div className="flex items-center gap-4">
-            <div>
-              <span className="text-xs text-muted-foreground">Leads</span>
-              <p className="text-xl font-bold">{isPro ? totals.leads : '–'}</p>
-            </div>
-            <div className="w-px h-8 bg-border" />
-            <div>
-              <span className="text-xs text-muted-foreground">Responses</span>
-              <p className="text-xl font-bold">{isPro ? totals.responses : '–'}</p>
-            </div>
+        <div className="flex items-center gap-3 flex-wrap">
+          {/* Leads */}
+          <div className="flex items-center gap-1.5 px-2 py-1 rounded-lg bg-blue-500/10">
+            <Users className="h-3 w-3 text-blue-600" />
+            <span className="text-[10px] font-medium text-blue-600">Leads</span>
+            <span className="text-xs font-bold">{isPro ? totals.leads : '–'}</span>
           </div>
-        </div>
-
-        {/* Enrollment/Final Tag Badge */}
-        {leadsFinalTargetTag && (
-          <div className="flex items-center gap-2 pt-2 border-t border-border/50">
-            <div className="flex items-center gap-1 px-2 py-1 rounded-lg bg-amber-500/10 border border-amber-500/30">
-              <Star className="h-3.5 w-3.5 text-amber-500 fill-amber-500" />
-              <span className="text-xs font-medium text-amber-600">{leadsFinalTargetTag}: {isPro ? (totals.tagCounts[leadsFinalTargetTag] || 0) : '–'}</span>
-            </div>
+          
+          {/* Responses */}
+          <div className="flex items-center gap-1.5 px-2 py-1 rounded-lg bg-emerald-500/10">
+            <MessageSquare className="h-3 w-3 text-emerald-600" />
+            <span className="text-[10px] font-medium text-emerald-600">Responses</span>
+            <span className="text-xs font-bold">{isPro ? totals.responses : '–'}</span>
           </div>
-        )}
-
-        {/* KPI Strip - Horizontal Scroll */}
-        <div className="flex gap-2 overflow-x-auto pt-2 pb-1 -mx-1 px-1 scrollbar-hide">
-          <div className="flex items-center gap-1.5 px-2 py-1 rounded-lg bg-muted/50 shrink-0">
+          
+          {/* Response Tags - first 3 only to keep compact */}
+          {tags.slice(0, 3).map((tag, idx) => {
+            const isFinal = tag === leadsFinalTargetTag;
+            const color = METRIC_COLORS.tag[idx % METRIC_COLORS.tag.length];
+            return (
+              <div 
+                key={tag}
+                className={cn(
+                  "flex items-center gap-1 px-2 py-1 rounded-lg",
+                  color.bg,
+                  isFinal && "ring-1 ring-amber-500/50"
+                )}
+              >
+                {isFinal && <Star className="h-3 w-3 text-amber-500 fill-amber-500" />}
+                <span className="text-[10px] font-medium truncate max-w-[50px]">{tag}</span>
+                <span className="text-xs font-bold">{isPro ? (totals.tagCounts[tag] || 0) : '–'}</span>
+              </div>
+            );
+          })}
+          
+          {/* Active Days */}
+          <div className="flex items-center gap-1 px-2 py-1 rounded-lg bg-muted/50 ml-auto">
             <Calendar className="h-3 w-3 text-muted-foreground" />
-            <span className="text-[10px] font-medium">Active Days</span>
-            <span className="text-xs font-bold">{daysInMonth - daysRemaining}/{daysInMonth}</span>
+            <span className="text-[10px] font-medium">{daysInMonth - daysRemaining}/{daysInMonth}</span>
           </div>
-          {tags.slice(0, 3).map((tag, idx) => (
-            <div 
-              key={tag} 
-              className={cn(
-                "flex items-center gap-1.5 px-2 py-1 rounded-lg shrink-0",
-                METRIC_COLORS.tag[idx % METRIC_COLORS.tag.length].bg
-              )}
-            >
-              <span className="text-[10px] font-medium truncate max-w-[60px]">{tag}</span>
-              <span className="text-xs font-bold">{isPro ? (totals.tagCounts[tag] || 0) : '–'}</span>
-            </div>
-          ))}
         </div>
       </div>
 
@@ -114,8 +112,7 @@ export function DynamicLeadsTracker({ isPro = true }: DynamicLeadsTrackerProps) 
         <div className="text-center min-w-[130px]">
           <p className="font-semibold text-sm">{formattedMonth}</p>
           <p className="text-[10px] text-muted-foreground">
-            <span className="text-primary font-medium">{daysInMonth - daysRemaining}</span>/{daysInMonth} days
-            {daysRemaining > 0 && <span className="ml-1">• {daysRemaining} left</span>}
+            {daysRemaining > 0 && <span>{daysRemaining} days left</span>}
           </p>
         </div>
         <Button variant="ghost" size="icon" onClick={() => changeMonth('next')} className="h-7 w-7 rounded-full">

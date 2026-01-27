@@ -46,7 +46,7 @@ export default function Auth() {
       if (uplineParam) {
         sessionStorage.setItem('pending_upline_email', uplineParam);
       }
-      navigate('/home');
+      navigate('/dashboard');
     }
   }, [user, authLoading, navigate, uplineParam]);
 
@@ -115,7 +115,7 @@ export default function Auth() {
         sessionStorage.setItem('pending_upline_email', uplineParam);
       }
       toast.success('Welcome back!');
-      navigate('/home');
+      navigate('/dashboard');
     }
     setIsSubmitting(false);
   };
@@ -213,7 +213,7 @@ export default function Auth() {
       setSignupStep('form');
       setIsSignUp(false);
     } else {
-      navigate('/home');
+      navigate('/dashboard');
     }
     
     setOtpVerifying(false);
@@ -269,7 +269,7 @@ export default function Auth() {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: `${PUBLISHED_APP_URL}/home`,
+          redirectTo: `${PUBLISHED_APP_URL}/dashboard`,
           queryParams: {
             access_type: 'offline',
             prompt: 'consent',

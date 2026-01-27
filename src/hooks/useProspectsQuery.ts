@@ -466,7 +466,9 @@ export function useProspectsQuery(options: UseProspectsQueryOptions = {}) {
     ): Promise<{ imported: number; skipped: number }> => {
       if (!user) return { imported: 0, skipped: 0 };
 
-      const validProspects = prospectsData.filter((p) => p.name && p.phone);
+      // Fix: Allow empty phone (phone is optional per validation rules)
+      // Previously: p.name && p.phone - this skipped rows with empty phone!
+      const validProspects = prospectsData.filter((p) => p.name && p.name.toString().trim());
       const skipped = prospectsData.length - validProspects.length;
 
       if (validProspects.length === 0) {
@@ -501,6 +503,7 @@ export function useProspectsQuery(options: UseProspectsQueryOptions = {}) {
       }
 
       let totalImported = 0;
+      let failedCount = 0;
 
       for (let chunkIndex = 0; chunkIndex < chunks.length; chunkIndex++) {
         const chunk = chunks[chunkIndex];
@@ -511,6 +514,9 @@ export function useProspectsQuery(options: UseProspectsQueryOptions = {}) {
           encryptedChunk = await encryptBatch(chunk);
         } catch (err) {
           console.error('Failed to encrypt batch:', err);
+          // Track encryption failures
+          failedCount += chunk.length;
+          continue;
         }
 
         const { data, error } = await supabase
@@ -520,11 +526,17 @@ export function useProspectsQuery(options: UseProspectsQueryOptions = {}) {
 
         if (error) {
           console.error('Failed to import chunk:', error);
+          failedCount += chunk.length;
           continue;
         }
 
         totalImported += data?.length || 0;
         onProgress?.(totalImported, validProspects.length);
+      }
+
+      // Log summary for debugging
+      if (failedCount > 0) {
+        console.warn(`Import summary: ${totalImported} imported, ${skipped} skipped (no name), ${failedCount} failed`);
       }
 
       // Invalidate ALL prospect queries to refetch with new data

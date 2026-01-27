@@ -1,16 +1,17 @@
 /**
- * Dynamic Funnel Tracker - Dashboard-style transposed layout
- * Rows = Stages, Columns = Dates (horizontal scroll)
+ * Dynamic Funnel Tracker - Funnel-period based layout
+ * Rows = Stages, Columns = Funnel periods (not daily dates)
  * Uses CUMULATIVE "reached stage" counting logic
  */
 import { useFunnelTrackingStats } from '@/hooks/useTrackingStats';
 import { useTrackingFormat } from '@/hooks/useTrackingFormat';
+import { useFunnelConfig } from '@/hooks/useFunnelConfig';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
-import { ChevronLeft, ChevronRight, Users, Layers, Calendar, Star, TrendingUp } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Layers, Star } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { format, parse } from 'date-fns';
-import { useRef } from 'react';
+import { format, parse, addDays } from 'date-fns';
+import { useRef, useMemo } from 'react';
 
 // Color palette for stages
 const STAGE_COLORS = [
@@ -23,6 +24,12 @@ const STAGE_COLORS = [
   { bg: 'bg-orange-500/10', text: 'text-orange-600', border: 'border-orange-500/30' },
 ];
 
+interface FunnelPeriod {
+  label: string;
+  dateRange: string;
+  tagCounts: Record<string, number>;
+}
+
 interface DynamicFunnelTrackerProps {
   isPro?: boolean;
 }
@@ -30,20 +37,60 @@ interface DynamicFunnelTrackerProps {
 export function DynamicFunnelTracker({ isPro = true }: DynamicFunnelTrackerProps) {
   const { dailyMetrics, totals, loading, monthYear, changeMonth, daysInMonth, daysRemaining, tags } = useFunnelTrackingStats();
   const { stageFinalTargetTag } = useTrackingFormat();
+  const { getEffectiveConfig } = useFunnelConfig();
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
   const formattedMonth = format(parse(monthYear, 'yyyy-MM', new Date()), 'MMMM yyyy');
+  const effectiveConfig = getEffectiveConfig();
+  const funnelLength = effectiveConfig?.funnel_length || 3;
+
+  // Group daily metrics into funnel periods
+  const funnelPeriods = useMemo((): FunnelPeriod[] => {
+    if (!dailyMetrics.length) return [];
+
+    const periods: FunnelPeriod[] = [];
+    let periodIndex = 1;
+
+    for (let i = 0; i < dailyMetrics.length; i += funnelLength) {
+      const periodDays = dailyMetrics.slice(i, i + funnelLength);
+      if (periodDays.length === 0) break;
+
+      // Aggregate counts for this period
+      const aggregatedCounts: Record<string, number> = {};
+      tags.forEach(tag => { aggregatedCounts[tag] = 0; });
+      
+      periodDays.forEach(day => {
+        Object.entries(day.tagCounts).forEach(([tag, count]) => {
+          aggregatedCounts[tag] = (aggregatedCounts[tag] || 0) + count;
+        });
+      });
+
+      const firstDay = periodDays[0].date.split(' ')[0];
+      const lastDay = periodDays[periodDays.length - 1].date.split(' ')[0];
+      const dateRange = periodDays.length > 1 ? `${firstDay}-${lastDay}` : firstDay;
+
+      periods.push({
+        label: `F${periodIndex}`,
+        dateRange,
+        tagCounts: aggregatedCounts,
+      });
+
+      periodIndex++;
+    }
+
+    return periods;
+  }, [dailyMetrics, funnelLength, tags]);
 
   if (loading) {
     return (
       <div className="space-y-3">
-        <Skeleton className="h-24 rounded-xl" />
+        <Skeleton className="h-20 rounded-xl" />
         <Skeleton className="h-64 w-full rounded-xl" />
       </div>
     );
   }
 
-  // Build stages array with colors
+  // Build stages array with colors (NO "Leads" row)
   const stages = tags.map((tag, idx) => ({
     key: tag,
     label: tag,
@@ -53,52 +100,32 @@ export function DynamicFunnelTracker({ isPro = true }: DynamicFunnelTrackerProps
 
   return (
     <div className="flex flex-col h-full animate-fade-in space-y-3">
-      {/* Summary Header Cards */}
+      {/* Compact Summary Header - Single Row KPIs */}
       <div className="bg-card rounded-xl p-3 border border-border/50">
-        <div className="flex items-center justify-between mb-2">
-          <div className="flex items-center gap-4">
-            <div>
-              <span className="text-xs text-muted-foreground">Entry (Leads)</span>
-              <p className="text-xl font-bold">{isPro ? totals.leads : '–'}</p>
-            </div>
-            <div className="w-px h-8 bg-border" />
-            {stageFinalTargetTag && (
-              <div>
-                <div className="flex items-center gap-1">
-                  <Star className="h-3 w-3 text-amber-500 fill-amber-500" />
-                  <span className="text-xs text-muted-foreground">Final ({stageFinalTargetTag})</span>
-                </div>
-                <p className="text-xl font-bold">{isPro ? (totals.tagCounts[stageFinalTargetTag] || 0) : '–'}</p>
-              </div>
-            )}
+        <div className="flex items-center gap-3 flex-wrap">
+          {/* Entry (Total) */}
+          <div className="flex items-center gap-1.5 px-2 py-1 rounded-lg bg-blue-500/10">
+            <Layers className="h-3 w-3 text-blue-600" />
+            <span className="text-[10px] font-medium text-blue-600">Entry</span>
+            <span className="text-xs font-bold">{isPro ? totals.responses : '–'}</span>
           </div>
-        </div>
-
-        {/* Stage KPI Strip - Horizontal Scroll */}
-        <div className="flex gap-2 overflow-x-auto pt-2 pb-1 -mx-1 px-1 scrollbar-hide border-t border-border/50">
+          
+          {/* Stage KPIs - compact, non-scrolling */}
           {stages.map((stage) => (
             <div 
               key={stage.key} 
               className={cn(
-                "flex items-center gap-1.5 px-2 py-1 rounded-lg shrink-0",
+                "flex items-center gap-1 px-2 py-1 rounded-lg",
                 stage.color.bg,
                 stage.isFinal && "ring-1 ring-amber-500/50"
               )}
             >
               {stage.isFinal && <Star className="h-3 w-3 text-amber-500 fill-amber-500" />}
-              <span className="text-[10px] font-medium truncate max-w-[60px]">{stage.label}</span>
+              <span className="text-[10px] font-medium truncate max-w-[50px]">{stage.label}</span>
               <span className="text-xs font-bold">{isPro ? (totals.tagCounts[stage.key] || 0) : '–'}</span>
             </div>
           ))}
         </div>
-      </div>
-
-      {/* Cumulative Info Banner */}
-      <div className="bg-muted/50 rounded-lg px-3 py-2 flex items-center gap-2">
-        <TrendingUp className="h-4 w-4 text-primary shrink-0" />
-        <p className="text-xs text-muted-foreground">
-          <span className="font-medium text-foreground">Cumulative counting:</span> Prospects at Stage 3 are also counted in Stage 1 & 2
-        </p>
       </div>
 
       {/* Month Selector */}
@@ -109,8 +136,7 @@ export function DynamicFunnelTracker({ isPro = true }: DynamicFunnelTrackerProps
         <div className="text-center min-w-[130px]">
           <p className="font-semibold text-sm">{formattedMonth}</p>
           <p className="text-[10px] text-muted-foreground">
-            <span className="text-primary font-medium">{daysInMonth - daysRemaining}</span>/{daysInMonth} days
-            {daysRemaining > 0 && <span className="ml-1">• {daysRemaining} left</span>}
+            {funnelPeriods.length} funnels ({funnelLength}-day cycles)
           </p>
         </div>
         <Button variant="ghost" size="icon" onClick={() => changeMonth('next')} className="h-7 w-7 rounded-full">
@@ -118,12 +144,12 @@ export function DynamicFunnelTracker({ isPro = true }: DynamicFunnelTrackerProps
         </Button>
       </div>
 
-      {/* Transposed Data Grid */}
+      {/* Funnel-Period Data Grid */}
       <div className="bg-card rounded-xl border border-border/50 overflow-hidden flex-1">
         <div className="px-3 py-2 border-b border-border/50">
           <div className="flex items-center gap-2">
             <Layers className="h-4 w-4 text-primary" />
-            <h3 className="font-semibold text-sm">Daily Funnel Tracking</h3>
+            <h3 className="font-semibold text-sm">Funnel Tracking</h3>
           </div>
         </div>
 
@@ -134,19 +160,20 @@ export function DynamicFunnelTracker({ isPro = true }: DynamicFunnelTrackerProps
             className="overflow-x-auto overflow-y-auto max-h-[400px]"
           >
             <table className="w-max min-w-full">
-              {/* Header Row - Dates */}
+              {/* Header Row - Funnel Periods */}
               <thead className="sticky top-0 z-10 bg-card">
                 <tr>
                   {/* Sticky First Column - Stage Label */}
                   <th className="sticky left-0 z-20 bg-card py-2 px-3 text-left text-[10px] font-semibold text-muted-foreground border-b border-r border-border/30 min-w-[80px]">
                     Stage
                   </th>
-                  {dailyMetrics.map((day) => (
+                  {funnelPeriods.map((period, idx) => (
                     <th 
-                      key={day.dayNumber} 
-                      className="py-2 px-2 text-center text-[10px] font-medium text-muted-foreground border-b border-border/30 min-w-[48px]"
+                      key={idx} 
+                      className="py-2 px-2 text-center border-b border-border/30 min-w-[60px]"
                     >
-                      {day.date.split(' ')[0]}
+                      <div className="text-[10px] font-bold text-foreground">{period.label}</div>
+                      <div className="text-[8px] text-muted-foreground">{period.dateRange}</div>
                     </th>
                   ))}
                   {/* Total Column */}
@@ -157,39 +184,13 @@ export function DynamicFunnelTracker({ isPro = true }: DynamicFunnelTrackerProps
               </thead>
 
               <tbody>
-                {/* Leads Row First */}
-                <tr className="bg-background">
-                  <td className="sticky left-0 z-10 bg-background py-1.5 px-2 text-xs font-medium border-r border-border/30 min-w-[80px]">
-                    <div className="flex items-center gap-1.5">
-                      <div className="p-1 rounded bg-primary/10">
-                        <Users className="h-3 w-3 text-primary" />
-                      </div>
-                      <span>Leads</span>
-                    </div>
-                  </td>
-                  
-                  {dailyMetrics.map((day) => (
-                    <td key={day.dayNumber} className="py-1 px-1 text-center">
-                      <div className="h-6 flex items-center justify-center text-[11px] font-medium rounded bg-background/50">
-                        {isPro ? (day.leads > 0 ? day.leads : '–') : '–'}
-                      </div>
-                    </td>
-                  ))}
-                  
-                  <td className="py-1 px-2 text-center border-l border-border/30 bg-primary/5">
-                    <div className="h-6 flex items-center justify-center text-xs font-bold rounded bg-card shadow-sm">
-                      {isPro ? totals.leads : '–'}
-                    </div>
-                  </td>
-                </tr>
-
-                {/* Stage Rows */}
+                {/* Stage Rows (NO Leads row) */}
                 {stages.map((stage, stageIdx) => (
-                  <tr key={stage.key} className={stageIdx % 2 === 0 ? 'bg-muted/20' : 'bg-background'}>
+                  <tr key={stage.key} className={stageIdx % 2 === 0 ? 'bg-background' : 'bg-muted/20'}>
                     {/* Sticky First Column - Stage Name */}
                     <td className={cn(
                       "sticky left-0 z-10 py-1.5 px-2 text-xs font-medium border-r border-border/30 min-w-[80px]",
-                      stageIdx % 2 === 0 ? 'bg-muted/20' : 'bg-background'
+                      stageIdx % 2 === 0 ? 'bg-background' : 'bg-muted/20'
                     )}>
                       <div className="flex items-center gap-1.5">
                         <div className={cn("p-1 rounded", stage.color.bg)}>
@@ -203,12 +204,12 @@ export function DynamicFunnelTracker({ isPro = true }: DynamicFunnelTrackerProps
                       </div>
                     </td>
                     
-                    {/* Data Cells */}
-                    {dailyMetrics.map((day) => {
-                      const value = day.tagCounts[stage.key] || 0;
+                    {/* Data Cells - Funnel Period Values */}
+                    {funnelPeriods.map((period, periodIdx) => {
+                      const value = period.tagCounts[stage.key] || 0;
                       
                       return (
-                        <td key={day.dayNumber} className="py-1 px-1 text-center">
+                        <td key={periodIdx} className="py-1 px-1 text-center">
                           <div className="h-6 flex items-center justify-center text-[11px] font-medium rounded bg-background/50">
                             {isPro ? (value > 0 ? value : '–') : '–'}
                           </div>
