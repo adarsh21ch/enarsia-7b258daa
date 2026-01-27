@@ -5,13 +5,16 @@ import { useAuth } from '@/contexts/AuthContext';
 import { BottomNav } from '@/components/layout/BottomNav';
 import { DynamicFunnelTracker } from '@/components/tracking/DynamicFunnelTracker';
 import { DynamicLeadsTracker } from '@/components/tracking/DynamicLeadsTracker';
+import { TrackUpAnalytics } from '@/components/tracking/TrackUpAnalytics';
 import { UpgradeBar } from '@/components/subscription/UpgradeBar';
 import { PullToRefreshIndicator } from '@/components/PullToRefreshIndicator';
 import { TopTabBar } from '@/components/ui/TopTabBar';
 import { Day1SetupDialog } from '@/components/trackup/Day1SetupDialog';
-import { TrendingUp, Calendar, Lock, RefreshCw, ArrowLeft } from 'lucide-react';
+import { TrendingUp, Calendar, Lock, RefreshCw, ArrowLeft, BarChart3 } from 'lucide-react';
 import { useSubscription } from '@/hooks/useSubscription';
 import { useFunnelConfig } from '@/hooks/useFunnelConfig';
+import { useLeadsTrackingStats, useFunnelTrackingStats } from '@/hooks/useTrackingStats';
+import { useTrackingFormat } from '@/hooks/useTrackingFormat';
 import { cn } from '@/lib/utils';
 import nevoraLogo from '@/assets/nevorai-logo.jpeg';
 
@@ -68,15 +71,20 @@ export default function Tracking() {
   const { isPro, loading: subLoading } = useSubscription();
   const { config, loading: configLoading, saveConfig, getEffectiveConfig, isReadOnly: isFunnelReadOnly, leaderName: funnelLeaderName } = useFunnelConfig();
   const effectiveConfig = getEffectiveConfig();
-  const [activeTab, setActiveTab] = useState('leads');
+  const [activeTab, setActiveTab] = useState<'leads' | 'funnel' | 'analytics'>('leads');
   const [showDay1Setup, setShowDay1Setup] = useState(false);
+
+  // Get tracking stats for analytics
+  const { totals: leadsTotals, tags: leadsTags } = useLeadsTrackingStats();
+  const { totals: funnelTotals, tags: funnelTags } = useFunnelTrackingStats();
+  const { leadsFinalTargetTag } = useTrackingFormat();
 
   // Handle tab change - show Day 1 setup if switching to funnel with no config (and not read-only from leader)
   const handleTabChange = (newTab: string) => {
     if (newTab === 'funnel' && !effectiveConfig && !configLoading && !isFunnelReadOnly) {
       setShowDay1Setup(true);
     }
-    setActiveTab(newTab);
+    setActiveTab(newTab as 'leads' | 'funnel' | 'analytics');
   };
 
   // Save Day 1 date from setup dialog
@@ -109,14 +117,23 @@ export default function Tracking() {
 
   if (!user) return null;
 
-  const toggleOptions: [{ value: string; label: string; icon: typeof Calendar }, { value: string; label: string; icon: typeof TrendingUp }] = [
+  // Calculate analytics data
+  const enrollments = leadsFinalTargetTag ? (leadsTotals.tagCounts[leadsFinalTargetTag] || 0) : 0;
+  const videosSent = leadsTags.includes('Video Sent') ? (leadsTotals.tagCounts['Video Sent'] || 0) : 0;
+  const notPicked = leadsTags.includes('Not Picked') ? (leadsTotals.tagCounts['Not Picked'] || 0) : 0;
+  
+  // Get funnel counts for drop-off analysis
+  const funnelCounts = funnelTags.map(tag => funnelTotals.tagCounts[tag] || 0);
+
+  const toggleOptions = [
     { value: 'leads', label: 'Leads', icon: Calendar },
     { value: 'funnel', label: 'Funnel', icon: TrendingUp },
+    { value: 'analytics', label: 'Insights', icon: BarChart3 },
   ];
 
   return (
     <div className="app-layout bg-gradient-to-b from-background via-background to-muted/20">
-      {/* Premium Header with Back Button + Leads/Funnel Switch */}
+      {/* Premium Header with Back Button + Leads/Funnel/Analytics Switch */}
       <header className="fixed-header z-40 bg-card/80 backdrop-blur-xl border-b border-border/50">
         <div className="flex items-center justify-between px-4 py-3">
           <div className="flex items-center gap-3">
@@ -146,7 +163,7 @@ export default function Tracking() {
           </div>
         </div>
         
-        {/* Leads/Funnel Segmented Switch - TOP, sticky in header */}
+        {/* Leads/Funnel/Analytics Segmented Switch - TOP, sticky in header */}
         <div className="px-4 pb-2">
           <TopTabBar options={toggleOptions} value={activeTab} onChange={handleTabChange} />
         </div>
@@ -178,10 +195,21 @@ export default function Tracking() {
             </div>
           )}
 
-          {/* Content based on active tab - uses dynamic tag-based trackers */}
+          {/* Content based on active tab */}
           <div className="flex-1 min-h-0">
             {activeTab === 'funnel' ? (
               <DynamicFunnelTracker isPro={true} />
+            ) : activeTab === 'analytics' ? (
+              <TrackUpAnalytics
+                leads={leadsTotals.leads}
+                responses={leadsTotals.responses}
+                enrollments={enrollments}
+                videosSent={videosSent}
+                notPicked={notPicked}
+                tagCounts={leadsTotals.tagCounts}
+                funnelCounts={funnelCounts}
+                stageTags={funnelTags}
+              />
             ) : (
               <DynamicLeadsTracker isPro={true} />
             )}

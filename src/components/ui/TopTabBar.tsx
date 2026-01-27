@@ -9,16 +9,18 @@ interface TabOption {
 }
 
 interface TopTabBarProps {
-  options: [TabOption, TabOption];
+  options: TabOption[]; // Support any number of tabs
   value: string;
   onChange: (value: string) => void;
   className?: string;
 }
 
 export function TopTabBar({ options, value, onChange, className }: TopTabBarProps) {
+  const gridColsClass = options.length === 2 ? 'grid-cols-2' : options.length === 3 ? 'grid-cols-3' : 'grid-cols-4';
+  
   return (
     <Tabs value={value} onValueChange={onChange} className={cn("w-full", className)}>
-      <TabsList className="grid w-full grid-cols-2 h-9">
+      <TabsList className={cn("grid w-full h-9", gridColsClass)}>
         {options.map((option) => {
           const Icon = option.icon;
           return (

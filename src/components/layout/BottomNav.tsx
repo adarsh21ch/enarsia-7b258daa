@@ -68,9 +68,13 @@ export function BottomNav({ className }: { className?: string }) {
   const userInitials = displayName.slice(0, 2).toUpperCase();
 
   return (
-    <nav className={cn("fixed bottom-0 left-0 right-0 z-50 bg-card/95 backdrop-blur-xl border-t border-border/50 safe-area-pb", className)}>
-      {/* Raised position with extra padding for Instagram-like positioning */}
-      <div className="flex items-center justify-around h-16 max-w-lg mx-auto pb-3 pt-1">
+    <nav className={cn(
+      "fixed bottom-0 left-0 right-0 z-50 bg-card/95 backdrop-blur-xl border-t border-border/50",
+      "pb-[env(safe-area-inset-bottom,8px)]", // Proper safe area handling
+      className
+    )}>
+      {/* Raised navigation with better thumb-friendly positioning */}
+      <div className="flex items-center justify-around h-[68px] max-w-lg mx-auto pt-1 pb-1">
         {navItems.map(item => {
           const Icon = item.icon;
           const isActive = location.pathname === item.path;
@@ -80,11 +84,11 @@ export function BottomNav({ className }: { className?: string }) {
               key={item.path}
               to={item.path}
               className={cn(
-                "relative flex flex-col items-center justify-center flex-1 h-full transition-all duration-200",
+                "relative flex flex-col items-center justify-center flex-1 h-full min-h-[44px] min-w-[44px] transition-all duration-200",
                 isActive ? "text-primary" : "text-muted-foreground hover:text-foreground"
               )}
             >
-              <div className="relative flex flex-col items-center">
+              <div className="relative flex flex-col items-center gap-0.5">
                 {item.isProfile ? (
                   // Profile tab with avatar
                   <Avatar className={cn(
@@ -100,16 +104,23 @@ export function BottomNav({ className }: { className?: string }) {
                   Icon && (
                     <Icon 
                       className={cn(
-                        "h-6 w-6 transition-all duration-200",
-                        isActive && "scale-105"
+                        "h-5 w-5 transition-all duration-200",
+                        isActive && "scale-110"
                       )} 
                     />
                   )
                 )}
-                {/* Active indicator bar below icon */}
+                {/* Label under icon */}
+                <span className={cn(
+                  "text-[9px] font-medium transition-all duration-200",
+                  isActive ? "text-primary" : "text-muted-foreground"
+                )}>
+                  {item.label}
+                </span>
+                {/* Active indicator dot */}
                 <div className={cn(
-                  "mt-2 h-0.5 rounded-full transition-all duration-200",
-                  isActive ? "w-5 bg-primary" : "w-0 bg-transparent"
+                  "absolute -bottom-1 left-1/2 -translate-x-1/2 h-1 w-1 rounded-full transition-all duration-200",
+                  isActive ? "bg-primary scale-100" : "bg-transparent scale-0"
                 )} />
               </div>
             </NavLink>
