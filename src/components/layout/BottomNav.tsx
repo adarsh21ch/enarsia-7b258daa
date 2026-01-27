@@ -104,7 +104,7 @@ export function BottomNav({
         {navItems.map(item => {
         const Icon = item.icon;
         const isActive = location.pathname === item.path;
-        return <NavLink key={item.path} to={item.path} className={cn("relative flex flex-col items-center justify-center flex-1 h-full min-h-[44px] min-w-[44px] transition-all duration-200 pb-[10px]", isActive ? "text-primary" : "text-muted-foreground hover:text-foreground")}>
+        return <NavLink key={item.path} to={item.path} className={cn("relative flex flex-col items-center justify-center flex-1 h-full min-h-[44px] min-w-[44px] transition-all duration-200 pb-[15px]", isActive ? "text-primary" : "text-muted-foreground hover:text-foreground")}>
               <div className="relative flex flex-col items-center gap-0.5">
                 {item.isProfile ?
             // Profile tab with avatar
