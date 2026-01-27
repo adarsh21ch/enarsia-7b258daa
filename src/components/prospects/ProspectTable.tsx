@@ -53,7 +53,9 @@ interface ProspectTableProps {
     deleted: number;
     prospects: Prospect[];
   }>;
-  onBulkDeleteBySheet?: (sheetId: string | null) => Promise<{ deleted: number }>;
+  onBulkDeleteBySheet?: (sheetId: string | null) => Promise<{
+    deleted: number;
+  }>;
   // Sheet props
   sheets: Sheet[];
   selectedSheetId: string | null;
@@ -249,23 +251,17 @@ function TableContent({
                       </button>}
                   </p>
                 </td>
-              </tr> : (
-                <>
+              </tr> : <>
                   {filteredProspects.map((prospect, index) => <SortableProspectRow key={prospect.id} prospect={prospect} index={index + 1} isCalling={isCalling} isExpanded={expandedRowId === prospect.id} onToggleExpand={() => handleToggleExpand(prospect.id)} onUpdate={handleUpdateWithUndo} onDelete={handleDeleteWithUndo} isEven={index % 2 === 0} columnOrder={COLUMN_ORDER} isMobileTable={isMobile} selectionModeActive={selectionMode.active} showSelection={selectionMode.active && selectionProspects.some(p => p.id === prospect.id)} isSelected={selectedIds.has(prospect.id)} onToggleSelect={() => handleToggleSelect(prospect.id)} disableDrag={!enableDragAndDrop} isLastContacted={lastContactedId === prospect.id} onMarkLastContacted={() => onMarkLastContacted(prospect.id)} />)}
                   {/* Infinite scroll sentinel */}
-                  {hasNextPage && (
-                    <tr>
+                  {hasNextPage && <tr>
                       <td colSpan={COLUMN_ORDER.length + (selectionMode.active ? 1 : 0)} className="p-0">
                         <div ref={sentinelRef} className="h-4 flex items-center justify-center">
-                          {isLoadingMore && (
-                            <span className="text-xs text-muted-foreground animate-pulse">Loading more...</span>
-                          )}
+                          {isLoadingMore && <span className="text-xs text-muted-foreground animate-pulse">Loading more...</span>}
                         </div>
                       </td>
-                    </tr>
-                  )}
-                </>
-              )}
+                    </tr>}
+                </>}
           </tbody>
         </table>
       </div>
@@ -307,8 +303,9 @@ export function ProspectTable({
   kpiTagCounts,
   fetchAllForExport
 }: ProspectTableProps) {
-  const { logBulkActivity } = useActivityLog();
-  
+  const {
+    logBulkActivity
+  } = useActivityLog();
   const [filters, setFilters] = useState<Filters>({
     search: '',
     stages: [],
@@ -345,14 +342,17 @@ export function ProspectTable({
 
   // Infinite scroll sentinel ref
   const sentinelRef = useRef<HTMLDivElement>(null);
-  
+
   // Scroll container ref for resetting scroll position
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
   // Reset scroll position when sheet changes
   useEffect(() => {
     if (scrollContainerRef.current) {
-      scrollContainerRef.current.scrollTo({ top: 0, behavior: 'auto' });
+      scrollContainerRef.current.scrollTo({
+        top: 0,
+        behavior: 'auto'
+      });
     }
   }, [selectedSheetId]);
 
@@ -360,16 +360,15 @@ export function ProspectTable({
   // Trigger at rootMargin of 200px (roughly ~5 rows before bottom)
   useEffect(() => {
     if (!hasNextPage || isLoadingMore || !sentinelRef.current) return;
-    
-    const observer = new IntersectionObserver(
-      (entries) => {
-        if (entries[0].isIntersecting && hasNextPage && !isLoadingMore) {
-          onLoadMore?.();
-        }
-      },
-      { threshold: 0.1, rootMargin: '200px' } // Prefetch earlier
+    const observer = new IntersectionObserver(entries => {
+      if (entries[0].isIntersecting && hasNextPage && !isLoadingMore) {
+        onLoadMore?.();
+      }
+    }, {
+      threshold: 0.1,
+      rootMargin: '200px'
+    } // Prefetch earlier
     );
-    
     observer.observe(sentinelRef.current);
     return () => observer.disconnect();
   }, [hasNextPage, isLoadingMore, onLoadMore]);
@@ -507,13 +506,11 @@ export function ProspectTable({
       } else {
         allProspects = filteredProspects;
       }
-      
       if (allProspects.length === 0) {
         toast.error('No data to export. Apply filters or add prospects first.');
         setExporting(false);
         return;
       }
-      
       const exportData = allProspects.map((p, i) => ({
         '#': i + 1,
         'Name': p.name || '',
@@ -593,13 +590,11 @@ export function ProspectTable({
         // Fallback to loaded data
         sheetProspects = sheetId === null ? baseProspects : baseProspects.filter(p => p.sheet_id === sheetId);
       }
-      
       if (sheetProspects.length === 0) {
         toast.error('No data to export in this sheet.');
         setExporting(false);
         return;
       }
-      
       const exportData = sheetProspects.map((p, i) => ({
         '#': i + 1,
         'Name': p.name || '',
@@ -828,7 +823,7 @@ export function ProspectTable({
       }
       return;
     }
-    
+
     // Fallback to old behavior using loaded prospects only
     const toDelete = sheetId === null ? baseProspects : baseProspects.filter(p => p.sheet_id === sheetId);
     if (toDelete.length === 0) {
@@ -1013,7 +1008,7 @@ export function ProspectTable({
       </div>
 
       {/* Table */}
-      <div className="bg-card rounded-xl border border-border/50 shadow-sm overflow-hidden flex-1 flex flex-col min-h-0">
+      <div className="bg-card rounded-xl border border-border/50 shadow-sm overflow-hidden flex-1 flex flex-col min-h-0 pb-[5px]">
         {enableDragAndDrop ? <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleRowDragEnd}>
             <SortableContext items={filteredProspects.map(p => p.id)} strategy={verticalListSortingStrategy}>
               <TableContent isMobile={isMobile} COLUMN_ORDER={COLUMN_ORDER} selectionMode={selectionMode} selectedIds={selectedIds} selectionProspects={selectionProspects} handleSelectAll={handleSelectAll} sheets={sheets} selectedSheetId={selectedSheetId} onSelectSheet={onSelectSheet} onAddSheet={onAddSheet} handleUpdateSheetWithUndo={handleUpdateSheetWithUndo} onDeleteSheet={onDeleteSheet} handleEnterSelectMode={handleEnterSelectMode} handleDeleteAllInSheet={handleDeleteAllInSheet} filteredProspects={filteredProspects} prospects={prospects} sheetFilteredProspects={sheetFilteredProspects} setFilters={setFilters} isCalling={isCalling} expandedRowId={expandedRowId} handleToggleExpand={handleToggleExpand} handleUpdateWithUndo={handleUpdateWithUndo} handleDeleteWithUndo={handleDeleteWithUndo} handleToggleSelect={handleToggleSelect} enableDragAndDrop={enableDragAndDrop} callingTrackingTags={callingTrackingTags} stageTrackingTags={stageTrackingTags} onOpenResponseTagsDialog={() => setResponseTagsDialogOpen(true)} onOpenStageTagsDialog={() => setStageTagsDialogOpen(true)} lastContactedId={lastContactedId} onMarkLastContacted={handleMarkLastContacted} onExportSheet={exportSheet} onExportAll={exportToExcel} sentinelRef={sentinelRef} scrollContainerRef={scrollContainerRef} hasNextPage={hasNextPage} isLoadingMore={isLoadingMore} />
