@@ -179,6 +179,14 @@ html {
   .fixed-header {
     flex-shrink: 0;
   }
+
+  /* Auth page layout - allows scrolling on standalone pages */
+  .auth-page-layout {
+    min-height: 100vh;
+    min-height: 100dvh;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
 }
 
 @layer components {

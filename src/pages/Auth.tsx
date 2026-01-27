@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { InputOTP, InputOTPGroup, InputOTPSlot } from '@/components/ui/input-otp';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from 'sonner';
 import { Loader2, Mail, Lock, Eye, EyeOff, ArrowLeft, User } from 'lucide-react';
 import nevoraLogo from '@/assets/nevorai-logo.jpeg';
@@ -20,7 +21,7 @@ export default function Auth() {
   const [name, setName] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isSignUp, setIsSignUp] = useState(true);
+  const [isSignUp, setIsSignUp] = useState(false);
   const [isForgotPassword, setIsForgotPassword] = useState(false);
   
   // OTP verification state
@@ -289,7 +290,7 @@ export default function Auth() {
 
   if (authLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
+      <div className="auth-page-layout bg-background flex items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
       </div>
     );
@@ -298,7 +299,7 @@ export default function Auth() {
   // Forgot Password View
   if (isForgotPassword) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background p-4">
+      <div className="auth-page-layout bg-background p-4 flex items-center justify-center">
         <div className="w-full max-w-md bg-card rounded-2xl shadow-xl border border-border p-8">
           <div className="text-center mb-8">
             <img src={nevoraLogo} alt="NevorAI Logo" className="w-16 h-16 mx-auto mb-3 rounded-xl" />
@@ -356,7 +357,7 @@ export default function Auth() {
   // OTP Verification View
   if (signupStep === 'otp' && pendingSignupData) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background p-4">
+      <div className="auth-page-layout bg-background p-4 flex items-center justify-center">
         <div className="w-full max-w-md bg-card rounded-2xl shadow-xl border border-border p-8">
           <div className="text-center mb-8">
             <img src={nevoraLogo} alt="NevorAI Logo" className="w-16 h-16 mx-auto mb-3 rounded-xl" />
@@ -435,13 +436,25 @@ export default function Auth() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background p-4">
-      <div className="w-full max-w-md bg-card rounded-2xl shadow-xl border border-border p-8">
-        <div className="text-center mb-8">
+    <div className="auth-page-layout bg-background p-4 flex items-center justify-center">
+      <div className="w-full max-w-md bg-card rounded-2xl shadow-xl border border-border p-8 my-8">
+        <div className="text-center mb-6">
           <img src={nevoraLogo} alt="NevorAI Logo" className="w-16 h-16 mx-auto mb-3 rounded-xl" />
           <h1 className="text-2xl font-bold text-foreground">NevorAI</h1>
           <p className="text-muted-foreground text-sm mt-1">Never miss a followup Again</p>
         </div>
+
+        {/* Tabs for Login / Create Account */}
+        <Tabs 
+          value={isSignUp ? 'signup' : 'login'}
+          onValueChange={(v) => setIsSignUp(v === 'signup')}
+          className="mb-6"
+        >
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="login">Login</TabsTrigger>
+            <TabsTrigger value="signup">Create your account</TabsTrigger>
+          </TabsList>
+        </Tabs>
 
         {uplineParam && (
           <div className="mb-4 p-3 bg-primary/10 border border-primary/20 rounded-lg text-center">
@@ -578,16 +591,6 @@ export default function Auth() {
           )}
           Continue with Google
         </Button>
-        <p className="text-center text-sm text-muted-foreground mt-6">
-          {isSignUp ? 'Already have an account?' : "Don't have an account?"}{' '}
-          <button
-            type="button"
-            onClick={() => setIsSignUp(!isSignUp)}
-            className="text-primary hover:underline font-medium"
-          >
-            {isSignUp ? 'Sign in' : 'Sign up'}
-          </button>
-        </p>
 
         <p className="text-center text-xs text-muted-foreground mt-4">
           By continuing, you agree to our{' '}
