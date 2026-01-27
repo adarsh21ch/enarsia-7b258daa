@@ -182,10 +182,30 @@ html {
 
   /* Auth page layout - allows scrolling on standalone pages */
   .auth-page-layout {
-    min-height: 100vh;
-    min-height: 100dvh;
-    overflow-y: auto;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    overflow-y: scroll;
     -webkit-overflow-scrolling: touch;
+    overscroll-behavior-y: contain;
+  }
+
+  .auth-page-content {
+    min-height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+    padding-top: env(safe-area-inset-top, 1rem);
+    padding-bottom: env(safe-area-inset-bottom, 1rem);
+  }
+
+  /* Ensure the card can grow beyond viewport for scrolling */
+  .auth-page-content > * {
+    flex-shrink: 0;
   }
 }
 

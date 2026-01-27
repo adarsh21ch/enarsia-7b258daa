@@ -290,8 +290,10 @@ export default function Auth() {
 
   if (authLoading) {
     return (
-      <div className="auth-page-layout bg-background flex items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      <div className="auth-page-layout bg-background">
+        <div className="auth-page-content">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        </div>
       </div>
     );
   }
@@ -299,56 +301,58 @@ export default function Auth() {
   // Forgot Password View
   if (isForgotPassword) {
     return (
-      <div className="auth-page-layout bg-background p-4 flex items-center justify-center">
-        <div className="w-full max-w-md bg-card rounded-2xl shadow-xl border border-border p-8">
-          <div className="text-center mb-8">
-            <img src={nevoraLogo} alt="NevorAI Logo" className="w-16 h-16 mx-auto mb-3 rounded-xl" />
-            <h1 className="text-2xl font-bold text-foreground">NevorAI</h1>
-            <p className="text-muted-foreground text-sm mt-1">Never miss a followup Again</p>
-          </div>
-
-          <button
-            type="button"
-            onClick={() => setIsForgotPassword(false)}
-            className="flex items-center text-sm text-muted-foreground hover:text-foreground mb-4"
-          >
-            <ArrowLeft className="h-4 w-4 mr-1" />
-            Back to Sign In
-          </button>
-
-          <h2 className="text-xl font-semibold text-foreground mb-2">Reset Password</h2>
-          <p className="text-sm text-muted-foreground mb-6">
-            Enter your email and we'll send you a link to reset your password.
-          </p>
-
-          <form onSubmit={handleForgotPassword} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="reset-email">Email</Label>
-              <div className="relative">
-                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  id="reset-email"
-                  type="email"
-                  value={emailOrLeaderId}
-                  onChange={(e) => setEmailOrLeaderId(e.target.value)}
-                  placeholder="you@example.com"
-                  className="pl-10"
-                  required
-                />
-              </div>
+      <div className="auth-page-layout bg-background">
+        <div className="auth-page-content">
+          <div className="w-full max-w-md bg-card rounded-2xl shadow-xl border border-border p-8 my-8">
+            <div className="text-center mb-8">
+              <img src={nevoraLogo} alt="NevorAI Logo" className="w-16 h-16 mx-auto mb-3 rounded-xl" />
+              <h1 className="text-2xl font-bold text-foreground">NevorAI</h1>
+              <p className="text-muted-foreground text-sm mt-1">Never miss a followup Again</p>
             </div>
 
-            <Button type="submit" className="w-full" disabled={isSubmitting}>
-              {isSubmitting ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Sending...
-                </>
-              ) : (
-                'Send Reset Link'
-              )}
-            </Button>
-          </form>
+            <button
+              type="button"
+              onClick={() => setIsForgotPassword(false)}
+              className="flex items-center text-sm text-muted-foreground hover:text-foreground mb-4"
+            >
+              <ArrowLeft className="h-4 w-4 mr-1" />
+              Back to Sign In
+            </button>
+
+            <h2 className="text-xl font-semibold text-foreground mb-2">Reset Password</h2>
+            <p className="text-sm text-muted-foreground mb-6">
+              Enter your email and we'll send you a link to reset your password.
+            </p>
+
+            <form onSubmit={handleForgotPassword} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="reset-email">Email</Label>
+                <div className="relative">
+                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    id="reset-email"
+                    type="email"
+                    value={emailOrLeaderId}
+                    onChange={(e) => setEmailOrLeaderId(e.target.value)}
+                    placeholder="you@example.com"
+                    className="pl-10"
+                    required
+                  />
+                </div>
+              </div>
+
+              <Button type="submit" className="w-full" disabled={isSubmitting}>
+                {isSubmitting ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Sending...
+                  </>
+                ) : (
+                  'Send Reset Link'
+                )}
+              </Button>
+            </form>
+          </div>
         </div>
       </div>
     );
@@ -357,78 +361,80 @@ export default function Auth() {
   // OTP Verification View
   if (signupStep === 'otp' && pendingSignupData) {
     return (
-      <div className="auth-page-layout bg-background p-4 flex items-center justify-center">
-        <div className="w-full max-w-md bg-card rounded-2xl shadow-xl border border-border p-8">
-          <div className="text-center mb-8">
-            <img src={nevoraLogo} alt="NevorAI Logo" className="w-16 h-16 mx-auto mb-3 rounded-xl" />
-            <h1 className="text-2xl font-bold text-foreground">NevorAI</h1>
-            <p className="text-muted-foreground text-sm mt-1">Never miss a followup Again</p>
-          </div>
+      <div className="auth-page-layout bg-background">
+        <div className="auth-page-content">
+          <div className="w-full max-w-md bg-card rounded-2xl shadow-xl border border-border p-8 my-8">
+            <div className="text-center mb-8">
+              <img src={nevoraLogo} alt="NevorAI Logo" className="w-16 h-16 mx-auto mb-3 rounded-xl" />
+              <h1 className="text-2xl font-bold text-foreground">NevorAI</h1>
+              <p className="text-muted-foreground text-sm mt-1">Never miss a followup Again</p>
+            </div>
 
-          <button
-            type="button"
-            onClick={handleBackFromOtp}
-            className="flex items-center text-sm text-muted-foreground hover:text-foreground mb-4"
-          >
-            <ArrowLeft className="h-4 w-4 mr-1" />
-            Back
-          </button>
-
-          <div className="text-center mb-6">
-            <h2 className="text-xl font-semibold text-foreground mb-2">Verify Your Email</h2>
-            <p className="text-sm text-muted-foreground">
-              We sent a 4-digit code to
-            </p>
-            <p className="text-sm font-medium text-foreground">{pendingSignupData.email}</p>
-          </div>
-
-          <div className="flex justify-center mb-6">
-            <InputOTP 
-              maxLength={4} 
-              value={otpCode} 
-              onChange={setOtpCode}
-              className="gap-2"
-            >
-              <InputOTPGroup className="gap-2">
-                <InputOTPSlot index={0} className="w-12 h-14 text-xl font-semibold" />
-                <InputOTPSlot index={1} className="w-12 h-14 text-xl font-semibold" />
-                <InputOTPSlot index={2} className="w-12 h-14 text-xl font-semibold" />
-                <InputOTPSlot index={3} className="w-12 h-14 text-xl font-semibold" />
-              </InputOTPGroup>
-            </InputOTP>
-          </div>
-
-          <Button 
-            onClick={handleVerifyOtp} 
-            className="w-full mb-4" 
-            disabled={otpVerifying || otpCode.length !== 4}
-          >
-            {otpVerifying ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Verifying...
-              </>
-            ) : (
-              'Verify & Create Account'
-            )}
-          </Button>
-
-          <div className="text-center">
-            <p className="text-sm text-muted-foreground mb-2">Didn't receive the code?</p>
             <button
               type="button"
-              onClick={handleResendOtp}
-              disabled={resendCooldown > 0 || otpSending}
-              className="text-sm text-primary hover:underline font-medium disabled:text-muted-foreground disabled:no-underline disabled:cursor-not-allowed"
+              onClick={handleBackFromOtp}
+              className="flex items-center text-sm text-muted-foreground hover:text-foreground mb-4"
             >
-              {otpSending ? (
-                'Sending...'
-              ) : resendCooldown > 0 ? (
-                `Resend in ${resendCooldown}s`
-              ) : (
-                'Resend Code'
-              )}
+              <ArrowLeft className="h-4 w-4 mr-1" />
+              Back
             </button>
+
+            <div className="text-center mb-6">
+              <h2 className="text-xl font-semibold text-foreground mb-2">Verify Your Email</h2>
+              <p className="text-sm text-muted-foreground">
+                We sent a 4-digit code to
+              </p>
+              <p className="text-sm font-medium text-foreground">{pendingSignupData.email}</p>
+            </div>
+
+            <div className="flex justify-center mb-6">
+              <InputOTP 
+                maxLength={4} 
+                value={otpCode} 
+                onChange={setOtpCode}
+                className="gap-2"
+              >
+                <InputOTPGroup className="gap-2">
+                  <InputOTPSlot index={0} className="w-12 h-14 text-xl font-semibold" />
+                  <InputOTPSlot index={1} className="w-12 h-14 text-xl font-semibold" />
+                  <InputOTPSlot index={2} className="w-12 h-14 text-xl font-semibold" />
+                  <InputOTPSlot index={3} className="w-12 h-14 text-xl font-semibold" />
+                </InputOTPGroup>
+              </InputOTP>
+            </div>
+
+            <Button 
+              onClick={handleVerifyOtp} 
+              className="w-full mb-4" 
+              disabled={otpVerifying || otpCode.length !== 4}
+            >
+              {otpVerifying ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Verifying...
+                </>
+              ) : (
+                'Verify & Create Account'
+              )}
+            </Button>
+
+            <div className="text-center">
+              <p className="text-sm text-muted-foreground mb-2">Didn't receive the code?</p>
+              <button
+                type="button"
+                onClick={handleResendOtp}
+                disabled={resendCooldown > 0 || otpSending}
+                className="text-sm text-primary hover:underline font-medium disabled:text-muted-foreground disabled:no-underline disabled:cursor-not-allowed"
+              >
+                {otpSending ? (
+                  'Sending...'
+                ) : resendCooldown > 0 ? (
+                  `Resend in ${resendCooldown}s`
+                ) : (
+                  'Resend Code'
+                )}
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -436,8 +442,9 @@ export default function Auth() {
   }
 
   return (
-    <div className="auth-page-layout bg-background p-4 flex items-center justify-center">
-      <div className="w-full max-w-md bg-card rounded-2xl shadow-xl border border-border p-8 my-8">
+    <div className="auth-page-layout bg-background">
+      <div className="auth-page-content">
+        <div className="w-full max-w-md bg-card rounded-2xl shadow-xl border border-border p-8 my-8">
         <div className="text-center mb-6">
           <img src={nevoraLogo} alt="NevorAI Logo" className="w-16 h-16 mx-auto mb-3 rounded-xl" />
           <h1 className="text-2xl font-bold text-foreground">NevorAI</h1>
@@ -598,6 +605,7 @@ export default function Auth() {
           <Link to="/privacy" target="_blank" className="text-primary hover:underline">Privacy Policy</Link>, and{' '}
           <Link to="/refund" target="_blank" className="text-primary hover:underline">Refund Policy</Link>.
         </p>
+        </div>
       </div>
     </div>
   );
