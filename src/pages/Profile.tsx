@@ -283,62 +283,37 @@ export default function Profile() {
                 </div>}
             </div>}
 
-          {/* Tracking Section */}
-          <div className="space-y-2">
-            {/* My Tracking - Simple neutral item */}
-            <button 
-              onClick={() => navigate('/tracking')}
-              className={cn(
-                "w-full rounded-xl p-4",
-                "bg-card border border-border/50",
-                "flex items-center justify-between",
-                "transition-all duration-200 hover:bg-muted/50"
-              )}
-            >
-              <div className="flex items-center gap-3">
-                <div className="p-2 rounded-lg bg-muted">
-                  <BarChart3 className="h-5 w-5 text-muted-foreground" />
-                </div>
-                <div className="text-left">
-                  <span className="font-medium block">My Tracking</span>
-                  <span className="text-xs text-muted-foreground">Personal leads & funnel analytics</span>
-                </div>
+          {/* TrackUp Dashboard - External link to web dashboard */}
+          <button 
+            onClick={handleOpenTrackUp}
+            disabled={ssoLoading}
+            className={cn(
+              "w-full relative overflow-hidden rounded-xl p-4",
+              "bg-gradient-to-r backdrop-blur-sm",
+              "border border-emerald-500/30 shadow-sm",
+              "flex items-center justify-between",
+              "transition-all duration-300 hover:shadow-md hover:scale-[1.01]",
+              "from-emerald-500/20 to-emerald-500/5",
+              ssoLoading && "opacity-70 cursor-wait"
+            )}
+          >
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-lg bg-emerald-500/10">
+                {ssoLoading ? (
+                  <Loader2 className="h-5 w-5 text-emerald-500 animate-spin" />
+                ) : (
+                  <BarChart3 className="h-5 w-5 text-emerald-500" />
+                )}
               </div>
-              <ChevronRight className="h-5 w-5 text-muted-foreground" />
-            </button>
-
-            {/* TrackUp Dashboard - Highlighted primary action */}
-            <button 
-              onClick={handleOpenTrackUp}
-              disabled={ssoLoading}
-              className={cn(
-                "w-full relative overflow-hidden rounded-xl p-4",
-                "bg-gradient-to-r backdrop-blur-sm",
-                "border border-emerald-500/30 shadow-sm",
-                "flex items-center justify-between",
-                "transition-all duration-300 hover:shadow-md hover:scale-[1.01]",
-                "from-emerald-500/20 to-emerald-500/5",
-                ssoLoading && "opacity-70 cursor-wait"
-              )}
-            >
-              <div className="flex items-center gap-3">
-                <div className="p-2 rounded-lg bg-emerald-500/10">
-                  {ssoLoading ? (
-                    <Loader2 className="h-5 w-5 text-emerald-500 animate-spin" />
-                  ) : (
-                    <BarChart3 className="h-5 w-5 text-emerald-500" />
-                  )}
-                </div>
-                <div className="text-left">
-                  <span className="font-medium block">TrackUp Dashboard</span>
-                  <span className="text-xs text-muted-foreground">
-                    {ssoLoading ? 'Opening...' : 'Open TrackUp on nevorai.com'}
-                  </span>
-                </div>
+              <div className="text-left">
+                <span className="font-medium block">TrackUp Dashboard</span>
+                <span className="text-xs text-muted-foreground">
+                  {ssoLoading ? 'Opening...' : 'Team tracking on nevorai.com'}
+                </span>
               </div>
-              <ExternalLink className="h-5 w-5 text-muted-foreground" />
-            </button>
-          </div>
+            </div>
+            <ExternalLink className="h-5 w-5 text-muted-foreground" />
+          </button>
 
           {/* Settings Section - Collapsible */}
           <Collapsible className="rounded-2xl bg-card border border-border/50 overflow-hidden">

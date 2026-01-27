@@ -1,4 +1,4 @@
-// To-Do List Page - Personal todos with calendar strip + Daily Tasks from leader
+// To-Do List Page - Personal todos with calendar strip + Daily Tasks from leader + Recent Activity
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
@@ -11,17 +11,18 @@ import { PullToRefreshIndicator } from '@/components/PullToRefreshIndicator';
 import { CalendarStrip } from '@/components/calendar/CalendarStrip';
 import { useCalendarStrip } from '@/hooks/useCalendarStrip';
 import { DailyTasksView } from '@/components/todo/DailyTasksView';
+import { RecentActivityView } from '@/components/todo/RecentActivityView';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Loader2, CheckCircle, Trash2, Edit2, Send, X, Check, Plus } from 'lucide-react';
+import { Loader2, CheckCircle, Trash2, Edit2, Send, X, Check, Plus, Clock } from 'lucide-react';
 import { format, parseISO, isSameDay } from 'date-fns';
 import { cn } from '@/lib/utils';
 import nevoraLogo from '@/assets/nevorai-logo.jpeg';
 import { toast } from 'sonner';
 
-type ViewMode = 'daily-tasks' | 'todo-list';
+type ViewMode = 'daily-tasks' | 'todo-list' | 'recent-activity';
 
 // Pull-to-refresh hook
 function usePullToRefresh(onRefresh: () => Promise<void>, threshold = 80) {
@@ -89,14 +90,34 @@ export default function TodoUp() {
   } = useUserDailyTasks(calendar.selectedDateString);
   
   const [viewMode, setViewMode] = useState<ViewMode>('todo-list');
+  const [previousViewMode, setPreviousViewMode] = useState<'todo-list' | 'daily-tasks'>('todo-list');
   const [newTodoInput, setNewTodoInput] = useState('');
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editingTitle, setEditingTitle] = useState('');
+  const [activitySearchQuery, setActivitySearchQuery] = useState('');
 
-  // Swipe to switch tabs
+  // Toggle Recent Activity view
+  const toggleRecentActivity = () => {
+    if (viewMode === 'recent-activity') {
+      setViewMode(previousViewMode);
+    } else {
+      setPreviousViewMode(viewMode === 'todo-list' || viewMode === 'daily-tasks' ? viewMode : 'todo-list');
+      setViewMode('recent-activity');
+    }
+  };
+
+  // Handle tab change (only for todo-list and daily-tasks)
+  const handleTabChange = (value: string) => {
+    if (value === 'todo-list' || value === 'daily-tasks') {
+      setViewMode(value);
+      setPreviousViewMode(value);
+    }
+  };
+
+  // Swipe to switch tabs (only between todo-list and daily-tasks)
   const { containerRef: swipeRef } = useSwipeTabs({
-    onSwipeLeft: () => setViewMode('todo-list'),
-    onSwipeRight: () => setViewMode('daily-tasks'),
+    onSwipeLeft: () => viewMode !== 'recent-activity' && setViewMode('todo-list'),
+    onSwipeRight: () => viewMode !== 'recent-activity' && setViewMode('daily-tasks'),
   });
 
   // Pull-to-refresh
@@ -162,7 +183,7 @@ export default function TodoUp() {
       if (result) {
         setNewTodoInput('');
       }
-    } else {
+    } else if (viewMode === 'todo-list') {
       // Add one-time todo with selected date
       const result = await addTodo(taskText, calendar.selectedDateString);
       if (result) {
@@ -205,6 +226,8 @@ export default function TodoUp() {
 
   if (!user) return null;
 
+  const isRecentActivity = viewMode === 'recent-activity';
+
   return (
     <div className="app-layout bg-gradient-to-b from-background via-background to-muted/20">
       <header className="fixed-header z-40 bg-card/80 backdrop-blur-xl border-b border-border/50">
@@ -216,30 +239,53 @@ export default function TodoUp() {
               className="h-10 w-10 rounded-xl object-cover shadow-md"
             />
             <div>
-              <h1 className="text-xl font-bold tracking-tight">To-Do List</h1>
-              <p className="text-xs text-muted-foreground font-medium">Your Tasks & Reminders</p>
+              <h1 className="text-xl font-bold tracking-tight">
+                {isRecentActivity ? 'Recent Activity' : 'To-Do List'}
+              </h1>
+              <p className="text-xs text-muted-foreground font-medium">
+                {isRecentActivity ? "Today's Updates" : 'Your Tasks & Reminders'}
+              </p>
             </div>
           </div>
-          <HeaderBellIcon />
+          <div className="flex items-center gap-1">
+            {/* Recent Activity Toggle */}
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={toggleRecentActivity}
+              className={cn(
+                "h-9 w-9 rounded-full",
+                isRecentActivity && "bg-primary/10 text-primary"
+              )}
+            >
+              <Clock className="h-5 w-5" />
+            </Button>
+            <HeaderBellIcon />
+          </div>
         </div>
 
-        {/* Segmented Control - Under title, above calendar */}
-        <div className="px-4 pb-2">
-          <Tabs value={viewMode} onValueChange={(v) => setViewMode(v as ViewMode)} className="w-full">
-            <TabsList className="grid w-full grid-cols-2 h-9">
-              <TabsTrigger value="todo-list" className="text-xs font-medium">
-                To-Do List
-              </TabsTrigger>
-              <TabsTrigger value="daily-tasks" className="text-xs font-medium">
-                Daily Tasks
-              </TabsTrigger>
-            </TabsList>
-          </Tabs>
-        </div>
+        {/* Segmented Control - Hidden when Recent Activity is active */}
+        {!isRecentActivity && (
+          <div className="px-4 pb-2">
+            <Tabs value={viewMode} onValueChange={handleTabChange} className="w-full">
+              <TabsList className="grid w-full grid-cols-2 h-9">
+                <TabsTrigger value="todo-list" className="text-xs font-medium">
+                  To-Do List
+                </TabsTrigger>
+                <TabsTrigger value="daily-tasks" className="text-xs font-medium">
+                  Daily Tasks
+                </TabsTrigger>
+              </TabsList>
+            </Tabs>
+          </div>
+        )}
       </header>
 
       {/* Calendar Strip - Fixed below header */}
-      <div className="fixed top-[108px] left-0 right-0 z-30">
+      <div className={cn(
+        "fixed left-0 right-0 z-30",
+        isRecentActivity ? "top-[72px]" : "top-[108px]"
+      )}>
         <CalendarStrip
           selectedDate={calendar.selectedDate}
           daysInMonth={calendar.daysInMonth}
@@ -252,9 +298,24 @@ export default function TodoUp() {
         />
       </div>
 
-      <main ref={mainRef} className="scrollable-content relative pb-24 pt-[168px]">
+      <main 
+        ref={mainRef} 
+        className={cn(
+          "scrollable-content relative pb-24",
+          isRecentActivity ? "pt-[132px]" : "pt-[168px]"
+        )}
+      >
         <PullToRefreshIndicator isRefreshing={isRefreshing} pullDistance={pullDistance} showIndicator={showIndicator} />
         <div className="container py-3 px-4 space-y-4">
+          {/* Recent Activity View */}
+          {isRecentActivity && (
+            <RecentActivityView 
+              selectedDate={calendar.selectedDate}
+              searchQuery={activitySearchQuery}
+              onSearchChange={setActivitySearchQuery}
+            />
+          )}
+
           {/* Daily Tasks View */}
           {viewMode === 'daily-tasks' && (
             <DailyTasksView 
@@ -281,7 +342,7 @@ export default function TodoUp() {
               </div>
 
               {/* To-Do List */}
-              <div className="bg-white dark:bg-card rounded-xl border border-border/40 shadow-sm overflow-hidden">
+              <div className="bg-card rounded-xl border border-border/40 shadow-sm overflow-hidden">
                 {todosLoading ? (
                   <div className="flex justify-center py-8">
                     <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
@@ -314,14 +375,14 @@ export default function TodoUp() {
                         className={cn(
                           "flex items-start gap-3 px-4 py-3 transition-all group",
                           index % 2 === 0 
-                            ? "bg-white dark:bg-card" 
-                            : "bg-gray-50/50 dark:bg-muted/10"
+                            ? "bg-card" 
+                            : "bg-muted/10"
                         )}
                       >
                         <Checkbox
                           checked={todo.completed}
                           onCheckedChange={(checked) => handleToggleComplete(todo.id, !!checked)}
-                          className="mt-1 data-[state=checked]:bg-gray-800 data-[state=checked]:border-gray-800 border-gray-400"
+                          className="mt-1 data-[state=checked]:bg-foreground data-[state=checked]:border-foreground border-muted-foreground"
                         />
                         
                         {editingId === todo.id ? (
@@ -329,7 +390,7 @@ export default function TodoUp() {
                             <Input
                               value={editingTitle}
                               onChange={(e) => setEditingTitle(e.target.value)}
-                              className="h-8 text-sm border-gray-300"
+                              className="h-8 text-sm border-border"
                               autoFocus
                               onKeyDown={(e) => {
                                 if (e.key === 'Enter') handleSaveEdit();
@@ -337,10 +398,10 @@ export default function TodoUp() {
                               }}
                             />
                             <Button variant="ghost" size="icon" className="h-7 w-7" onClick={handleSaveEdit}>
-                              <Check className="h-4 w-4 text-green-600" />
+                              <Check className="h-4 w-4 text-primary" />
                             </Button>
                             <Button variant="ghost" size="icon" className="h-7 w-7" onClick={handleCancelEdit}>
-                              <X className="h-4 w-4 text-gray-500" />
+                              <X className="h-4 w-4 text-muted-foreground" />
                             </Button>
                           </div>
                         ) : (
@@ -360,7 +421,7 @@ export default function TodoUp() {
                                 className="h-7 w-7"
                                 onClick={() => handleStartEdit(todo.id, todo.title)}
                               >
-                                <Edit2 className="h-3.5 w-3.5 text-gray-500" />
+                                <Edit2 className="h-3.5 w-3.5 text-muted-foreground" />
                               </Button>
                               <Button
                                 variant="ghost"
@@ -368,7 +429,7 @@ export default function TodoUp() {
                                 className="h-7 w-7"
                                 onClick={() => deleteTodo(todo.id)}
                               >
-                                <Trash2 className="h-3.5 w-3.5 text-gray-500" />
+                                <Trash2 className="h-3.5 w-3.5 text-muted-foreground" />
                               </Button>
                             </div>
                           </>
@@ -392,7 +453,7 @@ export default function TodoUp() {
                             <Checkbox
                               checked={todo.completed}
                               onCheckedChange={(checked) => handleToggleComplete(todo.id, !!checked)}
-                              className="mt-1 data-[state=checked]:bg-gray-800 data-[state=checked]:border-gray-800 border-gray-400"
+                              className="mt-1 data-[state=checked]:bg-foreground data-[state=checked]:border-foreground border-muted-foreground"
                             />
                             <div className="flex-1 min-w-0">
                               <p className="text-sm font-medium text-foreground line-through">
@@ -408,7 +469,7 @@ export default function TodoUp() {
                               className="h-7 w-7 opacity-0 group-hover:opacity-100"
                               onClick={() => deleteTodo(todo.id)}
                             >
-                              <Trash2 className="h-3.5 w-3.5 text-gray-500" />
+                              <Trash2 className="h-3.5 w-3.5 text-muted-foreground" />
                             </Button>
                           </div>
                         ))}
@@ -422,32 +483,34 @@ export default function TodoUp() {
         </div>
       </main>
 
-      {/* Fixed bottom chat-style input - show for both views */}
-      <div className="fixed bottom-14 left-0 right-0 z-30 px-4 pb-3 pt-2 pointer-events-none">
-        <div className="pointer-events-auto max-w-lg mx-auto">
-          <div className="flex items-center gap-2 bg-card/95 backdrop-blur-xl border border-border/50 rounded-full px-4 py-2 shadow-lg">
-            <input
-              id="todo-input"
-              type="text"
-              placeholder={viewMode === 'daily-tasks' ? 'Add recurring daily task...' : `Add task for ${format(calendar.selectedDate, 'MMM d')}...`}
-              value={newTodoInput}
-              onChange={(e) => setNewTodoInput(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') handleAddTask();
-              }}
-              className="flex-1 bg-transparent border-0 outline-none text-sm placeholder:text-muted-foreground/60"
-            />
-            <Button
-              onClick={handleAddTask}
-              disabled={!newTodoInput.trim()}
-              size="icon"
-              className="h-8 w-8 rounded-full shrink-0"
-            >
-              <Send className="h-4 w-4" />
-            </Button>
+      {/* Fixed bottom chat-style input - show for todo-list and daily-tasks only */}
+      {!isRecentActivity && (
+        <div className="fixed bottom-14 left-0 right-0 z-30 px-4 pb-3 pt-2 pointer-events-none">
+          <div className="pointer-events-auto max-w-lg mx-auto">
+            <div className="flex items-center gap-2 bg-card/95 backdrop-blur-xl border border-border/50 rounded-full px-4 py-2 shadow-lg">
+              <input
+                id="todo-input"
+                type="text"
+                placeholder={viewMode === 'daily-tasks' ? 'Add recurring daily task...' : `Add task for ${format(calendar.selectedDate, 'MMM d')}...`}
+                value={newTodoInput}
+                onChange={(e) => setNewTodoInput(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') handleAddTask();
+                }}
+                className="flex-1 bg-transparent border-0 outline-none text-sm placeholder:text-muted-foreground/60"
+              />
+              <Button
+                onClick={handleAddTask}
+                disabled={!newTodoInput.trim()}
+                size="icon"
+                className="h-8 w-8 rounded-full shrink-0"
+              >
+                <Send className="h-4 w-4" />
+              </Button>
+            </div>
           </div>
         </div>
-      </div>
+      )}
 
       <BottomNav />
     </div>
