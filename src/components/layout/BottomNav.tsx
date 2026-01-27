@@ -40,12 +40,22 @@ const TodoListIcon = ({ className }: { className?: string }) => (
   </svg>
 );
 
-// Tab order: Activity, Follow Up, Calling (default), To-Do List, Profile (avatar) - 5 items max
+// Chart/Analytics icon for TrackUp
+const TrackUpIcon = ({ className }: { className?: string }) => (
+  <svg viewBox="0 0 24 24" className={className} fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+    <path d="M3 3v18h18" />
+    <path d="M18 17V9" />
+    <path d="M13 17V5" />
+    <path d="M8 17v-3" />
+  </svg>
+);
+
+// Tab order: Calling (default), Follow-Up, To-Do, TrackUp, Profile - 5 tabs
 const navItems = [
-  { path: '/home', icon: ActivityIcon, label: 'Activity' },
-  { path: '/listup', icon: FollowUpIcon, label: 'Calling' },
   { path: '/dashboard', icon: CallingIcon, label: 'Calling' },
-  { path: '/action', icon: TodoListIcon, label: 'To-Do List' },
+  { path: '/listup', icon: FollowUpIcon, label: 'Follow-Up' },
+  { path: '/action', icon: TodoListIcon, label: 'To-Do' },
+  { path: '/tracking', icon: TrackUpIcon, label: 'TrackUp' },
   { path: '/profile', icon: null, label: 'Profile', isProfile: true },
 ];
 
