@@ -8,13 +8,13 @@ import { cn } from '@/lib/utils';
 import { useMemo } from 'react';
 import { format } from 'date-fns';
 
-interface AITipCardProps {
+export interface AITipCardProps {
   leads: number;
   responses: number;
   enrollments: number;
   videosSent: number;
   notPicked: number;
-  funnelDropOffs: number[];
+  funnelDropOffs?: number[]; // Optional - only for funnel context
   className?: string;
 }
 
@@ -30,7 +30,7 @@ export function AITipCard({
   enrollments,
   videosSent,
   notPicked,
-  funnelDropOffs,
+  funnelDropOffs = [],
   className,
 }: AITipCardProps) {
   const today = format(new Date(), 'yyyy-MM-dd');

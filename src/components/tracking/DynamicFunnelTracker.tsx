@@ -2,16 +2,22 @@
  * Dynamic Funnel Tracker - Funnel-period based layout
  * Rows = Stages, Columns = Funnel periods (not daily dates)
  * Uses CUMULATIVE "reached stage" counting logic
+ * Today-centered view with auto-scroll and visual highlighting
+ * Collapsible insights section below table
  */
 import { useFunnelTrackingStats } from '@/hooks/useTrackingStats';
 import { useTrackingFormat } from '@/hooks/useTrackingFormat';
 import { useFunnelConfig } from '@/hooks/useFunnelConfig';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
-import { ChevronLeft, ChevronRight, Layers, Star } from 'lucide-react';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { ChevronLeft, ChevronRight, Layers, Star, ChevronDown, ChevronUp } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { format, parse, addDays } from 'date-fns';
-import { useRef, useMemo } from 'react';
+import { format, parse } from 'date-fns';
+import { useRef, useMemo, useEffect, useState } from 'react';
+import { FunnelDropOff } from './FunnelDropOff';
+import { AITipCard } from './AITipCard';
+import { WeeklyReportCard } from './WeeklyReportCard';
 
 // Color palette for stages
 const STAGE_COLORS = [
@@ -32,13 +38,21 @@ interface FunnelPeriod {
 
 interface DynamicFunnelTrackerProps {
   isPro?: boolean;
+  // Insights data (passed from parent)
+  funnelCounts?: number[];
+  stageTags?: string[];
 }
 
-export function DynamicFunnelTracker({ isPro = true }: DynamicFunnelTrackerProps) {
+export function DynamicFunnelTracker({ 
+  isPro = true,
+  funnelCounts = [],
+  stageTags = []
+}: DynamicFunnelTrackerProps) {
   const { dailyMetrics, totals, loading, monthYear, changeMonth, daysInMonth, daysRemaining, tags } = useFunnelTrackingStats();
   const { stageFinalTargetTag } = useTrackingFormat();
   const { getEffectiveConfig } = useFunnelConfig();
   const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const [showInsights, setShowInsights] = useState(false);
 
   const formattedMonth = format(parse(monthYear, 'yyyy-MM', new Date()), 'MMMM yyyy');
   const effectiveConfig = getEffectiveConfig();
@@ -81,6 +95,36 @@ export function DynamicFunnelTracker({ isPro = true }: DynamicFunnelTrackerProps
     return periods;
   }, [dailyMetrics, funnelLength, tags]);
 
+  // Calculate which funnel contains today (for highlighting and auto-scroll)
+  const currentFunnelIndex = useMemo(() => {
+    const today = new Date();
+    const todayDate = today.getDate();
+    const currentMonthYear = format(today, 'yyyy-MM');
+    
+    if (monthYear !== currentMonthYear) return -1;
+    
+    return Math.floor((todayDate - 1) / funnelLength);
+  }, [monthYear, funnelLength]);
+
+  // Auto-scroll to center current funnel on mount/month change
+  useEffect(() => {
+    if (!scrollContainerRef.current || loading || currentFunnelIndex < 0) return;
+    
+    requestAnimationFrame(() => {
+      if (!scrollContainerRef.current) return;
+      
+      const columnWidth = 60; // min-w-[60px] per funnel column
+      const containerWidth = scrollContainerRef.current.clientWidth;
+      const stickyColumnWidth = 80; // min-w-[80px] for stage label column
+      const visibleWidth = containerWidth - stickyColumnWidth;
+      const columnsVisible = Math.floor(visibleWidth / columnWidth);
+      const centerOffset = Math.floor(columnsVisible / 2);
+      
+      const scrollPosition = Math.max(0, (currentFunnelIndex - centerOffset) * columnWidth);
+      scrollContainerRef.current.scrollLeft = scrollPosition;
+    });
+  }, [loading, currentFunnelIndex, monthYear]);
+
   if (loading) {
     return (
       <div className="space-y-3">
@@ -97,6 +141,9 @@ export function DynamicFunnelTracker({ isPro = true }: DynamicFunnelTrackerProps
     color: STAGE_COLORS[idx % STAGE_COLORS.length],
     isFinal: tag === stageFinalTargetTag,
   }));
+
+  // Get funnel counts for drop-off calculation
+  const actualFunnelCounts = stageTags.length > 0 ? funnelCounts : tags.map(tag => totals.tagCounts[tag] || 0);
 
   return (
     <div className="flex flex-col h-full animate-fade-in space-y-3">
@@ -167,15 +214,21 @@ export function DynamicFunnelTracker({ isPro = true }: DynamicFunnelTrackerProps
                   <th className="sticky left-0 z-20 bg-card py-2 px-3 text-left text-[10px] font-semibold text-muted-foreground border-b border-r border-border/30 min-w-[80px]">
                     Stage
                   </th>
-                  {funnelPeriods.map((period, idx) => (
-                    <th 
-                      key={idx} 
-                      className="py-2 px-2 text-center border-b border-border/30 min-w-[60px]"
-                    >
-                      <div className="text-[10px] font-bold text-foreground">{period.label}</div>
-                      <div className="text-[8px] text-muted-foreground">{period.dateRange}</div>
-                    </th>
-                  ))}
+                  {funnelPeriods.map((period, idx) => {
+                    const isCurrentFunnel = idx === currentFunnelIndex;
+                    return (
+                      <th 
+                        key={idx} 
+                        className={cn(
+                          "py-2 px-2 text-center border-b border-border/30 min-w-[60px]",
+                          isCurrentFunnel && "bg-primary/5 ring-1 ring-inset ring-primary/20"
+                        )}
+                      >
+                        <div className="text-[10px] font-bold text-foreground">{period.label}</div>
+                        <div className="text-[8px] text-muted-foreground">{period.dateRange}</div>
+                      </th>
+                    );
+                  })}
                   {/* Total Column */}
                   <th className="py-2 px-3 text-center text-[10px] font-bold text-primary border-b border-l border-border/30 bg-primary/5 min-w-[56px]">
                     Total
@@ -207,9 +260,16 @@ export function DynamicFunnelTracker({ isPro = true }: DynamicFunnelTrackerProps
                     {/* Data Cells - Funnel Period Values */}
                     {funnelPeriods.map((period, periodIdx) => {
                       const value = period.tagCounts[stage.key] || 0;
+                      const isCurrentFunnel = periodIdx === currentFunnelIndex;
                       
                       return (
-                        <td key={periodIdx} className="py-1 px-1 text-center">
+                        <td 
+                          key={periodIdx} 
+                          className={cn(
+                            "py-1 px-1 text-center",
+                            isCurrentFunnel && "bg-primary/5"
+                          )}
+                        >
                           <div className="h-6 flex items-center justify-center text-[11px] font-medium rounded bg-background/50">
                             {isPro ? (value > 0 ? value : '–') : '–'}
                           </div>
@@ -230,6 +290,48 @@ export function DynamicFunnelTracker({ isPro = true }: DynamicFunnelTrackerProps
           </div>
         </div>
       </div>
+
+      {/* Collapsible Insights Section */}
+      <Collapsible open={showInsights} onOpenChange={setShowInsights}>
+        <CollapsibleTrigger asChild>
+          <Button 
+            variant="ghost" 
+            className="w-full justify-between py-2 px-3 bg-card rounded-xl border border-border/50 hover:bg-muted/50"
+          >
+            <span className="text-sm font-medium">View Insights</span>
+            {showInsights ? (
+              <ChevronUp className="h-4 w-4 text-muted-foreground" />
+            ) : (
+              <ChevronDown className="h-4 w-4 text-muted-foreground" />
+            )}
+          </Button>
+        </CollapsibleTrigger>
+        <CollapsibleContent className="space-y-3 pt-3 overflow-y-auto max-h-[400px]">
+          {/* Funnel Drop-Off Analysis */}
+          <FunnelDropOff 
+            funnelCounts={actualFunnelCounts}
+            stageTags={stageTags.length > 0 ? stageTags : tags}
+          />
+          
+          {/* AI Tip of the Day - funnel focused */}
+          <AITipCard 
+            leads={0}
+            responses={totals.responses}
+            enrollments={actualFunnelCounts[actualFunnelCounts.length - 1] || 0}
+            videosSent={0}
+            notPicked={0}
+          />
+          
+          {/* Weekly Report */}
+          <WeeklyReportCard 
+            leads={0}
+            responses={totals.responses}
+            enrollments={actualFunnelCounts[actualFunnelCounts.length - 1] || 0}
+            funnelCounts={actualFunnelCounts}
+            stageTags={stageTags.length > 0 ? stageTags : tags}
+          />
+        </CollapsibleContent>
+      </Collapsible>
     </div>
   );
 }

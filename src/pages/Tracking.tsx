@@ -5,16 +5,17 @@ import { useAuth } from '@/contexts/AuthContext';
 import { BottomNav } from '@/components/layout/BottomNav';
 import { DynamicFunnelTracker } from '@/components/tracking/DynamicFunnelTracker';
 import { DynamicLeadsTracker } from '@/components/tracking/DynamicLeadsTracker';
-import { TrackUpAnalytics } from '@/components/tracking/TrackUpAnalytics';
 import { UpgradeBar } from '@/components/subscription/UpgradeBar';
 import { PullToRefreshIndicator } from '@/components/PullToRefreshIndicator';
 import { TopTabBar } from '@/components/ui/TopTabBar';
 import { Day1SetupDialog } from '@/components/trackup/Day1SetupDialog';
-import { TrendingUp, Calendar, Lock, RefreshCw, ArrowLeft, BarChart3 } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { TrendingUp, Calendar, Lock, RefreshCw, ExternalLink } from 'lucide-react';
 import { useSubscription } from '@/hooks/useSubscription';
 import { useFunnelConfig } from '@/hooks/useFunnelConfig';
 import { useLeadsTrackingStats, useFunnelTrackingStats } from '@/hooks/useTrackingStats';
 import { useTrackingFormat } from '@/hooks/useTrackingFormat';
+import { NEVORAI_WEBSITE_URL } from '@/config/siteUrl';
 import { cn } from '@/lib/utils';
 import nevoraLogo from '@/assets/nevorai-logo.jpeg';
 
@@ -91,10 +92,10 @@ export default function Tracking() {
     leaderName: funnelLeaderName
   } = useFunnelConfig();
   const effectiveConfig = getEffectiveConfig();
-  const [activeTab, setActiveTab] = useState<'leads' | 'funnel' | 'analytics'>('leads');
+  const [activeTab, setActiveTab] = useState<'leads' | 'funnel'>('leads');
   const [showDay1Setup, setShowDay1Setup] = useState(false);
 
-  // Get tracking stats for analytics
+  // Get tracking stats for analytics (passed to trackers for insights)
   const {
     totals: leadsTotals,
     tags: leadsTags
@@ -112,7 +113,12 @@ export default function Tracking() {
     if (newTab === 'funnel' && !effectiveConfig && !configLoading && !isFunnelReadOnly) {
       setShowDay1Setup(true);
     }
-    setActiveTab(newTab as 'leads' | 'funnel' | 'analytics');
+    setActiveTab(newTab as 'leads' | 'funnel');
+  };
+
+  // Open TrackUp Dashboard
+  const handleOpenDashboard = () => {
+    window.open(`${NEVORAI_WEBSITE_URL}/trackup`, '_blank');
   };
 
   // Save Day 1 date from setup dialog
@@ -150,13 +156,13 @@ export default function Tracking() {
 
   if (!user) return null;
 
-  // Calculate analytics data
+  // Calculate analytics data for insights (passed to trackers)
   const enrollments = leadsFinalTargetTag ? leadsTotals.tagCounts[leadsFinalTargetTag] || 0 : 0;
   const videosSent = leadsTags.includes('Video Sent') ? leadsTotals.tagCounts['Video Sent'] || 0 : 0;
   const notPicked = leadsTags.includes('Not Picked') ? leadsTotals.tagCounts['Not Picked'] || 0 : 0;
-
-  // Get funnel counts for drop-off analysis
   const funnelCounts = funnelTags.map(tag => funnelTotals.tagCounts[tag] || 0);
+
+  // Two-tab only: Leads and Funnel (no Insights tab)
   const toggleOptions = [{
     value: 'leads',
     label: 'Leads',
@@ -165,27 +171,32 @@ export default function Tracking() {
     value: 'funnel',
     label: 'Funnel',
     icon: TrendingUp
-  }, {
-    value: 'analytics',
-    label: 'Insights',
-    icon: BarChart3
   }];
+
   return <div className="app-layout bg-gradient-to-b from-background via-background to-muted/20">
-      {/* Premium Header with Back Button + Leads/Funnel/Analytics Switch */}
+      {/* Premium Header with Leads/Funnel Switch + Dashboard Link */}
       <header className="fixed-header z-40 bg-card/80 backdrop-blur-xl border-b border-border/50">
         <div className="flex items-center justify-between px-4 py-3">
           <div className="flex items-center gap-3">
-            {/* Back Button */}
-            
             <img src={nevoraLogo} alt="NevorAI Logo" className="h-10 w-10 rounded-xl object-cover shadow-md" />
             <div>
               <h1 className="text-xl font-bold tracking-tight">Track Up</h1>
               <p className="text-xs text-muted-foreground font-medium">Track Your Numbers</p>
             </div>
           </div>
+          {/* Dashboard Link Button */}
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={handleOpenDashboard}
+            className="h-8 w-8"
+            title="Open TrackUp Dashboard"
+          >
+            <ExternalLink className="h-4 w-4" />
+          </Button>
         </div>
         
-        {/* Leads/Funnel/Analytics Segmented Switch - TOP, sticky in header */}
+        {/* Leads/Funnel Segmented Switch - TWO TABS ONLY */}
         <div className="px-4 pb-2">
           <TopTabBar options={toggleOptions} value={activeTab} onChange={handleTabChange} />
         </div>
@@ -213,9 +224,25 @@ export default function Tracking() {
               Synced with {funnelLeaderName}
             </div>}
 
-          {/* Content based on active tab */}
+          {/* Content based on active tab - TWO TABS ONLY, insights embedded in each */}
           <div className="flex-1 min-h-0">
-            {activeTab === 'funnel' ? <DynamicFunnelTracker isPro={true} /> : activeTab === 'analytics' ? <TrackUpAnalytics leads={leadsTotals.leads} responses={leadsTotals.responses} enrollments={enrollments} videosSent={videosSent} notPicked={notPicked} tagCounts={leadsTotals.tagCounts} funnelCounts={funnelCounts} stageTags={funnelTags} /> : <DynamicLeadsTracker isPro={true} />}
+            {activeTab === 'funnel' ? (
+              <DynamicFunnelTracker 
+                isPro={true}
+                funnelCounts={funnelCounts}
+                stageTags={funnelTags}
+              />
+            ) : (
+              <DynamicLeadsTracker 
+                isPro={true}
+                leads={leadsTotals.leads}
+                responses={leadsTotals.responses}
+                enrollments={enrollments}
+                videosSent={videosSent}
+                notPicked={notPicked}
+                tagCounts={leadsTotals.tagCounts}
+              />
+            )}
           </div>
         </div>
       </main>

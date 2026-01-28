@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { useProfile } from '@/hooks/useProfile';
@@ -89,13 +90,31 @@ export function BottomNav({
   className?: string;
 }) {
   const location = useLocation();
-  const {
-    profile
-  } = useProfile();
+  const { profile } = useProfile();
+  const [keyboardVisible, setKeyboardVisible] = useState(false);
+
+  // Detect virtual keyboard on mobile (hide nav when keyboard is open)
+  useEffect(() => {
+    const handleResize = () => {
+      // If visual viewport is significantly smaller than window, keyboard is likely open
+      const isKeyboardOpen = window.visualViewport 
+        ? window.visualViewport.height < window.innerHeight * 0.75
+        : false;
+      setKeyboardVisible(isKeyboardOpen);
+    };
+
+    // Listen to visual viewport resize (fires when keyboard opens/closes)
+    window.visualViewport?.addEventListener('resize', handleResize);
+    return () => window.visualViewport?.removeEventListener('resize', handleResize);
+  }, []);
 
   // Get user initials for avatar fallback
   const displayName = profile?.display_name || 'User';
   const userInitials = displayName.slice(0, 2).toUpperCase();
+
+  // Hide bottom nav when keyboard is visible
+  if (keyboardVisible) return null;
+
   return <nav className={cn("fixed bottom-0 left-0 right-0 z-50 bg-card/95 backdrop-blur-xl border-t border-border/50", "pb-[env(safe-area-inset-bottom,8px)]",
   // Proper safe area handling
   className)}>

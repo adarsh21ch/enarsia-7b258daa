@@ -7,9 +7,10 @@ import { useMemo } from 'react';
 import { AlertTriangle, TrendingUp, TrendingDown, Minus, ArrowDown } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
-interface FunnelDropOffProps {
+export interface FunnelDropOffProps {
   funnelCounts: number[]; // [F1 count, F2 count, F3 count, ...]
-  enrollments: number;
+  stageTags?: string[]; // Stage labels (optional)
+  enrollments?: number;
   // Yesterday's data for trend
   yesterdayFunnelCounts?: number[];
   yesterdayEnrollments?: number;
@@ -24,7 +25,8 @@ interface DropOffCard {
 
 export function FunnelDropOff({
   funnelCounts,
-  enrollments,
+  stageTags = [],
+  enrollments = 0,
   yesterdayFunnelCounts = [],
   yesterdayEnrollments = 0,
 }: FunnelDropOffProps) {
@@ -50,8 +52,13 @@ export function FunnelDropOff({
       const severity: 'low' | 'medium' | 'high' =
         dropPercent < 30 ? 'low' : dropPercent < 50 ? 'medium' : 'high';
 
+      // Use stage tags for labels if available
+      const label = stageTags.length > i + 1 
+        ? `${stageTags[i]?.substring(0, 4) || 'F' + (i + 1)} → ${stageTags[i + 1]?.substring(0, 4) || 'F' + (i + 2)}`
+        : `F${i + 1} → F${i + 2}`;
+
       result.push({
-        label: `F${i + 1} → F${i + 2}`,
+        label,
         dropPercent,
         trend,
         severity,
@@ -82,7 +89,7 @@ export function FunnelDropOff({
     }
 
     return result;
-  }, [funnelCounts, enrollments, yesterdayFunnelCounts, yesterdayEnrollments]);
+  }, [funnelCounts, stageTags, enrollments, yesterdayFunnelCounts, yesterdayEnrollments]);
 
   const getSeverityColor = (severity: 'low' | 'medium' | 'high') => {
     switch (severity) {

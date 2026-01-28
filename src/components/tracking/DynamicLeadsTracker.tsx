@@ -2,15 +2,21 @@
  * Dynamic Leads Tracker - Dashboard-style transposed layout
  * Rows = Metrics, Columns = Dates (horizontal scroll)
  * Compact KPIs in single row, no scrolling
+ * Today-centered view with auto-scroll and visual highlighting
+ * Collapsible insights section below table
  */
 import { useLeadsTrackingStats } from '@/hooks/useTrackingStats';
 import { useTrackingFormat } from '@/hooks/useTrackingFormat';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
-import { ChevronLeft, ChevronRight, Users, MessageSquare, Calendar, Star, Tag } from 'lucide-react';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { ChevronLeft, ChevronRight, Users, MessageSquare, Calendar, Star, Tag, ChevronDown, ChevronUp } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { format, parse } from 'date-fns';
-import { useRef } from 'react';
+import { useRef, useEffect, useState, useMemo } from 'react';
+import { ConversionMetrics } from './ConversionMetrics';
+import { AITipCard } from './AITipCard';
+import { DailyInsightsCard } from './DailyInsightsCard';
 
 // Color palette for metrics
 const METRIC_COLORS = {
@@ -26,14 +32,67 @@ const METRIC_COLORS = {
 
 interface DynamicLeadsTrackerProps {
   isPro?: boolean;
+  // Insights data (passed from parent)
+  leads?: number;
+  responses?: number;
+  enrollments?: number;
+  videosSent?: number;
+  notPicked?: number;
+  tagCounts?: Record<string, number>;
 }
 
-export function DynamicLeadsTracker({ isPro = true }: DynamicLeadsTrackerProps) {
+export function DynamicLeadsTracker({ 
+  isPro = true,
+  leads = 0,
+  responses = 0,
+  enrollments = 0,
+  videosSent = 0,
+  notPicked = 0,
+  tagCounts = {}
+}: DynamicLeadsTrackerProps) {
   const { dailyMetrics, totals, loading, monthYear, changeMonth, daysInMonth, daysRemaining, tags } = useLeadsTrackingStats();
   const { leadsFinalTargetTag } = useTrackingFormat();
   const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const [showInsights, setShowInsights] = useState(false);
 
   const formattedMonth = format(parse(monthYear, 'yyyy-MM', new Date()), 'MMMM yyyy');
+
+  // Check if a day is today (for highlighting)
+  const isToday = useMemo(() => {
+    const now = new Date();
+    const currentMonthYear = format(now, 'yyyy-MM');
+    const todayDate = now.getDate();
+    return (dayNumber: number) => monthYear === currentMonthYear && dayNumber === todayDate;
+  }, [monthYear]);
+
+  // Get today's column index for auto-scroll
+  const todayColumnIndex = useMemo(() => {
+    const now = new Date();
+    const currentMonthYear = format(now, 'yyyy-MM');
+    if (monthYear !== currentMonthYear) return -1;
+    return now.getDate() - 1; // 0-indexed
+  }, [monthYear]);
+
+  // Auto-scroll to center today's date on mount/month change
+  useEffect(() => {
+    if (!scrollContainerRef.current || loading || todayColumnIndex < 0) return;
+    
+    // Use requestAnimationFrame to ensure DOM is ready
+    requestAnimationFrame(() => {
+      if (!scrollContainerRef.current) return;
+      
+      // Calculate scroll position to center today (show 2 days before, today, 2 days after)
+      const columnWidth = 48; // min-w-[48px] per column
+      const containerWidth = scrollContainerRef.current.clientWidth;
+      const stickyColumnWidth = 80; // min-w-[80px] for metric label column
+      const visibleWidth = containerWidth - stickyColumnWidth;
+      const columnsVisible = Math.floor(visibleWidth / columnWidth);
+      const centerOffset = Math.floor(columnsVisible / 2);
+      
+      const scrollPosition = Math.max(0, (todayColumnIndex - centerOffset) * columnWidth);
+      scrollContainerRef.current.scrollLeft = scrollPosition;
+    });
+  }, [loading, todayColumnIndex, monthYear]);
 
   if (loading) {
     return (
@@ -44,16 +103,17 @@ export function DynamicLeadsTracker({ isPro = true }: DynamicLeadsTrackerProps) 
     );
   }
 
-  // Build metrics array: Leads, Responses, then each Response Tag
+  // Build metrics array: Leads, Responses (⭐ key conversion), then each Response Tag
   const metrics = [
-    { key: 'leads', label: 'Leads', icon: Users, color: METRIC_COLORS.leads },
-    { key: 'responses', label: 'Responses', icon: MessageSquare, color: METRIC_COLORS.responses },
+    { key: 'leads', label: 'Leads', icon: Users, color: METRIC_COLORS.leads, isKeyConversion: false },
+    { key: 'responses', label: 'Responses', icon: MessageSquare, color: METRIC_COLORS.responses, isKeyConversion: true }, // ⭐ Key conversion point
     ...tags.map((tag, idx) => ({
       key: tag,
       label: tag,
       icon: tag === leadsFinalTargetTag ? Star : Tag,
       color: METRIC_COLORS.tag[idx % METRIC_COLORS.tag.length],
       isFinal: tag === leadsFinalTargetTag,
+      isKeyConversion: false,
     })),
   ];
 
@@ -69,9 +129,9 @@ export function DynamicLeadsTracker({ isPro = true }: DynamicLeadsTrackerProps) 
             <span className="text-xs font-bold">{isPro ? totals.leads : '–'}</span>
           </div>
           
-          {/* Responses */}
-          <div className="flex items-center gap-1.5 px-2 py-1 rounded-lg bg-emerald-500/10">
-            <MessageSquare className="h-3 w-3 text-emerald-600" />
+          {/* Responses - Key conversion point with star */}
+          <div className="flex items-center gap-1.5 px-2 py-1 rounded-lg bg-emerald-500/10 ring-1 ring-emerald-500/30">
+            <Star className="h-3 w-3 text-emerald-500 fill-emerald-500" />
             <span className="text-[10px] font-medium text-emerald-600">Responses</span>
             <span className="text-xs font-bold">{isPro ? totals.responses : '–'}</span>
           </div>
@@ -143,14 +203,20 @@ export function DynamicLeadsTracker({ isPro = true }: DynamicLeadsTrackerProps) 
                   <th className="sticky left-0 z-20 bg-card py-2 px-3 text-left text-[10px] font-semibold text-muted-foreground border-b border-r border-border/30 min-w-[80px]">
                     Metric
                   </th>
-                  {dailyMetrics.map((day) => (
-                    <th 
-                      key={day.dayNumber} 
-                      className="py-2 px-2 text-center text-[10px] font-medium text-muted-foreground border-b border-border/30 min-w-[48px]"
-                    >
-                      {day.date.split(' ')[0]}
-                    </th>
-                  ))}
+                  {dailyMetrics.map((day) => {
+                    const isTodayColumn = isToday(day.dayNumber);
+                    return (
+                      <th 
+                        key={day.dayNumber} 
+                        className={cn(
+                          "py-2 px-2 text-center text-[10px] font-medium text-muted-foreground border-b border-border/30 min-w-[48px]",
+                          isTodayColumn && "bg-primary/5 ring-1 ring-inset ring-primary/20"
+                        )}
+                      >
+                        {day.date.split(' ')[0]}
+                      </th>
+                    );
+                  })}
                   {/* Total Column */}
                   <th className="py-2 px-3 text-center text-[10px] font-bold text-primary border-b border-l border-border/30 bg-primary/5 min-w-[56px]">
                     Total
@@ -162,6 +228,7 @@ export function DynamicLeadsTracker({ isPro = true }: DynamicLeadsTrackerProps) 
                 {metrics.map((metric, metricIdx) => {
                   const Icon = metric.icon;
                   const isFinal = 'isFinal' in metric && metric.isFinal;
+                  const isKeyConversion = metric.isKeyConversion;
                   
                   return (
                     <tr key={metric.key} className={metricIdx % 2 === 0 ? 'bg-background' : 'bg-muted/20'}>
@@ -171,10 +238,19 @@ export function DynamicLeadsTracker({ isPro = true }: DynamicLeadsTrackerProps) 
                         metricIdx % 2 === 0 ? 'bg-background' : 'bg-muted/20'
                       )}>
                         <div className="flex items-center gap-1.5">
-                          <div className={cn("p-1 rounded", metric.color.bg)}>
-                            <Icon className={cn("h-3 w-3", metric.color.text, isFinal && "fill-current")} />
+                          <div className={cn(
+                            "p-1 rounded", 
+                            metric.color.bg,
+                            isKeyConversion && "ring-1 ring-emerald-500/30"
+                          )}>
+                            <Icon className={cn(
+                              "h-3 w-3", 
+                              metric.color.text, 
+                              (isFinal || isKeyConversion) && "fill-current"
+                            )} />
                           </div>
                           <span className="truncate max-w-[50px]">{metric.label}</span>
+                          {isKeyConversion && <Star className="h-2.5 w-2.5 text-emerald-500 fill-emerald-500" />}
                         </div>
                       </td>
                       
@@ -185,8 +261,16 @@ export function DynamicLeadsTracker({ isPro = true }: DynamicLeadsTrackerProps) 
                         else if (metric.key === 'responses') value = day.responses;
                         else value = day.tagCounts[metric.key] || 0;
                         
+                        const isTodayColumn = isToday(day.dayNumber);
+                        
                         return (
-                          <td key={day.dayNumber} className="py-1 px-1 text-center">
+                          <td 
+                            key={day.dayNumber} 
+                            className={cn(
+                              "py-1 px-1 text-center",
+                              isTodayColumn && "bg-primary/5"
+                            )}
+                          >
                             <div className="h-6 flex items-center justify-center text-[11px] font-medium rounded bg-background/50">
                               {isPro ? (value > 0 ? value : '–') : '–'}
                             </div>
@@ -212,6 +296,48 @@ export function DynamicLeadsTracker({ isPro = true }: DynamicLeadsTrackerProps) 
           </div>
         </div>
       </div>
+
+      {/* Collapsible Insights Section */}
+      <Collapsible open={showInsights} onOpenChange={setShowInsights}>
+        <CollapsibleTrigger asChild>
+          <Button 
+            variant="ghost" 
+            className="w-full justify-between py-2 px-3 bg-card rounded-xl border border-border/50 hover:bg-muted/50"
+          >
+            <span className="text-sm font-medium">View Insights</span>
+            {showInsights ? (
+              <ChevronUp className="h-4 w-4 text-muted-foreground" />
+            ) : (
+              <ChevronDown className="h-4 w-4 text-muted-foreground" />
+            )}
+          </Button>
+        </CollapsibleTrigger>
+        <CollapsibleContent className="space-y-3 pt-3 overflow-y-auto max-h-[400px]">
+          {/* Conversion Metrics - Lead-focused */}
+          <ConversionMetrics 
+            leads={totals.leads}
+            responses={totals.responses}
+            enrollments={enrollments}
+          />
+          
+          {/* AI Tip of the Day */}
+          <AITipCard 
+            leads={totals.leads}
+            responses={totals.responses}
+            enrollments={enrollments}
+            videosSent={videosSent}
+            notPicked={notPicked}
+          />
+          
+          {/* Daily Insights */}
+          <DailyInsightsCard 
+            leads={totals.leads}
+            responses={totals.responses}
+            enrollments={enrollments}
+            tagCounts={totals.tagCounts}
+          />
+        </CollapsibleContent>
+      </Collapsible>
     </div>
   );
 }

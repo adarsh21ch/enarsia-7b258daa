@@ -14,12 +14,25 @@ interface DailyInsight {
   isRead: boolean;
 }
 
-interface DailyInsightsCardProps {
-  insights: DailyInsight[];
+export interface DailyInsightsCardProps {
+  leads?: number;
+  responses?: number;
+  enrollments?: number;
+  tagCounts?: Record<string, number>;
+  insights?: DailyInsight[];
   onViewAll?: () => void;
 }
 
-export function DailyInsightsCard({ insights, onViewAll }: DailyInsightsCardProps) {
+export function DailyInsightsCard({ 
+  leads = 0, 
+  responses = 0, 
+  enrollments = 0, 
+  tagCounts = {},
+  insights: providedInsights, 
+  onViewAll 
+}: DailyInsightsCardProps) {
+  // Generate insights from data if not provided
+  const insights = providedInsights || generateInsightsFromData(leads, responses, enrollments, tagCounts);
   const getTypeIcon = (type: 'success' | 'warning' | 'info') => {
     switch (type) {
       case 'success':
@@ -179,4 +192,65 @@ export function generateDailyInsight(data: {
   }
 
   return null;
+}
+
+/**
+ * Generate insights from current data
+ */
+function generateInsightsFromData(
+  leads: number,
+  responses: number,
+  enrollments: number,
+  tagCounts: Record<string, number>
+): DailyInsight[] {
+  const insights: DailyInsight[] = [];
+  
+  const responseRate = leads > 0 ? (responses / leads) * 100 : 0;
+  const enrollRate = responses > 0 ? (enrollments / responses) * 100 : 0;
+  
+  // Low activity insight
+  if (leads < 3) {
+    insights.push({
+      id: 'low-activity',
+      date: new Date(),
+      message: 'Add more leads for meaningful insights. Aim for 5+ daily.',
+      type: 'info',
+      isRead: true,
+    });
+  }
+  
+  // Good response rate
+  if (responseRate > 50 && leads >= 5) {
+    insights.push({
+      id: 'good-response',
+      date: new Date(),
+      message: `Strong ${responseRate.toFixed(0)}% response rate! Keep this approach.`,
+      type: 'success',
+      isRead: true,
+    });
+  }
+  
+  // Low response rate
+  if (responseRate < 30 && leads >= 5) {
+    insights.push({
+      id: 'low-response',
+      date: new Date(),
+      message: `Response rate at ${responseRate.toFixed(0)}%. Try faster follow-ups.`,
+      type: 'warning',
+      isRead: false,
+    });
+  }
+  
+  // High enrollment
+  if (enrollRate > 40 && enrollments >= 2) {
+    insights.push({
+      id: 'high-enroll',
+      date: new Date(),
+      message: `Excellent ${enrollRate.toFixed(0)}% enrollment rate today!`,
+      type: 'success',
+      isRead: true,
+    });
+  }
+  
+  return insights;
 }
