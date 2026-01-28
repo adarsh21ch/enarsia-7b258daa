@@ -94,6 +94,15 @@ export interface PowerUser {
   last_active: string | null;
 }
 
+export interface ConversionAnalytics {
+  totalUsers: number;
+  freeUsers: number;
+  proUsers: number;
+  conversionRate: number;
+  conversionsThisMonth: number;
+  conversionsLastMonth: number;
+}
+
 export interface AdminAnalytics {
   dailySignups: DailySignup[];
   subscriptionBreakdown: SubscriptionBreakdown[];
@@ -113,6 +122,8 @@ export interface AdminAnalytics {
   activeUsage: ActiveUsageStats;
   // Revenue stats
   revenue: RevenueStats;
+  // Conversion analytics
+  conversion: ConversionAnalytics;
 }
 
 export function useAdminAnalytics() {
@@ -125,7 +136,7 @@ export function useAdminAnalytics() {
       const monthAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000).toISOString();
 
       // Fetch all data in parallel
-      const [analyticsRes, profilesRes, subscriptionsRes, paymentsRes, totalSignupsRes, revenueRes, usageRes] = await Promise.all([
+      const [analyticsRes, profilesRes, subscriptionsRes, paymentsRes, totalSignupsRes, revenueRes, usageRes, conversionRes] = await Promise.all([
         // Get core metrics from single source of truth function
         supabase.rpc('admin_get_analytics'),
         
@@ -154,6 +165,9 @@ export function useAdminAnalytics() {
 
         // Get active usage stats
         supabase.rpc('admin_get_active_usage_stats'),
+
+        // Get conversion analytics
+        supabase.rpc('admin_get_conversion_analytics'),
       ]);
 
       // Extract core metrics from single source
@@ -254,6 +268,17 @@ export function useAdminAnalytics() {
         activeCallersWeek: Number(usageData.active_callers_week) || 0,
       };
 
+      // Conversion analytics
+      const conversionData = (conversionRes.data?.[0] || {}) as Record<string, unknown>;
+      const conversion: ConversionAnalytics = {
+        totalUsers: Number(conversionData.total_users) || 0,
+        freeUsers: Number(conversionData.free_users) || 0,
+        proUsers: Number(conversionData.pro_users) || 0,
+        conversionRate: Number(conversionData.conversion_rate) || 0,
+        conversionsThisMonth: Number(conversionData.conversions_this_month) || 0,
+        conversionsLastMonth: Number(conversionData.conversions_last_month) || 0,
+      };
+
       return {
         dailySignups,
         subscriptionBreakdown,
@@ -270,6 +295,7 @@ export function useAdminAnalytics() {
         freeUsersCount,
         activeUsage,
         revenue,
+        conversion,
       };
     },
     enabled: !!user,

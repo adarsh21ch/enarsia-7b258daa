@@ -5,13 +5,9 @@ import { useAdmin } from '@/hooks/useAdmin';
 import { BottomNav } from '@/components/layout/BottomNav';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
-import { Loader2, Shield, Users, Crown, ArrowLeft, Search, Save, Calendar, BarChart3, MessageSquare, Settings, Tag, Sliders, Sparkles } from 'lucide-react';
-import { format, addDays } from 'date-fns';
-import { toast } from 'sonner';
+import { Loader2, Shield, Users, Crown, ArrowLeft, BarChart3, MessageSquare, Tag, Sliders, Sparkles, History } from 'lucide-react';
 import nevoraLogo from '@/assets/nevorai-logo.jpeg';
 import { AdminAnalyticsDashboard } from '@/components/admin/AdminAnalyticsDashboard';
 import { AdminSupportPanel } from '@/components/admin/AdminSupportPanel';
@@ -19,106 +15,19 @@ import { PlansManager } from '@/components/admin/PlansManager';
 import { OffersManager } from '@/components/admin/OffersManager';
 import { UsageLimitsManager } from '@/components/admin/UsageLimitsManager';
 import { FeatureFlagsManager } from '@/components/admin/FeatureFlagsManager';
-import { UserOverrideDrawer } from '@/components/admin/UserOverrideDrawer';
-
-const DURATION_OPTIONS = [
-  { value: '30', label: '30 days' },
-  { value: '60', label: '60 days' },
-  { value: '90', label: '90 days' },
-  { value: '365', label: '1 year' },
-];
+import { EnhancedUsersTab } from '@/components/admin/EnhancedUsersTab';
+import { AuditLogViewer } from '@/components/admin/AuditLogViewer';
 
 export default function Admin() {
   const navigate = useNavigate();
   const { user, loading: authLoading } = useAuth();
-  const { isAdmin, users, loading, searching, fetchAllUsers, updateUserSubscription } = useAdmin();
-  const [searchQuery, setSearchQuery] = useState('');
-  const [userFilter, setUserFilter] = useState<'all' | 'free' | 'pro'>('all');
-  const [pendingChanges, setPendingChanges] = useState<Record<string, { plan: 'free' | 'pro'; duration: string }>>({});
-  const [savingUserId, setSavingUserId] = useState<string | null>(null);
+  const { isAdmin, loading } = useAdmin();
 
   useEffect(() => {
     if (!authLoading && !user) {
       navigate('/auth');
     }
   }, [user, authLoading, navigate]);
-
-  // Fetch users on mount and when search/filter changes (debounced)
-  useEffect(() => {
-    if (isAdmin) {
-      const timer = setTimeout(() => {
-        fetchAllUsers(searchQuery, userFilter);
-      }, 300); // 300ms debounce for search
-      return () => clearTimeout(timer);
-    }
-  }, [isAdmin, fetchAllUsers, searchQuery, userFilter]);
-
-  // Check if user's Pro is expired
-  const isExpired = (expiresAt: string | null) => {
-    if (!expiresAt) return true;
-    return new Date(expiresAt) < new Date();
-  };
-
-  // Get effective status considering expiry
-  const getEffectiveStatus = (u: typeof users[0]) => {
-    if (u.plan !== 'pro') return 'free';
-    // Admin override users with no expiry date are always pro
-    if (u.is_admin_override && !u.expires_at) return 'pro';
-    // Users with no expiry date are considered pro (lifetime/admin)
-    if (!u.expires_at) return 'pro';
-    // Only check expiry if there's an actual expiry date
-    if (isExpired(u.expires_at)) return 'expired';
-    return 'pro';
-  };
-
-  // Handle plan change in dropdown
-  const handlePlanChange = (userId: string, plan: 'free' | 'pro') => {
-    setPendingChanges(prev => ({
-      ...prev,
-      [userId]: { plan, duration: prev[userId]?.duration || '30' }
-    }));
-  };
-
-  // Handle duration change
-  const handleDurationChange = (userId: string, duration: string) => {
-    setPendingChanges(prev => ({
-      ...prev,
-      [userId]: { ...prev[userId], plan: 'pro', duration }
-    }));
-  };
-
-  // Save changes for a user
-  const handleSave = async (userId: string) => {
-    const changes = pendingChanges[userId];
-    if (!changes) return;
-
-    setSavingUserId(userId);
-    try {
-      const durationDays = changes.plan === 'pro' ? parseInt(changes.duration) : undefined;
-      const { error } = await updateUserSubscription(userId, changes.plan, durationDays);
-      
-      if (error) {
-        toast.error('Failed to update subscription');
-      } else {
-        toast.success(`Subscription updated successfully`);
-        // Clear pending changes for this user
-        setPendingChanges(prev => {
-          const { [userId]: _, ...rest } = prev;
-          return rest;
-        });
-      }
-    } catch (err) {
-      toast.error('Error updating subscription');
-    } finally {
-      setSavingUserId(null);
-    }
-  };
-
-  // Calculate expiry date for display
-  const calculateExpiryDate = (duration: string) => {
-    const days = parseInt(duration);
-    return format(addDays(new Date(), days), 'dd MMM yyyy');
-  };
 
   if (authLoading || loading) {
     return (
@@ -198,13 +107,22 @@ export default function Admin() {
                   <Sparkles className="h-3.5 w-3.5 mr-1" />
                   Features
                 </TabsTrigger>
-                <TabsTrigger value="support" className="text-xs px-3">
+              <TabsTrigger value="support" className="text-xs px-3">
                   <MessageSquare className="h-3.5 w-3.5 mr-1" />
                   Support
+                </TabsTrigger>
+                <TabsTrigger value="audit" className="text-xs px-3">
+                  <History className="h-3.5 w-3.5 mr-1" />
+                  Audit Log
                 </TabsTrigger>
               </TabsList>
               <ScrollBar orientation="horizontal" />
             </ScrollArea>
+
+            {/* Users Tab - Enhanced */}
+            <TabsContent value="users" className="mt-4">
+              <EnhancedUsersTab />
+            </TabsContent>
 
             {/* Analytics Tab */}
             <TabsContent value="analytics" className="mt-4">
@@ -236,164 +154,10 @@ export default function Admin() {
               <AdminSupportPanel />
             </TabsContent>
 
-            {/* Users Tab */}
-            <TabsContent value="users" className="mt-4 space-y-4">
-          {/* Filters Row */}
-          <div className="flex gap-2">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Search by email, name, or upline email..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10 pr-10"
-              />
-              {searching && (
-                <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin text-muted-foreground" />
-              )}
-            </div>
-            <Select value={userFilter} onValueChange={(value) => setUserFilter(value as 'all' | 'free' | 'pro')}>
-              <SelectTrigger className="w-28">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Users</SelectItem>
-                <SelectItem value="free">Free</SelectItem>
-                <SelectItem value="pro">Pro</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          {/* User List */}
-          <div className="rounded-2xl bg-card border border-border/50 overflow-hidden flex flex-col">
-            <div className="px-4 py-3 border-b border-border/50 bg-muted/30 shrink-0">
-              <h3 className="font-semibold">
-                {searchQuery || userFilter !== 'all' 
-                  ? `Results (${users.length})` 
-                  : 'All Users'}
-              </h3>
-            </div>
-            <div className="divide-y divide-border/50 overflow-y-auto max-h-[60vh]">
-              {users.length === 0 ? (
-                <div className="p-8 text-center text-muted-foreground">
-                  <Users className="h-12 w-12 mx-auto mb-3 opacity-30" />
-                  <p>{searchQuery || userFilter !== 'all' ? 'No users match your filters' : 'No users found'}</p>
-                </div>
-              ) : (
-                users.map((u) => {
-                  const effectiveStatus = getEffectiveStatus(u);
-                  const pending = pendingChanges[u.id];
-                  const currentPlan = pending?.plan ?? u.plan;
-                  const currentDuration = pending?.duration ?? '30';
-                  const hasChanges = !!pending;
-
-                  return (
-                    <div key={u.id} className="p-4 space-y-3">
-                      {/* User Info Row */}
-                      <div className="flex items-center justify-between">
-                        <div className="flex-1 min-w-0">
-                          <p className="font-medium truncate">{u.email}</p>
-                          {u.name && (
-                            <p className="text-xs text-muted-foreground truncate">{u.name}</p>
-                          )}
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <Badge 
-                            variant="outline" 
-                            className={
-                              effectiveStatus === 'pro' 
-                                ? 'bg-amber-500/10 text-amber-600 border-amber-500/30'
-                                : effectiveStatus === 'expired'
-                                ? 'bg-red-500/10 text-red-600 border-red-500/30'
-                                : 'bg-muted text-muted-foreground'
-                            }
-                          >
-                            {effectiveStatus === 'pro' && <Crown className="h-3 w-3 mr-1" />}
-                            {effectiveStatus === 'pro' ? 'Pro' : effectiveStatus === 'expired' ? 'Expired' : 'Free'}
-                          </Badge>
-                          {u.is_admin_override && effectiveStatus === 'pro' && (
-                            <Badge variant="outline" className="bg-purple-500/10 text-purple-600 border-purple-500/30 text-[10px]">
-                              Admin
-                            </Badge>
-                          )}
-                        </div>
-                      </div>
-
-                      {/* Plan & Expiry Controls */}
-                      <div className="flex items-center gap-2 flex-wrap">
-                        {/* Plan Select */}
-                        <Select
-                          value={currentPlan}
-                          onValueChange={(value) => handlePlanChange(u.id, value as 'free' | 'pro')}
-                        >
-                          <SelectTrigger className="w-24 h-8 text-xs">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="free">Free</SelectItem>
-                            <SelectItem value="pro">Pro</SelectItem>
-                          </SelectContent>
-                        </Select>
-
-                        {/* Duration Select (only for Pro) */}
-                        {currentPlan === 'pro' && (
-                          <>
-                            <Select
-                              value={currentDuration}
-                              onValueChange={(value) => handleDurationChange(u.id, value)}
-                            >
-                              <SelectTrigger className="w-28 h-8 text-xs">
-                                <SelectValue />
-                              </SelectTrigger>
-                              <SelectContent>
-                                {DURATION_OPTIONS.map(opt => (
-                                  <SelectItem key={opt.value} value={opt.value}>
-                                    {opt.label}
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-
-                            {/* Expiry Date Preview */}
-                            <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                              <Calendar className="h-3 w-3" />
-                              <span>
-                                {hasChanges 
-                                  ? `→ ${calculateExpiryDate(currentDuration)}`
-                                  : u.expires_at 
-                                    ? format(new Date(u.expires_at), 'dd MMM yyyy')
-                                    : 'No expiry'
-                                }
-                              </span>
-                            </div>
-                          </>
-                        )}
-
-                        {/* Save Button */}
-                        {hasChanges && (
-                          <Button
-                            size="sm"
-                            className="h-8 text-xs ml-auto"
-                            onClick={() => handleSave(u.id)}
-                            disabled={savingUserId === u.id}
-                          >
-                            {savingUserId === u.id ? (
-                              <Loader2 className="h-3 w-3 animate-spin mr-1" />
-                            ) : (
-                              <Save className="h-3 w-3 mr-1" />
-                            )}
-                            Save
-                          </Button>
-                        )}
-                      </div>
-                    </div>
-                  );
-                })
-              )}
-            </div>
-          </div>
-
-          </TabsContent>
+            {/* Audit Log Tab */}
+            <TabsContent value="audit" className="mt-4">
+              <AuditLogViewer />
+            </TabsContent>
           </Tabs>
 
           <Link to="/profile">

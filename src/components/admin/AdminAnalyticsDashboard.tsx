@@ -40,6 +40,7 @@ export function AdminAnalyticsDashboard() {
         todayLeads={analytics.todayLeads}
         revenue={analytics.revenue}
         activeUsage={analytics.activeUsage}
+        conversion={analytics.conversion}
       />
 
       {/* Analytics Tabs */}

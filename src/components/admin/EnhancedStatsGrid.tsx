@@ -12,7 +12,7 @@ import {
 } from 'lucide-react';
 import { useState } from 'react';
 import { ProUserDrawer, FreeUserDrawer } from './UserListDrawer';
-import { useProUsers, useFreeUsers, useExpiringSubscriptions, RevenueStats, ActiveUsageStats } from '@/hooks/useAdminAnalytics';
+import { useProUsers, useFreeUsers, useExpiringSubscriptions, RevenueStats, ActiveUsageStats, ConversionAnalytics } from '@/hooks/useAdminAnalytics';
 
 interface EnhancedStatsGridProps {
   totalSignups: number;
@@ -24,6 +24,7 @@ interface EnhancedStatsGridProps {
   todayLeads: number;
   revenue: RevenueStats;
   activeUsage: ActiveUsageStats;
+  conversion?: ConversionAnalytics;
 }
 
 interface StatCardProps {
@@ -72,6 +73,7 @@ export function EnhancedStatsGrid({
   todayLeads,
   revenue,
   activeUsage,
+  conversion,
 }: EnhancedStatsGridProps) {
   const [proDrawerOpen, setProDrawerOpen] = useState(false);
   const [freeDrawerOpen, setFreeDrawerOpen] = useState(false);
@@ -151,13 +153,21 @@ export function EnhancedStatsGrid({
           icon={<TrendingUp className="h-3 w-3" />}
         />
 
-        {/* Row 4: Revenue */}
+        {/* Row 4: Revenue & Conversion */}
         <StatCard
           label="Total Revenue"
           value={formatRevenue(revenue.totalRevenue)}
           icon={<IndianRupee className="h-3 w-3 text-green-600" />}
           highlight="primary"
           subtext={`${revenue.successfulPayments} payments`}
+        />
+
+        <StatCard
+          label="Conversion Rate"
+          value={`${conversion?.conversionRate || 0}%`}
+          icon={<TrendingUp className="h-3 w-3 text-blue-500" />}
+          highlight="success"
+          subtext={`${conversion?.conversionsThisMonth || 0} this month`}
         />
 
         <StatCard

@@ -839,6 +839,42 @@ export type Database = {
           },
         ]
       }
+      admin_audit_logs: {
+        Row: {
+          action_type: string
+          admin_user_id: string
+          created_at: string | null
+          description: string
+          id: string
+          new_value: Json | null
+          old_value: Json | null
+          target_id: string | null
+          target_type: string
+        }
+        Insert: {
+          action_type: string
+          admin_user_id: string
+          created_at?: string | null
+          description: string
+          id?: string
+          new_value?: Json | null
+          old_value?: Json | null
+          target_id?: string | null
+          target_type: string
+        }
+        Update: {
+          action_type?: string
+          admin_user_id?: string
+          created_at?: string | null
+          description?: string
+          id?: string
+          new_value?: Json | null
+          old_value?: Json | null
+          target_id?: string | null
+          target_type?: string
+        }
+        Relationships: []
+      }
       admin_feature_flags: {
         Row: {
           created_at: string | null
@@ -2189,6 +2225,7 @@ export type Database = {
           display_name: string | null
           email: string | null
           id: string
+          is_suspended: boolean | null
           leader_code_seq: number | null
           leader_prompt_completed: boolean
           leaders_id_of_my_leader: string | null
@@ -2217,6 +2254,7 @@ export type Database = {
           display_name?: string | null
           email?: string | null
           id?: string
+          is_suspended?: boolean | null
           leader_code_seq?: number | null
           leader_prompt_completed?: boolean
           leaders_id_of_my_leader?: string | null
@@ -2245,6 +2283,7 @@ export type Database = {
           display_name?: string | null
           email?: string | null
           id?: string
+          is_suspended?: boolean | null
           leader_code_seq?: number | null
           leader_prompt_completed?: boolean
           leaders_id_of_my_leader?: string | null
@@ -3170,6 +3209,38 @@ export type Database = {
           week_active: number
         }[]
       }
+      admin_get_audit_logs: {
+        Args: {
+          p_action_type?: string
+          p_limit?: number
+          p_offset?: number
+          p_target_type?: string
+        }
+        Returns: {
+          action_type: string
+          admin_email: string
+          admin_user_id: string
+          created_at: string
+          description: string
+          id: string
+          new_value: Json
+          old_value: Json
+          target_id: string
+          target_type: string
+          total_count: number
+        }[]
+      }
+      admin_get_conversion_analytics: {
+        Args: never
+        Returns: {
+          conversion_rate: number
+          conversions_last_month: number
+          conversions_this_month: number
+          free_users: number
+          pro_users: number
+          total_users: number
+        }[]
+      }
       admin_get_expiring_subscriptions: {
         Args: { days_ahead?: number }
         Returns: {
@@ -3347,6 +3418,34 @@ export type Database = {
               user_id: string
             }[]
           }
+      admin_search_users_enhanced: {
+        Args: {
+          page_offset?: number
+          page_size?: number
+          plan_filter?: string
+          search_query?: string
+        }
+        Returns: {
+          created_at: string
+          display_name: string
+          email: string
+          expires_at: string
+          is_admin_override: boolean
+          is_suspended: boolean
+          last_active_at: string
+          neverai_id: string
+          plan: string
+          source_app: string
+          subscribed_at: string
+          total_count: number
+          total_leads_count: number
+          user_id: string
+        }[]
+      }
+      admin_toggle_user_suspension: {
+        Args: { p_suspend: boolean; p_user_id: string }
+        Returns: boolean
+      }
       batch_reorder_prospects: {
         Args: { p_updates: Json; p_user_id: string }
         Returns: boolean
@@ -3505,6 +3604,17 @@ export type Database = {
       is_in_downline: {
         Args: { target_user_id: string; viewer_user_id: string }
         Returns: boolean
+      }
+      log_admin_action: {
+        Args: {
+          p_action_type: string
+          p_description?: string
+          p_new_value?: Json
+          p_old_value?: Json
+          p_target_id: string
+          p_target_type: string
+        }
+        Returns: string
       }
       nevorai_create_share_token: {
         Args: { p_expires_at?: string; p_form_id: string }
