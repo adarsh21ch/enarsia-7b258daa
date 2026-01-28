@@ -146,72 +146,76 @@ export function DynamicFunnelTracker({
   const actualFunnelCounts = stageTags.length > 0 ? funnelCounts : tags.map(tag => totals.tagCounts[tag] || 0);
 
   return (
-    <div className="flex flex-col h-full animate-fade-in space-y-3">
-      {/* Compact Summary Header - Single Row KPIs */}
-      <div className="bg-card rounded-xl p-3 border border-border/50">
-        <div className="flex items-center gap-3 flex-wrap">
-          {/* Entry (Total) */}
-          <div className="flex items-center gap-1.5 px-2 py-1 rounded-lg bg-blue-500/10">
-            <Layers className="h-3 w-3 text-blue-600" />
-            <span className="text-[10px] font-medium text-blue-600">Entry</span>
-            <span className="text-xs font-bold">{isPro ? totals.responses : '–'}</span>
-          </div>
-          
-          {/* Stage KPIs - compact, non-scrolling */}
-          {stages.map((stage) => (
-            <div 
-              key={stage.key} 
-              className={cn(
-                "flex items-center gap-1 px-2 py-1 rounded-lg",
-                stage.color.bg,
-                stage.isFinal && "ring-1 ring-amber-500/50"
-              )}
-            >
-              {stage.isFinal && <Star className="h-3 w-3 text-amber-500 fill-amber-500" />}
-              <span className="text-[10px] font-medium truncate max-w-[50px]">{stage.label}</span>
-              <span className="text-xs font-bold">{isPro ? (totals.tagCounts[stage.key] || 0) : '–'}</span>
+    <div className="flex flex-col h-full animate-fade-in">
+      {/* Sticky Header Section - KPIs + Month Selector */}
+      <div className="sticky top-0 z-30 bg-background/95 backdrop-blur-sm pb-2 space-y-2">
+        {/* Compact Summary Header - Single Row KPIs */}
+        <div className="bg-card rounded-xl p-3 border border-border/50">
+          <div className="flex items-center gap-3 flex-wrap">
+            {/* Entry (Total) */}
+            <div className="flex items-center gap-1.5 px-2 py-1 rounded-lg bg-blue-500/10">
+              <Layers className="h-3 w-3 text-blue-600" />
+              <span className="text-[10px] font-medium text-blue-600">Entry</span>
+              <span className="text-xs font-bold">{isPro ? totals.responses : '–'}</span>
             </div>
-          ))}
-        </div>
-      </div>
-
-      {/* Month Selector */}
-      <div className="flex items-center justify-center gap-3 py-2 bg-card rounded-xl border border-border/50">
-        <Button variant="ghost" size="icon" onClick={() => changeMonth('prev')} className="h-7 w-7 rounded-full">
-          <ChevronLeft className="h-4 w-4" />
-        </Button>
-        <div className="text-center min-w-[130px]">
-          <p className="font-semibold text-sm">{formattedMonth}</p>
-          <p className="text-[10px] text-muted-foreground">
-            {funnelPeriods.length} funnels ({funnelLength}-day cycles)
-          </p>
-        </div>
-        <Button variant="ghost" size="icon" onClick={() => changeMonth('next')} className="h-7 w-7 rounded-full">
-          <ChevronRight className="h-4 w-4" />
-        </Button>
-      </div>
-
-      {/* Funnel-Period Data Grid */}
-      <div className="bg-card rounded-xl border border-border/50 overflow-hidden flex-1">
-        <div className="px-3 py-2 border-b border-border/50">
-          <div className="flex items-center gap-2">
-            <Layers className="h-4 w-4 text-primary" />
-            <h3 className="font-semibold text-sm">Funnel Tracking</h3>
+            
+            {/* Stage KPIs - compact, non-scrolling */}
+            {stages.map((stage) => (
+              <div 
+                key={stage.key} 
+                className={cn(
+                  "flex items-center gap-1 px-2 py-1 rounded-lg",
+                  stage.color.bg,
+                  stage.isFinal && "ring-1 ring-amber-500/50"
+                )}
+              >
+                {stage.isFinal && <Star className="h-3 w-3 text-amber-500 fill-amber-500" />}
+                <span className="text-[10px] font-medium truncate max-w-[50px]">{stage.label}</span>
+                <span className="text-xs font-bold">{isPro ? (totals.tagCounts[stage.key] || 0) : '–'}</span>
+              </div>
+            ))}
           </div>
         </div>
 
-        {/* Scrollable Grid Container */}
-        <div className="relative overflow-hidden">
+        {/* Month Selector */}
+        <div className="flex items-center justify-center gap-3 py-2 bg-card rounded-xl border border-border/50">
+          <Button variant="ghost" size="icon" onClick={() => changeMonth('prev')} className="h-7 w-7 rounded-full">
+            <ChevronLeft className="h-4 w-4" />
+          </Button>
+          <div className="text-center min-w-[130px]">
+            <p className="font-semibold text-sm">{formattedMonth}</p>
+            <p className="text-[10px] text-muted-foreground">
+              {funnelPeriods.length} funnels ({funnelLength}-day cycles)
+            </p>
+          </div>
+          <Button variant="ghost" size="icon" onClick={() => changeMonth('next')} className="h-7 w-7 rounded-full">
+            <ChevronRight className="h-4 w-4" />
+          </Button>
+        </div>
+      </div>
+
+      {/* Scrollable Content Area */}
+      <div className="flex-1 space-y-3 pt-2 min-h-0">
+        {/* Data Grid - Table scrolls horizontally, content scrolls with page */}
+        <div className="bg-card rounded-xl border border-border/50 overflow-hidden">
+          <div className="px-3 py-2 border-b border-border/50">
+            <div className="flex items-center gap-2">
+              <Layers className="h-4 w-4 text-primary" />
+              <h3 className="font-semibold text-sm">Funnel Tracking</h3>
+            </div>
+          </div>
+
+          {/* Horizontally Scrollable Grid */}
           <div 
             ref={scrollContainerRef}
-            className="overflow-x-auto overflow-y-auto max-h-[300px]"
+            className="overflow-x-auto"
           >
             <table className="w-max min-w-full">
               {/* Header Row - Funnel Periods */}
-              <thead className="sticky top-0 z-10 bg-card">
+              <thead className="bg-card">
                 <tr>
                   {/* Sticky First Column - Stage Label */}
-                  <th className="sticky left-0 z-20 bg-card py-2 px-3 text-left text-[10px] font-semibold text-muted-foreground border-b border-r border-border/30 min-w-[80px]">
+                  <th className="sticky left-0 z-10 bg-card py-2 px-3 text-left text-[10px] font-semibold text-muted-foreground border-b border-r border-border/30 min-w-[80px]">
                     Stage
                   </th>
                   {funnelPeriods.map((period, idx) => {
@@ -290,12 +294,12 @@ export function DynamicFunnelTracker({
           </div>
         </div>
 
-        {/* View Insights - Inside the table card */}
+        {/* View Insights - Expands inline, scrolls with page */}
         <Collapsible open={showInsights} onOpenChange={setShowInsights}>
           <CollapsibleTrigger asChild>
             <Button 
-              variant="ghost" 
-              className="w-full justify-between py-2 px-3 border-t border-border/50 rounded-none hover:bg-muted/50"
+              variant="outline" 
+              className="w-full justify-between py-3 px-4 bg-card border-border/50 hover:bg-muted/50"
             >
               <span className="text-sm font-medium">View Insights</span>
               {showInsights ? (
@@ -305,7 +309,7 @@ export function DynamicFunnelTracker({
               )}
             </Button>
           </CollapsibleTrigger>
-          <CollapsibleContent className="space-y-3 p-3 border-t border-border/30 overflow-y-auto max-h-[350px] bg-muted/20">
+          <CollapsibleContent className="space-y-3 pt-3">
             {/* Funnel Drop-Off Analysis */}
             <FunnelDropOff 
               funnelCounts={actualFunnelCounts}

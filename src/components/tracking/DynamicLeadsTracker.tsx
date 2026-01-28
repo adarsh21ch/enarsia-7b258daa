@@ -117,89 +117,93 @@ export function DynamicLeadsTracker({
   ];
 
   return (
-    <div className="flex flex-col h-full animate-fade-in space-y-3">
-      {/* Compact KPI Row - Single line, no scroll */}
-      <div className="bg-card rounded-xl p-3 border border-border/50">
-        <div className="flex items-center gap-3 flex-wrap">
-          {/* Leads */}
-          <div className="flex items-center gap-1.5 px-2 py-1 rounded-lg bg-blue-500/10">
-            <Users className="h-3 w-3 text-blue-600" />
-            <span className="text-[10px] font-medium text-blue-600">Leads</span>
-            <span className="text-xs font-bold">{isPro ? totals.leads : '–'}</span>
+    <div className="flex flex-col h-full animate-fade-in">
+      {/* Sticky Header Section - KPIs + Month Selector */}
+      <div className="sticky top-0 z-30 bg-background/95 backdrop-blur-sm pb-2 space-y-2">
+        {/* Compact KPI Row - Single line, no scroll */}
+        <div className="bg-card rounded-xl p-3 border border-border/50">
+          <div className="flex items-center gap-3 flex-wrap">
+            {/* Leads */}
+            <div className="flex items-center gap-1.5 px-2 py-1 rounded-lg bg-blue-500/10">
+              <Users className="h-3 w-3 text-blue-600" />
+              <span className="text-[10px] font-medium text-blue-600">Leads</span>
+              <span className="text-xs font-bold">{isPro ? totals.leads : '–'}</span>
+            </div>
+            
+            {/* Responses */}
+            <div className="flex items-center gap-1.5 px-2 py-1 rounded-lg bg-emerald-500/10">
+              <MessageSquare className="h-3 w-3 text-emerald-600" />
+              <span className="text-[10px] font-medium text-emerald-600">Responses</span>
+              <span className="text-xs font-bold">{isPro ? totals.responses : '–'}</span>
+            </div>
+            
+            {/* Response Tags - first 3 only to keep compact */}
+            {tags.slice(0, 3).map((tag, idx) => {
+              const isFinal = tag === leadsFinalTargetTag;
+              const color = METRIC_COLORS.tag[idx % METRIC_COLORS.tag.length];
+              return (
+                <div 
+                  key={tag}
+                  className={cn(
+                    "flex items-center gap-1 px-2 py-1 rounded-lg",
+                    color.bg,
+                    isFinal && "ring-1 ring-amber-500/50"
+                  )}
+                >
+                  {isFinal && <Star className="h-3 w-3 text-amber-500 fill-amber-500" />}
+                  <span className="text-[10px] font-medium truncate max-w-[50px]">{tag}</span>
+                  <span className="text-xs font-bold">{isPro ? (totals.tagCounts[tag] || 0) : '–'}</span>
+                </div>
+              );
+            })}
+            
+            {/* Active Days */}
+            <div className="flex items-center gap-1 px-2 py-1 rounded-lg bg-muted/50 ml-auto">
+              <Calendar className="h-3 w-3 text-muted-foreground" />
+              <span className="text-[10px] font-medium">{daysInMonth - daysRemaining}/{daysInMonth}</span>
+            </div>
           </div>
-          
-          {/* Responses */}
-          <div className="flex items-center gap-1.5 px-2 py-1 rounded-lg bg-emerald-500/10">
-            <MessageSquare className="h-3 w-3 text-emerald-600" />
-            <span className="text-[10px] font-medium text-emerald-600">Responses</span>
-            <span className="text-xs font-bold">{isPro ? totals.responses : '–'}</span>
+        </div>
+
+        {/* Month Selector */}
+        <div className="flex items-center justify-center gap-3 py-2 bg-card rounded-xl border border-border/50">
+          <Button variant="ghost" size="icon" onClick={() => changeMonth('prev')} className="h-7 w-7 rounded-full">
+            <ChevronLeft className="h-4 w-4" />
+          </Button>
+          <div className="text-center min-w-[130px]">
+            <p className="font-semibold text-sm">{formattedMonth}</p>
+            <p className="text-[10px] text-muted-foreground">
+              {daysRemaining > 0 && <span>{daysRemaining} days left</span>}
+            </p>
           </div>
-          
-          {/* Response Tags - first 3 only to keep compact */}
-          {tags.slice(0, 3).map((tag, idx) => {
-            const isFinal = tag === leadsFinalTargetTag;
-            const color = METRIC_COLORS.tag[idx % METRIC_COLORS.tag.length];
-            return (
-              <div 
-                key={tag}
-                className={cn(
-                  "flex items-center gap-1 px-2 py-1 rounded-lg",
-                  color.bg,
-                  isFinal && "ring-1 ring-amber-500/50"
-                )}
-              >
-                {isFinal && <Star className="h-3 w-3 text-amber-500 fill-amber-500" />}
-                <span className="text-[10px] font-medium truncate max-w-[50px]">{tag}</span>
-                <span className="text-xs font-bold">{isPro ? (totals.tagCounts[tag] || 0) : '–'}</span>
-              </div>
-            );
-          })}
-          
-          {/* Active Days */}
-          <div className="flex items-center gap-1 px-2 py-1 rounded-lg bg-muted/50 ml-auto">
-            <Calendar className="h-3 w-3 text-muted-foreground" />
-            <span className="text-[10px] font-medium">{daysInMonth - daysRemaining}/{daysInMonth}</span>
-          </div>
+          <Button variant="ghost" size="icon" onClick={() => changeMonth('next')} className="h-7 w-7 rounded-full">
+            <ChevronRight className="h-4 w-4" />
+          </Button>
         </div>
       </div>
 
-      {/* Month Selector */}
-      <div className="flex items-center justify-center gap-3 py-2 bg-card rounded-xl border border-border/50">
-        <Button variant="ghost" size="icon" onClick={() => changeMonth('prev')} className="h-7 w-7 rounded-full">
-          <ChevronLeft className="h-4 w-4" />
-        </Button>
-        <div className="text-center min-w-[130px]">
-          <p className="font-semibold text-sm">{formattedMonth}</p>
-          <p className="text-[10px] text-muted-foreground">
-            {daysRemaining > 0 && <span>{daysRemaining} days left</span>}
-          </p>
-        </div>
-        <Button variant="ghost" size="icon" onClick={() => changeMonth('next')} className="h-7 w-7 rounded-full">
-          <ChevronRight className="h-4 w-4" />
-        </Button>
-      </div>
-
-      {/* Transposed Data Grid */}
-      <div className="bg-card rounded-xl border border-border/50 overflow-hidden flex-1">
-        <div className="px-3 py-2 border-b border-border/50">
-          <div className="flex items-center gap-2">
-            <Calendar className="h-4 w-4 text-primary" />
-            <h3 className="font-semibold text-sm">Daily Leads Tracking</h3>
+      {/* Scrollable Content Area */}
+      <div className="flex-1 space-y-3 pt-2 min-h-0">
+        {/* Data Grid - Table scrolls horizontally, content scrolls with page */}
+        <div className="bg-card rounded-xl border border-border/50 overflow-hidden">
+          <div className="px-3 py-2 border-b border-border/50">
+            <div className="flex items-center gap-2">
+              <Calendar className="h-4 w-4 text-primary" />
+              <h3 className="font-semibold text-sm">Daily Leads Tracking</h3>
+            </div>
           </div>
-        </div>
 
-        {/* Scrollable Grid Container */}
-        <div className="relative overflow-hidden">
+          {/* Horizontally Scrollable Grid */}
           <div 
             ref={scrollContainerRef}
-            className="overflow-x-auto overflow-y-auto max-h-[300px]"
+            className="overflow-x-auto"
           >
             <table className="w-max min-w-full">
               {/* Header Row - Dates */}
-              <thead className="sticky top-0 z-10 bg-card">
+              <thead className="bg-card">
                 <tr>
                   {/* Sticky First Column - Metric Label */}
-                  <th className="sticky left-0 z-20 bg-card py-2 px-3 text-left text-[10px] font-semibold text-muted-foreground border-b border-r border-border/30 min-w-[80px]">
+                  <th className="sticky left-0 z-10 bg-card py-2 px-3 text-left text-[10px] font-semibold text-muted-foreground border-b border-r border-border/30 min-w-[80px]">
                     Metric
                   </th>
                   {dailyMetrics.map((day) => {
@@ -292,12 +296,12 @@ export function DynamicLeadsTracker({
           </div>
         </div>
 
-        {/* View Insights - Inside the table card */}
+        {/* View Insights - Expands inline, scrolls with page */}
         <Collapsible open={showInsights} onOpenChange={setShowInsights}>
           <CollapsibleTrigger asChild>
             <Button 
-              variant="ghost" 
-              className="w-full justify-between py-2 px-3 border-t border-border/50 rounded-none hover:bg-muted/50"
+              variant="outline" 
+              className="w-full justify-between py-3 px-4 bg-card border-border/50 hover:bg-muted/50"
             >
               <span className="text-sm font-medium">View Insights</span>
               {showInsights ? (
@@ -307,7 +311,7 @@ export function DynamicLeadsTracker({
               )}
             </Button>
           </CollapsibleTrigger>
-          <CollapsibleContent className="space-y-3 p-3 border-t border-border/30 overflow-y-auto max-h-[350px] bg-muted/20">
+          <CollapsibleContent className="space-y-3 pt-3">
             {/* Conversion Metrics - Lead-focused */}
             <ConversionMetrics 
               leads={totals.leads}
