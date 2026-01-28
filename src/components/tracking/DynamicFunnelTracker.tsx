@@ -146,196 +146,193 @@ export function DynamicFunnelTracker({
   const actualFunnelCounts = stageTags.length > 0 ? funnelCounts : tags.map(tag => totals.tagCounts[tag] || 0);
 
   return (
-    <div className="flex flex-col h-full animate-fade-in">
-      {/* Sticky Header Section - KPIs + Month Selector */}
-      <div className="sticky top-0 z-30 bg-background/95 backdrop-blur-sm pb-2 space-y-2">
-        {/* Compact Summary Header - Single Row KPIs */}
-        <div className="bg-card rounded-xl p-3 border border-border/50">
-          <div className="flex items-center gap-3 flex-wrap">
-            {/* Entry (Total) */}
-            <div className="flex items-center gap-1.5 px-2 py-1 rounded-lg bg-blue-500/10">
-              <Layers className="h-3 w-3 text-blue-600" />
-              <span className="text-[10px] font-medium text-blue-600">Entry</span>
-              <span className="text-xs font-bold">{isPro ? totals.responses : '–'}</span>
+    <div className="flex flex-col gap-3 animate-fade-in pb-4">
+      {/* KPI Summary Row - Scrolls with content (not sticky) */}
+      <div className="bg-card rounded-xl p-3 border border-border/50">
+        <div className="flex items-center gap-3 flex-wrap">
+          {/* Entry (Total) */}
+          <div className="flex items-center gap-1.5 px-2 py-1 rounded-lg bg-blue-500/10">
+            <Layers className="h-3 w-3 text-blue-600" />
+            <span className="text-[10px] font-medium text-blue-600">Entry</span>
+            <span className="text-xs font-bold">{isPro ? totals.responses : '–'}</span>
+          </div>
+          
+          {/* Stage KPIs - compact, non-scrolling */}
+          {stages.map((stage) => (
+            <div 
+              key={stage.key} 
+              className={cn(
+                "flex items-center gap-1 px-2 py-1 rounded-lg",
+                stage.color.bg,
+                stage.isFinal && "ring-1 ring-amber-500/50"
+              )}
+            >
+              {stage.isFinal && <Star className="h-3 w-3 text-amber-500 fill-amber-500" />}
+              <span className="text-[10px] font-medium truncate max-w-[50px]">{stage.label}</span>
+              <span className="text-xs font-bold">{isPro ? (totals.tagCounts[stage.key] || 0) : '–'}</span>
             </div>
-            
-            {/* Stage KPIs - compact, non-scrolling */}
-            {stages.map((stage) => (
-              <div 
-                key={stage.key} 
-                className={cn(
-                  "flex items-center gap-1 px-2 py-1 rounded-lg",
-                  stage.color.bg,
-                  stage.isFinal && "ring-1 ring-amber-500/50"
-                )}
-              >
-                {stage.isFinal && <Star className="h-3 w-3 text-amber-500 fill-amber-500" />}
-                <span className="text-[10px] font-medium truncate max-w-[50px]">{stage.label}</span>
-                <span className="text-xs font-bold">{isPro ? (totals.tagCounts[stage.key] || 0) : '–'}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Month Selector */}
-        <div className="flex items-center justify-center gap-3 py-2 bg-card rounded-xl border border-border/50">
-          <Button variant="ghost" size="icon" onClick={() => changeMonth('prev')} className="h-7 w-7 rounded-full">
-            <ChevronLeft className="h-4 w-4" />
-          </Button>
-          <div className="text-center min-w-[130px]">
-            <p className="font-semibold text-sm">{formattedMonth}</p>
-            <p className="text-[10px] text-muted-foreground">
-              {funnelPeriods.length} funnels ({funnelLength}-day cycles)
-            </p>
-          </div>
-          <Button variant="ghost" size="icon" onClick={() => changeMonth('next')} className="h-7 w-7 rounded-full">
-            <ChevronRight className="h-4 w-4" />
-          </Button>
+          ))}
         </div>
       </div>
 
-      {/* Scrollable Content Area */}
-      <div className="flex-1 space-y-3 pt-2 min-h-0">
-        {/* Data Grid - Table scrolls horizontally, content scrolls with page */}
-        <div className="bg-card rounded-xl border border-border/50 overflow-hidden">
-          <div className="px-3 py-2 border-b border-border/50">
-            <div className="flex items-center gap-2">
-              <Layers className="h-4 w-4 text-primary" />
-              <h3 className="font-semibold text-sm">Funnel Tracking</h3>
-            </div>
-          </div>
+      {/* Month Selector */}
+      <div className="flex items-center justify-center gap-3 py-2 bg-card rounded-xl border border-border/50">
+        <Button variant="ghost" size="icon" onClick={() => changeMonth('prev')} className="h-7 w-7 rounded-full">
+          <ChevronLeft className="h-4 w-4" />
+        </Button>
+        <div className="text-center min-w-[130px]">
+          <p className="font-semibold text-sm">{formattedMonth}</p>
+          <p className="text-[10px] text-muted-foreground">
+            {funnelPeriods.length} funnels ({funnelLength}-day cycles)
+          </p>
+        </div>
+        <Button variant="ghost" size="icon" onClick={() => changeMonth('next')} className="h-7 w-7 rounded-full">
+          <ChevronRight className="h-4 w-4" />
+        </Button>
+      </div>
 
-          {/* Horizontally Scrollable Grid */}
-          <div 
-            ref={scrollContainerRef}
-            className="overflow-x-auto"
-          >
-            <table className="w-max min-w-full">
-              {/* Header Row - Funnel Periods */}
-              <thead className="bg-card">
-                <tr>
-                  {/* Sticky First Column - Stage Label */}
-                  <th className="sticky left-0 z-10 bg-card py-2 px-3 text-left text-[10px] font-semibold text-muted-foreground border-b border-r border-border/30 min-w-[80px]">
-                    Stage
-                  </th>
-                  {funnelPeriods.map((period, idx) => {
-                    const isCurrentFunnel = idx === currentFunnelIndex;
+      {/* Data Grid - Horizontally scrollable table */}
+      <div className="bg-card rounded-xl border border-border/50 overflow-hidden">
+        <div className="px-3 py-2 border-b border-border/50">
+          <div className="flex items-center gap-2">
+            <Layers className="h-4 w-4 text-primary" />
+            <h3 className="font-semibold text-sm">Funnel Tracking</h3>
+          </div>
+        </div>
+
+        {/* Horizontally Scrollable Grid */}
+        <div 
+          ref={scrollContainerRef}
+          className="overflow-x-auto"
+        >
+          <table className="w-max min-w-full">
+            {/* Header Row - Funnel Periods */}
+            <thead className="bg-card">
+              <tr>
+                {/* Sticky First Column - Stage Label */}
+                <th className="sticky left-0 z-10 bg-card py-2 px-3 text-left text-[10px] font-semibold text-muted-foreground border-b border-r border-border/30 min-w-[80px]">
+                  Stage
+                </th>
+                {funnelPeriods.map((period, idx) => {
+                  const isCurrentFunnel = idx === currentFunnelIndex;
+                  return (
+                    <th 
+                      key={idx} 
+                      className={cn(
+                        "py-2 px-2 text-center border-b border-border/30 min-w-[60px]",
+                        isCurrentFunnel && "bg-primary/5 ring-1 ring-inset ring-primary/20"
+                      )}
+                    >
+                      <div className="text-[10px] font-bold text-foreground">{period.label}</div>
+                      <div className="text-[8px] text-muted-foreground">{period.dateRange}</div>
+                    </th>
+                  );
+                })}
+                {/* Total Column */}
+                <th className="py-2 px-3 text-center text-[10px] font-bold text-primary border-b border-l border-border/30 bg-primary/5 min-w-[56px]">
+                  Total
+                </th>
+              </tr>
+            </thead>
+
+            <tbody>
+              {/* Stage Rows (NO Leads row) */}
+              {stages.map((stage, stageIdx) => (
+                <tr key={stage.key} className={stageIdx % 2 === 0 ? 'bg-background' : 'bg-muted/20'}>
+                  {/* Sticky First Column - Stage Name */}
+                  <td className={cn(
+                    "sticky left-0 z-10 py-1.5 px-2 text-xs font-medium border-r border-border/30 min-w-[80px]",
+                    stageIdx % 2 === 0 ? 'bg-background' : 'bg-muted/20'
+                  )}>
+                    <div className="flex items-center gap-1.5">
+                      <div className={cn("p-1 rounded", stage.color.bg)}>
+                        {stage.isFinal ? (
+                          <Star className={cn("h-3 w-3", stage.color.text, "fill-current")} />
+                        ) : (
+                          <Layers className={cn("h-3 w-3", stage.color.text)} />
+                        )}
+                      </div>
+                      <span className="truncate max-w-[50px]">{stage.label}</span>
+                    </div>
+                  </td>
+                  
+                  {/* Data Cells - Funnel Period Values */}
+                  {funnelPeriods.map((period, periodIdx) => {
+                    const value = period.tagCounts[stage.key] || 0;
+                    const isCurrentFunnel = periodIdx === currentFunnelIndex;
+                    
                     return (
-                      <th 
-                        key={idx} 
+                      <td 
+                        key={periodIdx} 
                         className={cn(
-                          "py-2 px-2 text-center border-b border-border/30 min-w-[60px]",
-                          isCurrentFunnel && "bg-primary/5 ring-1 ring-inset ring-primary/20"
+                          "py-1 px-1 text-center",
+                          isCurrentFunnel && "bg-primary/5"
                         )}
                       >
-                        <div className="text-[10px] font-bold text-foreground">{period.label}</div>
-                        <div className="text-[8px] text-muted-foreground">{period.dateRange}</div>
-                      </th>
+                        <div className="h-6 flex items-center justify-center text-[11px] font-medium rounded bg-background/50">
+                          {isPro ? (value > 0 ? value : '–') : '–'}
+                        </div>
+                      </td>
                     );
                   })}
-                  {/* Total Column */}
-                  <th className="py-2 px-3 text-center text-[10px] font-bold text-primary border-b border-l border-border/30 bg-primary/5 min-w-[56px]">
-                    Total
-                  </th>
+                  
+                  {/* Total Cell */}
+                  <td className="py-1 px-2 text-center border-l border-border/30 bg-primary/5">
+                    <div className="h-6 flex items-center justify-center text-xs font-bold rounded bg-card shadow-sm">
+                      {isPro ? (totals.tagCounts[stage.key] || 0) : '–'}
+                    </div>
+                  </td>
                 </tr>
-              </thead>
-
-              <tbody>
-                {/* Stage Rows (NO Leads row) */}
-                {stages.map((stage, stageIdx) => (
-                  <tr key={stage.key} className={stageIdx % 2 === 0 ? 'bg-background' : 'bg-muted/20'}>
-                    {/* Sticky First Column - Stage Name */}
-                    <td className={cn(
-                      "sticky left-0 z-10 py-1.5 px-2 text-xs font-medium border-r border-border/30 min-w-[80px]",
-                      stageIdx % 2 === 0 ? 'bg-background' : 'bg-muted/20'
-                    )}>
-                      <div className="flex items-center gap-1.5">
-                        <div className={cn("p-1 rounded", stage.color.bg)}>
-                          {stage.isFinal ? (
-                            <Star className={cn("h-3 w-3", stage.color.text, "fill-current")} />
-                          ) : (
-                            <Layers className={cn("h-3 w-3", stage.color.text)} />
-                          )}
-                        </div>
-                        <span className="truncate max-w-[50px]">{stage.label}</span>
-                      </div>
-                    </td>
-                    
-                    {/* Data Cells - Funnel Period Values */}
-                    {funnelPeriods.map((period, periodIdx) => {
-                      const value = period.tagCounts[stage.key] || 0;
-                      const isCurrentFunnel = periodIdx === currentFunnelIndex;
-                      
-                      return (
-                        <td 
-                          key={periodIdx} 
-                          className={cn(
-                            "py-1 px-1 text-center",
-                            isCurrentFunnel && "bg-primary/5"
-                          )}
-                        >
-                          <div className="h-6 flex items-center justify-center text-[11px] font-medium rounded bg-background/50">
-                            {isPro ? (value > 0 ? value : '–') : '–'}
-                          </div>
-                        </td>
-                      );
-                    })}
-                    
-                    {/* Total Cell */}
-                    <td className="py-1 px-2 text-center border-l border-border/30 bg-primary/5">
-                      <div className="h-6 flex items-center justify-center text-xs font-bold rounded bg-card shadow-sm">
-                        {isPro ? (totals.tagCounts[stage.key] || 0) : '–'}
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+              ))}
+            </tbody>
+          </table>
         </div>
-
-        {/* View Insights - Expands inline, scrolls with page */}
-        <Collapsible open={showInsights} onOpenChange={setShowInsights}>
-          <CollapsibleTrigger asChild>
-            <Button 
-              variant="outline" 
-              className="w-full justify-between py-3 px-4 bg-card border-border/50 hover:bg-muted/50"
-            >
-              <span className="text-sm font-medium">View Insights</span>
-              {showInsights ? (
-                <ChevronUp className="h-4 w-4 text-muted-foreground" />
-              ) : (
-                <ChevronDown className="h-4 w-4 text-muted-foreground" />
-              )}
-            </Button>
-          </CollapsibleTrigger>
-          <CollapsibleContent className="space-y-3 pt-3">
-            {/* Funnel Drop-Off Analysis */}
-            <FunnelDropOff 
-              funnelCounts={actualFunnelCounts}
-              stageTags={stageTags.length > 0 ? stageTags : tags}
-            />
-            
-            {/* AI Tip of the Day - funnel focused */}
-            <AITipCard 
-              leads={0}
-              responses={totals.responses}
-              enrollments={actualFunnelCounts[actualFunnelCounts.length - 1] || 0}
-              videosSent={0}
-              notPicked={0}
-            />
-            
-            {/* Weekly Report */}
-            <WeeklyReportCard 
-              leads={0}
-              responses={totals.responses}
-              enrollments={actualFunnelCounts[actualFunnelCounts.length - 1] || 0}
-              funnelCounts={actualFunnelCounts}
-              stageTags={stageTags.length > 0 ? stageTags : tags}
-            />
-          </CollapsibleContent>
-        </Collapsible>
       </div>
+
+      {/* View Insights - Expands naturally, full-page scroll */}
+      <Collapsible open={showInsights} onOpenChange={setShowInsights}>
+        <CollapsibleTrigger asChild>
+          <Button 
+            variant="outline" 
+            className="w-full justify-between py-3 px-4 bg-card border-border/50 hover:bg-muted/50 transition-colors"
+          >
+            <span className="text-sm font-semibold text-foreground">
+              {showInsights ? 'Hide Insights' : 'View Insights'}
+            </span>
+            <div className={cn(
+              "transition-transform duration-200",
+              showInsights && "rotate-180"
+            )}>
+              <ChevronDown className="h-4 w-4 text-muted-foreground" />
+            </div>
+          </Button>
+        </CollapsibleTrigger>
+        <CollapsibleContent className="space-y-3 pt-3 data-[state=open]:animate-accordion-down data-[state=closed]:animate-accordion-up overflow-hidden">
+          {/* Funnel Drop-Off Analysis */}
+          <FunnelDropOff 
+            funnelCounts={actualFunnelCounts}
+            stageTags={stageTags.length > 0 ? stageTags : tags}
+          />
+          
+          {/* AI Tip of the Day - funnel focused */}
+          <AITipCard 
+            leads={0}
+            responses={totals.responses}
+            enrollments={actualFunnelCounts[actualFunnelCounts.length - 1] || 0}
+            videosSent={0}
+            notPicked={0}
+          />
+          
+          {/* Weekly Report */}
+          <WeeklyReportCard 
+            leads={0}
+            responses={totals.responses}
+            enrollments={actualFunnelCounts[actualFunnelCounts.length - 1] || 0}
+            funnelCounts={actualFunnelCounts}
+            stageTags={stageTags.length > 0 ? stageTags : tags}
+          />
+        </CollapsibleContent>
+      </Collapsible>
     </div>
   );
 }
