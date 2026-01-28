@@ -118,8 +118,8 @@ export function DynamicLeadsTracker({
 
   return (
     <div className="flex flex-col gap-3 animate-fade-in pb-4">
-      {/* KPI Summary Row - Scrolls with content (not sticky) */}
-      <div className="bg-card rounded-xl p-3 border border-border/50">
+      {/* KPI Summary Row - Sticky at top while scrolling */}
+      <div className="sticky top-0 z-30 bg-card/95 backdrop-blur-sm rounded-xl p-3 border border-border/50 shadow-sm">
         <div className="flex items-center gap-3 flex-wrap">
           {/* Leads */}
           <div className="flex items-center gap-1.5 px-2 py-1 rounded-lg bg-blue-500/10">

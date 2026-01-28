@@ -204,7 +204,7 @@ export default function Tracking() {
 
       <main ref={containerRef} className="scrollable-content relative">
         <PullToRefreshIndicator isRefreshing={isRefreshing} pullDistance={pullDistance} showIndicator={showIndicator} />
-        <div className={cn("container py-2 px-3 h-full flex flex-col", showProGate ? "pb-36" : "pb-24")}>
+        <div className={cn("container py-2 px-3", showProGate ? "pb-36" : "pb-24")}>
           {/* Pro gate - show when user is not Pro */}
           {showProGate && <div className="relative mb-4">
               <div className="absolute inset-0 flex flex-col items-center justify-center z-10 bg-background/80 backdrop-blur-sm rounded-xl py-8">
@@ -225,7 +225,7 @@ export default function Tracking() {
             </div>}
 
           {/* Content based on active tab - TWO TABS ONLY, insights embedded in each */}
-          <div className="flex-1 min-h-0">
+          <div>
             {activeTab === 'funnel' ? (
               <DynamicFunnelTracker 
                 isPro={true}
