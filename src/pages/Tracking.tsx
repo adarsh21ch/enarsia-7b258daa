@@ -172,7 +172,6 @@ export default function Tracking() {
     label: 'Funnel',
     icon: TrendingUp
   }];
-
   return <div className="app-layout bg-gradient-to-b from-background via-background to-muted/20">
       {/* Premium Header with Leads/Funnel Switch + Dashboard Link */}
       <header className="fixed-header z-40 bg-card/80 backdrop-blur-xl border-b border-border/50">
@@ -185,14 +184,9 @@ export default function Tracking() {
             </div>
           </div>
           {/* Dashboard Link Button */}
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={handleOpenDashboard}
-            className="h-8 gap-1.5 text-xs font-medium"
-          >
+          <Button variant="ghost" size="sm" onClick={handleOpenDashboard} className="h-8 gap-1.5 text-xs font-medium">
             <ExternalLink className="h-3.5 w-3.5" />
-            Dashboard
+            Team Tracking  
           </Button>
         </div>
         
@@ -226,23 +220,7 @@ export default function Tracking() {
 
           {/* Content based on active tab - TWO TABS ONLY, insights embedded in each */}
           <div>
-            {activeTab === 'funnel' ? (
-              <DynamicFunnelTracker 
-                isPro={true}
-                funnelCounts={funnelCounts}
-                stageTags={funnelTags}
-              />
-            ) : (
-              <DynamicLeadsTracker 
-                isPro={true}
-                leads={leadsTotals.leads}
-                responses={leadsTotals.responses}
-                enrollments={enrollments}
-                videosSent={videosSent}
-                notPicked={notPicked}
-                tagCounts={leadsTotals.tagCounts}
-              />
-            )}
+            {activeTab === 'funnel' ? <DynamicFunnelTracker isPro={true} funnelCounts={funnelCounts} stageTags={funnelTags} /> : <DynamicLeadsTracker isPro={true} leads={leadsTotals.leads} responses={leadsTotals.responses} enrollments={enrollments} videosSent={videosSent} notPicked={notPicked} tagCounts={leadsTotals.tagCounts} />}
           </div>
         </div>
       </main>
