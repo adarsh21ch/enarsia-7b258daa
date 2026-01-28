@@ -192,7 +192,7 @@ export function DynamicLeadsTracker({
         <div className="relative overflow-hidden">
           <div 
             ref={scrollContainerRef}
-            className="overflow-x-auto overflow-y-auto max-h-[400px]"
+            className="overflow-x-auto overflow-y-auto max-h-[300px]"
           >
             <table className="w-max min-w-full">
               {/* Header Row - Dates */}
@@ -224,7 +224,7 @@ export function DynamicLeadsTracker({
               </thead>
 
               <tbody>
-              {metrics.map((metric, metricIdx) => {
+                {metrics.map((metric, metricIdx) => {
                   const Icon = metric.icon;
                   const isFinal = 'isFinal' in metric && metric.isFinal;
                   
@@ -291,49 +291,49 @@ export function DynamicLeadsTracker({
             </table>
           </div>
         </div>
-      </div>
 
-      {/* Collapsible Insights Section */}
-      <Collapsible open={showInsights} onOpenChange={setShowInsights}>
-        <CollapsibleTrigger asChild>
-          <Button 
-            variant="ghost" 
-            className="w-full justify-between py-2 px-3 bg-card rounded-xl border border-border/50 hover:bg-muted/50"
-          >
-            <span className="text-sm font-medium">View Insights</span>
-            {showInsights ? (
-              <ChevronUp className="h-4 w-4 text-muted-foreground" />
-            ) : (
-              <ChevronDown className="h-4 w-4 text-muted-foreground" />
-            )}
-          </Button>
-        </CollapsibleTrigger>
-        <CollapsibleContent className="space-y-3 pt-3 overflow-y-auto max-h-[400px]">
-          {/* Conversion Metrics - Lead-focused */}
-          <ConversionMetrics 
-            leads={totals.leads}
-            responses={totals.responses}
-            enrollments={enrollments}
-          />
-          
-          {/* AI Tip of the Day */}
-          <AITipCard 
-            leads={totals.leads}
-            responses={totals.responses}
-            enrollments={enrollments}
-            videosSent={videosSent}
-            notPicked={notPicked}
-          />
-          
-          {/* Daily Insights */}
-          <DailyInsightsCard 
-            leads={totals.leads}
-            responses={totals.responses}
-            enrollments={enrollments}
-            tagCounts={totals.tagCounts}
-          />
-        </CollapsibleContent>
-      </Collapsible>
+        {/* View Insights - Inside the table card */}
+        <Collapsible open={showInsights} onOpenChange={setShowInsights}>
+          <CollapsibleTrigger asChild>
+            <Button 
+              variant="ghost" 
+              className="w-full justify-between py-2 px-3 border-t border-border/50 rounded-none hover:bg-muted/50"
+            >
+              <span className="text-sm font-medium">View Insights</span>
+              {showInsights ? (
+                <ChevronUp className="h-4 w-4 text-muted-foreground" />
+              ) : (
+                <ChevronDown className="h-4 w-4 text-muted-foreground" />
+              )}
+            </Button>
+          </CollapsibleTrigger>
+          <CollapsibleContent className="space-y-3 p-3 border-t border-border/30 overflow-y-auto max-h-[350px] bg-muted/20">
+            {/* Conversion Metrics - Lead-focused */}
+            <ConversionMetrics 
+              leads={totals.leads}
+              responses={totals.responses}
+              enrollments={enrollments}
+            />
+            
+            {/* AI Tip of the Day */}
+            <AITipCard 
+              leads={totals.leads}
+              responses={totals.responses}
+              enrollments={enrollments}
+              videosSent={videosSent}
+              notPicked={notPicked}
+            />
+            
+            {/* Daily Insights */}
+            <DailyInsightsCard 
+              leads={totals.leads}
+              responses={totals.responses}
+              enrollments={enrollments}
+              tagCounts={totals.tagCounts}
+            />
+          </CollapsibleContent>
+        </Collapsible>
+      </div>
     </div>
   );
 }

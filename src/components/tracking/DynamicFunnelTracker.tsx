@@ -204,7 +204,7 @@ export function DynamicFunnelTracker({
         <div className="relative overflow-hidden">
           <div 
             ref={scrollContainerRef}
-            className="overflow-x-auto overflow-y-auto max-h-[400px]"
+            className="overflow-x-auto overflow-y-auto max-h-[300px]"
           >
             <table className="w-max min-w-full">
               {/* Header Row - Funnel Periods */}
@@ -289,49 +289,49 @@ export function DynamicFunnelTracker({
             </table>
           </div>
         </div>
-      </div>
 
-      {/* Collapsible Insights Section */}
-      <Collapsible open={showInsights} onOpenChange={setShowInsights}>
-        <CollapsibleTrigger asChild>
-          <Button 
-            variant="ghost" 
-            className="w-full justify-between py-2 px-3 bg-card rounded-xl border border-border/50 hover:bg-muted/50"
-          >
-            <span className="text-sm font-medium">View Insights</span>
-            {showInsights ? (
-              <ChevronUp className="h-4 w-4 text-muted-foreground" />
-            ) : (
-              <ChevronDown className="h-4 w-4 text-muted-foreground" />
-            )}
-          </Button>
-        </CollapsibleTrigger>
-        <CollapsibleContent className="space-y-3 pt-3 overflow-y-auto max-h-[400px]">
-          {/* Funnel Drop-Off Analysis */}
-          <FunnelDropOff 
-            funnelCounts={actualFunnelCounts}
-            stageTags={stageTags.length > 0 ? stageTags : tags}
-          />
-          
-          {/* AI Tip of the Day - funnel focused */}
-          <AITipCard 
-            leads={0}
-            responses={totals.responses}
-            enrollments={actualFunnelCounts[actualFunnelCounts.length - 1] || 0}
-            videosSent={0}
-            notPicked={0}
-          />
-          
-          {/* Weekly Report */}
-          <WeeklyReportCard 
-            leads={0}
-            responses={totals.responses}
-            enrollments={actualFunnelCounts[actualFunnelCounts.length - 1] || 0}
-            funnelCounts={actualFunnelCounts}
-            stageTags={stageTags.length > 0 ? stageTags : tags}
-          />
-        </CollapsibleContent>
-      </Collapsible>
+        {/* View Insights - Inside the table card */}
+        <Collapsible open={showInsights} onOpenChange={setShowInsights}>
+          <CollapsibleTrigger asChild>
+            <Button 
+              variant="ghost" 
+              className="w-full justify-between py-2 px-3 border-t border-border/50 rounded-none hover:bg-muted/50"
+            >
+              <span className="text-sm font-medium">View Insights</span>
+              {showInsights ? (
+                <ChevronUp className="h-4 w-4 text-muted-foreground" />
+              ) : (
+                <ChevronDown className="h-4 w-4 text-muted-foreground" />
+              )}
+            </Button>
+          </CollapsibleTrigger>
+          <CollapsibleContent className="space-y-3 p-3 border-t border-border/30 overflow-y-auto max-h-[350px] bg-muted/20">
+            {/* Funnel Drop-Off Analysis */}
+            <FunnelDropOff 
+              funnelCounts={actualFunnelCounts}
+              stageTags={stageTags.length > 0 ? stageTags : tags}
+            />
+            
+            {/* AI Tip of the Day - funnel focused */}
+            <AITipCard 
+              leads={0}
+              responses={totals.responses}
+              enrollments={actualFunnelCounts[actualFunnelCounts.length - 1] || 0}
+              videosSent={0}
+              notPicked={0}
+            />
+            
+            {/* Weekly Report */}
+            <WeeklyReportCard 
+              leads={0}
+              responses={totals.responses}
+              enrollments={actualFunnelCounts[actualFunnelCounts.length - 1] || 0}
+              funnelCounts={actualFunnelCounts}
+              stageTags={stageTags.length > 0 ? stageTags : tags}
+            />
+          </CollapsibleContent>
+        </Collapsible>
+      </div>
     </div>
   );
 }
