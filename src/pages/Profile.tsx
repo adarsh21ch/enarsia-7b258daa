@@ -281,7 +281,7 @@ export default function Profile() {
                 {ssoLoading ? <Loader2 className="h-5 w-5 text-emerald-500 animate-spin" /> : <BarChart3 className="h-5 w-5 text-emerald-500" />}
               </div>
               <div className="text-left">
-                <span className="font-medium block">Team Tracking - TrackUp Dashboard                         </span>
+                <span className="font-medium block">TrackUp Dashboard                         </span>
                 <span className="text-xs text-muted-foreground">
                   {ssoLoading ? 'Opening...' : 'Team tracking on nevorai.com'}
                 </span>
