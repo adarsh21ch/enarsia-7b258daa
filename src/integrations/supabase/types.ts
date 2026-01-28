@@ -1286,18 +1286,21 @@ export type Database = {
         Row: {
           coupon_code: string
           id: string
+          payment_id: string | null
           used_at: string
           user_id: string
         }
         Insert: {
           coupon_code: string
           id?: string
+          payment_id?: string | null
           used_at?: string
           user_id: string
         }
         Update: {
           coupon_code?: string
           id?: string
+          payment_id?: string | null
           used_at?: string
           user_id?: string
         }
