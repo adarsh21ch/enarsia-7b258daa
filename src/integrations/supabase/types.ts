@@ -3290,6 +3290,19 @@ export type Database = {
           total_count: number
         }[]
       }
+      admin_get_churn_risk_users: {
+        Args: { p_limit?: number }
+        Returns: {
+          days_since_active: number
+          display_name: string
+          email: string
+          neverai_id: string
+          plan: string
+          risk_type: string
+          trial_days_remaining: number
+          user_id: string
+        }[]
+      }
       admin_get_conversion_analytics: {
         Args: never
         Returns: {
@@ -3336,6 +3349,22 @@ export type Database = {
           neverai_id: string
           total_count: number
           user_id: string
+        }[]
+      }
+      admin_get_offer_analytics: {
+        Args: never
+        Returns: {
+          discount_type: string
+          discount_value: number
+          end_date: string
+          is_active: boolean
+          offer_id: string
+          offer_name: string
+          promo_code: string
+          revenue_generated: number
+          start_date: string
+          times_used: number
+          unique_users: number
         }[]
       }
       admin_get_power_users: {
@@ -3387,6 +3416,21 @@ export type Database = {
           user_email: string
         }[]
       }
+      admin_get_retention_analytics: {
+        Args: never
+        Returns: {
+          dau: number
+          four_seven_days_active: number
+          inactive_30_plus: number
+          mau: number
+          one_two_weeks_active: number
+          returning_rate: number
+          today_active: number
+          two_three_days_active: number
+          wau: number
+          yesterday_active: number
+        }[]
+      }
       admin_get_revenue_stats: {
         Args: never
         Returns: {
@@ -3410,12 +3454,40 @@ export type Database = {
           revenue: number
         }[]
       }
+      admin_get_signup_cohort_analytics: {
+        Args: never
+        Returns: {
+          cohort_day: number
+          cohort_label: string
+          retention_rate: number
+          still_active: number
+          user_count: number
+        }[]
+      }
       admin_get_stats: {
         Args: never
         Returns: {
           active_pro_users: number
           total_payments: number
           total_users: number
+        }[]
+      }
+      admin_get_trial_analytics: {
+        Args: never
+        Returns: {
+          active_trials: number
+          avg_days_to_convert: number
+          converted_to_pro: number
+          day_1_users: number
+          day_2_users: number
+          day_3_users: number
+          day_4_users: number
+          day_5_users: number
+          day_6_users: number
+          day_7_users: number
+          expired_trials: number
+          trial_conversion_rate: number
+          trials_expiring_today: number
         }[]
       }
       admin_get_users_by_prospect_threshold: {
