@@ -1,18 +1,18 @@
-import { Crown, Sparkles, Check, Star } from 'lucide-react';
+import { Crown, Sparkles, Check, Star, Tag, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerTrigger } from '@/components/ui/drawer';
 import { useSubscription } from '@/hooks/useSubscription';
 import { usePaymentLinks, PlanConfig } from '@/hooks/usePaymentLinks';
+import { useAdminConfig, Offer } from '@/hooks/useAdminConfig';
 import { useRazorpay } from '@/hooks/useRazorpay';
 import { useToast } from '@/hooks/use-toast';
 import { useIsMobile } from '@/hooks/use-mobile';
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 
 interface UpgradeDrawerProps {
-  /** Trigger button variant */
   variant?: 'default' | 'prominent' | 'compact';
-  /** Custom trigger text */
   triggerText?: string;
 }
 
@@ -22,14 +22,81 @@ export function UpgradeDrawer({ variant = 'default', triggerText }: UpgradeDrawe
   const { toast } = useToast();
   const { refetch } = useSubscription();
   const { plans, getDefaultPlan, loading: plansLoading } = usePaymentLinks();
+  const { config } = useAdminConfig();
   const isMobile = useIsMobile();
   const [open, setOpen] = useState(false);
   
-  // Get default plan key for initial selection
   const defaultPlan = getDefaultPlan();
   const [selectedPlanKey, setSelectedPlanKey] = useState<string>(defaultPlan?.plan_key || 'quarterly');
+  
+  // Coupon code state
+  const [couponCode, setCouponCode] = useState('');
+  const [validatingCoupon, setValidatingCoupon] = useState(false);
+  const [appliedOffer, setAppliedOffer] = useState<Offer | null>(null);
+  const [couponError, setCouponError] = useState<string | null>(null);
+
+  // Get active offers
+  const activeOffers = useMemo(() => {
+    const now = new Date();
+    return config.offers.filter(o => 
+      o.is_active && 
+      o.promo_code && 
+      new Date(o.start_date) <= now && 
+      new Date(o.end_date) >= now
+    );
+  }, [config.offers]);
+
+  const validateCoupon = () => {
+    if (!couponCode.trim()) {
+      setCouponError('Please enter a coupon code');
+      return;
+    }
+    
+    setValidatingCoupon(true);
+    setCouponError(null);
+    
+    // Simulate a small delay for UX
+    setTimeout(() => {
+      const matchedOffer = activeOffers.find(
+        o => o.promo_code?.toUpperCase() === couponCode.trim().toUpperCase()
+      );
+      
+      if (matchedOffer) {
+        // Check if offer applies to selected plan
+        const selectedPlan = plans.find(p => p.plan_key === selectedPlanKey);
+        if (selectedPlan && matchedOffer.applicable_plan_ids.includes(selectedPlan.id)) {
+          setAppliedOffer(matchedOffer);
+          toast({
+            title: "Coupon Applied! 🎉",
+            description: `${matchedOffer.discount_value}% discount activated`,
+          });
+        } else {
+          setCouponError('This coupon is not valid for the selected plan');
+          setAppliedOffer(null);
+        }
+      } else {
+        setCouponError('Invalid or expired coupon code');
+        setAppliedOffer(null);
+      }
+      
+      setValidatingCoupon(false);
+    }, 500);
+  };
+
+  const removeCoupon = () => {
+    setAppliedOffer(null);
+    setCouponCode('');
+    setCouponError(null);
+  };
 
   const handleUpgrade = (planKey: string) => {
+    // If there's an applied offer with a payment link, use that
+    if (appliedOffer?.offer_payment_link) {
+      window.location.href = appliedOffer.offer_payment_link;
+      return;
+    }
+    
+    // Otherwise use normal payment flow
     initiatePayment({
       planType: planKey,
       onSuccess: () => {
@@ -46,14 +113,39 @@ export function UpgradeDrawer({ variant = 'default', triggerText }: UpgradeDrawe
     });
   };
 
-  // Don't show for paid users or while loading
+  // Reset coupon when plan changes
+  const handlePlanChange = (planKey: string) => {
+    setSelectedPlanKey(planKey);
+    if (appliedOffer) {
+      const newPlan = plans.find(p => p.plan_key === planKey);
+      if (newPlan && !appliedOffer.applicable_plan_ids.includes(newPlan.id)) {
+        removeCoupon();
+        toast({
+          title: "Coupon Removed",
+          description: "The coupon is not valid for this plan",
+          variant: "destructive",
+        });
+      }
+    }
+  };
+
   if (loading || isPaid) return null;
 
   const buttonText = triggerText || 'Upgrade to Pro';
-  
-  // Sort plans by sortOrder
   const sortedPlans = [...plans].sort((a, b) => a.sortOrder - b.sortOrder);
   const selectedPlan = plans.find(p => p.plan_key === selectedPlanKey) || defaultPlan;
+
+  // Calculate discounted price if offer applied
+  const getDisplayPrice = (plan: PlanConfig) => {
+    if (appliedOffer && appliedOffer.applicable_plan_ids.includes(plan.id)) {
+      if (appliedOffer.discount_type === 'percent') {
+        return Math.round(plan.price * (1 - appliedOffer.discount_value / 100));
+      } else {
+        return Math.max(0, plan.price - appliedOffer.discount_value);
+      }
+    }
+    return plan.price;
+  };
 
   const TriggerButton = variant === 'compact' ? (
     <Button
@@ -79,15 +171,16 @@ export function UpgradeDrawer({ variant = 'default', triggerText }: UpgradeDrawe
 
   const PlanCard = ({ plan, isSelected }: { plan: PlanConfig; isSelected: boolean }) => {
     const hasFeatures = plan.features && plan.features.length > 0;
-    const monthlyPrice = plan.durationDays >= 30 
-      ? Math.round(plan.price / (plan.durationDays / 30)) 
-      : plan.price;
+    const displayPrice = getDisplayPrice(plan);
+    const originalPrice = plan.price;
+    const hasDiscount = appliedOffer && appliedOffer.applicable_plan_ids.includes(plan.id);
     const months = Math.round(plan.durationDays / 30);
+    const monthlyPrice = months >= 1 ? Math.round(displayPrice / months) : displayPrice;
 
     return (
       <button
         type="button"
-        onClick={() => setSelectedPlanKey(plan.plan_key)}
+        onClick={() => handlePlanChange(plan.plan_key)}
         className={`w-full p-4 rounded-xl border-2 transition-all text-left relative ${
           isSelected
             ? 'border-primary bg-primary/10'
@@ -119,7 +212,14 @@ export function UpgradeDrawer({ variant = 'default', triggerText }: UpgradeDrawe
             )}
           </div>
           <div className="text-right shrink-0 ml-3">
-            <p className="font-bold text-xl text-foreground">₹{plan.price}</p>
+            {hasDiscount ? (
+              <>
+                <p className="text-sm text-muted-foreground line-through">₹{originalPrice}</p>
+                <p className="font-bold text-xl text-green-600 dark:text-green-400">₹{displayPrice}</p>
+              </>
+            ) : (
+              <p className="font-bold text-xl text-foreground">₹{originalPrice}</p>
+            )}
             <p className="text-xs text-muted-foreground">
               for {months} month{months > 1 ? 's' : ''}
             </p>
@@ -161,6 +261,50 @@ export function UpgradeDrawer({ variant = 'default', triggerText }: UpgradeDrawe
         </div>
       )}
 
+      {/* Coupon Code Section */}
+      <div className="pt-2 border-t">
+        {appliedOffer ? (
+          <div className="flex items-center justify-between p-3 bg-green-50 dark:bg-green-950/30 rounded-lg border border-green-200 dark:border-green-800">
+            <div className="flex items-center gap-2">
+              <Tag className="h-4 w-4 text-green-600" />
+              <span className="text-sm font-medium text-green-700 dark:text-green-400">
+                {appliedOffer.promo_code} – {appliedOffer.discount_value}% off
+              </span>
+            </div>
+            <Button variant="ghost" size="sm" onClick={removeCoupon} className="h-7 text-xs">
+              Remove
+            </Button>
+          </div>
+        ) : (
+          <div className="space-y-2">
+            <div className="flex gap-2">
+              <Input
+                placeholder="Enter coupon code"
+                value={couponCode}
+                onChange={(e) => {
+                  setCouponCode(e.target.value.toUpperCase());
+                  setCouponError(null);
+                }}
+                className="flex-1 h-9 text-sm uppercase"
+                onKeyDown={(e) => e.key === 'Enter' && validateCoupon()}
+              />
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={validateCoupon}
+                disabled={validatingCoupon || !couponCode.trim()}
+                className="h-9"
+              >
+                {validatingCoupon ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Apply'}
+              </Button>
+            </div>
+            {couponError && (
+              <p className="text-xs text-destructive">{couponError}</p>
+            )}
+          </div>
+        )}
+      </div>
+
       <Button 
         onClick={() => handleUpgrade(selectedPlanKey)}
         className="w-full h-12 text-base font-semibold shadow-lg shadow-primary/30"
@@ -171,7 +315,7 @@ export function UpgradeDrawer({ variant = 'default', triggerText }: UpgradeDrawe
         ) : selectedPlan ? (
           <>
             <Crown className="h-5 w-5 mr-2" />
-            Get {selectedPlan.name} – ₹{selectedPlan.price}
+            Get {selectedPlan.name} – ₹{getDisplayPrice(selectedPlan)}
           </>
         ) : (
           <>
@@ -187,7 +331,6 @@ export function UpgradeDrawer({ variant = 'default', triggerText }: UpgradeDrawe
     </div>
   );
 
-  // Mobile: Bottom drawer
   if (isMobile) {
     return (
       <Drawer open={open} onOpenChange={setOpen}>
@@ -204,7 +347,6 @@ export function UpgradeDrawer({ variant = 'default', triggerText }: UpgradeDrawe
     );
   }
 
-  // Desktop: Right slide-in sheet
   return (
     <Sheet open={open} onOpenChange={setOpen}>
       <SheetTrigger asChild>
