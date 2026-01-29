@@ -1,9 +1,6 @@
 import { Gift, Clock, Crown } from 'lucide-react';
 import { useFreeTrial } from '@/hooks/useFreeTrial';
-import { useSubscription } from '@/hooks/useSubscription';
-import { usePaymentLinks } from '@/hooks/usePaymentLinks';
-import { useRazorpay } from '@/hooks/useRazorpay';
-import { useToast } from '@/hooks/use-toast';
+import { UpgradeDrawer } from './UpgradeDrawer';
 import { cn } from '@/lib/utils';
 
 interface TrialBannerProps {
@@ -14,15 +11,11 @@ interface TrialBannerProps {
 
 /**
  * Compact single-line banner showing active trial status.
- * Clickable to initiate upgrade payment.
+ * Clicking opens the plan selection drawer.
  * Only renders for free users with an active trial.
  */
 export function TrialBanner({ className, tabId }: TrialBannerProps) {
   const { isTrialActive, daysRemaining, hoursRemaining, loading, allowedTabs } = useFreeTrial();
-  const { refetch } = useSubscription();
-  const { initiatePayment, loading: paymentLoading } = useRazorpay();
-  const { toast } = useToast();
-  const { getDefaultPlan, loading: plansLoading } = usePaymentLinks();
 
   // Don't render if not in active trial or still loading
   if (loading || !isTrialActive) return null;
@@ -31,25 +24,6 @@ export function TrialBanner({ className, tabId }: TrialBannerProps) {
   if (tabId && !allowedTabs.includes(tabId.toLowerCase())) {
     return null;
   }
-
-  const defaultPlan = getDefaultPlan();
-
-  const handleUpgrade = () => {
-    const planKey = defaultPlan?.plan_key || 'quarterly';
-    initiatePayment({
-      planType: planKey,
-      onSuccess: () => {
-        toast({
-          title: "Pro Activated 🎉",
-          description: "Welcome to premium! All features are now unlocked.",
-        });
-        refetch();
-      },
-      onError: (error) => {
-        console.error('Payment error:', error);
-      }
-    });
-  };
 
   // Determine urgency level for styling
   const isUrgent = daysRemaining <= 1;
@@ -61,15 +35,10 @@ export function TrialBanner({ className, tabId }: TrialBannerProps) {
       ? `⏰ Last day of trial!` 
       : `🎉 ${daysRemaining} days left in your free trial`;
 
-  const isLoading = paymentLoading || plansLoading;
-
   return (
-    <button 
-      onClick={handleUpgrade}
-      disabled={isLoading}
+    <div 
       className={cn(
         "w-full rounded-lg px-3 py-2 border transition-all flex items-center justify-between gap-2",
-        "hover:opacity-90 active:scale-[0.99] disabled:opacity-50",
         isUrgent 
           ? "bg-amber-500/10 border-amber-500/30"
           : "bg-emerald-500/10 border-emerald-500/30",
@@ -94,10 +63,7 @@ export function TrialBanner({ className, tabId }: TrialBannerProps) {
           {displayText}
         </span>
       </div>
-      <div className="flex items-center gap-1 text-xs font-medium text-primary shrink-0">
-        <Crown className="h-3 w-3" />
-        <span>{isLoading ? '...' : 'Upgrade'}</span>
-      </div>
-    </button>
+      <UpgradeDrawer variant="compact" triggerText="Upgrade" />
+    </div>
   );
 }
