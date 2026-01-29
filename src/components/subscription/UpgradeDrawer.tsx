@@ -190,7 +190,8 @@ export function UpgradeDrawer({ variant = 'default', triggerText }: UpgradeDrawe
     const originalPrice = plan.price;
     const hasDiscount = appliedOffer && appliedOffer.applicable_plan_ids.includes(plan.id);
     const months = Math.round(plan.durationDays / 30);
-    const monthlyPrice = months >= 1 ? Math.round(displayPrice / months) : displayPrice;
+    // Use floor for charm pricing (prices ending in 9 feel more attractive)
+    const monthlyPrice = months >= 1 ? Math.floor(displayPrice / months) : displayPrice;
 
     return (
       <button
