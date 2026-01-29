@@ -13,8 +13,17 @@ declare global {
 
 export type PlanType = string;
 
+export interface OfferDetails {
+  offerId: string;
+  promoCode: string;
+  discountType: 'percent' | 'fixed';
+  discountValue: number;
+  discountedAmount: number; // Final price in rupees
+}
+
 interface RazorpayOptions {
   planType?: PlanType;
+  offer?: OfferDetails;
   onSuccess?: () => void;
   onError?: (error: string) => void;
 }
@@ -54,10 +63,12 @@ export function useRazorpay() {
     const planKey = options?.planType || 'quarterly';
     const plan = config.plans.find(p => p.plan_key === planKey);
     
-    // Build description from dynamic config
-    const description = plan 
-      ? `${plan.plan_name} – ₹${plan.price_inr}` 
-      : `Pro Plan`;
+    // Build description - include offer details if present
+    const description = options?.offer
+      ? `${plan?.plan_name || 'Pro Plan'} – ₹${options.offer.discountedAmount} (${options.offer.promoCode})`
+      : plan 
+        ? `${plan.plan_name} – ₹${plan.price_inr}` 
+        : `Pro Plan`;
 
     setLoading(true);
 
@@ -74,6 +85,14 @@ export function useRazorpay() {
           user_id: user.id,
           user_email: user.email,
           plan_type: planKey,
+          // Pass offer details if present
+          offer: options?.offer ? {
+            offer_id: options.offer.offerId,
+            promo_code: options.offer.promoCode,
+            discount_type: options.offer.discountType,
+            discount_value: options.offer.discountValue,
+            discounted_amount: options.offer.discountedAmount,
+          } : undefined,
         },
       });
 
