@@ -228,19 +228,32 @@ export function UpgradeDrawer({ variant = 'default', triggerText }: UpgradeDrawe
             )}
           </div>
           <div className="text-right shrink-0 ml-3">
-            {hasDiscount ? (
+            {months > 1 ? (
+              // Multi-month plans: Show per-month as primary
               <>
-                <p className="text-sm text-muted-foreground line-through">₹{originalPrice}</p>
-                <p className="font-bold text-xl text-green-600 dark:text-green-400">₹{displayPrice}</p>
+                {hasDiscount && (
+                  <p className="text-sm text-muted-foreground line-through">₹{Math.floor(originalPrice / months)}/mo</p>
+                )}
+                <p className="font-bold text-xl text-foreground">
+                  ₹{monthlyPrice}<span className="text-sm font-normal text-muted-foreground">/month</span>
+                </p>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  Billed as ₹{displayPrice} for {months} months
+                </p>
               </>
             ) : (
-              <p className="font-bold text-xl text-foreground">₹{originalPrice}</p>
-            )}
-            <p className="text-xs text-muted-foreground">
-              for {months} month{months > 1 ? 's' : ''}
-            </p>
-            {months > 1 && (
-              <p className="text-xs text-primary font-medium">Just ₹{monthlyPrice} / month</p>
+              // Single month: Show total price
+              <>
+                {hasDiscount ? (
+                  <>
+                    <p className="text-sm text-muted-foreground line-through">₹{originalPrice}</p>
+                    <p className="font-bold text-xl text-green-600 dark:text-green-400">₹{displayPrice}</p>
+                  </>
+                ) : (
+                  <p className="font-bold text-xl text-foreground">₹{originalPrice}</p>
+                )}
+                <p className="text-xs text-muted-foreground">for 1 month</p>
+              </>
             )}
           </div>
         </div>
