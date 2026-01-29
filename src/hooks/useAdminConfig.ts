@@ -98,12 +98,18 @@ export const SAFE_DEFAULTS: AppConfig = {
   ],
   offers: [],
   limits: {
+    // Trial Period (disabled by default)
+    free_trial_days: 0,
+    trial_only_mode: 0,
+    // Lead Limits
     free_total_leads: 200,
     free_daily_upload: 50,
     pro_daily_upload: 500,
+    // Warning Thresholds
     warning_threshold_1: 100,
     warning_threshold_2: 150,
     warning_threshold_3: 190,
+    // Hard Limits
     hard_limit: 200,
   },
   features: {

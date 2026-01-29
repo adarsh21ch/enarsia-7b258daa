@@ -6,20 +6,27 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
-import { Loader2, Save, RotateCcw, AlertTriangle, Users, Upload, Bell, Ban } from 'lucide-react';
+import { Loader2, Save, RotateCcw, AlertTriangle, Users, Upload, Bell, Ban, Clock, Timer } from 'lucide-react';
 import { toast } from 'sonner';
 
 const LIMIT_ICONS: Record<string, React.ReactNode> = {
+  // Trial Period
+  free_trial_days: <Clock className="h-4 w-4" />,
+  trial_only_mode: <Timer className="h-4 w-4" />,
+  // Lead Limits
   free_total_leads: <Users className="h-4 w-4" />,
   free_daily_upload: <Upload className="h-4 w-4" />,
   pro_daily_upload: <Upload className="h-4 w-4" />,
+  // Warning Thresholds
   warning_threshold_1: <Bell className="h-4 w-4" />,
   warning_threshold_2: <Bell className="h-4 w-4" />,
   warning_threshold_3: <AlertTriangle className="h-4 w-4" />,
+  // Hard Limits
   hard_limit: <Ban className="h-4 w-4" />,
 };
 
 const LIMIT_CATEGORIES = {
+  'Trial Period': ['free_trial_days', 'trial_only_mode'],
   'Lead Limits': ['free_total_leads', 'free_daily_upload', 'pro_daily_upload'],
   'Warning Thresholds': ['warning_threshold_1', 'warning_threshold_2', 'warning_threshold_3'],
   'Hard Limits': ['hard_limit'],

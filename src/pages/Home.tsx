@@ -10,6 +10,8 @@ import { PullToRefreshIndicator } from '@/components/PullToRefreshIndicator';
 import { LeaderIdSetupDialog } from '@/components/profile/LeaderIdSetupDialog';
 import { CalendarStrip } from '@/components/calendar/CalendarStrip';
 import { useCalendarStrip } from '@/hooks/useCalendarStrip';
+import { TrialBanner } from '@/components/subscription/TrialBanner';
+import { TrialExpiredModal } from '@/components/subscription/TrialExpiredModal';
 import { Loader2, Clock } from 'lucide-react';
 import { SearchBar } from '@/components/ui/SearchBar';
 import { parseISO, format, isSameDay } from 'date-fns';
@@ -241,6 +243,9 @@ export default function Home() {
       <main ref={containerRef} className="scrollable-content relative flex flex-col">
         <PullToRefreshIndicator isRefreshing={isRefreshing} pullDistance={pullDistance} showIndicator={showIndicator} />
         <div className="container py-3 px-3 pb-20 flex-1 flex flex-col">
+          {/* Trial Banner - shows for users with active trial */}
+          <TrialBanner className="mb-3" />
+          
           {/* WhatsApp-style Search Bar */}
           <div className="mb-3">
             <SearchBar value={searchQuery} onChange={setSearchQuery} placeholder="Search name, phone..." />
@@ -322,5 +327,8 @@ export default function Home() {
       
       {/* First-time Leader ID Setup Dialog */}
       <LeaderIdSetupDialog />
+      
+      {/* Trial Expired Modal - shows when trial ends in trial-only mode */}
+      <TrialExpiredModal />
     </div>;
 }
