@@ -1,13 +1,30 @@
 import { useMemo } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { addDays, differenceInDays, differenceInHours } from 'date-fns';
 import { useProfile } from '@/hooks/useProfile';
 import { useAdminConfig } from '@/hooks/useAdminConfig';
 import { useSubscription } from '@/hooks/useSubscription';
+import { supabase } from '@/integrations/supabase/client';
+
+// Fetch trial banner tab configuration
+async function fetchTrialBannerTabs(): Promise<string[]> {
+  const { data, error } = await supabase
+    .from('admin_config_text')
+    .select('config_value, is_enabled')
+    .eq('config_key', 'trial_banner_tabs')
+    .maybeSingle();
+  
+  if (error || !data || !data.is_enabled) {
+    return ['dashboard', 'profile', 'listup']; // Default tabs
+  }
+  
+  return data.config_value.split(',').map((t: string) => t.trim().toLowerCase());
+}
 
 /**
  * Hook to manage time-based free trial status.
  * Reads trial configuration from admin config and calculates trial status
- * based on user's signup date (profiles.created_at).
+ * based on user's trial_start_date (or created_at as fallback).
  * 
  * IMPORTANT: trialOnlyMode is determined by the presence of the key
  * in config.limits (which means is_enabled = true in the database).
@@ -18,6 +35,14 @@ export function useFreeTrial() {
   const { profile, loading: profileLoading } = useProfile();
   const { config, loading: configLoading } = useAdminConfig();
   const { isPaid } = useSubscription();
+
+  // Fetch which tabs should show the trial banner
+  const { data: allowedTabs = ['dashboard', 'profile', 'listup'] } = useQuery({
+    queryKey: ['trial-banner-tabs'],
+    queryFn: fetchTrialBannerTabs,
+    staleTime: 30 * 1000,
+    gcTime: 5 * 60 * 1000,
+  });
 
   return useMemo(() => {
     // Check if trial is enabled in admin config
@@ -30,12 +55,18 @@ export function useFreeTrial() {
     // So we check for presence of the key (meaning toggle is ON in admin)
     const trialOnlyMode = 'trial_only_mode' in config.limits;
 
-    // Get user's signup date
-    const signupDate = profile?.created_at ? new Date(profile.created_at) : null;
+    // Get user's trial start date - use trial_start_date if set, otherwise fall back to created_at
+    // This allows admin to reset trials for existing users
+    const rawProfile = profile as any; // Access trial_start_date which may not be in types yet
+    const trialStartDate = rawProfile?.trial_start_date 
+      ? new Date(rawProfile.trial_start_date)
+      : profile?.created_at 
+        ? new Date(profile.created_at) 
+        : null;
     
     // Calculate trial end date
-    const trialEndDate = signupDate && trialDays > 0
-      ? addDays(signupDate, trialDays)
+    const trialEndDate = trialStartDate && trialDays > 0
+      ? addDays(trialStartDate, trialDays)
       : null;
     
     // Calculate trial status
@@ -68,6 +99,9 @@ export function useFreeTrial() {
       hoursRemaining,
       trialEndDate,
       
+      // Which tabs should show the trial banner
+      allowedTabs,
+      
       // Loading state
       loading: profileLoading || configLoading,
       
@@ -80,5 +114,5 @@ export function useFreeTrial() {
             ? `${hoursRemaining} hours left`
             : 'Trial ending soon',
     };
-  }, [profile?.created_at, config.limits, isPaid, profileLoading, configLoading]);
+  }, [profile, config.limits, isPaid, profileLoading, configLoading, allowedTabs]);
 }

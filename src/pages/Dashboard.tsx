@@ -252,7 +252,7 @@ export default function Dashboard() {
         
         {/* Trial Banner */}
         <div className="px-4 pt-2">
-          <TrialBanner />
+          <TrialBanner tabId="dashboard" />
         </div>
         
         {/* Table area - flex-1 to fill remaining space, pb for bottom nav */}

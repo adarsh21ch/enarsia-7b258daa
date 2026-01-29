@@ -4,17 +4,25 @@ import { cn } from '@/lib/utils';
 
 interface TrialBannerProps {
   className?: string;
+  /** The tab/page ID where this banner is rendered (e.g., 'dashboard', 'profile', 'listup') */
+  tabId?: string;
 }
 
 /**
  * Banner showing active trial status with days/hours remaining.
  * Only renders for free users with an active trial.
+ * Admin can configure which tabs show this banner via the admin panel.
  */
-export function TrialBanner({ className }: TrialBannerProps) {
-  const { isTrialActive, daysRemaining, hoursRemaining, trialDays, loading } = useFreeTrial();
+export function TrialBanner({ className, tabId }: TrialBannerProps) {
+  const { isTrialActive, daysRemaining, hoursRemaining, trialDays, loading, allowedTabs } = useFreeTrial();
 
   // Don't render if not in active trial or still loading
   if (loading || !isTrialActive) return null;
+
+  // If tabId is provided, only render if this tab is in the allowed list
+  if (tabId && !allowedTabs.includes(tabId.toLowerCase())) {
+    return null;
+  }
 
   // Determine urgency level for styling
   const isUrgent = daysRemaining <= 1;
