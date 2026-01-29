@@ -74,7 +74,7 @@ serve(async (req) => {
 
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
-    const { user_id, user_email, plan_type = 'quarterly' } = await req.json();
+    const { user_id, user_email, plan_type = 'quarterly', offer } = await req.json();
 
     if (!user_id || !user_email) {
       return new Response(
@@ -131,9 +131,53 @@ serve(async (req) => {
       };
     }
 
-    const finalAmount = planConfig.amount;
+    // Calculate final amount - use discounted amount if offer is present
+    let finalAmount = planConfig.amount;
+    let offerDetails = null;
 
-    console.log(`Creating Razorpay order for user: ${user_email}, plan: ${plan_type}, amount: ${finalAmount}, duration: ${planConfig.duration_days} days`);
+    if (offer && offer.discounted_amount) {
+      // Validate the offer exists and is active
+      const { data: offerData, error: offerError } = await supabase
+        .from('admin_offers')
+        .select('*')
+        .eq('id', offer.offer_id)
+        .eq('is_active', true)
+        .single();
+
+      if (offerError || !offerData) {
+        console.warn(`Offer ${offer.offer_id} not found or inactive`);
+        return new Response(
+          JSON.stringify({ error: 'Invalid or expired offer' }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      // Validate offer is still within date range
+      const now = new Date();
+      const startDate = new Date(offerData.start_date);
+      const endDate = new Date(offerData.end_date);
+
+      if (now < startDate || now > endDate) {
+        return new Response(
+          JSON.stringify({ error: 'This offer has expired' }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      // Use the discounted amount (convert to paise)
+      finalAmount = Math.round(offer.discounted_amount * 100);
+      offerDetails = {
+        offer_id: offer.offer_id,
+        promo_code: offer.promo_code,
+        discount_type: offer.discount_type,
+        discount_value: offer.discount_value,
+        original_amount: planConfig.amount,
+      };
+
+      console.log(`Applying offer: ${offer.promo_code}, original: ${planConfig.amount}, discounted: ${finalAmount}`);
+    }
+
+    console.log(`Creating Razorpay order for user: ${user_email}, plan: ${plan_type}, amount: ${finalAmount}, duration: ${planConfig.duration_days} days${offerDetails ? `, offer: ${offerDetails.promo_code}` : ''}`);
 
     const shortUserId = user_id.slice(0, 8);
     const orderPayload = {
@@ -148,6 +192,14 @@ serve(async (req) => {
         duration_days: planConfig.duration_days,
         original_amount: planConfig.amount,
         final_amount: finalAmount,
+        // Include offer details if present
+        ...(offerDetails && {
+          offer_applied: 'true',
+          offer_id: offerDetails.offer_id,
+          promo_code: offerDetails.promo_code,
+          discount_type: offerDetails.discount_type,
+          discount_value: String(offerDetails.discount_value),
+        }),
       }
     };
 

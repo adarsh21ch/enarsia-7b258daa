@@ -99,15 +99,21 @@ export function UpgradeDrawer({ variant = 'default', triggerText }: UpgradeDrawe
   };
 
   const handleUpgrade = (planKey: string) => {
-    // If there's an applied offer with a payment link, use that
-    if (appliedOffer?.offer_payment_link) {
-      window.location.href = appliedOffer.offer_payment_link;
-      return;
-    }
+    const plan = plans.find(p => p.plan_key === planKey);
     
-    // Otherwise use normal payment flow
+    // Build offer details if a coupon is applied
+    const offerDetails = appliedOffer && plan ? {
+      offerId: appliedOffer.id,
+      promoCode: appliedOffer.promo_code || '',
+      discountType: appliedOffer.discount_type as 'percent' | 'fixed',
+      discountValue: appliedOffer.discount_value,
+      discountedAmount: getDisplayPrice(plan),
+    } : undefined;
+    
+    // Use dynamic payment flow (popup checkout)
     initiatePayment({
       planType: planKey,
+      offer: offerDetails,
       onSuccess: () => {
         toast({
           title: "Pro Activated 🎉",
