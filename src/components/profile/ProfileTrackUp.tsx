@@ -107,11 +107,11 @@ export function ProfileTrackUp({ isPro }: ProfileTrackUpProps) {
               <Button 
                 size="sm" 
                 onClick={handleUpgrade}
-                className="gap-1"
+                className="gap-1.5"
                 disabled={paymentLoading || plansLoading}
               >
-                <Crown className="h-4 w-4" />
-                {paymentLoading ? 'Processing...' : defaultPlan ? `Get Pro – ₹${defaultPlan.price}` : 'Get Pro'}
+                <Crown className="h-3.5 w-3.5" />
+                {paymentLoading ? 'Processing...' : defaultPlan ? `Upgrade – ₹${defaultPlan.price}` : 'Upgrade'}
               </Button>
             </div>
           </div>

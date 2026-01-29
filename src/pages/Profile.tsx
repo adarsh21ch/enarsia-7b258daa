@@ -19,6 +19,7 @@ import { HelpSupportDrawer } from '@/components/profile/HelpSupportDrawer';
 import { UserGuideDrawer } from '@/components/profile/UserGuideDrawer';
 import { ProgressiveNudgeBanner } from '@/components/subscription/ProgressiveNudgeBanner';
 import { TrialBanner } from '@/components/subscription/TrialBanner';
+import { UpgradeButton } from '@/components/subscription/UpgradeButton';
 import { PullToRefreshIndicator } from '@/components/PullToRefreshIndicator';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -247,6 +248,11 @@ export default function Profile() {
 
           {/* Trial Banner - show for users with active trial */}
           <TrialBanner tabId="profile" />
+          
+          {/* Upgrade Button - show for non-Pro users when not in trial */}
+          {!isPro && !isTrialActive && (
+            <UpgradeButton className="w-full" />
+          )}
           
           {/* Progressive Upgrade Nudge Banner - non-spammy, stage-based */}
           {!isPaid && <ProgressiveNudgeBanner context="profile" />}
