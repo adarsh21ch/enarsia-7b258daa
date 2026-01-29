@@ -5,6 +5,11 @@ import { SubscriptionPieChart } from './SubscriptionPieChart';
 import { RevenueAnalytics } from './RevenueAnalytics';
 import { UsageAnalytics } from './UsageAnalytics';
 import { ProspectDistributionSection } from './ProspectDistributionSection';
+import { TrialAnalytics } from './TrialAnalytics';
+import { RetentionAnalytics } from './RetentionAnalytics';
+import { CohortAnalytics } from './CohortAnalytics';
+import { OfferPerformance } from './OfferPerformance';
+import { ChurnRiskAlert } from './ChurnRiskAlert';
 import { Loader2 } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
@@ -45,15 +50,27 @@ export function AdminAnalyticsDashboard() {
 
       {/* Analytics Tabs */}
       <Tabs defaultValue="overview" className="w-full">
-        <TabsList className="w-full grid grid-cols-3">
-          <TabsTrigger value="overview" className="text-xs">Overview</TabsTrigger>
-          <TabsTrigger value="revenue" className="text-xs">Revenue</TabsTrigger>
-          <TabsTrigger value="usage" className="text-xs">Usage</TabsTrigger>
+        <TabsList className="w-full grid grid-cols-5">
+          <TabsTrigger value="overview" className="text-[10px] px-1">Overview</TabsTrigger>
+          <TabsTrigger value="trials" className="text-[10px] px-1">Trials</TabsTrigger>
+          <TabsTrigger value="retention" className="text-[10px] px-1">Retention</TabsTrigger>
+          <TabsTrigger value="revenue" className="text-[10px] px-1">Revenue</TabsTrigger>
+          <TabsTrigger value="offers" className="text-[10px] px-1">Offers</TabsTrigger>
         </TabsList>
 
         <TabsContent value="overview" className="mt-3 space-y-4">
+          <ChurnRiskAlert />
           <SignupTrendChart data={analytics.dailySignups} />
           <SubscriptionPieChart data={analytics.subscriptionBreakdown} />
+        </TabsContent>
+
+        <TabsContent value="trials" className="mt-3">
+          <TrialAnalytics />
+        </TabsContent>
+
+        <TabsContent value="retention" className="mt-3 space-y-6">
+          <RetentionAnalytics />
+          <CohortAnalytics />
         </TabsContent>
 
         <TabsContent value="revenue" className="mt-3">
@@ -63,7 +80,8 @@ export function AdminAnalyticsDashboard() {
           />
         </TabsContent>
 
-        <TabsContent value="usage" className="mt-3 space-y-6">
+        <TabsContent value="offers" className="mt-3 space-y-6">
+          <OfferPerformance />
           <UsageAnalytics activeUsage={analytics.activeUsage} />
           <ProspectDistributionSection />
         </TabsContent>

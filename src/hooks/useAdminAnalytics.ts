@@ -413,3 +413,198 @@ export function usePowerUsers(limit: number = 10) {
     staleTime: 2 * 60 * 1000,
   });
 }
+
+// ==========================================
+// NEW ANALYTICS HOOKS
+// ==========================================
+
+export interface TrialAnalytics {
+  activeTrials: number;
+  expiredTrials: number;
+  convertedToPro: number;
+  conversionRate: number;
+  avgDaysToConvert: number;
+  trialsExpiringToday: number;
+  day1Users: number;
+  day2Users: number;
+  day3Users: number;
+  day4Users: number;
+  day5Users: number;
+  day6Users: number;
+  day7Users: number;
+}
+
+export function useTrialAnalytics() {
+  const { user } = useAuth();
+
+  return useQuery({
+    queryKey: ['admin-trial-analytics', user?.id],
+    queryFn: async (): Promise<TrialAnalytics> => {
+      const { data, error } = await supabase.rpc('admin_get_trial_analytics');
+      if (error) throw error;
+      const row = (data?.[0] || {}) as Record<string, unknown>;
+      return {
+        activeTrials: Number(row.active_trials) || 0,
+        expiredTrials: Number(row.expired_trials) || 0,
+        convertedToPro: Number(row.converted_to_pro) || 0,
+        conversionRate: Number(row.trial_conversion_rate) || 0,
+        avgDaysToConvert: Number(row.avg_days_to_convert) || 0,
+        trialsExpiringToday: Number(row.trials_expiring_today) || 0,
+        day1Users: Number(row.day_1_users) || 0,
+        day2Users: Number(row.day_2_users) || 0,
+        day3Users: Number(row.day_3_users) || 0,
+        day4Users: Number(row.day_4_users) || 0,
+        day5Users: Number(row.day_5_users) || 0,
+        day6Users: Number(row.day_6_users) || 0,
+        day7Users: Number(row.day_7_users) || 0,
+      };
+    },
+    enabled: !!user,
+    staleTime: 2 * 60 * 1000,
+  });
+}
+
+export interface RetentionAnalytics {
+  todayActive: number;
+  yesterdayActive: number;
+  twoThreeDaysActive: number;
+  fourSevenDaysActive: number;
+  oneTwoWeeksActive: number;
+  inactive30Plus: number;
+  dau: number;
+  wau: number;
+  mau: number;
+  returningRate: number;
+}
+
+export function useRetentionAnalytics() {
+  const { user } = useAuth();
+
+  return useQuery({
+    queryKey: ['admin-retention-analytics', user?.id],
+    queryFn: async (): Promise<RetentionAnalytics> => {
+      const { data, error } = await supabase.rpc('admin_get_retention_analytics');
+      if (error) throw error;
+      const row = (data?.[0] || {}) as Record<string, unknown>;
+      return {
+        todayActive: Number(row.today_active) || 0,
+        yesterdayActive: Number(row.yesterday_active) || 0,
+        twoThreeDaysActive: Number(row.two_three_days_active) || 0,
+        fourSevenDaysActive: Number(row.four_seven_days_active) || 0,
+        oneTwoWeeksActive: Number(row.one_two_weeks_active) || 0,
+        inactive30Plus: Number(row.inactive_30_plus) || 0,
+        dau: Number(row.dau) || 0,
+        wau: Number(row.wau) || 0,
+        mau: Number(row.mau) || 0,
+        returningRate: Number(row.returning_rate) || 0,
+      };
+    },
+    enabled: !!user,
+    staleTime: 2 * 60 * 1000,
+  });
+}
+
+export interface CohortData {
+  cohortLabel: string;
+  cohortDay: number;
+  userCount: number;
+  stillActive: number;
+  retentionRate: number;
+}
+
+export function useCohortAnalytics() {
+  const { user } = useAuth();
+
+  return useQuery({
+    queryKey: ['admin-cohort-analytics', user?.id],
+    queryFn: async (): Promise<CohortData[]> => {
+      const { data, error } = await supabase.rpc('admin_get_signup_cohort_analytics');
+      if (error) throw error;
+      return ((data || []) as Record<string, unknown>[]).map(row => ({
+        cohortLabel: String(row.cohort_label || ''),
+        cohortDay: Number(row.cohort_day) || 0,
+        userCount: Number(row.user_count) || 0,
+        stillActive: Number(row.still_active) || 0,
+        retentionRate: Number(row.retention_rate) || 0,
+      }));
+    },
+    enabled: !!user,
+    staleTime: 2 * 60 * 1000,
+  });
+}
+
+export interface OfferAnalytics {
+  offerId: string;
+  offerName: string;
+  promoCode: string;
+  discountType: string;
+  discountValue: number;
+  isActive: boolean;
+  timesUsed: number;
+  revenueGenerated: number;
+  uniqueUsers: number;
+  startDate: string;
+  endDate: string;
+}
+
+export function useOfferAnalytics() {
+  const { user } = useAuth();
+
+  return useQuery({
+    queryKey: ['admin-offer-analytics', user?.id],
+    queryFn: async (): Promise<OfferAnalytics[]> => {
+      const { data, error } = await supabase.rpc('admin_get_offer_analytics');
+      if (error) throw error;
+      return ((data || []) as Record<string, unknown>[]).map(row => ({
+        offerId: String(row.offer_id || ''),
+        offerName: String(row.offer_name || ''),
+        promoCode: String(row.promo_code || ''),
+        discountType: String(row.discount_type || ''),
+        discountValue: Number(row.discount_value) || 0,
+        isActive: Boolean(row.is_active),
+        timesUsed: Number(row.times_used) || 0,
+        revenueGenerated: Number(row.revenue_generated) || 0,
+        uniqueUsers: Number(row.unique_users) || 0,
+        startDate: String(row.start_date || ''),
+        endDate: String(row.end_date || ''),
+      }));
+    },
+    enabled: !!user,
+    staleTime: 2 * 60 * 1000,
+  });
+}
+
+export interface ChurnRiskUser {
+  userId: string;
+  displayName: string | null;
+  email: string | null;
+  neveraiId: string | null;
+  riskType: string;
+  daysSinceActive: number;
+  trialDaysRemaining: number | null;
+  plan: string;
+}
+
+export function useChurnRiskUsers(limit: number = 20) {
+  const { user } = useAuth();
+
+  return useQuery({
+    queryKey: ['admin-churn-risk', user?.id, limit],
+    queryFn: async (): Promise<ChurnRiskUser[]> => {
+      const { data, error } = await supabase.rpc('admin_get_churn_risk_users', { p_limit: limit });
+      if (error) throw error;
+      return ((data || []) as Record<string, unknown>[]).map(row => ({
+        userId: String(row.user_id || ''),
+        displayName: row.display_name ? String(row.display_name) : null,
+        email: row.email ? String(row.email) : null,
+        neveraiId: row.neverai_id ? String(row.neverai_id) : null,
+        riskType: String(row.risk_type || ''),
+        daysSinceActive: Number(row.days_since_active) || 0,
+        trialDaysRemaining: row.trial_days_remaining != null ? Number(row.trial_days_remaining) : null,
+        plan: String(row.plan || 'free'),
+      }));
+    },
+    enabled: !!user,
+    staleTime: 2 * 60 * 1000,
+  });
+}

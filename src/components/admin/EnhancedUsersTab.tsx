@@ -27,7 +27,10 @@ interface EnhancedUser {
   last_active_at: string | null;
   is_suspended: boolean;
   created_at: string | null;
+  trial_start_date: string | null;
 }
+
+const TRIAL_DURATION_DAYS = 7; // Default trial duration
 
 const PLAN_FILTER_OPTIONS = [
   { value: 'all', label: 'All Plans' },
@@ -73,6 +76,7 @@ export function EnhancedUsersTab() {
         last_active_at: row.last_active_at,
         is_suspended: row.is_suspended || false,
         created_at: row.created_at,
+        trial_start_date: row.trial_start_date || row.created_at,
       }));
 
       setUsers(mappedUsers);
@@ -182,6 +186,33 @@ export function EnhancedUsersTab() {
     return <Badge variant="outline" className="text-xs">{source}</Badge>;
   };
 
+  const getTrialStatusBadge = (user: EnhancedUser) => {
+    if (user.plan === 'pro' || user.plan === 'mini') return null;
+    
+    const trialStart = user.trial_start_date || user.created_at;
+    if (!trialStart) return null;
+    
+    const startDate = new Date(trialStart);
+    const now = new Date();
+    const daysSinceStart = Math.floor((now.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24));
+    const daysRemaining = TRIAL_DURATION_DAYS - daysSinceStart;
+    
+    if (daysRemaining <= 0) {
+      return <Badge variant="outline" className="text-xs text-destructive border-destructive/50">Trial Expired</Badge>;
+    }
+    
+    if (daysRemaining === 1) {
+      return <Badge className="text-xs bg-yellow-500 text-yellow-950">Day 7 - Expiring!</Badge>;
+    }
+    
+    const currentDay = daysSinceStart + 1;
+    return (
+      <Badge variant="outline" className="text-xs text-primary border-primary/50">
+        Day {currentDay} of Trial
+      </Badge>
+    );
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center py-12">
@@ -247,6 +278,7 @@ export function EnhancedUsersTab() {
                     {user.is_suspended && (
                       <Badge variant="destructive" className="text-xs">Suspended</Badge>
                     )}
+                    {getTrialStatusBadge(user)}
                   </div>
                   <p className="text-sm text-muted-foreground truncate">
                     {user.display_name || 'Unnamed'} {user.neverai_id && `• ${user.neverai_id}`}
