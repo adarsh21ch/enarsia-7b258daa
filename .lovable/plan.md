@@ -1,340 +1,280 @@
 
-# Complete Admin Panel & Lead Limits Fix Plan
 
-## Current Issues Summary
+# Time-Based Free Trial Feature Implementation Plan
 
-Based on my analysis, here are the confirmed bugs:
+## Overview
 
-| Issue | Root Cause | Severity |
-|-------|-----------|----------|
-| Audit Log shows "Failed to load audit logs" | Table is empty - no admin actions are being logged | High |
-| Daily upload limit (50) not enforced | No tracking table, no enforcement logic anywhere | Critical |
-| Plan updates not reflecting in app | Cache not invalidated after admin changes | Medium |
-| Offers missing payment link | Schema and UI missing offer_payment_link field | Medium |
-| Coupon doesn't change payment link | No logic to swap payment links | Medium |
+You want to add a **day-wise limit** option in the admin panel that works as an alternative to lead-based limits. When enabled:
+- New/existing free users get X days of free trial (e.g., 7 days)
+- During the trial, they can use the app without lead limits
+- After the trial expires, they see an upgrade prompt
 
----
-
-## Phase 1: Fix Audit Logging
-
-**Problem**: Admin actions (plan CRUD, offer CRUD, limit updates, feature flag updates) are not being logged to the audit log. Only user pro grants/revokes in EnhancedUsersTab are logged.
-
-**Solution**: Add `logAdminAction()` calls to all admin operations.
-
-### Files to Modify
-
-**1. src/components/admin/PlansManager.tsx**
-- Import `logAdminAction` from `@/hooks/useAuditLogs`
-- Add logging after:
-  - `createPlan()` success: `logAdminAction('plan_created', 'plan', planId, null, planData, 'Created plan: ' + planName)`
-  - `updatePlan()` success: `logAdminAction('plan_updated', 'plan', planId, oldPlan, newPlan, 'Updated plan: ' + planName)`
-  - `deletePlan()` success: `logAdminAction('plan_deleted', 'plan', planId, oldPlan, null, 'Deleted plan: ' + planName)`
-  - Toggle active: `logAdminAction('plan_updated', 'plan', id, {is_active: !old}, {is_active: new}, 'Plan status changed')`
-
-**2. src/components/admin/OffersManager.tsx**
-- Import `logAdminAction`
-- Add logging for create/update/delete/toggle operations
-
-**3. src/components/admin/UsageLimitsManager.tsx**
-- Import `logAdminAction`
-- Add logging in `handleSaveAll()` for each limit change:
-  - `logAdminAction('limit_updated', 'limit', limitId, {config_key, old_value}, {config_key, new_value}, 'Updated ' + limitKey)`
-
-**4. src/components/admin/FeatureFlagsManager.tsx**
-- Import `logAdminAction`
-- Add logging for flag updates
+This gives you flexibility to choose between:
+1. **Lead-based limits only** (current system)
+2. **Time-based trial only** (new system)
+3. **Both combined** (e.g., 7-day trial + 200 lead limit)
 
 ---
 
-## Phase 2: Daily Upload Limit Enforcement (Critical)
+## How It Will Work
 
-**Problem**: `admin_usage_limits` shows `free_daily_upload: 50` but users can import 100+ leads. No enforcement exists.
+### Admin Panel Controls
 
-### Database Changes
+A new "Trial Period" section in the Limits tab with:
 
-**1. Create `user_daily_uploads` tracking table**
-```sql
-CREATE TABLE public.user_daily_uploads (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
-  upload_date DATE NOT NULL DEFAULT CURRENT_DATE,
-  upload_count INTEGER NOT NULL DEFAULT 0,
-  updated_at TIMESTAMPTZ DEFAULT now(),
-  UNIQUE(user_id, upload_date)
-);
+| Setting | Description | Example |
+|---------|-------------|---------|
+| **Enable Free Trial** | Toggle to activate time-based trial | ON/OFF |
+| **Trial Duration (Days)** | Number of days for free trial | 7 |
+| **Use Trial Only** | If ON, disable lead limits during trial | ON/OFF |
 
-ALTER TABLE user_daily_uploads ENABLE ROW LEVEL SECURITY;
+### User Experience Flow
 
-CREATE POLICY "Users can read own uploads"
-  ON user_daily_uploads FOR SELECT
-  USING (auth.uid() = user_id);
+```text
+NEW USER SIGNS UP
+       |
+       v
+  Is Free Trial Enabled?
+       |
+   YES |           NO
+       v            v
+  Show Welcome    Apply Lead
+  "7-Day Trial!"   Limits
+       |
+       v
+  User uses app freely
+  (or with lead limits if combined)
+       |
+       v
+  Trial Expires?
+       |
+   YES |
+       v
+  Show Upgrade Modal:
+  "Your 7-day trial has ended"
 ```
 
-**2. Create `check_upload_limit` RPC function**
+### For Existing Users
+
+When you enable the trial:
+- Their trial starts from their original signup date (`profiles.created_at`)
+- If they signed up 10 days ago and trial is 7 days: Trial already expired
+- Option: Admin can set "Trial Start Date" as "Today" for all existing users (reset trial)
+
+---
+
+## Technical Implementation
+
+### Phase 1: Database Changes
+
+**Add new limit configurations to `admin_usage_limits`:**
+
 ```sql
-CREATE OR REPLACE FUNCTION public.check_upload_limit(p_user_id UUID, p_count INTEGER)
-RETURNS JSONB
-LANGUAGE plpgsql
-SECURITY DEFINER
-SET search_path = 'public'
-AS $$
+INSERT INTO admin_usage_limits (config_key, config_value, description, is_enabled) VALUES
+('free_trial_days', 7, 'Number of free trial days for new users', false),
+('trial_only_mode', 0, 'If 1, disable lead limits during active trial', false);
+```
+
+**Update `check_upload_limit` function to include trial logic:**
+
+The function will check:
+1. Is free trial enabled?
+2. Is user still within trial period? (Compare `profiles.created_at` + trial days vs now)
+3. Is "trial only mode" enabled?
+
+If trial is active and trial-only mode is ON: Allow unlimited uploads
+If trial is expired: Apply normal lead limits OR block with "Trial ended" message
+
+### Phase 2: Admin Panel UI
+
+**Update `UsageLimitsManager.tsx`:**
+
+Add a new "Trial Period" category with:
+- Toggle: Enable Free Trial (is_enabled)
+- Input: Trial Duration in Days (config_value)
+- Toggle: Trial Only Mode (disable lead limits during trial)
+
+```typescript
+const LIMIT_CATEGORIES = {
+  'Trial Period': ['free_trial_days', 'trial_only_mode'],
+  'Lead Limits': ['free_total_leads', 'free_daily_upload', 'pro_daily_upload'],
+  // ... existing categories
+};
+
+const LIMIT_ICONS: Record<string, React.ReactNode> = {
+  free_trial_days: <Clock className="h-4 w-4" />,
+  trial_only_mode: <Timer className="h-4 w-4" />,
+  // ... existing icons
+};
+```
+
+### Phase 3: Frontend Hooks
+
+**Create `useFreeTrial` hook:**
+
+```typescript
+export function useFreeTrial() {
+  const { profile } = useProfile();
+  const { config } = useAdminConfig();
+  const { isPaid } = useSubscription();
+  
+  const trialEnabled = config.limits.free_trial_days !== undefined 
+    && config.limits.free_trial_days > 0;
+  const trialDays = config.limits.free_trial_days ?? 0;
+  
+  const signupDate = profile?.created_at;
+  const trialEndDate = signupDate 
+    ? addDays(new Date(signupDate), trialDays) 
+    : null;
+  
+  const isTrialActive = trialEndDate && new Date() < trialEndDate;
+  const isTrialExpired = trialEndDate && new Date() >= trialEndDate;
+  const daysRemaining = trialEndDate 
+    ? Math.max(0, differenceInDays(trialEndDate, new Date())) 
+    : 0;
+  
+  return {
+    trialEnabled,
+    trialDays,
+    isTrialActive: !isPaid && isTrialActive,
+    isTrialExpired: !isPaid && isTrialExpired,
+    daysRemaining,
+    trialEndDate,
+  };
+}
+```
+
+**Update limit enforcement:**
+
+Modify `check_upload_limit` RPC to check trial status:
+
+```sql
+-- Inside check_upload_limit function
 DECLARE
-  v_is_pro BOOLEAN;
-  v_total_added INTEGER;
-  v_today_count INTEGER;
-  v_free_total_limit INTEGER;
-  v_free_daily_limit INTEGER;
-  v_pro_daily_limit INTEGER;
+  v_trial_enabled boolean;
+  v_trial_days integer;
+  v_trial_only_mode boolean;
+  v_user_created_at timestamptz;
+  v_trial_end_date timestamptz;
+  v_is_trial_active boolean;
 BEGIN
-  -- Check if user is Pro
-  SELECT (plan = 'pro' AND (expires_at IS NULL OR expires_at > NOW()))
-  INTO v_is_pro
-  FROM user_subscriptions
-  WHERE user_id = p_user_id;
+  -- Get trial settings
+  SELECT is_enabled, config_value INTO v_trial_enabled, v_trial_days
+  FROM admin_usage_limits WHERE config_key = 'free_trial_days';
   
-  v_is_pro := COALESCE(v_is_pro, false);
+  SELECT is_enabled INTO v_trial_only_mode
+  FROM admin_usage_limits WHERE config_key = 'trial_only_mode';
   
-  -- Get user's total leads added
-  SELECT COALESCE(total_leads_added, 0) INTO v_total_added
+  -- Get user signup date
+  SELECT created_at INTO v_user_created_at
   FROM profiles WHERE user_id = p_user_id;
   
-  -- Get today's upload count
-  SELECT COALESCE(upload_count, 0) INTO v_today_count
-  FROM user_daily_uploads
-  WHERE user_id = p_user_id AND upload_date = CURRENT_DATE;
+  -- Calculate if trial is active
+  v_trial_end_date := v_user_created_at + (v_trial_days || ' days')::interval;
+  v_is_trial_active := v_trial_enabled AND now() < v_trial_end_date;
   
-  -- Get limits from admin config
-  SELECT config_value INTO v_free_total_limit
-  FROM admin_usage_limits WHERE config_key = 'free_total_leads' AND is_enabled = true;
-  
-  SELECT config_value INTO v_free_daily_limit
-  FROM admin_usage_limits WHERE config_key = 'free_daily_upload' AND is_enabled = true;
-  
-  SELECT config_value INTO v_pro_daily_limit
-  FROM admin_usage_limits WHERE config_key = 'pro_daily_upload' AND is_enabled = true;
-  
-  -- Defaults
-  v_free_total_limit := COALESCE(v_free_total_limit, 1000);
-  v_free_daily_limit := COALESCE(v_free_daily_limit, 50);
-  v_pro_daily_limit := COALESCE(v_pro_daily_limit, 500);
-  
-  -- Pro user check
-  IF v_is_pro THEN
-    IF v_pro_daily_limit > 0 AND (v_today_count + p_count) > v_pro_daily_limit THEN
-      RETURN jsonb_build_object(
-        'allowed', false,
-        'reason', 'Daily Pro upload limit reached (' || v_pro_daily_limit || '/day)',
-        'limit_type', 'pro_daily'
-      );
-    END IF;
-    RETURN jsonb_build_object('allowed', true, 'reason', '', 'limit_type', 'pro');
-  END IF;
-  
-  -- Free user: check total limit first
-  IF (v_total_added + p_count) > v_free_total_limit THEN
+  -- If trial active and trial-only mode: allow unlimited
+  IF v_is_trial_active AND v_trial_only_mode THEN
     RETURN jsonb_build_object(
-      'allowed', false,
-      'reason', 'Total free leads limit reached (' || v_free_total_limit || '). Upgrade to Pro for unlimited.',
-      'limit_type', 'total'
+      'allowed', true,
+      'reason', '',
+      'limit_type', 'free_trial',
+      'trial_days_remaining', EXTRACT(DAY FROM v_trial_end_date - now())::integer
     );
   END IF;
   
-  -- Free user: check daily limit
-  IF (v_today_count + p_count) > v_free_daily_limit THEN
+  -- If trial expired and trial-only mode: block
+  IF v_trial_enabled AND v_trial_only_mode AND NOT v_is_trial_active THEN
     RETURN jsonb_build_object(
       'allowed', false,
-      'reason', 'Daily free upload limit reached (' || v_free_daily_limit || '/day). Try again tomorrow or upgrade to Pro.',
-      'limit_type', 'daily'
+      'reason', 'Your free trial has ended. Upgrade to Pro to continue.',
+      'limit_type', 'trial_expired'
     );
   END IF;
   
-  RETURN jsonb_build_object('allowed', true, 'reason', '', 'limit_type', 'free');
+  -- Otherwise, apply normal lead limits...
 END;
-$$;
 ```
 
-**3. Create `increment_daily_upload` RPC function**
-```sql
-CREATE OR REPLACE FUNCTION public.increment_daily_upload(p_user_id UUID, p_count INTEGER)
-RETURNS INTEGER
-LANGUAGE plpgsql
-SECURITY DEFINER
-SET search_path = 'public'
-AS $$
-DECLARE
-  v_new_count INTEGER;
-BEGIN
-  INSERT INTO user_daily_uploads (user_id, upload_date, upload_count)
-  VALUES (p_user_id, CURRENT_DATE, p_count)
-  ON CONFLICT (user_id, upload_date)
-  DO UPDATE SET 
-    upload_count = user_daily_uploads.upload_count + p_count,
-    updated_at = now()
-  RETURNING upload_count INTO v_new_count;
-  
-  RETURN v_new_count;
-END;
-$$;
-```
+### Phase 4: User Interface Updates
 
-### Frontend Changes
+**Welcome Banner (new users):**
 
-**1. Create `src/hooks/useDailyUploadLimit.ts`**
-```typescript
-export function useDailyUploadLimit() {
-  const { user } = useAuth();
-  
-  const checkLimit = async (count: number): Promise<{allowed: boolean; reason: string}> => {
-    const { data, error } = await supabase.rpc('check_upload_limit', {
-      p_user_id: user.id,
-      p_count: count
-    });
-    if (error) return { allowed: true, reason: '' }; // Fail open
-    return data;
-  };
-  
-  const incrementCount = async (count: number) => {
-    await supabase.rpc('increment_daily_upload', {
-      p_user_id: user.id,
-      p_count: count
-    });
-  };
-  
-  return { checkLimit, incrementCount };
-}
-```
-
-**2. Update `src/components/prospects/ImportExcelDialog.tsx`**
-- Import `useDailyUploadLimit`
-- Before starting import, call `checkLimit(prospects.length)`
-- If not allowed, show error with specific reason
-- After successful import, call `incrementCount(result.imported)`
-
-**3. Update `src/hooks/useProspectsQuery.ts`**
-- In `addMutation.mutationFn`, add daily limit check before insert
-- After successful insert, increment daily count
-
----
-
-## Phase 3: Offer Payment Links
-
-**Problem**: Offers have no payment link field. When coupon is applied, payment link doesn't change.
-
-### Database Changes
-
-```sql
-ALTER TABLE admin_offers 
-ADD COLUMN offer_payment_link TEXT;
-```
-
-### Frontend Changes
-
-**1. Update `src/components/admin/OffersManager.tsx`**
-- Add `offer_payment_link` field to OfferEditForm
-- Make it required for active offers
-- Show validation error if missing
-
-**2. Update offer types in `src/hooks/useAdminConfig.ts`**
-```typescript
-export interface Offer {
-  // ... existing fields
-  offer_payment_link: string | null;
-}
-```
-
-**3. Update payment flow in `src/hooks/useRazorpay.ts`**
-- When coupon is applied, use `offer_payment_link` instead of plan's `payment_link`
-- Pass coupon code in payment metadata
-
----
-
-## Phase 4: Cache Invalidation
-
-**Problem**: When admin updates plans/limits/offers, user-facing components show stale data due to 5-minute cache.
-
-### Solution
-
-**1. Update `src/hooks/useAdminConfig.ts`**
-
-In each admin CRUD hook (useAdminPlans, useAdminOffers, useAdminUsageLimits, useAdminFeatureFlags), after successful mutation:
+Show a celebratory banner for users with active trial:
 
 ```typescript
-const queryClient = useQueryClient();
+// In Home.tsx or a global component
+const { isTrialActive, daysRemaining } = useFreeTrial();
 
-// After createPlan/updatePlan/deletePlan:
-queryClient.invalidateQueries({ queryKey: ['admin-config'] });
+{isTrialActive && (
+  <div className="bg-green-500/10 border border-green-500/30 rounded-lg p-3 mb-4">
+    <div className="flex items-center gap-2">
+      <Gift className="h-5 w-5 text-green-500" />
+      <span className="font-medium">🎉 {daysRemaining} days left in your free trial!</span>
+    </div>
+  </div>
+)}
 ```
 
-**2. Add `refetchOnMount: 'always'` to useAdminConfig**
+**Trial Expired Modal:**
+
+When trial expires and trial-only mode is on, show upgrade modal with trial-specific messaging:
 
 ```typescript
-const { data, isLoading, error, refetch } = useQuery({
-  queryKey: ['admin-config'],
-  queryFn: fetchAppConfig,
-  staleTime: 5 * 60 * 1000,
-  refetchOnMount: 'always', // Always refetch when component mounts
-});
+// TrialExpiredModal.tsx
+<DialogTitle>Your Free Trial Has Ended</DialogTitle>
+<DialogDescription>
+  You've completed your {trialDays}-day free trial. 
+  Upgrade to Pro to continue using all features.
+</DialogDescription>
 ```
 
 ---
 
-## Phase 5: Admin Validation
-
-### PlansManager.tsx
-- Before saving, validate `payment_link` is not empty
-- Show toast error: "Payment link is required"
-
-### OffersManager.tsx
-- Before saving, validate:
-  - `offer_payment_link` is not empty (when is_active = true)
-  - `applicable_plan_ids` has at least one plan
-- Show specific error messages
-
----
-
-## Files Summary
+## Files to Create/Modify
 
 ### New Files
 | File | Purpose |
 |------|---------|
-| `src/hooks/useDailyUploadLimit.ts` | Daily limit checking hook |
-
-### Database Migration
-- Create `user_daily_uploads` table
-- Add `check_upload_limit` function
-- Add `increment_daily_upload` function
-- Add `offer_payment_link` column to `admin_offers`
+| `src/hooks/useFreeTrial.ts` | Trial status checking hook |
+| `src/components/subscription/TrialExpiredModal.tsx` | Modal for expired trials |
+| `src/components/subscription/TrialBanner.tsx` | Banner showing trial status |
 
 ### Modified Files
 | File | Changes |
 |------|---------|
-| `src/components/admin/PlansManager.tsx` | Add audit logging, validation |
-| `src/components/admin/OffersManager.tsx` | Add audit logging, payment link field, validation |
-| `src/components/admin/UsageLimitsManager.tsx` | Add audit logging |
-| `src/components/admin/FeatureFlagsManager.tsx` | Add audit logging |
-| `src/components/prospects/ImportExcelDialog.tsx` | Add daily limit check |
-| `src/hooks/useProspectsQuery.ts` | Add daily limit check in addProspect |
-| `src/hooks/useAdminConfig.ts` | Add cache invalidation, update Offer type |
-| `src/hooks/useRazorpay.ts` | Use offer payment link when coupon applied |
+| `UsageLimitsManager.tsx` | Add Trial Period section UI |
+| `useAdminConfig.ts` | Add trial limits to SAFE_DEFAULTS |
+| `check_upload_limit` (RPC) | Add trial checking logic |
+| `Home.tsx` or `ListUp.tsx` | Show trial banner |
+| `HardLimitModal.tsx` | Add trial-expired variant |
+
+### Database Migration
+- Insert `free_trial_days` and `trial_only_mode` rows in `admin_usage_limits`
+- Update `check_upload_limit` function with trial logic
+- Update `get_app_config` to include trial settings
 
 ---
 
-## Implementation Order
+## Admin Workflow
 
-1. **Database migration** - Create tables and functions
-2. **Audit logging** - Fix PlansManager, OffersManager, UsageLimitsManager, FeatureFlagsManager
-3. **Daily limit enforcement** - Create hook, update ImportExcelDialog and useProspectsQuery
-4. **Offer payment links** - Schema change, UI update
-5. **Cache invalidation** - Update admin hooks
-6. **Validation** - Add to admin forms
+1. Go to Admin Panel > Limits tab
+2. See new "Trial Period" section at top
+3. Enable "Free Trial Days" toggle
+4. Set value to 7 (or any number)
+5. Optionally enable "Trial Only Mode" to disable lead limits during trial
+6. Save changes
+7. All free users now follow trial rules
 
 ---
 
 ## Expected Outcomes
 
 After implementation:
-- Audit log shows all admin actions with old/new values
-- Free users blocked at 50 leads/day with clear error message
-- Plan updates instantly visible in upgrade popup (no stale data)
-- Offers have dedicated payment links that apply when coupon used
-- Admin cannot save incomplete configurations
+- Admin can enable 7-day (or any) free trial from the Limits panel
+- New users see "7 days free trial!" welcome message
+- During trial, users can use app without hitting lead limits (if trial-only mode is on)
+- After trial expires, upgrade modal appears with trial-specific messaging
+- Existing users' trial is calculated from their original signup date
+- System is flexible: can use trial only, lead limits only, or both
+
