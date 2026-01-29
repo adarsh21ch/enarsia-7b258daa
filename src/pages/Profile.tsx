@@ -8,6 +8,7 @@ import { useSubscription } from '@/hooks/useSubscription';
 import { useLeaderSetup } from '@/hooks/useLeaderSetup';
 import { useLifetimeLeadLimit } from '@/hooks/useLifetimeLeadLimit';
 import { useTrackingFormatContext } from '@/contexts/TrackingFormatContext';
+import { useFreeTrial } from '@/hooks/useFreeTrial';
 import { BottomNav } from '@/components/layout/BottomNav';
 import { HeaderBellIcon } from '@/components/layout/HeaderBellIcon';
 import { EditProfileDialog } from '@/components/profile/EditProfileDialog';
@@ -17,11 +18,12 @@ import { ProfileLevelDropdown } from '@/components/profile/ProfileLevelDropdown'
 import { HelpSupportDrawer } from '@/components/profile/HelpSupportDrawer';
 import { UserGuideDrawer } from '@/components/profile/UserGuideDrawer';
 import { ProgressiveNudgeBanner } from '@/components/subscription/ProgressiveNudgeBanner';
+import { TrialBanner } from '@/components/subscription/TrialBanner';
 import { PullToRefreshIndicator } from '@/components/PullToRefreshIndicator';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import { User, LogOut, ChevronRight, ChevronDown, Phone, Building2, MapPin, Loader2, FileText, Shield, Receipt, Mail, Settings, ExternalLink, BarChart3, Crown } from 'lucide-react';
+import { User, LogOut, ChevronRight, ChevronDown, Phone, Building2, MapPin, Loader2, FileText, Shield, Receipt, Mail, Settings, ExternalLink, BarChart3, Crown, Gift } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import nevoraLogo from '@/assets/nevorai-logo.jpeg';
@@ -114,6 +116,11 @@ export default function Profile() {
   const {
     isPaid
   } = useLifetimeLeadLimit();
+  const {
+    isTrialActive,
+    daysRemaining: trialDaysRemaining,
+    hoursRemaining
+  } = useFreeTrial();
   const [editOpen, setEditOpen] = useState(false);
 
   // Handle TrackUp Dashboard - SSO magic link to nevorai.com
@@ -207,12 +214,18 @@ export default function Profile() {
               <div className="flex-1 min-w-0">
                 <div className="flex items-start justify-between gap-2">
                   <div className="min-w-0">
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 flex-wrap">
                       <p className="font-semibold text-lg truncate">{displayName}</p>
                       {isPro && <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/30">
                           <Crown className="h-3 w-3" />
                           Pro
                         </span>}
+                      {isTrialActive && !isPro && (
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30">
+                          <Gift className="h-3 w-3" />
+                          {trialDaysRemaining > 0 ? `${trialDaysRemaining}d Trial` : `${hoursRemaining}h Trial`}
+                        </span>
+                      )}
                     </div>
                     <p className="text-sm text-muted-foreground truncate">{user.email}</p>
                   </div>
@@ -232,6 +245,9 @@ export default function Profile() {
             <div className="absolute -right-4 -top-4 w-16 h-16 rounded-full bg-primary/5" />
           </div>
 
+          {/* Trial Banner - show for users with active trial */}
+          <TrialBanner />
+          
           {/* Progressive Upgrade Nudge Banner - non-spammy, stage-based */}
           {!isPaid && <ProgressiveNudgeBanner context="profile" />}
 

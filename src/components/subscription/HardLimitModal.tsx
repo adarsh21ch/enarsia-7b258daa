@@ -14,6 +14,7 @@ import { useSubscription } from '@/hooks/useSubscription';
 import { useToast } from '@/hooks/use-toast';
 import { usePaymentLinks } from '@/hooks/usePaymentLinks';
 import { useAdminConfig } from '@/hooks/useAdminConfig';
+import { useFreeTrial } from '@/hooks/useFreeTrial';
 
 interface HardLimitModalProps {
   /** External control for modal visibility */
@@ -34,11 +35,15 @@ export function HardLimitModal({ forceOpen, onClose }: HardLimitModalProps) {
   const { toast } = useToast();
   const { plans, getDefaultPlan, loading: plansLoading } = usePaymentLinks();
   const { config } = useAdminConfig();
+  const { isTrialActive, trialOnlyMode } = useFreeTrial();
   
   const [isOpen, setIsOpen] = useState(false);
   const defaultPlan = getDefaultPlan();
   const [selectedPlanKey, setSelectedPlanKey] = useState<string>(defaultPlan?.plan_key || 'quarterly');
   const [hasShown, setHasShown] = useState(false);
+
+  // Don't show modal if user is in active trial with trial-only mode
+  const skipDueToTrial = isTrialActive && trialOnlyMode;
 
   // Update selected plan when default plan loads
   useEffect(() => {
@@ -49,6 +54,12 @@ export function HardLimitModal({ forceOpen, onClose }: HardLimitModalProps) {
 
   // Determine if modal should be open
   useEffect(() => {
+    // Skip entirely if user is in active trial with trial-only mode
+    if (skipDueToTrial) {
+      setIsOpen(false);
+      return;
+    }
+    
     // If externally forced open
     if (forceOpen !== undefined) {
       setIsOpen(forceOpen);
@@ -61,7 +72,7 @@ export function HardLimitModal({ forceOpen, onClose }: HardLimitModalProps) {
       setHasShown(true);
       markLimitModalShown();
     }
-  }, [currentStage, shouldShowLimitModal, hasShown, isPaid, forceOpen, markLimitModalShown]);
+  }, [currentStage, shouldShowLimitModal, hasShown, isPaid, forceOpen, markLimitModalShown, skipDueToTrial]);
 
   const handleClose = () => {
     setIsOpen(false);
@@ -90,8 +101,8 @@ export function HardLimitModal({ forceOpen, onClose }: HardLimitModalProps) {
     handleClose();
   };
 
-  // Don't render for paid users
-  if (isPaid) return null;
+  // Don't render for paid users or users in active trial with trial-only mode
+  if (isPaid || skipDueToTrial) return null;
 
   // Sort plans by sortOrder
   const sortedPlans = [...plans].sort((a, b) => a.sortOrder - b.sortOrder);

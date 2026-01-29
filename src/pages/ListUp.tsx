@@ -7,6 +7,7 @@ import { BottomNav } from '@/components/layout/BottomNav';
 import { HeaderBellIcon } from '@/components/layout/HeaderBellIcon';
 import { PullToRefreshIndicator } from '@/components/PullToRefreshIndicator';
 import { TopTabBar } from '@/components/ui/TopTabBar';
+import { TrialBanner } from '@/components/subscription/TrialBanner';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Loader2, Filter, ChevronDown, ChevronUp, Tags, X, Eye, Search, Phone, Layers } from 'lucide-react';
@@ -371,6 +372,8 @@ export default function ListUp() {
       <main ref={containerRef} className="scrollable-content relative pb-20">
         <PullToRefreshIndicator isRefreshing={isRefreshing} pullDistance={pullDistance} showIndicator={showIndicator} />
         <div className="container py-3 px-4 space-y-3">
+          {/* Trial Banner */}
+          <TrialBanner />
 
           {/* Search Bar */}
           <div className="relative">

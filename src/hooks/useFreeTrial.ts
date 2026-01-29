@@ -8,6 +8,11 @@ import { useSubscription } from '@/hooks/useSubscription';
  * Hook to manage time-based free trial status.
  * Reads trial configuration from admin config and calculates trial status
  * based on user's signup date (profiles.created_at).
+ * 
+ * IMPORTANT: trialOnlyMode is determined by the presence of the key
+ * in config.limits (which means is_enabled = true in the database).
+ * The get_app_config RPC only returns limits where is_enabled = true,
+ * so if the key exists, the toggle is ON.
  */
 export function useFreeTrial() {
   const { profile, loading: profileLoading } = useProfile();
@@ -16,14 +21,14 @@ export function useFreeTrial() {
 
   return useMemo(() => {
     // Check if trial is enabled in admin config
-    const trialEnabled = config.limits.free_trial_days !== undefined && 
-                         config.limits.free_trial_days > 0 &&
-                         // Check if the feature is actually enabled (is_enabled flag)
-                         // This is controlled via the toggle in admin panel
-                         true; // Will be refined when we can access is_enabled
-    
+    // Trial is enabled if free_trial_days exists and is > 0
     const trialDays = config.limits.free_trial_days ?? 0;
-    const trialOnlyMode = (config.limits.trial_only_mode ?? 0) > 0;
+    const trialEnabled = trialDays > 0;
+    
+    // Trial Only Mode is enabled when the key exists in config.limits
+    // The get_app_config RPC only returns keys where is_enabled = true
+    // So we check for presence of the key (meaning toggle is ON in admin)
+    const trialOnlyMode = 'trial_only_mode' in config.limits;
 
     // Get user's signup date
     const signupDate = profile?.created_at ? new Date(profile.created_at) : null;

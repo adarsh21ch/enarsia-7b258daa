@@ -134,6 +134,9 @@ export function UsageLimitsManager() {
                 const currentValue = pending?.value ?? limit.config_value;
                 const currentEnabled = pending?.enabled ?? limit.is_enabled;
                 const hasChange = !!pending;
+                
+                // Boolean-like fields don't need value input (trial_only_mode)
+                const isBooleanField = limit.config_key === 'trial_only_mode';
 
                 return (
                   <Card key={limit.id} className={`p-4 ${hasChange ? 'ring-2 ring-primary/50' : ''}`}>
@@ -149,24 +152,32 @@ export function UsageLimitsManager() {
                               Disabled
                             </Badge>
                           )}
+                          {isBooleanField && currentEnabled && (
+                            <Badge variant="default" className="text-xs bg-primary/10 text-primary border-primary/30">
+                              Active
+                            </Badge>
+                          )}
                         </div>
                         <p className="text-xs text-muted-foreground truncate">
                           {limit.description || limit.config_key}
                         </p>
                       </div>
                       <div className="flex items-center gap-3">
-                        <Input
-                          type="number"
-                          value={currentValue}
-                          onChange={(e) => handleValueChange(
-                            limit.id, 
-                            limit.config_key, 
-                            parseInt(e.target.value) || 0,
-                            limit.is_enabled
-                          )}
-                          className="w-24 h-8 text-right"
-                          min="0"
-                        />
+                        {/* Hide value input for boolean fields */}
+                        {!isBooleanField && (
+                          <Input
+                            type="number"
+                            value={currentValue}
+                            onChange={(e) => handleValueChange(
+                              limit.id, 
+                              limit.config_key, 
+                              parseInt(e.target.value) || 0,
+                              limit.is_enabled
+                            )}
+                            className="w-24 h-8 text-right"
+                            min="0"
+                          />
+                        )}
                         <Switch
                           checked={currentEnabled}
                           onCheckedChange={(enabled) => handleEnabledChange(

@@ -7,6 +7,7 @@ import { Plus, AlertTriangle } from 'lucide-react';
 import { Prospect } from '@/types/prospect';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useLifetimeLeadLimit } from '@/hooks/useLifetimeLeadLimit';
+import { useFreeTrial } from '@/hooks/useFreeTrial';
 import { HardLimitModal } from '@/components/subscription/HardLimitModal';
 import { cn } from '@/lib/utils';
 
@@ -27,6 +28,10 @@ export function AddProspectDialog({ onAdd, existingProspects = [] }: AddProspect
   const [showLimitModal, setShowLimitModal] = useState(false);
   const isMobile = useIsMobile();
   const { isAtLimit, canAddLead, incrementLeadCount, isPaid } = useLifetimeLeadLimit();
+  const { isTrialActive, trialOnlyMode } = useFreeTrial();
+  
+  // Skip limit checks if user is in active trial with trial-only mode
+  const bypassLimits = isTrialActive && trialOnlyMode;
 
   // Check for duplicate phone number
   const duplicateProspect = useMemo(() => {
@@ -43,8 +48,8 @@ export function AddProspectDialog({ onAdd, existingProspects = [] }: AddProspect
     e.preventDefault();
     setErrors({});
 
-    // Check lead limit before submitting
-    if (!canAddLead) {
+    // Check lead limit before submitting (skip if in trial with trial-only mode)
+    if (!bypassLimits && !canAddLead) {
       setShowLimitModal(true);
       return;
     }
@@ -83,9 +88,9 @@ export function AddProspectDialog({ onAdd, existingProspects = [] }: AddProspect
     setIsSubmitting(false);
   };
 
-  // Handle dialog open - check limit first
+  // Handle dialog open - check limit first (skip if in trial with trial-only mode)
   const handleOpenChange = (isOpen: boolean) => {
-    if (isOpen && isAtLimit) {
+    if (isOpen && !bypassLimits && isAtLimit) {
       setShowLimitModal(true);
       return;
     }

@@ -11,6 +11,7 @@ import { sanitizeImportString, validateImportedProspect } from '@/lib/validation
 import { cn } from '@/lib/utils';
 import { useLifetimeLeadLimit } from '@/hooks/useLifetimeLeadLimit';
 import { useDailyUploadLimit } from '@/hooks/useDailyUploadLimit';
+import { useFreeTrial } from '@/hooks/useFreeTrial';
 import { HardLimitModal } from '@/components/subscription/HardLimitModal';
 import { useActivityLog } from '@/hooks/useActivityLog';
 
@@ -71,6 +72,10 @@ export function ImportExcelDialog({ onImport }: ImportExcelDialogProps) {
   
   const { isAtLimit, canAddLeads, remaining, incrementLeadCount, isPaid } = useLifetimeLeadLimit();
   const { checkLimit: checkDailyLimit, incrementCount: incrementDailyCount } = useDailyUploadLimit();
+  const { isTrialActive, trialOnlyMode } = useFreeTrial();
+  
+  // Skip limit checks if user is in active trial with trial-only mode
+  const bypassLimits = isTrialActive && trialOnlyMode;
   
   // Resizable columns state for preview table
   const [previewColumnWidths, setPreviewColumnWidths] = useState<Record<string, number>>({});
@@ -152,8 +157,8 @@ export function ImportExcelDialog({ onImport }: ImportExcelDialogProps) {
   };
 
   const handleOpenChange = (isOpen: boolean) => {
-    // Check lead limit BEFORE opening the dialog (block immediately)
-    if (isOpen && isAtLimit) {
+    // Check lead limit BEFORE opening the dialog (skip if in trial with trial-only mode)
+    if (isOpen && !bypassLimits && isAtLimit) {
       setShowLimitModal(true);
       return; // Don't open the dialog
     }
@@ -240,8 +245,8 @@ export function ImportExcelDialog({ onImport }: ImportExcelDialogProps) {
       return;
     }
 
-    // Check lifetime lead limit before importing
-    if (isAtLimit) {
+    // Check lifetime lead limit before importing (skip if in trial with trial-only mode)
+    if (!bypassLimits && isAtLimit) {
       setShowLimitModal(true);
       return;
     }
@@ -292,26 +297,28 @@ export function ImportExcelDialog({ onImport }: ImportExcelDialogProps) {
       return;
     }
 
-    // Check daily upload limit FIRST (backend enforcement)
-    const dailyLimitCheck = await checkDailyLimit(prospects.length);
-    if (!dailyLimitCheck.allowed) {
-      setError(dailyLimitCheck.reason);
-      setIsImporting(false);
-      setImportProgress(null);
-      // Show upgrade modal if limit type is daily or total
-      if (dailyLimitCheck.limit_type === 'daily' || dailyLimitCheck.limit_type === 'total') {
-        setShowLimitModal(true);
+    // Check daily upload limit FIRST (backend enforcement) - skip if in trial with trial-only mode
+    if (!bypassLimits) {
+      const dailyLimitCheck = await checkDailyLimit(prospects.length);
+      if (!dailyLimitCheck.allowed) {
+        setError(dailyLimitCheck.reason);
+        setIsImporting(false);
+        setImportProgress(null);
+        // Show upgrade modal if limit type is daily or total
+        if (dailyLimitCheck.limit_type === 'daily' || dailyLimitCheck.limit_type === 'total') {
+          setShowLimitModal(true);
+        }
+        return;
       }
-      return;
-    }
 
-    // Check if importing would exceed lifetime limit (for free users)
-    if (!isPaid && !canAddLeads(prospects.length)) {
-      setError(`Cannot import ${prospects.length} leads. You have ${remaining} leads remaining in your free plan. Upgrade to Pro for unlimited leads.`);
-      setIsImporting(false);
-      setImportProgress(null);
-      setShowLimitModal(true);
-      return;
+      // Check if importing would exceed lifetime limit (for free users)
+      if (!isPaid && !canAddLeads(prospects.length)) {
+        setError(`Cannot import ${prospects.length} leads. You have ${remaining} leads remaining in your free plan. Upgrade to Pro for unlimited leads.`);
+        setIsImporting(false);
+        setImportProgress(null);
+        setShowLimitModal(true);
+        return;
+      }
     }
 
     // Import with progress callback

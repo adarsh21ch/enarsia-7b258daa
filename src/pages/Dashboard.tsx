@@ -12,6 +12,7 @@ import { PullToRefreshIndicator } from '@/components/PullToRefreshIndicator';
 import { TopTabBar } from '@/components/ui/TopTabBar';
 import { FilterTagSetupDialog, useFilterTagSetup } from '@/components/prospects/FilterTagSetupDialog';
 import { SearchBar } from '@/components/ui/SearchBar';
+import { TrialBanner } from '@/components/subscription/TrialBanner';
 import { Loader2, Phone, Layers } from 'lucide-react';
 import nevoraLogo from '@/assets/nevorai-logo.jpeg';
 
@@ -248,6 +249,11 @@ export default function Dashboard() {
       touchAction: 'pan-x pan-y'
     }}>
         <PullToRefreshIndicator isRefreshing={isRefreshing} pullDistance={pullDistance} showIndicator={showIndicator} />
+        
+        {/* Trial Banner */}
+        <div className="px-4 pt-2">
+          <TrialBanner />
+        </div>
         
         {/* Table area - flex-1 to fill remaining space, pb for bottom nav */}
         <div className="flex-1 min-h-0 px-4 pb-16 md:pb-24 lg:pb-16 overflow-y-auto">
