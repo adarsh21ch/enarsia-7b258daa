@@ -373,7 +373,7 @@ export default function ListUp() {
         <PullToRefreshIndicator isRefreshing={isRefreshing} pullDistance={pullDistance} showIndicator={showIndicator} />
         <div className="container py-3 px-4 space-y-3">
           {/* Trial Banner */}
-          <TrialBanner />
+          <TrialBanner tabId="listup" />
 
           {/* Search Bar */}
           <div className="relative">

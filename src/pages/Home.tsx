@@ -244,7 +244,7 @@ export default function Home() {
         <PullToRefreshIndicator isRefreshing={isRefreshing} pullDistance={pullDistance} showIndicator={showIndicator} />
         <div className="container py-3 px-3 pb-20 flex-1 flex flex-col">
           {/* Trial Banner - shows for users with active trial */}
-          <TrialBanner className="mb-3" />
+          <TrialBanner tabId="home" className="mb-3" />
           
           {/* WhatsApp-style Search Bar */}
           <div className="mb-3">

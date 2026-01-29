@@ -875,6 +875,33 @@ export type Database = {
         }
         Relationships: []
       }
+      admin_config_text: {
+        Row: {
+          config_key: string
+          config_value: string
+          description: string | null
+          id: string
+          is_enabled: boolean | null
+          updated_at: string | null
+        }
+        Insert: {
+          config_key: string
+          config_value: string
+          description?: string | null
+          id?: string
+          is_enabled?: boolean | null
+          updated_at?: string | null
+        }
+        Update: {
+          config_key?: string
+          config_value?: string
+          description?: string | null
+          id?: string
+          is_enabled?: boolean | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       admin_feature_flags: {
         Row: {
           created_at: string | null
@@ -2245,6 +2272,7 @@ export type Database = {
           stage_labels: Json | null
           tags_refresh_token: string | null
           total_leads_added: number
+          trial_start_date: string | null
           updated_at: string
           upline_email: string | null
           use_leader_stages: boolean
@@ -2274,6 +2302,7 @@ export type Database = {
           stage_labels?: Json | null
           tags_refresh_token?: string | null
           total_leads_added?: number
+          trial_start_date?: string | null
           updated_at?: string
           upline_email?: string | null
           use_leader_stages?: boolean
@@ -2303,6 +2332,7 @@ export type Database = {
           stage_labels?: Json | null
           tags_refresh_token?: string | null
           total_leads_added?: number
+          trial_start_date?: string | null
           updated_at?: string
           upline_email?: string | null
           use_leader_stages?: boolean

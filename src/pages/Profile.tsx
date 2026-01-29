@@ -246,7 +246,7 @@ export default function Profile() {
           </div>
 
           {/* Trial Banner - show for users with active trial */}
-          <TrialBanner />
+          <TrialBanner tabId="profile" />
           
           {/* Progressive Upgrade Nudge Banner - non-spammy, stage-based */}
           {!isPaid && <ProgressiveNudgeBanner context="profile" />}

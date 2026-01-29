@@ -8,6 +8,7 @@ import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
 import { Loader2, Save, RotateCcw, AlertTriangle, Users, Upload, Bell, Ban, Clock, Timer } from 'lucide-react';
 import { toast } from 'sonner';
+import { TrialBannerTabsManager } from './TrialBannerTabsManager';
 
 const LIMIT_ICONS: Record<string, React.ReactNode> = {
   // Trial Period
@@ -249,6 +250,9 @@ export function UsageLimitsManager() {
           </div>
         );
       })()}
+
+      {/* Trial Banner Tab Visibility */}
+      <TrialBannerTabsManager />
     </div>
   );
 }
