@@ -1593,6 +1593,161 @@ export type Database = {
         }
         Relationships: []
       }
+      funnel_leads: {
+        Row: {
+          access_token: string | null
+          access_token_expires_at: string | null
+          conversation_id: string | null
+          created_at: string | null
+          email: string | null
+          funnel_id: string
+          id: string
+          ip_address: string | null
+          last_watched_second: number | null
+          last_whatsapp_interaction: string | null
+          max_watched_second: number | null
+          name: string
+          owner_user_id: string
+          payment_status_cache: string | null
+          phone: string | null
+          source: string | null
+          synced_to_trackup_at: string | null
+          updated_at: string | null
+          user_agent: string | null
+          video_completed: boolean | null
+          video_watch_percent: number | null
+          whatsapp_consent: boolean | null
+        }
+        Insert: {
+          access_token?: string | null
+          access_token_expires_at?: string | null
+          conversation_id?: string | null
+          created_at?: string | null
+          email?: string | null
+          funnel_id: string
+          id?: string
+          ip_address?: string | null
+          last_watched_second?: number | null
+          last_whatsapp_interaction?: string | null
+          max_watched_second?: number | null
+          name: string
+          owner_user_id: string
+          payment_status_cache?: string | null
+          phone?: string | null
+          source?: string | null
+          synced_to_trackup_at?: string | null
+          updated_at?: string | null
+          user_agent?: string | null
+          video_completed?: boolean | null
+          video_watch_percent?: number | null
+          whatsapp_consent?: boolean | null
+        }
+        Update: {
+          access_token?: string | null
+          access_token_expires_at?: string | null
+          conversation_id?: string | null
+          created_at?: string | null
+          email?: string | null
+          funnel_id?: string
+          id?: string
+          ip_address?: string | null
+          last_watched_second?: number | null
+          last_whatsapp_interaction?: string | null
+          max_watched_second?: number | null
+          name?: string
+          owner_user_id?: string
+          payment_status_cache?: string | null
+          phone?: string | null
+          source?: string | null
+          synced_to_trackup_at?: string | null
+          updated_at?: string | null
+          user_agent?: string | null
+          video_completed?: boolean | null
+          video_watch_percent?: number | null
+          whatsapp_consent?: boolean | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "funnel_leads_funnel_id_fkey"
+            columns: ["funnel_id"]
+            isOneToOne: false
+            referencedRelation: "funnels"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      funnel_payments: {
+        Row: {
+          amount: number
+          created_at: string | null
+          currency: string | null
+          funnel_id: string
+          id: string
+          lead_id: string
+          manual_verified_at: string | null
+          manual_verified_by: string | null
+          owner_user_id: string
+          provider: string
+          provider_order_id: string | null
+          provider_payment_id: string | null
+          provider_signature: string | null
+          status: string | null
+          updated_at: string | null
+          upi_screenshot_url: string | null
+        }
+        Insert: {
+          amount: number
+          created_at?: string | null
+          currency?: string | null
+          funnel_id: string
+          id?: string
+          lead_id: string
+          manual_verified_at?: string | null
+          manual_verified_by?: string | null
+          owner_user_id: string
+          provider: string
+          provider_order_id?: string | null
+          provider_payment_id?: string | null
+          provider_signature?: string | null
+          status?: string | null
+          updated_at?: string | null
+          upi_screenshot_url?: string | null
+        }
+        Update: {
+          amount?: number
+          created_at?: string | null
+          currency?: string | null
+          funnel_id?: string
+          id?: string
+          lead_id?: string
+          manual_verified_at?: string | null
+          manual_verified_by?: string | null
+          owner_user_id?: string
+          provider?: string
+          provider_order_id?: string | null
+          provider_payment_id?: string | null
+          provider_signature?: string | null
+          status?: string | null
+          updated_at?: string | null
+          upi_screenshot_url?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "funnel_payments_funnel_id_fkey"
+            columns: ["funnel_id"]
+            isOneToOne: false
+            referencedRelation: "funnels"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "funnel_payments_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "funnel_leads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       funnel_tracking: {
         Row: {
           created_at: string
@@ -1629,6 +1784,120 @@ export type Database = {
           two_cc?: number | null
           updated_at?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      funnel_video_analytics: {
+        Row: {
+          created_at: string | null
+          event_data: Json | null
+          event_type: string
+          funnel_id: string
+          id: string
+          lead_id: string
+          timestamp_second: number | null
+          watched_percent: number | null
+        }
+        Insert: {
+          created_at?: string | null
+          event_data?: Json | null
+          event_type: string
+          funnel_id: string
+          id?: string
+          lead_id: string
+          timestamp_second?: number | null
+          watched_percent?: number | null
+        }
+        Update: {
+          created_at?: string | null
+          event_data?: Json | null
+          event_type?: string
+          funnel_id?: string
+          id?: string
+          lead_id?: string
+          timestamp_second?: number | null
+          watched_percent?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "funnel_video_analytics_funnel_id_fkey"
+            columns: ["funnel_id"]
+            isOneToOne: false
+            referencedRelation: "funnels"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "funnel_video_analytics_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "funnel_leads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      funnels: {
+        Row: {
+          allow_forward_seek: boolean | null
+          allow_speed_control: boolean | null
+          created_at: string | null
+          cta_button_text: string | null
+          cta_redirect_url: string | null
+          description: string | null
+          id: string
+          is_published: boolean | null
+          lock_cta_until_complete: boolean | null
+          owner_user_id: string
+          payment_type: string | null
+          price: number | null
+          slug: string
+          success_message: string | null
+          thumbnail_url: string | null
+          title: string
+          updated_at: string | null
+          upi_id: string | null
+          video_url: string
+        }
+        Insert: {
+          allow_forward_seek?: boolean | null
+          allow_speed_control?: boolean | null
+          created_at?: string | null
+          cta_button_text?: string | null
+          cta_redirect_url?: string | null
+          description?: string | null
+          id?: string
+          is_published?: boolean | null
+          lock_cta_until_complete?: boolean | null
+          owner_user_id: string
+          payment_type?: string | null
+          price?: number | null
+          slug: string
+          success_message?: string | null
+          thumbnail_url?: string | null
+          title: string
+          updated_at?: string | null
+          upi_id?: string | null
+          video_url: string
+        }
+        Update: {
+          allow_forward_seek?: boolean | null
+          allow_speed_control?: boolean | null
+          created_at?: string | null
+          cta_button_text?: string | null
+          cta_redirect_url?: string | null
+          description?: string | null
+          id?: string
+          is_published?: boolean | null
+          lock_cta_until_complete?: boolean | null
+          owner_user_id?: string
+          payment_type?: string | null
+          price?: number | null
+          slug?: string
+          success_message?: string | null
+          thumbnail_url?: string | null
+          title?: string
+          updated_at?: string | null
+          upi_id?: string | null
+          video_url?: string
         }
         Relationships: []
       }
@@ -3628,6 +3897,7 @@ export type Database = {
         Returns: string
       }
       get_form_share_url: { Args: { p_form_id: string }; Returns: string }
+      get_lead_payment_status: { Args: { p_lead_id: string }; Returns: string }
       get_leader_funnel_config: {
         Args: { target_neverai_id: string }
         Returns: {
