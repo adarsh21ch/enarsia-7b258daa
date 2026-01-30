@@ -1909,6 +1909,7 @@ export type Database = {
           title: string
           updated_at: string | null
           upi_id: string | null
+          video_asset_id: string | null
           video_url: string
         }
         Insert: {
@@ -1930,6 +1931,7 @@ export type Database = {
           title: string
           updated_at?: string | null
           upi_id?: string | null
+          video_asset_id?: string | null
           video_url: string
         }
         Update: {
@@ -1951,9 +1953,18 @@ export type Database = {
           title?: string
           updated_at?: string | null
           upi_id?: string | null
+          video_asset_id?: string | null
           video_url?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "funnels_video_asset_id_fkey"
+            columns: ["video_asset_id"]
+            isOneToOne: false
+            referencedRelation: "video_assets"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       inbox_messages: {
         Row: {
@@ -3525,6 +3536,51 @@ export type Database = {
           target_value?: number
           updated_at?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      video_assets: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          duration_seconds: number | null
+          file_size_bytes: number
+          id: string
+          mime_type: string | null
+          owner_user_id: string
+          r2_object_key: string
+          status: string | null
+          thumbnail_key: string | null
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          duration_seconds?: number | null
+          file_size_bytes: number
+          id?: string
+          mime_type?: string | null
+          owner_user_id: string
+          r2_object_key: string
+          status?: string | null
+          thumbnail_key?: string | null
+          title: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          duration_seconds?: number | null
+          file_size_bytes?: number
+          id?: string
+          mime_type?: string | null
+          owner_user_id?: string
+          r2_object_key?: string
+          status?: string | null
+          thumbnail_key?: string | null
+          title?: string
+          updated_at?: string | null
         }
         Relationships: []
       }

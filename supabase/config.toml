@@ -32,3 +32,12 @@ verify_jwt = false
 
 [functions.verify-otp-and-signup]
 verify_jwt = false
+
+[functions.r2-get-upload-url]
+verify_jwt = false
+
+[functions.r2-confirm-upload]
+verify_jwt = false
+
+[functions.r2-get-playback-url]
+verify_jwt = false
