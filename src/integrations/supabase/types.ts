@@ -1802,6 +1802,47 @@ export type Database = {
           },
         ]
       }
+      funnel_price_options: {
+        Row: {
+          amount: number
+          created_at: string | null
+          funnel_id: string
+          id: string
+          is_default: boolean | null
+          label: string
+          sort_order: number | null
+          upi_id: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string | null
+          funnel_id: string
+          id?: string
+          is_default?: boolean | null
+          label: string
+          sort_order?: number | null
+          upi_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string | null
+          funnel_id?: string
+          id?: string
+          is_default?: boolean | null
+          label?: string
+          sort_order?: number | null
+          upi_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "funnel_price_options_funnel_id_fkey"
+            columns: ["funnel_id"]
+            isOneToOne: false
+            referencedRelation: "funnels"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       funnel_tracking: {
         Row: {
           created_at: string
