@@ -1934,68 +1934,92 @@ export type Database = {
         Row: {
           allow_forward_seek: boolean | null
           allow_speed_control: boolean | null
+          contact_email: string | null
+          contact_phone: string | null
+          contact_whatsapp: string | null
           created_at: string | null
           cta_button_text: string | null
           cta_redirect_url: string | null
           description: string | null
           id: string
+          intent_type: string | null
           is_published: boolean | null
+          lead_form_config: Json | null
           lock_cta_until_complete: boolean | null
           owner_user_id: string
           payment_type: string | null
           price: number | null
+          razorpay_payment_link: string | null
           slug: string
           success_message: string | null
+          thumbnail_object_key: string | null
           thumbnail_url: string | null
           title: string
           updated_at: string | null
           upi_id: string | null
           video_asset_id: string | null
           video_url: string | null
+          visibility_type: string | null
         }
         Insert: {
           allow_forward_seek?: boolean | null
           allow_speed_control?: boolean | null
+          contact_email?: string | null
+          contact_phone?: string | null
+          contact_whatsapp?: string | null
           created_at?: string | null
           cta_button_text?: string | null
           cta_redirect_url?: string | null
           description?: string | null
           id?: string
+          intent_type?: string | null
           is_published?: boolean | null
+          lead_form_config?: Json | null
           lock_cta_until_complete?: boolean | null
           owner_user_id: string
           payment_type?: string | null
           price?: number | null
+          razorpay_payment_link?: string | null
           slug: string
           success_message?: string | null
+          thumbnail_object_key?: string | null
           thumbnail_url?: string | null
           title: string
           updated_at?: string | null
           upi_id?: string | null
           video_asset_id?: string | null
           video_url?: string | null
+          visibility_type?: string | null
         }
         Update: {
           allow_forward_seek?: boolean | null
           allow_speed_control?: boolean | null
+          contact_email?: string | null
+          contact_phone?: string | null
+          contact_whatsapp?: string | null
           created_at?: string | null
           cta_button_text?: string | null
           cta_redirect_url?: string | null
           description?: string | null
           id?: string
+          intent_type?: string | null
           is_published?: boolean | null
+          lead_form_config?: Json | null
           lock_cta_until_complete?: boolean | null
           owner_user_id?: string
           payment_type?: string | null
           price?: number | null
+          razorpay_payment_link?: string | null
           slug?: string
           success_message?: string | null
+          thumbnail_object_key?: string | null
           thumbnail_url?: string | null
           title?: string
           updated_at?: string | null
           upi_id?: string | null
           video_asset_id?: string | null
           video_url?: string | null
+          visibility_type?: string | null
         }
         Relationships: [
           {
