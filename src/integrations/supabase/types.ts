@@ -1910,7 +1910,7 @@ export type Database = {
           updated_at: string | null
           upi_id: string | null
           video_asset_id: string | null
-          video_url: string
+          video_url: string | null
         }
         Insert: {
           allow_forward_seek?: boolean | null
@@ -1932,7 +1932,7 @@ export type Database = {
           updated_at?: string | null
           upi_id?: string | null
           video_asset_id?: string | null
-          video_url: string
+          video_url?: string | null
         }
         Update: {
           allow_forward_seek?: boolean | null
@@ -1954,7 +1954,7 @@ export type Database = {
           updated_at?: string | null
           upi_id?: string | null
           video_asset_id?: string | null
-          video_url?: string
+          video_url?: string | null
         }
         Relationships: [
           {
