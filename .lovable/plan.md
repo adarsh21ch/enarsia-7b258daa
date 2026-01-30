@@ -1,341 +1,143 @@
 
-# Complete NevorAI Funnels System - Remaining Implementation
+
+# Update R2 Edge Functions to Manual AWS Signature V4
 
 ## Overview
 
-The R2 video infrastructure is complete. This plan implements the **Funnels UI** - the pages and components needed to create, manage, and view video sales funnels.
+Replace AWS SDK-based presigned URL generation with native AWS Signature V4 implementation using `crypto.subtle`. This eliminates external SDK dependencies that may cause compatibility issues in Deno/Edge runtime.
 
 ---
 
-## Current State (Already Implemented)
+## Key Changes
 
-| Component | Status |
-|-----------|--------|
-| Database tables (funnels, funnel_leads, funnel_payments, funnel_video_analytics, video_assets) | ✅ Done |
-| Edge functions (r2-get-upload-url, r2-confirm-upload, r2-get-playback-url) | ✅ Done |
-| Video types and hooks (useVideoAssets, useVideoUpload, usePlaybackUrl) | ✅ Done |
-| Video components (VideoAssetSelector, VideoUploadZone, VideoAssetLibrary, ControlledVideoPlayer) | ✅ Done |
+| Current Implementation | New Implementation |
+|------------------------|-------------------|
+| Uses `@aws-sdk/client-s3` | Uses native `crypto.subtle` |
+| Uses `@aws-sdk/s3-request-presigner` | Manual AWS4-HMAC-SHA256 signing |
+| External esm.sh dependencies | Zero external dependencies (besides Supabase) |
+| SDK handles signature complexity | Custom `hmacSha256` helper function |
 
 ---
 
-## Phase 1: Funnels Data Layer
+## Benefits of Manual Signing
 
-### 1.1 Create `useFunnels` Hook
+1. **No external dependencies** - Removes esm.sh SDK imports that may have version/compatibility issues
+2. **Smaller bundle size** - Only imports Supabase client
+3. **More control** - Direct control over signing parameters
+4. **Better reliability** - No SDK version mismatches in edge runtime
 
-**File:** `src/hooks/useFunnels.ts`
+---
 
-Provides CRUD operations for funnels:
-- `useFunnels()` - List user's funnels with counts
-- `useFunnel(id)` - Get single funnel details
-- `useCreateFunnel()` - Create new funnel
-- `useUpdateFunnel()` - Update funnel settings
-- `useDeleteFunnel()` - Delete funnel
-- `usePublishFunnel()` - Toggle publish state
+## Files to Update
 
-### 1.2 Create `useFunnelLeads` Hook
+### 1. `supabase/functions/r2-get-upload-url/index.ts`
 
-**File:** `src/hooks/useFunnelLeads.ts`
+**Changes:**
+- Remove `S3Client`, `PutObjectCommand`, `getSignedUrl` imports
+- Add manual AWS Signature V4 signing logic
+- Use `crypto.subtle` for HMAC-SHA256 operations
+- Keep existing authentication and validation logic
+- Keep better CORS headers from current version
 
-Manages leads for a specific funnel:
-- `useFunnelLeads(funnelId)` - List leads with pagination
-- `useFunnelLeadStats(funnelId)` - Aggregate stats (total leads, completion rate, payments)
+### 2. `supabase/functions/r2-confirm-upload/index.ts`
 
-### 1.3 Create Funnel Types
+**Changes:**
+- Remove `S3Client`, `HeadObjectCommand` imports
+- Simplify to skip R2 verification (trust client upload confirmation)
+- Keep existing authentication and database update logic
+- This is acceptable for MVP - can add R2 HEAD verification later if needed
 
-**File:** `src/types/funnels.ts`
+### 3. `supabase/functions/r2-get-playback-url/index.ts`
+
+**Changes:**
+- Remove `S3Client`, `GetObjectCommand`, `getSignedUrl` imports
+- Add manual AWS Signature V4 signing for GET requests
+- Keep existing access control logic (owner, lead token, published funnel checks)
+- Use 4-hour expiry for playback URLs
+
+---
+
+## Technical Details
+
+### Manual AWS Signature V4 Implementation
+
+The signing process involves:
+
+```text
+1. Create canonical request
+2. Create string to sign
+3. Calculate signature using HMAC-SHA256 chain:
+   - kDate = HMAC("AWS4" + secretKey, dateStamp)
+   - kRegion = HMAC(kDate, region)
+   - kService = HMAC(kRegion, service)
+   - kSigning = HMAC(kService, "aws4_request")
+   - signature = HMAC(kSigning, stringToSign)
+4. Append signature to query parameters
+```
+
+### Helper Function
 
 ```typescript
-export interface Funnel {
-  id: string;
-  owner_user_id: string;
-  title: string;
-  slug: string;
-  description?: string;
-  video_asset_id?: string;
-  video_url?: string; // Legacy, deprecated
-  thumbnail_url?: string;
-  allow_speed_control: boolean;
-  allow_forward_seek: boolean;
-  lock_cta_until_complete: boolean;
-  price: number;
-  payment_type: 'razorpay' | 'upi_manual' | 'free';
-  upi_id?: string;
-  cta_button_text: string;
-  cta_redirect_url?: string;
-  success_message?: string;
-  is_published: boolean;
-  created_at: string;
-  updated_at: string;
-  // Computed fields
-  leads_count?: number;
-  video_asset?: VideoAsset;
-}
-
-export interface FunnelLead {
-  id: string;
-  funnel_id: string;
-  name: string;
-  phone?: string;
-  email?: string;
-  video_watch_percent: number;
-  video_completed: boolean;
-  payment_status_cache: 'pending' | 'paid' | 'failed';
-  created_at: string;
+async function hmacSha256(key: ArrayBuffer, data: string): Promise<ArrayBuffer> {
+  const cryptoKey = await crypto.subtle.importKey(
+    'raw',
+    key,
+    { name: 'HMAC', hash: 'SHA-256' },
+    false,
+    ['sign']
+  );
+  return await crypto.subtle.sign('HMAC', cryptoKey, encoder.encode(data));
 }
 ```
 
 ---
 
-## Phase 2: Funnels Management Pages
+## Implementation Details
 
-### 2.1 Funnels List Page
+### r2-get-upload-url
+- Method: `PUT`
+- Expires: 1 hour (3600 seconds)
+- Payload: `UNSIGNED-PAYLOAD`
 
-**File:** `src/pages/Funnels.tsx`
+### r2-get-playback-url
+- Method: `GET`
+- Expires: 4 hours (14400 seconds)
+- Payload: `UNSIGNED-PAYLOAD`
 
-**Features:**
-- Grid/list of user's funnels
-- Shows: title, thumbnail, leads count, published status
-- Quick actions: edit, preview, copy link, delete
-- "Create Funnel" button
-
-**UI Layout:**
-```text
-┌─────────────────────────────────────────────────┐
-│  My Funnels                     [+ Create New]  │
-├─────────────────────────────────────────────────┤
-│  ┌──────────────────┐  ┌──────────────────┐     │
-│  │ [Video Thumb]    │  │ [Video Thumb]    │     │
-│  │ Product Demo     │  │ Webinar Funnel   │     │
-│  │ 24 leads • Live  │  │ 156 leads • Draft│     │
-│  │ [Edit] [Preview] │  │ [Edit] [Publish] │     │
-│  └──────────────────┘  └──────────────────┘     │
-└─────────────────────────────────────────────────┘
-```
-
-### 2.2 Create/Edit Funnel Page
-
-**File:** `src/pages/FunnelEditor.tsx`
-
-**Sections:**
-1. **Basic Info** - Title, description, slug
-2. **Video** - VideoAssetSelector component (R2 upload/select)
-3. **Player Settings** - Speed control, seek restriction, CTA lock
-4. **CTA & Payment** - Button text, price, payment type, UPI ID
-5. **Success** - Redirect URL, success message
-
-**Form Fields:**
-```text
-┌─────────────────────────────────────────────────┐
-│  Create Funnel                                  │
-├─────────────────────────────────────────────────┤
-│  Title: [________________]                      │
-│  URL Slug: nevorai.app/f/[__________]           │
-│  Description: [__________________________]      │
-│                                                 │
-│  📹 Video                                       │
-│  ┌────────────────────────────────────────┐     │
-│  │ [VideoAssetSelector Component]         │     │
-│  └────────────────────────────────────────┘     │
-│                                                 │
-│  ⚙️ Player Controls                             │
-│  ☑ Lock CTA until video completes               │
-│  ☐ Allow speed control                          │
-│  ☐ Allow forward seeking                        │
-│                                                 │
-│  💳 Payment                                     │
-│  Type: [Free ▾]  Price: [₹0]                    │
-│  CTA Button: [Get Access Now]                   │
-│  Redirect URL: [https://...]                    │
-│                                                 │
-│  [Save Draft]  [Save & Publish]                 │
-└─────────────────────────────────────────────────┘
-```
-
-### 2.3 Funnel Analytics Page
-
-**File:** `src/pages/FunnelAnalytics.tsx`
-
-**Features:**
-- View leads for a specific funnel
-- Stats: total leads, completion rate, payment conversion
-- Leads table with: name, watch %, payment status, date
-- Export to Excel option
+### r2-confirm-upload
+- No R2 API calls needed (simplified version trusts client)
+- Can optionally add HEAD request verification later
 
 ---
 
-## Phase 3: Public Funnel Viewer
+## CORS Headers
 
-### 3.1 Public Viewer Page
-
-**File:** `src/pages/FunnelView.tsx`
-**Route:** `/f/:slug`
-
-**Flow:**
-1. Load funnel by slug (public, no auth required)
-2. Show lead capture form (name, phone/email)
-3. After capture → Show video with ControlledVideoPlayer
-4. Track progress → Save to funnel_leads
-5. On completion → Show CTA button
-6. Handle payment flow if price > 0
-
-**UI Phases:**
-
-```text
-Phase 1: Lead Capture
-┌─────────────────────────────────────────────────┐
-│  [Video Thumbnail / Blurred Preview]            │
-│                                                 │
-│  Enter your details to watch:                   │
-│  Name: [________________]                       │
-│  Phone: [________________]                      │
-│  [Watch Video →]                                │
-└─────────────────────────────────────────────────┘
-
-Phase 2: Video Playback
-┌─────────────────────────────────────────────────┐
-│  ┌───────────────────────────────────────────┐  │
-│  │                                           │  │
-│  │       [ControlledVideoPlayer]             │  │
-│  │                                           │  │
-│  └───────────────────────────────────────────┘  │
-│                                                 │
-│  [CTA Button - Locked until complete]           │
-└─────────────────────────────────────────────────┘
-
-Phase 3: CTA Active
-┌─────────────────────────────────────────────────┐
-│  ✅ Video Complete!                             │
-│                                                 │
-│  [Get Access Now - ₹499]  ←── Enabled           │
-└─────────────────────────────────────────────────┘
-```
-
-### 3.2 Payment Handling
-
-For `payment_type = 'razorpay'`:
-- Use existing Razorpay integration
-- Create order via edge function
-- Handle payment completion
-
-For `payment_type = 'upi_manual'`:
-- Show UPI QR code / ID
-- Allow screenshot upload
-- Owner manually verifies
-
-### 3.3 Lead Progress Tracking
-
-**Edge Function:** `supabase/functions/funnel-track-progress/index.ts`
-
-Saves watch progress events:
-- Called periodically from ControlledVideoPlayer
-- Updates `funnel_leads` record
-- Inserts into `funnel_video_analytics`
-
----
-
-## Phase 4: Routing Updates
-
-### 4.1 Add Routes to App.tsx
+Will keep the current extended CORS headers for better Supabase client compatibility:
 
 ```typescript
-// New Funnels routes
-<Route path="/funnels" element={<Funnels />} />
-<Route path="/funnels/new" element={<FunnelEditor />} />
-<Route path="/funnels/:id/edit" element={<FunnelEditor />} />
-<Route path="/funnels/:id/analytics" element={<FunnelAnalytics />} />
-
-// Public funnel viewer (no auth)
-<Route path="/f/:slug" element={<FunnelView />} />
-```
-
-### 4.2 Add Funnels to Navigation
-
-Add "Funnels" link to the Profile page or create a dedicated nav item for authenticated users.
-
----
-
-## Phase 5: Edge Function for Progress Tracking
-
-### 5.1 `funnel-track-progress`
-
-**File:** `supabase/functions/funnel-track-progress/index.ts`
-
-**Purpose:** Track video watch progress from public viewer
-
-**Input:**
-```json
-{
-  "lead_token": "abc123",
-  "current_time": 120,
-  "duration": 300,
-  "event_type": "progress"
-}
-```
-
-**Logic:**
-1. Validate lead token
-2. Update `funnel_leads` with watch progress
-3. Insert event into `funnel_video_analytics`
-4. Return updated lead state
-
----
-
-## File Structure Summary
-
-```text
-New Files:
-├── src/types/
-│   └── funnels.ts
-├── src/hooks/
-│   ├── useFunnels.ts
-│   └── useFunnelLeads.ts
-├── src/pages/
-│   ├── Funnels.tsx          (List all funnels)
-│   ├── FunnelEditor.tsx     (Create/Edit funnel)
-│   ├── FunnelAnalytics.tsx  (View leads/stats)
-│   └── FunnelView.tsx       (Public viewer)
-├── src/components/funnels/
-│   ├── FunnelCard.tsx       (Grid card component)
-│   ├── FunnelForm.tsx       (Form fields component)
-│   ├── LeadCaptureForm.tsx  (Public lead form)
-│   └── FunnelLeadsTable.tsx (Analytics table)
-└── supabase/functions/
-    └── funnel-track-progress/index.ts
-
-Modified Files:
-├── src/App.tsx              (Add routes)
-├── src/pages/Profile.tsx    (Add Funnels link)
-└── supabase/config.toml     (Add edge function config)
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version',
+};
 ```
 
 ---
 
-## Implementation Order
+## Files Modified
 
-1. **First:** Types and hooks (funnels.ts, useFunnels.ts, useFunnelLeads.ts)
-2. **Second:** Funnels list page and FunnelCard component
-3. **Third:** FunnelEditor page with VideoAssetSelector integration
-4. **Fourth:** Public FunnelView page with lead capture
-5. **Fifth:** Progress tracking edge function
-6. **Sixth:** FunnelAnalytics page
-7. **Seventh:** Route updates and navigation
+| File | Action |
+|------|--------|
+| `supabase/functions/r2-get-upload-url/index.ts` | Replace SDK with manual signing |
+| `supabase/functions/r2-confirm-upload/index.ts` | Simplify (remove SDK) |
+| `supabase/functions/r2-get-playback-url/index.ts` | Replace SDK with manual signing |
 
 ---
 
-## Key Integration Points
+## Testing Checklist
 
-| Component | Uses |
-|-----------|------|
-| FunnelEditor | VideoAssetSelector → stores video_asset_id |
-| FunnelView | ControlledVideoPlayer → fetches via r2-get-playback-url |
-| ControlledVideoPlayer | Calls funnel-track-progress on timeupdate |
-| FunnelCard | Shows video_asset metadata (duration, thumbnail) |
+After implementation:
+1. Test video upload flow (get upload URL → upload to R2 → confirm)
+2. Test playback URL generation for authenticated user
+3. Test playback URL generation for public funnel viewer
+4. Verify 4-hour expiry on playback URLs
 
----
-
-## Security Considerations
-
-- Public routes (`/f/:slug`) require no authentication
-- Lead capture creates anonymous lead with access_token
-- Video playback URL validated via lead_token OR published funnel check
-- Analytics/management pages require authentication + ownership check
