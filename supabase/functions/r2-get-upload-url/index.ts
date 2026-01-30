@@ -15,6 +15,7 @@ async function hmacSha256(key: ArrayBuffer, data: string): Promise<ArrayBuffer> 
     false,
     ['sign']
   );
+  const encoder = new TextEncoder();
   return await crypto.subtle.sign('HMAC', cryptoKey, encoder.encode(data));
 }
 
@@ -122,7 +123,7 @@ Deno.serve(async (req) => {
 
     const algorithm = 'AWS4-HMAC-SHA256';
     const credentialScope = `${dateStamp}/${region}/${service}/aws4_request`;
-    const signedHeaders = 'host';
+    const signedHeaders = 'content-type;host';
     
     const queryParams = new URLSearchParams({
       'X-Amz-Algorithm': algorithm,
@@ -134,7 +135,7 @@ Deno.serve(async (req) => {
 
     const canonicalUri = `/${R2_BUCKET_NAME}/${objectKey}`;
     const canonicalQueryString = queryParams.toString().split('&').sort().join('&');
-    const canonicalHeaders = `host:${host}\n`;
+    const canonicalHeaders = `content-type:${content_type}\nhost:${host}\n`;
     const payloadHash = 'UNSIGNED-PAYLOAD';
 
     const canonicalRequest = [
@@ -180,6 +181,7 @@ Deno.serve(async (req) => {
         upload_url: presignedUrl,
         object_key: objectKey,
         asset_id: asset.id,
+        content_type: content_type,
       }),
       { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
