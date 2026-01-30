@@ -1,0 +1,1 @@
+ALTER TABLE funnel_price_options ADD COLUMN IF NOT EXISTS qr_image_url TEXT;

@@ -1810,6 +1810,7 @@ export type Database = {
           id: string
           is_default: boolean | null
           label: string
+          qr_image_url: string | null
           sort_order: number | null
           upi_id: string
         }
@@ -1820,6 +1821,7 @@ export type Database = {
           id?: string
           is_default?: boolean | null
           label: string
+          qr_image_url?: string | null
           sort_order?: number | null
           upi_id: string
         }
@@ -1830,6 +1832,7 @@ export type Database = {
           id?: string
           is_default?: boolean | null
           label?: string
+          qr_image_url?: string | null
           sort_order?: number | null
           upi_id?: string
         }
