@@ -4237,13 +4237,7 @@ export type Database = {
       }
       nevorai_list_submissions: {
         Args: { p_form_id: string; p_limit?: number; p_offset?: number }
-        Returns: {
-          created_at: string
-          submission_id: string
-          submitter_email: string
-          submitter_user_id: string
-          total_count: number
-        }[]
+        Returns: Json
       }
       nevorai_submit_form: {
         Args: {
