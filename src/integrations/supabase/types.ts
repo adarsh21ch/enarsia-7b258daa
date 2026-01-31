@@ -4066,6 +4066,8 @@ export type Database = {
       }
       clear_upline_relationship: { Args: { p_user_id: string }; Returns: Json }
       ensure_ac_profile_exists: { Args: never; Returns: Json }
+      gen_random_bytes: { Args: { n: number }; Returns: string }
+      gen_random_uuid: { Args: never; Returns: string }
       generate_neverai_id: { Args: never; Returns: string }
       generate_sequential_neverai_id: { Args: never; Returns: string }
       generate_simple_neverai_id: { Args: never; Returns: string }
