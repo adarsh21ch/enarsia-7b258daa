@@ -3,7 +3,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-lead-token',
 };
 
 serve(async (req) => {
@@ -13,11 +13,22 @@ serve(async (req) => {
 
   try {
     const body = await req.json();
-    const { lead_id, funnel_id, price_option_id, amount, screenshot_url } = body;
+    const { 
+      lead_id, 
+      funnel_id, 
+      price_option_id, 
+      amount, 
+      screenshot_url,
+      // Optional contact fields for creating new leads
+      contact_name,
+      contact_phone,
+      contact_email,
+    } = body;
 
-    if (!lead_id || !funnel_id || !amount || !screenshot_url) {
+    // Require funnel_id, amount, and screenshot_url
+    if (!funnel_id || !amount || !screenshot_url) {
       return new Response(
-        JSON.stringify({ error: 'Missing required fields' }),
+        JSON.stringify({ error: 'Missing required fields: funnel_id, amount, screenshot_url' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
@@ -28,25 +39,111 @@ serve(async (req) => {
       { auth: { autoRefreshToken: false, persistSession: false } }
     );
 
-    const { data: lead, error: leadError } = await supabase
-      .from('funnel_leads')
-      .select('id, funnel_id, owner_user_id')
-      .eq('id', lead_id)
-      .single();
+    let effectiveLeadId = lead_id;
+    let ownerUserId: string | null = null;
 
-    if (leadError || !lead) {
-      return new Response(
-        JSON.stringify({ error: 'Lead not found' }),
-        { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+    // If lead_id provided, verify it exists
+    if (lead_id) {
+      const { data: lead, error: leadError } = await supabase
+        .from('funnel_leads')
+        .select('id, funnel_id, owner_user_id')
+        .eq('id', lead_id)
+        .single();
+
+      if (leadError || !lead) {
+        return new Response(
+          JSON.stringify({ error: 'Lead not found' }),
+          { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+      ownerUserId = lead.owner_user_id;
+    } else {
+      // No lead_id - check if we have contact info to create one
+      if (!contact_name && !contact_phone && !contact_email) {
+        return new Response(
+          JSON.stringify({ error: 'Either lead_id or contact info (name/phone/email) is required' }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      // Get funnel owner
+      const { data: funnel, error: funnelError } = await supabase
+        .from('funnels')
+        .select('id, owner_user_id')
+        .eq('id', funnel_id)
+        .single();
+
+      if (funnelError || !funnel) {
+        return new Response(
+          JSON.stringify({ error: 'Funnel not found' }),
+          { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      ownerUserId = funnel.owner_user_id;
+
+      // Check if a lead with this phone/email already exists for this funnel
+      let existingLead = null;
+      if (contact_phone) {
+        const { data } = await supabase
+          .from('funnel_leads')
+          .select('id')
+          .eq('funnel_id', funnel_id)
+          .eq('phone', contact_phone)
+          .single();
+        existingLead = data;
+      }
+      if (!existingLead && contact_email) {
+        const { data } = await supabase
+          .from('funnel_leads')
+          .select('id')
+          .eq('funnel_id', funnel_id)
+          .eq('email', contact_email)
+          .single();
+        existingLead = data;
+      }
+
+      if (existingLead) {
+        effectiveLeadId = existingLead.id;
+      } else {
+        // Create new lead with source 'payment_direct'
+        const accessToken = crypto.randomUUID();
+        const { data: newLead, error: createError } = await supabase
+          .from('funnel_leads')
+          .insert({
+            funnel_id,
+            owner_user_id: ownerUserId,
+            name: contact_name || 'Unknown',
+            phone: contact_phone || null,
+            email: contact_email || null,
+            source: 'payment_direct',
+            access_token: accessToken,
+            video_watch_percent: 0,
+            video_completed: false,
+          })
+          .select()
+          .single();
+
+        if (createError) {
+          console.error('Failed to create lead:', createError);
+          return new Response(
+            JSON.stringify({ error: 'Failed to create lead record' }),
+            { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
+        }
+
+        effectiveLeadId = newLead.id;
+        console.log('Created new lead for direct payment:', { leadId: newLead.id, source: 'payment_direct' });
+      }
     }
 
+    // Create payment record with pending status
     const { data: payment, error: paymentError } = await supabase
       .from('funnel_payments')
       .insert({
-        lead_id,
+        lead_id: effectiveLeadId,
         funnel_id,
-        owner_user_id: lead.owner_user_id,
+        owner_user_id: ownerUserId,
         provider: 'manual',
         amount,
         currency: 'INR',
@@ -64,10 +161,19 @@ serve(async (req) => {
       );
     }
 
+    console.log('Payment proof submitted:', {
+      paymentId: payment.id,
+      leadId: effectiveLeadId,
+      funnelId: funnel_id,
+      amount,
+      hadExistingLead: !!lead_id,
+    });
+
     return new Response(
       JSON.stringify({
         success: true,
         payment_id: payment.id,
+        lead_id: effectiveLeadId,
         status: 'pending',
       }),
       { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
