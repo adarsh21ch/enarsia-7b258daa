@@ -1,132 +1,187 @@
 
-# Fix Nevorai Forms Anonymous Submission
+# Separate Authentication for Achievers Club and Nevorai
 
-## Problem
-The Nevorai Forms system is failing to accept submissions from anonymous users. Two issues have been identified:
+## Problem Analysis
 
-1. **Function Signature Mismatch**: External applications are calling `nevorai_submit_form(p_answers, p_form_id, p_share_token)` but the database function has signature `(p_token, p_answers_json, p_attachments_json)`
+Both Achievers Club and Nevorai currently share the **same authentication system**. When Achievers Club provisions a user or when a user signs up through Achievers Club, they get an entry in `auth.users`. Then when the same person tries to sign up for Nevorai, they see "An account with this email already exists."
 
-2. **Authentication Block**: The current function throws an error if `auth.uid()` is null, which blocks anonymous submissions
+**Current flow causing issues:**
+1. User joins Achievers Club → Entry created in `auth.users`
+2. Same user tries to sign up for Nevorai → `send-otp` checks `auth.admin.listUsers()` 
+3. System finds the user → Returns "already registered" error
 
-## Solution
-Create an updated `nevorai_submit_form` function that:
-- Accepts an optional submitter name parameter for anonymous users
-- Allows submissions without authentication (when `auth.uid()` is null)
-- Keeps the correct parameter signature that matches the types file
+---
+
+## Proposed Solution
+
+Instead of trying to separate the Supabase auth entirely (which would require major infrastructure changes), we'll implement a **product-scoped authentication model**:
+
+- Keep the shared `auth.users` table (this is necessary for Supabase)
+- Track which products each user has access to using a new `user_products` table
+- Modify signup/login flows to check product access instead of just user existence
+
+### Why This Approach?
+
+1. **No infrastructure changes needed** - both apps can keep using the same Supabase project
+2. **Same email can "sign up" for both products** - system creates appropriate product access
+3. **Independent experiences** - each product manages its own onboarding
 
 ---
 
 ## Technical Implementation
 
-### Database Migration
-Update the `nevorai_submit_form` function to support anonymous submissions:
+### 1. Database Changes
 
+**Create new `user_products` table:**
 ```sql
-CREATE OR REPLACE FUNCTION public.nevorai_submit_form(
-    p_token text, 
-    p_answers_json jsonb, 
-    p_attachments_json jsonb DEFAULT '[]'::jsonb,
-    p_submitter_name text DEFAULT NULL
-)
-RETURNS TABLE(submission_id uuid, success boolean, message text)
-LANGUAGE plpgsql
-SECURITY DEFINER
-SET search_path TO 'public'
-AS $$
-DECLARE
-    v_share_id uuid;
-    v_form_id uuid;
-    v_submission_id uuid;
-    v_user_id uuid;
-    v_user_email text;
-    v_answer jsonb;
-    v_attachment jsonb;
-BEGIN
-    -- Get current user (may be null for anonymous)
-    v_user_id := auth.uid();
-    
-    -- Get user email if authenticated
-    IF v_user_id IS NOT NULL THEN
-        SELECT email INTO v_user_email FROM auth.users WHERE id = v_user_id;
-    END IF;
-
-    -- Get share and form info
-    SELECT s.id, s.form_id INTO v_share_id, v_form_id
-    FROM nevorai_form_shares s
-    JOIN nevorai_forms f ON f.id = s.form_id
-    WHERE s.token = p_token AND f.is_public = true;
-
-    IF v_form_id IS NULL THEN
-        RAISE EXCEPTION 'Form not found or not accepting submissions';
-    END IF;
-
-    -- Create submission (supports anonymous)
-    INSERT INTO nevorai_form_submissions (
-        form_id, share_id, submitter_user_id, submitter_email, submitter_name
-    )
-    VALUES (v_form_id, v_share_id, v_user_id, v_user_email, p_submitter_name)
-    RETURNING id INTO v_submission_id;
-
-    -- Insert answers
-    FOR v_answer IN SELECT * FROM jsonb_array_elements(p_answers_json)
-    LOOP
-        INSERT INTO nevorai_submission_answers (submission_id, field_id, field_key, value, value_json)
-        VALUES (
-            v_submission_id,
-            (v_answer->>'field_id')::uuid,
-            v_answer->>'field_key',
-            v_answer->>'value',
-            v_answer->'value_json'
-        );
-    END LOOP;
-
-    -- Insert attachments
-    FOR v_attachment IN SELECT * FROM jsonb_array_elements(p_attachments_json)
-    LOOP
-        INSERT INTO nevorai_submission_attachments (submission_id, field_id, storage_path, content_type, size)
-        VALUES (
-            v_submission_id,
-            (v_attachment->>'field_id')::uuid,
-            v_attachment->>'storage_path',
-            v_attachment->>'content_type',
-            (v_attachment->>'size')::bigint
-        );
-    END LOOP;
-
-    RETURN QUERY SELECT v_submission_id, true, 'Form submitted successfully'::TEXT;
-END;
-$$;
-
--- Grant anonymous users permission to call the function
-GRANT EXECUTE ON FUNCTION public.nevorai_submit_form(text, jsonb, jsonb, text) TO anon;
+CREATE TABLE user_products (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id uuid REFERENCES auth.users(id) ON DELETE CASCADE,
+  product text NOT NULL, -- 'nevorai' or 'achievers_club'
+  created_at timestamptz DEFAULT now(),
+  UNIQUE(user_id, product)
+);
 ```
 
-### Key Changes
-| Current Behavior | New Behavior |
-|-----------------|--------------|
-| Throws error if `auth.uid()` is null | Allows null user ID for anonymous submissions |
-| No submitter name field | Accepts optional `p_submitter_name` parameter |
-| Requires login | Works for anyone, like Google Forms |
+This tracks which products each user has actively signed up for.
+
+### 2. Update `send-otp` Function
+
+**Before:** Blocks signup if user exists in `auth.users`
+**After:** Only blocks if user exists AND has 'nevorai' product access
+
+```typescript
+// Check if user already has Nevorai access (not just exists)
+const { data: existingProfile } = await supabase
+  .from('user_products')
+  .select('id')
+  .eq('email', normalizedEmail)  
+  .eq('product', 'nevorai')
+  .maybeSingle();
+
+if (existingProfile) {
+  return jsonResponse({ 
+    success: false, 
+    error: 'You already have a Nevorai account. Please sign in instead.' 
+  }, 400);
+}
+// If no Nevorai access, allow signup (even if auth.users entry exists)
+```
+
+### 3. Update `verify-otp-and-signup` Function
+
+**Before:** Creates new auth.user, fails if exists
+**After:** If user exists but no Nevorai access, grant Nevorai access instead of failing
+
+```typescript
+// Check if user exists in auth
+const existingUser = await supabase.auth.admin.listUsers()
+  .then(r => r.data?.users?.find(u => u.email?.toLowerCase() === normalizedEmail));
+
+if (existingUser) {
+  // User exists - check if they have Nevorai access
+  const { data: hasNevorai } = await supabase
+    .from('user_products')
+    .select('id')
+    .eq('user_id', existingUser.id)
+    .eq('product', 'nevorai')
+    .maybeSingle();
+
+  if (hasNevorai) {
+    // Already has Nevorai - tell them to sign in
+    return jsonResponse({ 
+      error: 'You already have a Nevorai account. Please sign in.' 
+    }, 400);
+  }
+
+  // Grant Nevorai access to existing user
+  await supabase.from('user_products').insert({
+    user_id: existingUser.id,
+    product: 'nevorai'
+  });
+
+  // Update their password if provided (they're "creating" their Nevorai account)
+  await supabase.auth.admin.updateUserById(existingUser.id, { password });
+
+  // Update profile
+  await supabase.from('profiles').update({ 
+    display_name: name.trim() 
+  }).eq('user_id', existingUser.id);
+
+  return jsonResponse({ success: true, message: 'Nevorai account activated!' });
+}
+
+// User doesn't exist - create new auth.user as normal
+```
+
+### 4. Update Login Flow
+
+No changes needed for login - existing login works for all users regardless of product.
+
+### 5. Migrate Existing Users
+
+Run a one-time migration to populate `user_products` for existing users:
+
+```sql
+-- Grant Nevorai access to all existing Nevorai users
+INSERT INTO user_products (user_id, product)
+SELECT user_id, 'nevorai' FROM profiles
+WHERE source_app IS NULL OR source_app != 'achievers_club'
+ON CONFLICT DO NOTHING;
+
+-- Grant Achievers Club access to AC users
+INSERT INTO user_products (user_id, product)
+SELECT user_id, 'achievers_club' FROM profiles
+WHERE source_app = 'achievers_club' OR source_app = 'achievers_club_linked'
+ON CONFLICT DO NOTHING;
+```
 
 ---
 
-## Additional Note
-The error message shows the calling application is using parameter names `(p_answers, p_form_id, p_share_token)`. If you control that external "Team Tracking" application, you should update its RPC call to use the correct signature:
+## User Experience After Changes
 
-```typescript
-// Correct call format
-const { data, error } = await supabase.rpc('nevorai_submit_form', {
-  p_token: shareToken,
-  p_answers_json: answers,
-  p_attachments_json: []
-});
-```
+### Scenario 1: Achievers Club user signs up for Nevorai
+1. User enters email → OTP sent (no "already registered" error)
+2. User verifies OTP and sets password
+3. System grants Nevorai access, updates password
+4. User can now login to both products with same credentials
+
+### Scenario 2: Nevorai user signs up for Achievers Club
+1. User enters email → AC system checks for AC access (not Nevorai)
+2. If no AC access → allow signup, grant AC access
+3. Both products share same login credentials
+
+### Scenario 3: New user signs up for Nevorai
+1. Normal signup flow - creates auth.user + grants Nevorai access
+
+---
+
+## Files to Modify
+
+| File | Changes |
+|------|---------|
+| `supabase/migrations/xxx.sql` | Create `user_products` table + migration |
+| `supabase/functions/send-otp/index.ts` | Check product access instead of user existence |
+| `supabase/functions/verify-otp-and-signup/index.ts` | Handle existing users, grant product access |
+| `supabase/functions/cross-app-auth/index.ts` | Update to use product-based model |
+
+---
+
+## Benefits
+
+- No "already registered" confusion
+- Same email works independently in both products
+- Shared credentials (optional - users can set different passwords)
+- Clean separation without infrastructure changes
+- Easy to add more products in the future
 
 ---
 
 ## Testing Checklist
+
 After implementation:
-- [ ] Anonymous users can submit forms without logging in
-- [ ] Authenticated users can still submit forms
-- [ ] Submissions appear in the form owner's dashboard
-- [ ] Submitter name is captured if provided
+- [ ] Achievers Club user can "sign up" for Nevorai without errors
+- [ ] New users can sign up for Nevorai normally
+- [ ] Existing Nevorai users cannot sign up again (get appropriate message)
+- [ ] Login works for all users regardless of which product they signed up through
+- [ ] Password changes work correctly
