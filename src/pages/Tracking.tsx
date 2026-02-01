@@ -123,6 +123,15 @@ export default function Tracking() {
   const handleOpenDashboard = async () => {
     setSsoLoading(true);
     try {
+      // Check for valid session first
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        toast.error('Please log in first');
+        window.location.href = '/auth';
+        setSsoLoading(false);
+        return;
+      }
+
       const { data, error } = await supabase.functions.invoke('trackup-sso-link');
       if (error) {
         console.error('SSO link error:', error);
