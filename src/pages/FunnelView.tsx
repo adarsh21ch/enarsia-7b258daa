@@ -116,39 +116,34 @@ export default function FunnelView() {
     loadFunnel();
   }, [slug]);
 
-  // Handle lead capture
+  // Handle lead capture - using edge function for anonymous access
   const handleLeadCapture = async (data: { name: string; phone: string; email?: string }) => {
     if (!funnel) return;
 
     setIsSubmitting(true);
 
     try {
-      // Generate access token
-      const accessToken = crypto.randomUUID();
-
-      // Insert lead
-      const { data: lead, error } = await supabase
-        .from('funnel_leads')
-        .insert({
+      // Call edge function instead of direct insert (works for anonymous users)
+      const { data: result, error } = await supabase.functions.invoke('create-funnel-lead', {
+        body: {
           funnel_id: funnel.id,
-          owner_user_id: (await supabase.from('funnels').select('owner_user_id').eq('id', funnel.id).single()).data?.owner_user_id,
           name: data.name,
           phone: data.phone,
-          email: data.email || null,
-          access_token: accessToken,
-          access_token_expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(), // 24 hours
-        })
-        .select()
-        .single();
+          email: data.email || undefined,
+          source: 'funnel_view',
+        },
+      });
 
-      if (error) throw error;
+      if (error || !result?.success) {
+        throw new Error(result?.error || 'Failed to create submission');
+      }
 
       const session: LeadSession = {
-        leadId: lead.id,
-        accessToken,
+        leadId: result.lead_id,
+        accessToken: result.token,
       };
 
-      // Store session
+      // Store session for video access
       sessionStorage.setItem(`funnel_lead_${funnel.id}`, JSON.stringify(session));
       setLeadSession(session);
       setPhase('video');
