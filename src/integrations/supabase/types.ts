@@ -4243,6 +4243,7 @@ export type Database = {
         Args: {
           p_answers_json: Json
           p_attachments_json?: Json
+          p_submitter_name?: string
           p_token: string
         }
         Returns: {
