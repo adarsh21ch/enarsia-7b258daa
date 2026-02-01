@@ -1,165 +1,130 @@
+# Product-Scoped Authentication - Implementation Complete
 
-# Update TrackUp/nevorai.com for Product-Scoped Authentication
+## Status: ✅ Backend Ready
 
-## Problem
-The nevorai.com website (TrackUp Dashboard, Nevorai Forms, etc.) uses the same Supabase authentication as the Nevorai mobile app. When Achievers Club users try to sign up on nevorai.com, they see "already registered" errors because the website is checking `auth.users` directly.
-
-## Solution Overview
-Since the nevorai.com website is a **separate application** outside this Lovable project, we need to:
-
-1. **Create backend edge functions** in this project that nevorai.com can call for signup
-2. **Provide documentation** for the nevorai.com website to implement the new flow
+The backend changes for product-scoped authentication have been implemented. The nevorai.com website can now use these edge functions.
 
 ---
 
-## Part 1: Backend Changes (This Project)
+## Available Edge Functions for nevorai.com
 
-### New Edge Function: `website-send-otp`
-Create a version of send-otp specifically for the nevorai.com website with CORS configured for that domain:
+### 1. `send-otp` (Already Updated)
+Send OTP for signup - checks product access instead of just user existence.
 
 ```typescript
-// supabase/functions/website-send-otp/index.ts
-// Same logic as send-otp but:
-// - Accepts 'product' parameter (default: 'nevorai')
-// - Configured for nevorai.com origin
+const response = await fetch('https://kisankusogixarejjphi.supabase.co/functions/v1/send-otp', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({ email })
+});
 ```
 
-### New Edge Function: `website-signup`
-Create a signup endpoint for nevorai.com:
+### 2. `verify-otp-and-signup` (Already Updated)
+Verify OTP and create/link account with product-scoped logic.
 
 ```typescript
-// supabase/functions/website-signup/index.ts
-// - Accepts: email, otp_code, password, name, product
-// - Uses product-scoped logic (checks user_products table)
-// - Returns session token for auto-login
+const response = await fetch('https://kisankusogixarejjphi.supabase.co/functions/v1/verify-otp-and-signup', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({ email, otp_code, password, name })
+});
 ```
 
-### Update `cross-app-auth` Edge Function
-Add new actions for TrackUp signup that use product-scoped logic:
+### 3. `cross-app-auth` with `check_signup_eligibility` (NEW)
+Check if user can sign up for a specific product before showing signup form.
 
 ```typescript
-// New action: 'check_signup_eligibility'
-case 'check_signup_eligibility': {
-  const { email, product } = requestBody;
-  
-  // Check if user has access to this specific product
-  const { data: hasProduct } = await supabase
-    .from('user_products')
-    .select('id')
-    .eq('user_id', profile.user_id)
-    .eq('product', product)
-    .maybeSingle();
-  
-  return jsonResponse({
-    can_signup: !hasProduct,
-    user_exists: !!profile
-  });
-}
+const response = await fetch('https://kisankusogixarejjphi.supabase.co/functions/v1/cross-app-auth', {
+  method: 'POST',
+  headers: { 
+    'Content-Type': 'application/json',
+    'x-cross-app-secret': 'YOUR_CROSS_APP_SECRET'
+  },
+  body: JSON.stringify({ 
+    action: 'check_signup_eligibility',
+    email: 'user@example.com',
+    product: 'nevorai' // or 'achievers_club'
+  })
+});
 
-// New action: 'website_create_user'
-case 'website_create_user': {
-  // Similar logic to verify-otp-and-signup
-  // but callable via cross-app secret
-}
+// Response:
+// { success: true, can_signup: true, user_exists: false, has_product: false }
 ```
 
 ---
 
-## Part 2: nevorai.com Website Changes (External)
+## Implementation Guide for nevorai.com
 
-The nevorai.com website needs to update its authentication flow:
+### Step 1: Replace `supabase.auth.signUp()` with OTP flow
 
-### Current Flow (Broken)
-```
-User enters email → supabase.auth.signUp() → "already registered" error
-```
-
-### New Flow (Fixed)
-```
-User enters email → call /website-send-otp → show OTP input
-User enters OTP → call /website-signup → auto-login
-```
-
-### Code Changes for nevorai.com
-
-**1. Replace Supabase auth.signUp with edge function calls:**
-
+**Before (broken):**
 ```typescript
-// Before (in nevorai.com/auth page)
 const { error } = await supabase.auth.signUp({ email, password });
+// Shows "already registered" for AC users
+```
 
-// After
-const { data, error } = await supabase.functions.invoke('website-send-otp', {
-  body: { email, product: 'nevorai' }
+**After (fixed):**
+```typescript
+// 1. Send OTP
+const { data } = await supabase.functions.invoke('send-otp', {
+  body: { email }
 });
 
 if (data?.success) {
-  // Show OTP input
-  setStep('otp');
+  setStep('otp'); // Show OTP input
 }
 ```
 
-**2. Verify OTP and create account:**
+### Step 2: Verify OTP and complete signup
 
 ```typescript
-const { data, error } = await supabase.functions.invoke('website-signup', {
-  body: {
-    email,
-    otp_code: otpCode,
-    password,
-    name,
-    product: 'nevorai'
-  }
+const { data } = await supabase.functions.invoke('verify-otp-and-signup', {
+  body: { email, otp_code: otpCode, password, name }
 });
 
 if (data?.success) {
   // Auto sign-in
   await supabase.auth.signInWithPassword({ email, password });
+  
+  // Check if user was an AC member
+  if (data.is_achievers_club_member) {
+    console.log('Linked AC member with leader_id:', data.leader_id);
+  }
+}
+```
+
+### Step 3: (Optional) Pre-check signup eligibility
+
+```typescript
+// Before showing signup form, check if user can sign up
+const response = await fetch('/functions/v1/cross-app-auth', {
+  method: 'POST',
+  headers: { 
+    'x-cross-app-secret': SECRET,
+    'Content-Type': 'application/json'
+  },
+  body: JSON.stringify({ 
+    action: 'check_signup_eligibility',
+    email,
+    product: 'nevorai'
+  })
+});
+
+const { can_signup, user_exists, has_product } = await response.json();
+
+if (!can_signup && has_product) {
+  // Redirect to login instead of signup
+  showMessage('You already have an account. Please sign in.');
 }
 ```
 
 ---
 
-## Part 3: Files to Create/Modify in This Project
-
-| File | Action | Purpose |
-|------|--------|---------|
-| `supabase/functions/website-send-otp/index.ts` | Create | OTP endpoint for nevorai.com |
-| `supabase/functions/website-signup/index.ts` | Create | Signup endpoint with product scope |
-| `supabase/functions/cross-app-auth/index.ts` | Update | Add signup eligibility check |
-
----
-
-## Alternative: Reuse Existing Edge Functions
-
-Instead of creating new edge functions, the nevorai.com website can call the existing `send-otp` and `verify-otp-and-signup` edge functions directly, as they already implement product-scoped logic.
-
-**nevorai.com just needs to:**
-1. Call `send-otp` with the email
-2. Show OTP input UI
-3. Call `verify-otp-and-signup` with email, otp_code, password, name
-4. Auto sign-in after success
-
-This is the simplest approach since the edge functions are already updated!
-
----
-
-## Recommended Approach
-
-Since `send-otp` and `verify-otp-and-signup` already have product-scoped logic, the nevorai.com website only needs **frontend changes** to:
-
-1. Replace `supabase.auth.signUp()` calls with edge function calls
-2. Add OTP verification UI (similar to `src/pages/Auth.tsx` in this project)
-
-**No additional backend changes needed!**
-
----
-
 ## Testing Checklist
 
-After nevorai.com website is updated:
+After nevorai.com implements the changes:
 - [ ] Achievers Club user can sign up on nevorai.com without "already registered" error
 - [ ] New users can sign up normally
-- [ ] Existing nevorai.com users cannot sign up again (redirected to login)
+- [ ] Existing nevorai.com users get "already have account" message
 - [ ] Login works for all users
 - [ ] TrackUp Dashboard accessible after signup/login

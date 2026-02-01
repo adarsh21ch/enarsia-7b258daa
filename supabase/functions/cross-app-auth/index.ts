@@ -318,13 +318,59 @@ serve(async (req) => {
         });
       }
 
+      // ACTION: check_signup_eligibility (NEW - check if user can sign up for a product)
+      case 'check_signup_eligibility': {
+        const { email, product = 'nevorai' } = requestBody;
+        
+        if (!email) {
+          return jsonResponse({ success: false, error: 'email required' }, 400);
+        }
+
+        const normalizedEmail = email.toLowerCase().trim();
+
+        // Check if user exists in profiles
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('user_id')
+          .eq('email', normalizedEmail)
+          .maybeSingle();
+
+        if (!profile) {
+          // User doesn't exist at all - can sign up
+          console.log('User does not exist, can sign up:', normalizedEmail);
+          return jsonResponse({ 
+            success: true, 
+            can_signup: true,
+            user_exists: false,
+            has_product: false
+          });
+        }
+
+        // User exists - check if they have access to this specific product
+        const { data: hasProduct } = await supabase
+          .from('user_products')
+          .select('id')
+          .eq('user_id', profile.user_id)
+          .eq('product', product)
+          .maybeSingle();
+
+        const canSignup = !hasProduct;
+        console.log('Signup eligibility for', normalizedEmail, 'product:', product, '- can_signup:', canSignup);
+
+        return jsonResponse({ 
+          success: true, 
+          can_signup: canSignup,
+          user_exists: true,
+          has_product: !!hasProduct
+        });
+      }
+
       default:
         return jsonResponse({ 
           success: false, 
-          error: 'Invalid action. Use: get_leader_ids, get_user_by_email, set_upline_by_email, provision_leader_id, get_subscription' 
+          error: 'Invalid action. Use: get_leader_ids, get_user_by_email, set_upline_by_email, provision_leader_id, get_subscription, check_signup_eligibility' 
         }, 400);
     }
-
   } catch (error) {
     console.error('cross-app-auth error:', error);
     return jsonResponse({ success: false, error: 'Internal server error' }, 500);
