@@ -1643,6 +1643,8 @@ export type Database = {
       }
       funnel_leads: {
         Row: {
+          access_granted: boolean | null
+          access_granted_at: string | null
           access_token: string | null
           access_token_expires_at: string | null
           conversation_id: string | null
@@ -1664,11 +1666,14 @@ export type Database = {
           synced_to_trackup_at: string | null
           updated_at: string | null
           user_agent: string | null
+          video_access_expires_at: string | null
           video_completed: boolean | null
           video_watch_percent: number | null
           whatsapp_consent: boolean | null
         }
         Insert: {
+          access_granted?: boolean | null
+          access_granted_at?: string | null
           access_token?: string | null
           access_token_expires_at?: string | null
           conversation_id?: string | null
@@ -1690,11 +1695,14 @@ export type Database = {
           synced_to_trackup_at?: string | null
           updated_at?: string | null
           user_agent?: string | null
+          video_access_expires_at?: string | null
           video_completed?: boolean | null
           video_watch_percent?: number | null
           whatsapp_consent?: boolean | null
         }
         Update: {
+          access_granted?: boolean | null
+          access_granted_at?: string | null
           access_token?: string | null
           access_token_expires_at?: string | null
           conversation_id?: string | null
@@ -1716,6 +1724,7 @@ export type Database = {
           synced_to_trackup_at?: string | null
           updated_at?: string | null
           user_agent?: string | null
+          video_access_expires_at?: string | null
           video_completed?: boolean | null
           video_watch_percent?: number | null
           whatsapp_consent?: boolean | null
@@ -1726,6 +1735,57 @@ export type Database = {
             columns: ["funnel_id"]
             isOneToOne: false
             referencedRelation: "funnels"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      funnel_notifications: {
+        Row: {
+          body: string | null
+          created_at: string | null
+          funnel_id: string | null
+          id: string
+          is_read: boolean | null
+          lead_id: string | null
+          owner_user_id: string
+          title: string
+          type: string
+        }
+        Insert: {
+          body?: string | null
+          created_at?: string | null
+          funnel_id?: string | null
+          id?: string
+          is_read?: boolean | null
+          lead_id?: string | null
+          owner_user_id: string
+          title: string
+          type: string
+        }
+        Update: {
+          body?: string | null
+          created_at?: string | null
+          funnel_id?: string | null
+          id?: string
+          is_read?: boolean | null
+          lead_id?: string | null
+          owner_user_id?: string
+          title?: string
+          type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "funnel_notifications_funnel_id_fkey"
+            columns: ["funnel_id"]
+            isOneToOne: false
+            referencedRelation: "funnels"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "funnel_notifications_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "funnel_leads"
             referencedColumns: ["id"]
           },
         ]
@@ -1937,12 +1997,16 @@ export type Database = {
         Row: {
           allow_forward_seek: boolean | null
           allow_speed_control: boolean | null
+          audio_play_timing: string | null
+          audio_url: string | null
           contact_email: string | null
           contact_phone: string | null
           contact_whatsapp: string | null
           created_at: string | null
           cta_button_text: string | null
           cta_redirect_url: string | null
+          cta_trigger_type: string | null
+          cta_trigger_value: number | null
           description: string | null
           id: string
           intent_type: string | null
@@ -1960,6 +2024,7 @@ export type Database = {
           title: string
           updated_at: string | null
           upi_id: string | null
+          video_access_limit_minutes: number | null
           video_asset_id: string | null
           video_url: string | null
           visibility_type: string | null
@@ -1967,12 +2032,16 @@ export type Database = {
         Insert: {
           allow_forward_seek?: boolean | null
           allow_speed_control?: boolean | null
+          audio_play_timing?: string | null
+          audio_url?: string | null
           contact_email?: string | null
           contact_phone?: string | null
           contact_whatsapp?: string | null
           created_at?: string | null
           cta_button_text?: string | null
           cta_redirect_url?: string | null
+          cta_trigger_type?: string | null
+          cta_trigger_value?: number | null
           description?: string | null
           id?: string
           intent_type?: string | null
@@ -1990,6 +2059,7 @@ export type Database = {
           title: string
           updated_at?: string | null
           upi_id?: string | null
+          video_access_limit_minutes?: number | null
           video_asset_id?: string | null
           video_url?: string | null
           visibility_type?: string | null
@@ -1997,12 +2067,16 @@ export type Database = {
         Update: {
           allow_forward_seek?: boolean | null
           allow_speed_control?: boolean | null
+          audio_play_timing?: string | null
+          audio_url?: string | null
           contact_email?: string | null
           contact_phone?: string | null
           contact_whatsapp?: string | null
           created_at?: string | null
           cta_button_text?: string | null
           cta_redirect_url?: string | null
+          cta_trigger_type?: string | null
+          cta_trigger_value?: number | null
           description?: string | null
           id?: string
           intent_type?: string | null
@@ -2020,6 +2094,7 @@ export type Database = {
           title?: string
           updated_at?: string | null
           upi_id?: string | null
+          video_access_limit_minutes?: number | null
           video_asset_id?: string | null
           video_url?: string | null
           visibility_type?: string | null
