@@ -1,130 +1,80 @@
-# Product-Scoped Authentication - Implementation Complete
 
-## Status: ✅ Backend Ready
 
-The backend changes for product-scoped authentication have been implemented. The nevorai.com website can now use these edge functions.
+# Migrate R2 URLs to Public Format
 
----
+## Problem
+Images stored in Cloudflare R2 are using private signed URLs that may expire or require authentication. The `r2-get-upload-url` edge function already has logic to use public URLs, but:
 
-## Available Edge Functions for nevorai.com
+1. The `R2_PUBLIC_URL` secret is **not configured**
+2. Existing records have private URLs that need updating
 
-### 1. `send-otp` (Already Updated)
-Send OTP for signup - checks product access instead of just user existence.
+## Current State
+- **2 records** need URL migration:
+  - 1 in `funnel_price_options` (QR code image)
+  - 1 in `funnel_payments` (payment screenshot)
+- **23 video assets** exist (these use the `r2-get-playback-url` function separately)
 
-```typescript
-const response = await fetch('https://kisankusogixarejjphi.supabase.co/functions/v1/send-otp', {
-  method: 'POST',
-  headers: { 'Content-Type': 'application/json' },
-  body: JSON.stringify({ email })
-});
+## Implementation
+
+### Step 1: Add R2_PUBLIC_URL Secret
+Add the public R2 URL secret so new uploads return accessible URLs.
+
+**Secret Name:** `R2_PUBLIC_URL`
+**Value:** `https://pub-d0cae7c30eea4f949d9c33c730813937.r2.dev`
+
+### Step 2: Database Migration
+Update existing private URLs to use the public format:
+
+```sql
+-- Migrate funnel_price_options QR images
+UPDATE funnel_price_options
+SET qr_image_url = REPLACE(
+  qr_image_url,
+  'https://b2cc3a6e16425fd28d16161e9acaa822.r2.cloudflarestorage.com/nevorai/',
+  'https://pub-d0cae7c30eea4f949d9c33c730813937.r2.dev/'
+)
+WHERE qr_image_url LIKE '%r2.cloudflarestorage.com%';
+
+-- Migrate funnel_payments screenshots  
+UPDATE funnel_payments
+SET upi_screenshot_url = REPLACE(
+  upi_screenshot_url,
+  'https://b2cc3a6e16425fd28d16161e9acaa822.r2.cloudflarestorage.com/nevorai/',
+  'https://pub-d0cae7c30eea4f949d9c33c730813937.r2.dev/'
+)
+WHERE upi_screenshot_url LIKE '%r2.cloudflarestorage.com%';
+
+-- Migrate funnels thumbnails (if any)
+UPDATE funnels
+SET thumbnail_url = REPLACE(
+  thumbnail_url,
+  'https://b2cc3a6e16425fd28d16161e9acaa822.r2.cloudflarestorage.com/nevorai/',
+  'https://pub-d0cae7c30eea4f949d9c33c730813937.r2.dev/'
+)
+WHERE thumbnail_url LIKE '%r2.cloudflarestorage.com%';
 ```
 
-### 2. `verify-otp-and-signup` (Already Updated)
-Verify OTP and create/link account with product-scoped logic.
+### Step 3: Verify Edge Function
+The `r2-get-upload-url` function already handles public URLs correctly:
 
 ```typescript
-const response = await fetch('https://kisankusogixarejjphi.supabase.co/functions/v1/verify-otp-and-signup', {
-  method: 'POST',
-  headers: { 'Content-Type': 'application/json' },
-  body: JSON.stringify({ email, otp_code, password, name })
-});
+const R2_PUBLIC_URL = Deno.env.get('R2_PUBLIC_URL');
+const publicUrl = R2_PUBLIC_URL 
+  ? `${R2_PUBLIC_URL}/${objectKey}`
+  : `https://${host}/${R2_BUCKET_NAME}/${objectKey}`;
 ```
 
-### 3. `cross-app-auth` with `check_signup_eligibility` (NEW)
-Check if user can sign up for a specific product before showing signup form.
+Once `R2_PUBLIC_URL` secret is added, new uploads will automatically use public URLs.
 
-```typescript
-const response = await fetch('https://kisankusogixarejjphi.supabase.co/functions/v1/cross-app-auth', {
-  method: 'POST',
-  headers: { 
-    'Content-Type': 'application/json',
-    'x-cross-app-secret': 'YOUR_CROSS_APP_SECRET'
-  },
-  body: JSON.stringify({ 
-    action: 'check_signup_eligibility',
-    email: 'user@example.com',
-    product: 'nevorai' // or 'achievers_club'
-  })
-});
+## Files to Modify
 
-// Response:
-// { success: true, can_signup: true, user_exists: false, has_product: false }
-```
+| File | Action |
+|------|--------|
+| Database migration | Create SQL to update existing URLs |
+| Project secrets | Add `R2_PUBLIC_URL` secret |
 
----
+## Expected Result
+- Existing 2 image URLs will be publicly accessible
+- All new image uploads will return public URLs
+- No authentication/signing required for viewing images
 
-## Implementation Guide for nevorai.com
-
-### Step 1: Replace `supabase.auth.signUp()` with OTP flow
-
-**Before (broken):**
-```typescript
-const { error } = await supabase.auth.signUp({ email, password });
-// Shows "already registered" for AC users
-```
-
-**After (fixed):**
-```typescript
-// 1. Send OTP
-const { data } = await supabase.functions.invoke('send-otp', {
-  body: { email }
-});
-
-if (data?.success) {
-  setStep('otp'); // Show OTP input
-}
-```
-
-### Step 2: Verify OTP and complete signup
-
-```typescript
-const { data } = await supabase.functions.invoke('verify-otp-and-signup', {
-  body: { email, otp_code: otpCode, password, name }
-});
-
-if (data?.success) {
-  // Auto sign-in
-  await supabase.auth.signInWithPassword({ email, password });
-  
-  // Check if user was an AC member
-  if (data.is_achievers_club_member) {
-    console.log('Linked AC member with leader_id:', data.leader_id);
-  }
-}
-```
-
-### Step 3: (Optional) Pre-check signup eligibility
-
-```typescript
-// Before showing signup form, check if user can sign up
-const response = await fetch('/functions/v1/cross-app-auth', {
-  method: 'POST',
-  headers: { 
-    'x-cross-app-secret': SECRET,
-    'Content-Type': 'application/json'
-  },
-  body: JSON.stringify({ 
-    action: 'check_signup_eligibility',
-    email,
-    product: 'nevorai'
-  })
-});
-
-const { can_signup, user_exists, has_product } = await response.json();
-
-if (!can_signup && has_product) {
-  // Redirect to login instead of signup
-  showMessage('You already have an account. Please sign in.');
-}
-```
-
----
-
-## Testing Checklist
-
-After nevorai.com implements the changes:
-- [ ] Achievers Club user can sign up on nevorai.com without "already registered" error
-- [ ] New users can sign up normally
-- [ ] Existing nevorai.com users get "already have account" message
-- [ ] Login works for all users
-- [ ] TrackUp Dashboard accessible after signup/login
