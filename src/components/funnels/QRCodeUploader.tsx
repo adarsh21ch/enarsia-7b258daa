@@ -2,9 +2,10 @@ import { useState, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { X, Loader2, QrCode, Download } from 'lucide-react';
+import { X, Loader2, QrCode } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
+
 const APP_SUPABASE_URL = 'https://kisankusogixarejjphi.supabase.co';
 
 interface QRCodeUploaderProps {
@@ -106,63 +107,26 @@ export function QRCodeUploader({ value, onChange, disabled }: QRCodeUploaderProp
     onChange(undefined);
   };
 
-  const handleDownload = async () => {
-    if (!value) return;
-    
-    try {
-      const response = await fetch(value);
-      if (!response.ok) throw new Error('Failed to fetch image');
-      
-      const blob = await response.blob();
-      const url = URL.createObjectURL(blob);
-      
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = 'qr-code.png';
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      
-      URL.revokeObjectURL(url);
-      toast.success('QR code downloaded');
-    } catch (error) {
-      console.error('Download failed:', error);
-      toast.error('Failed to download QR code');
-    }
-  };
-
   return (
     <div className="space-y-3">
       <Label>QR Code Image</Label>
       
       {value ? (
-        <div className="space-y-2">
-          <div className="relative inline-block">
-            <img
-              src={value}
-              alt="QR Code"
-              className="w-32 h-32 object-contain border rounded-lg bg-white"
-            />
-            <Button
-              type="button"
-              variant="destructive"
-              size="icon"
-              className="absolute -top-2 -right-2 h-6 w-6"
-              onClick={handleRemove}
-              disabled={disabled}
-            >
-              <X className="h-3 w-3" />
-            </Button>
-          </div>
+        <div className="relative inline-block">
+          <img
+            src={value}
+            alt="QR Code"
+            className="w-32 h-32 object-contain border rounded-lg bg-white"
+          />
           <Button
             type="button"
-            variant="outline"
-            size="sm"
-            onClick={handleDownload}
-            className="flex items-center gap-1"
+            variant="destructive"
+            size="icon"
+            className="absolute -top-2 -right-2 h-6 w-6"
+            onClick={handleRemove}
+            disabled={disabled}
           >
-            <Download className="h-3 w-3" />
-            Download QR
+            <X className="h-3 w-3" />
           </Button>
         </div>
       ) : (

@@ -238,10 +238,10 @@ Deno.serve(async (req) => {
     queryParams.set('X-Amz-Signature', signature);
     const presignedUrl = `https://${host}${canonicalUri}?${queryParams.toString()}`;
 
-    // Build public URL (include bucket name in path for r2.dev URLs)
+    // Build public URL
     const R2_PUBLIC_URL = Deno.env.get('R2_PUBLIC_URL');
     const publicUrl = R2_PUBLIC_URL 
-      ? `${R2_PUBLIC_URL}/${R2_BUCKET_NAME}/${objectKey}`
+      ? `${R2_PUBLIC_URL}/${objectKey}`
       : `https://${host}/${R2_BUCKET_NAME}/${objectKey}`;
 
     console.log(`Created upload URL for ${isLeadAuth ? 'lead' : 'user'} - object: ${objectKey}`);
