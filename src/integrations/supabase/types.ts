@@ -4299,6 +4299,7 @@ export type Database = {
         Args: { target_user_id: string; viewer_user_id: string }
         Returns: boolean
       }
+      is_user_upline: { Args: { target_user_id: string }; Returns: boolean }
       log_admin_action: {
         Args: {
           p_action_type: string
