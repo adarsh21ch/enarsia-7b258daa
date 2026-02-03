@@ -148,11 +148,9 @@ serve(async (req) => {
 
     const presignedUrl = `https://${host}/${bucketName}/${objectKey}?${canonicalQueryString}&X-Amz-Signature=${signature}`;
 
-    // Public URL for the uploaded file (include bucket name in path for r2.dev URLs)
-    const R2_PUBLIC_URL = Deno.env.get('R2_PUBLIC_URL');
-    const publicUrl = R2_PUBLIC_URL 
-      ? `${R2_PUBLIC_URL}/${bucketName}/${objectKey}`
-      : `https://${host}/${bucketName}/${objectKey}`;
+    // Public URL using r2.dev public endpoint
+    const R2_PUBLIC_BASE = 'https://pub-d0cae7c30eea4f949d9c33c730813937.r2.dev';
+    const publicUrl = `${R2_PUBLIC_BASE}/${bucketName}/${objectKey}`;
 
     console.log('Generated presigned URL for payment screenshot:', { objectKey, leadId: lead_id });
 
