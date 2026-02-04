@@ -26,7 +26,7 @@ interface TrialExpiredModalProps {
  * Only shows when trial is enabled, expired, and user is not paid.
  */
 export function TrialExpiredModal({ forceOpen, onClose }: TrialExpiredModalProps) {
-  const { isTrialExpired, trialDays, trialOnlyMode } = useFreeTrial();
+  const { isTrialExpired, trialDays, trialOnlyMode, loading: trialLoading } = useFreeTrial();
   const { initiatePayment, loading: paymentLoading } = useRazorpay();
   const { refetch, isPaid } = useSubscription();
   const { toast } = useToast();
@@ -52,13 +52,17 @@ export function TrialExpiredModal({ forceOpen, onClose }: TrialExpiredModalProps
       return;
     }
 
+    // Don't auto-show while loading - prevents false positives for Pro users
+    // This fixes the race condition where isPaid defaults to false before subscription loads
+    if (trialLoading) return;
+
     // Auto-show logic: only when trial is expired AND trial-only mode is on
     // This ensures the modal only shows when trial expiry actually blocks the user
     if (isTrialExpired && trialOnlyMode && !hasShown && !isPaid) {
       setIsOpen(true);
       setHasShown(true);
     }
-  }, [isTrialExpired, trialOnlyMode, hasShown, isPaid, forceOpen]);
+  }, [isTrialExpired, trialOnlyMode, hasShown, isPaid, forceOpen, trialLoading]);
 
   const handleClose = () => {
     setIsOpen(false);
