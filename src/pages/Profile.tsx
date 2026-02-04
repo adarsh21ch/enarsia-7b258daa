@@ -130,15 +130,21 @@ export default function Profile() {
     setSsoLoading(true);
     try {
       // Check for valid session first
-      const { data: { session } } = await supabase.auth.getSession();
+      const {
+        data: {
+          session
+        }
+      } = await supabase.auth.getSession();
       if (!session) {
         toast.error('Please log in first');
         navigate('/auth');
         setSsoLoading(false);
         return;
       }
-
-      const { data, error } = await supabase.functions.invoke('trackup-sso-link');
+      const {
+        data,
+        error
+      } = await supabase.functions.invoke('trackup-sso-link');
       if (error) {
         console.error('SSO link error:', error);
         toast.error('Failed to generate login link. Opening login page...');
@@ -227,12 +233,10 @@ export default function Profile() {
                           <Crown className="h-3 w-3" />
                           Pro
                         </span>}
-                      {isTrialActive && !isPro && (
-                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30">
+                      {isTrialActive && !isPro && <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30">
                           <Gift className="h-3 w-3" />
                           {trialDaysRemaining > 0 ? `${trialDaysRemaining}d Trial` : `${hoursRemaining}h Trial`}
-                        </span>
-                      )}
+                        </span>}
                     </div>
                     <p className="text-sm text-muted-foreground truncate">{user.email}</p>
                   </div>
@@ -256,9 +260,7 @@ export default function Profile() {
           <TrialBanner tabId="profile" />
           
           {/* Upgrade Button - show for non-Pro users when not in trial */}
-          {!isPro && !isTrialActive && (
-            <UpgradeButton className="w-full" />
-          )}
+          {!isPro && !isTrialActive && <UpgradeButton className="w-full" />}
           
           {/* Progressive Upgrade Nudge Banner - non-spammy, stage-based */}
           {!isPaid && <ProgressiveNudgeBanner context="profile" />}
@@ -309,7 +311,127 @@ export default function Profile() {
                 {ssoLoading ? <Loader2 className="h-5 w-5 text-emerald-500 animate-spin" /> : <BarChart3 className="h-5 w-5 text-emerald-500" />}
               </div>
               <div className="text-left">
-                <span className="font-medium block">Team Tracking                                </span>
+                <span className="font-medium block">TrackUp Dashboard 
+    
+ 
+                                       
+    
+ 
+                                       
+    
+ 
+                                       
+    
+ 
+                                       
+    
+ 
+                                       
+    
+ 
+                                       
+    
+ 
+                                       
+    
+ 
+                                       
+    
+ 
+                                       
+    
+ 
+                                        
+    
+ 
+                                       
+    
+ 
+                                        
+    
+ 
+                                       
+    
+ 
+                                       
+    
+ 
+                                       
+    
+ 
+                                       
+    
+ 
+                                       
+    
+ 
+                                       
+    
+ 
+                                       
+    
+ 
+                                        
+    
+ 
+                                         
+    
+ 
+                                          
+    
+ 
+                                           
+    
+ 
+                                            
+    
+ 
+                                             
+    
+ 
+                                              
+    
+ 
+                                               
+    
+ 
+                                                
+    
+ 
+                                                 
+    
+ 
+                                                  
+    
+ 
+                                                   
+    
+ 
+                                                    
+    
+ 
+                                                     
+    
+ 
+                                                      
+    
+ 
+                                                       
+    
+ 
+                                                        
+    
+ 
+                                                         
+    
+ 
+                                                          
+    
+ 
+                                                           
+    
+ 
+                                       </span>
                 <span className="text-xs text-muted-foreground">
                   {ssoLoading ? 'Opening...' : 'Team tracking on nevorai.com'}
                 </span>
