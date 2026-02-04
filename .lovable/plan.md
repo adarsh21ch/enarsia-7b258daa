@@ -1,153 +1,82 @@
 
-
-# Fix Broken R2 Image Display (Stability Fix)
+# Plan: Persist Retargeting Filter State
 
 ## Problem Summary
-Images stored in Cloudflare R2 are displaying as broken (❓ icon) because:
-1. **2 existing records** use private S3 API URLs (`r2.cloudflarestorage.com`) instead of the public endpoint
-2. Edge functions need to consistently return `r2.dev` URLs for new uploads
+When users apply a Retargeting filter (e.g., "Video Send") in the Calling > Leads tab, the selection gets reset when:
+- Switching between tabs (Follow-Up, To-Do, TrackUp, Profile)
+- Making a call and returning
+- Refreshing the page
+- Closing and reopening the app
 
-## Current State Analysis
+This causes frustration as users must repeatedly reselect filters during their workflow.
 
-### Database Records Needing Migration
-| Table | URL Type | Count |
-|-------|----------|-------|
-| `funnel_price_options` | QR code image | 1 |
-| `funnel_payments` | Payment screenshot | 1 |
-| `funnels` | Thumbnail | 0 |
+## Root Cause
+The filter state in `ProspectTable.tsx` uses `useState` with a hardcoded initial value. This state resets whenever the component remounts (tab switch, navigation) or the page reloads.
 
-### Edge Function Status
-- `R2_PUBLIC_URL` secret is **already configured** ✓
-- `r2-get-upload-url` has public URL logic but may not include bucket name in path
-- `upload-payment-screenshot` has similar issue
+## Solution Overview
+Persist the Retargeting filter state to `localStorage` and restore it on component mount. The filters will be stored with a key specific to the filter mode (calling vs funnel) so each tab maintains its own filter state.
 
-## Implementation Tasks
+## Implementation Steps
 
-### Task 1: Database Migration (SQL)
-Update existing private URLs to public format:
+### Step 1: Create Filter Persistence Hook
+Create a new custom hook `usePersistedFilters` that:
+- Reads initial filter state from localStorage on mount
+- Saves filter changes to localStorage automatically
+- Uses filter mode (calling/funnel) as part of the storage key
 
-```sql
--- Funnel price option QR images
-UPDATE funnel_price_options
-SET qr_image_url = REPLACE(
-  qr_image_url,
-  'https://b2cc3a6e16425fd28d16161e9acaa822.r2.cloudflarestorage.com/nevorai/',
-  'https://pub-d0cae7c30eea4f949d9c33c730813937.r2.dev/nevorai/'
-)
-WHERE qr_image_url IS NOT NULL
-  AND qr_image_url LIKE '%r2.cloudflarestorage.com%';
+File: `src/hooks/usePersistedFilters.ts`
 
--- Payment screenshots
-UPDATE funnel_payments
-SET upi_screenshot_url = REPLACE(
-  upi_screenshot_url,
-  'https://b2cc3a6e16425fd28d16161e9acaa822.r2.cloudflarestorage.com/nevorai/',
-  'https://pub-d0cae7c30eea4f949d9c33c730813937.r2.dev/nevorai/'
-)
-WHERE upi_screenshot_url IS NOT NULL
-  AND upi_screenshot_url LIKE '%r2.cloudflarestorage.com%';
+### Step 2: Update ProspectTable to Use Persisted Filters
+Modify `ProspectTable.tsx` to:
+- Replace the hardcoded `useState` for filters with the new `usePersistedFilters` hook
+- Pass `filterMode` to the hook to separate Leads vs Funnel filter storage
 
--- Funnel thumbnails (precautionary)
-UPDATE funnels
-SET thumbnail_url = REPLACE(
-  thumbnail_url,
-  'https://b2cc3a6e16425fd28d16161e9acaa822.r2.cloudflarestorage.com/nevorai/',
-  'https://pub-d0cae7c30eea4f949d9c33c730813937.r2.dev/nevorai/'
-)
-WHERE thumbnail_url IS NOT NULL
-  AND thumbnail_url LIKE '%r2.cloudflarestorage.com%';
+### Step 3: Handle Clear Filter Action
+Ensure the "Clear" button in `ProspectFilters.tsx` properly clears both the state and the persisted storage.
+
+---
+
+## Technical Details
+
+### Storage Key Format
+```
+nevorai-filters-calling  → stores Leads tab filters
+nevorai-filters-funnel   → stores Funnel tab filters
 ```
 
-### Task 2: Fix Edge Functions for Future Uploads
-
-#### `r2-get-upload-url/index.ts`
-**Issue:** The public URL construction doesn't include the bucket name (`nevorai/`) in the path when using `R2_PUBLIC_URL`.
-
-**Current code (line 242-245):**
+### Data Structure Stored
 ```typescript
-const R2_PUBLIC_URL = Deno.env.get('R2_PUBLIC_URL');
-const publicUrl = R2_PUBLIC_URL 
-  ? `${R2_PUBLIC_URL}/${objectKey}`
-  : `https://${host}/${R2_BUCKET_NAME}/${objectKey}`;
+{
+  actions: string[],     // Retargeting filters for Calling tab
+  stages: string[],      // Stage filters for Funnel tab
+  incompleteOnly: boolean
+}
 ```
 
-**Fixed code:**
-```typescript
-const R2_PUBLIC_URL = Deno.env.get('R2_PUBLIC_URL');
-const R2_BUCKET_NAME = Deno.env.get('R2_BUCKET_NAME')!;
-const publicUrl = R2_PUBLIC_URL 
-  ? `${R2_PUBLIC_URL}/${R2_BUCKET_NAME}/${objectKey}`
-  : `https://${host}/${R2_BUCKET_NAME}/${objectKey}`;
-```
+Note: `search` and `qualities` are intentionally NOT persisted as search is handled by the parent component and qualities is not actively used.
 
-#### `upload-payment-screenshot/index.ts`
-**Issue:** Same problem - missing bucket name in public URL path.
+### Lazy Initialization
+The hook will use lazy initialization for `useState` to read from localStorage only once on mount, avoiding unnecessary reads on re-renders.
 
-**Current code (line 151-154):**
-```typescript
-const publicUrl = Deno.env.get('R2_PUBLIC_URL') 
-  ? `${Deno.env.get('R2_PUBLIC_URL')}/${objectKey}`
-  : `https://${host}/${bucketName}/${objectKey}`;
-```
+### Error Handling
+Wrap localStorage operations in try-catch to handle cases where:
+- localStorage is unavailable (private browsing)
+- Storage quota exceeded
+- Corrupted data
 
-**Fixed code:**
-```typescript
-const R2_PUBLIC_URL = Deno.env.get('R2_PUBLIC_URL');
-const publicUrl = R2_PUBLIC_URL 
-  ? `${R2_PUBLIC_URL}/${bucketName}/${objectKey}`
-  : `https://${host}/${bucketName}/${objectKey}`;
-```
-
-### Task 3: Add Download QR Button with Blob Fetch
-
-Add a download helper function to `QRCodeUploader.tsx` that fetches the image as a blob and triggers a browser download (avoiding cross-origin issues):
-
-```typescript
-const handleDownload = async () => {
-  if (!value) return;
-  
-  try {
-    const response = await fetch(value);
-    const blob = await response.blob();
-    const url = URL.createObjectURL(blob);
-    
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = 'qr-code.png';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    
-    URL.revokeObjectURL(url);
-    toast.success('QR code downloaded');
-  } catch (error) {
-    toast.error('Failed to download QR code');
-  }
-};
-```
+---
 
 ## Files to Modify
 
 | File | Change |
 |------|--------|
-| `supabase/functions/r2-get-upload-url/index.ts` | Fix public URL to include bucket name |
-| `supabase/functions/upload-payment-screenshot/index.ts` | Fix public URL to include bucket name |
-| `src/components/funnels/QRCodeUploader.tsx` | Add download button with blob fetch |
-| Database migration | Update 2 existing records |
+| `src/hooks/usePersistedFilters.ts` | **New file** - Custom hook for filter persistence |
+| `src/components/prospects/ProspectTable.tsx` | Replace useState with usePersistedFilters hook |
 
-## Verification Checklist
-After implementation:
-- [ ] Existing QR code images display correctly
-- [ ] Existing payment screenshots display correctly  
-- [ ] New QR uploads store `r2.dev` URLs
-- [ ] New payment screenshots store `r2.dev` URLs
-- [ ] Download QR button works correctly
-- [ ] Thumbnails display in funnel cards
-- [ ] QR codes display in UPI payment modal
-
-## What's NOT Changing
-- Video playback (continues using signed URLs)
-- No new edge functions
-- No backend architecture changes
-- No signed URLs for images
-
+## Expected Behavior After Fix
+- Filter selection persists across tab switches
+- Filter selection persists after making calls
+- Filter selection persists after page refresh
+- Filter selection persists after app close/reopen
+- Clear button properly resets both UI and storage
+- Leads tab and Funnel tab maintain separate filter states
