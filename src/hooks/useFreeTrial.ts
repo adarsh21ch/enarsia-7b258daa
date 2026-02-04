@@ -34,7 +34,7 @@ async function fetchTrialBannerTabs(): Promise<string[]> {
 export function useFreeTrial() {
   const { profile, loading: profileLoading } = useProfile();
   const { config, loading: configLoading } = useAdminConfig();
-  const { isPaid } = useSubscription();
+  const { isPaid, loading: subscriptionLoading } = useSubscription();
 
   // Fetch which tabs should show the trial banner
   const { data: allowedTabs = ['dashboard', 'profile', 'listup'] } = useQuery({
@@ -84,15 +84,19 @@ export function useFreeTrial() {
       ? Math.max(0, differenceInHours(trialEndDate, now))
       : 0;
 
+    // Return safe defaults while subscription is loading to prevent race conditions
+    // This fixes Pro users seeing "Free Trial Over" messages during initial load
+    const subscriptionNotReady = subscriptionLoading;
+
     return {
       // Trial configuration
       trialEnabled,
       trialDays,
       trialOnlyMode,
       
-      // Trial status (only applies to non-paid users)
-      isTrialActive: !isPaid && trialEnabled && isTrialActive,
-      isTrialExpired: !isPaid && trialEnabled && isTrialExpired,
+      // Trial status (only applies to non-paid users AND when subscription data is ready)
+      isTrialActive: !subscriptionNotReady && !isPaid && trialEnabled && isTrialActive,
+      isTrialExpired: !subscriptionNotReady && !isPaid && trialEnabled && isTrialExpired,
       
       // Time remaining
       daysRemaining,
@@ -102,8 +106,8 @@ export function useFreeTrial() {
       // Which tabs should show the trial banner
       allowedTabs,
       
-      // Loading state
-      loading: profileLoading || configLoading,
+      // Loading state - includes subscription loading to prevent premature decisions
+      loading: profileLoading || configLoading || subscriptionLoading,
       
       // Formatted display string
       timeRemainingText: daysRemaining > 1 
@@ -114,5 +118,5 @@ export function useFreeTrial() {
             ? `${hoursRemaining} hours left`
             : 'Trial ending soon',
     };
-  }, [profile, config.limits, isPaid, profileLoading, configLoading, allowedTabs]);
+  }, [profile, config.limits, isPaid, subscriptionLoading, profileLoading, configLoading, allowedTabs]);
 }

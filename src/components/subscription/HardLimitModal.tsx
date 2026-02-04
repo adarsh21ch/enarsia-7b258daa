@@ -35,15 +35,16 @@ export function HardLimitModal({ forceOpen, onClose }: HardLimitModalProps) {
   const { toast } = useToast();
   const { plans, getDefaultPlan, loading: plansLoading } = usePaymentLinks();
   const { config } = useAdminConfig();
-  const { isTrialActive, trialOnlyMode } = useFreeTrial();
+  const { isTrialActive, trialOnlyMode, loading: trialLoading } = useFreeTrial();
   
   const [isOpen, setIsOpen] = useState(false);
   const defaultPlan = getDefaultPlan();
   const [selectedPlanKey, setSelectedPlanKey] = useState<string>(defaultPlan?.plan_key || 'quarterly');
   const [hasShown, setHasShown] = useState(false);
 
-  // Don't show modal if user is in active trial with trial-only mode
-  const skipDueToTrial = isTrialActive && trialOnlyMode;
+  // Don't show modal if user is in active trial with trial-only mode OR if still loading
+  // Including trialLoading prevents showing modal before subscription status is known
+  const skipDueToTrial = trialLoading || (isTrialActive && trialOnlyMode);
 
   // Update selected plan when default plan loads
   useEffect(() => {
