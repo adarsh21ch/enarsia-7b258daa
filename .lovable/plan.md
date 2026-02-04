@@ -1,129 +1,291 @@
 
-# Fix: Pro Users Seeing "Free Trial Over" Message
+# Plan: Fix Pro Users Seeing "Free Trial Over" During Import
 
-## Problem Analysis
+## Problem Summary
 
-**User Report**: Pro users are being blocked with "Free Trial Over" messages and cannot upload leads.
+Pro users who were granted access via Admin "Grant Pro" button are being blocked from importing leads with "Your free trial has ended. Upgrade to Pro to continue." message.
 
-**Root Cause Identified**: There's a **race condition** in the `useFreeTrial` hook and `TrialExpiredModal` component:
+The issue is in the **backend `check_upload_limit` SQL function** which does NOT respect the `is_admin_override` flag stored in `user_subscriptions`. It only checks a separate `admin_user_overrides.force_pro_access` column.
 
-1. **Missing Subscription Loading State**: The `useFreeTrial` hook uses `isPaid` from `useSubscription()` but **doesn't include the subscription loading state** in its returned `loading` value:
-   ```typescript
-   const { isPaid } = useSubscription();  // Missing: loading state!
-   ...
-   loading: profileLoading || configLoading  // MISSING: subscriptionLoading!
-   ```
+## Root Cause
 
-2. **Premature Modal Display**: When the app loads, the subscription query takes time to fetch. During this period:
-   - `isPaid` defaults to `false` (subscription not yet loaded)
-   - `isTrialExpired` becomes `true` for ANY user whose trial date has passed
-   - The `TrialExpiredModal` sees `isTrialExpired && !isPaid` and shows the modal
+When an admin uses "Grant Pro" in the Enhanced Users Tab:
+1. The `admin-update-subscription` edge function sets `is_admin_override = true` in `user_subscriptions`
+2. BUT the `check_upload_limit` function only checks `admin_user_overrides.force_pro_access`
+3. These are **two different tables** with different overrides!
 
-3. **Pro Users Affected**: Pro users see the trial expired modal because the subscription data hasn't loaded yet when the trial check runs.
+Additionally, when a Pro subscription expires (`expires_at < now()`), the function incorrectly treats users as "free" even if they have `is_admin_override = true`.
 
 ## Solution
 
-### File 1: `src/hooks/useFreeTrial.ts`
-- Include subscription `loading` state from `useSubscription()`
-- Add subscription loading to the returned `loading` property
-- When subscription is loading, return safe defaults (`isTrialActive: false`, `isTrialExpired: false`)
-
-### File 2: `src/components/subscription/TrialExpiredModal.tsx`
-- Get `loading` state from `useFreeTrial()`
-- Don't auto-show modal while loading
-- Add early return when loading to prevent premature modal display
-
-### File 3: `src/components/subscription/HardLimitModal.tsx`
-- Similar fix - check `useFreeTrial().loading` before showing
-
----
+Update the `check_upload_limit` SQL function to:
+1. Check `is_admin_override = true` in `user_subscriptions` table 
+2. Treat admin-override users as Pro regardless of expiry status
+3. Continue also respecting `admin_user_overrides.force_pro_access` for manual per-user overrides
 
 ## Technical Implementation
 
-### Change 1: useFreeTrial.ts
+### Step 1: Update `check_upload_limit` Function
 
-```typescript
-// Before:
-const { isPaid } = useSubscription();
-...
-loading: profileLoading || configLoading,
+Create a new migration to modify the `check_upload_limit` function with the following changes:
 
-// After:
-const { isPaid, loading: subscriptionLoading } = useSubscription();
-...
-// Return safe defaults while subscription is loading
-const subscriptionNotReady = subscriptionLoading;
+```sql
+-- Current v_is_pro check:
+SELECT EXISTS (
+  SELECT 1 FROM user_subscriptions 
+  WHERE user_id = p_user_id AND plan = 'pro' AND status = 'active'
+  AND (expires_at IS NULL OR expires_at > now())
+) INTO v_is_pro;
 
-return {
-  ...
-  isTrialActive: !subscriptionNotReady && !isPaid && trialEnabled && isTrialActive,
-  isTrialExpired: !subscriptionNotReady && !isPaid && trialEnabled && isTrialExpired,
-  ...
-  loading: profileLoading || configLoading || subscriptionLoading,
-}
+-- Updated check that respects is_admin_override:
+SELECT EXISTS (
+  SELECT 1 FROM user_subscriptions 
+  WHERE user_id = p_user_id 
+  AND (
+    -- Regular Pro with valid expiry
+    (plan = 'pro' AND status = 'active' AND (expires_at IS NULL OR expires_at > now()))
+    -- OR admin override (always Pro regardless of expiry)
+    OR (is_admin_override = true AND plan = 'pro')
+  )
+) INTO v_is_pro;
 ```
 
-### Change 2: TrialExpiredModal.tsx
+### Step 2: Also check trial_start_date for trial logic
 
-```typescript
-// Before:
-const { isTrialExpired, trialDays, trialOnlyMode } = useFreeTrial();
+The function currently uses `profiles.created_at` for trial calculation, but should use `trial_start_date` when available (this aligns with frontend logic).
 
-// After:
-const { isTrialExpired, trialDays, trialOnlyMode, loading: trialLoading } = useFreeTrial();
-...
-useEffect(() => {
-  // Don't auto-show while loading - prevents false positives for Pro users
-  if (trialLoading) return;
+```sql
+-- Current:
+SELECT created_at INTO v_user_created_at FROM profiles WHERE user_id = p_user_id;
+
+-- Updated:
+SELECT COALESCE(trial_start_date, created_at) INTO v_user_created_at 
+FROM profiles WHERE user_id = p_user_id;
+```
+
+## Files to Modify
+
+| Location | Change |
+|----------|--------|
+| `supabase/migrations/` | New migration to update `check_upload_limit` function |
+
+## Database Migration Content
+
+```sql
+-- Fix: Respect is_admin_override in user_subscriptions for Pro access
+-- and use trial_start_date for trial calculation
+
+CREATE OR REPLACE FUNCTION public.check_upload_limit(p_user_id uuid, p_count integer)
+RETURNS jsonb
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE
+  v_is_pro boolean;
+  v_force_pro boolean;
+  v_custom_daily integer;
+  v_custom_total integer;
+  v_base_daily integer;
+  v_base_total integer;
+  v_pro_daily integer;
+  v_today_count integer;
+  v_total_leads bigint;
+  v_effective_daily integer;
+  v_effective_total integer;
+  v_daily_after_cap integer;
+  v_trial_enabled boolean;
+  v_trial_days integer;
+  v_trial_only_mode boolean;
+  v_user_created_at timestamptz;
+  v_trial_end_date timestamptz;
+  v_is_trial_active boolean;
+  v_trial_days_remaining integer;
+BEGIN
+  -- Check if user is pro from user_subscriptions
+  -- FIXED: Also respect is_admin_override flag for admin-granted Pro access
+  SELECT EXISTS (
+    SELECT 1 FROM user_subscriptions 
+    WHERE user_id = p_user_id 
+    AND (
+      -- Regular Pro with valid expiry
+      (plan = 'pro' AND status = 'active' AND (expires_at IS NULL OR expires_at > now()))
+      -- OR admin-granted Pro (always valid regardless of expiry)
+      OR (is_admin_override = true AND plan = 'pro')
+    )
+  ) INTO v_is_pro;
   
-  if (isTrialExpired && trialOnlyMode && !hasShown && !isPaid) {
-    setIsOpen(true);
-    setHasShown(true);
-  }
-}, [isTrialExpired, trialOnlyMode, hasShown, isPaid, forceOpen, trialLoading]);
+  -- Check admin_user_overrides for additional per-user overrides
+  SELECT force_pro_access, custom_daily_limit, custom_total_limit
+  INTO v_force_pro, v_custom_daily, v_custom_total
+  FROM admin_user_overrides
+  WHERE user_id = p_user_id;
+  
+  -- If forced pro via admin_user_overrides, treat as pro
+  IF COALESCE(v_force_pro, false) THEN
+    v_is_pro := true;
+  END IF;
+  
+  -- Get trial settings
+  SELECT is_enabled, config_value INTO v_trial_enabled, v_trial_days
+  FROM admin_usage_limits WHERE config_key = 'free_trial_days';
+  
+  SELECT is_enabled INTO v_trial_only_mode
+  FROM admin_usage_limits WHERE config_key = 'trial_only_mode';
+  
+  v_trial_enabled := COALESCE(v_trial_enabled, false);
+  v_trial_days := COALESCE(v_trial_days, 7);
+  v_trial_only_mode := COALESCE(v_trial_only_mode, false);
+  
+  -- FIXED: Use trial_start_date if available, fallback to created_at
+  SELECT COALESCE(trial_start_date, created_at) INTO v_user_created_at
+  FROM profiles WHERE user_id = p_user_id;
+  
+  -- Calculate trial status (only for non-pro users)
+  IF NOT v_is_pro AND v_trial_enabled AND v_user_created_at IS NOT NULL THEN
+    v_trial_end_date := v_user_created_at + (v_trial_days || ' days')::interval;
+    v_is_trial_active := now() < v_trial_end_date;
+    v_trial_days_remaining := GREATEST(0, EXTRACT(DAY FROM v_trial_end_date - now())::integer);
+  ELSE
+    v_is_trial_active := false;
+    v_trial_days_remaining := 0;
+  END IF;
+  
+  -- Trial active + trial-only mode = allow unlimited
+  IF v_is_trial_active AND v_trial_only_mode THEN
+    RETURN jsonb_build_object(
+      'allowed', true,
+      'reason', '',
+      'limit_type', 'free_trial',
+      'trial_days_remaining', v_trial_days_remaining
+    );
+  END IF;
+  
+  -- Trial expired + trial-only mode = block (non-pro only)
+  IF v_trial_enabled AND v_trial_only_mode AND NOT v_is_trial_active AND NOT v_is_pro THEN
+    RETURN jsonb_build_object(
+      'allowed', false,
+      'reason', 'Your free trial has ended. Upgrade to Pro to continue.',
+      'limit_type', 'trial_expired',
+      'trial_days_remaining', 0
+    );
+  END IF;
+  
+  -- Get base limits from admin_usage_limits
+  SELECT config_value INTO v_base_daily
+  FROM admin_usage_limits WHERE config_key = 'free_daily_upload' AND is_enabled = true;
+  
+  SELECT config_value INTO v_base_total
+  FROM admin_usage_limits WHERE config_key = 'free_total_leads' AND is_enabled = true;
+  
+  SELECT config_value INTO v_pro_daily
+  FROM admin_usage_limits WHERE config_key = 'pro_daily_upload' AND is_enabled = true;
+  
+  SELECT config_value INTO v_daily_after_cap
+  FROM admin_usage_limits WHERE config_key = 'free_daily_after_cap' AND is_enabled = true;
+  
+  v_base_daily := COALESCE(v_base_daily, 50);
+  v_base_total := COALESCE(v_base_total, 200);
+  v_pro_daily := COALESCE(v_pro_daily, 500);
+  v_daily_after_cap := COALESCE(v_daily_after_cap, 0);
+  
+  -- Determine effective limits
+  IF v_is_pro THEN
+    v_effective_daily := COALESCE(v_custom_daily, v_pro_daily);
+    v_effective_total := NULL; -- No total limit for pro
+  ELSE
+    v_effective_daily := COALESCE(v_custom_daily, v_base_daily);
+    v_effective_total := COALESCE(v_custom_total, v_base_total);
+  END IF;
+  
+  -- Get today's upload count
+  SELECT COALESCE(upload_count, 0) INTO v_today_count
+  FROM user_daily_uploads
+  WHERE user_id = p_user_id AND upload_date = CURRENT_DATE;
+  v_today_count := COALESCE(v_today_count, 0);
+  
+  -- Get total leads count
+  SELECT COUNT(*) INTO v_total_leads
+  FROM prospects WHERE user_id = p_user_id;
+  
+  -- Pro users: only check daily limit
+  IF v_is_pro THEN
+    IF v_effective_daily > 0 AND (v_today_count + p_count) > v_effective_daily THEN
+      RETURN jsonb_build_object(
+        'allowed', false,
+        'reason', format('Daily upload limit of %s reached', v_effective_daily),
+        'limit_type', 'pro_daily',
+        'today_count', v_today_count,
+        'limit_value', v_effective_daily
+      );
+    END IF;
+    
+    RETURN jsonb_build_object(
+      'allowed', true,
+      'reason', '',
+      'limit_type', 'none',
+      'today_count', v_today_count,
+      'limit_value', v_effective_daily
+    );
+  END IF;
+  
+  -- Free users: check total limit first
+  IF v_effective_total > 0 AND v_total_leads >= v_effective_total THEN
+    IF v_daily_after_cap = 0 THEN
+      RETURN jsonb_build_object(
+        'allowed', false,
+        'reason', format('Total lead limit of %s reached. Upgrade to Pro for unlimited access.', v_effective_total),
+        'limit_type', 'total',
+        'today_count', v_today_count,
+        'limit_value', v_effective_total
+      );
+    ELSIF (v_today_count + p_count) > v_daily_after_cap THEN
+      RETURN jsonb_build_object(
+        'allowed', false,
+        'reason', format('Daily limit of %s reached (total cap exceeded)', v_daily_after_cap),
+        'limit_type', 'daily_after_cap',
+        'today_count', v_today_count,
+        'limit_value', v_daily_after_cap
+      );
+    END IF;
+  ELSE
+    IF v_effective_daily > 0 AND (v_today_count + p_count) > v_effective_daily THEN
+      RETURN jsonb_build_object(
+        'allowed', false,
+        'reason', format('Daily upload limit of %s reached', v_effective_daily),
+        'limit_type', 'daily',
+        'today_count', v_today_count,
+        'limit_value', v_effective_daily
+      );
+    END IF;
+  END IF;
+  
+  RETURN jsonb_build_object(
+    'allowed', true,
+    'reason', '',
+    'limit_type', 'none',
+    'today_count', v_today_count,
+    'limit_value', COALESCE(v_effective_daily, 0)
+  );
+END;
+$$;
 ```
 
-### Change 3: HardLimitModal.tsx
-
-```typescript
-// Before:
-const { isTrialActive, trialOnlyMode } = useFreeTrial();
-
-// After:
-const { isTrialActive, trialOnlyMode, loading: trialLoading } = useFreeTrial();
-
-// Don't show modal if user is in active trial with trial-only mode OR if still loading
-const skipDueToTrial = trialLoading || (isTrialActive && trialOnlyMode);
-```
-
----
-
-## Why This Fix Works
+## Why This Fixes the Issue
 
 | Scenario | Before Fix | After Fix |
 |----------|------------|-----------|
-| Pro user, subscription loading | `isPaid=false` → Shows trial expired modal | `loading=true` → No modal shown |
-| Pro user, subscription loaded | `isPaid=true` → No modal | `isPaid=true` → No modal |
-| Free user, trial expired | Shows modal correctly | Shows modal correctly |
-| Free user, trial active | No modal | No modal |
-
----
-
-## Files Modified
-
-| File | Change |
-|------|--------|
-| `src/hooks/useFreeTrial.ts` | Include subscription loading state, return safe defaults while loading |
-| `src/components/subscription/TrialExpiredModal.tsx` | Check loading before auto-showing modal |
-| `src/components/subscription/HardLimitModal.tsx` | Check loading before auto-showing modal |
-
----
+| Admin grants Pro via "Grant Pro" button | Function only checks `expires_at > now()`, fails if expired | Function respects `is_admin_override = true`, allows access |
+| Admin uses "Force Pro Access" override | Works correctly via `admin_user_overrides` | No change, still works |
+| Trial expired, user has admin-granted Pro | Blocked with "trial ended" | Allowed as Pro |
+| Trial expired, regular free user | Blocked | Blocked (correct behavior) |
 
 ## Testing Checklist
 
-After implementation:
-1. Pro user should NOT see "Free Trial Over" modal on any page
-2. Pro user should be able to upload leads without restrictions
-3. Free user with expired trial should still see the trial expired modal
-4. Free user with active trial should NOT see trial expired modal
-5. Verify on page refresh, tab switch, and app reopen
+After applying the migration:
+1. Admin-granted Pro user should be able to import leads
+2. Admin-granted Pro user should NOT see "Free Trial Over" message
+3. Free users with expired trial should still be blocked (Trial Only Mode is ON)
+4. Paid Pro users should work normally
+5. Users with Force Pro Access override should work normally
+
