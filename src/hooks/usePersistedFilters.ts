@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { FunnelStage, ProspectQuality, ExtendedActionTaken } from '@/types/prospect';
 
 export interface Filters {
@@ -31,13 +31,20 @@ const DEFAULT_FILTERS: Filters = {
  */
 export function usePersistedFilters(filterMode: 'calling' | 'funnel') {
   const storageKey = `${STORAGE_KEY_PREFIX}${filterMode}`;
+  
+  // Track if initial load is complete to prevent overwriting on mount
+  const isInitializedRef = useRef(false);
+  const isFirstRenderRef = useRef(true);
 
   // Lazy initialization: read from localStorage only once on mount
   const [filters, setFiltersState] = useState<Filters>(() => {
     try {
       const stored = localStorage.getItem(storageKey);
+      console.log('[usePersistedFilters] Init:', storageKey, stored);
       if (stored) {
         const parsed: PersistedFilterData = JSON.parse(stored);
+        // Mark as initialized since we found persisted data
+        isInitializedRef.current = true;
         return {
           search: '', // Never persist search
           stages: Array.isArray(parsed.stages) ? parsed.stages : [],
@@ -49,17 +56,32 @@ export function usePersistedFilters(filterMode: 'calling' | 'funnel') {
     } catch (error) {
       console.warn('Failed to read persisted filters:', error);
     }
+    // No persisted data found, use defaults
+    isInitializedRef.current = true;
     return DEFAULT_FILTERS;
   });
 
-  // Save to localStorage whenever filters change (debounced effect)
+  // Save to localStorage whenever filters change
+  // Skip the first render to prevent overwriting persisted data on mount
   useEffect(() => {
+    // Skip the first render entirely
+    if (isFirstRenderRef.current) {
+      isFirstRenderRef.current = false;
+      return;
+    }
+
+    // Only save if we've been initialized
+    if (!isInitializedRef.current) {
+      return;
+    }
+
     try {
       const dataToStore: PersistedFilterData = {
         actions: filters.actions,
         stages: filters.stages,
         incompleteOnly: filters.incompleteOnly,
       };
+      console.log('[usePersistedFilters] Save:', storageKey, dataToStore);
       localStorage.setItem(storageKey, JSON.stringify(dataToStore));
     } catch (error) {
       console.warn('Failed to persist filters:', error);
