@@ -29,13 +29,7 @@ import { useCustomOptionsContext } from '@/contexts/CustomOptionsContext';
 import { useTrackingTags } from '@/hooks/useTrackingTags';
 import { useTrackingFormatContext } from '@/contexts/TrackingFormatContext';
 import { useActivityLog } from '@/hooks/useActivityLog';
-interface Filters {
-  search: string;
-  stages: FunnelStage[];
-  qualities: ProspectQuality[];
-  actions: ExtendedActionTaken[];
-  incompleteOnly: boolean;
-}
+import { usePersistedFilters, Filters } from '@/hooks/usePersistedFilters';
 interface ProspectTableProps {
   prospects: Prospect[];
   loading: boolean;
@@ -306,13 +300,9 @@ export function ProspectTable({
   const {
     logBulkActivity
   } = useActivityLog();
-  const [filters, setFilters] = useState<Filters>({
-    search: '',
-    stages: [],
-    qualities: [],
-    actions: [],
-    incompleteOnly: false
-  });
+  
+  // Use persisted filters hook for Retargeting filter state persistence
+  const { filters, setFilters } = usePersistedFilters(filterMode);
 
   // Use external search if provided, otherwise use internal filters.search
   const effectiveSearch = externalSearch || filters.search;
