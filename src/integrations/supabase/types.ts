@@ -1993,6 +1993,74 @@ export type Database = {
           },
         ]
       }
+      funnel_view_analytics: {
+        Row: {
+          completed: boolean | null
+          created_at: string | null
+          device_type: string | null
+          funnel_id: string
+          id: string
+          ip_address: string | null
+          opened_video: boolean | null
+          owner_user_id: string
+          referrer: string | null
+          session_end: string | null
+          session_start: string | null
+          updated_at: string | null
+          user_agent: string | null
+          viewer_id: string
+          viewer_type: string | null
+          watch_percentage: number | null
+          watch_seconds: number | null
+        }
+        Insert: {
+          completed?: boolean | null
+          created_at?: string | null
+          device_type?: string | null
+          funnel_id: string
+          id?: string
+          ip_address?: string | null
+          opened_video?: boolean | null
+          owner_user_id: string
+          referrer?: string | null
+          session_end?: string | null
+          session_start?: string | null
+          updated_at?: string | null
+          user_agent?: string | null
+          viewer_id: string
+          viewer_type?: string | null
+          watch_percentage?: number | null
+          watch_seconds?: number | null
+        }
+        Update: {
+          completed?: boolean | null
+          created_at?: string | null
+          device_type?: string | null
+          funnel_id?: string
+          id?: string
+          ip_address?: string | null
+          opened_video?: boolean | null
+          owner_user_id?: string
+          referrer?: string | null
+          session_end?: string | null
+          session_start?: string | null
+          updated_at?: string | null
+          user_agent?: string | null
+          viewer_id?: string
+          viewer_type?: string | null
+          watch_percentage?: number | null
+          watch_seconds?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "funnel_view_analytics_funnel_id_fkey"
+            columns: ["funnel_id"]
+            isOneToOne: false
+            referencedRelation: "funnels"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       funnels: {
         Row: {
           allow_forward_seek: boolean | null
@@ -4283,6 +4351,16 @@ export type Database = {
         Returns: string
       }
       get_form_share_url: { Args: { p_form_id: string }; Returns: string }
+      get_funnel_view_stats: {
+        Args: { p_funnel_id: string }
+        Returns: {
+          avg_watch_percent: number
+          completion_count: number
+          completion_rate: number
+          total_views: number
+          unique_viewers: number
+        }[]
+      }
       get_lead_payment_status: { Args: { p_lead_id: string }; Returns: string }
       get_leader_funnel_config: {
         Args: { target_neverai_id: string }
