@@ -3595,6 +3595,54 @@ export type Database = {
         }
         Relationships: []
       }
+      user_kyc_submissions: {
+        Row: {
+          age: number | null
+          city: string | null
+          document_type: Database["public"]["Enums"]["kyc_document_type"]
+          document_url: string
+          full_name: string
+          id: string
+          rejection_reason: string | null
+          status: Database["public"]["Enums"]["kyc_status"] | null
+          submitted_at: string | null
+          updated_at: string | null
+          user_id: string
+          verified_at: string | null
+          verified_by_admin_id: string | null
+        }
+        Insert: {
+          age?: number | null
+          city?: string | null
+          document_type: Database["public"]["Enums"]["kyc_document_type"]
+          document_url: string
+          full_name: string
+          id?: string
+          rejection_reason?: string | null
+          status?: Database["public"]["Enums"]["kyc_status"] | null
+          submitted_at?: string | null
+          updated_at?: string | null
+          user_id: string
+          verified_at?: string | null
+          verified_by_admin_id?: string | null
+        }
+        Update: {
+          age?: number | null
+          city?: string | null
+          document_type?: Database["public"]["Enums"]["kyc_document_type"]
+          document_url?: string
+          full_name?: string
+          id?: string
+          rejection_reason?: string | null
+          status?: Database["public"]["Enums"]["kyc_status"] | null
+          submitted_at?: string | null
+          updated_at?: string | null
+          user_id?: string
+          verified_at?: string | null
+          verified_by_admin_id?: string | null
+        }
+        Relationships: []
+      }
       user_products: {
         Row: {
           created_at: string | null
@@ -3819,6 +3867,27 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      public_verified_users: {
+        Row: {
+          city: string | null
+          full_name: string | null
+          user_id: string | null
+          verified_at: string | null
+        }
+        Insert: {
+          city?: string | null
+          full_name?: string | null
+          user_id?: string | null
+          verified_at?: string | null
+        }
+        Update: {
+          city?: string | null
+          full_name?: string | null
+          user_id?: string | null
+          verified_at?: string | null
+        }
+        Relationships: []
       }
     }
     Functions: {
@@ -4336,11 +4405,13 @@ export type Database = {
         Args: { p_community_id: string; p_user_id: string }
         Returns: boolean
       }
+      is_funnels_admin: { Args: { check_user_id: string }; Returns: boolean }
       is_in_downline: {
         Args: { target_user_id: string; viewer_user_id: string }
         Returns: boolean
       }
       is_user_upline: { Args: { target_user_id: string }; Returns: boolean }
+      is_user_verified: { Args: { check_user_id: string }; Returns: boolean }
       log_admin_action: {
         Args: {
           p_action_type: string
@@ -4432,6 +4503,13 @@ export type Database = {
         | "Minimum Bill"
         | "Level Up"
         | "2CC"
+      kyc_document_type:
+        | "aadhaar"
+        | "pan"
+        | "voter_id"
+        | "passport"
+        | "driving_license"
+      kyc_status: "pending" | "approved" | "rejected"
       membership_status: "active" | "blocked" | "left"
       message_type: "text" | "media" | "system"
       notification_type: "achievement" | "reminder" | "system" | "mention"
@@ -4586,6 +4664,14 @@ export const Constants = {
         "Level Up",
         "2CC",
       ],
+      kyc_document_type: [
+        "aadhaar",
+        "pan",
+        "voter_id",
+        "passport",
+        "driving_license",
+      ],
+      kyc_status: ["pending", "approved", "rejected"],
       membership_status: ["active", "blocked", "left"],
       message_type: ["text", "media", "system"],
       notification_type: ["achievement", "reminder", "system", "mention"],
