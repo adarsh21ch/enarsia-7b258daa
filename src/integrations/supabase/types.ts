@@ -4465,6 +4465,10 @@ export type Database = {
         }
         Returns: boolean
       }
+      has_video_access: {
+        Args: { check_user_id: string; video_id: string }
+        Returns: boolean
+      }
       increment_daily_upload: {
         Args: { p_count: number; p_user_id: string }
         Returns: number
@@ -4490,6 +4494,10 @@ export type Database = {
       }
       is_user_upline: { Args: { target_user_id: string }; Returns: boolean }
       is_user_verified: { Args: { check_user_id: string }; Returns: boolean }
+      is_video_owner: {
+        Args: { check_user_id: string; video_id: string }
+        Returns: boolean
+      }
       log_admin_action: {
         Args: {
           p_action_type: string
