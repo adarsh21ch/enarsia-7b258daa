@@ -1381,6 +1381,187 @@ export type Database = {
         }
         Relationships: []
       }
+      course_enrollments: {
+        Row: {
+          course_id: string
+          email: string | null
+          enrolled_at: string
+          id: string
+          name: string | null
+          payment_proof_url: string | null
+          payment_status: string
+          phone: string | null
+          user_identifier: string
+        }
+        Insert: {
+          course_id: string
+          email?: string | null
+          enrolled_at?: string
+          id?: string
+          name?: string | null
+          payment_proof_url?: string | null
+          payment_status?: string
+          phone?: string | null
+          user_identifier: string
+        }
+        Update: {
+          course_id?: string
+          email?: string | null
+          enrolled_at?: string
+          id?: string
+          name?: string | null
+          payment_proof_url?: string | null
+          payment_status?: string
+          phone?: string | null
+          user_identifier?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "course_enrollments_course_id_fkey"
+            columns: ["course_id"]
+            isOneToOne: false
+            referencedRelation: "courses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      course_video_progress: {
+        Row: {
+          completed: boolean
+          course_video_id: string
+          enrollment_id: string
+          id: string
+          last_heartbeat_at: string | null
+          last_position: number
+          updated_at: string
+          watch_percentage: number
+          watch_seconds: number
+        }
+        Insert: {
+          completed?: boolean
+          course_video_id: string
+          enrollment_id: string
+          id?: string
+          last_heartbeat_at?: string | null
+          last_position?: number
+          updated_at?: string
+          watch_percentage?: number
+          watch_seconds?: number
+        }
+        Update: {
+          completed?: boolean
+          course_video_id?: string
+          enrollment_id?: string
+          id?: string
+          last_heartbeat_at?: string | null
+          last_position?: number
+          updated_at?: string
+          watch_percentage?: number
+          watch_seconds?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "course_video_progress_course_video_id_fkey"
+            columns: ["course_video_id"]
+            isOneToOne: false
+            referencedRelation: "course_videos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "course_video_progress_enrollment_id_fkey"
+            columns: ["enrollment_id"]
+            isOneToOne: false
+            referencedRelation: "course_enrollments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      course_videos: {
+        Row: {
+          course_id: string
+          created_at: string
+          id: string
+          sort_order: number
+          title: string | null
+          video_asset_id: string
+        }
+        Insert: {
+          course_id: string
+          created_at?: string
+          id?: string
+          sort_order?: number
+          title?: string | null
+          video_asset_id: string
+        }
+        Update: {
+          course_id?: string
+          created_at?: string
+          id?: string
+          sort_order?: number
+          title?: string | null
+          video_asset_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "course_videos_course_id_fkey"
+            columns: ["course_id"]
+            isOneToOne: false
+            referencedRelation: "courses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      courses: {
+        Row: {
+          access_type: string
+          cover_image_url: string | null
+          created_at: string
+          description: string | null
+          id: string
+          is_published: boolean
+          owner_user_id: string
+          price: number
+          qr_image_url: string | null
+          sequential_unlock: boolean
+          slug: string
+          title: string
+          updated_at: string
+          upi_id: string | null
+        }
+        Insert: {
+          access_type?: string
+          cover_image_url?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_published?: boolean
+          owner_user_id: string
+          price?: number
+          qr_image_url?: string | null
+          sequential_unlock?: boolean
+          slug: string
+          title: string
+          updated_at?: string
+          upi_id?: string | null
+        }
+        Update: {
+          access_type?: string
+          cover_image_url?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_published?: boolean
+          owner_user_id?: string
+          price?: number
+          qr_image_url?: string | null
+          sequential_unlock?: boolean
+          slug?: string
+          title?: string
+          updated_at?: string
+          upi_id?: string | null
+        }
+        Relationships: []
+      }
       custom_options: {
         Row: {
           color: string | null
