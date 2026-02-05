@@ -2001,6 +2001,7 @@ export type Database = {
           funnel_id: string
           id: string
           ip_address: string | null
+          last_heartbeat_at: string | null
           opened_video: boolean | null
           owner_user_id: string
           referrer: string | null
@@ -2020,6 +2021,7 @@ export type Database = {
           funnel_id: string
           id?: string
           ip_address?: string | null
+          last_heartbeat_at?: string | null
           opened_video?: boolean | null
           owner_user_id: string
           referrer?: string | null
@@ -2039,6 +2041,7 @@ export type Database = {
           funnel_id?: string
           id?: string
           ip_address?: string | null
+          last_heartbeat_at?: string | null
           opened_video?: boolean | null
           owner_user_id?: string
           referrer?: string | null
