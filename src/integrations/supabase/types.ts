@@ -3905,6 +3905,101 @@ export type Database = {
           },
         ]
       }
+      video_folder_access: {
+        Row: {
+          folder_id: string
+          granted_at: string | null
+          granted_by_user_id: string
+          id: string
+          revoked_at: string | null
+          user_id: string
+        }
+        Insert: {
+          folder_id: string
+          granted_at?: string | null
+          granted_by_user_id: string
+          id?: string
+          revoked_at?: string | null
+          user_id: string
+        }
+        Update: {
+          folder_id?: string
+          granted_at?: string | null
+          granted_by_user_id?: string
+          id?: string
+          revoked_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "video_folder_access_folder_id_fkey"
+            columns: ["folder_id"]
+            isOneToOne: false
+            referencedRelation: "video_folders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      video_folder_items: {
+        Row: {
+          added_at: string | null
+          folder_id: string
+          id: string
+          video_asset_id: string
+        }
+        Insert: {
+          added_at?: string | null
+          folder_id: string
+          id?: string
+          video_asset_id: string
+        }
+        Update: {
+          added_at?: string | null
+          folder_id?: string
+          id?: string
+          video_asset_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "video_folder_items_folder_id_fkey"
+            columns: ["folder_id"]
+            isOneToOne: false
+            referencedRelation: "video_folders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "video_folder_items_video_asset_id_fkey"
+            columns: ["video_asset_id"]
+            isOneToOne: false
+            referencedRelation: "video_assets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      video_folders: {
+        Row: {
+          created_at: string | null
+          id: string
+          name: string
+          owner_user_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          name: string
+          owner_user_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          name?: string
+          owner_user_id?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       ac_user_full_profile: {
@@ -4453,6 +4548,10 @@ export type Database = {
         Args: { p_product: string; p_user_id: string }
         Returns: boolean
       }
+      has_folder_access: {
+        Args: { p_folder_id: string; p_user_id: string }
+        Returns: boolean
+      }
       has_nevorai_profile: { Args: { user_uuid: string }; Returns: boolean }
       has_product_access: {
         Args: { p_product: string; p_user_id: string }
@@ -4485,6 +4584,10 @@ export type Database = {
       }
       is_community_member: {
         Args: { p_community_id: string; p_user_id: string }
+        Returns: boolean
+      }
+      is_folder_owner: {
+        Args: { p_folder_id: string; p_user_id: string }
         Returns: boolean
       }
       is_funnels_admin: { Args: { check_user_id: string }; Returns: boolean }
