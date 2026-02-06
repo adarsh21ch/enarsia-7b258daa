@@ -2684,7 +2684,8 @@ export type Database = {
           share_id: string | null
           source: string
           submitter_email: string
-          submitter_user_id: string
+          submitter_name: string | null
+          submitter_user_id: string | null
           utm_campaign: string | null
           utm_content: string | null
           utm_medium: string | null
@@ -2699,7 +2700,8 @@ export type Database = {
           share_id?: string | null
           source?: string
           submitter_email: string
-          submitter_user_id: string
+          submitter_name?: string | null
+          submitter_user_id?: string | null
           utm_campaign?: string | null
           utm_content?: string | null
           utm_medium?: string | null
@@ -2714,7 +2716,8 @@ export type Database = {
           share_id?: string | null
           source?: string
           submitter_email?: string
-          submitter_user_id?: string
+          submitter_name?: string | null
+          submitter_user_id?: string | null
           utm_campaign?: string | null
           utm_content?: string | null
           utm_medium?: string | null
