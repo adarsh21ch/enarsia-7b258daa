@@ -2548,39 +2548,86 @@ export type Database = {
           },
         ]
       }
-      nevorai_form_fields: {
+      nevorai_form_analytics_daily: {
         Row: {
           created_at: string
+          date: string
+          form_id: string
+          id: string
+          source_breakdown: Json
+          submission_count: number
+        }
+        Insert: {
+          created_at?: string
+          date: string
+          form_id: string
+          id?: string
+          source_breakdown?: Json
+          submission_count?: number
+        }
+        Update: {
+          created_at?: string
+          date?: string
+          form_id?: string
+          id?: string
+          source_breakdown?: Json
+          submission_count?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "nevorai_form_analytics_daily_form_id_fkey"
+            columns: ["form_id"]
+            isOneToOne: false
+            referencedRelation: "nevorai_forms"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      nevorai_form_fields: {
+        Row: {
+          conditional_logic: Json | null
+          created_at: string
+          description: string | null
           field_key: string
           field_type: string
           form_id: string
           id: string
           label: string
           options: Json | null
+          placeholder: string | null
           position: number
           required: boolean
+          validation: Json | null
         }
         Insert: {
+          conditional_logic?: Json | null
           created_at?: string
+          description?: string | null
           field_key: string
           field_type: string
           form_id: string
           id?: string
           label: string
           options?: Json | null
+          placeholder?: string | null
           position?: number
           required?: boolean
+          validation?: Json | null
         }
         Update: {
+          conditional_logic?: Json | null
           created_at?: string
+          description?: string | null
           field_key?: string
           field_type?: string
           form_id?: string
           id?: string
           label?: string
           options?: Json | null
+          placeholder?: string | null
           position?: number
           required?: boolean
+          validation?: Json | null
         }
         Relationships: [
           {
@@ -2632,25 +2679,46 @@ export type Database = {
           created_at: string
           form_id: string
           id: string
+          lead_created: boolean
+          lead_id: string | null
           share_id: string | null
+          source: string
           submitter_email: string
           submitter_user_id: string
+          utm_campaign: string | null
+          utm_content: string | null
+          utm_medium: string | null
+          utm_source: string | null
         }
         Insert: {
           created_at?: string
           form_id: string
           id?: string
+          lead_created?: boolean
+          lead_id?: string | null
           share_id?: string | null
+          source?: string
           submitter_email: string
           submitter_user_id: string
+          utm_campaign?: string | null
+          utm_content?: string | null
+          utm_medium?: string | null
+          utm_source?: string | null
         }
         Update: {
           created_at?: string
           form_id?: string
           id?: string
+          lead_created?: boolean
+          lead_id?: string | null
           share_id?: string | null
+          source?: string
           submitter_email?: string
           submitter_user_id?: string
+          utm_campaign?: string | null
+          utm_content?: string | null
+          utm_medium?: string | null
+          utm_source?: string | null
         }
         Relationships: [
           {
@@ -2671,31 +2739,52 @@ export type Database = {
       }
       nevorai_forms: {
         Row: {
+          access_mode: string
+          allow_multiple_submissions: boolean
+          collect_utm: boolean
+          confirmation_message: string | null
           created_at: string
           description: string | null
+          embed_enabled: boolean
           form_type: string | null
           id: string
           is_public: boolean
+          lead_mapping: Json | null
+          max_submissions: number | null
           owner_user_id: string
           title: string
           updated_at: string
         }
         Insert: {
+          access_mode?: string
+          allow_multiple_submissions?: boolean
+          collect_utm?: boolean
+          confirmation_message?: string | null
           created_at?: string
           description?: string | null
+          embed_enabled?: boolean
           form_type?: string | null
           id?: string
           is_public?: boolean
+          lead_mapping?: Json | null
+          max_submissions?: number | null
           owner_user_id: string
           title: string
           updated_at?: string
         }
         Update: {
+          access_mode?: string
+          allow_multiple_submissions?: boolean
+          collect_utm?: boolean
+          confirmation_message?: string | null
           created_at?: string
           description?: string | null
+          embed_enabled?: boolean
           form_type?: string | null
           id?: string
           is_public?: boolean
+          lead_mapping?: Json | null
+          max_submissions?: number | null
           owner_user_id?: string
           title?: string
           updated_at?: string
@@ -4888,16 +4977,21 @@ export type Database = {
       }
       nevorai_submit_form: {
         Args: {
-          p_answers_json: Json
+          p_answers?: Json
+          p_answers_json?: Json
           p_attachments_json?: Json
+          p_form_id?: string
+          p_share_token?: string
+          p_source?: string
+          p_submitter_email?: string
           p_submitter_name?: string
-          p_token: string
+          p_token?: string
+          p_utm_campaign?: string
+          p_utm_content?: string
+          p_utm_medium?: string
+          p_utm_source?: string
         }
-        Returns: {
-          message: string
-          submission_id: string
-          success: boolean
-        }[]
+        Returns: Json
       }
       normalize_leader_id: { Args: { id: string }; Returns: string }
       record_app_access: { Args: { p_app: string }; Returns: undefined }
