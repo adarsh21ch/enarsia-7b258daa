@@ -1,125 +1,209 @@
 
 
-# Restrict Historical Data Access for Free Users (Post-Trial)
+# Calling Streak / Daily Activity Streak
 
 ## Overview
 
-Add admin-controlled gating that prevents free (post-trial) users from viewing past-date data in the TrackUp dashboard (Leads and Funnel trackers). Pro and trial users retain full access. Admin settings are the single source of truth.
+Track consecutive active days for each user to boost daily retention. A day counts as active if the user adds/imports leads, makes calls, or updates tracking. The streak displays as a fire icon in the Calling tab header, with admin controls for configuration.
 
 ---
 
-## 1. Database: Add Admin Config Keys
+## 1. Database: New Tables and Config
 
-Insert three new rows into `admin_usage_limits`:
+### `user_daily_activity` table
+
+Stores one record per user per day to track activity without scanning full history.
+
+| Column | Type | Notes |
+|---|---|---|
+| id | UUID PK | |
+| user_id | UUID NOT NULL | |
+| activity_date | DATE NOT NULL | |
+| has_activity | BOOLEAN DEFAULT false | |
+| activity_sources | TEXT[] DEFAULT '{}' | Array: 'manual_add', 'import', 'call', 'tracking_update' |
+| created_at | TIMESTAMPTZ | |
+
+Unique constraint on `(user_id, activity_date)`.
+
+### `user_streaks` table
+
+Maintains precomputed streak state per user (no full-history scans).
+
+| Column | Type | Notes |
+|---|---|---|
+| id | UUID PK | |
+| user_id | UUID UNIQUE NOT NULL | |
+| current_streak | INTEGER DEFAULT 0 | |
+| longest_streak | INTEGER DEFAULT 0 | |
+| last_active_date | DATE | |
+| grace_used | INTEGER DEFAULT 0 | |
+| updated_at | TIMESTAMPTZ | |
+
+### Admin Config Rows
+
+Insert into `admin_usage_limits`:
 
 | config_key | config_value | description |
 |---|---|---|
-| `restrict_historical_data` | 0 | Boolean toggle (1=ON, 0=OFF) |
-| `allowed_past_days` | 0 | Number of past days free users can access (0 = today only) |
+| streak_enabled | 1 | Enable/disable streak feature |
+| streak_grace_days | 1 | Number of grace days before reset |
 
-Insert one row into `admin_config_text`:
+Insert into `admin_config_text`:
 
 | config_key | config_value | description |
 |---|---|---|
-| `historical_restriction_scope` | `leads,funnel` | Comma-separated list of scopes (leads, funnel) |
+| streak_active_actions | manual_add,import,call,tracking_update | Comma-separated actions that count |
+
+### RLS Policies
+
+- `user_daily_activity`: Users can read/insert/update their own rows (`auth.uid() = user_id`)
+- `user_streaks`: Users can read/insert/update their own rows (`auth.uid() = user_id`)
 
 ---
 
-## 2. Admin Panel: Update UsageLimitsManager
+## 2. New Hook: `useStreak`
+
+**File:** `src/hooks/useStreak.ts`
+
+Responsibilities:
+- Fetch `user_streaks` row for current user (create if missing)
+- Fetch admin config for `streak_enabled`, `streak_grace_days`, and `streak_active_actions`
+- Expose: `currentStreak`, `longestStreak`, `lastActiveDate`, `streakEnabled`, `loading`
+- Provide `recordActivity(source: string)` function that:
+  1. Upserts into `user_daily_activity` for today (adds source to `activity_sources` array, sets `has_activity = true`)
+  2. Recalculates streak: if `last_active_date` is yesterday (or within grace), increment `current_streak`; if today already recorded, no-op; if gap exceeds grace, reset to 1
+  3. Updates `user_streaks` row with new values
+- All streak math is done client-side on the single `user_streaks` row (no history scan)
+
+### Streak Calculation Logic
+
+```text
+today = current date
+gap = daysBetween(last_active_date, today)
+
+if gap == 0: already active today, no change
+if gap == 1: consecutive day, streak += 1, grace_used = 0
+if gap <= 1 + grace_days: within grace, streak += 1, grace_used = gap - 1
+if gap > 1 + grace_days: streak reset to 1, grace_used = 0
+
+Update longest_streak = max(longest_streak, current_streak)
+Update last_active_date = today
+```
+
+---
+
+## 3. Integrate Activity Recording
+
+Record streak activity at existing action points (no new UI, just hook calls):
+
+- **`src/hooks/useProspectsQuery.ts`** (or wherever `addProspect` / `importProspects` resolves): call `recordActivity('manual_add')` or `recordActivity('import')`
+- **`src/components/prospects/CallResultModal.tsx`**: after saving a call result, call `recordActivity('call')`
+- **`src/components/tracking/DynamicLeadsTracker.tsx`** and **`DynamicFunnelTracker.tsx`**: when user saves today's tracking data, call `recordActivity('tracking_update')`
+
+Each call is a lightweight upsert (idempotent for the same day).
+
+---
+
+## 4. Streak Badge in Dashboard Header
+
+**File:** `src/pages/Dashboard.tsx`
+
+- Import `useStreak`
+- In the header row (next to "Calling" title or near `HeaderBellIcon`), render a streak badge:
+
+```text
+[fire emoji] [number]
+```
+
+- Wrap in a `Tooltip` (from existing `@radix-ui/react-tooltip`):
+  - Content: "You're on a {N}-day streak! Keep going by adding leads or making calls daily."
+  - If streak is 0: "Start your streak by being active today!"
+
+- Only render if `streakEnabled` is true from admin config
+- On missed day (grace period active), show a subtle warning text below the badge: "Don't break your streak!"
+
+---
+
+## 5. Streak History (Pro Only)
+
+**File:** `src/components/tracking/StreakHistory.tsx` (new, optional)
+
+- Simple card showing streak history from `user_daily_activity` (last 30 days calendar heatmap or list)
+- Gated: only visible if `isPro` from `useSubscription`
+- Free users see: "Upgrade to Pro to view your streak history and consistency insights" with upgrade CTA
+- This component can be placed in the Tracking page or Profile page
+
+---
+
+## 6. Admin Panel: Streak Settings
 
 **File:** `src/components/admin/UsageLimitsManager.tsx`
 
-- Add a new category `'Historical Access'` to `LIMIT_CATEGORIES` with keys `['restrict_historical_data', 'allowed_past_days']`
-- Add icons for the new keys (e.g., `Lock` for restrict_historical_data, `CalendarDays` for allowed_past_days)
-- Mark `restrict_historical_data` as a boolean field (like `trial_only_mode`) so it shows a toggle instead of numeric input
-- Add a new section below the limits for scope selection (checkboxes for "Leads Tracking" and "Funnel Tracking") that reads/writes the `historical_restriction_scope` value from `admin_config_text`
+Add to `LIMIT_CATEGORIES`:
+
+```text
+'Streak Settings': ['streak_enabled', 'streak_grace_days']
+```
+
+Add to `LIMIT_ICONS`:
+
+```text
+streak_enabled: <Flame icon />
+streak_grace_days: <Clock icon />
+```
+
+Add `streak_enabled` to `BOOLEAN_FIELDS` array (shows toggle instead of number input).
+
+### Action Scope Checkboxes
+
+Add a new section (similar to `HistoricalScopeManager`) called `StreakActionsManager`:
+- Reads/writes `streak_active_actions` from `admin_config_text`
+- Checkboxes for: Manual Add, Import, Call, Tracking Update
+- Save button appears on change
+
+### Admin User Streak Reset
+
+In `EnhancedUsersTab` or `UserOverrideDrawer`:
+- Add a "Reset Streak" button per user
+- On click: sets `current_streak = 0`, `grace_used = 0`, `last_active_date = null` in `user_streaks`
+- Logs action to audit log
 
 ---
 
-## 3. New Hook: useHistoricalAccess
+## 7. Files Summary
 
-**File:** `src/hooks/useHistoricalAccess.ts` (new)
-
-This hook encapsulates all historical access logic:
-
-- Reads `restrict_historical_data` and `allowed_past_days` from `useAdminConfig().config.limits`
-- Reads `historical_restriction_scope` from `admin_config_text` table
-- Uses `useSubscription()` for Pro status
-- Uses `useFreeTrial()` for trial status
-- Exposes:
-  - `isDateRestricted(date: Date, scope: 'leads' | 'funnel'): boolean` -- returns true if the date should be blocked
-  - `restrictionEnabled: boolean` -- master toggle
-  - `allowedPastDays: number`
-  - `showUpgradeModal: boolean` + `setShowUpgradeModal` state
-  - `triggerRestriction()` -- sets showUpgradeModal to true
-
-Logic:
-- If user is Pro or trial is active: never restrict
-- If toggle is OFF: never restrict
-- If scope doesn't include the tracker type: never restrict
-- Otherwise: restrict dates older than `allowedPastDays` from today
-
----
-
-## 4. Update DynamicLeadsTracker
-
-**File:** `src/components/tracking/DynamicLeadsTracker.tsx`
-
-- Import and use `useHistoricalAccess`
-- On the **month selector**: when user navigates to a past month and restriction applies, block the entire view and show the upgrade modal instead of loading data
-- On **individual date columns**: for restricted dates, show a lock icon instead of data (not zeros, not blank)
-- When clicking a restricted column or navigating to a restricted month, call `triggerRestriction()` to show the upgrade modal
-- Render the `UpgradeModal` at the bottom of the component with custom title/description about historical data
-
----
-
-## 5. Update DynamicFunnelTracker
-
-**File:** `src/components/tracking/DynamicFunnelTracker.tsx`
-
-- Same pattern as LeadsTracker:
-  - Import `useHistoricalAccess`
-  - Block past month navigation when restricted
-  - Show lock icons on restricted funnel period columns
-  - Show upgrade modal on interaction with restricted data
-
----
-
-## 6. Update Tracking Page (Month Navigation Guard)
-
-**File:** `src/pages/Tracking.tsx`
-
-- No major changes needed; the restriction logic lives in the child tracker components
-- The month selector `changeMonth('prev')` calls already exist in the trackers -- restriction is enforced there
+| Action | File |
+|---|---|
+| Create | `supabase/migrations/[timestamp].sql` (tables + config rows + RLS) |
+| Create | `src/hooks/useStreak.ts` |
+| Create | `src/components/tracking/StreakHistory.tsx` |
+| Edit | `src/pages/Dashboard.tsx` (streak badge in header) |
+| Edit | `src/components/admin/UsageLimitsManager.tsx` (streak settings + actions manager) |
+| Edit | `src/components/prospects/CallResultModal.tsx` (record 'call' activity) |
+| Edit | `src/hooks/useProspectsQuery.ts` (record 'manual_add' / 'import' activity) |
+| Edit | `src/components/tracking/DynamicLeadsTracker.tsx` (record 'tracking_update') |
+| Edit | `src/components/tracking/DynamicFunnelTracker.tsx` (record 'tracking_update') |
+| Edit | `src/components/admin/EnhancedUsersTab.tsx` or `UserOverrideDrawer.tsx` (reset streak button) |
 
 ---
 
 ## Technical Details
 
-### Boolean Toggle Convention
-`restrict_historical_data` follows the existing convention: stored as integer (1/0) in `admin_usage_limits.config_value`, detected via `'restrict_historical_data' in config.limits` (presence = enabled, since `get_app_config` RPC only returns enabled keys).
+### Performance
+- Streak is precomputed in `user_streaks` -- no history scans
+- `recordActivity` is a single upsert + single update per action (idempotent per day)
+- Admin config is cached via existing `useAdminConfig` with 30s stale time
 
-### Date Restriction Logic (in useHistoricalAccess)
-```text
-const today = startOfDay(new Date())
-const cutoffDate = subDays(today, allowedPastDays)
-isRestricted = targetDate < cutoffDate
-```
+### Independence
+- Streak tables are fully independent from `daily_tracking_log`, `activity_logs`, and analytics tables
+- No foreign keys to tracking tables -- only `user_id` references
 
-### Month-Level Restriction
-When user navigates to a past month in either tracker:
-- If ALL days in that month are restricted, block the entire month view
-- Show upgrade modal immediately instead of loading restricted data
-- The `changeMonth('prev')` still works (dates are visible) but data cells show lock icons and clicking triggers the modal
+### Grace Day Warning
+- When `grace_used > 0` (user is in grace period), the badge tooltip shows: "You missed a day! Stay active to keep your streak."
+- This is a soft warning, not blocking
 
-### Scope Filtering
-The `historical_restriction_scope` text config allows admins to selectively apply restrictions to only Leads, only Funnel, or both. Default: both.
-
-### Cache Invalidation
-Changes saved in Admin Panel automatically invalidate `admin-config` query key (existing behavior), ensuring immediate reflection in the user-facing app.
-
-### Upgrade Modal Messaging
-Title: "Historical Data is a Pro Feature"
-Description: "Upgrade to Pro to view past leads and funnel performance data."
-CTA: Standard plan selection via existing UpgradeModal component.
+### Admin as Source of Truth
+- `streak_enabled` toggle controls whether the feature is active at all
+- `streak_active_actions` controls which actions count
+- Changes reflect immediately via existing cache invalidation on `admin-config` query key
 
