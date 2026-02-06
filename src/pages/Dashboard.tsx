@@ -231,30 +231,32 @@ export default function Dashboard() {
         <div className="flex items-center justify-between px-4 py-3">
           <div className="flex items-center gap-3">
             <img src={nevoraLogo} alt="NevorAI Logo" className="h-10 w-10 rounded-xl object-cover shadow-md" />
-            <div className="flex items-center gap-2">
-              <h1 className="text-xl font-bold tracking-tight">Calling</h1>
-              {streakEnabled && (
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <div className="flex items-center gap-1 px-2 py-1 rounded-lg bg-orange-500/10 cursor-default">
-                        <Flame className="h-4 w-4 text-orange-500" />
-                        <span className="text-sm font-bold text-orange-600">{currentStreak}</span>
-                      </div>
-                    </TooltipTrigger>
-                    <TooltipContent side="bottom" className="max-w-[200px]">
-                      {currentStreak > 0
-                        ? `You're on a ${currentStreak}-day streak! Keep going by adding leads or making calls daily.`
-                        : 'Start your streak by being active today!'}
-                      {isInGracePeriod && (
-                        <p className="text-amber-500 mt-1 text-xs font-medium">You missed a day! Stay active to keep your streak.</p>
-                      )}
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-              )}
+            <div>
+              <div className="flex items-center gap-2">
+                <h1 className="text-xl font-bold tracking-tight">Calling</h1>
+                {streakEnabled && (
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <div className="flex items-center gap-1 px-2 py-1 rounded-lg bg-orange-500/10 cursor-default">
+                          <Flame className="h-4 w-4 text-orange-500" />
+                          <span className="text-sm font-bold text-orange-600">{currentStreak}</span>
+                        </div>
+                      </TooltipTrigger>
+                      <TooltipContent side="bottom" className="max-w-[200px]">
+                        {currentStreak > 0
+                          ? `You're on a ${currentStreak}-day streak! Keep going by adding leads or making calls daily.`
+                          : 'Start your streak by being active today!'}
+                        {isInGracePeriod && (
+                          <p className="text-amber-500 mt-1 text-xs font-medium">You missed a day! Stay active to keep your streak.</p>
+                        )}
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                )}
+              </div>
+              <p className="text-xs text-muted-foreground font-medium">Manage your prospects</p>
             </div>
-            <p className="text-xs text-muted-foreground font-medium">Manage your prospects</p>
           </div>
           <div className="flex items-center gap-2">
             <HeaderBellIcon />
