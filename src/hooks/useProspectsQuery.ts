@@ -277,6 +277,13 @@ export function useProspectsQuery(options: UseProspectsQueryOptions = {}) {
       queryClient.invalidateQueries({ queryKey: ['prospects', user?.id] });
       queryClient.invalidateQueries({ queryKey: ['prospects-kpi', user?.id] });
       toast.success('Prospect added');
+      // Record streak activity for manual add (fire-and-forget)
+      supabase.from('user_daily_activity' as any).upsert(
+        { user_id: user!.id, activity_date: new Date().toISOString().split('T')[0], has_activity: true, activity_sources: ['manual_add'] },
+        { onConflict: 'user_id,activity_date' }
+      ).then(() => {
+        queryClient.invalidateQueries({ queryKey: ['user-streak', user?.id] });
+      });
     },
     onError: (error: Error) => {
       // Show specific error message for limit errors
@@ -620,6 +627,16 @@ export function useProspectsQuery(options: UseProspectsQueryOptions = {}) {
       // Invalidate tracking stats so imported leads are counted
       queryClient.invalidateQueries({ queryKey: ['tracking-leads', user?.id] });
       queryClient.invalidateQueries({ queryKey: ['tracking-funnel', user?.id] });
+
+      // Record streak activity for import (fire-and-forget)
+      if (totalImported > 0) {
+        supabase.from('user_daily_activity' as any).upsert(
+          { user_id: user!.id, activity_date: new Date().toISOString().split('T')[0], has_activity: true, activity_sources: ['import'] },
+          { onConflict: 'user_id,activity_date' }
+        ).then(() => {
+          queryClient.invalidateQueries({ queryKey: ['user-streak', user?.id] });
+        });
+      }
 
       return { imported: totalImported, skipped };
     },

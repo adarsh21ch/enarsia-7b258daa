@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Loader2, Save, RotateCcw, AlertTriangle, Users, Upload, Bell, Ban, Clock, Timer, Lock as LockIcon, CalendarDays } from 'lucide-react';
+import { Loader2, Save, RotateCcw, AlertTriangle, Users, Upload, Bell, Ban, Clock, Timer, Lock as LockIcon, CalendarDays, Flame } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
@@ -30,6 +30,9 @@ const LIMIT_ICONS: Record<string, React.ReactNode> = {
   // Historical Access
   restrict_historical_data: <LockIcon className="h-4 w-4" />,
   allowed_past_days: <CalendarDays className="h-4 w-4" />,
+  // Streak Settings
+  streak_enabled: <Flame className="h-4 w-4" />,
+  streak_grace_days: <Clock className="h-4 w-4" />,
 };
 
 const LIMIT_CATEGORIES = {
@@ -38,9 +41,10 @@ const LIMIT_CATEGORIES = {
   'Warning Thresholds': ['warning_threshold_1', 'warning_threshold_2', 'warning_threshold_3'],
   'Hard Limits': ['hard_limit'],
   'Historical Access': ['restrict_historical_data', 'allowed_past_days'],
+  'Streak Settings': ['streak_enabled', 'streak_grace_days'],
 };
 
-const BOOLEAN_FIELDS = ['trial_only_mode', 'restrict_historical_data'];
+const BOOLEAN_FIELDS = ['trial_only_mode', 'restrict_historical_data', 'streak_enabled'];
 
 export function UsageLimitsManager() {
   const { limits, loading, updateLimit } = useAdminUsageLimits();
@@ -263,6 +267,9 @@ export function UsageLimitsManager() {
       {/* Historical Restriction Scope */}
       <HistoricalScopeManager />
 
+      {/* Streak Actions Manager */}
+      <StreakActionsManager />
+
       {/* Trial Banner Tab Visibility */}
       <TrialBannerTabsManager />
     </div>
@@ -351,6 +358,97 @@ function HistoricalScopeManager() {
         </div>
         <p className="text-xs text-muted-foreground mt-2">
           Select which trackers enforce historical data restrictions for free users.
+        </p>
+      </Card>
+    </div>
+  );
+}
+
+/** Manages streak_active_actions checkboxes */
+function StreakActionsManager() {
+  const queryClient = useQueryClient();
+  const { data, isLoading } = useQuery({
+    queryKey: ['admin-streak-actions'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('admin_config_text')
+        .select('*')
+        .eq('config_key', 'streak_active_actions')
+        .maybeSingle();
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  const ALL_ACTIONS = [
+    { key: 'manual_add', label: 'Manual Add' },
+    { key: 'import', label: 'Import' },
+    { key: 'call', label: 'Call' },
+    { key: 'tracking_update', label: 'Tracking Update' },
+  ];
+
+  const currentActions = (data?.config_value || 'manual_add,import,call,tracking_update').split(',').map((s: string) => s.trim());
+  const [checked, setChecked] = useState<Record<string, boolean>>({});
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    if (data) {
+      const actions = data.config_value.split(',').map((s: string) => s.trim());
+      const state: Record<string, boolean> = {};
+      ALL_ACTIONS.forEach(a => { state[a.key] = actions.includes(a.key); });
+      setChecked(state);
+    }
+  }, [data]);
+
+  const handleSave = async () => {
+    const selected = ALL_ACTIONS.filter(a => checked[a.key]).map(a => a.key);
+    const newValue = selected.join(',') || 'none';
+
+    setSaving(true);
+    try {
+      const { error } = await supabase
+        .from('admin_config_text')
+        .update({ config_value: newValue })
+        .eq('config_key', 'streak_active_actions');
+      if (error) throw error;
+      queryClient.invalidateQueries({ queryKey: ['admin-streak-actions'] });
+      queryClient.invalidateQueries({ queryKey: ['streak-active-actions'] });
+      queryClient.invalidateQueries({ queryKey: ['admin-config'] });
+      toast.success('Streak actions updated');
+    } catch {
+      toast.error('Failed to update streak actions');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const hasChanges = data && ALL_ACTIONS.some(a => (checked[a.key] ?? false) !== currentActions.includes(a.key));
+
+  if (isLoading) return null;
+
+  return (
+    <div className="space-y-3">
+      <h3 className="text-sm font-medium text-muted-foreground">Streak Active Actions</h3>
+      <Card className="p-4">
+        <div className="flex items-center gap-6 flex-wrap">
+          {ALL_ACTIONS.map(action => (
+            <label key={action.key} className="flex items-center gap-2 cursor-pointer">
+              <Checkbox
+                checked={checked[action.key] ?? false}
+                onCheckedChange={(v) => setChecked(prev => ({ ...prev, [action.key]: !!v }))}
+              />
+              <span className="text-sm font-medium">{action.label}</span>
+            </label>
+          ))}
+          {hasChanges && (
+            <Button size="sm" onClick={handleSave} disabled={saving} className="ml-auto">
+              {saving ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <Save className="h-4 w-4 mr-1" />}
+              Save
+            </Button>
+          )}
+        </div>
+        <p className="text-xs text-muted-foreground mt-2">
+          Select which user actions count toward their daily activity streak.
         </p>
       </Card>
     </div>

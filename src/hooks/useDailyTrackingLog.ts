@@ -11,6 +11,7 @@
 import { useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
+import { useQueryClient } from '@tanstack/react-query';
 import { format, startOfDay, endOfDay } from 'date-fns';
 
 interface DailyTrackingCounts {
@@ -32,6 +33,7 @@ interface DailyTrackingCounts {
  */
 export function useDailyTrackingLog() {
   const { user } = useAuth();
+  const queryClient = useQueryClient();
 
   /**
    * Calculate today's tracking counts from prospects and upsert to daily_tracking_logs
@@ -142,11 +144,19 @@ export function useDailyTrackingLog() {
 
       if (upsertError) {
         console.error('Error upserting daily tracking log:', upsertError);
+      } else {
+        // Record streak activity for tracking_update (fire-and-forget)
+        supabase.from('user_daily_activity' as any).upsert(
+          { user_id: user.id, activity_date: todayStr, has_activity: true, activity_sources: ['tracking_update'] },
+          { onConflict: 'user_id,activity_date' }
+        ).then(() => {
+          queryClient.invalidateQueries({ queryKey: ['user-streak', user.id] });
+        });
       }
     } catch (err) {
       console.error('Exception in logDailyTracking:', err);
     }
-  }, [user]);
+  }, [user, queryClient]);
 
   return { logDailyTracking };
 }

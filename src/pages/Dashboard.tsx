@@ -13,8 +13,10 @@ import { TopTabBar } from '@/components/ui/TopTabBar';
 import { FilterTagSetupDialog, useFilterTagSetup } from '@/components/prospects/FilterTagSetupDialog';
 import { SearchBar } from '@/components/ui/SearchBar';
 import { TrialBanner } from '@/components/subscription/TrialBanner';
-import { Loader2, Phone, Layers } from 'lucide-react';
+import { Loader2, Phone, Layers, Flame } from 'lucide-react';
 import nevoraLogo from '@/assets/nevorai-logo.jpeg';
+import { useStreak } from '@/hooks/useStreak';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 // Pull-to-refresh hook - fixed to not interfere with normal scrolling
 function usePullToRefresh(onRefresh: () => Promise<void>, threshold = 100) {
@@ -91,6 +93,9 @@ export default function Dashboard() {
     user,
     loading: authLoading
   } = useAuth();
+
+  // Streak
+  const { currentStreak, isInGracePeriod, streakEnabled, loading: streakLoading } = useStreak();
 
   // Main tab state - Calling is default
   const [mainTab, setMainTab] = useState<'leads' | 'funnel'>('leads');
@@ -231,7 +236,29 @@ export default function Dashboard() {
               <p className="text-xs text-muted-foreground font-medium">Manage your prospects</p>
             </div>
           </div>
-          <HeaderBellIcon />
+          <div className="flex items-center gap-2">
+            {streakEnabled && (
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <div className="flex items-center gap-1 px-2 py-1 rounded-lg bg-orange-500/10 cursor-default">
+                      <Flame className="h-4 w-4 text-orange-500" />
+                      <span className="text-sm font-bold text-orange-600">{currentStreak}</span>
+                    </div>
+                  </TooltipTrigger>
+                  <TooltipContent side="bottom" className="max-w-[200px]">
+                    {currentStreak > 0
+                      ? `You're on a ${currentStreak}-day streak! Keep going by adding leads or making calls daily.`
+                      : 'Start your streak by being active today!'}
+                    {isInGracePeriod && (
+                      <p className="text-amber-500 mt-1 text-xs font-medium">You missed a day! Stay active to keep your streak.</p>
+                    )}
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            )}
+            <HeaderBellIcon />
+          </div>
         </div>
         
         {/* Row B: Segmented control - compact like To-Do */}

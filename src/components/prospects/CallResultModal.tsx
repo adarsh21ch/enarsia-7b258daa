@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Phone, MessageCircle, CheckCircle, XCircle, Clock, PhoneOff } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useStreak } from '@/hooks/useStreak';
 
 interface CallResultModalProps {
   open: boolean;
@@ -38,6 +39,7 @@ export function CallResultModal({
   const [selectedOutcome, setSelectedOutcome] = useState<string | null>(null);
   const [notes, setNotes] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const { recordActivity } = useStreak();
 
   const outcomes = contactType === 'call' ? CALL_OUTCOMES : WHATSAPP_OUTCOMES;
 
@@ -54,6 +56,8 @@ export function CallResultModal({
     
     setIsSubmitting(true);
     await onSubmit({ outcome: selectedOutcome, notes: notes.trim() || undefined });
+    // Record streak activity for call (fire-and-forget)
+    recordActivity('call');
     setIsSubmitting(false);
     onOpenChange(false);
   };

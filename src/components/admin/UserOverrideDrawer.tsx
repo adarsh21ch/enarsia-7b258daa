@@ -6,9 +6,12 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
-import { Loader2, Save, Trash2, Crown, Calendar, Upload, Users } from 'lucide-react';
+import { Loader2, Save, Trash2, Crown, Calendar, Upload, Users, Flame } from 'lucide-react';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
+import { logAdminAction } from '@/hooks/useAuditLogs';
+import { useQueryClient } from '@tanstack/react-query';
 
 interface UserOverrideDrawerProps {
   open: boolean;
@@ -27,6 +30,8 @@ export function UserOverrideDrawer({
 }: UserOverrideDrawerProps) {
   const { overrides, createOrUpdateOverride, deleteOverride, loading } = useAdminUserOverrides();
   const [saving, setSaving] = useState(false);
+  const [resettingStreak, setResettingStreak] = useState(false);
+  const queryClient = useQueryClient();
 
   // Find existing override for this user
   const existingOverride = overrides.find(o => o.user_id === userId);
@@ -181,6 +186,43 @@ export function UserOverrideDrawer({
               onChange={(e) => setFormData(prev => ({ ...prev, notes: e.target.value }))}
               rows={3}
             />
+          </div>
+
+          {/* Reset Streak */}
+          <div className="flex items-center justify-between p-4 rounded-lg border">
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-lg bg-orange-500/10">
+                <Flame className="h-4 w-4 text-orange-500" />
+              </div>
+              <div>
+                <p className="font-medium">Reset Streak</p>
+                <p className="text-xs text-muted-foreground">Reset this user's activity streak to 0</p>
+              </div>
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={resettingStreak}
+              onClick={async () => {
+                if (!confirm('Reset this user\'s streak to 0?')) return;
+                setResettingStreak(true);
+                try {
+                  await supabase
+                    .from('user_streaks' as any)
+                    .update({ current_streak: 0, grace_used: 0, last_active_date: null, updated_at: new Date().toISOString() })
+                    .eq('user_id', userId);
+                  await logAdminAction('streak_reset', 'user', userId, null, null, `Reset streak for ${userEmail}`);
+                  queryClient.invalidateQueries({ queryKey: ['user-streak', userId] });
+                  toast.success('Streak reset');
+                } catch {
+                  toast.error('Failed to reset streak');
+                } finally {
+                  setResettingStreak(false);
+                }
+              }}
+            >
+              {resettingStreak ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Reset'}
+            </Button>
           </div>
 
           {/* Actions */}

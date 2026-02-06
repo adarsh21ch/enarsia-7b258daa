@@ -3758,6 +3758,33 @@ export type Database = {
         }
         Relationships: []
       }
+      user_daily_activity: {
+        Row: {
+          activity_date: string
+          activity_sources: string[] | null
+          created_at: string
+          has_activity: boolean | null
+          id: string
+          user_id: string
+        }
+        Insert: {
+          activity_date: string
+          activity_sources?: string[] | null
+          created_at?: string
+          has_activity?: boolean | null
+          id?: string
+          user_id: string
+        }
+        Update: {
+          activity_date?: string
+          activity_sources?: string[] | null
+          created_at?: string
+          has_activity?: boolean | null
+          id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_daily_task_status: {
         Row: {
           date: string
@@ -3933,6 +3960,36 @@ export type Database = {
           created_at?: string
           id?: string
           role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_streaks: {
+        Row: {
+          current_streak: number | null
+          grace_used: number | null
+          id: string
+          last_active_date: string | null
+          longest_streak: number | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          current_streak?: number | null
+          grace_used?: number | null
+          id?: string
+          last_active_date?: string | null
+          longest_streak?: number | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          current_streak?: number | null
+          grace_used?: number | null
+          id?: string
+          last_active_date?: string | null
+          longest_streak?: number | null
+          updated_at?: string
           user_id?: string
         }
         Relationships: []
