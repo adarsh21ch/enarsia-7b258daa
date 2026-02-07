@@ -1,214 +1,120 @@
-import { useEffect, useState, useRef, useCallback } from 'react';
+import { useEffect, useState, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { format } from 'date-fns';
+import { format, subMonths, addMonths } from 'date-fns';
+import { ChevronLeft, ChevronRight, ExternalLink, Loader2 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { BottomNav } from '@/components/layout/BottomNav';
-import { DynamicFunnelTracker } from '@/components/tracking/DynamicFunnelTracker';
-import { DynamicLeadsTracker } from '@/components/tracking/DynamicLeadsTracker';
-import { UpgradeBar } from '@/components/subscription/UpgradeBar';
 import { TrialBanner } from '@/components/subscription/TrialBanner';
-import { PullToRefreshIndicator } from '@/components/PullToRefreshIndicator';
-import { TopTabBar } from '@/components/ui/TopTabBar';
-import { Day1SetupDialog } from '@/components/trackup/Day1SetupDialog';
 import { Button } from '@/components/ui/button';
-import { TrendingUp, Calendar, Lock, RefreshCw, ExternalLink, Loader2 } from 'lucide-react';
-import { useSubscription } from '@/hooks/useSubscription';
-import { useFunnelConfig } from '@/hooks/useFunnelConfig';
-import { useLeadsTrackingStats, useFunnelTrackingStats } from '@/hooks/useTrackingStats';
+import { ModeSelectors } from '@/components/trackup-v2/ModeSelectors';
+import { ViewSelector } from '@/components/trackup-v2/ViewSelector';
+import { CollapsibleKPI } from '@/components/trackup-v2/CollapsibleKPI';
+import { SummaryTable } from '@/components/trackup-v2/SummaryTable';
+import { DateWiseTable } from '@/components/trackup-v2/DateWiseTable';
+import { FunnelWiseTable } from '@/components/trackup-v2/FunnelWiseTable';
+import { MonthlyTotalsTable } from '@/components/trackup-v2/MonthlyTotalsTable';
+import { ManualUpdateDrawer } from '@/components/trackup-v2/ManualUpdateDrawer';
+import { FloatingUpdateButton } from '@/components/trackup-v2/FloatingUpdateButton';
+import { useTrackingModes } from '@/hooks/useTrackingModes';
+import { usePersonalSnapshotV2Read } from '@/hooks/usePersonalSnapshotV2Read';
+import { useTotalSnapshotV2Read } from '@/hooks/useTotalSnapshotV2Read';
+import { useSnapshotV2ComputedData } from '@/hooks/useSnapshotV2ComputedData';
 import { useTrackingFormat } from '@/hooks/useTrackingFormat';
+import { useFunnelConfig } from '@/hooks/useFunnelConfig';
 import { NEVORAI_WEBSITE_URL } from '@/config/siteUrl';
-import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import nevoraLogo from '@/assets/nevorai-logo.jpeg';
 
-// Pull-to-refresh hook
-function usePullToRefresh(onRefresh: () => Promise<void>, threshold = 80) {
-  const [isRefreshing, setIsRefreshing] = useState(false);
-  const [pullDistance, setPullDistance] = useState(0);
-  const startY = useRef(0);
-  const containerRef = useRef<HTMLDivElement>(null);
-  const handleTouchStart = useCallback((e: TouchEvent) => {
-    if (containerRef.current && containerRef.current.scrollTop === 0) {
-      startY.current = e.touches[0].clientY;
-    }
-  }, []);
-  const handleTouchMove = useCallback((e: TouchEvent) => {
-    if (!startY.current || isRefreshing) return;
-    const currentY = e.touches[0].clientY;
-    const diff = currentY - startY.current;
-    if (diff > 0 && containerRef.current && containerRef.current.scrollTop === 0) {
-      setPullDistance(Math.min(diff * 0.5, threshold * 1.5));
-    }
-  }, [isRefreshing, threshold]);
-  const handleTouchEnd = useCallback(async () => {
-    if (pullDistance >= threshold && !isRefreshing) {
-      setIsRefreshing(true);
-      try {
-        await onRefresh();
-      } finally {
-        setIsRefreshing(false);
-      }
-    }
-    setPullDistance(0);
-    startY.current = 0;
-  }, [pullDistance, threshold, isRefreshing, onRefresh]);
-  useEffect(() => {
-    const container = containerRef.current;
-    if (!container) return;
-    container.addEventListener('touchstart', handleTouchStart, {
-      passive: true
-    });
-    container.addEventListener('touchmove', handleTouchMove, {
-      passive: true
-    });
-    container.addEventListener('touchend', handleTouchEnd);
-    return () => {
-      container.removeEventListener('touchstart', handleTouchStart);
-      container.removeEventListener('touchmove', handleTouchMove);
-      container.removeEventListener('touchend', handleTouchEnd);
-    };
-  }, [handleTouchStart, handleTouchMove, handleTouchEnd]);
-  return {
-    containerRef,
-    isRefreshing,
-    pullDistance,
-    showIndicator: pullDistance > 20 || isRefreshing
-  };
-}
 export default function Tracking() {
   const navigate = useNavigate();
-  const {
-    user,
-    loading: authLoading
-  } = useAuth();
-  const {
-    isPro,
-    loading: subLoading
-  } = useSubscription();
-  const {
-    config,
-    loading: configLoading,
-    saveConfig,
-    getEffectiveConfig,
-    isReadOnly: isFunnelReadOnly,
-    leaderName: funnelLeaderName
-  } = useFunnelConfig();
-  const effectiveConfig = getEffectiveConfig();
-  const [activeTab, setActiveTab] = useState<'leads' | 'funnel'>('leads');
-  const [showDay1Setup, setShowDay1Setup] = useState(false);
+  const { user, loading: authLoading } = useAuth();
+  const [currentMonth, setCurrentMonth] = useState(new Date());
+  const [showUpdateDrawer, setShowUpdateDrawer] = useState(false);
+  const [ssoLoading, setSsoLoading] = useState(false);
 
-  // Get tracking stats for analytics (passed to trackers for insights)
+  const monthYear = format(currentMonth, 'yyyy-MM');
+  const monthLabel = format(currentMonth, 'MMMM yyyy');
+
+  // Tracking modes (Personal/Total, Leads/Funnel, view mode)
   const {
-    totals: leadsTotals,
-    tags: leadsTags
-  } = useLeadsTrackingStats();
+    dataMode, viewType, viewMode, viewModeOptions,
+    setDataMode, setViewType, setViewMode,
+  } = useTrackingModes();
+
+  // Tracking format (tags from leader/own)
   const {
-    totals: funnelTotals,
-    tags: funnelTags
-  } = useFunnelTrackingStats();
-  const {
-    leadsFinalTargetTag
+    leadsTrackingTags, stageTags, leadsTrackingTagNames, stageTagNames,
+    leadsFinalTargetTag, stageFinalTargetTag, directLeaderId,
   } = useTrackingFormat();
 
-  // Handle tab change - show Day 1 setup if switching to funnel with no config (and not read-only from leader)
-  const handleTabChange = (newTab: string) => {
-    if (newTab === 'funnel' && !effectiveConfig && !configLoading && !isFunnelReadOnly) {
-      setShowDay1Setup(true);
-    }
-    setActiveTab(newTab as 'leads' | 'funnel');
-  };
+  // Funnel config
+  const { getEffectiveConfig } = useFunnelConfig();
+  const effectiveConfig = getEffectiveConfig();
 
-  // Open TrackUp Dashboard with SSO
-  const [ssoLoading, setSsoLoading] = useState(false);
-  const handleOpenDashboard = async () => {
+  // Read snapshots for current month
+  const { snapshots: personalSnapshots } = usePersonalSnapshotV2Read(monthYear);
+  const { snapshots: totalSnapshots } = useTotalSnapshotV2Read(monthYear);
+
+  // Pick active snapshots based on data mode
+  const activeSnapshots = dataMode === 'personal' ? personalSnapshots : totalSnapshots;
+
+  // Pick tags based on view type
+  const activeResponseTags = leadsTrackingTags;
+  const activeStageTags = stageTags;
+  const activeTagNames = viewType === 'leads' ? leadsTrackingTagNames : stageTagNames;
+  const activeFinalTag = viewType === 'leads' ? leadsFinalTargetTag : stageFinalTargetTag;
+
+  // Computed data
+  const {
+    dailyMetrics, monthlyTotals, kpiData, funnelPeriods,
+    responseTagNames, stageTagNames: computedStageNames, finalTagName,
+  } = useSnapshotV2ComputedData(
+    activeSnapshots,
+    activeResponseTags,
+    activeStageTags,
+    effectiveConfig?.funnel_length ?? 3,
+    effectiveConfig?.day_1_start ?? null,
+  );
+
+  // Auth redirect
+  useEffect(() => {
+    if (!user && !authLoading) navigate('/auth');
+  }, [user, authLoading, navigate]);
+
+  // SSO redirect to website team tracking
+  const handleOpenDashboard = useCallback(async () => {
     setSsoLoading(true);
     try {
-      // Check for valid session first
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) {
         toast.error('Please log in first');
         window.location.href = '/auth';
-        setSsoLoading(false);
         return;
       }
-
       const { data, error } = await supabase.functions.invoke('trackup-sso-link');
       if (error) {
-        console.error('SSO link error:', error);
-        toast.error('Failed to generate login link. Opening login page...');
+        toast.error('Failed to generate login link');
         window.open(`${NEVORAI_WEBSITE_URL}/auth?redirect=/trackup`, '_blank');
         return;
       }
       if (data?.action_link) {
-        // Open the magic link - user will be auto-logged in
         window.open(data.action_link, '_blank');
       } else {
-        toast.error('Failed to generate login link');
         window.open(`${NEVORAI_WEBSITE_URL}/auth?redirect=/trackup`, '_blank');
       }
-    } catch (err) {
-      console.error('SSO error:', err);
-      toast.error('Something went wrong. Opening login page...');
+    } catch {
       window.open(`${NEVORAI_WEBSITE_URL}/auth?redirect=/trackup`, '_blank');
     } finally {
       setSsoLoading(false);
     }
-  };
-
-  // Save Day 1 date from setup dialog
-  const handleDay1Save = async (date: Date) => {
-    await saveConfig({
-      funnel_name: 'Default Funnel',
-      funnel_length: 3,
-      // Fixed 3-day funnel
-      day_1_start: format(date, 'yyyy-MM-dd')
-    });
-    setShowDay1Setup(false);
-  };
-
-  // Pro gate disabled for now
-  const showProGate = false;
-
-  // Pull-to-refresh (no-op since dynamic trackers handle their own data)
-  const handleRefresh = useCallback(async () => {
-    // Dynamic trackers handle their own refetch
   }, []);
-  const {
-    containerRef,
-    isRefreshing,
-    pullDistance,
-    showIndicator
-  } = usePullToRefresh(handleRefresh);
-  useEffect(() => {
-    if (!user && !authLoading) {
-      navigate('/auth');
-    }
-  }, [user, authLoading, navigate]);
-
-  // Only check auth for redirect - let children handle their own loading states
-  // This prevents the flash/flicker when navigating to TrackUp
 
   if (!user) return null;
 
-  // Calculate analytics data for insights (passed to trackers)
-  const enrollments = leadsFinalTargetTag ? leadsTotals.tagCounts[leadsFinalTargetTag] || 0 : 0;
-  const videosSent = leadsTags.includes('Video Sent') ? leadsTotals.tagCounts['Video Sent'] || 0 : 0;
-  const notPicked = leadsTags.includes('Not Picked') ? leadsTotals.tagCounts['Not Picked'] || 0 : 0;
-  const funnelCounts = funnelTags.map(tag => funnelTotals.tagCounts[tag] || 0);
-
-  // Two-tab only: Leads and Funnel (no Insights tab)
-  const toggleOptions = [{
-    value: 'leads',
-    label: 'Leads',
-    icon: Calendar
-  }, {
-    value: 'funnel',
-    label: 'Funnel',
-    icon: TrendingUp
-  }];
-  return <div className="app-layout bg-gradient-to-b from-background via-background to-muted/20">
-      {/* Premium Header with Leads/Funnel Switch + Dashboard Link */}
+  return (
+    <div className="app-layout bg-gradient-to-b from-background via-background to-muted/20">
+      {/* Header */}
       <header className="fixed-header z-40 bg-card/80 backdrop-blur-xl border-b border-border/50">
         <div className="flex items-center justify-between px-4 py-3">
           <div className="flex items-center gap-3">
@@ -218,67 +124,105 @@ export default function Tracking() {
               <p className="text-xs text-muted-foreground font-medium">Track Your Numbers</p>
             </div>
           </div>
-          {/* Dashboard Link Button */}
-          <Button 
-            variant="ghost" 
-            size="sm" 
-            onClick={handleOpenDashboard} 
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={handleOpenDashboard}
             disabled={ssoLoading}
             className="h-8 gap-1.5 text-xs font-medium"
           >
-            {ssoLoading ? (
-              <Loader2 className="h-3.5 w-3.5 animate-spin" />
-            ) : (
-              <ExternalLink className="h-3.5 w-3.5" />
-            )}
+            {ssoLoading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <ExternalLink className="h-3.5 w-3.5" />}
             {ssoLoading ? 'Opening...' : 'Team Tracking'}
           </Button>
         </div>
-        
-        {/* Leads/Funnel Segmented Switch - TWO TABS ONLY */}
-        <div className="px-4 pb-2">
-          <TopTabBar options={toggleOptions} value={activeTab} onChange={handleTabChange} />
+
+        {/* Mode selectors */}
+        <div className="px-4 pb-3">
+          <ModeSelectors
+            dataMode={dataMode}
+            viewType={viewType}
+            onDataModeChange={setDataMode}
+            onViewTypeChange={setViewType}
+          />
         </div>
       </header>
 
-      <main ref={containerRef} className="scrollable-content relative">
-        <PullToRefreshIndicator isRefreshing={isRefreshing} pullDistance={pullDistance} showIndicator={showIndicator} />
-        <div className={cn("container py-2 px-3", showProGate ? "pb-36" : "pb-24")}>
-          {/* Trial Banner - respects admin config */}
+      <main className="scrollable-content">
+        <div className="container py-2 px-3 pb-24">
           <TrialBanner tabId="tracking" className="mb-3" />
-          
-          {/* Pro gate - show when user is not Pro */}
-          {showProGate && <div className="relative mb-4">
-              <div className="absolute inset-0 flex flex-col items-center justify-center z-10 bg-background/80 backdrop-blur-sm rounded-xl py-8">
-                <div className="p-3 rounded-full bg-muted mb-3">
-                  <Lock className="h-10 w-10 text-muted-foreground" />
-                </div>
-                <h3 className="text-lg font-semibold mb-1">Pro Feature</h3>
-                <p className="text-sm text-muted-foreground max-w-sm text-center px-4">
-                  TrackUp is a Pro feature. Subscribe to Pro Monthly (₹249) or Pro Yearly (₹2,999) to unlock team tracking and advanced analytics.
-                </p>
-              </div>
-            </div>}
 
-          {/* Sync indicator for connected members */}
-          {activeTab === 'funnel' && isFunnelReadOnly && funnelLeaderName && <div className="text-xs text-muted-foreground text-center mb-2 flex items-center justify-center gap-1.5 bg-muted/50 py-1.5 px-3 rounded-full mx-auto w-fit">
-              <RefreshCw className="h-3 w-3" />
-              Synced with {funnelLeaderName}
-            </div>}
+          {/* View header row */}
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-2">
+              <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setCurrentMonth((m) => subMonths(m, 1))}>
+                <ChevronLeft className="h-4 w-4" />
+              </Button>
+              <span className="text-sm font-semibold">{monthLabel}</span>
+              <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setCurrentMonth((m) => addMonths(m, 1))}>
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+            </div>
+            <ViewSelector viewMode={viewMode} options={viewModeOptions} onViewModeChange={setViewMode} />
+          </div>
 
-          {/* Content based on active tab - TWO TABS ONLY, insights embedded in each */}
+          {/* Collapsible KPI */}
+          <div className="mb-3">
+            <CollapsibleKPI kpi={kpiData} responseTagNames={responseTagNames} stageTagNames={computedStageNames} />
+          </div>
+
+          {/* Active table view */}
           <div>
-            {activeTab === 'funnel' ? <DynamicFunnelTracker isPro={true} funnelCounts={funnelCounts} stageTags={funnelTags} /> : <DynamicLeadsTracker isPro={true} leads={leadsTotals.leads} responses={leadsTotals.responses} enrollments={enrollments} videosSent={videosSent} notPicked={notPicked} tagCounts={leadsTotals.tagCounts} />}
+            {viewMode === 'summary' && (
+              <SummaryTable
+                dailyMetrics={dailyMetrics}
+                responseTagNames={responseTagNames}
+                stageTagNames={computedStageNames}
+                finalTagName={finalTagName}
+              />
+            )}
+            {viewMode === 'date-wise' && (
+              <DateWiseTable
+                dailyMetrics={dailyMetrics}
+                responseTagNames={responseTagNames}
+                finalTagName={finalTagName}
+              />
+            )}
+            {viewMode === 'funnel-wise' && (
+              <FunnelWiseTable
+                funnelPeriods={funnelPeriods}
+                stageTagNames={computedStageNames}
+                finalTagName={finalTagName}
+              />
+            )}
+            {viewMode === 'monthly-totals' && (
+              <MonthlyTotalsTable
+                totals={monthlyTotals}
+                responseTagNames={responseTagNames}
+                stageTagNames={computedStageNames}
+                finalTagName={finalTagName}
+                monthLabel={monthLabel}
+              />
+            )}
           </div>
         </div>
       </main>
 
-      {/* Day 1 Setup Dialog */}
-      <Day1SetupDialog open={showDay1Setup} onSave={handleDay1Save} />
+      {/* FAB */}
+      <FloatingUpdateButton onClick={() => setShowUpdateDrawer(true)} />
 
-      {/* Upgrade Bar only for Free Users */}
-      {showProGate && <UpgradeBar />}
+      {/* Manual Update Drawer */}
+      <ManualUpdateDrawer
+        open={showUpdateDrawer}
+        onOpenChange={setShowUpdateDrawer}
+        responseTagNames={leadsTrackingTagNames}
+        stageTagNames={stageTagNames}
+        finalTagName={stageFinalTargetTag}
+        personalSnapshots={personalSnapshots}
+        totalSnapshots={totalSnapshots}
+        uplineLeaderId={directLeaderId}
+      />
 
       <BottomNav />
-    </div>;
+    </div>
+  );
 }
