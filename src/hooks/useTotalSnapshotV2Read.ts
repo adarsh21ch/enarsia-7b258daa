@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
@@ -38,6 +39,18 @@ export function useTotalSnapshotV2Read(monthYear: string) {
     enabled: !!user && !!monthYear,
     staleTime: 30_000,
   });
+
+  // Listen for sync events from write hooks
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const detail = (e as CustomEvent).detail;
+      if (detail?.month === monthYear) {
+        refetch();
+      }
+    };
+    window.addEventListener('trackup:total-snapshot-synced', handler);
+    return () => window.removeEventListener('trackup:total-snapshot-synced', handler);
+  }, [monthYear, refetch]);
 
   return { snapshots, loading: isLoading, refetch };
 }

@@ -58,6 +58,11 @@ export function useTotalSnapshotV2Write() {
 
       const monthYear = params.date.substring(0, 7);
       queryClient.invalidateQueries({ queryKey: ['total-snapshot-v2', user.id, monthYear] });
+      window.dispatchEvent(
+        new CustomEvent('trackup:total-snapshot-synced', {
+          detail: { userId: user.id, month: monthYear },
+        })
+      );
       toast.success('Total tracking saved');
       return true;
     } catch (err) {
