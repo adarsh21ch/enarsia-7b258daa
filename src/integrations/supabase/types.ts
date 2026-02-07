@@ -3671,6 +3671,7 @@ export type Database = {
           funnel_tag_count: number
           response_tags: Json
           snapshot_id: string
+          source: Database["public"]["Enums"]["team_snapshot_source"]
           stage_tags: Json
           total_leads: number
           total_responses: number
@@ -3689,6 +3690,7 @@ export type Database = {
           funnel_tag_count?: number
           response_tags?: Json
           snapshot_id?: string
+          source?: Database["public"]["Enums"]["team_snapshot_source"]
           stage_tags?: Json
           total_leads?: number
           total_responses?: number
@@ -3707,6 +3709,7 @@ export type Database = {
           funnel_tag_count?: number
           response_tags?: Json
           snapshot_id?: string
+          source?: Database["public"]["Enums"]["team_snapshot_source"]
           stage_tags?: Json
           total_leads?: number
           total_responses?: number
