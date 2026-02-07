@@ -1,209 +1,229 @@
 
-
-# Calling Streak / Daily Activity Streak
+# TrackUp V2: Full Personal + Total Tracking Dashboard
 
 ## Overview
 
-Track consecutive active days for each user to boost daily retention. A day counts as active if the user adds/imports leads, makes calls, or updates tracking. The streak displays as a fire icon in the Calling tab header, with admin controls for configuration.
+Replace the current simple Leads/Funnel tracking page with a full-featured TrackUp dashboard that mirrors the website, supporting both **Personal** and **Total** tracking modes, multiple view types, and an Update Tracking modal.
 
 ---
 
-## 1. Database: New Tables and Config
+## Phase 1: Data Layer (Hooks and Utilities)
 
-### `user_daily_activity` table
+### 1.1 Create snapshot read hooks for V2
 
-Stores one record per user per day to track activity without scanning full history.
+Create two new hooks that read from `personal_snapshot_v2` and `total_snapshot_v2` for a given month, returning daily snapshot rows:
 
-| Column | Type | Notes |
-|---|---|---|
-| id | UUID PK | |
-| user_id | UUID NOT NULL | |
-| activity_date | DATE NOT NULL | |
-| has_activity | BOOLEAN DEFAULT false | |
-| activity_sources | TEXT[] DEFAULT '{}' | Array: 'manual_add', 'import', 'call', 'tracking_update' |
-| created_at | TIMESTAMPTZ | |
+- **`src/hooks/usePersonalSnapshotV2Read.ts`** -- Fetches `personal_snapshot_v2` rows for the current user filtered by month. Returns array of snapshots with `date`, `total_leads`, `total_responses`, `response_tags`, `stage_tags`, funnel fields.
 
-Unique constraint on `(user_id, activity_date)`.
+- **`src/hooks/useTotalSnapshotV2Read.ts`** -- Same pattern but reads from `total_snapshot_v2`.
 
-### `user_streaks` table
+Both use React Query with `queryKey` including `user_id` and `monthYear`.
 
-Maintains precomputed streak state per user (no full-history scans).
+### 1.2 Create computed data hook
 
-| Column | Type | Notes |
-|---|---|---|
-| id | UUID PK | |
-| user_id | UUID UNIQUE NOT NULL | |
-| current_streak | INTEGER DEFAULT 0 | |
-| longest_streak | INTEGER DEFAULT 0 | |
-| last_active_date | DATE | |
-| grace_used | INTEGER DEFAULT 0 | |
-| updated_at | TIMESTAMPTZ | |
+- **`src/hooks/useSnapshotV2ComputedData.ts`** -- Takes raw snapshot rows + tracking tags and computes:
+  - Daily metrics array (for Date-wise and Funnel-wise tables)
+  - Monthly totals per tag
+  - KPI values (total leads, responses, per-tag counts, final target count)
+  - Summary data (transposed metrics-as-rows format)
+  - Funnel period groupings (based on `funnel_length` config)
 
-### Admin Config Rows
+### 1.3 Create tracking modes hook
 
-Insert into `admin_usage_limits`:
+- **`src/hooks/useTrackingModes.ts`** -- Manages:
+  - `dataMode`: `'personal'` | `'total'` (left pill selector)
+  - `viewType`: `'leads'` | `'funnel'` (right pill selector)
+  - `viewMode`: `'date-wise'` | `'funnel-wise'` | `'monthly-totals'` | `'summary'` (view dropdown)
+  - Auto-switch logic: Leads defaults to `'date-wise'`, Funnels defaults to `'funnel-wise'`
 
-| config_key | config_value | description |
-|---|---|---|
-| streak_enabled | 1 | Enable/disable streak feature |
-| streak_grace_days | 1 | Number of grace days before reset |
+### 1.4 Create snapshot slot utilities
 
-Insert into `admin_config_text`:
+- **`src/lib/snapshotSlotUtils.ts`** -- Utility functions to convert between tag names and slot keys (`response_tag_1`, `stage_tag_2`, etc.) used by the `update-tracking` edge function.
 
-| config_key | config_value | description |
-|---|---|---|
-| streak_active_actions | manual_add,import,call,tracking_update | Comma-separated actions that count |
+### 1.5 Create `update-tracking` edge function
 
-### RLS Policies
+Deploy **`supabase/functions/update-tracking/index.ts`** in this project's backend. Actions:
 
-- `user_daily_activity`: Users can read/insert/update their own rows (`auth.uid() = user_id`)
-- `user_streaks`: Users can read/insert/update their own rows (`auth.uid() = user_id`)
+| Action | Description |
+|--------|-------------|
+| `save_personal` | Upsert into `personal_snapshot_v2` using service role |
+| `save_total_manual` | Upsert into `total_snapshot_v2` with manual source |
+| `save_total_automated` | Aggregate downline snapshots into `total_snapshot_v2` |
+
+Uses `SUPABASE_SERVICE_ROLE_KEY` (auto-available) to bypass RLS for cross-user aggregation.
+
+### 1.6 Create write hooks
+
+- **`src/hooks/usePersonalSnapshotV2Write.ts`** -- Calls `update-tracking` edge function with `action: 'save_personal'`
+- **`src/hooks/useTotalSnapshotV2Write.ts`** -- Calls `update-tracking` with `action: 'save_total_manual'` or `'save_total_automated'`
 
 ---
 
-## 2. New Hook: `useStreak`
+## Phase 2: UI Components
 
-**File:** `src/hooks/useStreak.ts`
+### 2.1 Mode Selectors Component
 
-Responsibilities:
-- Fetch `user_streaks` row for current user (create if missing)
-- Fetch admin config for `streak_enabled`, `streak_grace_days`, and `streak_active_actions`
-- Expose: `currentStreak`, `longestStreak`, `lastActiveDate`, `streakEnabled`, `loading`
-- Provide `recordActivity(source: string)` function that:
-  1. Upserts into `user_daily_activity` for today (adds source to `activity_sources` array, sets `has_activity = true`)
-  2. Recalculates streak: if `last_active_date` is yesterday (or within grace), increment `current_streak`; if today already recorded, no-op; if gap exceeds grace, reset to 1
-  3. Updates `user_streaks` row with new values
-- All streak math is done client-side on the single `user_streaks` row (no history scan)
+**`src/components/trackup-v2/ModeSelectors.tsx`**
 
-### Streak Calculation Logic
+Two 50/50-width pill dropdowns:
+- Left: Personal / Total (data mode)
+- Right: Leads / Funnels (view type)
+
+Styled with `bg-primary text-primary-foreground` for active state, `ChevronDown` icon, `text-xs font-semibold`.
+
+### 2.2 View Selector Dropdown
+
+**`src/components/trackup-v2/ViewSelector.tsx`**
+
+Dropdown showing view options based on current view type:
+- Leads: Date-wise, Monthly Totals, Summary
+- Funnels: Funnel-wise, Monthly Totals, Summary
+
+Styled as rounded-full pill button.
+
+### 2.3 Collapsible KPI Section
+
+**`src/components/trackup-v2/CollapsibleKPI.tsx`**
+
+- Collapsed: single row of compact metric badges with dot separators
+- Expanded: 3-column grid of KPI cards
+- Star icon (amber) for final target tags
+- Chevron toggle
+
+### 2.4 Table Components
+
+All tables use a transposed layout (metrics/stages as sticky left column, dates/funnels scrolling horizontally):
+
+- **`src/components/trackup-v2/SummaryTable.tsx`** -- Metrics as rows, all dates as columns. Sticky left column with `bg-primary text-primary-foreground`. Today highlighted. Zeros shown as `--`.
+
+- **`src/components/trackup-v2/DateWiseTable.tsx`** -- For Leads mode. Same transposed layout with date groups, thick right border separators, auto-scroll to today.
+
+- **`src/components/trackup-v2/FunnelWiseTable.tsx`** -- For Funnels mode. Funnel run periods as columns, stage tags as rows.
+
+- **`src/components/trackup-v2/MonthlyTotalsTable.tsx`** -- Standard table with tag columns and monthly aggregate rows.
+
+### 2.5 Manual Update Modal (Drawer)
+
+**`src/components/trackup-v2/ManualUpdateDrawer.tsx`**
+
+Full-screen Drawer (100dvh on mobile) containing:
+
+- **Date strip calendar**: 7-day week view with left/right arrows and "Today" button
+- **Category tabs**: Leads / Funnel toggle
+- **Two-column layout**: Personal and Total
+  - Gear icon on each column header for source selection popover
+  - Personal sources: Manual / Application
+  - Total sources: Manual / Automated
+- **Numeric inputs**: Borderless, `inputMode="numeric"`, blank = not saved, explicit 0 = saved
+- **Save button**: "Save and Update" -- disabled until at least one field has data
+- **Local cache**: Snapshot data cached per date for instant switching
+
+Uses `usePersonalSnapshotV2Write` and `useTotalSnapshotV2Write` hooks on save.
+
+### 2.6 Floating Action Button (FAB)
+
+**`src/components/trackup-v2/FloatingUpdateButton.tsx`**
+
+- Position: `fixed bottom-20 right-4` (above bottom nav)
+- Size: `h-14 w-14 rounded-full bg-primary`
+- Icon: Plus
+- Opens ManualUpdateDrawer
+
+### 2.7 Team Redirect Button
+
+Part of the header -- opens `https://nevorai.com/trackup` in a new tab. Uses the existing SSO flow from `trackup-sso-link` edge function (already implemented).
+
+---
+
+## Phase 3: Page Assembly
+
+### 3.1 Rewrite `src/pages/Tracking.tsx`
+
+Replace the current two-tab (Leads/Funnel) layout with the full V2 dashboard:
 
 ```text
-today = current date
-gap = daysBetween(last_active_date, today)
+Header
+  - Logo + "Track Up" title
+  - Team Redirect button (top-right)
+  - ModeSelectors (Personal/Total + Leads/Funnels)
 
-if gap == 0: already active today, no change
-if gap == 1: consecutive day, streak += 1, grace_used = 0
-if gap <= 1 + grace_days: within grace, streak += 1, grace_used = gap - 1
-if gap > 1 + grace_days: streak reset to 1, grace_used = 0
+Content area
+  - View header row: Funnel name, Star KPI, ViewSelector dropdown, 3-dot menu
+  - CollapsibleKPI section
+  - Active table view (based on viewMode):
+    - DateWiseTable | FunnelWiseTable | MonthlyTotalsTable | SummaryTable
+  - Month navigator (prev/next arrows)
 
-Update longest_streak = max(longest_streak, current_streak)
-Update last_active_date = today
+FloatingUpdateButton -> ManualUpdateDrawer
+BottomNav
 ```
 
----
+### 3.2 Update `ProfileTrackUp` component
 
-## 3. Integrate Activity Recording
-
-Record streak activity at existing action points (no new UI, just hook calls):
-
-- **`src/hooks/useProspectsQuery.ts`** (or wherever `addProspect` / `importProspects` resolves): call `recordActivity('manual_add')` or `recordActivity('import')`
-- **`src/components/prospects/CallResultModal.tsx`**: after saving a call result, call `recordActivity('call')`
-- **`src/components/tracking/DynamicLeadsTracker.tsx`** and **`DynamicFunnelTracker.tsx`**: when user saves today's tracking data, call `recordActivity('tracking_update')`
-
-Each call is a lightweight upsert (idempotent for the same day).
+Update the profile page tracking section to also use the new V2 snapshot data instead of the old prospect-based tracking stats.
 
 ---
 
-## 4. Streak Badge in Dashboard Header
+## Phase 4: Styling
 
-**File:** `src/pages/Dashboard.tsx`
-
-- Import `useStreak`
-- In the header row (next to "Calling" title or near `HeaderBellIcon`), render a streak badge:
-
-```text
-[fire emoji] [number]
-```
-
-- Wrap in a `Tooltip` (from existing `@radix-ui/react-tooltip`):
-  - Content: "You're on a {N}-day streak! Keep going by adding leads or making calls daily."
-  - If streak is 0: "Start your streak by being active today!"
-
-- Only render if `streakEnabled` is true from admin config
-- On missed day (grace period active), show a subtle warning text below the badge: "Don't break your streak!"
-
----
-
-## 5. Streak History (Pro Only)
-
-**File:** `src/components/tracking/StreakHistory.tsx` (new, optional)
-
-- Simple card showing streak history from `user_daily_activity` (last 30 days calendar heatmap or list)
-- Gated: only visible if `isPro` from `useSubscription`
-- Free users see: "Upgrade to Pro to view your streak history and consistency insights" with upgrade CTA
-- This component can be placed in the Tracking page or Profile page
-
----
-
-## 6. Admin Panel: Streak Settings
-
-**File:** `src/components/admin/UsageLimitsManager.tsx`
-
-Add to `LIMIT_CATEGORIES`:
-
-```text
-'Streak Settings': ['streak_enabled', 'streak_grace_days']
-```
-
-Add to `LIMIT_ICONS`:
-
-```text
-streak_enabled: <Flame icon />
-streak_grace_days: <Clock icon />
-```
-
-Add `streak_enabled` to `BOOLEAN_FIELDS` array (shows toggle instead of number input).
-
-### Action Scope Checkboxes
-
-Add a new section (similar to `HistoricalScopeManager`) called `StreakActionsManager`:
-- Reads/writes `streak_active_actions` from `admin_config_text`
-- Checkboxes for: Manual Add, Import, Call, Tracking Update
-- Save button appears on change
-
-### Admin User Streak Reset
-
-In `EnhancedUsersTab` or `UserOverrideDrawer`:
-- Add a "Reset Streak" button per user
-- On click: sets `current_streak = 0`, `grace_used = 0`, `last_active_date = null` in `user_streaks`
-- Logs action to audit log
-
----
-
-## 7. Files Summary
-
-| Action | File |
-|---|---|
-| Create | `supabase/migrations/[timestamp].sql` (tables + config rows + RLS) |
-| Create | `src/hooks/useStreak.ts` |
-| Create | `src/components/tracking/StreakHistory.tsx` |
-| Edit | `src/pages/Dashboard.tsx` (streak badge in header) |
-| Edit | `src/components/admin/UsageLimitsManager.tsx` (streak settings + actions manager) |
-| Edit | `src/components/prospects/CallResultModal.tsx` (record 'call' activity) |
-| Edit | `src/hooks/useProspectsQuery.ts` (record 'manual_add' / 'import' activity) |
-| Edit | `src/components/tracking/DynamicLeadsTracker.tsx` (record 'tracking_update') |
-| Edit | `src/components/tracking/DynamicFunnelTracker.tsx` (record 'tracking_update') |
-| Edit | `src/components/admin/EnhancedUsersTab.tsx` or `UserOverrideDrawer.tsx` (reset streak button) |
+No CSS variable changes needed -- the existing theme already uses the correct primary blue color. The new components will use existing Tailwind classes and shadcn/ui components consistent with the current design system.
 
 ---
 
 ## Technical Details
 
-### Performance
-- Streak is precomputed in `user_streaks` -- no history scans
-- `recordActivity` is a single upsert + single update per action (idempotent per day)
-- Admin config is cached via existing `useAdminConfig` with 30s stale time
+### Database tables used (all already exist)
 
-### Independence
-- Streak tables are fully independent from `daily_tracking_log`, `activity_logs`, and analytics tables
-- No foreign keys to tracking tables -- only `user_id` references
+| Table | Purpose |
+|-------|---------|
+| `personal_snapshot_v2` | Personal tracking data per user per date |
+| `total_snapshot_v2` | Total/team tracking data per user per date |
+| `tracking_source_preferences` | Manual/Auto source settings |
+| `profiles` | Response/stage labels, funnel config |
+| `funnel_configs` | Funnel length and start date |
 
-### Grace Day Warning
-- When `grace_used > 0` (user is in grace period), the badge tooltip shows: "You missed a day! Stay active to keep your streak."
-- This is a soft warning, not blocking
+### New files to create (~15 files)
 
-### Admin as Source of Truth
-- `streak_enabled` toggle controls whether the feature is active at all
-- `streak_active_actions` controls which actions count
-- Changes reflect immediately via existing cache invalidation on `admin-config` query key
+| File | Type |
+|------|------|
+| `src/hooks/usePersonalSnapshotV2Read.ts` | Hook |
+| `src/hooks/useTotalSnapshotV2Read.ts` | Hook |
+| `src/hooks/useSnapshotV2ComputedData.ts` | Hook |
+| `src/hooks/useTrackingModes.ts` | Hook |
+| `src/hooks/usePersonalSnapshotV2Write.ts` | Hook |
+| `src/hooks/useTotalSnapshotV2Write.ts` | Hook |
+| `src/lib/snapshotSlotUtils.ts` | Utility |
+| `src/components/trackup-v2/ModeSelectors.tsx` | Component |
+| `src/components/trackup-v2/ViewSelector.tsx` | Component |
+| `src/components/trackup-v2/CollapsibleKPI.tsx` | Component |
+| `src/components/trackup-v2/SummaryTable.tsx` | Component |
+| `src/components/trackup-v2/DateWiseTable.tsx` | Component |
+| `src/components/trackup-v2/FunnelWiseTable.tsx` | Component |
+| `src/components/trackup-v2/MonthlyTotalsTable.tsx` | Component |
+| `src/components/trackup-v2/ManualUpdateDrawer.tsx` | Component |
+| `src/components/trackup-v2/FloatingUpdateButton.tsx` | Component |
+| `supabase/functions/update-tracking/index.ts` | Edge Function |
 
+### Files to modify
+
+| File | Change |
+|------|--------|
+| `src/pages/Tracking.tsx` | Full rewrite to V2 layout |
+| `src/components/profile/ProfileTrackUp.tsx` | Use V2 snapshot data |
+| `supabase/config.toml` | Add `update-tracking` function config |
+
+### Implementation order
+
+1. Utility files and slot conversion helpers
+2. Read hooks (personal + total snapshot)
+3. Computed data hook
+4. Tracking modes hook
+5. Edge function (`update-tracking`)
+6. Write hooks
+7. UI components (mode selectors, KPI, tables)
+8. Manual Update Drawer
+9. FAB button
+10. Page assembly (rewrite Tracking.tsx)
+11. Profile section update
+
+This is a large feature that will be built incrementally. The existing old tracking components (`DynamicLeadsTracker`, `DynamicFunnelTracker`) will remain available but the Tracking page will switch to the new V2 components.
