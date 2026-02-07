@@ -118,6 +118,9 @@ export function ManualUpdateDrawer({
     return Object.values(allVals).some((v) => v !== '' && v !== undefined);
   }, [personalValues, totalValues]);
 
+  const isPersonalDisabled = personalSource === 'AUTO';
+  const isTotalDisabled = teamSource === 'AUTO';
+
   const handleSave = async () => {
     const pLeads = parseInt(personalValues['leads'] || '0', 10) || 0;
     const pResponses = parseInt(personalValues['responses'] || '0', 10) || 0;
@@ -167,6 +170,8 @@ export function ManualUpdateDrawer({
         funnelStartDate: null,
         funnelDay: null,
         uplineLeaderId,
+        responseTagNames,
+        stageTagNames,
       }),
       saveTotal({
         date: dateStr,
@@ -182,6 +187,8 @@ export function ManualUpdateDrawer({
         funnelStartDate: null,
         funnelDay: null,
         uplineLeaderId,
+        responseTagNames,
+        stageTagNames,
       }),
     ]);
 
@@ -282,8 +289,8 @@ export function ManualUpdateDrawer({
           {/* Two-column input grid */}
           <div className="grid grid-cols-[1fr_1fr_1fr] gap-x-2 gap-y-1 text-xs">
             {/* Header row */}
-            <div className="font-medium text-muted-foreground py-1">Field</div>
-            <div className="text-center font-semibold py-1 flex items-center justify-center gap-1">
+            <div className="font-medium text-muted-foreground py-1 bg-muted/30 px-2 rounded">Metric</div>
+            <div className="text-center font-semibold py-1 bg-primary/10 flex items-center justify-center gap-1">
               Personal
               <SourceGear
                 value={personalSource}
@@ -294,7 +301,7 @@ export function ManualUpdateDrawer({
                 onChange={(v) => setPersonalSource(v as any)}
               />
             </div>
-            <div className="text-center font-semibold py-1 flex items-center justify-center gap-1">
+            <div className="text-center font-semibold py-1 bg-primary/10 flex items-center justify-center gap-1">
               Total
               <SourceGear
                 value={teamSource}
@@ -316,8 +323,12 @@ export function ManualUpdateDrawer({
                 onChange={(e) =>
                   setPersonalValues((p) => ({ ...p, leads: e.target.value.replace(/\D/g, '') }))
                 }
-                placeholder="--"
-                className="w-full text-center bg-transparent border-b border-border/50 py-1 outline-none focus:border-primary text-sm"
+                placeholder="0"
+                disabled={isPersonalDisabled}
+                className={cn(
+                  "w-full text-center bg-transparent border-b border-border/50 py-1 outline-none focus:border-primary text-sm placeholder:text-muted-foreground/40",
+                  isPersonalDisabled && "opacity-50 cursor-not-allowed"
+                )}
               />
             </div>
             <div className="py-1">
@@ -328,8 +339,12 @@ export function ManualUpdateDrawer({
                 onChange={(e) =>
                   setTotalValues((p) => ({ ...p, leads: e.target.value.replace(/\D/g, '') }))
                 }
-                placeholder="--"
-                className="w-full text-center bg-transparent border-b border-border/50 py-1 outline-none focus:border-primary text-sm"
+                placeholder="0"
+                disabled={isTotalDisabled}
+                className={cn(
+                  "w-full text-center bg-transparent border-b border-border/50 py-1 outline-none focus:border-primary text-sm placeholder:text-muted-foreground/40",
+                  isTotalDisabled && "opacity-50 cursor-not-allowed"
+                )}
               />
             </div>
 
@@ -346,8 +361,12 @@ export function ManualUpdateDrawer({
                     responses: e.target.value.replace(/\D/g, ''),
                   }))
                 }
-                placeholder="--"
-                className="w-full text-center bg-transparent border-b border-border/50 py-1 outline-none focus:border-primary text-sm"
+                placeholder="0"
+                disabled={isPersonalDisabled}
+                className={cn(
+                  "w-full text-center bg-transparent border-b border-border/50 py-1 outline-none focus:border-primary text-sm placeholder:text-muted-foreground/40",
+                  isPersonalDisabled && "opacity-50 cursor-not-allowed"
+                )}
               />
             </div>
             <div className="py-1">
@@ -361,8 +380,12 @@ export function ManualUpdateDrawer({
                     responses: e.target.value.replace(/\D/g, ''),
                   }))
                 }
-                placeholder="--"
-                className="w-full text-center bg-transparent border-b border-border/50 py-1 outline-none focus:border-primary text-sm"
+                placeholder="0"
+                disabled={isTotalDisabled}
+                className={cn(
+                  "w-full text-center bg-transparent border-b border-border/50 py-1 outline-none focus:border-primary text-sm placeholder:text-muted-foreground/40",
+                  isTotalDisabled && "opacity-50 cursor-not-allowed"
+                )}
               />
             </div>
 
@@ -373,6 +396,8 @@ export function ManualUpdateDrawer({
                 name={name}
                 personalValue={personalValues[name] || ''}
                 totalValue={totalValues[name] || ''}
+                personalDisabled={isPersonalDisabled}
+                totalDisabled={isTotalDisabled}
                 onPersonalChange={(v) =>
                   setPersonalValues((p) => ({ ...p, [name]: v }))
                 }
@@ -441,26 +466,34 @@ function TagInputRow({
   name,
   personalValue,
   totalValue,
+  personalDisabled,
+  totalDisabled,
   onPersonalChange,
   onTotalChange,
 }: {
   name: string;
   personalValue: string;
   totalValue: string;
+  personalDisabled?: boolean;
+  totalDisabled?: boolean;
   onPersonalChange: (v: string) => void;
   onTotalChange: (v: string) => void;
 }) {
   return (
     <>
-      <div className="py-2 font-medium truncate">{name}</div>
+      <div className="py-2 font-medium truncate bg-muted/30 px-2 rounded">{name}</div>
       <div className="py-1">
         <input
           type="text"
           inputMode="numeric"
           value={personalValue}
           onChange={(e) => onPersonalChange(e.target.value.replace(/\D/g, ''))}
-          placeholder="--"
-          className="w-full text-center bg-transparent border-b border-border/50 py-1 outline-none focus:border-primary text-sm"
+          placeholder="0"
+          disabled={personalDisabled}
+          className={cn(
+            "w-full text-center bg-transparent border-b border-border/50 py-1 outline-none focus:border-primary text-sm placeholder:text-muted-foreground/40",
+            personalDisabled && "opacity-50 cursor-not-allowed"
+          )}
         />
       </div>
       <div className="py-1">
@@ -469,8 +502,12 @@ function TagInputRow({
           inputMode="numeric"
           value={totalValue}
           onChange={(e) => onTotalChange(e.target.value.replace(/\D/g, ''))}
-          placeholder="--"
-          className="w-full text-center bg-transparent border-b border-border/50 py-1 outline-none focus:border-primary text-sm"
+          placeholder="0"
+          disabled={totalDisabled}
+          className={cn(
+            "w-full text-center bg-transparent border-b border-border/50 py-1 outline-none focus:border-primary text-sm placeholder:text-muted-foreground/40",
+            totalDisabled && "opacity-50 cursor-not-allowed"
+          )}
         />
       </div>
     </>

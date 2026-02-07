@@ -95,3 +95,51 @@ export function getTagValue(
 export function formatTrackingValue(value: number): string {
   return value === 0 ? '--' : String(value);
 }
+
+/**
+ * Convert human-readable tag names + values to position-based slot keys.
+ * e.g. tagNames = ["Interested", "Follow Up"], values = { "Interested": 3, "Follow Up": 2 }
+ * => { "response_tag_1": 3, "response_tag_2": 2 }
+ */
+export function tagNamesToSlotKeys(
+  tagNames: string[],
+  values: Record<string, number>,
+  prefix: 'response_tag' | 'stage_tag'
+): Record<string, number> {
+  const result: Record<string, number> = {};
+  tagNames.forEach((name, index) => {
+    const slotKey = `${prefix}_${index + 1}`;
+    if (values[name] !== undefined) {
+      result[slotKey] = values[name];
+    }
+  });
+  return result;
+}
+
+/**
+ * Convert position-based slot keys back to human-readable tag names.
+ * e.g. tagNames = ["Interested", "Follow Up"], slotData = { "response_tag_1": 3, "response_tag_2": 2 }
+ * => { "Interested": 3, "Follow Up": 2 }
+ */
+export function slotKeysToTagNames(
+  tagNames: string[],
+  slotData: Record<string, number>,
+  prefix: 'response_tag' | 'stage_tag'
+): Record<string, number> {
+  const result: Record<string, number> = {};
+  tagNames.forEach((name, index) => {
+    const slotKey = `${prefix}_${index + 1}`;
+    if (slotData[slotKey] !== undefined) {
+      result[name] = slotData[slotKey];
+    }
+  });
+  return result;
+}
+
+/**
+ * Detect if tags object uses slot keys (e.g. response_tag_1) vs human-readable names.
+ */
+export function hasSlotKeys(tags: Record<string, number>, prefix: 'response_tag' | 'stage_tag'): boolean {
+  const pattern = new RegExp(`^${prefix}_\\d+$`);
+  return Object.keys(tags).some((key) => pattern.test(key));
+}

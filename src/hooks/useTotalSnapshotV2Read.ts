@@ -2,14 +2,16 @@ import { useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
-import { parseSnapshotRow, type SnapshotRow } from '@/lib/snapshotSlotUtils';
+import { parseSnapshotRow, hasSlotKeys, slotKeysToTagNames, type SnapshotRow } from '@/lib/snapshotSlotUtils';
+import { useTrackingFormat } from '@/hooks/useTrackingFormat';
 
 /**
  * Reads total_snapshot_v2 rows for the current user for a given month.
- * @param monthYear - Format: 'YYYY-MM'
+ * Converts slot-keyed tags to human-readable names.
  */
 export function useTotalSnapshotV2Read(monthYear: string) {
   const { user } = useAuth();
+  const { leadsTrackingTagNames, stageTagNames } = useTrackingFormat();
 
   const { data: snapshots = [], isLoading, refetch } = useQuery({
     queryKey: ['total-snapshot-v2', user?.id, monthYear],
@@ -34,7 +36,16 @@ export function useTotalSnapshotV2Read(monthYear: string) {
         return [];
       }
 
-      return (data || []).map(parseSnapshotRow);
+      return (data || []).map((raw) => {
+        const row = parseSnapshotRow(raw);
+        if (hasSlotKeys(row.response_tags, 'response_tag') && leadsTrackingTagNames.length > 0) {
+          row.response_tags = slotKeysToTagNames(leadsTrackingTagNames, row.response_tags, 'response_tag');
+        }
+        if (hasSlotKeys(row.stage_tags, 'stage_tag') && stageTagNames.length > 0) {
+          row.stage_tags = slotKeysToTagNames(stageTagNames, row.stage_tags, 'stage_tag');
+        }
+        return row;
+      });
     },
     enabled: !!user && !!monthYear,
     staleTime: 30_000,
