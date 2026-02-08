@@ -50,7 +50,7 @@ export function ManualUpdateDrawer({
 
   const { savePersonal, saving: savingPersonal } = usePersonalSnapshotV2Write();
   const { saveTotal, saving: savingTotal } = useTotalSnapshotV2Write();
-  const { personalSource, teamSource, setPersonalSource, setTeamSource } =
+  const { personalSource, teamSource, setPersonalSource, setTeamSource, isLoading: prefsLoading } =
     useTrackingSourcePreferences();
 
   const dateStr = format(selectedDate, 'yyyy-MM-dd');
@@ -118,8 +118,8 @@ export function ManualUpdateDrawer({
     return Object.values(allVals).some((v) => v !== '' && v !== undefined);
   }, [personalValues, totalValues]);
 
-  const isPersonalDisabled = personalSource === 'AUTO';
-  const isTotalDisabled = teamSource === 'AUTO';
+  const isPersonalDisabled = prefsLoading || personalSource === 'AUTO';
+  const isTotalDisabled = prefsLoading || teamSource === 'AUTO';
 
   const handleSave = async () => {
     const pLeads = parseInt(personalValues['leads'] || '0', 10) || 0;
@@ -292,25 +292,33 @@ export function ManualUpdateDrawer({
             <div className="font-medium text-muted-foreground py-1 bg-muted/30 px-2 rounded">Metric</div>
             <div className="text-center font-semibold py-1 bg-primary/10 flex items-center justify-center gap-1">
               Personal
-              <SourceGear
-                value={personalSource}
-                options={[
-                  { label: 'Manual', value: 'MANUAL' },
-                  { label: 'Application', value: 'AUTO' },
-                ]}
-                onChange={(v) => setPersonalSource(v as any)}
-              />
+              {prefsLoading ? (
+                <Settings className="h-3 w-3 text-muted-foreground animate-spin" />
+              ) : (
+                <SourceGear
+                  value={personalSource}
+                  options={[
+                    { label: 'Manual', value: 'MANUAL' },
+                    { label: 'Application', value: 'AUTO' },
+                  ]}
+                  onChange={(v) => setPersonalSource(v as any)}
+                />
+              )}
             </div>
             <div className="text-center font-semibold py-1 bg-primary/10 flex items-center justify-center gap-1">
               Total
-              <SourceGear
-                value={teamSource}
-                options={[
-                  { label: 'Manual', value: 'MANUAL' },
-                  { label: 'Automated', value: 'AUTO' },
-                ]}
-                onChange={(v) => setTeamSource(v as any)}
-              />
+              {prefsLoading ? (
+                <Settings className="h-3 w-3 text-muted-foreground animate-spin" />
+              ) : (
+                <SourceGear
+                  value={teamSource}
+                  options={[
+                    { label: 'Manual', value: 'MANUAL' },
+                    { label: 'Automated', value: 'AUTO' },
+                  ]}
+                  onChange={(v) => setTeamSource(v as any)}
+                />
+              )}
             </div>
 
             {/* Leads row */}
