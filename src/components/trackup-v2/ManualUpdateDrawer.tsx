@@ -1,6 +1,6 @@
 import { useState, useCallback, useMemo, useEffect, useRef } from 'react';
-import { format, addDays, subDays, startOfWeek, isToday, parseISO } from 'date-fns';
-import { Check, ChevronLeft, ChevronRight, Settings } from 'lucide-react';
+import { format, isToday, parseISO } from 'date-fns';
+import { Check, Settings } from 'lucide-react';
 import { useQueryClient } from '@tanstack/react-query';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -10,6 +10,7 @@ import {
   DrawerHeader,
   DrawerTitle,
 } from '@/components/ui/drawer';
+import { useCalendarStrip } from '@/hooks/useCalendarStrip';
 import {
   Popover,
   PopoverContent,
@@ -43,6 +44,10 @@ export function ManualUpdateDrawer({
   totalSnapshots,
   uplineLeaderId,
 }: ManualUpdateDrawerProps) {
+  const calendar = useCalendarStrip({
+    initialDate: new Date(),
+    onDateChange: (d) => setSelectedDate(d),
+  });
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [category, setCategory] = useState<Category>('leads');
   const [personalValues, setPersonalValues] = useState<Record<string, string>>({});
@@ -112,11 +117,7 @@ export function ManualUpdateDrawer({
     }
   }, [dateStr, open, hydrateFromSnapshots]);
 
-  // Date strip
-  const weekDays = useMemo(() => {
-    const start = startOfWeek(selectedDate, { weekStartsOn: 1 });
-    return Array.from({ length: 7 }, (_, i) => addDays(start, i));
-  }, [selectedDate]);
+  // Use full month calendar strip
 
   const tagNames = category === 'leads' ? responseTagNames : stageTagNames;
 
@@ -215,66 +216,39 @@ export function ManualUpdateDrawer({
           <DrawerTitle className="text-base font-bold">Update Tracking</DrawerTitle>
         </DrawerHeader>
 
-        <div className="flex-1 overflow-y-auto px-4 py-3 space-y-4">
-          {/* Date strip */}
-          <div className="flex items-center gap-2">
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-8 w-8"
-              onClick={() => setSelectedDate((d) => subDays(d, 7))}
-            >
-              <ChevronLeft className="h-4 w-4" />
-            </Button>
-            <div className="flex-1 flex gap-1">
-              {weekDays.map((d) => {
-                const isSelected = format(d, 'yyyy-MM-dd') === dateStr;
-                const isTodayDate = isToday(d);
-                return (
-                  <button
-                    key={format(d, 'yyyy-MM-dd')}
-                    onClick={() => setSelectedDate(d)}
-                    className={cn(
-                      'flex-1 flex flex-col items-center py-1.5 rounded-lg text-xs transition-colors',
-                      isSelected
-                        ? 'bg-primary text-primary-foreground'
-                        : isTodayDate
-                        ? 'bg-primary/10 text-primary'
-                        : 'hover:bg-muted'
-                    )}
-                  >
-                    <span className="text-[10px] font-medium">
-                      {format(d, 'EEE')}
-                    </span>
-                    <span className="font-bold">{format(d, 'd')}</span>
-                  </button>
-                );
-              })}
-            </div>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-8 w-8"
-              onClick={() => setSelectedDate((d) => addDays(d, 7))}
-            >
-              <ChevronRight className="h-4 w-4" />
-            </Button>
-          </div>
+        <div className="flex-1 overflow-y-auto py-3 space-y-4">
+          {/* Full month calendar strip */}
+          <CalendarStripCompact
+            selectedDate={selectedDate}
+            daysInMonth={calendar.daysInMonth}
+            monthYearLabel={calendar.monthYearLabel}
+            onSelectDate={(d) => {
+              setSelectedDate(d);
+              calendar.selectDate(d);
+            }}
+            onPreviousMonth={calendar.goToPreviousMonth}
+            onNextMonth={calendar.goToNextMonth}
+          />
 
           {/* Today button */}
           {!isToday(selectedDate) && (
             <Button
               variant="outline"
               size="sm"
-              className="w-full text-xs"
-              onClick={() => setSelectedDate(new Date())}
+              className="w-full text-xs mx-4"
+              style={{ width: 'calc(100% - 2rem)' }}
+              onClick={() => {
+                const today = new Date();
+                setSelectedDate(today);
+                calendar.selectDate(today);
+              }}
             >
               Go to Today
             </Button>
           )}
 
           {/* Category tabs */}
-          <div className="flex gap-1 p-1 bg-muted/50 rounded-lg">
+          <div className="flex gap-1 p-1 bg-muted/50 rounded-lg mx-4">
             <button
               onClick={() => setCategory('leads')}
               className={cn(
@@ -300,7 +274,7 @@ export function ManualUpdateDrawer({
           </div>
 
           {/* Two-column input grid */}
-          <div className="grid grid-cols-[1fr_1fr_1fr] gap-x-2 gap-y-1 text-xs">
+          <div className="grid grid-cols-[1fr_1fr_1fr] gap-x-2 gap-y-1 text-xs mx-4">
             {/* Header row */}
             <div className="font-medium text-accent-foreground py-1.5 bg-accent px-2 rounded text-center">Metric</div>
             <div className="text-center font-semibold py-1.5 bg-accent text-accent-foreground rounded flex items-center justify-center gap-1">
@@ -540,5 +514,84 @@ function TagInputRow({
         />
       </div>
     </>
+  );
+}
+
+/* ── Compact calendar strip for full month view ── */
+import { useRef as useRefCalendar } from 'react';
+import { isSameDay } from 'date-fns';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
+
+function CalendarStripCompact({
+  selectedDate,
+  daysInMonth,
+  monthYearLabel,
+  onSelectDate,
+  onPreviousMonth,
+  onNextMonth,
+}: {
+  selectedDate: Date;
+  daysInMonth: Date[];
+  monthYearLabel: string;
+  onSelectDate: (d: Date) => void;
+  onPreviousMonth: () => void;
+  onNextMonth: () => void;
+}) {
+  const scrollRef = useRefCalendar<HTMLDivElement>(null);
+  const selectedRef = useRefCalendar<HTMLButtonElement>(null);
+
+  useEffect(() => {
+    if (selectedRef.current && scrollRef.current) {
+      const container = scrollRef.current;
+      const el = selectedRef.current;
+      container.scrollTo({
+        left: el.offsetLeft - container.offsetWidth / 2 + el.offsetWidth / 2,
+        behavior: 'smooth',
+      });
+    }
+  }, [selectedDate, daysInMonth]);
+
+  return (
+    <div>
+      <div className="flex items-center justify-between px-4 py-1">
+        <Button variant="ghost" size="icon" className="h-7 w-7" onClick={onPreviousMonth}>
+          <ChevronLeft className="h-4 w-4" />
+        </Button>
+        <span className="text-xs font-semibold">{monthYearLabel}</span>
+        <Button variant="ghost" size="icon" className="h-7 w-7" onClick={onNextMonth}>
+          <ChevronRight className="h-4 w-4" />
+        </Button>
+      </div>
+      <div
+        ref={scrollRef}
+        className="flex overflow-x-auto px-2 pb-2 gap-1"
+        style={{ scrollbarWidth: 'none' }}
+      >
+        {daysInMonth.map((day) => {
+          const isSelected = isSameDay(day, selectedDate);
+          const isTodayDate = isToday(day);
+          return (
+            <button
+              key={format(day, 'yyyy-MM-dd')}
+              ref={isSelected ? selectedRef : null}
+              onClick={() => onSelectDate(day)}
+              className={cn(
+                'flex flex-col items-center min-w-[40px] py-1.5 px-1 rounded-lg text-xs transition-colors',
+                isSelected
+                  ? 'bg-primary text-primary-foreground shadow-sm'
+                  : isTodayDate
+                  ? 'bg-primary/10 text-primary'
+                  : 'hover:bg-muted'
+              )}
+            >
+              <span className={cn('text-[10px] font-medium', isSelected ? 'text-primary-foreground/80' : 'text-muted-foreground')}>
+                {format(day, 'EEE')}
+              </span>
+              <span className="font-bold">{format(day, 'd')}</span>
+            </button>
+          );
+        })}
+      </div>
+    </div>
   );
 }
