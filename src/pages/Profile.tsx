@@ -129,40 +129,40 @@ export default function Profile() {
   const [ssoLoading, setSsoLoading] = useState(false);
   const handleOpenTrackUp = async () => {
     setSsoLoading(true);
-    // Open window IMMEDIATELY on user click (before any await) to bypass popup blocker
-    const newWindow = window.open('about:blank', '_blank');
     try {
-      const { data: { session } } = await supabase.auth.getSession();
+      // Check for valid session first
+      const {
+        data: {
+          session
+        }
+      } = await supabase.auth.getSession();
       if (!session) {
-        newWindow?.close();
         toast.error('Please log in first');
         navigate('/auth');
+        setSsoLoading(false);
         return;
       }
-      const { data, error } = await supabase.functions.invoke('trackup-sso-link');
+      const {
+        data,
+        error
+      } = await supabase.functions.invoke('trackup-sso-link');
       if (error) {
         console.error('SSO link error:', error);
-        if (newWindow) {
-          newWindow.location.href = 'https://nevorai.com/auth?redirect=/trackup';
-        }
+        toast.error('Failed to generate login link. Opening login page...');
+        window.open('https://nevorai.com/auth?redirect=/trackup', '_blank');
         return;
       }
       if (data?.action_link) {
-        if (newWindow) {
-          newWindow.location.href = data.action_link;
-        } else {
-          window.location.href = data.action_link;
-        }
+        // Open the magic link - user will be auto-logged in
+        window.open(data.action_link, '_blank');
       } else {
-        if (newWindow) {
-          newWindow.location.href = 'https://nevorai.com/auth?redirect=/trackup';
-        }
+        toast.error('Failed to generate login link');
+        window.open('https://nevorai.com/auth?redirect=/trackup', '_blank');
       }
     } catch (err) {
       console.error('SSO error:', err);
-      if (newWindow) {
-        newWindow.location.href = 'https://nevorai.com/auth?redirect=/trackup';
-      }
+      toast.error('Something went wrong. Opening login page...');
+      window.open('https://nevorai.com/auth?redirect=/trackup', '_blank');
     } finally {
       setSsoLoading(false);
     }

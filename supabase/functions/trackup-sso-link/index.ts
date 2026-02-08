@@ -32,24 +32,23 @@ serve(async (req) => {
     const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY')!;
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 
-    // Verify user via getClaims (required for signing-keys auth)
+    // Client for verifying the user
     const supabaseClient = createClient(supabaseUrl, supabaseAnonKey, {
       global: { headers: { Authorization: authHeader } },
     });
 
-    const token = authHeader.replace('Bearer ', '');
-    const { data: claimsData, error: claimsError } = await supabaseClient.auth.getClaims(token);
+    // Get the authenticated user
+    const { data: { user }, error: userError } = await supabaseClient.auth.getUser();
     
-    if (claimsError || !claimsData?.claims) {
-      console.error('User authentication failed:', claimsError);
+    if (userError || !user) {
+      console.error('User authentication failed:', userError?.message);
       return new Response(
         JSON.stringify({ error: 'Unauthorized - Invalid session' }),
         { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    const userId = claimsData.claims.sub as string;
-    const userEmail = claimsData.claims.email as string;
+    const userEmail = user.email;
     if (!userEmail) {
       console.error('User has no email');
       return new Response(
@@ -58,15 +57,15 @@ serve(async (req) => {
       );
     }
 
-    console.log('Generating SSO link for user:', userId, 'email:', userEmail);
+    console.log('Generating SSO link for user:', user.id, 'email:', userEmail);
 
     // Rate limiting check
-    const lastRequest = rateLimitMap.get(userId);
+    const lastRequest = rateLimitMap.get(user.id);
     const now = Date.now();
     
     if (lastRequest && (now - lastRequest) < RATE_LIMIT_SECONDS * 1000) {
       const waitSeconds = Math.ceil((RATE_LIMIT_SECONDS * 1000 - (now - lastRequest)) / 1000);
-      console.log('Rate limited:', userId, 'wait:', waitSeconds);
+      console.log('Rate limited:', user.id, 'wait:', waitSeconds);
       return new Response(
         JSON.stringify({ error: `Please wait ${waitSeconds} seconds before requesting another link` }),
         { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -94,7 +93,7 @@ serve(async (req) => {
     }
 
     // Update rate limit timestamp
-    rateLimitMap.set(userId, now);
+    rateLimitMap.set(user.id, now);
 
     const actionLink = linkData.properties?.action_link;
     if (!actionLink) {
@@ -105,7 +104,7 @@ serve(async (req) => {
       );
     }
 
-    console.log('SSO link generated successfully for:', userId);
+    console.log('SSO link generated successfully for:', user.id);
 
     return new Response(
       JSON.stringify({ action_link: actionLink }),

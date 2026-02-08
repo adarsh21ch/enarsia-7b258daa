@@ -1,68 +1,71 @@
 
 
-# Fix TrackUp Dashboard Button — Not Opening
+# Speed Up TrackUp Loading — Instant Data on Tab Switch
 
-## Problem
+## Root Cause
 
-Two issues prevent the button from working:
+When you open TrackUp, there is a **waterfall of 5-7 sequential database calls** before any data appears:
 
-1. **Browser popup blocker**: The code calls `window.open()` after multiple `await` calls (session check, then edge function call). Browsers block `window.open` when it's not triggered by a direct, synchronous user gesture. This is why nothing happens — the popup is silently blocked.
+1. Auth loads user
+2. `useTrackingFormat` fetches your profile, then your leader's profile via 2-3 RPC calls
+3. `useFunnelConfig` fetches funnel config + checks leader connection (2-3 more calls)
+4. Only AFTER steps 2-3 finish do the snapshot read hooks (`usePersonalSnapshotV2Read`, `useTotalSnapshotV2Read`) fire
+5. Tag name resolution must complete before data renders correctly
 
-2. **Wrong redirect URL**: The generated magic link redirects to `https://nevorai.lovable.app` instead of `https://nevorai.com/trackup`. The Supabase auth Site URL configuration is overriding the `redirectTo` parameter specified in the edge function.
+FollowUp feels instant because it does a single `prospects` query with no dependencies.
 
-## Fix
+## Solution: Aggressive Caching + Prefetching
 
-### 1. `src/pages/Profile.tsx` — Fix popup blocker
+The key insight: **tracking format, funnel config, and snapshot data rarely change**. We can cache them so that switching tabs or reopening the app shows stale data immediately, then silently refreshes in the background.
 
-Open a blank window **before** the async calls, then set its URL after the SSO link is generated:
+### Changes
 
-```typescript
-const handleOpenTrackUp = async () => {
-  setSsoLoading(true);
-  // Open window IMMEDIATELY on user click (before any await)
-  const newWindow = window.open('about:blank', '_blank');
-  try {
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session) {
-      newWindow?.close();
-      toast.error('Please log in first');
-      navigate('/auth');
-      return;
-    }
-    const { data, error } = await supabase.functions.invoke('trackup-sso-link');
-    if (data?.action_link) {
-      if (newWindow) {
-        newWindow.location.href = data.action_link;
-      } else {
-        window.location.href = data.action_link;
-      }
-    } else {
-      // Fallback
-      if (newWindow) {
-        newWindow.location.href = 'https://nevorai.com/auth?redirect=/trackup';
-      }
-    }
-  } catch (err) {
-    if (newWindow) {
-      newWindow.location.href = 'https://nevorai.com/auth?redirect=/trackup';
-    }
-  } finally {
-    setSsoLoading(false);
-  }
-};
+**1. `src/hooks/useTrackingFormat.ts`** — Add localStorage caching
+
+- On successful load, save `trackingFormat` to `localStorage`
+- On mount, immediately read from `localStorage` and set state (so data shows in ~5ms)
+- Then fetch fresh data from DB in the background and update if changed
+- This eliminates the 3-5 second wait for tag names on every tab switch
+
+**2. `src/hooks/usePersonalSnapshotV2Read.ts`** — Increase staleTime and gcTime
+
+- Change `staleTime` from 30s to 5 minutes (`300_000`)
+- Add `gcTime: 10 * 60 * 1000` (10 minutes) so React Query keeps data in memory across tab switches
+- Data still refreshes in the background, but the UI shows cached data instantly
+
+**3. `src/hooks/useTotalSnapshotV2Read.ts`** — Same caching changes
+
+- Match personal snapshot caching: `staleTime: 300_000`, `gcTime: 600_000`
+
+**4. `src/hooks/useFunnelConfig.ts`** — Add localStorage caching
+
+- Cache own config and leader config to localStorage on successful fetch
+- Read from cache on mount for instant display
+- Fetch fresh data in background
+
+**5. `src/hooks/useTrackingSourcePreferences.ts`** — Increase staleTime
+
+- Add `staleTime: 300_000` and `gcTime: 600_000` so preference loads from cache on tab switch
+
+### How It Works
+
+```text
+BEFORE (current):
+Tab switch -> Auth -> TrackingFormat (3 RPCs) -> FunnelConfig (2 RPCs) -> Snapshots (2 queries)
+                                    ~10-12 seconds total
+
+AFTER (with caching):
+Tab switch -> Cached TrackingFormat (5ms) -> Cached Snapshots (5ms) -> UI renders
+             Background: fresh fetch -> update if changed
+                                    ~instant display, background refresh
 ```
 
-This pattern opens the window synchronously (allowed by browsers), then navigates it once the link is ready.
+### Safety
 
-### 2. `src/pages/Tracking.tsx` — Apply same fix
-
-The Tracking page has the same SSO button with the same popup blocker issue. Apply the identical `window.open('about:blank')` pattern there.
-
-### 3. Redirect URL issue (informational)
-
-The redirect URL (`nevorai.com/trackup`) must be added to the **Redirect URLs** list in the Supabase Auth configuration for the external Supabase instance. Without it, Supabase falls back to the Site URL. This is a backend configuration change on the external instance — not something that can be fixed in code alone.
-
-## Files to Edit
-- `src/pages/Profile.tsx` — Fix popup blocker in `handleOpenTrackUp`
-- `src/pages/Tracking.tsx` — Fix popup blocker in equivalent SSO handler
+- Cached data is only used for display while fresh data loads
+- If cached data is stale, it gets replaced silently within 1-2 seconds
+- First-ever login still loads normally (no cache exists yet)
+- Cache is keyed per user ID to prevent data leaks between accounts
+- Logout clears cached tracking data
+- No changes to any API, edge function, KPI calculation, or snapshot logic
 
