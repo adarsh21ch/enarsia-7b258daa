@@ -1,39 +1,30 @@
 
 
-# Fix: Funnel-wise View "No Data Available"
+# Fix: Eliminate Loading Delay on TrackUp Page
 
-## Safety Confirmation
+## Root Cause
 
-This change is 100% safe and does NOT affect the website dashboard in any way:
+`Tracking.tsx` calls `useTrackingFormat()` directly, which creates a **second, independent instance** of the hook. This triggers fresh database queries (profile fetch, leader RPC calls) every time the page opens -- causing the loading spinner.
 
-- This file (`useSnapshotV2ComputedData.ts`) exists only in the App's codebase
-- The website has its own separate code — no shared frontend files
-- No database, edge function, or backend changes whatsoever
-- Only the funnel period grouping logic changes; KPIs, monthly totals, and daily metrics remain untouched
+Meanwhile, the `TrackingFormatProvider` at the app root **already has all this data loaded** since app startup. It just isn't being used on this page.
 
-## What Changes
+## Fix
 
-**1 file modified: `src/hooks/useSnapshotV2ComputedData.ts`**
+**1 file modified: `src/pages/Tracking.tsx`**
 
-Only the `funnelPeriods` useMemo block (lines 130-190) is replaced.
-
-**Current (broken):** Filters snapshots by `funnelDay !== null && funnelDay > 0` -- this column is always `null` in the database, so zero results are returned.
-
-**New (matches website):** Uses date arithmetic from the leader's `day_1_start` config:
-
-```text
-For each daily metric:
-  daysSince = differenceInCalendarDays(metricDate, funnelStartDate) + 1
-  if daysSince < 1 -> skip (before funnel started)
-  periodNum = Math.ceil(daysSince / funnelLength)
-  -> Group into "F1", "F2", etc. and aggregate stage totals
-```
+- Replace `import { useTrackingFormat } from '@/hooks/useTrackingFormat'` with `import { useTrackingFormatContext } from '@/contexts/TrackingFormatContext'`
+- Change the hook call from `useTrackingFormat()` to `useTrackingFormatContext()`
+- Remove the `formatLoading` conditional and the loading spinner -- data is already available instantly from the context
+- Keep all other logic exactly the same (same variable names, same destructuring)
 
 ## What Does NOT Change
 
-- Zero changes to the website dashboard (separate codebase entirely)
-- Zero database or edge function changes
-- Zero changes to KPI calculations, monthly totals, or daily metrics
-- Zero changes to read/write hooks, slot key mapping, or UI components
-- Only the `funnelPeriods` computation block is rewritten with an import of `differenceInCalendarDays` from `date-fns`
+- No database, edge function, or backend changes
+- No changes to any other component or hook
+- No changes to KPI, table, or drawer logic
+- The tracking format data itself is identical -- just sourced from the already-loaded context instead of a fresh fetch
+
+## Result
+
+TrackUp page opens instantly with all rows (Leads, Response tags, Stage tags) visible at once -- no spinner, no staggered loading.
 
