@@ -125,47 +125,9 @@ export default function Profile() {
   } = useFreeTrial();
   const [editOpen, setEditOpen] = useState(false);
 
-  // Handle TrackUp Dashboard - SSO magic link to nevorai.com
-  const [ssoLoading, setSsoLoading] = useState(false);
-  const handleOpenTrackUp = async () => {
-    setSsoLoading(true);
-    try {
-      // Check for valid session first
-      const {
-        data: {
-          session
-        }
-      } = await supabase.auth.getSession();
-      if (!session) {
-        toast.error('Please log in first');
-        navigate('/auth');
-        setSsoLoading(false);
-        return;
-      }
-      const {
-        data,
-        error
-      } = await supabase.functions.invoke('trackup-sso-link');
-      if (error) {
-        console.error('SSO link error:', error);
-        toast.error('Failed to generate login link. Opening login page...');
-        window.open('https://nevorai.com/auth?redirect=/trackup', '_blank');
-        return;
-      }
-      if (data?.action_link) {
-        // Open the magic link - user will be auto-logged in
-        window.open(data.action_link, '_blank');
-      } else {
-        toast.error('Failed to generate login link');
-        window.open('https://nevorai.com/auth?redirect=/trackup', '_blank');
-      }
-    } catch (err) {
-      console.error('SSO error:', err);
-      toast.error('Something went wrong. Opening login page...');
-      window.open('https://nevorai.com/auth?redirect=/trackup', '_blank');
-    } finally {
-      setSsoLoading(false);
-    }
+  // Handle TrackUp Dashboard - direct link to nevorai.com
+  const handleOpenTrackUp = () => {
+    window.open('https://nevorai.com/trackup', '_blank', 'noopener');
   };
 
   // Process pending upline email from share links
@@ -306,10 +268,10 @@ export default function Profile() {
             </div>}
 
           {/* TrackUp Dashboard - External link to web dashboard */}
-          <button onClick={handleOpenTrackUp} disabled={ssoLoading} className={cn("w-full relative overflow-hidden rounded-xl p-4", "bg-gradient-to-r backdrop-blur-sm", "border border-emerald-500/30 shadow-sm", "flex items-center justify-between", "transition-all duration-300 hover:shadow-md hover:scale-[1.01]", "from-emerald-500/20 to-emerald-500/5", ssoLoading && "opacity-70 cursor-wait")}>
+          <button onClick={handleOpenTrackUp} className={cn("w-full relative overflow-hidden rounded-xl p-4", "bg-gradient-to-r backdrop-blur-sm", "border border-emerald-500/30 shadow-sm", "flex items-center justify-between", "transition-all duration-300 hover:shadow-md hover:scale-[1.01]", "from-emerald-500/20 to-emerald-500/5")}>
             <div className="flex items-center gap-3">
               <div className="p-2 rounded-lg bg-emerald-500/10">
-                {ssoLoading ? <Loader2 className="h-5 w-5 text-emerald-500 animate-spin" /> : <BarChart3 className="h-5 w-5 text-emerald-500" />}
+                <BarChart3 className="h-5 w-5 text-emerald-500" />
               </div>
               <div className="text-left">
                 <span className="font-medium block">TrackUp Dashboard 
@@ -434,7 +396,7 @@ export default function Profile() {
  
                                        </span>
                 <span className="text-xs text-muted-foreground">
-                  {ssoLoading ? 'Opening...' : 'Team tracking on nevorai.com'}
+                  Team tracking on nevorai.com
                 </span>
               </div>
             </div>
