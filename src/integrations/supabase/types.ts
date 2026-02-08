@@ -1792,6 +1792,38 @@ export type Database = {
           },
         ]
       }
+      funnel_access: {
+        Row: {
+          created_at: string | null
+          funnel_id: string
+          granted_by_user_id: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          funnel_id: string
+          granted_by_user_id: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          funnel_id?: string
+          granted_by_user_id?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "funnel_access_funnel_id_fkey"
+            columns: ["funnel_id"]
+            isOneToOne: false
+            referencedRelation: "funnels"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       funnel_configs: {
         Row: {
           created_at: string
