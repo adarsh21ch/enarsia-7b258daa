@@ -1,20 +1,16 @@
-import { useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { parseSnapshotRow, hasSlotKeys, slotKeysToTagNames, type SnapshotRow } from '@/lib/snapshotSlotUtils';
 import { useTrackingFormat } from '@/hooks/useTrackingFormat';
 
-/**
- * Reads personal_snapshot_v2 rows for the current user for a given month.
- * Converts slot-keyed tags to human-readable names.
- */
 export function usePersonalSnapshotV2Read(monthYear: string) {
   const { user } = useAuth();
   const { leadsTrackingTagNames, stageTagNames } = useTrackingFormat();
 
-  const { data: snapshots = [], isLoading, refetch } = useQuery({
-    queryKey: ['personal-snapshot-v2', user?.id, monthYear, leadsTrackingTagNames, stageTagNames],
+  const { data: rawSnapshots = [], isLoading, refetch } = useQuery({
+    queryKey: ['personal-snapshot-v2', user?.id, monthYear],
     queryFn: async (): Promise<SnapshotRow[]> => {
       if (!user) return [];
 
@@ -36,22 +32,27 @@ export function usePersonalSnapshotV2Read(monthYear: string) {
         return [];
       }
 
-      return (data || []).map((raw) => {
-        const row = parseSnapshotRow(raw);
-        // Convert slot keys to human-readable tag names if needed
-        if (hasSlotKeys(row.response_tags, 'response_tag') && leadsTrackingTagNames.length > 0) {
-          row.response_tags = slotKeysToTagNames(leadsTrackingTagNames, row.response_tags, 'response_tag');
-        }
-        if (hasSlotKeys(row.stage_tags, 'stage_tag') && stageTagNames.length > 0) {
-          row.stage_tags = slotKeysToTagNames(stageTagNames, row.stage_tags, 'stage_tag');
-        }
-        return row;
-      });
+      return (data || []).map((raw) => parseSnapshotRow(raw));
     },
     enabled: !!user && !!monthYear,
     staleTime: 300_000,
     gcTime: 600_000,
+    refetchOnMount: 'always',
   });
+
+  // Post-process: convert slot keys to tag names reactively
+  const snapshots = useMemo(() => {
+    return rawSnapshots.map((row) => {
+      const mapped = { ...row };
+      if (hasSlotKeys(mapped.response_tags, 'response_tag') && leadsTrackingTagNames.length > 0) {
+        mapped.response_tags = slotKeysToTagNames(leadsTrackingTagNames, mapped.response_tags, 'response_tag');
+      }
+      if (hasSlotKeys(mapped.stage_tags, 'stage_tag') && stageTagNames.length > 0) {
+        mapped.stage_tags = slotKeysToTagNames(stageTagNames, mapped.stage_tags, 'stage_tag');
+      }
+      return mapped;
+    });
+  }, [rawSnapshots, leadsTrackingTagNames, stageTagNames]);
 
   // Listen for sync events from write hooks
   useEffect(() => {

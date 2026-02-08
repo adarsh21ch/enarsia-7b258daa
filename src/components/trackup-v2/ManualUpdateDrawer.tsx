@@ -1,6 +1,7 @@
 import { useState, useCallback, useMemo, useEffect, useRef } from 'react';
 import { format, addDays, subDays, startOfWeek, isToday, parseISO } from 'date-fns';
 import { Check, ChevronLeft, ChevronRight, Settings } from 'lucide-react';
+import { useQueryClient } from '@tanstack/react-query';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import {
@@ -48,6 +49,7 @@ export function ManualUpdateDrawer({
   const [totalValues, setTotalValues] = useState<Record<string, string>>({});
   const prevOpen = useRef(false);
 
+  const queryClient = useQueryClient();
   const { savePersonal, saving: savingPersonal } = usePersonalSnapshotV2Write();
   const { saveTotal, saving: savingTotal } = useTotalSnapshotV2Write();
   const { personalSource, teamSource, setPersonalSource, setTeamSource, isLoading: prefsLoading } =
@@ -190,6 +192,12 @@ export function ManualUpdateDrawer({
         responseTagNames,
         stageTagNames,
       }),
+    ]);
+
+    // Wait for cache to refresh before closing so the user sees updated data immediately
+    await Promise.all([
+      queryClient.invalidateQueries({ queryKey: ['personal-snapshot-v2'] }),
+      queryClient.invalidateQueries({ queryKey: ['total-snapshot-v2'] }),
     ]);
 
     onOpenChange(false);
