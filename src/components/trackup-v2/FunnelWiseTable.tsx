@@ -31,8 +31,8 @@ export function FunnelWiseTable({
       <div className="overflow-x-auto">
         <table className="w-max min-w-full text-xs">
           <thead>
-            <tr>
-              <th className="sticky left-0 z-10 bg-primary text-primary-foreground px-3 py-2 text-left font-semibold min-w-[100px]">
+            <tr className="bg-accent text-accent-foreground">
+              <th className="sticky left-0 z-10 bg-accent text-accent-foreground px-3 py-2 text-left font-semibold min-w-[100px]">
                 Stage
               </th>
               {funnelPeriods.map((period) => (
@@ -41,7 +41,7 @@ export function FunnelWiseTable({
                   className="px-3 py-2 text-center font-semibold min-w-[64px]"
                 >
                   <div className="font-bold">{period.label}</div>
-                  <div className="text-[10px] text-muted-foreground font-normal">
+                  <div className="text-[10px] text-accent-foreground/70 font-normal">
                     {period.startDate.slice(5)}
                   </div>
                 </th>
@@ -51,7 +51,7 @@ export function FunnelWiseTable({
           <tbody>
             {stageTagNames.map((stageName) => (
               <tr key={stageName} className="border-t border-border/30">
-                <td className="sticky left-0 z-10 bg-primary text-primary-foreground px-3 py-2 font-medium whitespace-nowrap">
+                <td className="sticky left-0 z-10 bg-accent/15 text-accent px-3 py-2 font-medium whitespace-nowrap">
                   {stageName}
                 </td>
                 {funnelPeriods.map((period) => {
