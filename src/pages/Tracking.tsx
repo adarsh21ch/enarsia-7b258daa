@@ -50,9 +50,9 @@ export default function Tracking() {
   const { getEffectiveConfig } = useFunnelConfig();
   const effectiveConfig = getEffectiveConfig();
 
-  // Read snapshots for current month
-  const { snapshots: personalSnapshots } = usePersonalSnapshotV2Read(monthYear);
-  const { snapshots: totalSnapshots } = useTotalSnapshotV2Read(monthYear);
+  // Read snapshots for current month — pass tag names from context for instant mapping
+  const { snapshots: personalSnapshots } = usePersonalSnapshotV2Read(monthYear, leadsTrackingTagNames, stageTagNames);
+  const { snapshots: totalSnapshots } = useTotalSnapshotV2Read(monthYear, leadsTrackingTagNames, stageTagNames);
 
   // Pick active snapshots based on data mode
   const activeSnapshots = dataMode === 'personal' ? personalSnapshots : totalSnapshots;

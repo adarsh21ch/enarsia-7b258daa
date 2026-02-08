@@ -3,11 +3,13 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { parseSnapshotRow, hasSlotKeys, slotKeysToTagNames, type SnapshotRow } from '@/lib/snapshotSlotUtils';
-import { useTrackingFormat } from '@/hooks/useTrackingFormat';
 
-export function usePersonalSnapshotV2Read(monthYear: string) {
+export function usePersonalSnapshotV2Read(
+  monthYear: string,
+  leadsTrackingTagNames: string[] = [],
+  stageTagNames: string[] = [],
+) {
   const { user } = useAuth();
-  const { leadsTrackingTagNames, stageTagNames } = useTrackingFormat();
 
   const { data: rawSnapshots = [], isLoading, refetch } = useQuery({
     queryKey: ['personal-snapshot-v2', user?.id, monthYear],
@@ -40,7 +42,7 @@ export function usePersonalSnapshotV2Read(monthYear: string) {
     refetchOnMount: 'always',
   });
 
-  // Post-process: convert slot keys to tag names reactively
+  // Post-process: convert slot keys to tag names reactively using passed-in names
   const snapshots = useMemo(() => {
     return rawSnapshots.map((row) => {
       const mapped = { ...row };
