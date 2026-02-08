@@ -45,6 +45,7 @@ export interface TrackingFormat {
   // Metadata
   directLeaderName: string | null;
   directLeaderId: string | null;
+  directLeaderUserId: string | null;  // UUID of direct leader (for snapshot writes)
   isUsingLeaderFormat: boolean;
   isRootLeader: boolean;
   
@@ -154,6 +155,7 @@ export function useTrackingFormat() {
   // Fetch a leader's profile meta (name/id). Used for displaying the *direct* leader.
   // IMPORTANT: profiles table is protected by RLS, so we must use SECURITY DEFINER RPCs.
   const fetchLeaderMeta = useCallback(async (leaderNeveraiId: string): Promise<{
+    leaderUserId: string;
     leaderId: string;
     leaderName: string;
   } | null> => {
@@ -168,6 +170,7 @@ export function useTrackingFormat() {
 
     const leader = data[0] as any;
     return {
+      leaderUserId: leader.user_id,
       leaderId: leader.neverai_id || leaderNeveraiId,
       leaderName: leader.display_name || 'Leader',
     };
@@ -307,6 +310,7 @@ export function useTrackingFormat() {
           })),
           directLeaderName: null,
           directLeaderId: null,
+          directLeaderUserId: null,
           isUsingLeaderFormat: false,
           isRootLeader: true,
           rootLeaderName: freshProfile.display_name || 'You',
@@ -339,6 +343,7 @@ export function useTrackingFormat() {
             ownStagePersonalTags: ownStagePersonal,
             directLeaderName: directLeaderMeta?.leaderName || 'Leader',
             directLeaderId: directLeaderMeta?.leaderId || directLeaderNeveraiId,
+            directLeaderUserId: directLeaderMeta?.leaderUserId || null,
             isUsingLeaderFormat: true,
             isRootLeader: false,
             rootLeaderName: rootLeaderData.leaderName,
@@ -361,6 +366,7 @@ export function useTrackingFormat() {
             ownStagePersonalTags: ownStagePersonal,
             directLeaderName: directLeaderMeta?.leaderName || null,
             directLeaderId: directLeaderMeta?.leaderId || directLeaderNeveraiId,
+            directLeaderUserId: directLeaderMeta?.leaderUserId || null,
             isUsingLeaderFormat: true,
             isRootLeader: false,
             rootLeaderName: null,
@@ -602,6 +608,7 @@ export function useTrackingFormat() {
     isUsingLeaderFormat: trackingFormat?.isUsingLeaderFormat || false,
     directLeaderName: trackingFormat?.directLeaderName || null,
     directLeaderId: trackingFormat?.directLeaderId || null,
+    directLeaderUserId: trackingFormat?.directLeaderUserId || null,
     // Legacy aliases
     rootLeaderName: trackingFormat?.rootLeaderName || null,
     
