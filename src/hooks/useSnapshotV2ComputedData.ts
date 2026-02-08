@@ -126,16 +126,26 @@ export function useSnapshotV2ComputedData(
     [monthlyTotals, finalTagName, snapshots]
   );
 
-  // Funnel periods (group daily metrics by funnel length using date arithmetic)
+  // Funnel periods (group daily metrics by funnel length, starting from the configured day-of-month)
   const funnelPeriods: FunnelPeriod[] = useMemo(() => {
-    if (!funnelStartDate || funnelLength <= 0) return [];
+    if (!funnelStartDate || funnelLength <= 0 || dailyMetrics.length === 0) return [];
 
-    const startD = parseISO(funnelStartDate);
+    // Extract the day-of-month from the leader's day_1_start config
+    const configDay = parseISO(funnelStartDate).getDate();
+
+    // Determine the month we're viewing from the first snapshot
+    const firstSnap = parseISO(dailyMetrics[0].date);
+    const viewYear = firstSnap.getFullYear();
+    const viewMonth = firstSnap.getMonth();
+
+    // F1 starts on configDay of the viewing month
+    const monthStart = new Date(viewYear, viewMonth, configDay);
+
     const buckets: Map<number, DailyMetric[]> = new Map();
 
     dailyMetrics.forEach((m) => {
-      const daysSince = differenceInCalendarDays(parseISO(m.date), startD) + 1;
-      if (daysSince < 1) return; // before funnel started
+      const daysSince = differenceInCalendarDays(parseISO(m.date), monthStart) + 1;
+      if (daysSince < 1) return; // before funnel cycle starts this month
       const periodNum = Math.ceil(daysSince / funnelLength);
       if (!buckets.has(periodNum)) buckets.set(periodNum, []);
       buckets.get(periodNum)!.push(m);
@@ -153,7 +163,7 @@ export function useSnapshotV2ComputedData(
         );
       });
       return {
-        label: `F${index + 1}`, // Reset to F1 each month
+        label: `F${index + 1}`,
         startDate: days[0].date,
         endDate: days[days.length - 1].date,
         days,
