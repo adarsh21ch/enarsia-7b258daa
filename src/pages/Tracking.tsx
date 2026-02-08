@@ -20,7 +20,7 @@ import { useTrackingModes } from '@/hooks/useTrackingModes';
 import { usePersonalSnapshotV2Read } from '@/hooks/usePersonalSnapshotV2Read';
 import { useTotalSnapshotV2Read } from '@/hooks/useTotalSnapshotV2Read';
 import { useSnapshotV2ComputedData } from '@/hooks/useSnapshotV2ComputedData';
-import { useTrackingFormat } from '@/hooks/useTrackingFormat';
+import { useTrackingFormatContext } from '@/contexts/TrackingFormatContext';
 import { useFunnelConfig } from '@/hooks/useFunnelConfig';
 import { NEVORAI_WEBSITE_URL } from '@/config/siteUrl';
 import { toast } from 'sonner';
@@ -45,8 +45,8 @@ export default function Tracking() {
   // Tracking format (tags from leader/own)
   const {
     leadsTrackingTags, stageTags, leadsTrackingTagNames, stageTagNames,
-    leadsFinalTargetTag, stageFinalTargetTag, directLeaderId, loading: formatLoading,
-  } = useTrackingFormat();
+    leadsFinalTargetTag, stageFinalTargetTag, directLeaderId,
+  } = useTrackingFormatContext();
 
   // Funnel config
   const { getEffectiveConfig } = useFunnelConfig();
@@ -151,14 +151,6 @@ export default function Tracking() {
         <div className="container py-2 px-3 pb-24">
           <TrialBanner tabId="tracking" className="mb-3" />
 
-          {/* Show loading state while tracking format resolves */}
-          {formatLoading ? (
-            <div className="flex items-center justify-center py-16 gap-2 text-muted-foreground">
-              <Loader2 className="h-5 w-5 animate-spin" />
-              <span className="text-sm">Loading tracking data…</span>
-            </div>
-          ) : (
-          <>
           {/* View header row */}
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-2">
@@ -212,8 +204,6 @@ export default function Tracking() {
               />
             )}
           </div>
-          </>
-          )}
         </div>
       </main>
 
