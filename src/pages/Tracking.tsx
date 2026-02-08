@@ -1,9 +1,8 @@
 import { useEffect, useState, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { format, subMonths, addMonths } from 'date-fns';
-import { ChevronLeft, ChevronRight, ExternalLink, Loader2 } from 'lucide-react';
+import { ChevronLeft, ChevronRight, ExternalLink } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
-import { supabase } from '@/integrations/supabase/client';
 import { BottomNav } from '@/components/layout/BottomNav';
 import { TrialBanner } from '@/components/subscription/TrialBanner';
 import { Button } from '@/components/ui/button';
@@ -23,7 +22,6 @@ import { useSnapshotV2ComputedData } from '@/hooks/useSnapshotV2ComputedData';
 import { useTrackingFormatContext } from '@/contexts/TrackingFormatContext';
 import { useFunnelConfig } from '@/hooks/useFunnelConfig';
 import { NEVORAI_WEBSITE_URL } from '@/config/siteUrl';
-import { toast } from 'sonner';
 import nevoraLogo from '@/assets/nevorai-logo.jpeg';
 
 export default function Tracking() {
@@ -31,7 +29,7 @@ export default function Tracking() {
   const { user, loading: authLoading } = useAuth();
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [showUpdateDrawer, setShowUpdateDrawer] = useState(false);
-  const [ssoLoading, setSsoLoading] = useState(false);
+  
 
   const monthYear = format(currentMonth, 'yyyy-MM');
   const monthLabel = format(currentMonth, 'MMMM yyyy');
@@ -82,32 +80,9 @@ export default function Tracking() {
     if (!user && !authLoading) navigate('/auth');
   }, [user, authLoading, navigate]);
 
-  // SSO redirect to website team tracking
-  const handleOpenDashboard = useCallback(async () => {
-    setSsoLoading(true);
-    try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
-        toast.error('Please log in first');
-        window.location.href = '/auth';
-        return;
-      }
-      const { data, error } = await supabase.functions.invoke('trackup-sso-link');
-      if (error) {
-        toast.error('Failed to generate login link');
-        window.open(`${NEVORAI_WEBSITE_URL}/auth?redirect=/trackup`, '_blank');
-        return;
-      }
-      if (data?.action_link) {
-        window.open(data.action_link, '_blank');
-      } else {
-        window.open(`${NEVORAI_WEBSITE_URL}/auth?redirect=/trackup`, '_blank');
-      }
-    } catch {
-      window.open(`${NEVORAI_WEBSITE_URL}/auth?redirect=/trackup`, '_blank');
-    } finally {
-      setSsoLoading(false);
-    }
+  // Open team tracking on website
+  const handleOpenDashboard = useCallback(() => {
+    window.open(`${NEVORAI_WEBSITE_URL}/trackup`, '_blank', 'noopener');
   }, []);
 
   if (!user) return null;
@@ -128,11 +103,10 @@ export default function Tracking() {
             variant="ghost"
             size="sm"
             onClick={handleOpenDashboard}
-            disabled={ssoLoading}
             className="h-8 gap-1.5 text-xs font-medium"
           >
-            {ssoLoading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <ExternalLink className="h-3.5 w-3.5" />}
-            {ssoLoading ? 'Opening...' : 'Team Tracking'}
+            <ExternalLink className="h-3.5 w-3.5" />
+            Team Tracking
           </Button>
         </div>
 
