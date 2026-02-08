@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { format, parseISO, isToday } from 'date-fns';
+import { format, parseISO, isToday, differenceInCalendarDays } from 'date-fns';
 import type { SnapshotRow } from '@/lib/snapshotSlotUtils';
 import type { TrackingTag, StageTag } from '@/hooks/useTrackingFormat';
 
@@ -126,67 +126,40 @@ export function useSnapshotV2ComputedData(
     [monthlyTotals, finalTagName, snapshots]
   );
 
-  // Funnel periods (group daily metrics by funnel length)
+  // Funnel periods (group daily metrics by funnel length using date arithmetic)
   const funnelPeriods: FunnelPeriod[] = useMemo(() => {
     if (!funnelStartDate || funnelLength <= 0) return [];
 
-    const periods: FunnelPeriod[] = [];
     const startD = parseISO(funnelStartDate);
-    let periodIndex = 1;
+    const buckets: Map<number, DailyMetric[]> = new Map();
 
-    // Group all daily metrics that have funnel data
-    const funnelDays = dailyMetrics.filter(
-      (m) => m.funnelDay !== null && m.funnelDay > 0
-    );
-
-    // Group by funnel period
-    let currentPeriodDays: DailyMetric[] = [];
-
-    funnelDays.forEach((m) => {
-      const dayInCycle = ((m.funnelDay! - 1) % funnelLength) + 1;
-      if (dayInCycle === 1 && currentPeriodDays.length > 0) {
-        // Start new period
-        const stageTotals: Record<string, number> = {};
-        stageTagNames.forEach((name) => {
-          stageTotals[name] = currentPeriodDays.reduce(
-            (sum, d) => sum + (d.stageTags[name] ?? 0),
-            0
-          );
-        });
-
-        periods.push({
-          label: `F${periodIndex}`,
-          startDate: currentPeriodDays[0].date,
-          endDate: currentPeriodDays[currentPeriodDays.length - 1].date,
-          days: currentPeriodDays,
-          stageTotals,
-        });
-        periodIndex++;
-        currentPeriodDays = [];
-      }
-      currentPeriodDays.push(m);
+    dailyMetrics.forEach((m) => {
+      const daysSince = differenceInCalendarDays(parseISO(m.date), startD) + 1;
+      if (daysSince < 1) return; // before funnel started
+      const periodNum = Math.ceil(daysSince / funnelLength);
+      if (!buckets.has(periodNum)) buckets.set(periodNum, []);
+      buckets.get(periodNum)!.push(m);
     });
 
-    // Push last period
-    if (currentPeriodDays.length > 0) {
+    const sortedKeys = Array.from(buckets.keys()).sort((a, b) => a - b);
+
+    return sortedKeys.map((key) => {
+      const days = buckets.get(key)!;
       const stageTotals: Record<string, number> = {};
       stageTagNames.forEach((name) => {
-        stageTotals[name] = currentPeriodDays.reduce(
+        stageTotals[name] = days.reduce(
           (sum, d) => sum + (d.stageTags[name] ?? 0),
           0
         );
       });
-
-      periods.push({
-        label: `F${periodIndex}`,
-        startDate: currentPeriodDays[0].date,
-        endDate: currentPeriodDays[currentPeriodDays.length - 1].date,
-        days: currentPeriodDays,
+      return {
+        label: `F${key}`,
+        startDate: days[0].date,
+        endDate: days[days.length - 1].date,
+        days,
         stageTotals,
-      });
-    }
-
-    return periods;
+      };
+    });
   }, [dailyMetrics, funnelLength, funnelStartDate, stageTagNames]);
 
   return {
