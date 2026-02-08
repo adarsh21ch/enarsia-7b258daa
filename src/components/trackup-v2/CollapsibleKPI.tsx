@@ -8,9 +8,10 @@ interface CollapsibleKPIProps {
   kpi: KPIData;
   responseTagNames: string[];
   stageTagNames: string[];
+  viewType: 'leads' | 'funnel';
 }
 
-export function CollapsibleKPI({ kpi, responseTagNames, stageTagNames }: CollapsibleKPIProps) {
+export function CollapsibleKPI({ kpi, responseTagNames, stageTagNames, viewType }: CollapsibleKPIProps) {
   const [expanded, setExpanded] = useState(false);
 
   const compactItems = [
@@ -52,10 +53,10 @@ export function CollapsibleKPI({ kpi, responseTagNames, stageTagNames }: Collaps
         <div className="px-3 pb-3 grid grid-cols-3 gap-2">
           <KPICard label="Leads" value={kpi.totalLeads} />
           <KPICard label="Responses" value={kpi.totalResponses} />
-          {responseTagNames.map((name) => (
+          {viewType === 'leads' && responseTagNames.map((name) => (
             <KPICard key={name} label={name} value={kpi.responseTagTotals[name] ?? 0} />
           ))}
-          {stageTagNames.map((name) => {
+          {viewType === 'funnel' && stageTagNames.map((name) => {
             const isFinal = kpi.finalTagName === name;
             return (
               <KPICard

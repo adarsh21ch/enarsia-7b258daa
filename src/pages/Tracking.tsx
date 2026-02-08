@@ -167,7 +167,7 @@ export default function Tracking() {
 
           {/* Collapsible KPI */}
           <div className="mb-3">
-            <CollapsibleKPI kpi={kpiData} responseTagNames={responseTagNames} stageTagNames={computedStageNames} />
+            <CollapsibleKPI kpi={kpiData} responseTagNames={responseTagNames} stageTagNames={computedStageNames} viewType={viewType} />
           </div>
 
           {/* Active table view */}
