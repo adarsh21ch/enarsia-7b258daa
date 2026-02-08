@@ -43,7 +43,7 @@ export default function Tracking() {
   // Tracking format (tags from leader/own)
   const {
     leadsTrackingTags, stageTags, leadsTrackingTagNames, stageTagNames,
-    leadsFinalTargetTag, stageFinalTargetTag, directLeaderId,
+    leadsFinalTargetTag, stageFinalTargetTag, directLeaderUserId,
   } = useTrackingFormatContext();
 
   // Funnel config
@@ -193,7 +193,7 @@ export default function Tracking() {
         finalTagName={stageFinalTargetTag}
         personalSnapshots={personalSnapshots}
         totalSnapshots={totalSnapshots}
-        uplineLeaderId={directLeaderId}
+        uplineLeaderId={directLeaderUserId}
       />
 
       <BottomNav />

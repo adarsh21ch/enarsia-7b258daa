@@ -41,6 +41,7 @@ interface TrackingFormatContextType {
   isUsingLeaderFormat: boolean;
   directLeaderName: string | null;
   directLeaderId: string | null;
+  directLeaderUserId: string | null;
   rootLeaderName: string | null; // Legacy alias
   
   // Legacy aliases
