@@ -1,41 +1,71 @@
 
 
-# Fix: Make Tracking Source Preference Truly Persistent
+# Speed Up TrackUp Loading — Instant Data on Tab Switch
 
-## Problem
+## Root Cause
 
-The tracking source preference (Manual / Automatic) is stored in the database and should persist across devices and sessions. However, there is a **race condition**: while the preference is loading from the database, the hook defaults to `'MANUAL'`. Any component that reads the value during this brief loading window sees `'MANUAL'` instead of the user's actual saved preference.
+When you open TrackUp, there is a **waterfall of 5-7 sequential database calls** before any data appears:
 
-This means:
-- On page refresh, the gear icon briefly shows "Manual" even if the user set "Automated"
-- If the drawer opens before the query resolves, inputs appear enabled (Manual mode) when they should be disabled (Auto mode)
-- On the website side, the same race could cause a save with the wrong source value
+1. Auth loads user
+2. `useTrackingFormat` fetches your profile, then your leader's profile via 2-3 RPC calls
+3. `useFunnelConfig` fetches funnel config + checks leader connection (2-3 more calls)
+4. Only AFTER steps 2-3 finish do the snapshot read hooks (`usePersonalSnapshotV2Read`, `useTotalSnapshotV2Read`) fire
+5. Tag name resolution must complete before data renders correctly
 
-## Solution
+FollowUp feels instant because it does a single `prospects` query with no dependencies.
 
-**1 file modified: `src/hooks/useTrackingSourcePreferences.ts`**
+## Solution: Aggressive Caching + Prefetching
 
-- Expose `isLoading` more prominently so consumers can wait for the real value
-- Keep the default fallback to `'MANUAL'` (this is correct for first-time users who have no row yet)
-- No changes needed to the hook itself -- the persistence logic is correct
+The key insight: **tracking format, funnel config, and snapshot data rarely change**. We can cache them so that switching tabs or reopening the app shows stale data immediately, then silently refreshes in the background.
 
-**1 file modified: `src/components/trackup-v2/ManualUpdateDrawer.tsx`**
+### Changes
 
-- Read `isLoading` from `useTrackingSourcePreferences()`
-- While `isLoading` is true, disable all inputs and show a brief loading state for the source gear icons
-- This prevents the drawer from displaying "Manual" mode before the real preference loads
-- Once loaded, the correct preference (Manual or Auto) is shown and stays permanent
+**1. `src/hooks/useTrackingFormat.ts`** — Add localStorage caching
 
-## What Does NOT Change
+- On successful load, save `trackingFormat` to `localStorage`
+- On mount, immediately read from `localStorage` and set state (so data shows in ~5ms)
+- Then fetch fresh data from DB in the background and update if changed
+- This eliminates the 3-5 second wait for tag names on every tab switch
 
-- No database changes
-- No edge function changes
-- No API changes
-- No KPI or calculation changes
-- The `tracking_source_preferences` table and RLS are already correct
-- The preference already persists in the database across all devices and sessions -- this fix just prevents the UI from showing a stale default during the loading window
+**2. `src/hooks/usePersonalSnapshotV2Read.ts`** — Increase staleTime and gcTime
 
-## Technical Detail
+- Change `staleTime` from 30s to 5 minutes (`300_000`)
+- Add `gcTime: 10 * 60 * 1000` (10 minutes) so React Query keeps data in memory across tab switches
+- Data still refreshes in the background, but the UI shows cached data instantly
 
-The root cause is that `preferences?.personal_source || 'MANUAL'` returns `'MANUAL'` when `preferences` is `null` (still loading). The fix ensures the UI waits for the actual DB value before rendering the source state, so users never see a flickering "Manual" that contradicts their saved "Automated" preference.
+**3. `src/hooks/useTotalSnapshotV2Read.ts`** — Same caching changes
+
+- Match personal snapshot caching: `staleTime: 300_000`, `gcTime: 600_000`
+
+**4. `src/hooks/useFunnelConfig.ts`** — Add localStorage caching
+
+- Cache own config and leader config to localStorage on successful fetch
+- Read from cache on mount for instant display
+- Fetch fresh data in background
+
+**5. `src/hooks/useTrackingSourcePreferences.ts`** — Increase staleTime
+
+- Add `staleTime: 300_000` and `gcTime: 600_000` so preference loads from cache on tab switch
+
+### How It Works
+
+```text
+BEFORE (current):
+Tab switch -> Auth -> TrackingFormat (3 RPCs) -> FunnelConfig (2 RPCs) -> Snapshots (2 queries)
+                                    ~10-12 seconds total
+
+AFTER (with caching):
+Tab switch -> Cached TrackingFormat (5ms) -> Cached Snapshots (5ms) -> UI renders
+             Background: fresh fetch -> update if changed
+                                    ~instant display, background refresh
+```
+
+### Safety
+
+- Cached data is only used for display while fresh data loads
+- If cached data is stale, it gets replaced silently within 1-2 seconds
+- First-ever login still loads normally (no cache exists yet)
+- Cache is keyed per user ID to prevent data leaks between accounts
+- Logout clears cached tracking data
+- No changes to any API, edge function, KPI calculation, or snapshot logic
 
