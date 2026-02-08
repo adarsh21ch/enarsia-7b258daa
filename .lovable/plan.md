@@ -1,56 +1,42 @@
 
 
-# Fix: "Video Send" & "Enrollment" Numbers Load 5-6 Seconds Late
+# Align TrackUp Funnel Display with Website Dashboard
 
-## Root Cause
+## What's Being Fixed
 
-The snapshot read hooks (`usePersonalSnapshotV2Read`, `useTotalSnapshotV2Read`) each import and call `useTrackingFormat()` **directly**, creating their own separate instances of the hook. Meanwhile, the `TrackingFormatContext` also calls `useTrackingFormat()`. This means:
+The funnel-wise table in the app needs to match the website dashboard's display format exactly. The website shows headers like **"Funnel 1 (2-4 Feb)"** while the app currently shows **"F1"** with a small date like "02-02".
 
-- 3 independent copies of `useTrackingFormat` are running, each making their own RPC calls
-- The read hooks' copies may resolve later than the context's copy
-- Until a hook's tag names resolve, the slot-to-name mapping is skipped (the `if leadsTrackingTagNames.length > 0` check fails), so data like `response_tag_1: 5` stays as slot keys
-- The table looks for `responseTags["Video Send"]` but finds `response_tag_1` instead, showing `--` (zero)
-- After 5-6 seconds when the tag names finally arrive, the `useMemo` re-runs and the correct values appear
+The underlying computation logic is already correct -- funnel periods start from the upline's configured day (e.g., 2nd of the month) and team members cannot change this config. The fix is purely a display/formatting improvement.
 
-## Solution
+## Changes
 
-Remove the duplicate `useTrackingFormat()` calls from the read hooks and instead pass the tag names down from the `TrackingFormatContext` (which already has cached data from localStorage for instant hydration).
+### 1. Update FunnelWiseTable header format to match website
+**File:** `src/components/trackup-v2/FunnelWiseTable.tsx`
 
-### File 1: `src/hooks/usePersonalSnapshotV2Read.ts`
-- Remove the `useTrackingFormat()` import and call
-- Accept `leadsTrackingTagNames` and `stageTagNames` as **parameters** instead
-- This way the hook uses the same tag names the rest of the app uses (from context, with localStorage cache)
-
-### File 2: `src/hooks/useTotalSnapshotV2Read.ts`
-- Same change: accept tag names as parameters, remove internal `useTrackingFormat()` call
-
-### File 3: `src/pages/Tracking.tsx`
-- Pass `leadsTrackingTagNames` and `stageTagNames` from `useTrackingFormatContext()` into the read hooks
-
-### File 4: `src/components/profile/ProfileTrackUp.tsx`
-- Pass tag names from its own `useTrackingFormat()` into the read hook
-
-## Why This Fixes It
-
+Change the column headers from:
 ```
-BEFORE (3 independent format fetches):
-  TrackingFormatContext -> useTrackingFormat() -> cached instantly
-  usePersonalSnapshotV2Read -> useTrackingFormat() -> fetches from DB (5-6s)
-  useTotalSnapshotV2Read -> useTrackingFormat() -> fetches from DB (5-6s)
-  
-  Result: Tag mapping delayed 5-6s in read hooks
-
-AFTER (single source of truth):
-  TrackingFormatContext -> useTrackingFormat() -> cached instantly
-  usePersonalSnapshotV2Read(tagNames) -> uses passed-in names -> instant mapping
-  useTotalSnapshotV2Read(tagNames) -> uses passed-in names -> instant mapping
-  
-  Result: Tag mapping happens instantly from cache
+F1
+02-02
 ```
 
-## Additional Benefit
+To match the website style:
+```
+Funnel 1 (2-4 Feb)
+```
 
-- Eliminates 4 redundant RPC calls per page load (2 hooks x 2 RPC calls each)
-- Reduces network overhead and speeds up overall page load
-- Single source of truth for tag names across the entire app
+This means formatting `startDate` and `endDate` into a readable range like "2-4 Feb" or "2 Feb - 4 Feb" and showing "Funnel 1" instead of "F1".
+
+### 2. Include date range in FunnelPeriod label
+**File:** `src/hooks/useSnapshotV2ComputedData.ts`
+
+Update the `FunnelPeriod` interface and computation to format dates in a human-readable way. The `label` will show the full funnel name, and the date range will be formatted as "(2-4 Feb)" matching the website.
+
+### 3. Ensure computed data shows date range per funnel period
+The `FunnelPeriod` already has `startDate` and `endDate` fields. The FunnelWiseTable will format these as a readable date range in the header, e.g., "2-4 Feb" when both dates are in the same month, or "28 Jan - 1 Feb" when they span months.
+
+## Technical Details
+
+- **FunnelWiseTable.tsx**: Update header rendering to show `Funnel {n}` and a formatted date range `(d-d Mon)` using `format()` from date-fns
+- **No backend changes needed** -- all funnel config inheritance (read-only for team members, synced from leader) is already working correctly
+- **No changes to computation logic** -- the period grouping based on `configDay` is already correct
 
