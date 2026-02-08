@@ -321,81 +321,86 @@ export function ManualUpdateDrawer({
               )}
             </div>
 
-            {/* Leads row */}
-            <div className="py-2 font-medium bg-accent/15 px-2 rounded">Leads</div>
-            <div className="py-1">
-              <input
-                type="text"
-                inputMode="numeric"
-                value={personalValues['leads'] || ''}
-                onChange={(e) =>
-                  setPersonalValues((p) => ({ ...p, leads: e.target.value.replace(/\D/g, '') }))
-                }
-                placeholder="0"
-                disabled={isPersonalDisabled}
-                className={cn(
-                  "w-full text-center bg-transparent border-b border-border/50 py-1 outline-none focus:border-primary text-sm placeholder:text-muted-foreground/40",
-                  isPersonalDisabled && "opacity-50 cursor-not-allowed"
-                )}
-              />
-            </div>
-            <div className="py-1">
-              <input
-                type="text"
-                inputMode="numeric"
-                value={totalValues['leads'] || ''}
-                onChange={(e) =>
-                  setTotalValues((p) => ({ ...p, leads: e.target.value.replace(/\D/g, '') }))
-                }
-                placeholder="0"
-                disabled={isTotalDisabled}
-                className={cn(
-                  "w-full text-center bg-transparent border-b border-border/50 py-1 outline-none focus:border-primary text-sm placeholder:text-muted-foreground/40",
-                  isTotalDisabled && "opacity-50 cursor-not-allowed"
-                )}
-              />
-            </div>
+            {/* Leads & Responses rows - only show in Leads tab */}
+            {category === 'leads' && (
+              <>
+                {/* Leads row */}
+                <div className="py-2 font-medium bg-accent/15 px-2 rounded">Leads</div>
+                <div className="py-1">
+                  <input
+                    type="text"
+                    inputMode="numeric"
+                    value={personalValues['leads'] || ''}
+                    onChange={(e) =>
+                      setPersonalValues((p) => ({ ...p, leads: e.target.value.replace(/\D/g, '') }))
+                    }
+                    placeholder="0"
+                    disabled={isPersonalDisabled}
+                    className={cn(
+                      "w-full text-center bg-transparent border-b border-border/50 py-1 outline-none focus:border-primary text-sm placeholder:text-muted-foreground/40",
+                      isPersonalDisabled && "opacity-50 cursor-not-allowed"
+                    )}
+                  />
+                </div>
+                <div className="py-1">
+                  <input
+                    type="text"
+                    inputMode="numeric"
+                    value={totalValues['leads'] || ''}
+                    onChange={(e) =>
+                      setTotalValues((p) => ({ ...p, leads: e.target.value.replace(/\D/g, '') }))
+                    }
+                    placeholder="0"
+                    disabled={isTotalDisabled}
+                    className={cn(
+                      "w-full text-center bg-transparent border-b border-border/50 py-1 outline-none focus:border-primary text-sm placeholder:text-muted-foreground/40",
+                      isTotalDisabled && "opacity-50 cursor-not-allowed"
+                    )}
+                  />
+                </div>
 
-            {/* Responses row */}
-            <div className="py-2 font-medium bg-accent/15 px-2 rounded">Responses</div>
-            <div className="py-1">
-              <input
-                type="text"
-                inputMode="numeric"
-                value={personalValues['responses'] || ''}
-                onChange={(e) =>
-                  setPersonalValues((p) => ({
-                    ...p,
-                    responses: e.target.value.replace(/\D/g, ''),
-                  }))
-                }
-                placeholder="0"
-                disabled={isPersonalDisabled}
-                className={cn(
-                  "w-full text-center bg-transparent border-b border-border/50 py-1 outline-none focus:border-primary text-sm placeholder:text-muted-foreground/40",
-                  isPersonalDisabled && "opacity-50 cursor-not-allowed"
-                )}
-              />
-            </div>
-            <div className="py-1">
-              <input
-                type="text"
-                inputMode="numeric"
-                value={totalValues['responses'] || ''}
-                onChange={(e) =>
-                  setTotalValues((p) => ({
-                    ...p,
-                    responses: e.target.value.replace(/\D/g, ''),
-                  }))
-                }
-                placeholder="0"
-                disabled={isTotalDisabled}
-                className={cn(
-                  "w-full text-center bg-transparent border-b border-border/50 py-1 outline-none focus:border-primary text-sm placeholder:text-muted-foreground/40",
-                  isTotalDisabled && "opacity-50 cursor-not-allowed"
-                )}
-              />
-            </div>
+                {/* Responses row */}
+                <div className="py-2 font-medium bg-accent/15 px-2 rounded">Responses</div>
+                <div className="py-1">
+                  <input
+                    type="text"
+                    inputMode="numeric"
+                    value={personalValues['responses'] || ''}
+                    onChange={(e) =>
+                      setPersonalValues((p) => ({
+                        ...p,
+                        responses: e.target.value.replace(/\D/g, ''),
+                      }))
+                    }
+                    placeholder="0"
+                    disabled={isPersonalDisabled}
+                    className={cn(
+                      "w-full text-center bg-transparent border-b border-border/50 py-1 outline-none focus:border-primary text-sm placeholder:text-muted-foreground/40",
+                      isPersonalDisabled && "opacity-50 cursor-not-allowed"
+                    )}
+                  />
+                </div>
+                <div className="py-1">
+                  <input
+                    type="text"
+                    inputMode="numeric"
+                    value={totalValues['responses'] || ''}
+                    onChange={(e) =>
+                      setTotalValues((p) => ({
+                        ...p,
+                        responses: e.target.value.replace(/\D/g, ''),
+                      }))
+                    }
+                    placeholder="0"
+                    disabled={isTotalDisabled}
+                    className={cn(
+                      "w-full text-center bg-transparent border-b border-border/50 py-1 outline-none focus:border-primary text-sm placeholder:text-muted-foreground/40",
+                      isTotalDisabled && "opacity-50 cursor-not-allowed"
+                    )}
+                  />
+                </div>
+              </>
+            )}
 
             {/* Tag rows */}
             {tagNames.map((name) => (
