@@ -1,71 +1,54 @@
 
 
-# Speed Up TrackUp Loading — Instant Data on Tab Switch
+# Fix: Upline Not Seeing Downline's Tracking Numbers
 
 ## Root Cause
 
-When you open TrackUp, there is a **waterfall of 5-7 sequential database calls** before any data appears:
+There is a **value mismatch** between what gets saved and what gets queried:
 
-1. Auth loads user
-2. `useTrackingFormat` fetches your profile, then your leader's profile via 2-3 RPC calls
-3. `useFunnelConfig` fetches funnel config + checks leader connection (2-3 more calls)
-4. Only AFTER steps 2-3 finish do the snapshot read hooks (`usePersonalSnapshotV2Read`, `useTotalSnapshotV2Read`) fire
-5. Tag name resolution must complete before data renders correctly
+- **When saving**: The app passes `uplineLeaderId` = the leader's `neverai_id` (e.g., "ABC123") because `directLeaderId` in TrackingFormatContext maps to `neverai_id`
+- **When the upline reads downline data**: The query uses `.eq('upline_leader_id', user.id)` where `user.id` is the leader's **UUID** (e.g., "550e8400-e29b-...")
+- Since "ABC123" does not equal "550e8400-e29b-...", the query returns **zero rows** and the upline sees nothing
 
-FollowUp feels instant because it does a single `prospects` query with no dependencies.
+## Fix
 
-## Solution: Aggressive Caching + Prefetching
-
-The key insight: **tracking format, funnel config, and snapshot data rarely change**. We can cache them so that switching tabs or reopening the app shows stale data immediately, then silently refreshes in the background.
+We need to save the leader's **UUID** (not `neverai_id`) as `upline_leader_id` so the upline's downline query matches correctly.
 
 ### Changes
 
-**1. `src/hooks/useTrackingFormat.ts`** — Add localStorage caching
+**1. `src/hooks/useTrackingFormat.ts`** -- Expose `directLeaderUserId` (UUID)
 
-- On successful load, save `trackingFormat` to `localStorage`
-- On mount, immediately read from `localStorage` and set state (so data shows in ~5ms)
-- Then fetch fresh data from DB in the background and update if changed
-- This eliminates the 3-5 second wait for tag names on every tab switch
+- Add `directLeaderUserId: string | null` to the `TrackingFormat` interface
+- Set it from `fetchLeaderFormat`'s returned `leaderUserId` (which already contains the UUID)
+- Root leaders get `null` for this field
 
-**2. `src/hooks/usePersonalSnapshotV2Read.ts`** — Increase staleTime and gcTime
+**2. `src/contexts/TrackingFormatContext.tsx`** -- Pass through the new field
 
-- Change `staleTime` from 30s to 5 minutes (`300_000`)
-- Add `gcTime: 10 * 60 * 1000` (10 minutes) so React Query keeps data in memory across tab switches
-- Data still refreshes in the background, but the UI shows cached data instantly
+- Add `directLeaderUserId` to the context type
+- Expose it from the provider
 
-**3. `src/hooks/useTotalSnapshotV2Read.ts`** — Same caching changes
+**3. `src/pages/Tracking.tsx`** -- Use UUID instead of neverai_id
 
-- Match personal snapshot caching: `staleTime: 300_000`, `gcTime: 600_000`
+- Read `directLeaderUserId` from the context (instead of `directLeaderId`)
+- Pass it as `uplineLeaderId` to the ManualUpdateDrawer
 
-**4. `src/hooks/useFunnelConfig.ts`** — Add localStorage caching
+This ensures that when a team member saves their snapshot with `upline_leader_id = <leader's UUID>`, the upline's query `.eq('upline_leader_id', user.id)` will find a match.
 
-- Cache own config and leader config to localStorage on successful fetch
-- Read from cache on mount for instant display
-- Fetch fresh data in background
-
-**5. `src/hooks/useTrackingSourcePreferences.ts`** — Increase staleTime
-
-- Add `staleTime: 300_000` and `gcTime: 600_000` so preference loads from cache on tab switch
-
-### How It Works
+### Technical Detail
 
 ```text
-BEFORE (current):
-Tab switch -> Auth -> TrackingFormat (3 RPCs) -> FunnelConfig (2 RPCs) -> Snapshots (2 queries)
-                                    ~10-12 seconds total
+BEFORE (broken):
+  Save:  upline_leader_id = "ABC123"     (neverai_id)
+  Query: upline_leader_id = "550e8400-..." (UUID)
+  Result: NO MATCH
 
-AFTER (with caching):
-Tab switch -> Cached TrackingFormat (5ms) -> Cached Snapshots (5ms) -> UI renders
-             Background: fresh fetch -> update if changed
-                                    ~instant display, background refresh
+AFTER (fixed):
+  Save:  upline_leader_id = "550e8400-..." (UUID)
+  Query: upline_leader_id = "550e8400-..." (UUID)
+  Result: MATCH -- upline sees data
 ```
 
 ### Safety
-
-- Cached data is only used for display while fresh data loads
-- If cached data is stale, it gets replaced silently within 1-2 seconds
-- First-ever login still loads normally (no cache exists yet)
-- Cache is keyed per user ID to prevent data leaks between accounts
-- Logout clears cached tracking data
-- No changes to any API, edge function, KPI calculation, or snapshot logic
-
+- No database schema changes needed
+- No edge function changes needed
+- Only affects new saves going forward; existing mismatched rows can be corrected by the user re-saving their tracking for those dates
