@@ -44,6 +44,8 @@ export function useTrackingSourcePreferences() {
       return data as TrackingSourcePreferences | null;
     },
     enabled: !!user?.id,
+    staleTime: 300_000,
+    gcTime: 600_000,
   });
 
   // Upsert mutation (create or update)

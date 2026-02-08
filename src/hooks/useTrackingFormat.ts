@@ -114,10 +114,41 @@ function parseStageLabels(labels: any): { stageTags: StageTag[]; stageNonTrackin
   return { stageTags: [], stageNonTracking: [] };
 }
 
+const TRACKING_FORMAT_CACHE_KEY = 'nevorai-tracking-format';
+
+function getCachedTrackingFormat(userId: string): TrackingFormat | null {
+  try {
+    const raw = localStorage.getItem(`${TRACKING_FORMAT_CACHE_KEY}-${userId}`);
+    if (!raw) return null;
+    return JSON.parse(raw) as TrackingFormat;
+  } catch { return null; }
+}
+
+function setCachedTrackingFormat(userId: string, format: TrackingFormat) {
+  try {
+    localStorage.setItem(`${TRACKING_FORMAT_CACHE_KEY}-${userId}`, JSON.stringify(format));
+  } catch { /* quota exceeded - ignore */ }
+}
+
+export function clearTrackingFormatCache() {
+  try {
+    const keys = Object.keys(localStorage);
+    keys.forEach(k => { if (k.startsWith(TRACKING_FORMAT_CACHE_KEY)) localStorage.removeItem(k); });
+  } catch { /* ignore */ }
+}
+
 export function useTrackingFormat() {
   const { user } = useAuth();
-  const [trackingFormat, setTrackingFormat] = useState<TrackingFormat | null>(null);
-  const [loading, setLoading] = useState(true);
+  // Initialize from cache for instant display
+  const [trackingFormat, setTrackingFormat] = useState<TrackingFormat | null>(() => {
+    if (!user?.id) return null;
+    return getCachedTrackingFormat(user.id);
+  });
+  const [loading, setLoading] = useState(() => {
+    // If we have cached data, don't show loading state
+    if (user?.id && getCachedTrackingFormat(user.id)) return false;
+    return true;
+  });
   const lastRefreshTokenRef = useRef<string | null>(null);
 
   // Fetch a leader's profile meta (name/id). Used for displaying the *direct* leader.
@@ -258,12 +289,11 @@ export function useTrackingFormat() {
         const { leadsTracking } = parseResponseLabels(freshProfile.response_labels);
         const { stageTags } = parseStageLabels(freshProfile.stage_labels);
 
-        setTrackingFormat({
+        const format: TrackingFormat = {
           leadsTrackingTags: leadsTracking,
           leadsNonTrackingTags: ownLeadsPersonal,
           stageTags,
           stageNonTrackingTags: ownStagePersonal,
-          // For root leader, all personal tags are their own
           leaderLeadsPersonalTags: [],
           leaderStagePersonalTags: [],
           ownLeadsPersonalTags: ownLeadsPersonal,
@@ -279,10 +309,11 @@ export function useTrackingFormat() {
           directLeaderId: null,
           isUsingLeaderFormat: false,
           isRootLeader: true,
-          // Legacy aliases
           rootLeaderName: freshProfile.display_name || 'You',
           rootLeaderId: freshProfile.neverai_id,
-        });
+        };
+        setTrackingFormat(format);
+        setCachedTrackingFormat(user.id, format);
       } else {
         // User uses upline's format - fetch using email-based lookup
         // For now, we still need the legacy neverai_id fields for the RPC calls
@@ -296,53 +327,47 @@ export function useTrackingFormat() {
         ]);
 
         if (rootLeaderData) {
-          setTrackingFormat({
-            // TRACKING tags + levels come from ROOT leader (tracking format owner)
+          const format: TrackingFormat = {
             leadsTrackingTags: rootLeaderData.leadsTracking,
             stageTags: rootLeaderData.stageTags,
             levels: rootLeaderData.levels,
-
-            // Personal tags are NEVER inherited - only user's own
             leadsNonTrackingTags: ownLeadsPersonal,
             stageNonTrackingTags: ownStagePersonal,
             leaderLeadsPersonalTags: [],
             leaderStagePersonalTags: [],
             ownLeadsPersonalTags: ownLeadsPersonal,
             ownStagePersonalTags: ownStagePersonal,
-
-            // Metadata
             directLeaderName: directLeaderMeta?.leaderName || 'Leader',
             directLeaderId: directLeaderMeta?.leaderId || directLeaderNeveraiId,
             isUsingLeaderFormat: true,
             isRootLeader: false,
-
-            // Root leader (tracking format owner)
             rootLeaderName: rootLeaderData.leaderName,
             rootLeaderId: rootLeaderData.leaderId,
-          });
+          };
+          setTrackingFormat(format);
+          setCachedTrackingFormat(user.id, format);
         } else {
           // If the root leader cannot be resolved, do NOT fall back to the user's old tracking tags
           // (keeps behavior aligned with "use leader format")
-          setTrackingFormat({
+          const format: TrackingFormat = {
             leadsTrackingTags: [],
             stageTags: [],
             levels: [],
-
             leadsNonTrackingTags: ownLeadsPersonal,
             stageNonTrackingTags: ownStagePersonal,
             leaderLeadsPersonalTags: [],
             leaderStagePersonalTags: [],
             ownLeadsPersonalTags: ownLeadsPersonal,
             ownStagePersonalTags: ownStagePersonal,
-
             directLeaderName: directLeaderMeta?.leaderName || null,
             directLeaderId: directLeaderMeta?.leaderId || directLeaderNeveraiId,
             isUsingLeaderFormat: true,
             isRootLeader: false,
-
             rootLeaderName: null,
             rootLeaderId: rootLeaderNeveraiId,
-          });
+          };
+          setTrackingFormat(format);
+          setCachedTrackingFormat(user.id, format);
         }
       }
     } catch (error) {

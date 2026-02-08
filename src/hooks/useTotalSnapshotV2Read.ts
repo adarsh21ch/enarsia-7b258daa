@@ -48,7 +48,8 @@ export function useTotalSnapshotV2Read(monthYear: string) {
       });
     },
     enabled: !!user && !!monthYear,
-    staleTime: 30_000,
+    staleTime: 300_000,
+    gcTime: 600_000,
   });
 
   // Listen for sync events from write hooks

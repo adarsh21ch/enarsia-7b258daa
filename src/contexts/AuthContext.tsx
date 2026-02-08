@@ -2,6 +2,8 @@ import { createContext, useContext, useEffect, useState, useRef, useCallback, Re
 import { User, Session, AuthChangeEvent } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import { getPublishedAppUrl } from '@/config/siteUrl';
+import { clearTrackingFormatCache } from '@/hooks/useTrackingFormat';
+import { clearFunnelConfigCache } from '@/hooks/useFunnelConfig';
 
 interface AuthContextType {
   user: User | null;
@@ -252,6 +254,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // Always clear local state even if server call fails
     setSession(null);
     setUser(null);
+    // Clear cached tracking data
+    clearTrackingFormatCache();
+    clearFunnelConfigCache();
   };
 
   return (

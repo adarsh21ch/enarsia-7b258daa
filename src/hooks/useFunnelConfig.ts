@@ -10,14 +10,38 @@ export interface FunnelConfig {
   user_id?: string;
 }
 
+const FUNNEL_CONFIG_CACHE_KEY = 'nevorai-funnel-config';
+
+function getCachedFunnelConfig(userId: string): { config: FunnelConfig | null; leaderConfig: FunnelConfig | null } | null {
+  try {
+    const raw = localStorage.getItem(`${FUNNEL_CONFIG_CACHE_KEY}-${userId}`);
+    if (!raw) return null;
+    return JSON.parse(raw);
+  } catch { return null; }
+}
+
+function setCachedFunnelConfig(userId: string, config: FunnelConfig | null, leaderConfig: FunnelConfig | null) {
+  try {
+    localStorage.setItem(`${FUNNEL_CONFIG_CACHE_KEY}-${userId}`, JSON.stringify({ config, leaderConfig }));
+  } catch { /* quota exceeded */ }
+}
+
+export function clearFunnelConfigCache() {
+  try {
+    const keys = Object.keys(localStorage);
+    keys.forEach(k => { if (k.startsWith(FUNNEL_CONFIG_CACHE_KEY)) localStorage.removeItem(k); });
+  } catch { /* ignore */ }
+}
+
 export function useFunnelConfig() {
-  const [config, setConfig] = useState<FunnelConfig | null>(null);
-  const [leaderConfig, setLeaderConfig] = useState<FunnelConfig | null>(null);
+  const { user } = useAuth();
+  const cached = user?.id ? getCachedFunnelConfig(user.id) : null;
+  const [config, setConfig] = useState<FunnelConfig | null>(cached?.config ?? null);
+  const [leaderConfig, setLeaderConfig] = useState<FunnelConfig | null>(cached?.leaderConfig ?? null);
   const [leaderName, setLeaderName] = useState<string | null>(null);
   const [leaderUserId, setLeaderUserId] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(!cached);
   const [useLeaderConfig, setUseLeaderConfig] = useState(false);
-  const { user } = useAuth();
   const subscriptionRef = useRef<any>(null);
 
   const fetchConfig = useCallback(async () => {
@@ -171,6 +195,13 @@ export function useFunnelConfig() {
       subscriptionRef.current = null;
     };
   }, [leaderUserId, useLeaderConfig]);
+
+  // Persist to localStorage whenever config changes
+  useEffect(() => {
+    if (user?.id) {
+      setCachedFunnelConfig(user.id, config, leaderConfig);
+    }
+  }, [user?.id, config, leaderConfig]);
 
   useEffect(() => {
     fetchConfig();
