@@ -1,6 +1,6 @@
 import { useState, useCallback, useMemo, useEffect, useRef } from 'react';
 import { format, addDays, subDays, startOfWeek, isToday, parseISO } from 'date-fns';
-import { ChevronLeft, ChevronRight, Settings } from 'lucide-react';
+import { Check, ChevronLeft, ChevronRight, Settings } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import {
@@ -267,7 +267,7 @@ export function ManualUpdateDrawer({
               className={cn(
                 'flex-1 py-1.5 rounded-md text-xs font-semibold transition-colors',
                 category === 'leads'
-                  ? 'bg-background shadow-sm text-foreground'
+                  ? 'bg-foreground text-background shadow-sm'
                   : 'text-muted-foreground'
               )}
             >
@@ -278,7 +278,7 @@ export function ManualUpdateDrawer({
               className={cn(
                 'flex-1 py-1.5 rounded-md text-xs font-semibold transition-colors',
                 category === 'funnel'
-                  ? 'bg-background shadow-sm text-foreground'
+                  ? 'bg-foreground text-background shadow-sm'
                   : 'text-muted-foreground'
               )}
             >
@@ -289,11 +289,11 @@ export function ManualUpdateDrawer({
           {/* Two-column input grid */}
           <div className="grid grid-cols-[1fr_1fr_1fr] gap-x-2 gap-y-1 text-xs">
             {/* Header row */}
-            <div className="font-medium text-muted-foreground py-1 bg-muted/30 px-2 rounded">Metric</div>
-            <div className="text-center font-semibold py-1 bg-primary/10 flex items-center justify-center gap-1">
+            <div className="font-medium text-accent-foreground py-1.5 bg-accent px-2 rounded text-center">Metric</div>
+            <div className="text-center font-semibold py-1.5 bg-accent text-accent-foreground rounded flex items-center justify-center gap-1">
               Personal
               {prefsLoading ? (
-                <Settings className="h-3 w-3 text-muted-foreground animate-spin" />
+                <Settings className="h-3 w-3 text-accent-foreground/60 animate-spin" />
               ) : (
                 <SourceGear
                   value={personalSource}
@@ -305,10 +305,10 @@ export function ManualUpdateDrawer({
                 />
               )}
             </div>
-            <div className="text-center font-semibold py-1 bg-primary/10 flex items-center justify-center gap-1">
+            <div className="text-center font-semibold py-1.5 bg-accent text-accent-foreground rounded flex items-center justify-center gap-1">
               Total
               {prefsLoading ? (
-                <Settings className="h-3 w-3 text-muted-foreground animate-spin" />
+                <Settings className="h-3 w-3 text-accent-foreground/60 animate-spin" />
               ) : (
                 <SourceGear
                   value={teamSource}
@@ -322,7 +322,7 @@ export function ManualUpdateDrawer({
             </div>
 
             {/* Leads row */}
-            <div className="py-2 font-medium">Leads</div>
+            <div className="py-2 font-medium bg-accent/15 px-2 rounded">Leads</div>
             <div className="py-1">
               <input
                 type="text"
@@ -357,7 +357,7 @@ export function ManualUpdateDrawer({
             </div>
 
             {/* Responses row */}
-            <div className="py-2 font-medium">Responses</div>
+            <div className="py-2 font-medium bg-accent/15 px-2 rounded">Responses</div>
             <div className="py-1">
               <input
                 type="text"
@@ -446,23 +446,26 @@ function SourceGear({
   return (
     <Popover>
       <PopoverTrigger asChild>
-        <button className="p-0.5 rounded hover:bg-muted transition-colors">
-          <Settings className="h-3 w-3 text-muted-foreground" />
+        <button className="p-0.5 rounded hover:bg-accent/80 transition-colors">
+          <Settings className="h-3 w-3 text-accent-foreground/70" />
         </button>
       </PopoverTrigger>
-      <PopoverContent className="w-36 p-1" align="center" side="bottom">
+      <PopoverContent className="w-40 p-1" align="center" side="bottom">
         {options.map((opt) => (
           <button
             key={opt.value}
             onClick={() => onChange(opt.value)}
             className={cn(
-              'w-full text-left px-2 py-1.5 text-xs rounded transition-colors',
+              'w-full flex items-center justify-between px-2 py-1.5 text-xs rounded transition-colors',
               value === opt.value
-                ? 'bg-primary/10 text-primary font-semibold'
+                ? 'bg-accent text-accent-foreground font-semibold'
                 : 'hover:bg-muted text-foreground'
             )}
           >
             {opt.label}
+            {value === opt.value && (
+              <Check className="h-3.5 w-3.5 text-accent-foreground" />
+            )}
           </button>
         ))}
       </PopoverContent>
@@ -489,7 +492,7 @@ function TagInputRow({
 }) {
   return (
     <>
-      <div className="py-2 font-medium truncate bg-muted/30 px-2 rounded">{name}</div>
+      <div className="py-2 font-medium truncate bg-accent/15 px-2 rounded">{name}</div>
       <div className="py-1">
         <input
           type="text"
