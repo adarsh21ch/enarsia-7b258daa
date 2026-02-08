@@ -14,13 +14,22 @@ interface CollapsibleKPIProps {
 export function CollapsibleKPI({ kpi, responseTagNames, stageTagNames, viewType }: CollapsibleKPIProps) {
   const [expanded, setExpanded] = useState(false);
 
-  const compactItems = [
-    { label: 'Leads', value: kpi.totalLeads },
-    { label: 'Responses', value: kpi.totalResponses },
-    ...(kpi.finalTagName
-      ? [{ label: kpi.finalTagName, value: kpi.finalTagTotal, isStar: true }]
-      : []),
-  ];
+  // Compact row items based on view type
+  const compactItems: { label: string; value: number; isStar?: boolean }[] = viewType === 'leads'
+    ? [
+        { label: 'Leads', value: kpi.totalLeads },
+        { label: 'Responses', value: kpi.totalResponses },
+        ...responseTagNames.map((name) => ({
+          label: name,
+          value: kpi.responseTagTotals[name] ?? 0,
+          isStar: kpi.finalTagName === name,
+        })),
+      ]
+    : stageTagNames.map((name) => ({
+        label: name,
+        value: kpi.stageTagTotals[name] ?? 0,
+        isStar: kpi.finalTagName === name,
+      }));
 
   return (
     <div className="rounded-xl border border-border/50 bg-card overflow-hidden">
@@ -51,22 +60,23 @@ export function CollapsibleKPI({ kpi, responseTagNames, stageTagNames, viewType 
       {/* Expanded grid */}
       {expanded && (
         <div className="px-3 pb-3 grid grid-cols-3 gap-2">
-          <KPICard label="Leads" value={kpi.totalLeads} />
-          <KPICard label="Responses" value={kpi.totalResponses} />
-          {viewType === 'leads' && responseTagNames.map((name) => (
-            <KPICard key={name} label={name} value={kpi.responseTagTotals[name] ?? 0} />
+          {viewType === 'leads' && (
+            <>
+              <KPICard label="Leads" value={kpi.totalLeads} />
+              <KPICard label="Responses" value={kpi.totalResponses} />
+              {responseTagNames.map((name) => (
+                <KPICard key={name} label={name} value={kpi.responseTagTotals[name] ?? 0} isStar={kpi.finalTagName === name} />
+              ))}
+            </>
+          )}
+          {viewType === 'funnel' && stageTagNames.map((name) => (
+            <KPICard
+              key={name}
+              label={name}
+              value={kpi.stageTagTotals[name] ?? 0}
+              isStar={kpi.finalTagName === name}
+            />
           ))}
-          {viewType === 'funnel' && stageTagNames.map((name) => {
-            const isFinal = kpi.finalTagName === name;
-            return (
-              <KPICard
-                key={name}
-                label={name}
-                value={kpi.stageTagTotals[name] ?? 0}
-                isStar={isFinal}
-              />
-            );
-          })}
           <KPICard label="Days Active" value={kpi.daysWithData} />
         </div>
       )}
