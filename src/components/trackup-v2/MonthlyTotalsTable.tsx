@@ -39,11 +39,11 @@ export function MonthlyTotalsTable({
         <table className="w-full text-xs">
           <thead>
             <tr>
-              <th className="bg-primary text-primary-foreground px-3 py-2 text-left font-semibold">
+              <th className="sticky left-0 z-10 bg-accent text-accent-foreground px-3 py-2 text-left font-semibold min-w-[100px]">
                 Month
               </th>
               {allTags.map((tag) => (
-                <th key={tag.label} className="px-3 py-2 text-center font-semibold">
+                <th key={tag.label} className="bg-accent text-accent-foreground px-3 py-2 text-center font-semibold">
                   {tag.label}
                 </th>
               ))}
@@ -51,7 +51,7 @@ export function MonthlyTotalsTable({
           </thead>
           <tbody>
             <tr className="border-t border-border/30">
-              <td className="bg-primary text-primary-foreground px-3 py-2 font-medium">
+              <td className="sticky left-0 z-10 bg-accent text-accent-foreground px-3 py-2 font-medium">
                 {monthLabel}
               </td>
               {allTags.map((tag) => (

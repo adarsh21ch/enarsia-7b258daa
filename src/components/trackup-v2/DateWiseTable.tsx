@@ -87,7 +87,7 @@ export function DateWiseTable({
           <tbody>
             {metricRows.map((row) => (
               <tr key={row.label} className="border-t border-border/30">
-                <td className="sticky left-0 z-10 bg-accent/15 text-accent px-3 py-2 font-medium whitespace-nowrap">
+                <td className="sticky left-0 z-10 bg-accent text-accent-foreground px-3 py-2 font-medium whitespace-nowrap">
                   {row.label}
                 </td>
                 {row.values.map((val, i) => (

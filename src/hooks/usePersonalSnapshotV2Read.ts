@@ -14,7 +14,7 @@ export function usePersonalSnapshotV2Read(monthYear: string) {
   const { leadsTrackingTagNames, stageTagNames } = useTrackingFormat();
 
   const { data: snapshots = [], isLoading, refetch } = useQuery({
-    queryKey: ['personal-snapshot-v2', user?.id, monthYear],
+    queryKey: ['personal-snapshot-v2', user?.id, monthYear, leadsTrackingTagNames, stageTagNames],
     queryFn: async (): Promise<SnapshotRow[]> => {
       if (!user) return [];
 

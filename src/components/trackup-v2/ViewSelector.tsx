@@ -24,7 +24,7 @@ export function ViewSelector({ viewMode, options, onViewModeChange }: ViewSelect
           className={cn(
             'flex items-center gap-1.5 rounded-full border px-3 py-1.5',
             'text-xs font-semibold transition-colors',
-            'bg-primary text-primary-foreground border-primary'
+            'bg-accent text-accent-foreground border-accent'
           )}
         >
           {activeLabel}

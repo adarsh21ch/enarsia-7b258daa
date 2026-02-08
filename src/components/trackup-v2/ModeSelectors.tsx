@@ -30,7 +30,7 @@ export function ModeSelectors({
             className={cn(
               'flex-1 flex items-center justify-center gap-1.5 rounded-full px-3 py-2',
               'text-xs font-semibold transition-colors',
-              'bg-primary text-primary-foreground'
+              'bg-accent text-accent-foreground'
             )}
           >
             {dataMode === 'personal' ? 'Personal' : 'Total'}
@@ -60,7 +60,7 @@ export function ModeSelectors({
             className={cn(
               'flex-1 flex items-center justify-center gap-1.5 rounded-full px-3 py-2',
               'text-xs font-semibold transition-colors',
-              'bg-primary text-primary-foreground'
+              'bg-accent text-accent-foreground'
             )}
           >
             {viewType === 'leads' ? 'Leads' : 'Funnels'}

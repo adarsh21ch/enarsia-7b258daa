@@ -51,7 +51,7 @@ export function FunnelWiseTable({
           <tbody>
             {stageTagNames.map((stageName) => (
               <tr key={stageName} className="border-t border-border/30">
-                <td className="sticky left-0 z-10 bg-accent/15 text-accent px-3 py-2 font-medium whitespace-nowrap">
+                <td className="sticky left-0 z-10 bg-accent text-accent-foreground px-3 py-2 font-medium whitespace-nowrap">
                   {stageName}
                 </td>
                 {funnelPeriods.map((period) => {
