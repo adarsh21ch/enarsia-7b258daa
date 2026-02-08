@@ -1,7 +1,18 @@
-import { useMemo } from 'react';
 import { cn } from '@/lib/utils';
 import { formatTrackingValue } from '@/lib/snapshotSlotUtils';
+import { format, parseISO } from 'date-fns';
 import type { FunnelPeriod } from '@/hooks/useSnapshotV2ComputedData';
+
+function formatDateRange(startDate: string, endDate: string): string {
+  const s = parseISO(startDate);
+  const e = parseISO(endDate);
+  const sMonth = format(s, 'MMM');
+  const eMonth = format(e, 'MMM');
+  if (sMonth === eMonth) {
+    return `${format(s, 'd')}-${format(e, 'd')} ${sMonth}`;
+  }
+  return `${format(s, 'd')} ${sMonth} - ${format(e, 'd')} ${eMonth}`;
+}
 
 interface FunnelWiseTableProps {
   funnelPeriods: FunnelPeriod[];
@@ -35,14 +46,14 @@ export function FunnelWiseTable({
               <th className="sticky left-0 z-10 bg-accent text-accent-foreground px-3 py-2 text-left font-semibold min-w-[100px]">
                 Stage
               </th>
-              {funnelPeriods.map((period) => (
+              {funnelPeriods.map((period, index) => (
                 <th
                   key={period.label}
-                  className="px-3 py-2 text-center font-semibold min-w-[64px]"
+                  className="px-3 py-2 text-center font-semibold min-w-[90px]"
                 >
-                  <div className="font-bold">{period.label}</div>
+                  <div className="font-bold text-[11px]">Funnel {index + 1}</div>
                   <div className="text-[10px] text-accent-foreground/70 font-normal">
-                    {period.startDate.slice(5)}
+                    ({formatDateRange(period.startDate, period.endDate)})
                   </div>
                 </th>
               ))}
