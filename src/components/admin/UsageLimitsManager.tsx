@@ -7,65 +7,205 @@ import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Loader2, Save, RotateCcw, AlertTriangle, Users, Upload, Bell, Ban, Clock, Timer, Lock as LockIcon, CalendarDays, Flame } from 'lucide-react';
+import { Loader2, Save, RotateCcw, AlertTriangle, Users, Upload, Bell, Ban, Clock, Timer, Lock as LockIcon, CalendarDays, Flame, Info, ShieldCheck } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { TrialBannerTabsManager } from './TrialBannerTabsManager';
+import { LimitSettingCard, type LimitSettingMeta } from './LimitSettingCard';
 
-const LIMIT_ICONS: Record<string, React.ReactNode> = {
-  // Trial Period
+// ─── Setting metadata: titles, scopes, toggle semantics ────────────────────
+
+const SETTING_META: Record<string, LimitSettingMeta> = {
+  // ── FREE USER LIMITS ──
+  free_daily_upload: {
+    title: 'Free Daily Upload Limit',
+    scope: 'FREE',
+    kind: 'LIMIT',
+    onEnabled: 'Free users are restricted to X uploads per day',
+    onDisabled: 'Free users have NO daily upload restriction',
+    tooltip: 'This setting applies only to Free users. Turning this ON restricts daily uploads to the specified number. Pro users are not affected.',
+    valueHint: '0 = no uploads allowed, 100 = max 100/day',
+  },
+  free_total_leads: {
+    title: 'Free Total Leads (Lifetime)',
+    scope: 'FREE',
+    kind: 'LIMIT',
+    onEnabled: 'Free users are restricted to X total leads (lifetime)',
+    onDisabled: 'Free users have NO lifetime lead restriction',
+    tooltip: 'This setting applies only to Free users. It caps the total number of leads a Free user can ever create. Pro users are not affected.',
+    valueHint: '0 = blocked, higher = more generous cap',
+  },
+  restrict_historical_data: {
+    title: 'Limit Free Users\' Historical Data Access',
+    scope: 'FREE',
+    kind: 'FEATURE',
+    isBoolean: true,
+    onEnabled: 'Free users can only view recent data (based on Allowed Past Days below)',
+    onDisabled: 'Free users can view ALL historical data',
+    tooltip: 'This setting applies only to Free users. When ON, past date data in TrackUp is locked behind an upgrade wall. Pro and Trial users always have full access.',
+  },
+  allowed_past_days: {
+    title: 'Free Users: Allowed Past Data Days',
+    scope: 'FREE',
+    kind: 'LIMIT',
+    onEnabled: 'Free users can view the last X days of data',
+    onDisabled: 'Historical restriction is inactive (all data visible)',
+    tooltip: 'This setting applies only to Free users. Controls how many days back a Free user can see in TrackUp. Only works when "Limit Historical Data Access" is ON.',
+    valueHint: '0 = today only, 7 = last 7 days, 30 = last 30 days',
+  },
+
+  // ── PRO USER OVERRIDES ──
+  pro_daily_upload: {
+    title: 'Pro Daily Upload Limit',
+    scope: 'PRO',
+    kind: 'LIMIT',
+    onEnabled: 'Pro users are restricted to X uploads per day',
+    onDisabled: 'Pro users have UNLIMITED daily uploads',
+    tooltip: 'This setting applies only to Pro users. Usually kept OFF (unlimited). Turn ON only if you want to cap Pro uploads.',
+    valueHint: '0 = unlimited (when disabled)',
+  },
+
+  // ── TRIAL CONFIGURATION ──
+  free_trial_days: {
+    title: 'Trial Duration (Days)',
+    scope: 'TRIAL',
+    kind: 'LIMIT',
+    onEnabled: 'New users get X days of trial access',
+    onDisabled: 'Free trial is completely disabled for new users',
+    tooltip: 'Controls how many days new users get trial access. When disabled, no trial is offered.',
+    valueHint: 'e.g. 7 = one week trial',
+  },
+  trial_only_mode: {
+    title: 'Trial Overrides Free Limits',
+    scope: 'TRIAL',
+    kind: 'FEATURE',
+    isBoolean: true,
+    onEnabled: 'Trial users IGNORE Free limits and get Pro-level access',
+    onDisabled: 'Trial users follow Free plan limits',
+    tooltip: 'When ON, active trial users bypass all Free-tier restrictions and behave as Pro users. When OFF, trial users are treated the same as Free users.',
+  },
+
+  // ── WARNING & PAYWALL ──
+  warning_threshold_1: {
+    title: 'Warning Stage 1 (Soft Warning)',
+    scope: 'FREE',
+    kind: 'LIMIT',
+    onEnabled: 'Soft warning shown when Free user reaches X% of their limit',
+    onDisabled: 'No soft warning is shown',
+    tooltip: 'Triggers a gentle upgrade nudge when a Free user reaches this percentage of their lead limit. Pro users never see this.',
+    valueHint: 'e.g. 70 = warn at 70% usage',
+  },
+  warning_threshold_2: {
+    title: 'Warning Stage 2 (Strong Warning)',
+    scope: 'FREE',
+    kind: 'LIMIT',
+    onEnabled: 'Strong warning shown when Free user reaches X% of their limit',
+    onDisabled: 'No strong warning is shown',
+    tooltip: 'Triggers an urgent upgrade banner when a Free user reaches this percentage. More prominent than Stage 1.',
+    valueHint: 'e.g. 90 = warn at 90% usage',
+  },
+  warning_threshold_3: {
+    title: 'Warning Stage 3 (Critical Alert)',
+    scope: 'FREE',
+    kind: 'LIMIT',
+    onEnabled: 'Critical alert shown when Free user reaches X% of their limit',
+    onDisabled: 'No critical alert is shown',
+    tooltip: 'Triggers a blocking-style alert when a Free user is at or very close to their limit.',
+    valueHint: 'e.g. 95 = alert at 95% usage',
+  },
+  hard_limit: {
+    title: 'Hard Limit (Blocking Paywall)',
+    scope: 'FREE',
+    kind: 'LIMIT',
+    onEnabled: 'Free users are BLOCKED when they reach X% of their limit',
+    onDisabled: 'No hard block — Free users can exceed limits',
+    tooltip: 'When ON, Free users hitting this threshold see a blocking modal and cannot add more leads until they upgrade. Pro users are never blocked.',
+    valueHint: 'e.g. 100 = block at 100% (exact limit)',
+  },
+
+  // ── STREAK SETTINGS ──
+  streak_enabled: {
+    title: 'Activity Streak Tracking',
+    scope: 'ALL',
+    kind: 'FEATURE',
+    isBoolean: true,
+    onEnabled: 'Users see their daily activity streak counter',
+    onDisabled: 'Streak tracking is hidden for all users',
+    tooltip: 'Applies to all users. Shows a streak counter that tracks consecutive days of activity.',
+  },
+  streak_grace_days: {
+    title: 'Streak Grace Period',
+    scope: 'ALL',
+    kind: 'LIMIT',
+    onEnabled: 'Users get X grace days before losing their streak',
+    onDisabled: 'No grace period — streak resets after 1 missed day',
+    tooltip: 'Applies to all users. Allows users to miss X days before their streak resets to zero.',
+    valueHint: '0 = no grace, 1 = can miss 1 day',
+  },
+};
+
+const SETTING_ICONS: Record<string, React.ReactNode> = {
   free_trial_days: <Clock className="h-4 w-4" />,
   trial_only_mode: <Timer className="h-4 w-4" />,
-  // Lead Limits
   free_total_leads: <Users className="h-4 w-4" />,
   free_daily_upload: <Upload className="h-4 w-4" />,
   pro_daily_upload: <Upload className="h-4 w-4" />,
-  // Warning Thresholds
   warning_threshold_1: <Bell className="h-4 w-4" />,
   warning_threshold_2: <Bell className="h-4 w-4" />,
   warning_threshold_3: <AlertTriangle className="h-4 w-4" />,
-  // Hard Limits
   hard_limit: <Ban className="h-4 w-4" />,
-  // Historical Access
   restrict_historical_data: <LockIcon className="h-4 w-4" />,
   allowed_past_days: <CalendarDays className="h-4 w-4" />,
-  // Streak Settings
   streak_enabled: <Flame className="h-4 w-4" />,
   streak_grace_days: <Clock className="h-4 w-4" />,
 };
 
-// Detect plan type from config_key
-function getPlanType(key: string): 'free' | 'pro' | 'general' {
-  if (key.startsWith('free_')) return 'free';
-  if (key.startsWith('pro_')) return 'pro';
-  return 'general';
-}
+// ─── Regrouped sections per the design spec ─────────────────────────────────
 
-const LIMIT_CATEGORIES = {
-  'Trial Period': ['free_trial_days', 'trial_only_mode'],
-  'Lead Limits': ['free_total_leads', 'free_daily_upload', 'pro_daily_upload'],
-  'Warning Thresholds': ['warning_threshold_1', 'warning_threshold_2', 'warning_threshold_3'],
-  'Hard Limits': ['hard_limit'],
-  'Historical Access': ['restrict_historical_data', 'allowed_past_days'],
-  'Streak Settings': ['streak_enabled', 'streak_grace_days'],
-};
+const SECTIONS = [
+  {
+    title: '🔒 Free User Limits',
+    subtitle: 'Restrictions that apply ONLY to Free users. Pro users bypass all of these.',
+    keys: ['free_daily_upload', 'free_total_leads', 'restrict_historical_data', 'allowed_past_days'],
+  },
+  {
+    title: '👑 Pro User Overrides',
+    subtitle: 'Settings that apply ONLY to Pro users. Usually kept unlimited.',
+    keys: ['pro_daily_upload'],
+  },
+  {
+    title: '⏳ Trial Configuration',
+    subtitle: 'Controls how the free trial works for new sign-ups.',
+    keys: ['free_trial_days', 'trial_only_mode'],
+  },
+  {
+    title: '⚠️ Warning & Paywall Stages',
+    subtitle: 'Progressive warnings shown to Free users as they approach their limit.',
+    keys: ['warning_threshold_1', 'warning_threshold_2', 'warning_threshold_3', 'hard_limit'],
+  },
+  {
+    title: '🔥 Streak Settings',
+    subtitle: 'Activity streak tracking settings for all users.',
+    keys: ['streak_enabled', 'streak_grace_days'],
+  },
+];
 
-const BOOLEAN_FIELDS = ['trial_only_mode', 'restrict_historical_data', 'streak_enabled'];
+// ─── Main component ─────────────────────────────────────────────────────────
 
 export function UsageLimitsManager() {
   const { limits, loading, updateLimit } = useAdminUsageLimits();
   const [pendingChanges, setPendingChanges] = useState<Record<string, { value: number; enabled: boolean }>>({});
   const [saving, setSaving] = useState(false);
 
-  const handleValueChange = (id: string, key: string, value: number, currentEnabled: boolean) => {
+  const handleValueChange = (id: string, value: number, currentEnabled: boolean) => {
     setPendingChanges(prev => ({
       ...prev,
       [id]: { value, enabled: prev[id]?.enabled ?? currentEnabled },
     }));
   };
 
-  const handleEnabledChange = (id: string, key: string, enabled: boolean, currentValue: number) => {
+  const handleEnabledChange = (id: string, enabled: boolean, currentValue: number) => {
     setPendingChanges(prev => ({
       ...prev,
       [id]: { value: prev[id]?.value ?? currentValue, enabled },
@@ -76,17 +216,15 @@ export function UsageLimitsManager() {
     setSaving(true);
     try {
       for (const [id, changes] of Object.entries(pendingChanges)) {
-        // Find the original limit to get old values
         const originalLimit = limits.find(l => l.id === id);
         const oldValue = originalLimit ? {
           config_key: originalLimit.config_key,
           config_value: originalLimit.config_value,
           is_enabled: originalLimit.is_enabled,
         } : null;
-        
+
         await updateLimit(id, changes.value, changes.enabled);
-        
-        // Log audit action for each limit change
+
         if (originalLimit) {
           await logAdminAction(
             'limit_updated',
@@ -100,7 +238,7 @@ export function UsageLimitsManager() {
       }
       setPendingChanges({});
       toast.success('All limits saved');
-    } catch (err) {
+    } catch {
       toast.error('Failed to save limits');
     } finally {
       setSaving(false);
@@ -123,10 +261,11 @@ export function UsageLimitsManager() {
 
   return (
     <div className="space-y-6">
+      {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-lg font-semibold">Usage Limits</h2>
-          <p className="text-sm text-muted-foreground">Control free/pro limits and warning thresholds</p>
+          <h2 className="text-lg font-semibold">Limits & Access Control</h2>
+          <p className="text-sm text-muted-foreground">Configure restrictions, limits, and paywall behavior</p>
         </div>
         {hasChanges && (
           <div className="flex gap-2">
@@ -142,91 +281,58 @@ export function UsageLimitsManager() {
         )}
       </div>
 
-      {Object.entries(LIMIT_CATEGORIES).map(([category, keys]) => {
-        const categoryLimits = limits.filter(l => keys.includes(l.config_key));
-        if (categoryLimits.length === 0) return null;
+      {/* ─── Global Rules Info Box ─── */}
+      <Card className="p-4 bg-muted/50 border-primary/20">
+        <div className="flex items-start gap-3">
+          <ShieldCheck className="h-5 w-5 text-primary shrink-0 mt-0.5" />
+          <div className="space-y-1">
+            <p className="text-sm font-semibold">Global Rules</p>
+            <ul className="text-xs text-muted-foreground space-y-0.5">
+              <li>• <strong>Free users</strong> are affected by all limits below</li>
+              <li>• <strong>Pro users</strong> bypass Free limits (unless Pro-specific limit is set)</li>
+              <li>• <strong>Trial users</strong> follow Trial configuration (Pro access or Free limits)</li>
+              <li>• <strong>ENABLED (ON)</strong> = restriction is <strong>active</strong></li>
+              <li>• <strong>DISABLED (OFF)</strong> = restriction is <strong>inactive</strong></li>
+            </ul>
+          </div>
+        </div>
+      </Card>
+
+      {/* ─── Sections ─── */}
+      {SECTIONS.map(section => {
+        const sectionLimits = section.keys
+          .map(key => limits.find(l => l.config_key === key))
+          .filter(Boolean) as typeof limits;
+
+        if (sectionLimits.length === 0) return null;
 
         return (
-          <div key={category} className="space-y-3">
-            <h3 className="text-sm font-medium text-muted-foreground">{category}</h3>
+          <div key={section.title} className="space-y-3">
+            <div>
+              <h3 className="text-sm font-semibold">{section.title}</h3>
+              <p className="text-[11px] text-muted-foreground">{section.subtitle}</p>
+            </div>
             <div className="grid gap-3">
-              {categoryLimits.map((limit) => {
+              {sectionLimits.map(limit => {
+                const meta = SETTING_META[limit.config_key];
+                if (!meta) return null;
+
                 const pending = pendingChanges[limit.id];
                 const currentValue = pending?.value ?? limit.config_value;
                 const currentEnabled = pending?.enabled ?? limit.is_enabled;
                 const hasChange = !!pending;
-                
-                // Boolean-like fields don't need value input
-                const isBooleanField = BOOLEAN_FIELDS.includes(limit.config_key);
 
                 return (
-                  <Card key={limit.id} className={`p-4 ${hasChange ? 'ring-2 ring-primary/50' : ''}`}>
-                    <div className="flex items-center gap-4">
-                      <div className="p-2 rounded-lg bg-muted">
-                        {LIMIT_ICONS[limit.config_key] || <Users className="h-4 w-4" />}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2">
-                          {/* Plan type badge */}
-                          {(() => {
-                            const plan = getPlanType(limit.config_key);
-                            if (plan === 'free') return (
-                              <Badge variant="outline" className="text-[10px] px-1.5 py-0 bg-blue-500/10 text-blue-600 border-blue-500/30">
-                                Free
-                              </Badge>
-                            );
-                            if (plan === 'pro') return (
-                              <Badge variant="outline" className="text-[10px] px-1.5 py-0 bg-emerald-500/10 text-emerald-600 border-emerald-500/30">
-                                Pro
-                              </Badge>
-                            );
-                            return null;
-                          })()}
-                          <span className="font-medium">{formatLimitKey(limit.config_key)}</span>
-                          {!currentEnabled && (
-                            <Badge variant="outline" className="text-xs bg-muted">
-                              Disabled
-                            </Badge>
-                          )}
-                          {isBooleanField && currentEnabled && (
-                            <Badge variant="default" className="text-xs bg-primary/10 text-primary border-primary/30">
-                              Active
-                            </Badge>
-                          )}
-                        </div>
-                        <p className="text-xs text-muted-foreground truncate">
-                          {limit.description || limit.config_key}
-                        </p>
-                      </div>
-                      <div className="flex items-center gap-3">
-                        {/* Hide value input for boolean fields */}
-                        {!isBooleanField && (
-                          <Input
-                            type="number"
-                            value={currentValue}
-                            onChange={(e) => handleValueChange(
-                              limit.id, 
-                              limit.config_key, 
-                              parseInt(e.target.value) || 0,
-                              limit.is_enabled
-                            )}
-                            className="w-24 h-8 text-right"
-                            min="0"
-                          />
-                        )}
-                        <Switch
-                          checked={currentEnabled}
-                          onCheckedChange={(enabled) => handleEnabledChange(
-                            limit.id,
-                            limit.config_key,
-                            enabled,
-                            limit.config_value
-                          )}
-                          aria-label="Enable limit"
-                        />
-                      </div>
-                    </div>
-                  </Card>
+                  <LimitSettingCard
+                    key={limit.id}
+                    meta={meta}
+                    currentValue={currentValue}
+                    currentEnabled={currentEnabled}
+                    hasChange={hasChange}
+                    onValueChange={(v) => handleValueChange(limit.id, v, limit.is_enabled)}
+                    onEnabledChange={(e) => handleEnabledChange(limit.id, e, limit.config_value)}
+                    icon={SETTING_ICONS[limit.config_key] || <Users className="h-4 w-4" />}
+                  />
                 );
               })}
             </div>
@@ -234,51 +340,41 @@ export function UsageLimitsManager() {
         );
       })}
 
-      {/* Uncategorized limits */}
+      {/* Uncategorized limits (safety net) */}
       {(() => {
-        const categorizedKeys = Object.values(LIMIT_CATEGORIES).flat();
-        const uncategorized = limits.filter(l => !categorizedKeys.includes(l.config_key));
+        const allKeys = SECTIONS.flatMap(s => s.keys);
+        const uncategorized = limits.filter(l => !allKeys.includes(l.config_key));
         if (uncategorized.length === 0) return null;
 
         return (
           <div className="space-y-3">
-            <h3 className="text-sm font-medium text-muted-foreground">Other Limits</h3>
+            <h3 className="text-sm font-semibold">🔧 Other Settings</h3>
             <div className="grid gap-3">
-              {uncategorized.map((limit) => {
+              {uncategorized.map(limit => {
                 const pending = pendingChanges[limit.id];
                 const currentValue = pending?.value ?? limit.config_value;
                 const currentEnabled = pending?.enabled ?? limit.is_enabled;
 
+                const fallbackMeta: LimitSettingMeta = {
+                  title: limit.config_key.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase()),
+                  scope: 'ALL',
+                  kind: 'LIMIT',
+                  onEnabled: 'This restriction is active',
+                  onDisabled: 'This restriction is inactive',
+                  tooltip: limit.description || 'No additional information available.',
+                };
+
                 return (
-                  <Card key={limit.id} className="p-4">
-                    <div className="flex items-center gap-4">
-                      <div className="flex-1 min-w-0">
-                        <span className="font-medium">{formatLimitKey(limit.config_key)}</span>
-                        <p className="text-xs text-muted-foreground">{limit.description}</p>
-                      </div>
-                      <Input
-                        type="number"
-                        value={currentValue}
-                        onChange={(e) => handleValueChange(
-                          limit.id,
-                          limit.config_key,
-                          parseInt(e.target.value) || 0,
-                          limit.is_enabled
-                        )}
-                        className="w-24 h-8 text-right"
-                        min="0"
-                      />
-                      <Switch
-                        checked={currentEnabled}
-                        onCheckedChange={(enabled) => handleEnabledChange(
-                          limit.id,
-                          limit.config_key,
-                          enabled,
-                          limit.config_value
-                        )}
-                      />
-                    </div>
-                  </Card>
+                  <LimitSettingCard
+                    key={limit.id}
+                    meta={fallbackMeta}
+                    currentValue={currentValue}
+                    currentEnabled={currentEnabled}
+                    hasChange={!!pending}
+                    onValueChange={(v) => handleValueChange(limit.id, v, limit.is_enabled)}
+                    onEnabledChange={(e) => handleEnabledChange(limit.id, e, limit.config_value)}
+                    icon={<Users className="h-4 w-4" />}
+                  />
                 );
               })}
             </div>
@@ -286,19 +382,16 @@ export function UsageLimitsManager() {
         );
       })()}
 
-      {/* Historical Restriction Scope */}
+      {/* ─── Sub-managers ─── */}
       <HistoricalScopeManager />
-
-      {/* Streak Actions Manager */}
       <StreakActionsManager />
-
-      {/* Trial Banner Tab Visibility */}
       <TrialBannerTabsManager />
     </div>
   );
 }
 
-/** Manages the historical_restriction_scope checkboxes */
+// ─── Historical Restriction Scope ──────────────────────────────────────────
+
 function HistoricalScopeManager() {
   const queryClient = useQueryClient();
   const { data, isLoading } = useQuery({
@@ -360,7 +453,10 @@ function HistoricalScopeManager() {
 
   return (
     <div className="space-y-3">
-      <h3 className="text-sm font-medium text-muted-foreground">Historical Restriction Scope</h3>
+      <div>
+        <h3 className="text-sm font-semibold">🔒 Historical Restriction Scope</h3>
+        <p className="text-[11px] text-muted-foreground">Applies to: FREE users — Select which trackers enforce historical data restrictions</p>
+      </div>
       <Card className="p-4">
         <div className="flex items-center gap-6">
           <label className="flex items-center gap-2 cursor-pointer">
@@ -378,15 +474,16 @@ function HistoricalScopeManager() {
             </Button>
           )}
         </div>
-        <p className="text-xs text-muted-foreground mt-2">
-          Select which trackers enforce historical data restrictions for free users.
+        <p className="text-[11px] text-muted-foreground mt-2">
+          ✅ Checked = Free users' historical data is restricted in that tracker. Pro users always have full access.
         </p>
       </Card>
     </div>
   );
 }
 
-/** Manages streak_active_actions checkboxes */
+// ─── Streak Active Actions ──────────────────────────────────────────────────
+
 function StreakActionsManager() {
   const queryClient = useQueryClient();
   const { data, isLoading } = useQuery({
@@ -450,7 +547,10 @@ function StreakActionsManager() {
 
   return (
     <div className="space-y-3">
-      <h3 className="text-sm font-medium text-muted-foreground">Streak Active Actions</h3>
+      <div>
+        <h3 className="text-sm font-semibold">🔥 Streak Active Actions</h3>
+        <p className="text-[11px] text-muted-foreground">Applies to: ALL users — Select which actions count toward daily streak</p>
+      </div>
       <Card className="p-4">
         <div className="flex items-center gap-6 flex-wrap">
           {ALL_ACTIONS.map(action => (
@@ -469,16 +569,10 @@ function StreakActionsManager() {
             </Button>
           )}
         </div>
-        <p className="text-xs text-muted-foreground mt-2">
-          Select which user actions count toward their daily activity streak.
+        <p className="text-[11px] text-muted-foreground mt-2">
+          ✅ Checked = This action counts as "active" for streak tracking.
         </p>
       </Card>
     </div>
   );
-}
-
-function formatLimitKey(key: string): string {
-  return key
-    .replace(/_/g, ' ')
-    .replace(/\b\w/g, c => c.toUpperCase());
 }
