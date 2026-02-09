@@ -88,6 +88,12 @@ export function UpgradeModal({
     return `${days} days`;
   };
 
+  const getPerMonth = (plan: PlanConfig) => {
+    const months = Math.round(plan.durationDays / 30);
+    if (months > 1) return Math.floor(plan.price / months);
+    return null;
+  };
+
   return (
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-md bg-card border-border">
@@ -138,8 +144,17 @@ export function UpgradeModal({
                   </div>
                 </div>
                 <div className="text-right shrink-0 ml-3">
-                  <p className="font-bold text-lg text-foreground">₹{primaryPlan.price}</p>
-                  <p className="text-xs text-muted-foreground">{formatDuration(primaryPlan.durationDays)}</p>
+                  {getPerMonth(primaryPlan) ? (
+                    <>
+                      <p className="font-bold text-lg text-foreground">₹{getPerMonth(primaryPlan)}<span className="text-xs font-normal text-muted-foreground">/month</span></p>
+                      <p className="text-[10px] text-muted-foreground">Billed as ₹{primaryPlan.price} for {formatDuration(primaryPlan.durationDays)}</p>
+                    </>
+                  ) : (
+                    <>
+                      <p className="font-bold text-lg text-foreground">₹{primaryPlan.price}</p>
+                      <p className="text-xs text-muted-foreground">{formatDuration(primaryPlan.durationDays)}</p>
+                    </>
+                  )}
                 </div>
               </div>
             </button>
@@ -161,8 +176,17 @@ export function UpgradeModal({
                   <p className="font-semibold text-foreground">{secondaryPlan.name}</p>
                 </div>
                 <div className="text-right">
-                  <span className="font-bold text-foreground">₹{secondaryPlan.price}</span>
-                  <span className="text-xs text-muted-foreground ml-1">/ {formatDuration(secondaryPlan.durationDays)}</span>
+                  {getPerMonth(secondaryPlan) ? (
+                    <>
+                      <span className="font-bold text-foreground">₹{getPerMonth(secondaryPlan)}<span className="text-xs font-normal text-muted-foreground">/month</span></span>
+                      <p className="text-[10px] text-muted-foreground">Billed ₹{secondaryPlan.price} / {formatDuration(secondaryPlan.durationDays)}</p>
+                    </>
+                  ) : (
+                    <>
+                      <span className="font-bold text-foreground">₹{secondaryPlan.price}</span>
+                      <span className="text-xs text-muted-foreground ml-1">/ {formatDuration(secondaryPlan.durationDays)}</span>
+                    </>
+                  )}
                 </div>
               </div>
             </button>
