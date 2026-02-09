@@ -4,7 +4,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useProfile } from '@/hooks/useProfile';
 import { useAdmin } from '@/hooks/useAdmin';
-import { useSubscription } from '@/hooks/useSubscription';
+import { usePermissions } from '@/contexts/PermissionsContext';
 import { useLeaderSetup } from '@/hooks/useLeaderSetup';
 import { useLifetimeLeadLimit } from '@/hooks/useLifetimeLeadLimit';
 import { useTrackingFormatContext } from '@/contexts/TrackingFormatContext';
@@ -106,12 +106,9 @@ export default function Profile() {
     isAdmin
   } = useAdmin();
   const {
-    isPro,
-    isAdminOverride,
-    daysRemaining,
-    subscription,
-    loading: subLoading
-  } = useSubscription();
+    isPaid: isPro,
+    isLoading: subLoading,
+  } = usePermissions();
   const {
     refreshFormat
   } = useTrackingFormatContext();

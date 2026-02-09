@@ -5,6 +5,7 @@ import { ChevronLeft, ChevronRight, Users, MessageSquare, Layers, UserPlus, Cale
 import { cn } from '@/lib/utils';
 import { format, parse } from 'date-fns';
 import { useRef, useEffect, useState } from 'react';
+import { usePermissions } from '@/contexts/PermissionsContext';
 
 // Default metrics for the TrackUp view - now includes stageLeads
 const METRICS = ['leads', 'responses', 'stageLeads', 'enrollments'] as const;
@@ -53,11 +54,9 @@ function getProgressColor(current: number, goal: number) {
   return 'from-red-400 to-red-500';
 }
 
-interface LeadsTrackerProps {
-  isPro?: boolean;
-}
-
-export function LeadsTracker({ isPro = true }: LeadsTrackerProps) {
+export function LeadsTracker() {
+  const { checkFeature } = usePermissions();
+  const isPro = checkFeature('tracking_tags');
   const { dailyMetrics, totals, loading, monthYear, changeMonth, daysInMonth, daysRemaining } = useLeadsFromProspects();
   const [isHeaderSticky, setIsHeaderSticky] = useState(false);
   const tableHeaderRef = useRef<HTMLDivElement>(null);

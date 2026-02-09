@@ -6,10 +6,10 @@ import { toast } from 'sonner';
 import { Prospect, FunnelStage, ActionTaken, FUNNEL_STAGES, ACTIONS } from '@/types/prospect';
 import * as XLSX from 'xlsx';
 import { format } from 'date-fns';
+import { usePermissions } from '@/contexts/PermissionsContext';
 
 interface ExportFunnelDataProps {
   prospects: Prospect[];
-  isPro?: boolean;
 }
 
 type FilterType = 'all' | FunnelStage | ActionTaken | 'enrolled' | 'not_enrolled';
@@ -22,7 +22,9 @@ const FILTER_OPTIONS: { value: FilterType; label: string }[] = [
   { value: 'not_enrolled', label: 'Not Enrolled Only' },
 ];
 
-export function ExportFunnelData({ prospects, isPro = true }: ExportFunnelDataProps) {
+export function ExportFunnelData({ prospects }: ExportFunnelDataProps) {
+  const { checkFeature } = usePermissions();
+  const isPro = checkFeature('export_data');
   const [filter, setFilter] = useState<FilterType>('all');
   const [exporting, setExporting] = useState(false);
 

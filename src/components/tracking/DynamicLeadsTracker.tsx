@@ -8,6 +8,7 @@
 import { useLeadsTrackingStats } from '@/hooks/useTrackingStats';
 import { useTrackingFormat } from '@/hooks/useTrackingFormat';
 import { useHistoricalAccess } from '@/hooks/useHistoricalAccess';
+import { usePermissions } from '@/contexts/PermissionsContext';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
@@ -33,7 +34,6 @@ const METRIC_COLORS = {
 };
 
 interface DynamicLeadsTrackerProps {
-  isPro?: boolean;
   leads?: number;
   responses?: number;
   enrollments?: number;
@@ -43,7 +43,6 @@ interface DynamicLeadsTrackerProps {
 }
 
 export function DynamicLeadsTracker({ 
-  isPro = true,
   leads = 0,
   responses = 0,
   enrollments = 0,
@@ -51,6 +50,8 @@ export function DynamicLeadsTracker({
   notPicked = 0,
   tagCounts = {}
 }: DynamicLeadsTrackerProps) {
+  const { checkFeature } = usePermissions();
+  const isPro = checkFeature('tracking_tags');
   const { dailyMetrics, totals, loading, monthYear, changeMonth, daysInMonth, daysRemaining, tags } = useLeadsTrackingStats();
   const { leadsFinalTargetTag } = useTrackingFormat();
   const { isDateRestricted, isMonthFullyRestricted, triggerRestriction, showUpgradeModal, setShowUpgradeModal } = useHistoricalAccess();

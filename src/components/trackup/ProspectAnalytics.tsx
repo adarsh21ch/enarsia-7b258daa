@@ -3,13 +3,15 @@ import { StageBadge, StatusBadge } from '@/components/prospects/StatusBadge';
 import { useMemo } from 'react';
 import { cn } from '@/lib/utils';
 import { Users, UserCheck, AlertTriangle, TrendingUp, Activity } from 'lucide-react';
+import { usePermissions } from '@/contexts/PermissionsContext';
 
 interface ProspectAnalyticsProps {
   prospects: Prospect[];
-  isPro?: boolean;
 }
 
-export function ProspectAnalytics({ prospects, isPro = true }: ProspectAnalyticsProps) {
+export function ProspectAnalytics({ prospects }: ProspectAnalyticsProps) {
+  const { checkFeature } = usePermissions();
+  const isPro = checkFeature('funnel_analytics');
   const stats = useMemo(() => {
     const totalProspects = prospects.length;
     const positiveCount = prospects.filter(p => p.prospect_status === 'Good').length;

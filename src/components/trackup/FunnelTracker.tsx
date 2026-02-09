@@ -3,6 +3,7 @@ import { format } from 'date-fns';
 import { useProspectFunnelStats, FunnelStats } from '@/hooks/useProspectFunnelStats';
 import { useFunnelConfig } from '@/hooks/useFunnelConfig';
 import { useProspectsQuery } from '@/hooks/useProspectsQuery';
+import { usePermissions } from '@/contexts/PermissionsContext';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ChevronDown, ChevronUp, Flame, TrendingUp, TrendingDown, Minus, Sparkles, Users, Grid3X3, Settings2, CalendarDays, Lock } from 'lucide-react';
@@ -75,7 +76,6 @@ interface FunnelConfig {
 }
 
 interface FunnelTrackerProps {
-  isPro?: boolean;
   // Team viewing props
   isViewingTeam?: boolean;
   teamProspects?: Array<{ id: string; funnel_stage: string | null; funnel_stage_at: string | null; date_added: string }>;
@@ -83,11 +83,12 @@ interface FunnelTrackerProps {
 }
 
 export function FunnelTracker({ 
-  isPro = true, 
   isViewingTeam = false,
   teamProspects,
   leaderFunnelConfig 
 }: FunnelTrackerProps) {
+  const { checkFeature } = usePermissions();
+  const isPro = checkFeature('funnel_analytics');
   const { prospects, loading: prospectsLoading } = useProspectsQuery();
   const { config, loading: configLoading, saveConfig, getEffectiveConfig, isReadOnly, leaderName, hasLeaderConfig } = useFunnelConfig();
   
@@ -431,7 +432,7 @@ export function FunnelTracker({
       </div>
 
       {/* Export Data Section */}
-      <ExportFunnelData prospects={prospects} isPro={isPro} />
+      <ExportFunnelData prospects={prospects} />
     </div>
   );
 }

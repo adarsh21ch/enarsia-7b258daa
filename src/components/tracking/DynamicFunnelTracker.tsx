@@ -9,6 +9,7 @@ import { useFunnelTrackingStats } from '@/hooks/useTrackingStats';
 import { useTrackingFormat } from '@/hooks/useTrackingFormat';
 import { useFunnelConfig } from '@/hooks/useFunnelConfig';
 import { useHistoricalAccess } from '@/hooks/useHistoricalAccess';
+import { usePermissions } from '@/contexts/PermissionsContext';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
@@ -41,16 +42,16 @@ interface FunnelPeriod {
 }
 
 interface DynamicFunnelTrackerProps {
-  isPro?: boolean;
   funnelCounts?: number[];
   stageTags?: string[];
 }
 
 export function DynamicFunnelTracker({ 
-  isPro = true,
   funnelCounts = [],
   stageTags = []
 }: DynamicFunnelTrackerProps) {
+  const { checkFeature } = usePermissions();
+  const isPro = checkFeature('funnel_analytics');
   const { dailyMetrics, totals, loading, monthYear, changeMonth, daysInMonth, daysRemaining, tags } = useFunnelTrackingStats();
   const { stageFinalTargetTag } = useTrackingFormat();
   const { getEffectiveConfig } = useFunnelConfig();

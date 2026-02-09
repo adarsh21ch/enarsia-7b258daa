@@ -5,8 +5,12 @@ import { useFeatureAccess } from '@/hooks/useFeatureAccess';
 // Soft limit for upgrade prompt (no hard blocking)
 const DEFAULT_SOFT_LIMIT = 50;
 
-export function useProspectLimit(prospects: Prospect[], isPro: boolean) {
-  const { limit } = useFeatureAccess('total_lead_limit');
+/**
+ * Hook to check prospect limits. Now reads from Feature Registry.
+ * The isPro param is kept for backward compat but ignored — access is determined by useFeatureAccess.
+ */
+export function useProspectLimit(prospects: Prospect[], _isPro?: boolean) {
+  const { canAccess, limit } = useFeatureAccess('total_lead_limit');
 
   // Count unique prospects by phone number
   const uniqueCount = useMemo(() => {
@@ -16,6 +20,7 @@ export function useProspectLimit(prospects: Prospect[], isPro: boolean) {
 
   // Soft limit from feature registry, or default
   const softLimit = limit ?? DEFAULT_SOFT_LIMIT;
+  const isPro = canAccess && limit === null; // unlimited = pro
 
   // No hard limits - just soft prompts for Free users
   const showUpgradeHint = !isPro && uniqueCount >= softLimit;
