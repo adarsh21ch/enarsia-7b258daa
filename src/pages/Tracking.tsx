@@ -73,6 +73,7 @@ export default function Tracking() {
     activeStageTags,
     effectiveConfig?.funnel_length ?? 3,
     effectiveConfig?.day_1_start ?? null,
+    monthYear,
   );
 
   // Auth redirect
