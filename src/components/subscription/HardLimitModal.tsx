@@ -172,8 +172,12 @@ export function HardLimitModal({ forceOpen, onClose }: HardLimitModalProps) {
                       )}
                     </div>
                     <div className="text-right shrink-0 ml-3">
-                      <p className="font-bold text-xl text-foreground">₹{plan.price}</p>
-                      <p className="text-xs text-muted-foreground">for {months} month{months > 1 ? 's' : ''}</p>
+                      <p className="font-bold text-xl text-foreground">₹{months > 1 ? Math.floor(plan.price / months) : plan.price}{months > 1 ? '/month' : ''}</p>
+                      {months > 1 ? (
+                        <p className="text-xs text-muted-foreground">Billed as ₹{plan.price} for {months} months</p>
+                      ) : (
+                        <p className="text-xs text-muted-foreground">for 1 month</p>
+                      )}
                     </div>
                   </div>
                 </button>
@@ -193,7 +197,7 @@ export function HardLimitModal({ forceOpen, onClose }: HardLimitModalProps) {
             ) : selectedPlan ? (
               <>
                 <Crown className="h-5 w-5 mr-2" />
-                Upgrade to Pro – ₹{selectedPlan.price}
+                Upgrade to Pro – ₹{(() => { const m = Math.round(selectedPlan.durationDays / 30); return m > 1 ? `${Math.floor(selectedPlan.price / m)}/month` : selectedPlan.price; })()}
               </>
             ) : (
               <>
