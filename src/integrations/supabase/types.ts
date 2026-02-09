@@ -2791,6 +2791,7 @@ export type Database = {
         Row: {
           access_mode: string
           allow_multiple_submissions: boolean
+          close_date: string | null
           collect_utm: boolean
           confirmation_message: string | null
           created_at: string
@@ -2798,6 +2799,7 @@ export type Database = {
           embed_enabled: boolean
           form_type: string | null
           id: string
+          is_accepting: boolean
           is_public: boolean
           lead_mapping: Json | null
           max_submissions: number | null
@@ -2808,6 +2810,7 @@ export type Database = {
         Insert: {
           access_mode?: string
           allow_multiple_submissions?: boolean
+          close_date?: string | null
           collect_utm?: boolean
           confirmation_message?: string | null
           created_at?: string
@@ -2815,6 +2818,7 @@ export type Database = {
           embed_enabled?: boolean
           form_type?: string | null
           id?: string
+          is_accepting?: boolean
           is_public?: boolean
           lead_mapping?: Json | null
           max_submissions?: number | null
@@ -2825,6 +2829,7 @@ export type Database = {
         Update: {
           access_mode?: string
           allow_multiple_submissions?: boolean
+          close_date?: string | null
           collect_utm?: boolean
           confirmation_message?: string | null
           created_at?: string
@@ -2832,6 +2837,7 @@ export type Database = {
           embed_enabled?: boolean
           form_type?: string | null
           id?: string
+          is_accepting?: boolean
           is_public?: boolean
           lead_mapping?: Json | null
           max_submissions?: number | null
@@ -5028,24 +5034,43 @@ export type Database = {
         Args: { p_form_id: string; p_limit?: number; p_offset?: number }
         Returns: Json
       }
-      nevorai_submit_form: {
-        Args: {
-          p_answers?: Json
-          p_answers_json?: Json
-          p_attachments_json?: Json
-          p_form_id?: string
-          p_share_token?: string
-          p_source?: string
-          p_submitter_email?: string
-          p_submitter_name?: string
-          p_token?: string
-          p_utm_campaign?: string
-          p_utm_content?: string
-          p_utm_medium?: string
-          p_utm_source?: string
-        }
-        Returns: Json
-      }
+      nevorai_submit_form:
+        | {
+            Args: {
+              p_answers?: Json
+              p_answers_json?: Json
+              p_attachments_json?: Json
+              p_form_id?: string
+              p_share_token?: string
+              p_source?: string
+              p_submitter_email?: string
+              p_submitter_name?: string
+              p_token?: string
+              p_utm_campaign?: string
+              p_utm_content?: string
+              p_utm_medium?: string
+              p_utm_source?: string
+            }
+            Returns: Json
+          }
+        | {
+            Args: {
+              p_answers?: Json
+              p_answers_json?: Json
+              p_attachments_json?: Json
+              p_form_id?: string
+              p_share_token?: string
+              p_source?: string
+              p_submitter_email?: string
+              p_submitter_name?: string
+              p_token?: string
+              p_utm_campaign?: string
+              p_utm_content?: string
+              p_utm_medium?: string
+              p_utm_source?: string
+            }
+            Returns: Json
+          }
       normalize_leader_id: { Args: { id: string }; Returns: string }
       record_app_access: { Args: { p_app: string }; Returns: undefined }
       update_leader_hierarchy: {
