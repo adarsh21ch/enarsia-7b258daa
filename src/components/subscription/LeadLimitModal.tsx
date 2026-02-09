@@ -123,8 +123,12 @@ export function LeadLimitModal({
                       <p className="text-xs text-muted-foreground">Unlimited leads • Team sync • Analytics</p>
                     </div>
                     <div className="text-right shrink-0 ml-3">
-                      <p className="font-bold text-lg text-foreground">₹{plan.price}</p>
-                      <p className="text-xs text-muted-foreground">{months} month{months > 1 ? 's' : ''}</p>
+                      <p className="font-bold text-lg text-foreground">₹{months > 1 ? Math.floor(plan.price / months) : plan.price}{months > 1 ? '/month' : ''}</p>
+                      {months > 1 ? (
+                        <p className="text-xs text-muted-foreground">Billed as ₹{plan.price} for {months} months</p>
+                      ) : (
+                        <p className="text-xs text-muted-foreground">for 1 month</p>
+                      )}
                     </div>
                   </div>
                 </button>
@@ -142,7 +146,7 @@ export function LeadLimitModal({
             ) : selectedPlan ? (
               <>
                 <Crown className="h-4 w-4 mr-2" />
-                Upgrade to Pro – ₹{selectedPlan.price}
+                Upgrade to Pro – ₹{(() => { const m = Math.round(selectedPlan.durationDays / 30); return m > 1 ? `${Math.floor(selectedPlan.price / m)}/month` : selectedPlan.price; })()}
               </>
             ) : (
               <>
