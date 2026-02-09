@@ -141,27 +141,49 @@ export function FeatureFlagsManager() {
                   </div>
                   {flag.description && <p className="text-xs text-muted-foreground">{flag.description}</p>}
 
-                  {/* Toggles row */}
-                  <div className="flex flex-wrap items-center gap-4">
+                  {/* Access & Enable row */}
+                  <div className="flex flex-wrap items-center gap-3">
+                    {/* Master enable toggle */}
                     <div className="flex items-center gap-1.5">
                       <Power className="h-3 w-3 text-muted-foreground" />
-                      <span className="text-[11px] text-muted-foreground">Enabled</span>
                       <Switch checked={flag.is_enabled} onCheckedChange={v => handleToggle(flag.id, 'is_enabled', v, flag)} />
                     </div>
                     <div className="h-4 w-px bg-border" />
-                    <div className="flex items-center gap-1.5">
-                      <Users className="h-3 w-3 text-muted-foreground" />
-                      <span className="text-[11px] text-muted-foreground">Free</span>
-                      <Switch checked={flag.free_access} disabled={!flag.is_enabled} onCheckedChange={v => handleToggle(flag.id, 'free_access', v, flag)} />
+
+                    {/* Access level: segmented Free | Pro Only */}
+                    <div className={`inline-flex rounded-lg border overflow-hidden text-[11px] font-medium ${!flag.is_enabled ? 'opacity-40 pointer-events-none' : ''}`}>
+                      <button
+                        onClick={() => {
+                          if (!flag.free_access) handleToggle(flag.id, 'free_access', true, flag);
+                        }}
+                        className={`px-3 py-1.5 flex items-center gap-1 transition-colors ${
+                          flag.free_access
+                            ? 'bg-primary text-primary-foreground'
+                            : 'bg-muted/50 text-muted-foreground hover:bg-muted'
+                        }`}
+                      >
+                        <Users className="h-3 w-3" />
+                        Free
+                      </button>
+                      <button
+                        onClick={() => {
+                          if (flag.free_access) handleToggle(flag.id, 'free_access', false, flag);
+                        }}
+                        className={`px-3 py-1.5 flex items-center gap-1 transition-colors ${
+                          !flag.free_access
+                            ? 'bg-emerald-500 text-white'
+                            : 'bg-muted/50 text-muted-foreground hover:bg-muted'
+                        }`}
+                      >
+                        <Crown className="h-3 w-3" />
+                        Pro Only
+                      </button>
                     </div>
-                    <div className="flex items-center gap-1.5">
-                      <Crown className="h-3 w-3 text-amber-500" />
-                      <span className="text-[11px] text-muted-foreground">Pro</span>
-                      <Switch checked={flag.pro_access} disabled={!flag.is_enabled} onCheckedChange={v => handleToggle(flag.id, 'pro_access', v, flag)} />
-                    </div>
-                    <div className="flex items-center gap-1.5">
+
+                    {/* Trial toggle */}
+                    <div className={`flex items-center gap-1.5 ${!flag.is_enabled ? 'opacity-40 pointer-events-none' : ''}`}>
                       <FlaskConical className="h-3 w-3 text-blue-500" />
-                      <span className="text-[11px] text-muted-foreground">Trial</span>
+                      <span className="text-[10px] text-muted-foreground">Trial</span>
                       <Switch checked={flag.trial_access ?? true} disabled={!flag.is_enabled} onCheckedChange={v => handleToggle(flag.id, 'trial_access', v, flag)} />
                     </div>
                   </div>
