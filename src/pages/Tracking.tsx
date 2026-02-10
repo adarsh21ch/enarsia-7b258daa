@@ -24,6 +24,7 @@ import { useTotalSnapshotV2Read } from '@/hooks/useTotalSnapshotV2Read';
 import { useSnapshotV2ComputedData } from '@/hooks/useSnapshotV2ComputedData';
 import { useTrackingFormatContext } from '@/contexts/TrackingFormatContext';
 import { useTrackingSourcePreferences } from '@/hooks/useTrackingSourcePreferences';
+import { useApplicationTotalSnapshots } from '@/hooks/useApplicationTotalSnapshots';
 import { useApplicationSnapshots } from '@/hooks/useApplicationSnapshots';
 import { useFunnelConfig } from '@/hooks/useFunnelConfig';
 import { NEVORAI_WEBSITE_URL } from '@/config/siteUrl';
@@ -54,7 +55,7 @@ export default function Tracking() {
   } = useTrackingFormatContext();
 
   // Source preference
-  const { personalSource } = useTrackingSourcePreferences();
+  const { personalSource, teamSource } = useTrackingSourcePreferences();
 
   // Funnel config
   const { getEffectiveConfig } = useFunnelConfig();
@@ -67,7 +68,11 @@ export default function Tracking() {
   );
   const personalSnapshots = personalSource === 'AUTO' ? appSnapshots : manualSnapshots;
 
-  const { snapshots: totalSnapshots } = useTotalSnapshotV2Read(monthYear, leadsTrackingTagNames, stageTagNames);
+  const { snapshots: manualTotalSnapshots } = useTotalSnapshotV2Read(monthYear, leadsTrackingTagNames, stageTagNames);
+  const { snapshots: autoTotalSnapshots } = useApplicationTotalSnapshots(
+    monthYear, leadsTrackingTagNames, stageTagNames, leadsFinalTargetTag, stageFinalTargetTag,
+  );
+  const totalSnapshots = teamSource === 'AUTO' ? autoTotalSnapshots : manualTotalSnapshots;
 
   // Pick active snapshots based on data mode
   const activeSnapshots = dataMode === 'personal' ? personalSnapshots : totalSnapshots;
