@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 import { useGlobalProspects } from '@/contexts/ProspectsContext';
 import { useFeatureAccess } from '@/hooks/useFeatureAccess';
+import { useAdminConfig } from '@/hooks/useAdminConfig';
 
 /**
  * Hook to check if user has reached the free lead limit.
@@ -9,12 +10,16 @@ import { useFeatureAccess } from '@/hooks/useFeatureAccess';
 export function useLeadLimit() {
   const { prospects } = useGlobalProspects();
   const { canAccess, limit, isLoading } = useFeatureAccess('total_lead_limit');
+  const { config } = useAdminConfig();
 
   const totalLeads = prospects?.length ?? 0;
-  const freeLeadLimit = limit ?? Infinity; // null = unlimited
+  
+  // Check if the limit is actually enabled in admin config
+  const isLimitEnabled = config.limits_enabled?.free_total_leads !== false;
+  const freeLeadLimit = !isLimitEnabled ? Infinity : (limit ?? Infinity);
 
   const limitInfo = useMemo(() => {
-    // If no limit (paid/unlimited), no restriction
+    // If no limit (paid/unlimited or admin disabled), no restriction
     if (freeLeadLimit === Infinity || limit === null) {
       return {
         isAtLimit: false,

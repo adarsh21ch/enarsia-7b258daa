@@ -54,13 +54,18 @@ export function useUpgradeNudge() {
     if (isLoading || configLoading) return 'none';
     if (isPaid) return 'none';
     
+    // If lead limits are disabled by admin, no nudges
+    const totalLimitEnabled = config.limits_enabled?.free_total_leads !== false;
+    const hardLimitEnabled = config.limits_enabled?.hard_limit !== false;
+    if (!totalLimitEnabled && !hardLimitEnabled) return 'none';
+    
     if (lifetimeCount >= thresholds.STAGE_4) return 'stage4';
     if (lifetimeCount >= thresholds.STAGE_3) return 'stage3';
     if (lifetimeCount >= thresholds.STAGE_2) return 'stage2';
     if (lifetimeCount >= thresholds.STAGE_1) return 'stage1';
     
     return 'none';
-  }, [lifetimeCount, isPaid, isLoading, configLoading, thresholds]);
+  }, [lifetimeCount, isPaid, isLoading, configLoading, thresholds, config.limits_enabled]);
 
   /**
    * Check if Stage 1 banner should be shown.

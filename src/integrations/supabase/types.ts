@@ -4825,7 +4825,7 @@ export type Database = {
         }[]
       }
       check_upload_limit: {
-        Args: { p_count: number; p_user_id: string }
+        Args: { p_count?: number; p_user_id: string }
         Returns: Json
       }
       clear_upline_relationship: { Args: { p_user_id: string }; Returns: Json }
