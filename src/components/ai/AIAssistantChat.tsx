@@ -87,8 +87,6 @@ export function AIAssistantChat({ open, onOpenChange }: AIAssistantChatProps) {
     setInput('');
     setIsLoading(true);
 
-    let assistantSoFar = '';
-
     try {
       const resp = await fetch(CHAT_URL, {
         method: 'POST',
@@ -96,7 +94,7 @@ export function AIAssistantChat({ open, onOpenChange }: AIAssistantChatProps) {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${session?.access_token || import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
         },
-        body: JSON.stringify({ messages: allMessages }),
+        body: JSON.stringify({ messages: allMessages, auth_token: session?.access_token }),
       });
 
       if (!resp.ok) {
@@ -109,64 +107,9 @@ export function AIAssistantChat({ open, onOpenChange }: AIAssistantChatProps) {
         return;
       }
 
-      if (!resp.body) throw new Error('No response body');
-
-      const reader = resp.body.getReader();
-      const decoder = new TextDecoder();
-      let textBuffer = '';
-
-      const upsertAssistant = (chunk: string) => {
-        assistantSoFar += chunk;
-        const content = assistantSoFar;
-        setMessages(prev => {
-          const last = prev[prev.length - 1];
-          if (last?.role === 'assistant') {
-            return prev.map((m, i) => i === prev.length - 1 ? { ...m, content } : m);
-          }
-          return [...prev, { role: 'assistant', content }];
-        });
-      };
-
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-        textBuffer += decoder.decode(value, { stream: true });
-
-        let newlineIndex: number;
-        while ((newlineIndex = textBuffer.indexOf('\n')) !== -1) {
-          let line = textBuffer.slice(0, newlineIndex);
-          textBuffer = textBuffer.slice(newlineIndex + 1);
-          if (line.endsWith('\r')) line = line.slice(0, -1);
-          if (line.startsWith(':') || line.trim() === '') continue;
-          if (!line.startsWith('data: ')) continue;
-          const jsonStr = line.slice(6).trim();
-          if (jsonStr === '[DONE]') break;
-          try {
-            const parsed = JSON.parse(jsonStr);
-            const content = parsed.choices?.[0]?.delta?.content;
-            if (content) upsertAssistant(content);
-          } catch {
-            textBuffer = line + '\n' + textBuffer;
-            break;
-          }
-        }
-      }
-
-      // Final flush
-      if (textBuffer.trim()) {
-        for (let raw of textBuffer.split('\n')) {
-          if (!raw || raw.startsWith(':') || raw.trim() === '') continue;
-          if (raw.endsWith('\r')) raw = raw.slice(0, -1);
-          if (!raw.startsWith('data: ')) continue;
-          const jsonStr = raw.slice(6).trim();
-          if (jsonStr === '[DONE]') continue;
-          try {
-            const parsed = JSON.parse(jsonStr);
-            const content = parsed.choices?.[0]?.delta?.content;
-            if (content) upsertAssistant(content);
-          } catch { /* ignore */ }
-        }
-      }
+      const result = await resp.json();
+      const assistantContent = result.response || "I couldn't process your request. Please try again.";
+      setMessages(prev => [...prev, { role: 'assistant', content: assistantContent }]);
     } catch (e) {
       console.error('AI chat error:', e);
       toast.error('Failed to get AI response');
