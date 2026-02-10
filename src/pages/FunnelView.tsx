@@ -5,6 +5,7 @@ import { LeadCaptureForm } from '@/components/funnels/LeadCaptureForm';
 import { ControlledVideoPlayer } from '@/components/funnels/ControlledVideoPlayer';
 import { UPIPaymentModal } from '@/components/funnels/UPIPaymentModal';
 import { FunnelPriceOption } from '@/types/funnels';
+import { buildWhatsAppLink } from '@/lib/whatsapp';
 import { Button } from '@/components/ui/button';
 import { Loader2, CheckCircle, Lock, Clock } from 'lucide-react';
 import { toast } from 'sonner';
@@ -25,6 +26,8 @@ interface PublicFunnel {
   cta_button_text: string;
   cta_redirect_url: string | null;
   success_message: string | null;
+  whatsapp_auto_message_enabled: boolean;
+  whatsapp_auto_message: string | null;
   is_published: boolean;
 }
 
@@ -146,6 +149,16 @@ export default function FunnelView() {
       // Store session for video access
       sessionStorage.setItem(`funnel_lead_${funnel.id}`, JSON.stringify(session));
       setLeadSession(session);
+
+      // Trigger WhatsApp auto-message if enabled
+      if (funnel.whatsapp_auto_message_enabled && funnel.whatsapp_auto_message && data.phone) {
+        const message = funnel.whatsapp_auto_message
+          .replace(/\{\{name\}\}/g, data.name || '')
+          .replace(/\{\{phone\}\}/g, data.phone || '');
+        const waLink = buildWhatsAppLink(data.phone, message);
+        window.open(waLink, '_blank');
+      }
+
       setPhase('video');
     } catch (err) {
       console.error('Lead capture error:', err);
