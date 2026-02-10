@@ -1,53 +1,38 @@
 
 
-## Replace nevorai-ai with Tool-Calling Architecture
+## Fix nevorai-ai: Full Replacement with Tool-Calling Architecture
 
-### What Changes
+### Problems Found (3 critical bugs)
 
-Two files updated:
+1. **Team discovery is broken** (line 113-116): Only queries `profiles.upline_leader_id = userId`. Most team members are linked via `upline_email` or `leaders_id_of_my_leader`, so they return 0 results.
 
-**1. `supabase/functions/nevorai-ai/index.ts`** -- Complete replacement with the user-provided code:
-- Replaces the 2-step intent-detect-then-fetch pattern with a proper **AI tool-calling loop**
-- 10 read-only tools: `get_snapshot_kpis`, `get_team_kpis`, `list_team_members`, `get_member_kpis`, `get_rankings`, `search_prospects`, `get_prospect_details`, `get_funnel_stages`, `get_conversion_rates`, `get_tracking_status`
-- Label resolution from root leader profiles (response_labels, stage_labels)
-- Slot-key-to-label mapping for response_tags and stage_tags
-- Team discovery via dual filter (`leaders_id_of_my_leader` + `upline_email`)
-- Tool call loop (max 5 iterations) -- AI decides which tools to call
-- Returns `{ response: string, scope: string }` as JSON (NOT SSE streaming)
-- Auth via `auth_token` field in request body (not Authorization header)
-- Rate limiting: 50 requests/hour per user
+2. **Auth mismatch**: The deployed function reads `Authorization` header (line 471), but the frontend sends `auth_token` in the JSON body. The function never sees the token.
 
-**2. `src/components/ai/AIAssistantChat.tsx`** -- Update to match the new non-streaming JSON response format:
-- Send `auth_token` in request body instead of Authorization header
-- Parse JSON response (`{ response }`) instead of reading SSE stream
-- Remove all streaming/SSE parsing logic (reader, decoder, textBuffer, upsertAssistant)
-- Keep everything else: SimpleMarkdown, suggestions, UI layout, conversation history
+3. **Response format mismatch**: The function returns `text/event-stream` (SSE, line 554), but the frontend calls `resp.json()`. This causes the `SyntaxError` you saw.
 
-### Technical Details
+Additionally: no label resolution (slot keys like `response_tag_1` are shown raw), no tool-calling loop, and the intent-detection pipeline is fragile.
 
-**Edge function request format (new):**
-```json
-{
-  "messages": [{ "role": "user", "content": "My stats today" }],
-  "auth_token": "<jwt>"
-}
-```
+### Fix
 
-**Edge function response format (new):**
-```json
-{
-  "response": "Total Leads: 42 (Personal, This Month)\n• Video Send: 17\n• Enrolled: 12",
-  "scope": "Leader"
-}
-```
+**Replace the entire `supabase/functions/nevorai-ai/index.ts`** with the tool-calling code you provided earlier in the conversation. This code correctly implements:
 
-**Frontend sendMessage flow (simplified):**
-1. POST to nevorai-ai with `{ messages, auth_token }`
-2. Await JSON response
-3. Append `result.response` as assistant message
-4. No streaming -- response appears all at once
+- Auth via `auth_token` in request body + `supabase.auth.getUser()`
+- Team discovery via dual filter: `upline_email = leader_email OR leaders_id_of_my_leader = leader_neverai_id`
+- Label resolution from root leader profile (`response_labels`, `stage_labels`)
+- Slot-key-to-label mapping (`response_tag_1` becomes the actual tag name)
+- 10 read-only tools with AI tool-calling loop (max 5 iterations)
+- JSON response: `{ response: string, scope: string }`
+- Rate limiting: 50 req/hour per user
+
+### Files Changed
+
+| File | Action |
+|------|--------|
+| `supabase/functions/nevorai-ai/index.ts` | Full replacement (563 lines old code replaced with ~500 lines tool-calling code) |
 
 ### No Other Changes
-- No database or RLS changes
-- No changes to AIAssistantButton, Dashboard, Tracking, or ListUp pages
-- config.toml already has nevorai-ai registered
+
+- Frontend (`AIAssistantChat.tsx`) is already correct -- sends `auth_token`, parses JSON
+- No database/RLS/migration changes
+- No other components affected
+
