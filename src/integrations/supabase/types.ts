@@ -2327,6 +2327,8 @@ export type Database = {
           video_asset_id: string | null
           video_url: string | null
           visibility_type: string | null
+          whatsapp_auto_message: string | null
+          whatsapp_auto_message_enabled: boolean | null
         }
         Insert: {
           allow_forward_seek?: boolean | null
@@ -2362,6 +2364,8 @@ export type Database = {
           video_asset_id?: string | null
           video_url?: string | null
           visibility_type?: string | null
+          whatsapp_auto_message?: string | null
+          whatsapp_auto_message_enabled?: boolean | null
         }
         Update: {
           allow_forward_seek?: boolean | null
@@ -2397,6 +2401,8 @@ export type Database = {
           video_asset_id?: string | null
           video_url?: string | null
           visibility_type?: string | null
+          whatsapp_auto_message?: string | null
+          whatsapp_auto_message_enabled?: boolean | null
         }
         Relationships: [
           {

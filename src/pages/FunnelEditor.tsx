@@ -47,6 +47,8 @@ export default function FunnelEditor() {
     cta_button_text: 'Get Access Now',
     cta_redirect_url: '',
     success_message: '',
+    whatsapp_auto_message_enabled: false,
+    whatsapp_auto_message: '',
     is_published: false,
   });
 
@@ -78,6 +80,8 @@ export default function FunnelEditor() {
         cta_button_text: existingFunnel.cta_button_text,
         cta_redirect_url: existingFunnel.cta_redirect_url || '',
         success_message: existingFunnel.success_message || '',
+        whatsapp_auto_message_enabled: existingFunnel.whatsapp_auto_message_enabled,
+        whatsapp_auto_message: existingFunnel.whatsapp_auto_message || '',
         is_published: existingFunnel.is_published,
       });
     }
@@ -399,6 +403,42 @@ export default function FunnelEditor() {
                   }
                   rows={2}
                 />
+              </div>
+
+              {/* WhatsApp Auto-Message */}
+              <div className="space-y-4 border-t pt-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <Label>WhatsApp Auto-Message</Label>
+                    <p className="text-sm text-muted-foreground">
+                      Send a WhatsApp message automatically after lead submission
+                    </p>
+                  </div>
+                  <Switch
+                    checked={formData.whatsapp_auto_message_enabled}
+                    onCheckedChange={(checked) =>
+                      setFormData((prev) => ({ ...prev, whatsapp_auto_message_enabled: checked }))
+                    }
+                  />
+                </div>
+
+                {formData.whatsapp_auto_message_enabled && (
+                  <div className="space-y-2">
+                    <Label htmlFor="whatsapp_auto_message">Message Template</Label>
+                    <Textarea
+                      id="whatsapp_auto_message"
+                      placeholder="Hi {{name}}, thanks for signing up!"
+                      value={formData.whatsapp_auto_message}
+                      onChange={(e) =>
+                        setFormData((prev) => ({ ...prev, whatsapp_auto_message: e.target.value }))
+                      }
+                      rows={3}
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      Use {'{{name}}'} and {'{{phone}}'} as placeholders
+                    </p>
+                  </div>
+                )}
               </div>
             </CardContent>
           </Card>

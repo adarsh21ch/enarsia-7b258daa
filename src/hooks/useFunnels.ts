@@ -89,6 +89,8 @@ export function useCreateFunnel() {
           cta_button_text: input.cta_button_text || 'Get Access Now',
           cta_redirect_url: input.cta_redirect_url || null,
           success_message: input.success_message || null,
+          whatsapp_auto_message_enabled: input.whatsapp_auto_message_enabled ?? false,
+          whatsapp_auto_message: input.whatsapp_auto_message || null,
           is_published: input.is_published ?? false,
         })
         .select()

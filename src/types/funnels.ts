@@ -18,6 +18,8 @@ export interface Funnel {
   cta_button_text: string;
   cta_redirect_url?: string | null;
   success_message?: string | null;
+  whatsapp_auto_message_enabled: boolean;
+  whatsapp_auto_message?: string | null;
   is_published: boolean;
   created_at: string;
   updated_at: string;
@@ -89,6 +91,8 @@ export interface CreateFunnelInput {
   cta_button_text?: string;
   cta_redirect_url?: string;
   success_message?: string;
+  whatsapp_auto_message_enabled?: boolean;
+  whatsapp_auto_message?: string;
   is_published?: boolean;
 }
 
