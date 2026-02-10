@@ -9,46 +9,23 @@ const corsHeaders = {
 
 const AI_GATEWAY = "https://ai.gateway.lovable.dev/v1/chat/completions";
 const MODEL = "google/gemini-3-flash-preview";
+const MAX_TOOL_ITERATIONS = 5;
+const RATE_LIMIT_PER_HOUR = 50;
 
-// ══════════════════════════════════════════════════════════════
-// DOMAIN DEFINITIONS — single source of truth
-// ══════════════════════════════════════════════════════════════
-const DOMAIN_GLOSSARY = `
-DOMAIN DEFINITIONS (absolute, never override):
-- Enrollment = final_tag_count (the count of people who completed the LAST stage)
-- Prospect = any lead that has NOT yet reached the final tag
-- Leads = total_leads (new names added to the list)
-- Responses = total_responses (prospects who replied / were contacted)
-- Day 1, Day 2, Day 3… = stage_tag_1, stage_tag_2, stage_tag_3… from stage_tags JSON
-- Final stage = the last stage_tag (its count = final_tag_count = Enrollments)
-- Funnel day = funnel_day column (which day of the funnel cycle the user is on)
-- Direct team member = a profile whose upline_leader_id matches the requester's user_id
-- Personal data = personal_snapshot_v2 (user's own numbers only)
-- Team totals = total_snapshot_v2 (includes the user + their entire downline)
-- Conversion rate = final_tag_count / total_leads (only when both are in the data)
-- Drop-off between stages = stage_tag_N minus stage_tag_(N+1)
-`;
+// In-memory rate limit (resets on cold start, good enough for edge)
+const rateLimitMap = new Map<string, { count: number; resetAt: number }>();
 
-// ══════════════════════════════════════════════════════════════
-// INTENT CATALOGUE
-// ══════════════════════════════════════════════════════════════
-const INTENTS = [
-  "today_summary",
-  "monthly_summary",
-  "day_wise_breakdown",
-  "team_count",
-  "team_performance",
-  "top_performers",
-  "bottom_performers",
-  "funnel_conversion",
-  "funnel_dropoff",
-  "stage_conversion",      // Day N → Day N+1 conversion
-  "enrollment_count",
-  "compare_months",
-  "general_tips",
-  "my_role",               // Am I a leader / member?
-] as const;
-type Intent = typeof INTENTS[number];
+function checkRateLimit(userId: string): boolean {
+  const now = Date.now();
+  const entry = rateLimitMap.get(userId);
+  if (!entry || now > entry.resetAt) {
+    rateLimitMap.set(userId, { count: 1, resetAt: now + 3600000 });
+    return true;
+  }
+  if (entry.count >= RATE_LIMIT_PER_HOUR) return false;
+  entry.count++;
+  return true;
+}
 
 // ══════════════════════════════════════════════════════════════
 // HELPERS
@@ -62,403 +39,668 @@ function dateRange(my: string) {
   const last = new Date(y, m, 0).getDate();
   return { start: `${my}-01`, end: `${my}-${String(last).padStart(2, "0")}` };
 }
-function sumField(rows: any[], f: string): number {
-  return rows.reduce((s, r) => s + (typeof r[f] === "number" ? r[f] : 0), 0);
+function todayStr(): string {
+  return new Date().toISOString().split("T")[0];
 }
-function sumTags(rows: any[], f: string): Record<string, number> {
-  const t: Record<string, number> = {};
-  for (const r of rows) {
-    const tags = r[f];
-    if (tags && typeof tags === "object") {
-      for (const [k, v] of Object.entries(tags)) {
-        t[k] = (t[k] || 0) + (typeof v === "number" ? v : 0);
-      }
+
+// ══════════════════════════════════════════════════════════════
+// LABEL RESOLUTION — map slot keys to human-readable names
+// ══════════════════════════════════════════════════════════════
+interface LabelMap {
+  responseLabels: string[];
+  stageLabels: string[];
+}
+
+function parseLabels(raw: any): string[] {
+  if (!raw) return [];
+  if (Array.isArray(raw)) return raw;
+  if (typeof raw === "object" && Array.isArray(raw.tracking)) return raw.tracking;
+  if (typeof raw === "string") {
+    try { const p = JSON.parse(raw); return Array.isArray(p) ? p : []; } catch { return []; }
+  }
+  return [];
+}
+
+async function resolveLabels(supabase: any, userId: string): Promise<LabelMap> {
+  // Walk up the upline chain to find the root leader's labels
+  let currentId = userId;
+  const visited = new Set<string>();
+  
+  for (let i = 0; i < 10; i++) {
+    if (visited.has(currentId)) break;
+    visited.add(currentId);
+    
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("response_labels, stage_labels, upline_leader_id")
+      .eq("user_id", currentId)
+      .maybeSingle();
+    
+    if (!profile) break;
+    
+    const rLabels = parseLabels(profile.response_labels);
+    const sLabels = parseLabels(profile.stage_labels);
+    
+    // If this profile has labels, use them
+    if (rLabels.length > 0 || sLabels.length > 0) {
+      return { responseLabels: rLabels, stageLabels: sLabels };
+    }
+    
+    // Walk up
+    if (profile.upline_leader_id) {
+      currentId = profile.upline_leader_id;
+    } else {
+      break;
     }
   }
-  return t;
+  
+  return { responseLabels: [], stageLabels: [] };
 }
-function agg(rows: any[]) {
-  return {
-    days_tracked: rows.length,
-    total_leads: sumField(rows, "total_leads"),
-    total_responses: sumField(rows, "total_responses"),
-    total_enrollments: sumField(rows, "final_tag_count"),
-  };
+
+function resolveTagNames(tags: Record<string, number>, labels: string[], prefix: string): Record<string, number> {
+  const result: Record<string, number> = {};
+  for (const [key, value] of Object.entries(tags)) {
+    const match = key.match(new RegExp(`^${prefix}_(\\d+)$`));
+    if (match) {
+      const idx = parseInt(match[1]) - 1;
+      const name = labels[idx] || key;
+      result[name] = value;
+    } else {
+      result[key] = value; // Already a human name
+    }
+  }
+  return result;
 }
 
 // ══════════════════════════════════════════════════════════════
-// ROLE DETECTION
+// TEAM DISCOVERY — dual filter matching dashboard logic
 // ══════════════════════════════════════════════════════════════
-interface UserRole {
-  role: "leader" | "member";
-  userId: string;
-  displayName: string;
-  neveraiId: string | null;
-  teamMemberIds: string[];
-  teamMemberNames: string[];
+interface TeamMember {
+  user_id: string;
+  display_name: string;
 }
 
-async function resolveRole(supabase: any, userId: string): Promise<UserRole> {
-  // Fetch own profile
-  const { data: profile } = await supabase
+async function discoverTeam(supabase: any, userId: string): Promise<TeamMember[]> {
+  // Get leader's profile for email and neverai_id
+  const { data: leaderProfile } = await supabase
     .from("profiles")
-    .select("display_name, neverai_id, upline_leader_id")
+    .select("email, neverai_id")
     .eq("user_id", userId)
     .maybeSingle();
 
-  const displayName = profile?.display_name || "Unknown";
-  const neveraiId = profile?.neverai_id || null;
+  if (!leaderProfile) return [];
 
-  // Find direct team members (people whose upline_leader_id = this user)
-  const { data: team } = await supabase
-    .from("profiles")
-    .select("user_id, display_name")
-    .eq("upline_leader_id", userId);
+  const leaderEmail = leaderProfile.email;
+  const leaderId = leaderProfile.neverai_id;
 
-  const members = team || [];
+  // Dual filter: upline_email OR leaders_id_of_my_leader
+  // We need to do two queries and merge since Supabase doesn't support OR across columns easily
+  const queries: Promise<any>[] = [];
 
-  return {
-    role: members.length > 0 ? "leader" : "member",
-    userId,
-    displayName,
-    neveraiId,
-    teamMemberIds: members.map((m: any) => m.user_id),
-    teamMemberNames: members.map((m: any) => m.display_name || "Unknown"),
-  };
-}
-
-// ══════════════════════════════════════════════════════════════
-// STEP 1 — INTENT DETECTION (tool calling, non-streaming)
-// ══════════════════════════════════════════════════════════════
-async function detectIntent(
-  messages: any[],
-  apiKey: string,
-  role: UserRole,
-): Promise<{ intent: Intent; month_year?: string; compare_month?: string }> {
-  const roleHint = role.role === "leader"
-    ? `The user is a LEADER with ${role.teamMemberIds.length} direct team members.`
-    : `The user is an individual MEMBER (no team).`;
-
-  const resp = await fetch(AI_GATEWAY, {
-    method: "POST",
-    headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
-    body: JSON.stringify({
-      model: MODEL,
-      messages: [
-        {
-          role: "system",
-          content: `You classify questions for NevorAI, a network-marketing CRM.
-${roleHint}
-${role.role === "member" ? "Team-related intents (team_count, team_performance, top_performers, bottom_performers) are NOT available for this user — use general_tips instead." : ""}
-
-Available intents: ${INTENTS.join(", ")}
-
-Rules:
-- today_summary: today's numbers
-- monthly_summary: a month's aggregated numbers
-- day_wise_breakdown: day-by-day table
-- team_count: how many direct team members
-- team_performance: each team member's monthly numbers
-- top_performers: rank team members best-first
-- bottom_performers: rank team members worst-first
-- funnel_conversion: total stage-by-stage numbers
-- funnel_dropoff: where prospects drop between stages
-- stage_conversion: conversion rate from one stage to next (Day 1 → Day 2, etc.)
-- enrollment_count: total enrollments for a period
-- compare_months: compare two months side-by-side
-- general_tips: coaching / advice
-- my_role: user asking about their role, team structure
-
-If user mentions a month, extract month_year as YYYY-MM.
-If comparing months, also extract compare_month.
-Default to current month if none specified.`,
-        },
-        ...messages.slice(-3),
-      ],
-      tools: [{
-        type: "function",
-        function: {
-          name: "classify_intent",
-          description: "Classify the user's question",
-          parameters: {
-            type: "object",
-            properties: {
-              intent: { type: "string", enum: INTENTS },
-              month_year: { type: "string", description: "YYYY-MM" },
-              compare_month: { type: "string", description: "YYYY-MM for comparison" },
-            },
-            required: ["intent"],
-            additionalProperties: false,
-          },
-        },
-      }],
-      tool_choice: { type: "function", function: { name: "classify_intent" } },
-    }),
-  });
-
-  if (!resp.ok) {
-    console.error("Intent detection failed:", resp.status);
-    return { intent: "general_tips" };
+  if (leaderEmail) {
+    queries.push(
+      supabase
+        .from("profiles")
+        .select("user_id, display_name")
+        .eq("upline_email", leaderEmail)
+        .eq("allow_leader_to_view", true)
+    );
   }
 
-  try {
-    const data = await resp.json();
-    const args = JSON.parse(data.choices[0].message.tool_calls[0].function.arguments);
-    let intent: Intent = INTENTS.includes(args.intent) ? args.intent : "general_tips";
+  if (leaderId) {
+    queries.push(
+      supabase
+        .from("profiles")
+        .select("user_id, display_name")
+        .eq("leaders_id_of_my_leader", leaderId)
+        .eq("allow_leader_to_view", true)
+    );
+  }
 
-    // Role guard: block team intents for members
-    if (role.role === "member" && ["team_count", "team_performance", "top_performers", "bottom_performers"].includes(intent)) {
-      intent = "general_tips";
+  const results = await Promise.all(queries);
+  const memberMap = new Map<string, string>();
+  
+  for (const result of results) {
+    const data = result.data || [];
+    for (const m of data) {
+      if (m.user_id !== userId) {
+        memberMap.set(m.user_id, m.display_name || "Unknown");
+      }
     }
-
-    return { intent, month_year: args.month_year, compare_month: args.compare_month };
-  } catch {
-    return { intent: "general_tips" };
   }
+
+  return Array.from(memberMap.entries()).map(([user_id, display_name]) => ({
+    user_id,
+    display_name,
+  }));
 }
 
 // ══════════════════════════════════════════════════════════════
-// STEP 2 — CONTROLLED DATA FETCHING
+// TOOL DEFINITIONS
 // ══════════════════════════════════════════════════════════════
-async function fetchData(
+const TOOLS = [
+  {
+    type: "function",
+    function: {
+      name: "get_snapshot_kpis",
+      description: "Get the user's personal KPIs (leads, responses, enrollments, tag breakdowns) for a date range",
+      parameters: {
+        type: "object",
+        properties: {
+          start_date: { type: "string", description: "YYYY-MM-DD" },
+          end_date: { type: "string", description: "YYYY-MM-DD" },
+        },
+        required: ["start_date", "end_date"],
+        additionalProperties: false,
+      },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "get_team_kpis",
+      description: "Get aggregated KPIs for all team members for a date range (leaders only)",
+      parameters: {
+        type: "object",
+        properties: {
+          start_date: { type: "string", description: "YYYY-MM-DD" },
+          end_date: { type: "string", description: "YYYY-MM-DD" },
+        },
+        required: ["start_date", "end_date"],
+        additionalProperties: false,
+      },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "list_team_members",
+      description: "List all direct team members with their names (leaders only)",
+      parameters: { type: "object", properties: {}, additionalProperties: false },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "get_member_kpis",
+      description: "Get a specific team member's KPIs for a date range (leaders only)",
+      parameters: {
+        type: "object",
+        properties: {
+          member_name: { type: "string", description: "Display name of the team member" },
+          start_date: { type: "string", description: "YYYY-MM-DD" },
+          end_date: { type: "string", description: "YYYY-MM-DD" },
+        },
+        required: ["member_name", "start_date", "end_date"],
+        additionalProperties: false,
+      },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "get_rankings",
+      description: "Get team members ranked by a metric (leaders only)",
+      parameters: {
+        type: "object",
+        properties: {
+          metric: { type: "string", enum: ["total_leads", "total_responses", "enrollments"], description: "Metric to rank by" },
+          start_date: { type: "string", description: "YYYY-MM-DD" },
+          end_date: { type: "string", description: "YYYY-MM-DD" },
+          order: { type: "string", enum: ["top", "bottom"], description: "Ranking order" },
+        },
+        required: ["metric", "start_date", "end_date", "order"],
+        additionalProperties: false,
+      },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "search_prospects",
+      description: "Search the user's prospect list by name, status, or response tag",
+      parameters: {
+        type: "object",
+        properties: {
+          query: { type: "string", description: "Name or keyword to search" },
+          status: { type: "string", enum: ["new", "contacted", "follow_up", "enrolled", "not_interested"], description: "Filter by status" },
+          limit: { type: "number", description: "Max results (default 10)" },
+        },
+        required: [],
+        additionalProperties: false,
+      },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "get_prospect_details",
+      description: "Get full details of a specific prospect by name",
+      parameters: {
+        type: "object",
+        properties: {
+          name: { type: "string", description: "Prospect name to look up" },
+        },
+        required: ["name"],
+        additionalProperties: false,
+      },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "get_funnel_stages",
+      description: "Get stage-by-stage funnel breakdown for a date range",
+      parameters: {
+        type: "object",
+        properties: {
+          start_date: { type: "string", description: "YYYY-MM-DD" },
+          end_date: { type: "string", description: "YYYY-MM-DD" },
+        },
+        required: ["start_date", "end_date"],
+        additionalProperties: false,
+      },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "get_conversion_rates",
+      description: "Get conversion rates between funnel stages for a date range",
+      parameters: {
+        type: "object",
+        properties: {
+          start_date: { type: "string", description: "YYYY-MM-DD" },
+          end_date: { type: "string", description: "YYYY-MM-DD" },
+        },
+        required: ["start_date", "end_date"],
+        additionalProperties: false,
+      },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "get_tracking_status",
+      description: "Get the user's current tracking status including streak, funnel day, and today's progress",
+      parameters: { type: "object", properties: {}, additionalProperties: false },
+    },
+  },
+];
+
+// ══════════════════════════════════════════════════════════════
+// TOOL EXECUTION
+// ══════════════════════════════════════════════════════════════
+async function executeTool(
+  name: string,
+  args: any,
   supabase: any,
-  role: UserRole,
-  intent: Intent,
-  monthYear: string,
-  compareMonth?: string,
-): Promise<{ label: string; data: any }> {
-  const { start, end } = dateRange(monthYear);
-  const todayStr = new Date().toISOString().split("T")[0];
-
-  // Helper: personal snapshots for a month
-  const personalMonth = async (my: string) => {
-    const r = dateRange(my);
-    const { data } = await supabase
-      .from("personal_snapshot_v2")
-      .select("date, total_leads, total_responses, response_tags, stage_tags, final_tag_count, funnel_day, final_tag")
-      .eq("user_id", role.userId)
-      .gte("date", r.start).lte("date", r.end)
-      .order("date", { ascending: true });
-    return data || [];
-  };
-
-  // Helper: team snapshots for a month
-  const teamMonth = async (my: string) => {
-    if (role.teamMemberIds.length === 0) return [];
-    const r = dateRange(my);
-    const { data } = await supabase
-      .from("personal_snapshot_v2")
-      .select("user_id, total_leads, total_responses, final_tag_count, stage_tags")
-      .in("user_id", role.teamMemberIds)
-      .gte("date", r.start).lte("date", r.end);
-    return data || [];
-  };
-
-  switch (intent) {
-    // ── Personal ──
-    case "today_summary": {
-      const { data } = await supabase
-        .from("personal_snapshot_v2")
-        .select("total_leads, total_responses, response_tags, stage_tags, final_tag_count, final_tag, funnel_day")
-        .eq("user_id", role.userId).eq("date", todayStr)
-        .maybeSingle();
-      return {
-        label: `Today's Summary (${todayStr})`,
-        data: data || { total_leads: 0, total_responses: 0, response_tags: {}, stage_tags: {}, final_tag_count: 0, note: "No data tracked today yet" },
-      };
-    }
-
-    case "monthly_summary": {
-      const rows = await personalMonth(monthYear);
-      return {
-        label: `Monthly Summary (${monthYear})`,
-        data: { ...agg(rows), response_tags: sumTags(rows, "response_tags"), stage_tags: sumTags(rows, "stage_tags") },
-      };
-    }
-
-    case "day_wise_breakdown": {
-      const rows = await personalMonth(monthYear);
-      return {
-        label: `Day-wise Breakdown (${monthYear})`,
-        data: rows.map((r: any) => ({
-          date: r.date, leads: r.total_leads || 0, responses: r.total_responses || 0,
-          enrollments: r.final_tag_count || 0, funnel_day: r.funnel_day,
-        })),
-      };
-    }
-
-    case "enrollment_count": {
-      const rows = await personalMonth(monthYear);
-      return { label: `Enrollments (${monthYear})`, data: { total_enrollments: sumField(rows, "final_tag_count"), month: monthYear } };
-    }
-
-    case "funnel_conversion": {
-      const rows = await personalMonth(monthYear);
-      const stages = sumTags(rows, "stage_tags");
-      const totalLeads = sumField(rows, "total_leads");
-      const enrollments = sumField(rows, "final_tag_count");
-      return {
-        label: `Funnel Conversion (${monthYear})`,
-        data: { total_leads: totalLeads, stage_tags: stages, total_enrollments: enrollments,
-          overall_conversion: totalLeads > 0 ? `${((enrollments / totalLeads) * 100).toFixed(1)}%` : "N/A" },
-      };
-    }
-
-    case "funnel_dropoff": {
-      const rows = await personalMonth(monthYear);
-      const stages = sumTags(rows, "stage_tags");
-      const totalLeads = sumField(rows, "total_leads");
-      // Build ordered drop-off: leads → stage1 → stage2 → … → final
-      const stageKeys = Object.keys(stages).sort((a, b) => {
-        const numA = parseInt(a.replace(/\D/g, "")) || 0;
-        const numB = parseInt(b.replace(/\D/g, "")) || 0;
-        return numA - numB;
-      });
-      const dropoff: { from: string; to: string; from_count: number; to_count: number; dropped: number }[] = [];
-      let prev = { name: "Total Leads", count: totalLeads };
-      for (const key of stageKeys) {
-        const count = stages[key];
-        dropoff.push({ from: prev.name, to: key, from_count: prev.count, to_count: count, dropped: prev.count - count });
-        prev = { name: key, count };
+  userId: string,
+  team: TeamMember[],
+  labels: LabelMap,
+): Promise<string> {
+  try {
+    switch (name) {
+      case "get_snapshot_kpis": {
+        const { data } = await supabase
+          .from("personal_snapshot_v2")
+          .select("date, total_leads, total_responses, response_tags, stage_tags, final_tag_count, funnel_day, final_tag")
+          .eq("user_id", userId)
+          .gte("date", args.start_date)
+          .lte("date", args.end_date)
+          .order("date", { ascending: true });
+        
+        const rows = data || [];
+        const totalLeads = rows.reduce((s: number, r: any) => s + (r.total_leads || 0), 0);
+        const totalResponses = rows.reduce((s: number, r: any) => s + (r.total_responses || 0), 0);
+        const totalEnrollments = rows.reduce((s: number, r: any) => s + (r.final_tag_count || 0), 0);
+        
+        // Aggregate and resolve tags
+        const rawResponseTags: Record<string, number> = {};
+        const rawStageTags: Record<string, number> = {};
+        for (const r of rows) {
+          if (r.response_tags && typeof r.response_tags === "object") {
+            for (const [k, v] of Object.entries(r.response_tags)) {
+              rawResponseTags[k] = (rawResponseTags[k] || 0) + (typeof v === "number" ? v : 0);
+            }
+          }
+          if (r.stage_tags && typeof r.stage_tags === "object") {
+            for (const [k, v] of Object.entries(r.stage_tags)) {
+              rawStageTags[k] = (rawStageTags[k] || 0) + (typeof v === "number" ? v : 0);
+            }
+          }
+        }
+        
+        const responseTags = resolveTagNames(rawResponseTags, labels.responseLabels, "response_tag");
+        const stageTags = resolveTagNames(rawStageTags, labels.stageLabels, "stage_tag");
+        
+        return JSON.stringify({
+          period: `${args.start_date} to ${args.end_date}`,
+          days_tracked: rows.length,
+          total_leads: totalLeads,
+          total_responses: totalResponses,
+          total_enrollments: totalEnrollments,
+          response_breakdown: responseTags,
+          stage_breakdown: stageTags,
+          conversion_rate: totalLeads > 0 ? `${((totalEnrollments / totalLeads) * 100).toFixed(1)}%` : "N/A",
+          daily: rows.map((r: any) => ({
+            date: r.date,
+            leads: r.total_leads || 0,
+            responses: r.total_responses || 0,
+            enrollments: r.final_tag_count || 0,
+            funnel_day: r.funnel_day,
+          })),
+        });
       }
-      return { label: `Funnel Drop-off Analysis (${monthYear})`, data: { total_leads: totalLeads, stages, dropoff_steps: dropoff } };
-    }
 
-    case "stage_conversion": {
-      const rows = await personalMonth(monthYear);
-      const stages = sumTags(rows, "stage_tags");
-      const totalLeads = sumField(rows, "total_leads");
-      const stageKeys = Object.keys(stages).sort((a, b) => {
-        const numA = parseInt(a.replace(/\D/g, "")) || 0;
-        const numB = parseInt(b.replace(/\D/g, "")) || 0;
-        return numA - numB;
-      });
-      const conversions: { from: string; to: string; rate: string }[] = [];
-      let prevCount = totalLeads;
-      let prevName = "Total Leads";
-      for (const key of stageKeys) {
-        const count = stages[key];
-        conversions.push({ from: prevName, to: key, rate: prevCount > 0 ? `${((count / prevCount) * 100).toFixed(1)}%` : "N/A" });
-        prevCount = count;
-        prevName = key;
+      case "get_team_kpis": {
+        if (team.length === 0) return JSON.stringify({ error: "No team members found. You may be a member, not a leader." });
+        
+        const memberIds = team.map(m => m.user_id);
+        const { data } = await supabase
+          .from("personal_snapshot_v2")
+          .select("user_id, total_leads, total_responses, final_tag_count")
+          .in("user_id", memberIds)
+          .gte("date", args.start_date)
+          .lte("date", args.end_date);
+        
+        const rows = data || [];
+        const memberAgg: Record<string, { name: string; leads: number; responses: number; enrollments: number }> = {};
+        for (const m of team) {
+          memberAgg[m.user_id] = { name: m.display_name, leads: 0, responses: 0, enrollments: 0 };
+        }
+        for (const r of rows) {
+          const m = memberAgg[r.user_id];
+          if (m) {
+            m.leads += r.total_leads || 0;
+            m.responses += r.total_responses || 0;
+            m.enrollments += r.final_tag_count || 0;
+          }
+        }
+        
+        const members = Object.values(memberAgg);
+        return JSON.stringify({
+          period: `${args.start_date} to ${args.end_date}`,
+          team_size: team.length,
+          grand_total_leads: members.reduce((s, m) => s + m.leads, 0),
+          grand_total_responses: members.reduce((s, m) => s + m.responses, 0),
+          grand_total_enrollments: members.reduce((s, m) => s + m.enrollments, 0),
+          per_member: members,
+        });
       }
-      return { label: `Stage-to-Stage Conversion (${monthYear})`, data: { total_leads: totalLeads, conversions } };
-    }
 
-    case "compare_months": {
-      const prevMY = compareMonth || (() => {
-        const [y, m] = monthYear.split("-").map(Number);
-        return m === 1 ? `${y - 1}-12` : `${y}-${String(m - 1).padStart(2, "0")}`;
-      })();
-      const [curr, prev] = await Promise.all([personalMonth(monthYear), personalMonth(prevMY)]);
-      return {
-        label: `Comparison: ${monthYear} vs ${prevMY}`,
-        data: { current: { month: monthYear, ...agg(curr) }, previous: { month: prevMY, ...agg(prev) } },
-      };
-    }
-
-    // ── Team (leader only — role guard already applied in detectIntent) ──
-    case "team_count": {
-      return {
-        label: "Team Count",
-        data: { count: role.teamMemberIds.length, members: role.teamMemberNames },
-      };
-    }
-
-    case "team_performance": {
-      const snapshots = await teamMonth(monthYear);
-      const memberMap: Record<string, { name: string; leads: number; responses: number; enrollments: number }> = {};
-      for (let i = 0; i < role.teamMemberIds.length; i++) {
-        memberMap[role.teamMemberIds[i]] = { name: role.teamMemberNames[i], leads: 0, responses: 0, enrollments: 0 };
+      case "list_team_members": {
+        return JSON.stringify({
+          team_size: team.length,
+          members: team.map(m => m.display_name),
+        });
       }
-      for (const s of snapshots) {
-        const e = memberMap[s.user_id];
-        if (e) { e.leads += s.total_leads || 0; e.responses += s.total_responses || 0; e.enrollments += s.final_tag_count || 0; }
+
+      case "get_member_kpis": {
+        const member = team.find(m => m.display_name.toLowerCase().includes(args.member_name.toLowerCase()));
+        if (!member) return JSON.stringify({ error: `Member "${args.member_name}" not found in your team.` });
+        
+        const { data } = await supabase
+          .from("personal_snapshot_v2")
+          .select("date, total_leads, total_responses, response_tags, stage_tags, final_tag_count")
+          .eq("user_id", member.user_id)
+          .gte("date", args.start_date)
+          .lte("date", args.end_date)
+          .order("date", { ascending: true });
+        
+        const rows = data || [];
+        const totalLeads = rows.reduce((s: number, r: any) => s + (r.total_leads || 0), 0);
+        const totalResponses = rows.reduce((s: number, r: any) => s + (r.total_responses || 0), 0);
+        const totalEnrollments = rows.reduce((s: number, r: any) => s + (r.final_tag_count || 0), 0);
+        
+        return JSON.stringify({
+          member_name: member.display_name,
+          period: `${args.start_date} to ${args.end_date}`,
+          days_tracked: rows.length,
+          total_leads: totalLeads,
+          total_responses: totalResponses,
+          total_enrollments: totalEnrollments,
+        });
       }
-      return { label: `Team Performance (${monthYear})`, data: { month: monthYear, members: Object.values(memberMap) } };
-    }
 
-    case "top_performers":
-    case "bottom_performers": {
-      const snapshots = await teamMonth(monthYear);
-      const memberMap: Record<string, { name: string; leads: number; responses: number; enrollments: number; score: number }> = {};
-      for (let i = 0; i < role.teamMemberIds.length; i++) {
-        memberMap[role.teamMemberIds[i]] = { name: role.teamMemberNames[i], leads: 0, responses: 0, enrollments: 0, score: 0 };
+      case "get_rankings": {
+        if (team.length === 0) return JSON.stringify({ error: "No team members found." });
+        
+        const memberIds = team.map(m => m.user_id);
+        const { data } = await supabase
+          .from("personal_snapshot_v2")
+          .select("user_id, total_leads, total_responses, final_tag_count")
+          .in("user_id", memberIds)
+          .gte("date", args.start_date)
+          .lte("date", args.end_date);
+        
+        const rows = data || [];
+        const memberAgg: Record<string, { name: string; leads: number; responses: number; enrollments: number }> = {};
+        for (const m of team) {
+          memberAgg[m.user_id] = { name: m.display_name, leads: 0, responses: 0, enrollments: 0 };
+        }
+        for (const r of rows) {
+          const m = memberAgg[r.user_id];
+          if (m) {
+            m.leads += r.total_leads || 0;
+            m.responses += r.total_responses || 0;
+            m.enrollments += r.final_tag_count || 0;
+          }
+        }
+        
+        const list = Object.values(memberAgg);
+        const metricKey = args.metric === "enrollments" ? "enrollments" : args.metric === "total_responses" ? "responses" : "leads";
+        list.sort((a: any, b: any) => args.order === "top" ? b[metricKey] - a[metricKey] : a[metricKey] - b[metricKey]);
+        
+        return JSON.stringify({
+          metric: args.metric,
+          order: args.order,
+          period: `${args.start_date} to ${args.end_date}`,
+          rankings: list.map((m, i) => ({ rank: i + 1, name: m.name, [metricKey]: (m as any)[metricKey] })),
+        });
       }
-      for (const s of snapshots) {
-        const e = memberMap[s.user_id];
-        if (e) { e.leads += s.total_leads || 0; e.responses += s.total_responses || 0; e.enrollments += s.final_tag_count || 0; }
+
+      case "search_prospects": {
+        let query = supabase
+          .from("prospects")
+          .select("name, phone, status, response_tag, stage_tag, notes, created_at")
+          .eq("user_id", userId)
+          .is("deleted_at", null)
+          .limit(args.limit || 10);
+        
+        if (args.query) query = query.ilike("name", `%${args.query}%`);
+        if (args.status) query = query.eq("status", args.status);
+        
+        const { data } = await query.order("created_at", { ascending: false });
+        return JSON.stringify({ results: data || [], count: (data || []).length });
       }
-      const list = Object.values(memberMap);
-      list.forEach(m => { m.score = m.leads + m.enrollments * 3; }); // Weighted score
-      list.sort((a, b) => intent === "top_performers" ? b.score - a.score : a.score - b.score);
-      return {
-        label: `${intent === "top_performers" ? "Top" : "Bottom"} Performers (${monthYear})`,
-        data: { month: monthYear, ranked_members: list },
-      };
-    }
 
-    case "my_role": {
-      return {
-        label: "Your Role",
-        data: {
-          role: role.role,
-          display_name: role.displayName,
-          direct_team_count: role.teamMemberIds.length,
-          team_members: role.role === "leader" ? role.teamMemberNames : [],
-        },
-      };
-    }
+      case "get_prospect_details": {
+        const { data } = await supabase
+          .from("prospects")
+          .select("name, phone, status, response_tag, stage_tag, notes, source, created_at, updated_at")
+          .eq("user_id", userId)
+          .ilike("name", `%${args.name}%`)
+          .is("deleted_at", null)
+          .limit(5);
+        
+        return JSON.stringify({ matches: data || [] });
+      }
 
-    case "general_tips": {
-      const rows = await personalMonth(monthYear);
-      const a = agg(rows);
-      return {
-        label: `Performance Summary for Coaching (${monthYear})`,
-        data: {
-          ...a,
-          conversion_rate: a.total_leads > 0 ? `${((a.total_enrollments / a.total_leads) * 100).toFixed(1)}%` : "N/A",
-          response_rate: a.total_leads > 0 ? `${((a.total_responses / a.total_leads) * 100).toFixed(1)}%` : "N/A",
-          is_leader: role.role === "leader",
-          team_size: role.teamMemberIds.length,
-        },
-      };
-    }
+      case "get_funnel_stages": {
+        const { data } = await supabase
+          .from("personal_snapshot_v2")
+          .select("stage_tags, total_leads, final_tag_count")
+          .eq("user_id", userId)
+          .gte("date", args.start_date)
+          .lte("date", args.end_date);
+        
+        const rows = data || [];
+        const rawStageTags: Record<string, number> = {};
+        const totalLeads = rows.reduce((s: number, r: any) => s + (r.total_leads || 0), 0);
+        const totalEnrollments = rows.reduce((s: number, r: any) => s + (r.final_tag_count || 0), 0);
+        
+        for (const r of rows) {
+          if (r.stage_tags && typeof r.stage_tags === "object") {
+            for (const [k, v] of Object.entries(r.stage_tags)) {
+              rawStageTags[k] = (rawStageTags[k] || 0) + (typeof v === "number" ? v : 0);
+            }
+          }
+        }
+        
+        const stageTags = resolveTagNames(rawStageTags, labels.stageLabels, "stage_tag");
+        
+        return JSON.stringify({
+          period: `${args.start_date} to ${args.end_date}`,
+          total_leads: totalLeads,
+          stages: stageTags,
+          total_enrollments: totalEnrollments,
+        });
+      }
 
-    default:
-      return { label: "Unknown", data: {} };
+      case "get_conversion_rates": {
+        const { data } = await supabase
+          .from("personal_snapshot_v2")
+          .select("stage_tags, total_leads, final_tag_count")
+          .eq("user_id", userId)
+          .gte("date", args.start_date)
+          .lte("date", args.end_date);
+        
+        const rows = data || [];
+        const rawStageTags: Record<string, number> = {};
+        const totalLeads = rows.reduce((s: number, r: any) => s + (r.total_leads || 0), 0);
+        
+        for (const r of rows) {
+          if (r.stage_tags && typeof r.stage_tags === "object") {
+            for (const [k, v] of Object.entries(r.stage_tags)) {
+              rawStageTags[k] = (rawStageTags[k] || 0) + (typeof v === "number" ? v : 0);
+            }
+          }
+        }
+        
+        const stageTags = resolveTagNames(rawStageTags, labels.stageLabels, "stage_tag");
+        const stageEntries = Object.entries(stageTags).sort((a, b) => {
+          const numA = parseInt(a[0].replace(/\D/g, "")) || 0;
+          const numB = parseInt(b[0].replace(/\D/g, "")) || 0;
+          return numA - numB;
+        });
+        
+        const conversions: { from: string; to: string; rate: string; drop: number }[] = [];
+        let prev = { name: "Total Leads", count: totalLeads };
+        for (const [name, count] of stageEntries) {
+          conversions.push({
+            from: prev.name,
+            to: name,
+            rate: prev.count > 0 ? `${((count / prev.count) * 100).toFixed(1)}%` : "N/A",
+            drop: prev.count - count,
+          });
+          prev = { name, count };
+        }
+        
+        return JSON.stringify({ period: `${args.start_date} to ${args.end_date}`, total_leads: totalLeads, conversions });
+      }
+
+      case "get_tracking_status": {
+        const today = todayStr();
+        const { data: todayData } = await supabase
+          .from("personal_snapshot_v2")
+          .select("total_leads, total_responses, final_tag_count, funnel_day, final_tag, response_tags, stage_tags")
+          .eq("user_id", userId)
+          .eq("date", today)
+          .maybeSingle();
+        
+        // Get streak info from daily_tracking_logs
+        const { data: recentLogs } = await supabase
+          .from("daily_tracking_logs")
+          .select("log_date")
+          .eq("user_id", userId)
+          .order("log_date", { ascending: false })
+          .limit(30);
+        
+        let streak = 0;
+        if (recentLogs && recentLogs.length > 0) {
+          const dates = recentLogs.map((r: any) => r.log_date).sort().reverse();
+          const d = new Date(today);
+          for (const logDate of dates) {
+            const expected = d.toISOString().split("T")[0];
+            if (logDate === expected) {
+              streak++;
+              d.setDate(d.getDate() - 1);
+            } else {
+              break;
+            }
+          }
+        }
+        
+        const result: any = {
+          today: today,
+          tracked_today: !!todayData,
+          streak_days: streak,
+        };
+        
+        if (todayData) {
+          const rTags = resolveTagNames(todayData.response_tags || {}, labels.responseLabels, "response_tag");
+          const sTags = resolveTagNames(todayData.stage_tags || {}, labels.stageLabels, "stage_tag");
+          result.today_stats = {
+            leads: todayData.total_leads || 0,
+            responses: todayData.total_responses || 0,
+            enrollments: todayData.final_tag_count || 0,
+            funnel_day: todayData.funnel_day,
+            response_breakdown: rTags,
+            stage_breakdown: sTags,
+          };
+        }
+        
+        return JSON.stringify(result);
+      }
+
+      default:
+        return JSON.stringify({ error: `Unknown tool: ${name}` });
+    }
+  } catch (e) {
+    console.error(`Tool ${name} error:`, e);
+    return JSON.stringify({ error: `Tool execution failed: ${e instanceof Error ? e.message : "unknown"}` });
   }
 }
 
 // ══════════════════════════════════════════════════════════════
-// STEP 3 — EXPLANATION (streaming)
+// SYSTEM PROMPT
 // ══════════════════════════════════════════════════════════════
-const SYSTEM_PROMPT = `You are NevorAI Assistant — a precise, data-driven AI for network marketers using the NevorAI CRM.
+function buildSystemPrompt(role: string, teamSize: number, displayName: string): string {
+  return `You are NevorAI Assistant — a precise, data-driven AI for network marketers using the NevorAI CRM.
 
-${DOMAIN_GLOSSARY}
+DOMAIN DEFINITIONS:
+- Enrollment = final_tag_count (people who completed the LAST stage)
+- Prospect = any lead not yet at the final stage
+- Leads = total_leads (new names added)
+- Responses = total_responses (prospects who replied)
+- Conversion rate = enrollments / total_leads
+
+USER: ${displayName}
+ROLE: ${role.toUpperCase()}${role === "leader" ? ` with ${teamSize} direct team members` : " (individual, no team access)"}
+
+CURRENT DATE: ${todayStr()}
+CURRENT MONTH: ${monthYearNow()}
 
 CRITICAL RULES:
-1. You may ONLY reference numbers explicitly present in the DATA block.
-2. If a number is NOT in the data, say "I don't have that information."
-3. NEVER estimate, guess, interpolate, or calculate numbers not provided.
-4. NEVER reference UI state, localStorage, cookies, or client-side data.
-5. NEVER reveal raw JSON, table names, column names, or internal identifiers.
-6. When mentioning stages, use the tag names (e.g. "Day 1", "Day 2") not "stage_tag_1".
-7. For team data, only discuss members present in the data — never speculate about others.
-8. This is READ-ONLY. Never suggest the user can update data via chat.
-
-ROLE AWARENESS:
-- If the user is a MEMBER, they can only see their own data. Do not reference team features.
-- If the user is a LEADER, they can see their own data + direct team members' data.
+1. ONLY reference numbers from tool results. Never estimate or guess.
+2. If data is missing, say "I don't have that information."
+3. Never reveal raw JSON, table names, column names, or internal identifiers.
+4. Use human-readable tag names (from tool results), never slot keys like "response_tag_1".
+5. This is READ-ONLY. Never suggest users can update data via chat.
+6. ${role === "member" ? "Do NOT reference team features — this user has no team." : "You can access team data for this leader."}
 
 FORMATTING:
-- Keep responses brief: 2-4 sentences for simple questions, short paragraph for analysis.
-- Use tables (markdown) for day-wise or team comparisons when data has 3+ rows.
-- Use 1-2 emoji max per response.
+- Brief responses: 2-4 sentences for simple questions, short paragraph for analysis.
+- Use markdown tables for comparisons with 3+ rows.
+- 1-2 emoji max per response.
 - Format numbers clearly (e.g. "45 leads", "12.5% conversion").
 - Be encouraging but honest about low numbers.
-- Give specific, actionable advice (not generic motivation).
-- Respond in the same language the user writes in.`;
+- Give specific, actionable advice.
+- Respond in the same language the user writes in.
+
+Use the provided tools to fetch data before answering. Always call at least one tool for data questions.`;
+}
 
 // ══════════════════════════════════════════════════════════════
 // MAIN HANDLER
@@ -467,32 +709,41 @@ serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
-    // ── Auth ──
-    const authHeader = req.headers.get("Authorization");
-    if (!authHeader?.startsWith("Bearer ")) {
-      return new Response(JSON.stringify({ error: "Unauthorized" }), {
-        status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
+    const body = await req.json();
+    const { messages, auth_token } = body;
 
-    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-    const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
-    const supabase = createClient(supabaseUrl, supabaseAnonKey, {
-      global: { headers: { Authorization: authHeader } },
-    });
-
-    const token = authHeader.replace("Bearer ", "");
-    const { data: { user }, error: authError } = await supabase.auth.getUser(token);
-    if (authError || !user) {
-      return new Response(JSON.stringify({ error: "Unauthorized" }), {
-        status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
-    const { messages, monthYear } = await req.json();
     if (!messages || !Array.isArray(messages)) {
       return new Response(JSON.stringify({ error: "messages array required" }), {
         status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // ── Auth via auth_token in body ──
+    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+    const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
+    const token = auth_token || req.headers.get("Authorization")?.replace("Bearer ", "");
+    
+    if (!token) {
+      return new Response(JSON.stringify({ error: "Unauthorized — no auth token" }), {
+        status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+      global: { headers: { Authorization: `Bearer ${token}` } },
+    });
+
+    const { data: { user }, error: authError } = await supabase.auth.getUser(token);
+    if (authError || !user) {
+      return new Response(JSON.stringify({ error: "Unauthorized — invalid token" }), {
+        status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // ── Rate limit ──
+    if (!checkRateLimit(user.id)) {
+      return new Response(JSON.stringify({ error: "Rate limit reached. Please wait a moment." }), {
+        status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
@@ -503,56 +754,100 @@ serve(async (req) => {
       });
     }
 
-    const defaultMonth = monthYear || monthYearNow();
+    // ── Resolve context ──
+    const [team, labels, profileData] = await Promise.all([
+      discoverTeam(supabase, user.id),
+      resolveLabels(supabase, user.id),
+      supabase.from("profiles").select("display_name").eq("user_id", user.id).maybeSingle(),
+    ]);
 
-    // Step 0: Resolve role
-    const role = await resolveRole(supabase, user.id);
-    console.log(`User: ${role.displayName}, Role: ${role.role}, Team: ${role.teamMemberIds.length}`);
+    const displayName = profileData.data?.display_name || "User";
+    const role = team.length > 0 ? "leader" : "member";
+    console.log(`User: ${displayName}, Role: ${role}, Team: ${team.length}, Labels: R=${labels.responseLabels.length} S=${labels.stageLabels.length}`);
 
-    // Step 1: Detect intent
-    const { intent, month_year, compare_month } = await detectIntent(messages, LOVABLE_API_KEY, role);
-    const targetMonth = month_year || defaultMonth;
-    console.log(`Intent: ${intent}, Month: ${targetMonth}, Compare: ${compare_month}`);
+    // ── Tool-calling loop ──
+    const systemPrompt = buildSystemPrompt(role, team.length, displayName);
+    let conversationMessages: any[] = [
+      { role: "system", content: systemPrompt },
+      ...messages.slice(-6), // Keep last 6 messages for context
+    ];
 
-    // Step 2: Fetch data
-    const { label, data } = await fetchData(supabase, role, intent, targetMonth, compare_month);
+    let finalResponse = "";
 
-    // Step 3: Stream explanation
-    const roleContext = role.role === "leader"
-      ? `\nUSER ROLE: Leader with ${role.teamMemberIds.length} direct team members.`
-      : `\nUSER ROLE: Individual member (no team access).`;
-
-    const dataBlock = `${roleContext}\n\n--- DATA: ${label} ---\n${JSON.stringify(data, null, 2)}\n--- END DATA ---`;
-
-    const aiResponse = await fetch(AI_GATEWAY, {
-      method: "POST",
-      headers: { Authorization: `Bearer ${LOVABLE_API_KEY}`, "Content-Type": "application/json" },
-      body: JSON.stringify({
-        model: MODEL,
-        messages: [{ role: "system", content: SYSTEM_PROMPT + dataBlock }, ...messages],
-        stream: true,
-      }),
-    });
-
-    if (!aiResponse.ok) {
-      if (aiResponse.status === 429) {
-        return new Response(JSON.stringify({ error: "Rate limit exceeded. Please try again in a moment." }), {
-          status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
-      if (aiResponse.status === 402) {
-        return new Response(JSON.stringify({ error: "AI credits exhausted. Please add credits." }), {
-          status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
-      console.error("AI gateway error:", aiResponse.status, await aiResponse.text());
-      return new Response(JSON.stringify({ error: "AI service error" }), {
-        status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
+    for (let iteration = 0; iteration < MAX_TOOL_ITERATIONS; iteration++) {
+      const aiResp = await fetch(AI_GATEWAY, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${LOVABLE_API_KEY}`, "Content-Type": "application/json" },
+        body: JSON.stringify({
+          model: MODEL,
+          messages: conversationMessages,
+          tools: TOOLS,
+          tool_choice: iteration === 0 ? "auto" : "auto",
+        }),
       });
+
+      if (!aiResp.ok) {
+        const status = aiResp.status;
+        if (status === 429) {
+          return new Response(JSON.stringify({ error: "Rate limit exceeded. Please try again in a moment." }), {
+            status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+        if (status === 402) {
+          return new Response(JSON.stringify({ error: "AI credits exhausted. Please add credits." }), {
+            status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+        console.error("AI gateway error:", status, await aiResp.text());
+        return new Response(JSON.stringify({ error: "AI service error" }), {
+          status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      const aiData = await aiResp.json();
+      const choice = aiData.choices?.[0];
+      if (!choice) {
+        finalResponse = "I couldn't process your request. Please try again.";
+        break;
+      }
+
+      const msg = choice.message;
+      conversationMessages.push(msg);
+
+      // If the model wants to call tools
+      if (msg.tool_calls && msg.tool_calls.length > 0) {
+        console.log(`Iteration ${iteration + 1}: ${msg.tool_calls.length} tool call(s)`);
+        
+        for (const toolCall of msg.tool_calls) {
+          const fnName = toolCall.function.name;
+          let fnArgs: any = {};
+          try {
+            fnArgs = JSON.parse(toolCall.function.arguments || "{}");
+          } catch {
+            fnArgs = {};
+          }
+          
+          console.log(`  Tool: ${fnName}`, JSON.stringify(fnArgs));
+          const result = await executeTool(fnName, fnArgs, supabase, user.id, team, labels);
+          
+          conversationMessages.push({
+            role: "tool",
+            tool_call_id: toolCall.id,
+            content: result,
+          });
+        }
+        // Continue loop for next iteration
+        continue;
+      }
+
+      // Model gave a final text response
+      finalResponse = msg.content || "I couldn't generate a response.";
+      break;
     }
 
-    return new Response(aiResponse.body, {
-      headers: { ...corsHeaders, "Content-Type": "text/event-stream" },
+    return new Response(JSON.stringify({ response: finalResponse, scope: role }), {
+      status: 200,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (e) {
     console.error("nevorai-ai error:", e);
