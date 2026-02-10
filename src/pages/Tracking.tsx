@@ -52,17 +52,15 @@ export default function Tracking() {
     leadsFinalTargetTag, stageFinalTargetTag, directLeaderUserId,
   } = useTrackingFormatContext();
 
-  // Source preference — map to DB source value
+  // Source preference (controls input method, not display filtering)
   const { personalSource } = useTrackingSourcePreferences();
-  const personalSourceFilter: 'MANUAL' | 'APPLICATION' | null =
-    personalSource === 'AUTO' ? 'APPLICATION' : personalSource === 'MANUAL' ? 'MANUAL' : null;
 
   // Funnel config
   const { getEffectiveConfig } = useFunnelConfig();
   const effectiveConfig = getEffectiveConfig();
 
-  // Read snapshots for current month — pass tag names from context for instant mapping
-  const { snapshots: personalSnapshots } = usePersonalSnapshotV2Read(monthYear, leadsTrackingTagNames, stageTagNames, personalSourceFilter);
+  // Read snapshots for current month — no source filter; show all data regardless of source
+  const { snapshots: personalSnapshots } = usePersonalSnapshotV2Read(monthYear, leadsTrackingTagNames, stageTagNames);
   const { snapshots: totalSnapshots } = useTotalSnapshotV2Read(monthYear, leadsTrackingTagNames, stageTagNames);
 
   // Pick active snapshots based on data mode
