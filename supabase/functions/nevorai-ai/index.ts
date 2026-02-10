@@ -49,20 +49,47 @@ function todayStr(): string {
 interface LabelMap {
   responseLabels: string[];
   stageLabels: string[];
+  enrollmentSlotKey: string | null; // e.g. "response_tag_2" for the enrollment tag
 }
 
 function parseLabels(raw: any): string[] {
   if (!raw) return [];
-  if (Array.isArray(raw)) return raw;
-  if (typeof raw === "object" && Array.isArray(raw.tracking)) return raw.tracking;
   if (typeof raw === "string") {
-    try { const p = JSON.parse(raw); return Array.isArray(p) ? p : []; } catch { return []; }
+    try { raw = JSON.parse(raw); } catch { return []; }
+  }
+  if (Array.isArray(raw)) {
+    return raw.map((item: any) => (typeof item === "object" && item?.name) ? item.name : String(item));
+  }
+  if (typeof raw === "object") {
+    // Handle {tracking: [{name: "Video Sent"}, ...]} format
+    if (Array.isArray(raw.tracking)) {
+      return raw.tracking.map((t: any) => (typeof t === "object" && t?.name) ? t.name : String(t));
+    }
+    // Handle {stages: [{name: "Day 1"}, ...]} format
+    if (Array.isArray(raw.stages)) {
+      return raw.stages.map((s: any) => (typeof s === "object" && s?.name) ? s.name : String(s));
+    }
   }
   return [];
 }
 
+function findEnrollmentSlotKey(raw: any): string | null {
+  if (!raw) return null;
+  if (typeof raw === "string") {
+    try { raw = JSON.parse(raw); } catch { return null; }
+  }
+  const tracking = raw?.tracking;
+  if (!Array.isArray(tracking)) return null;
+  for (let i = 0; i < tracking.length; i++) {
+    const entry = tracking[i];
+    if (typeof entry === "object" && (entry.isStageTag === true || entry.isFinalTarget === true)) {
+      return `response_tag_${i + 1}`;
+    }
+  }
+  return null;
+}
+
 async function resolveLabels(supabase: any, userId: string): Promise<LabelMap> {
-  // Walk up the upline chain to find the root leader's labels
   let currentId = userId;
   const visited = new Set<string>();
   
@@ -72,7 +99,7 @@ async function resolveLabels(supabase: any, userId: string): Promise<LabelMap> {
     
     const { data: profile } = await supabase
       .from("profiles")
-      .select("response_labels, stage_labels, upline_leader_id")
+      .select("response_labels, stage_labels, upline_email")
       .eq("user_id", currentId)
       .maybeSingle();
     
@@ -81,20 +108,29 @@ async function resolveLabels(supabase: any, userId: string): Promise<LabelMap> {
     const rLabels = parseLabels(profile.response_labels);
     const sLabels = parseLabels(profile.stage_labels);
     
-    // If this profile has labels, use them
     if (rLabels.length > 0 || sLabels.length > 0) {
-      return { responseLabels: rLabels, stageLabels: sLabels };
+      const enrollmentSlotKey = findEnrollmentSlotKey(profile.response_labels);
+      return { responseLabels: rLabels, stageLabels: sLabels, enrollmentSlotKey };
     }
     
-    // Walk up
-    if (profile.upline_leader_id) {
-      currentId = profile.upline_leader_id;
+    // Walk up via upline_email → find the leader's user_id
+    if (profile.upline_email) {
+      const { data: uplineProfile } = await supabase
+        .from("profiles")
+        .select("user_id")
+        .eq("email", profile.upline_email)
+        .maybeSingle();
+      if (uplineProfile) {
+        currentId = uplineProfile.user_id;
+      } else {
+        break;
+      }
     } else {
       break;
     }
   }
   
-  return { responseLabels: [], stageLabels: [] };
+  return { responseLabels: [], stageLabels: [], enrollmentSlotKey: null };
 }
 
 function resolveTagNames(tags: Record<string, number>, labels: string[], prefix: string): Record<string, number> {
@@ -183,12 +219,13 @@ const TOOLS = [
     type: "function",
     function: {
       name: "get_snapshot_kpis",
-      description: "Get the user's personal KPIs (leads, responses, enrollments, tag breakdowns) for a date range",
+      description: "Get the user's KPIs (leads, responses, enrollments, tag breakdowns) for a date range. Uses total (personal+team) data by default.",
       parameters: {
         type: "object",
         properties: {
           start_date: { type: "string", description: "YYYY-MM-DD" },
           end_date: { type: "string", description: "YYYY-MM-DD" },
+          source: { type: "string", enum: ["total", "personal"], description: "Data source: 'total' (default, matches dashboard Total view) or 'personal' (user's own data only)" },
         },
         required: ["start_date", "end_date"],
         additionalProperties: false,
@@ -290,12 +327,13 @@ const TOOLS = [
     type: "function",
     function: {
       name: "get_funnel_stages",
-      description: "Get stage-by-stage funnel breakdown for a date range",
+      description: "Get stage-by-stage funnel breakdown for a date range. Uses total data by default.",
       parameters: {
         type: "object",
         properties: {
           start_date: { type: "string", description: "YYYY-MM-DD" },
           end_date: { type: "string", description: "YYYY-MM-DD" },
+          source: { type: "string", enum: ["total", "personal"], description: "Data source: 'total' (default) or 'personal'" },
         },
         required: ["start_date", "end_date"],
         additionalProperties: false,
@@ -306,12 +344,13 @@ const TOOLS = [
     type: "function",
     function: {
       name: "get_conversion_rates",
-      description: "Get conversion rates between funnel stages for a date range",
+      description: "Get conversion rates between funnel stages for a date range. Uses total data by default.",
       parameters: {
         type: "object",
         properties: {
           start_date: { type: "string", description: "YYYY-MM-DD" },
           end_date: { type: "string", description: "YYYY-MM-DD" },
+          source: { type: "string", enum: ["total", "personal"], description: "Data source: 'total' (default) or 'personal'" },
         },
         required: ["start_date", "end_date"],
         additionalProperties: false,
@@ -328,9 +367,25 @@ const TOOLS = [
   },
 ];
 
-// ══════════════════════════════════════════════════════════════
-// TOOL EXECUTION
-// ══════════════════════════════════════════════════════════════
+// Helper: compute enrollments from response_tags using enrollmentSlotKey
+function computeEnrollments(rows: any[], labels: LabelMap): number {
+  if (labels.enrollmentSlotKey) {
+    let total = 0;
+    for (const r of rows) {
+      if (r.response_tags && typeof r.response_tags === "object") {
+        total += (typeof r.response_tags[labels.enrollmentSlotKey] === "number" ? r.response_tags[labels.enrollmentSlotKey] : 0);
+      }
+    }
+    return total;
+  }
+  // Fallback to final_tag_count
+  return rows.reduce((s: number, r: any) => s + (r.final_tag_count || 0), 0);
+}
+
+function snapshotTable(source?: string): string {
+  return source === "personal" ? "personal_snapshot_v2" : "total_snapshot_v2";
+}
+
 async function executeTool(
   name: string,
   args: any,
@@ -342,8 +397,9 @@ async function executeTool(
   try {
     switch (name) {
       case "get_snapshot_kpis": {
+        const table = snapshotTable(args.source);
         const { data } = await supabase
-          .from("personal_snapshot_v2")
+          .from(table)
           .select("date, total_leads, total_responses, response_tags, stage_tags, final_tag_count, funnel_day, final_tag")
           .eq("user_id", userId)
           .gte("date", args.start_date)
@@ -353,9 +409,8 @@ async function executeTool(
         const rows = data || [];
         const totalLeads = rows.reduce((s: number, r: any) => s + (r.total_leads || 0), 0);
         const totalResponses = rows.reduce((s: number, r: any) => s + (r.total_responses || 0), 0);
-        const totalEnrollments = rows.reduce((s: number, r: any) => s + (r.final_tag_count || 0), 0);
+        const totalEnrollments = computeEnrollments(rows, labels);
         
-        // Aggregate and resolve tags
         const rawResponseTags: Record<string, number> = {};
         const rawStageTags: Record<string, number> = {};
         for (const r of rows) {
@@ -375,6 +430,7 @@ async function executeTool(
         const stageTags = resolveTagNames(rawStageTags, labels.stageLabels, "stage_tag");
         
         return JSON.stringify({
+          source: table,
           period: `${args.start_date} to ${args.end_date}`,
           days_tracked: rows.length,
           total_leads: totalLeads,
@@ -383,13 +439,6 @@ async function executeTool(
           response_breakdown: responseTags,
           stage_breakdown: stageTags,
           conversion_rate: totalLeads > 0 ? `${((totalEnrollments / totalLeads) * 100).toFixed(1)}%` : "N/A",
-          daily: rows.map((r: any) => ({
-            date: r.date,
-            leads: r.total_leads || 0,
-            responses: r.total_responses || 0,
-            enrollments: r.final_tag_count || 0,
-            funnel_day: r.funnel_day,
-          })),
         });
       }
 
@@ -399,7 +448,7 @@ async function executeTool(
         const memberIds = team.map(m => m.user_id);
         const { data } = await supabase
           .from("personal_snapshot_v2")
-          .select("user_id, total_leads, total_responses, final_tag_count")
+          .select("user_id, total_leads, total_responses, response_tags")
           .in("user_id", memberIds)
           .gte("date", args.start_date)
           .lte("date", args.end_date);
@@ -414,7 +463,12 @@ async function executeTool(
           if (m) {
             m.leads += r.total_leads || 0;
             m.responses += r.total_responses || 0;
-            m.enrollments += r.final_tag_count || 0;
+            // Compute enrollment from response_tags
+            if (labels.enrollmentSlotKey && r.response_tags && typeof r.response_tags === "object") {
+              m.enrollments += (typeof r.response_tags[labels.enrollmentSlotKey] === "number" ? r.response_tags[labels.enrollmentSlotKey] : 0);
+            } else {
+              // No slot key, skip (final_tag_count is unreliable)
+            }
           }
         }
         
@@ -451,7 +505,7 @@ async function executeTool(
         const rows = data || [];
         const totalLeads = rows.reduce((s: number, r: any) => s + (r.total_leads || 0), 0);
         const totalResponses = rows.reduce((s: number, r: any) => s + (r.total_responses || 0), 0);
-        const totalEnrollments = rows.reduce((s: number, r: any) => s + (r.final_tag_count || 0), 0);
+        const totalEnrollments = computeEnrollments(rows, labels);
         
         return JSON.stringify({
           member_name: member.display_name,
@@ -469,7 +523,7 @@ async function executeTool(
         const memberIds = team.map(m => m.user_id);
         const { data } = await supabase
           .from("personal_snapshot_v2")
-          .select("user_id, total_leads, total_responses, final_tag_count")
+          .select("user_id, total_leads, total_responses, response_tags")
           .in("user_id", memberIds)
           .gte("date", args.start_date)
           .lte("date", args.end_date);
@@ -484,7 +538,9 @@ async function executeTool(
           if (m) {
             m.leads += r.total_leads || 0;
             m.responses += r.total_responses || 0;
-            m.enrollments += r.final_tag_count || 0;
+            if (labels.enrollmentSlotKey && r.response_tags && typeof r.response_tags === "object") {
+              m.enrollments += (typeof r.response_tags[labels.enrollmentSlotKey] === "number" ? r.response_tags[labels.enrollmentSlotKey] : 0);
+            }
           }
         }
         
@@ -528,9 +584,10 @@ async function executeTool(
       }
 
       case "get_funnel_stages": {
+        const table = snapshotTable(args.source);
         const { data } = await supabase
-          .from("personal_snapshot_v2")
-          .select("stage_tags, total_leads, final_tag_count")
+          .from(table)
+          .select("stage_tags, response_tags, total_leads, final_tag_count")
           .eq("user_id", userId)
           .gte("date", args.start_date)
           .lte("date", args.end_date);
@@ -538,7 +595,7 @@ async function executeTool(
         const rows = data || [];
         const rawStageTags: Record<string, number> = {};
         const totalLeads = rows.reduce((s: number, r: any) => s + (r.total_leads || 0), 0);
-        const totalEnrollments = rows.reduce((s: number, r: any) => s + (r.final_tag_count || 0), 0);
+        const totalEnrollments = computeEnrollments(rows, labels);
         
         for (const r of rows) {
           if (r.stage_tags && typeof r.stage_tags === "object") {
@@ -551,6 +608,7 @@ async function executeTool(
         const stageTags = resolveTagNames(rawStageTags, labels.stageLabels, "stage_tag");
         
         return JSON.stringify({
+          source: table,
           period: `${args.start_date} to ${args.end_date}`,
           total_leads: totalLeads,
           stages: stageTags,
@@ -559,9 +617,10 @@ async function executeTool(
       }
 
       case "get_conversion_rates": {
+        const table = snapshotTable(args.source);
         const { data } = await supabase
-          .from("personal_snapshot_v2")
-          .select("stage_tags, total_leads, final_tag_count")
+          .from(table)
+          .select("stage_tags, total_leads, response_tags, final_tag_count")
           .eq("user_id", userId)
           .gte("date", args.start_date)
           .lte("date", args.end_date);
@@ -597,19 +656,32 @@ async function executeTool(
           prev = { name, count };
         }
         
-        return JSON.stringify({ period: `${args.start_date} to ${args.end_date}`, total_leads: totalLeads, conversions });
+        return JSON.stringify({ source: table, period: `${args.start_date} to ${args.end_date}`, total_leads: totalLeads, conversions });
       }
 
       case "get_tracking_status": {
         const today = todayStr();
-        const { data: todayData } = await supabase
-          .from("personal_snapshot_v2")
-          .select("total_leads, total_responses, final_tag_count, funnel_day, final_tag, response_tags, stage_tags")
+        // Check total first, fall back to personal
+        let todayData: any = null;
+        const { data: totalToday } = await supabase
+          .from("total_snapshot_v2")
+          .select("total_leads, total_responses, response_tags, stage_tags, funnel_day, final_tag, final_tag_count")
           .eq("user_id", userId)
           .eq("date", today)
           .maybeSingle();
         
-        // Get streak info from daily_tracking_logs
+        if (totalToday) {
+          todayData = totalToday;
+        } else {
+          const { data: personalToday } = await supabase
+            .from("personal_snapshot_v2")
+            .select("total_leads, total_responses, response_tags, stage_tags, funnel_day, final_tag, final_tag_count")
+            .eq("user_id", userId)
+            .eq("date", today)
+            .maybeSingle();
+          todayData = personalToday;
+        }
+        
         const { data: recentLogs } = await supabase
           .from("daily_tracking_logs")
           .select("log_date")
@@ -641,10 +713,13 @@ async function executeTool(
         if (todayData) {
           const rTags = resolveTagNames(todayData.response_tags || {}, labels.responseLabels, "response_tag");
           const sTags = resolveTagNames(todayData.stage_tags || {}, labels.stageLabels, "stage_tag");
+          const enrollToday = labels.enrollmentSlotKey && todayData.response_tags
+            ? (typeof todayData.response_tags[labels.enrollmentSlotKey] === "number" ? todayData.response_tags[labels.enrollmentSlotKey] : 0)
+            : (todayData.final_tag_count || 0);
           result.today_stats = {
             leads: todayData.total_leads || 0,
             responses: todayData.total_responses || 0,
-            enrollments: todayData.final_tag_count || 0,
+            enrollments: enrollToday,
             funnel_day: todayData.funnel_day,
             response_breakdown: rTags,
             stage_breakdown: sTags,
@@ -670,11 +745,15 @@ function buildSystemPrompt(role: string, teamSize: number, displayName: string):
   return `You are NevorAI Assistant — a precise, data-driven AI for network marketers using the NevorAI CRM.
 
 DOMAIN DEFINITIONS:
-- Enrollment = final_tag_count (people who completed the LAST stage)
+- Enrollment = the response tag marked as the enrollment/final target (summed from response_tags)
 - Prospect = any lead not yet at the final stage
 - Leads = total_leads (new names added)
 - Responses = total_responses (prospects who replied)
 - Conversion rate = enrollments / total_leads
+
+DATA SOURCE RULES:
+- By default, use source="total" for get_snapshot_kpis, get_funnel_stages, get_conversion_rates. This matches the dashboard's "Total" view and includes team+personal combined data.
+- Only use source="personal" when the user EXPLICITLY asks for "my personal data only" or "personal stats".
 
 USER: ${displayName}
 ROLE: ${role.toUpperCase()}${role === "leader" ? ` with ${teamSize} direct team members` : " (individual, no team access)"}
