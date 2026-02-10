@@ -418,15 +418,18 @@ const TOOLS = [
 // Helper: compute enrollments from response_tags using enrollmentSlotKey
 function computeEnrollments(rows: any[], labels: LabelMap): number {
   if (labels.enrollmentSlotKey) {
-    let total = 0;
+    // Accumulate raw response_tags across all rows first
+    const rawTags: Record<string, number> = {};
     for (const r of rows) {
       if (r.response_tags && typeof r.response_tags === "object") {
-        // Coerce to slots first to handle both human-name and slot-key formats
-        const slots = coerceToSlots(r.response_tags, labels.responseLabels.length, labels.responseLabels, "response_tag_");
-        total += slots[labels.enrollmentSlotKey] || 0;
+        for (const [k, v] of Object.entries(r.response_tags)) {
+          rawTags[k] = (rawTags[k] || 0) + (typeof v === "number" ? v : 0);
+        }
       }
     }
-    return total;
+    // Coerce once, then read the enrollment slot
+    const slots = coerceToSlots(rawTags, labels.responseLabels.length, labels.responseLabels, "response_tag_", labels.responseLabels);
+    return slots[labels.enrollmentSlotKey] || 0;
   }
   // Fallback to final_tag_count
   return rows.reduce((s: number, r: any) => s + (r.final_tag_count || 0), 0);
@@ -461,26 +464,27 @@ async function executeTool(
         const totalResponses = rows.reduce((s: number, r: any) => s + (r.total_responses || 0), 0);
         const totalEnrollments = computeEnrollments(rows, labels);
         
-        // Aggregate: coerce each row to slot keys, then sum
-        const aggResponseSlots: Record<string, number> = {};
-        const aggStageSlots: Record<string, number> = {};
+        // Accumulate ALL tag keys (both slot and legacy) across rows
+        const rawResponseTags: Record<string, number> = {};
+        const rawStageTags: Record<string, number> = {};
         for (const r of rows) {
           if (r.response_tags && typeof r.response_tags === "object") {
-            const slots = coerceToSlots(r.response_tags, labels.responseLabels.length, labels.responseLabels, "response_tag_");
-            for (const [k, v] of Object.entries(slots)) {
-              aggResponseSlots[k] = (aggResponseSlots[k] || 0) + v;
+            for (const [k, v] of Object.entries(r.response_tags)) {
+              rawResponseTags[k] = (rawResponseTags[k] || 0) + (typeof v === "number" ? v : 0);
             }
           }
           if (r.stage_tags && typeof r.stage_tags === "object") {
-            const slots = coerceToSlots(r.stage_tags, labels.stageLabels.length, labels.stageLabels, "stage_tag_");
-            for (const [k, v] of Object.entries(slots)) {
-              aggStageSlots[k] = (aggStageSlots[k] || 0) + v;
+            for (const [k, v] of Object.entries(r.stage_tags)) {
+              rawStageTags[k] = (rawStageTags[k] || 0) + (typeof v === "number" ? v : 0);
             }
           }
         }
         
-        const responseTags = slotsToLabels(aggResponseSlots, labels.responseLabels, "response_tag_");
-        const stageTags = slotsToLabels(aggStageSlots, labels.stageLabels, "stage_tag_");
+        // CRITICAL: Apply coerceToSlots then slotsToLabels
+        const responseSlots = coerceToSlots(rawResponseTags, labels.responseLabels.length, labels.responseLabels, "response_tag_", labels.responseLabels);
+        const responseTags = slotsToLabels(responseSlots, labels.responseLabels, "response_tag_");
+        const stageSlots = coerceToSlots(rawStageTags, labels.stageLabels.length, labels.stageLabels, "stage_tag_", labels.stageLabels);
+        const stageTags = slotsToLabels(stageSlots, labels.stageLabels, "stage_tag_");
         
         return JSON.stringify({
           source: table,
@@ -646,20 +650,20 @@ async function executeTool(
           .lte("date", args.end_date);
         
         const rows = data || [];
-        const aggStageSlots: Record<string, number> = {};
+        const rawStageTags: Record<string, number> = {};
         const totalLeads = rows.reduce((s: number, r: any) => s + (r.total_leads || 0), 0);
         const totalEnrollments = computeEnrollments(rows, labels);
         
         for (const r of rows) {
           if (r.stage_tags && typeof r.stage_tags === "object") {
-            const slots = coerceToSlots(r.stage_tags, labels.stageLabels.length, labels.stageLabels, "stage_tag_");
-            for (const [k, v] of Object.entries(slots)) {
-              aggStageSlots[k] = (aggStageSlots[k] || 0) + v;
+            for (const [k, v] of Object.entries(r.stage_tags)) {
+              rawStageTags[k] = (rawStageTags[k] || 0) + (typeof v === "number" ? v : 0);
             }
           }
         }
         
-        const stageTags = slotsToLabels(aggStageSlots, labels.stageLabels, "stage_tag_");
+        const stageSlots = coerceToSlots(rawStageTags, labels.stageLabels.length, labels.stageLabels, "stage_tag_", labels.stageLabels);
+        const stageTags = slotsToLabels(stageSlots, labels.stageLabels, "stage_tag_");
         
         return JSON.stringify({
           source: table,
@@ -680,19 +684,19 @@ async function executeTool(
           .lte("date", args.end_date);
         
         const rows = data || [];
-        const aggStageSlots: Record<string, number> = {};
+        const rawStageTags: Record<string, number> = {};
         const totalLeads = rows.reduce((s: number, r: any) => s + (r.total_leads || 0), 0);
         
         for (const r of rows) {
           if (r.stage_tags && typeof r.stage_tags === "object") {
-            const slots = coerceToSlots(r.stage_tags, labels.stageLabels.length, labels.stageLabels, "stage_tag_");
-            for (const [k, v] of Object.entries(slots)) {
-              aggStageSlots[k] = (aggStageSlots[k] || 0) + v;
+            for (const [k, v] of Object.entries(r.stage_tags)) {
+              rawStageTags[k] = (rawStageTags[k] || 0) + (typeof v === "number" ? v : 0);
             }
           }
         }
         
-        const stageTags = slotsToLabels(aggStageSlots, labels.stageLabels, "stage_tag_");
+        const stageSlots = coerceToSlots(rawStageTags, labels.stageLabels.length, labels.stageLabels, "stage_tag_", labels.stageLabels);
+        const stageTags = slotsToLabels(stageSlots, labels.stageLabels, "stage_tag_");
         const stageEntries = Object.entries(stageTags).sort((a, b) => {
           const numA = parseInt(a[0].replace(/\D/g, "")) || 0;
           const numB = parseInt(b[0].replace(/\D/g, "")) || 0;
