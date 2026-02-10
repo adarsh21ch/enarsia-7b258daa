@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Loader2, Sparkles, Users, Crown, Power, FlaskConical, Plus, Hash } from 'lucide-react';
 import { toast } from 'sonner';
 
-const CATEGORY_ORDER = ['calling', 'leads', 'tracking', 'todo', 'export', 'automation', 'analytics', 'team', 'general'];
+const CATEGORY_ORDER = ['calling', 'leads', 'tracking', 'todo', 'export', 'automation', 'analytics', 'team', 'ai', 'general'];
 const CATEGORY_LABELS: Record<string, string> = {
   calling: '📞 Calling',
   leads: '📋 Leads',
@@ -19,6 +19,7 @@ const CATEGORY_LABELS: Record<string, string> = {
   automation: '⚙️ Automation',
   analytics: '📈 Analytics',
   team: '👥 Team',
+  ai: '🤖 AI',
   general: '🔧 General',
 };
 

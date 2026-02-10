@@ -18,6 +18,7 @@ import nevoraLogo from '@/assets/nevorai-logo.jpeg';
 import { Prospect } from '@/types/prospect';
 import { AIAssistantButton } from '@/components/ai/AIAssistantButton';
 import { AIAssistantChat } from '@/components/ai/AIAssistantChat';
+import { useFeatureAccess } from '@/hooks/useFeatureAccess';
 
 type LeadMode = 'leads' | 'funnel';
 
@@ -141,6 +142,7 @@ export default function ListUp() {
   });
   const [expandedProspectId, setExpandedProspectId] = useState<string | null>(null);
   const [showAIChat, setShowAIChat] = useState(false);
+  const { canAccess: canAccessAI } = useFeatureAccess('ai_assistant');
 
   // Persist lead mode to sessionStorage
   useEffect(() => {
@@ -555,8 +557,12 @@ export default function ListUp() {
       </main>
 
       {/* AI Assistant */}
-      <AIAssistantButton onClick={() => setShowAIChat(true)} />
-      <AIAssistantChat open={showAIChat} onOpenChange={setShowAIChat} />
+      {canAccessAI && (
+        <>
+          <AIAssistantButton onClick={() => setShowAIChat(true)} />
+          <AIAssistantChat open={showAIChat} onOpenChange={setShowAIChat} />
+        </>
+      )}
 
       <BottomNav />
     </div>;
