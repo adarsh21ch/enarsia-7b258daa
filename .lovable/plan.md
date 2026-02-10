@@ -1,78 +1,51 @@
 
-## Fix: Application Mode Not Showing Leads Data in TrackUp
 
-### Root Cause Found
+## Fix: Total Tracking Automated Mode
 
-The auto-sync (`useAutoTrackingSync`) only counts prospects added **today** (filters by `date_added` between today's start and end). But the user's 300+ leads were imported on previous days (Feb 1-8). So when auto-sync runs, it finds 0 prospects for today and writes `total_leads: 0` to the snapshot.
+### What's Wrong
+When Total Tracking is set to "Automated," it always reads from `total_snapshot_v2` (which has old manual data). It ignores your personal source preference, so your application-computed numbers don't appear in the total.
 
-Additionally, the auto-sync only triggers on prospect mutations (add/import/delete). If the user just switches to Application mode, nothing triggers a sync for historical dates.
+### The Fix (Safe, Minimal)
 
-Database proof:
-- User has leads spread across Jan 13 - Feb 8 (various import batches)
-- The APPLICATION snapshot row for Feb 10 shows `total_leads: 0` because no prospects were added on Feb 10
-- Previous days have no APPLICATION rows at all
+This uses the exact same pattern already working for Personal tracking -- just applied to the Total side.
 
-### Solution: Compute Application Data from Prospects at Read Time
+**1. New Hook: `useApplicationTotalSnapshots.ts`**
 
-Instead of trying to write snapshot rows for every historical date (which would require dozens of slow edge function calls), we compute the data **directly from the prospects table** when the source is APPLICATION. This guarantees the data is always fresh and correct.
+Computes total data by merging:
+- Your personal data (respects your personal source: if APPLICATION, computes from prospects; if MANUAL, reads from personal_snapshot_v2)
+- Team members' data (from personal_snapshot_v2 where upline_leader_id = you)
+- Sums everything per date, returns the same SnapshotRow[] format
 
----
+**2. Tracking.tsx -- 1 conditional change**
 
-### Changes
-
-**1. New Hook: `src/hooks/useApplicationSnapshots.ts`**
-
-A new hook that replaces snapshot reads when source = APPLICATION:
-- Queries ALL prospects for the given month (grouped by `date(date_added)`)
-- Counts leads, response tags, and stage tags per day
-- Returns data in the same `SnapshotRow[]` format that the dashboard expects
-- No edge function calls needed -- pure client-side computation from the prospects table
-
-**2. Update: `src/pages/Tracking.tsx`**
-
-- When `personalSource === 'AUTO'`, use `useApplicationSnapshots` for personal data instead of `usePersonalSnapshotV2Read`
-- When `personalSource === 'MANUAL'`, keep using the existing snapshot read (unchanged behavior)
-- The switch is seamless -- both return the same `SnapshotRow[]` format
-
-**3. Update: `src/components/profile/ProfileTrackUp.tsx`**
-
-- Same source-based switching as Tracking.tsx
-
-**4. Cleanup: `src/hooks/useAutoTrackingSync.ts`**
-
-- Keep for future use (writing APPLICATION rows for team aggregation)
-- Fix it to compute per-date snapshots when triggered (not just today)
-- But the dashboard no longer depends on it for display
-
----
-
-### Data Flow After Fix
-
-```text
-Source = MANUAL:
-  Read from personal_snapshot_v2 (existing behavior, unchanged)
-
-Source = APPLICATION:
-  Query prospects table directly for the month
-  -> Group by date_added
-  -> Count leads, responses, tags per day
-  -> Return as SnapshotRow[] (same format)
-  -> Dashboard renders correctly with real data
+Line 70 currently:
+```
+const { snapshots: totalSnapshots } = useTotalSnapshotV2Read(...)
 ```
 
-### What This Fixes
+Becomes:
+```
+// Both hooks always run (React rules), dashboard picks the right one
+const { snapshots: manualTotalSnapshots } = useTotalSnapshotV2Read(...)
+const { snapshots: autoTotalSnapshots } = useApplicationTotalSnapshots(...)
+const totalSnapshots = teamSource === 'AUTO' ? autoTotalSnapshots : manualTotalSnapshots
+```
 
-- 300+ imported leads now appear in TrackUp immediately when source = Application
-- Tags applied in the Calling tab are reflected in real-time
-- Historical data (all past days) shows correctly, not just today
-- Switching between Manual and Application instantly changes the data source
-- No dependency on edge function writes for display
+**3. ProfileTrackUp.tsx -- same small conditional**
+
+### Safety Guarantees
+
+- No existing hooks modified
+- No database or schema changes
+- Manual mode path completely untouched
+- Same SnapshotRow[] output format the dashboard already consumes
+- Pure read-time computation, no writes or side effects
 
 ### Files Changed
 
 | File | Change |
 |------|--------|
-| `src/hooks/useApplicationSnapshots.ts` | NEW -- computes daily snapshots from prospects table |
-| `src/pages/Tracking.tsx` | Use application snapshots when source = AUTO |
-| `src/components/profile/ProfileTrackUp.tsx` | Same source-based switch |
-| `src/hooks/useAutoTrackingSync.ts` | Fix to group by date instead of today-only (for team aggregation) |
+| `src/hooks/useApplicationTotalSnapshots.ts` | NEW -- merges personal + team data |
+| `src/pages/Tracking.tsx` | Conditional: use auto total when teamSource = AUTO |
+| `src/components/profile/ProfileTrackUp.tsx` | Same conditional |
+
