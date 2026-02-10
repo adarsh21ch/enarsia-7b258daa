@@ -17,6 +17,7 @@ import { ManualUpdateDrawer } from '@/components/trackup-v2/ManualUpdateDrawer';
 import { FloatingUpdateButton } from '@/components/trackup-v2/FloatingUpdateButton';
 import { AIAssistantButton } from '@/components/ai/AIAssistantButton';
 import { AIAssistantChat } from '@/components/ai/AIAssistantChat';
+import { useFeatureAccess } from '@/hooks/useFeatureAccess';
 import { useTrackingModes } from '@/hooks/useTrackingModes';
 import { usePersonalSnapshotV2Read } from '@/hooks/usePersonalSnapshotV2Read';
 import { useTotalSnapshotV2Read } from '@/hooks/useTotalSnapshotV2Read';
@@ -32,6 +33,7 @@ export default function Tracking() {
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [showUpdateDrawer, setShowUpdateDrawer] = useState(false);
   const [showAIChat, setShowAIChat] = useState(false);
+  const { canAccess: canAccessAI } = useFeatureAccess('ai_assistant');
   
 
   const monthYear = format(currentMonth, 'yyyy-MM');
@@ -186,8 +188,12 @@ export default function Tracking() {
       </main>
 
       {/* AI Assistant */}
-      <AIAssistantButton onClick={() => setShowAIChat(true)} className="fixed bottom-36 right-4 z-30" />
-      <AIAssistantChat open={showAIChat} onOpenChange={setShowAIChat} />
+      {canAccessAI && (
+        <>
+          <AIAssistantButton onClick={() => setShowAIChat(true)} className="fixed bottom-36 right-4 z-30" />
+          <AIAssistantChat open={showAIChat} onOpenChange={setShowAIChat} />
+        </>
+      )}
 
       {/* FAB */}
       <FloatingUpdateButton onClick={() => setShowUpdateDrawer(true)} />
