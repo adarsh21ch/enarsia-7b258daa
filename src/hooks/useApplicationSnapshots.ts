@@ -33,7 +33,7 @@ export function useApplicationSnapshots(
 
       const { data, error } = await supabase
         .from('prospects')
-        .select('id, date_added, action_taken, funnel_stage')
+        .select('id, date_added, action_taken, funnel_stage, personal_tags')
         .eq('user_id', user.id)
         .is('deleted_at', null)
         .gte('date_added', format(monthStart, 'yyyy-MM-dd'))
@@ -69,27 +69,40 @@ export function useApplicationSnapshots(
       .map(([dateStr, dayProspects]): SnapshotRow => {
         const totalLeads = dayProspects.length;
 
-        // Count response tags
+        // Initialize tag counters
         const responseTags: Record<string, number> = {};
         leadsTrackingTagNames.forEach((t) => { responseTags[t] = 0; });
-        let totalResponses = 0;
-
-        dayProspects.forEach((p) => {
-          if (p.action_taken) {
-            totalResponses++;
-            if (leadsTrackingTagNames.includes(p.action_taken)) {
-              responseTags[p.action_taken] = (responseTags[p.action_taken] || 0) + 1;
-            }
-          }
-        });
-
-        // Count stage tags
         const stTags: Record<string, number> = {};
         stageTagNames.forEach((t) => { stTags[t] = 0; });
+        let totalResponses = 0;
 
-        dayProspects.forEach((p) => {
-          if (p.funnel_stage && stageTagNames.includes(p.funnel_stage)) {
-            stTags[p.funnel_stage] = (stTags[p.funnel_stage] || 0) + 1;
+        dayProspects.forEach((p: any) => {
+          const hasAction = !!p.action_taken;
+          const hasPersonalTags = Array.isArray(p.personal_tags) && p.personal_tags.length > 0;
+
+          // B) RESPONSES: count lead if it has ANY tag
+          if (hasAction || hasPersonalTags) {
+            totalResponses++;
+          }
+
+          // C) RESPONSE STAGES (cumulative): backfill from index 0 to matched index
+          if (hasAction) {
+            const idx = leadsTrackingTagNames.indexOf(p.action_taken);
+            if (idx >= 0) {
+              for (let i = 0; i <= idx; i++) {
+                responseTags[leadsTrackingTagNames[i]]++;
+              }
+            }
+          }
+
+          // D) FUNNEL STAGES (cumulative): backfill from index 0 to matched index
+          if (p.funnel_stage) {
+            const idx = stageTagNames.indexOf(p.funnel_stage);
+            if (idx >= 0) {
+              for (let i = 0; i <= idx; i++) {
+                stTags[stageTagNames[i]]++;
+              }
+            }
           }
         });
 
