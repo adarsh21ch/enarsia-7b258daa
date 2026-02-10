@@ -96,7 +96,7 @@ export function AddProspectDialog({ onAdd, existingProspects = [] }: AddProspect
     <>
       <Dialog open={open} onOpenChange={handleOpenChange}>
         <DialogTrigger asChild>
-          <Button size="sm" className="h-8 gap-1 text-xs px-2">
+          <Button data-add-trigger size="sm" className="h-8 gap-1 text-xs px-2">
             <Plus className="h-3.5 w-3.5" />
             <span className="hidden sm:inline">Add</span>
           </Button>
