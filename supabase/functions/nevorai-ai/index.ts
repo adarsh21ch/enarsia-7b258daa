@@ -202,9 +202,29 @@ function slotsToLabels(
 interface TeamMember {
   user_id: string;
   display_name: string;
+  level_id: string | null;
+  level_label: string | null;
+  level_code: string | null;
+  level_position: number | null;
 }
 
-async function discoverTeam(supabase: any, userId: string): Promise<TeamMember[]> {
+interface LeaderLevel {
+  id: string;
+  label: string;
+  code: string | null;
+  position: number;
+}
+
+async function fetchLeaderLevels(supabase: any, userId: string): Promise<LeaderLevel[]> {
+  const { data } = await supabase
+    .from("leader_levels")
+    .select("id, label, code, position")
+    .eq("leader_id", userId)
+    .order("position", { ascending: true });
+  return (data || []) as LeaderLevel[];
+}
+
+async function discoverTeam(supabase: any, userId: string, levels: LeaderLevel[]): Promise<TeamMember[]> {
   // Get leader's profile for email and neverai_id
   const { data: leaderProfile } = await supabase
     .from("profiles")
@@ -218,14 +238,13 @@ async function discoverTeam(supabase: any, userId: string): Promise<TeamMember[]
   const leaderId = leaderProfile.neverai_id;
 
   // Dual filter: upline_email OR leaders_id_of_my_leader
-  // We need to do two queries and merge since Supabase doesn't support OR across columns easily
   const queries: Promise<any>[] = [];
 
   if (leaderEmail) {
     queries.push(
       supabase
         .from("profiles")
-        .select("user_id, display_name")
+        .select("user_id, display_name, level_id")
         .eq("upline_email", leaderEmail)
         .eq("allow_leader_to_view", true)
     );
@@ -235,28 +254,38 @@ async function discoverTeam(supabase: any, userId: string): Promise<TeamMember[]
     queries.push(
       supabase
         .from("profiles")
-        .select("user_id, display_name")
+        .select("user_id, display_name, level_id")
         .eq("leaders_id_of_my_leader", leaderId)
         .eq("allow_leader_to_view", true)
     );
   }
 
   const results = await Promise.all(queries);
-  const memberMap = new Map<string, string>();
+  const memberMap = new Map<string, { display_name: string; level_id: string | null }>();
   
   for (const result of results) {
     const data = result.data || [];
     for (const m of data) {
       if (m.user_id !== userId) {
-        memberMap.set(m.user_id, m.display_name || "Unknown");
+        memberMap.set(m.user_id, { display_name: m.display_name || "Unknown", level_id: m.level_id || null });
       }
     }
   }
 
-  return Array.from(memberMap.entries()).map(([user_id, display_name]) => ({
-    user_id,
-    display_name,
-  }));
+  // Build level lookup map
+  const levelMap = new Map(levels.map(l => [l.id, l]));
+
+  return Array.from(memberMap.entries()).map(([user_id, info]) => {
+    const level = info.level_id ? levelMap.get(info.level_id) : null;
+    return {
+      user_id,
+      display_name: info.display_name,
+      level_id: info.level_id,
+      level_label: level?.label || null,
+      level_code: level?.code || null,
+      level_position: level?.position || null,
+    };
+  });
 }
 
 // ══════════════════════════════════════════════════════════════
@@ -413,6 +442,23 @@ const TOOLS = [
       parameters: { type: "object", properties: {}, additionalProperties: false },
     },
   },
+  {
+    type: "function",
+    function: {
+      name: "filter_team_by_level",
+      description: "Filter team members by their assigned level (e.g. AS, S, AM, M). Use when user asks about specific level groups. Returns members and their KPIs.",
+      parameters: {
+        type: "object",
+        properties: {
+          level_name: { type: "string", description: "Level label or code to filter by (e.g. 'S', 'AM', 'M', 'AS')" },
+          start_date: { type: "string", description: "YYYY-MM-DD start of date range for KPIs" },
+          end_date: { type: "string", description: "YYYY-MM-DD end of date range for KPIs" },
+        },
+        required: ["level_name", "start_date", "end_date"],
+        additionalProperties: false,
+      },
+    },
+  },
 ];
 
 // Helper: compute enrollments from response_tags using enrollmentSlotKey
@@ -543,7 +589,11 @@ async function executeTool(
       case "list_team_members": {
         return JSON.stringify({
           team_size: team.length,
-          members: team.map(m => m.display_name),
+          members: team.map(m => ({
+            name: m.display_name,
+            level: m.level_label || "Unassigned",
+            level_code: m.level_code || null,
+          })),
         });
       }
 
@@ -790,6 +840,60 @@ async function executeTool(
         return JSON.stringify(result);
       }
 
+      case "filter_team_by_level": {
+        if (team.length === 0) return JSON.stringify({ error: "No team members found." });
+        
+        const levelName = args.level_name;
+        // Match by label or code, case-insensitive
+        const matchedMembers = team.filter(m =>
+          m.level_label?.toLowerCase() === levelName.toLowerCase() ||
+          m.level_code?.toLowerCase() === levelName.toLowerCase()
+        );
+        
+        if (matchedMembers.length === 0) {
+          const availableLevels = [...new Set(team.map(m => m.level_label).filter(Boolean))];
+          return JSON.stringify({
+            error: `No members found at level "${levelName}". Available levels: ${availableLevels.join(", ") || "None assigned"}`,
+          });
+        }
+        
+        // Fetch KPIs for matched members
+        const filteredIds = matchedMembers.map(m => m.user_id);
+        const { data: levelSnapshots } = await supabase
+          .from("total_snapshot_v2")
+          .select("user_id, total_leads, total_responses, response_tags")
+          .in("user_id", filteredIds)
+          .gte("date", args.start_date)
+          .lte("date", args.end_date);
+        
+        const levelRows = levelSnapshots || [];
+        const levelAgg: Record<string, { name: string; leads: number; responses: number; enrollments: number }> = {};
+        for (const m of matchedMembers) {
+          levelAgg[m.user_id] = { name: m.display_name, leads: 0, responses: 0, enrollments: 0 };
+        }
+        for (const r of levelRows) {
+          const m = levelAgg[r.user_id];
+          if (m) {
+            m.leads += r.total_leads || 0;
+            m.responses += r.total_responses || 0;
+            if (labels.enrollmentSlotKey && r.response_tags && typeof r.response_tags === "object") {
+              m.enrollments += (typeof r.response_tags[labels.enrollmentSlotKey] === "number" ? r.response_tags[labels.enrollmentSlotKey] : 0);
+            }
+          }
+        }
+        
+        const levelMembers = Object.values(levelAgg);
+        return JSON.stringify({
+          level: levelName,
+          period: `${args.start_date} to ${args.end_date}`,
+          member_count: matchedMembers.length,
+          grand_total_leads: levelMembers.reduce((s, m) => s + m.leads, 0),
+          grand_total_responses: levelMembers.reduce((s, m) => s + m.responses, 0),
+          grand_total_enrollments: levelMembers.reduce((s, m) => s + m.enrollments, 0),
+          per_member: levelMembers,
+        });
+      }
+
       default:
         return JSON.stringify({ error: `Unknown tool: ${name}` });
     }
@@ -802,7 +906,10 @@ async function executeTool(
 // ══════════════════════════════════════════════════════════════
 // SYSTEM PROMPT
 // ══════════════════════════════════════════════════════════════
-function buildSystemPrompt(role: string, teamSize: number, displayName: string): string {
+function buildSystemPrompt(role: string, teamSize: number, displayName: string, levels: LeaderLevel[]): string {
+  const levelInfo = levels.length > 0
+    ? `\nTEAM LEVELS (from highest position to lowest): ${levels.map(l => `${l.label}${l.code ? ` (${l.code})` : ""}`).join(", ")}\n- You can filter team data by level when users ask about specific groups (e.g. "show me all S members", "AM team performance").`
+    : "";
   return `You are NevorAI Assistant — a precise, data-driven AI for network marketers using the NevorAI CRM.
 
 DOMAIN DEFINITIONS:
@@ -817,7 +924,7 @@ DATA SOURCE RULES:
 - Only use source="personal" when the user EXPLICITLY asks for "my personal data only" or "personal stats".
 
 USER: ${displayName}
-ROLE: ${role.toUpperCase()}${role === "leader" ? ` with ${teamSize} direct team members` : " (individual, no team access)"}
+ROLE: ${role.toUpperCase()}${role === "leader" ? ` with ${teamSize} direct team members` : " (individual, no team access)"}${levelInfo}
 
 CURRENT DATE: ${todayStr()}
 CURRENT MONTH: ${monthYearNow()}
@@ -895,18 +1002,20 @@ serve(async (req) => {
     }
 
     // ── Resolve context ──
-    const [team, labels, profileData] = await Promise.all([
-      discoverTeam(supabase, user.id),
+    const [levels, labels, profileData] = await Promise.all([
+      fetchLeaderLevels(supabase, user.id),
       resolveLabels(supabase, user.id),
       supabase.from("profiles").select("display_name").eq("user_id", user.id).maybeSingle(),
     ]);
 
+    const team = await discoverTeam(supabase, user.id, levels);
+
     const displayName = profileData.data?.display_name || "User";
     const role = team.length > 0 ? "leader" : "member";
-    console.log(`User: ${displayName}, Role: ${role}, Team: ${team.length}, Labels: R=${labels.responseLabels.length} S=${labels.stageLabels.length}`);
+    console.log(`User: ${displayName}, Role: ${role}, Team: ${team.length}, Levels: ${levels.length}, Labels: R=${labels.responseLabels.length} S=${labels.stageLabels.length}`);
 
     // ── Tool-calling loop ──
-    const systemPrompt = buildSystemPrompt(role, team.length, displayName);
+    const systemPrompt = buildSystemPrompt(role, team.length, displayName, levels);
     let conversationMessages: any[] = [
       { role: "system", content: systemPrompt },
       ...messages.slice(-6), // Keep last 6 messages for context
