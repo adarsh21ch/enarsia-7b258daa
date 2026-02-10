@@ -1,46 +1,68 @@
 
-## Fix nevorai-ai: Three Critical Data Bugs
 
-### Bug 1: Label Parsing Broken
+## Add AI Assistant Feature Flag to Admin Panel
 
-**Current code** (`parseLabels`, line 54-62):
-```js
-if (typeof raw === "object" && Array.isArray(raw.tracking)) return raw.tracking;
+### Goal
+Add the NevorAI AI Assistant as a controllable feature in the Feature Registry, so admins can restrict it to Pro-only, Free, or Trial users.
+
+### Current State
+- The AI Assistant button and chat appear on Dashboard, ListUp, and Tracking pages with NO access control
+- The Feature Registry system (`admin_feature_flags` table) already supports Free/Pro/Trial toggling and numeric limits
+- The `useFeatureAccess` hook already handles all the gating logic
+
+### Implementation
+
+**Step 1: Insert the `ai_assistant` feature flag into the database**
+
+Add a new row to `admin_feature_flags` with:
+- `feature_key`: `ai_assistant`
+- `feature_name`: `AI Assistant`
+- `category`: `general`
+- `is_enabled`: true
+- `free_access`: true (default to all users, admin can toggle)
+- `pro_access`: true
+- `trial_access`: true
+
+**Step 2: Add a new category for AI in the Feature Registry UI**
+
+Update `FeatureFlagsManager.tsx`:
+- Add `'ai'` to `CATEGORY_ORDER`
+- Add label: `ai: '🤖 AI'`
+
+This groups the AI Assistant feature under its own category in the admin panel.
+
+**Step 3: Gate the AI Assistant behind the feature flag**
+
+Update three page files to conditionally render the AI button:
+
+- `src/pages/Dashboard.tsx` -- wrap `AIAssistantButton` + `AIAssistantChat` with `useFeatureAccess('ai_assistant')` check
+- `src/pages/ListUp.tsx` -- same
+- `src/pages/Tracking.tsx` -- same
+
+In each file:
+```text
+const { canAccess: canAccessAI } = useFeatureAccess('ai_assistant');
+
+// Only render if access granted
+{canAccessAI && (
+  <>
+    <AIAssistantButton onClick={() => setShowAIChat(true)} />
+    <AIAssistantChat open={showAIChat} onOpenChange={setShowAIChat} />
+  </>
+)}
 ```
 
-**Actual data format**:
-- `response_labels`: `{tracking: [{name: "Video Sent"}, {name: "Enrolment"}]}`
-- `stage_labels`: `{stages: [{name: "Day 1"}, {name: "Day 2"}, ...]}`
-
-The function returns `[{name: "Video Sent"}, ...]` (objects) instead of `["Video Sent", ...]` (strings). And it never checks `raw.stages` for stage labels.
-
-**Fix**: Update `parseLabels` to:
-- Extract `.name` from object-style entries: `raw.tracking.map(t => t.name)`
-- Also check `raw.stages` for stage labels: `raw.stages.map(s => s.name)`
-
-### Bug 2: Wrong Table for "My KPIs"
-
-The user's `personal_snapshot_v2` has ALL ZEROS. The dashboard "Total" view reads from `total_snapshot_v2` which has the real data (4718 leads, etc.).
-
-**Fix**: Update `get_snapshot_kpis` to accept an optional `source` parameter (`"personal"` or `"total"`, defaulting to `"total"`), and query the appropriate table. Similarly update `get_funnel_stages`, `get_conversion_rates`, and `get_tracking_status` to also query `total_snapshot_v2` as fallback when personal data is empty.
-
-Update the tool definition to include the `source` parameter, and update the system prompt to tell the AI:
-- Use `source: "total"` by default (matches dashboard "Total" view)
-- Use `source: "personal"` only when the user explicitly asks for personal-only data
-
-### Bug 3: Enrollment Uses Wrong Column
-
-`final_tag_count` is 0 everywhere. The dashboard's "250 Enrolment" comes from summing the response tag that has `isStageTag: true` or is named "Enrolment" (i.e., `response_tag_2`).
-
-**Fix**: Instead of relying on `final_tag_count`, identify the enrollment tag dynamically from `response_labels.tracking` entries. Find the one where `isStageTag: true` or `isFinalTarget: true`, then sum its corresponding slot key value from `response_tags`. Fallback to `final_tag_count` if no such tag exists.
-
 ### Files Changed
+| File | Change |
+|------|--------|
+| Database migration | Insert `ai_assistant` row into `admin_feature_flags` |
+| `src/components/admin/FeatureFlagsManager.tsx` | Add `ai` category |
+| `src/pages/Dashboard.tsx` | Gate AI behind `useFeatureAccess` |
+| `src/pages/ListUp.tsx` | Gate AI behind `useFeatureAccess` |
+| `src/pages/Tracking.tsx` | Gate AI behind `useFeatureAccess` |
 
-| File | Changes |
-|------|---------|
-| `supabase/functions/nevorai-ai/index.ts` | Fix `parseLabels` to handle `{tracking: [{name}]}` and `{stages: [{name}]}` formats; add `source` param to snapshot tools to query `total_snapshot_v2` vs `personal_snapshot_v2`; fix enrollment calculation to sum from response tags instead of `final_tag_count`; update system prompt to instruct AI to use total by default |
+### Result
+- Admin can toggle AI Assistant between Free / Pro Only / Trial from the Features tab
+- The AI button will immediately show/hide based on the user's plan
+- No code changes needed in the future to adjust access -- purely admin-controlled
 
-### No Other Changes
-- Frontend (`AIAssistantChat.tsx`) unchanged -- it already correctly handles the JSON response
-- No database or RLS changes needed
-- No other components affected
