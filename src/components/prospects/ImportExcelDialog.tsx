@@ -338,9 +338,9 @@ export function ImportExcelDialog({ onImport }: ImportExcelDialogProps) {
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>
-        <Button variant="outline" size="sm" className="h-8 gap-1 text-xs px-2">
+        <Button data-import-trigger variant="outline" size="sm" className="h-8 gap-1 text-xs px-2">
           <FileSpreadsheet className="h-3.5 w-3.5" />
-          <span className="hidden sm:inline">Import</span>
+          <span>Import</span>
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-2xl bg-card border-border max-h-[90vh] overflow-y-auto overflow-x-hidden">
@@ -359,6 +359,19 @@ export function ImportExcelDialog({ onImport }: ImportExcelDialogProps) {
 
         {step === 'upload' && (
           <div className="space-y-4">
+            {/* WhatsApp guidance */}
+            <div className="flex gap-2.5 p-3 bg-muted/50 rounded-lg border border-border/50">
+              <span className="text-lg shrink-0">📱</span>
+              <div className="text-xs text-muted-foreground space-y-1">
+                <p className="font-medium text-foreground/80">If your leads are on WhatsApp:</p>
+                <ol className="list-decimal list-inside space-y-0.5 pl-0.5">
+                  <li>Open the Excel file in WhatsApp</li>
+                  <li>Save it to your phone (Files / Downloads)</li>
+                  <li>Then select it here to import</li>
+                </ol>
+              </div>
+            </div>
+
             <div
               className="border-2 border-dashed border-border rounded-lg p-8 text-center hover:border-accent/50 transition-colors cursor-pointer"
               onClick={() => fileInputRef.current?.click()}

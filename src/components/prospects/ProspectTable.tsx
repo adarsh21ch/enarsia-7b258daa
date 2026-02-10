@@ -16,7 +16,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
-import { Users, Undo2, Redo2, X, Trash2, Edit, Star } from 'lucide-react';
+import { Users, Undo2, Redo2, X, Trash2, Edit, Star, FileSpreadsheet, Upload } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
@@ -232,21 +232,50 @@ function TableContent({
           <tbody>
             {filteredProspects.length === 0 ? <tr>
                 <td colSpan={COLUMN_ORDER.length + (selectionMode.active ? 1 : 0)} className="py-12 text-center bg-card">
-                  <Users className="h-10 w-10 mx-auto text-muted-foreground/40 mb-3" />
-                  <p className="text-sm font-medium text-muted-foreground mb-1">
-                    {prospects.length === 0 ? "No leads yet" : selectedSheetId ? "No leads in this sheet" : "No leads match your filters"}
-                  </p>
-                  <p className="text-xs text-muted-foreground/70 mb-3">
-                    {prospects.length === 0 || selectedSheetId && sheetFilteredProspects.length === 0 ? "Import Excel or Add Lead to get started" : <button onClick={() => setFilters({
-                  search: '',
-                  stages: [],
-                  qualities: [],
-                  actions: [],
-                  incompleteOnly: false
-                })} className="text-accent hover:underline">
-                        Clear filters
-                      </button>}
-                  </p>
+                  {prospects.length === 0 ? (
+                    <div className="max-w-xs mx-auto space-y-3">
+                      <div className="h-14 w-14 mx-auto rounded-2xl bg-primary/10 flex items-center justify-center">
+                        <FileSpreadsheet className="h-7 w-7 text-primary" />
+                      </div>
+                      <p className="text-base font-semibold text-foreground">Start by importing your leads</p>
+                      <p className="text-sm text-muted-foreground">
+                        You don't have any leads yet. Import your leads to start calling and follow-ups.
+                      </p>
+                      <div className="flex flex-col items-center gap-2 pt-1">
+                        <Button size="sm" className="gap-1.5" onClick={() => {
+                          const importBtn = document.querySelector('[data-import-trigger]') as HTMLButtonElement;
+                          if (importBtn) importBtn.click();
+                        }}>
+                          <Upload className="h-4 w-4" />
+                          Import Leads
+                        </Button>
+                        <button className="text-xs text-muted-foreground hover:text-accent transition-colors" onClick={() => {
+                          const addBtn = document.querySelector('[data-add-trigger]') as HTMLButtonElement;
+                          if (addBtn) addBtn.click();
+                        }}>
+                          or add manually
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <>
+                      <Users className="h-10 w-10 mx-auto text-muted-foreground/40 mb-3" />
+                      <p className="text-sm font-medium text-muted-foreground mb-1">
+                        {selectedSheetId ? "No leads in this sheet" : "No leads match your filters"}
+                      </p>
+                      <p className="text-xs text-muted-foreground/70 mb-3">
+                        {selectedSheetId && sheetFilteredProspects.length === 0 ? "Import Excel or Add Lead to get started" : <button onClick={() => setFilters({
+                      search: '',
+                      stages: [],
+                      qualities: [],
+                      actions: [],
+                      incompleteOnly: false
+                    })} className="text-accent hover:underline">
+                            Clear filters
+                          </button>}
+                      </p>
+                    </>
+                  )}
                 </td>
               </tr> : <>
                   {filteredProspects.map((prospect, index) => <SortableProspectRow key={prospect.id} prospect={prospect} index={index + 1} isCalling={isCalling} isExpanded={expandedRowId === prospect.id} onToggleExpand={() => handleToggleExpand(prospect.id)} onUpdate={handleUpdateWithUndo} onDelete={handleDeleteWithUndo} isEven={index % 2 === 0} columnOrder={COLUMN_ORDER} isMobileTable={isMobile} selectionModeActive={selectionMode.active} showSelection={selectionMode.active && selectionProspects.some(p => p.id === prospect.id)} isSelected={selectedIds.has(prospect.id)} onToggleSelect={() => handleToggleSelect(prospect.id)} disableDrag={!enableDragAndDrop} isLastContacted={lastContactedId === prospect.id} onMarkLastContacted={() => onMarkLastContacted(prospect.id)} />)}
