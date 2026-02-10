@@ -16,7 +16,7 @@ const SUGGESTIONS = [
   "Monthly summary",
 ];
 
-const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/ai-assistant`;
+const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/nevorai-ai`;
 
 function SimpleMarkdown({ content }: { content: string }) {
   // Basic markdown: bold, italic, bullet points, line breaks
