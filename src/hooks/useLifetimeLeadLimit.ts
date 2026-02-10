@@ -23,8 +23,12 @@ export function useLifetimeLeadLimit() {
   const totalLeadsAdded = profile?.total_leads_added ?? 0;
   const isLoading = profileLoading || featureLoading || configLoading;
 
+  // Check if the limit is actually enabled in admin config
+  const isLimitEnabled = config.limits_enabled?.free_total_leads !== false;
+
   // Get limit from feature registry (null = unlimited for paid/trial users)
-  const freeLimit = limit ?? Infinity;
+  // If admin disabled the limit, treat as unlimited regardless
+  const freeLimit = !isLimitEnabled ? Infinity : (limit ?? Infinity);
   const warningThreshold = config.limits.warning_threshold_3 ?? LEAD_WARNING_THRESHOLD;
   const isPaid = limit === null; // null limit means unlimited (paid/trial)
 

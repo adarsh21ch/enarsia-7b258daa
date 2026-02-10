@@ -52,6 +52,7 @@ export interface AppConfig {
   plans: SubscriptionPlan[];
   offers: Offer[];
   limits: Record<string, number>;
+  limits_enabled: Record<string, boolean>;
   features: Record<string, FeatureFlag>;
 }
 
@@ -117,6 +118,17 @@ export const SAFE_DEFAULTS: AppConfig = {
     // Hard Limits
     hard_limit: 200,
   },
+  limits_enabled: {
+    free_trial_days: false,
+    trial_only_mode: false,
+    free_total_leads: true,
+    free_daily_upload: true,
+    pro_daily_upload: true,
+    warning_threshold_1: true,
+    warning_threshold_2: true,
+    warning_threshold_3: true,
+    hard_limit: true,
+  },
   features: {
     insights: { feature_name: 'View Insights', description: null, free_access: true, pro_access: true, trial_access: true, is_enabled: true, free_limit: null, pro_limit: null, trial_limit: null, category: 'analytics' },
     export: { feature_name: 'Export Data', description: null, free_access: true, pro_access: true, trial_access: true, is_enabled: true, free_limit: null, pro_limit: null, trial_limit: null, category: 'export' },
@@ -152,6 +164,7 @@ async function fetchAppConfig(): Promise<AppConfig> {
     plans: config.plans && config.plans.length > 0 ? config.plans : SAFE_DEFAULTS.plans,
     offers: config.offers || [],
     limits: { ...SAFE_DEFAULTS.limits, ...(config.limits || {}) },
+    limits_enabled: { ...SAFE_DEFAULTS.limits_enabled, ...((config as any).limits_enabled || {}) },
     features: { ...SAFE_DEFAULTS.features, ...(config.features || {}) },
   };
 }
