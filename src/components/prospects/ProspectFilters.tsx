@@ -2,11 +2,13 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Checkbox } from '@/components/ui/checkbox';
-import { X, Download, ChevronDown, Loader2, Settings2 } from 'lucide-react';
+import { X, Download, ChevronDown, Loader2, Settings2, Lock } from 'lucide-react';
 import { FUNNEL_STAGES, EXTENDED_ACTIONS, FunnelStage, ProspectQuality, ExtendedActionTaken } from '@/types/prospect';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useTrackingFormatContext } from '@/contexts/TrackingFormatContext';
 import { cn } from '@/lib/utils';
+import { usePermissions } from '@/contexts/PermissionsContext';
+import { toast } from 'sonner';
 import { ManageResponseTagsDialog } from './ManageResponseTagsDialog';
 import { ManageStageTagsDialog } from './ManageStageTagsDialog';
 interface Filters {
@@ -40,6 +42,9 @@ export function ProspectFilters({
 }: ProspectFiltersProps) {
   const hasFilters = filters.search || filters.stages.length > 0 || filters.actions.length > 0;
   const isMobile = useIsMobile();
+  const { checkFeature } = usePermissions();
+  const canRetarget = checkFeature('retargeting_by_tags');
+  const canExport = checkFeature('export') || checkFeature('export_data');
 
   // Use TrackingFormatContext for tag options (unified source of truth)
   const {
@@ -98,12 +103,15 @@ export function ProspectFilters({
         {/* Multi-select Stages Filter - only show if showStagesFilter is true */}
         {showStagesFilter && <Popover>
           <PopoverTrigger asChild>
-            <Button variant="outline" className={cn("h-9 min-w-[90px] w-auto text-xs shrink-0 justify-between gap-1", filters.stages.length > 0 && "border-primary/50 bg-primary/5")}>
+            <Button variant="outline" className={cn("h-9 min-w-[90px] w-auto text-xs shrink-0 justify-between gap-1", filters.stages.length > 0 && "border-primary/50 bg-primary/5", !canRetarget && "opacity-60")}
+              onClick={!canRetarget ? (e: React.MouseEvent) => { e.preventDefault(); toast.error('Upgrade to Pro to use retargeting filters'); } : undefined}
+            >
+              {!canRetarget && <Lock className="h-3 w-3 mr-0.5" />}
               <span className="truncate text-sm">{getStagesLabel()}</span>
               <ChevronDown className="h-3.5 w-3.5 opacity-50" />
             </Button>
           </PopoverTrigger>
-          <PopoverContent className="w-48 p-2 bg-popover border-border z-[100]" align="start" sideOffset={4}>
+          {canRetarget && <PopoverContent className="w-48 p-2 bg-popover border-border z-[100]" align="start" sideOffset={4}>
             <div className="space-y-1">
               {stageOptions.map(stage => <label key={stage} className="flex items-center gap-2 px-2 py-2 rounded-md hover:bg-muted cursor-pointer min-h-[40px]">
                 <Checkbox checked={filters.stages.includes(stage)} onCheckedChange={() => toggleStage(stage)} className="h-4 w-4" />
@@ -120,18 +128,21 @@ export function ProspectFilters({
               <Settings2 className="h-3 w-3" />
               Manage Tags
             </Button>
-          </PopoverContent>
+          </PopoverContent>}
         </Popover>}
 
         {/* Multi-select Responses Filter - only show if showResponsesFilter is true */}
         {showResponsesFilter && <Popover>
           <PopoverTrigger asChild>
-            <Button variant="outline" className={cn("h-9 min-w-[90px] w-auto shrink-0 justify-between gap-1 text-sm", filters.actions.length > 0 && "border-primary/50 bg-primary/5")}>
+            <Button variant="outline" className={cn("h-9 min-w-[90px] w-auto shrink-0 justify-between gap-1 text-sm", filters.actions.length > 0 && "border-primary/50 bg-primary/5", !canRetarget && "opacity-60")}
+              onClick={!canRetarget ? (e: React.MouseEvent) => { e.preventDefault(); toast.error('Upgrade to Pro to use retargeting filters'); } : undefined}
+            >
+              {!canRetarget && <Lock className="h-3 w-3 mr-0.5" />}
               <span className="truncate">{getActionsLabel()}</span>
               <ChevronDown className="h-3.5 w-3.5 opacity-50" />
             </Button>
           </PopoverTrigger>
-          <PopoverContent className="w-48 p-2 bg-popover border-border z-[100]" align="start" sideOffset={4}>
+          {canRetarget && <PopoverContent className="w-48 p-2 bg-popover border-border z-[100]" align="start" sideOffset={4}>
             <div className="space-y-1">
               {actionOptions.map(action => <label key={action} className="flex items-center gap-2 px-2 py-2 rounded-md hover:bg-muted cursor-pointer min-h-[40px]">
                 <Checkbox checked={filters.actions.includes(action)} onCheckedChange={() => toggleAction(action)} className="h-4 w-4" />
@@ -148,7 +159,7 @@ export function ProspectFilters({
               <Settings2 className="h-3 w-3" />
               Manage Tags
             </Button>
-          </PopoverContent>
+          </PopoverContent>}
         </Popover>}
 
         {/* Funnel Tag button - inline with other controls (only on desktop) */}
@@ -159,14 +170,15 @@ export function ProspectFilters({
           Clear
         </Button>}
 
-        {/* Export button - show on both mobile and desktop */}
+        {/* Export button - show on both mobile and desktop, gated by feature flag */}
         <Button 
           variant="outline" 
           size="sm" 
-          onClick={onExport} 
-          disabled={exporting || filteredCount === 0} 
-          className="h-9 gap-1.5 shrink-0"
+          onClick={canExport ? onExport : () => toast.error('Upgrade to Pro to export data')} 
+          disabled={exporting || (canExport && filteredCount === 0)} 
+          className={cn("h-9 gap-1.5 shrink-0", !canExport && "opacity-60")}
         >
+          {!canExport && <Lock className="h-3 w-3" />}
           {exporting ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Download className="h-3.5 w-3.5" />}
           {isMobile ? '' : (exporting ? 'Exporting...' : `Export${filteredCount > 0 ? ` (${filteredCount})` : ''}`)}
         </Button>
