@@ -30,6 +30,7 @@ import { useTrackingTags } from '@/hooks/useTrackingTags';
 import { useTrackingFormatContext } from '@/contexts/TrackingFormatContext';
 import { useActivityLog } from '@/hooks/useActivityLog';
 import { usePersistedFilters, Filters } from '@/hooks/usePersistedFilters';
+import { usePermissions } from '@/contexts/PermissionsContext';
 interface ProspectTableProps {
   prospects: Prospect[];
   loading: boolean;
@@ -312,6 +313,8 @@ export function ProspectTable({
   const [viewMode, setViewMode] = useState<'card' | 'table'>('table');
   const [exporting, setExporting] = useState(false);
   const isMobile = useIsMobile();
+  const { checkFeature } = usePermissions();
+  const canExport = checkFeature('export') || checkFeature('export_data');
 
   // Selection mode state
   const [selectionMode, setSelectionMode] = useState<{
@@ -489,6 +492,7 @@ export function ProspectTable({
     return filterMode === 'calling' ? 'Calling' : 'Filter';
   };
   const exportToExcel = async () => {
+    if (!canExport) { toast.error('Upgrade to Pro to export data'); return; }
     setExporting(true);
     try {
       // Use fetchAllForExport if available to get ALL prospects (bypasses pagination)
@@ -572,6 +576,7 @@ export function ProspectTable({
 
   // Export specific sheet - fetches ALL data from DB, not just loaded pages
   const exportSheet = async (sheetId: string | null) => {
+    if (!canExport) { toast.error('Upgrade to Pro to export data'); return; }
     setExporting(true);
     try {
       // Use fetchAllForExport if available to get ALL prospects (bypasses pagination)
