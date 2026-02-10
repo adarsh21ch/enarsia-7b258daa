@@ -58,17 +58,16 @@ function parseLabels(raw: any): string[] {
     try { raw = JSON.parse(raw); } catch { return []; }
   }
   if (Array.isArray(raw)) {
-    return raw.map((item: any) => (typeof item === "object" && item?.name) ? item.name : String(item));
+    // Format 1: simple array of strings
+    return raw.filter((x: any) => typeof x === "string");
   }
-  if (typeof raw === "object") {
-    // Handle {tracking: [{name: "Video Sent"}, ...]} format
-    if (Array.isArray(raw.tracking)) {
-      return raw.tracking.map((t: any) => (typeof t === "object" && t?.name) ? t.name : String(t));
-    }
-    // Handle {stages: [{name: "Day 1"}, ...]} format
-    if (Array.isArray(raw.stages)) {
-      return raw.stages.map((s: any) => (typeof s === "object" && s?.name) ? s.name : String(s));
-    }
+  // Format 2: { tracking: [{ name, isStageTag, isFinalTarget }] }
+  //        or { stages: [{ name, isFinalTarget }] }
+  if (raw.tracking && Array.isArray(raw.tracking)) {
+    return raw.tracking.map((t: any) => t.name).filter(Boolean);
+  }
+  if (raw.stages && Array.isArray(raw.stages)) {
+    return raw.stages.map((t: any) => t.name).filter(Boolean);
   }
   return [];
 }
