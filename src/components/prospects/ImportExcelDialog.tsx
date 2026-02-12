@@ -235,6 +235,11 @@ export function ImportExcelDialog({ onImport }: ImportExcelDialogProps) {
     } catch (err) {
       setError('Failed to parse file. Please ensure it\'s a valid Excel or CSV file.');
       console.error('File parse error:', err);
+    } finally {
+      // Always clear input so the same file can be re-selected
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
     }
   };
 

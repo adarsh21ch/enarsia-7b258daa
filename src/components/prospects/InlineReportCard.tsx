@@ -90,6 +90,7 @@ const [localData, setLocalData] = useState<Partial<Prospect>>({});
     setLocalData({
       name: prospect.name,
       phone: prospect.phone,
+      phone2: (prospect as any).phone2 || '',
       address: prospect.address || '',
       age_or_dob: prospect.age_or_dob || '',
       gender: prospect.gender || '',
@@ -229,7 +230,7 @@ const [localData, setLocalData] = useState<Partial<Prospect>>({});
           </div>
 
           {/* Row 2: Compact editable fields grid */}
-          <div className="grid grid-cols-3 sm:grid-cols-6 gap-2 mb-2">
+          <div className="grid grid-cols-3 sm:grid-cols-7 gap-2 mb-2">
             {/* Name */}
             <div>
               <Label className="text-[10px] text-muted-foreground mb-0.5 block">Name *</Label>
@@ -240,14 +241,25 @@ const [localData, setLocalData] = useState<Partial<Prospect>>({});
                 className="h-7 text-xs"
               />
             </div>
-            {/* Phone */}
+            {/* Phone 1 */}
             <div>
-              <Label className="text-[10px] text-muted-foreground mb-0.5 block">Phone *</Label>
+              <Label className="text-[10px] text-muted-foreground mb-0.5 block">Phone 1 *</Label>
               <Input
                 value={localData.phone || ''}
                 onChange={(e) => handleFieldChange('phone', e.target.value)}
                 onBlur={() => handleFieldBlur('phone')}
                 className="h-7 text-xs"
+              />
+            </div>
+            {/* Phone 2 */}
+            <div>
+              <Label className="text-[10px] text-muted-foreground mb-0.5 block">Phone 2</Label>
+              <Input
+                value={localData.phone2 || ''}
+                onChange={(e) => handleFieldChange('phone2', e.target.value)}
+                onBlur={() => handleFieldBlur('phone2')}
+                className="h-7 text-xs"
+                placeholder="Alt number"
               />
             </div>
             {/* Address */}
@@ -270,6 +282,17 @@ const [localData, setLocalData] = useState<Partial<Prospect>>({});
                 onBlur={() => handleFieldBlur('age_or_dob')}
                 className="h-7 text-xs w-16"
                 placeholder="25"
+              />
+            </div>
+            {/* Gender */}
+            <div className="w-16">
+              <Label className="text-[10px] text-muted-foreground mb-0.5 block">Gender</Label>
+              <Input
+                value={localData.gender || ''}
+                onChange={(e) => handleFieldChange('gender', e.target.value)}
+                onBlur={() => handleFieldBlur('gender')}
+                className="h-7 text-xs w-16"
+                placeholder="M/F"
               />
             </div>
             {/* Profession */}
