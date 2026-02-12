@@ -2221,6 +2221,57 @@ export type Database = {
           },
         ]
       }
+      funnel_video_sessions: {
+        Row: {
+          created_at: string
+          funnel_id: string
+          id: string
+          is_completed: boolean
+          is_currently_watching: boolean
+          last_active_at: string
+          last_position_seconds: number
+          lead_id: string | null
+          max_watched_seconds: number
+          total_watch_seconds: number
+          updated_at: string
+          video_duration_seconds: number
+          viewer_token: string
+          watch_percent: number
+        }
+        Insert: {
+          created_at?: string
+          funnel_id: string
+          id?: string
+          is_completed?: boolean
+          is_currently_watching?: boolean
+          last_active_at?: string
+          last_position_seconds?: number
+          lead_id?: string | null
+          max_watched_seconds?: number
+          total_watch_seconds?: number
+          updated_at?: string
+          video_duration_seconds?: number
+          viewer_token: string
+          watch_percent?: number
+        }
+        Update: {
+          created_at?: string
+          funnel_id?: string
+          id?: string
+          is_completed?: boolean
+          is_currently_watching?: boolean
+          last_active_at?: string
+          last_position_seconds?: number
+          lead_id?: string | null
+          max_watched_seconds?: number
+          total_watch_seconds?: number
+          updated_at?: string
+          video_duration_seconds?: number
+          viewer_token?: string
+          watch_percent?: number
+        }
+        Relationships: []
+      }
       funnel_view_analytics: {
         Row: {
           completed: boolean | null
