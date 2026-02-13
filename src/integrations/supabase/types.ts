@@ -2367,6 +2367,8 @@ export type Database = {
           payment_type: string | null
           price: number | null
           razorpay_payment_link: string | null
+          show_contact: boolean
+          show_cta: boolean
           slug: string
           success_message: string | null
           thumbnail_object_key: string | null
@@ -2404,6 +2406,8 @@ export type Database = {
           payment_type?: string | null
           price?: number | null
           razorpay_payment_link?: string | null
+          show_contact?: boolean
+          show_cta?: boolean
           slug: string
           success_message?: string | null
           thumbnail_object_key?: string | null
@@ -2441,6 +2445,8 @@ export type Database = {
           payment_type?: string | null
           price?: number | null
           razorpay_payment_link?: string | null
+          show_contact?: boolean
+          show_cta?: boolean
           slug?: string
           success_message?: string | null
           thumbnail_object_key?: string | null
