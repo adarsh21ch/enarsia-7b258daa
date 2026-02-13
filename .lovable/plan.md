@@ -1,29 +1,45 @@
 
 
-## Clean Up Duplicate video_assets SELECT Policies
+## Fix: Add Shared User Access to r2-get-playback-url
 
-### What will change
-Drop the redundant SELECT policies on the `video_assets` table and keep a single, clean policy that covers both owner access and shared access via `video_assets_access`.
+### Problem
+The `r2-get-playback-url` edge function checks ownership and funnel relationships, but **never checks the `video_assets_access` table**. Users who have been granted shared access via `video_assets_access` get a 403 "Access denied" error when trying to play videos.
 
-### Steps
+### Current Access Checks
+1. Owner (`owner_user_id === userId`) -- works
+2. User owns a funnel using the asset -- works
+3. Lead token (public viewer) -- works
+4. Published funnel -- works
+5. **Shared access via `video_assets_access`** -- MISSING
 
-1. **Drop existing duplicate SELECT policies**:
-   - `video_assets_owner_select`
-   - `video_assets_shared_select`
-   - `video_assets_select`
+### Fix
+Add a shared-access check after the owner/funnel check block (around line 80 in the function). If the authenticated user has an active (non-revoked) record in `video_assets_access`, grant access.
 
-2. **Create one unified SELECT policy**:
-   ```sql
-   CREATE POLICY "Users with access can view video assets"
-   ON public.video_assets
-   FOR SELECT
-   USING (
-     auth.uid() = owner_user_id
-     OR public.has_video_access(id, auth.uid())
-   );
-   ```
-   This uses the existing `has_video_access` security definer function to avoid any recursion issues and keeps the logic in one place.
+### Technical Details
 
-### Result
-One clear, non-redundant SELECT policy on `video_assets` replacing three overlapping ones. No behavior change -- same access rules, just cleaner.
+In `supabase/functions/r2-get-playback-url/index.ts`, after the funnel-owner check block (around line 78), add:
+
+```typescript
+// Check if user has shared access via video_assets_access
+if (!hasAccess) {
+  const { data: accessRecord } = await serviceClient
+    .from('video_assets_access')
+    .select('id')
+    .eq('video_asset_id', asset_id)
+    .eq('user_id', userId)
+    .is('revoked_at', null)
+    .maybeSingle();
+
+  if (accessRecord) {
+    hasAccess = true;
+    console.log(`Access granted: user ${userId} has shared access to asset ${asset_id}`);
+  }
+}
+```
+
+This block must be placed **inside** the `if (user)` block so `userId` is available, and before the lead-token / published-funnel fallback checks.
+
+### No other files need changes
+- The RLS policy already uses `has_video_access()` for SELECT -- this fix aligns the edge function with the database-level access model.
+- The `usePlaybackUrl` hook and `ControlledVideoPlayer` component remain unchanged.
 
