@@ -3198,6 +3198,7 @@ export type Database = {
           display_name: string | null
           email: string | null
           id: string
+          instagram_username: string | null
           is_suspended: boolean | null
           leader_code_seq: number | null
           leader_prompt_completed: boolean
@@ -3228,6 +3229,7 @@ export type Database = {
           display_name?: string | null
           email?: string | null
           id?: string
+          instagram_username?: string | null
           is_suspended?: boolean | null
           leader_code_seq?: number | null
           leader_prompt_completed?: boolean
@@ -3258,6 +3260,7 @@ export type Database = {
           display_name?: string | null
           email?: string | null
           id?: string
+          instagram_username?: string | null
           is_suspended?: boolean | null
           leader_code_seq?: number | null
           leader_prompt_completed?: boolean
