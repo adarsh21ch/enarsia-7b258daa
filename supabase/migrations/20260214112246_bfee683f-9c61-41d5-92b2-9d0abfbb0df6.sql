@@ -1,0 +1,1 @@
+ALTER TABLE public.funnels ADD COLUMN IF NOT EXISTS contact_follows_cta boolean DEFAULT false;
