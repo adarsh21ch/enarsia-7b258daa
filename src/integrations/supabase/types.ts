@@ -2350,6 +2350,7 @@ export type Database = {
           audio_play_timing: string | null
           audio_url: string | null
           contact_email: string | null
+          contact_follows_cta: boolean | null
           contact_phone: string | null
           contact_whatsapp: string | null
           created_at: string | null
@@ -2390,6 +2391,7 @@ export type Database = {
           audio_play_timing?: string | null
           audio_url?: string | null
           contact_email?: string | null
+          contact_follows_cta?: boolean | null
           contact_phone?: string | null
           contact_whatsapp?: string | null
           created_at?: string | null
@@ -2430,6 +2432,7 @@ export type Database = {
           audio_play_timing?: string | null
           audio_url?: string | null
           contact_email?: string | null
+          contact_follows_cta?: boolean | null
           contact_phone?: string | null
           contact_whatsapp?: string | null
           created_at?: string | null
