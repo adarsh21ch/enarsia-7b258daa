@@ -1,45 +1,41 @@
 
 
-## Fix: Add Shared User Access to r2-get-playback-url
+## Fix: Service Role Key Bypass in r2-get-upload-url
 
 ### Problem
-The `r2-get-playback-url` edge function checks ownership and funnel relationships, but **never checks the `video_assets_access` table**. Users who have been granted shared access via `video_assets_access` get a 403 "Access denied" error when trying to play videos.
+The service role key comparison on line 42 isn't matching, causing 401 responses for trusted proxy calls. The likely cause is either:
+- `token` is `undefined` (no auth header) matching against something unexpected
+- Missing explicit truthiness check on `token`
 
-### Current Access Checks
-1. Owner (`owner_user_id === userId`) -- works
-2. User owns a funnel using the asset -- works
-3. Lead token (public viewer) -- works
-4. Published funnel -- works
-5. **Shared access via `video_assets_access`** -- MISSING
+### Solution
+Update the bypass condition on line 42 to add an explicit `token &&` guard, exactly as you specified:
 
-### Fix
-Add a shared-access check after the owner/funnel check block (around line 80 in the function). If the authenticated user has an active (non-revoked) record in `video_assets_access`, grant access.
+**File:** `supabase/functions/r2-get-upload-url/index.ts`
 
-### Technical Details
-
-In `supabase/functions/r2-get-playback-url/index.ts`, after the funnel-owner check block (around line 78), add:
-
+**Change (line 42):**
 ```typescript
-// Check if user has shared access via video_assets_access
-if (!hasAccess) {
-  const { data: accessRecord } = await serviceClient
-    .from('video_assets_access')
-    .select('id')
-    .eq('video_asset_id', asset_id)
-    .eq('user_id', userId)
-    .is('revoked_at', null)
-    .maybeSingle();
+// Before:
+if (token === serviceRoleKey) {
 
-  if (accessRecord) {
-    hasAccess = true;
-    console.log(`Access granted: user ${userId} has shared access to asset ${asset_id}`);
-  }
-}
+// After:
+if (token && token === serviceRoleKey) {
 ```
 
-This block must be placed **inside** the `if (user)` block so `userId` is available, and before the lead-token / published-funnel fallback checks.
+Also remove the `!` non-null assertion on `serviceRoleKey` (line 30) so a missing env var doesn't cause a crash — instead it would just be `undefined` and the comparison would safely fail:
 
-### No other files need changes
-- The RLS policy already uses `has_video_access()` for SELECT -- this fix aligns the edge function with the database-level access model.
-- The `usePlaybackUrl` hook and `ControlledVideoPlayer` component remain unchanged.
+```typescript
+// Before:
+const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+
+// After:
+const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+```
+
+### After Code Change
+- Redeploy the `r2-get-upload-url` edge function
+
+### Technical Details
+- The `token && token === serviceRoleKey` pattern ensures we never compare `undefined === undefined`
+- Removing the `!` assertion prevents runtime crashes if the env var is missing
+- No other files need changes — the bypass logic and ordering are already correct
 
