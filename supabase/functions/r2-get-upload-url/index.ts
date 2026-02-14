@@ -29,20 +29,24 @@ Deno.serve(async (req) => {
     const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY')!;
     const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 
-    const authHeader = req.headers.get('Authorization');
+    const authHeader = req.headers.get('Authorization') ?? '';
     const leadToken = req.headers.get('x-lead-token');
 
     let userId: string | null = null;
     let leadId: string | null = null;
     let isLeadAuth = false;
 
-    // Try JWT auth first
-    if (authHeader?.startsWith('Bearer ')) {
+    const token = authHeader.replace('Bearer ', '');
+
+    // Allow service_role key (used by Lovable Cloud proxy)
+    if (token === serviceRoleKey) {
+      // Trusted server-to-server call — skip JWT validation
+    } else if (authHeader.startsWith('Bearer ')) {
+      // Try JWT auth
       const supabase = createClient(supabaseUrl, supabaseAnonKey, {
         global: { headers: { Authorization: authHeader } }
       });
 
-      const token = authHeader.replace('Bearer ', '');
       const { data: claims, error: authError } = await supabase.auth.getUser(token);
       
       if (!authError && claims?.user) {
