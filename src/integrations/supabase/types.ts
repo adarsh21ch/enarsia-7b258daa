@@ -1875,8 +1875,11 @@ export type Database = {
           access_granted_at: string | null
           access_token: string | null
           access_token_expires_at: string | null
+          city: string | null
           conversation_id: string | null
           created_at: string | null
+          custom_field_label: string | null
+          custom_field_value: string | null
           email: string | null
           funnel_id: string
           id: string
@@ -1904,8 +1907,11 @@ export type Database = {
           access_granted_at?: string | null
           access_token?: string | null
           access_token_expires_at?: string | null
+          city?: string | null
           conversation_id?: string | null
           created_at?: string | null
+          custom_field_label?: string | null
+          custom_field_value?: string | null
           email?: string | null
           funnel_id: string
           id?: string
@@ -1933,8 +1939,11 @@ export type Database = {
           access_granted_at?: string | null
           access_token?: string | null
           access_token_expires_at?: string | null
+          city?: string | null
           conversation_id?: string | null
           created_at?: string | null
+          custom_field_label?: string | null
+          custom_field_value?: string | null
           email?: string | null
           funnel_id?: string
           id?: string
