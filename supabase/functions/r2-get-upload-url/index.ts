@@ -38,6 +38,10 @@ Deno.serve(async (req) => {
 
     const token = authHeader?.replace('Bearer ', '');
 
+    // Temporary debug logging
+    console.log('[bypass] token length:', token?.length, 'serviceRoleKey length:', serviceRoleKey?.length);
+    console.log('[bypass] match:', token === serviceRoleKey);
+
     // Allow service_role key (used by Lovable Cloud proxy)
     if (token && token === serviceRoleKey) {
       // Trusted server-to-server call — skip JWT validation
