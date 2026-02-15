@@ -121,6 +121,19 @@ export default function FormResponsesPage() {
     }
   }, []);
 
+  const handleBulkDelete = useCallback(async (ids: string[]) => {
+    try {
+      await supabase.from('nevorai_submission_attachments').delete().in('submission_id', ids);
+      await supabase.from('nevorai_submission_answers').delete().in('submission_id', ids);
+      const { error } = await supabase.from('nevorai_form_submissions').delete().in('id', ids);
+      if (error) throw error;
+      setSubmissions(prev => prev.filter(s => !ids.includes(s.id)));
+      toast.success(`${ids.length} submission${ids.length > 1 ? 's' : ''} deleted`);
+    } catch {
+      toast.error('Failed to delete submissions');
+    }
+  }, []);
+
   if (!user) return null;
 
   return (
@@ -229,7 +242,8 @@ export default function FormResponsesPage() {
             <SubmissionsSpreadsheetView
               fields={form.fields}
               submissions={filtered}
-              formTitle={form.title} />
+              formTitle={form.title}
+              onDelete={handleBulkDelete} />
 
             }
 
