@@ -45,16 +45,16 @@ export default function FormsDashboard() {
       <main className="scrollable-content">
         <div className="max-w-4xl mx-auto py-4 px-4 pb-20">
           <Tabs value={activeTab} onValueChange={v => { setActiveTab(v); if (v === 'my-forms') setEditingForm(null); }}>
-            <TabsList className="w-full sm:w-auto bg-blue-50/80 dark:bg-blue-950/30 p-1 rounded-xl border border-blue-100/50 dark:border-blue-900/30">
+            <TabsList className="grid w-full grid-cols-2 h-10 bg-blue-50/80 dark:bg-blue-950/30 p-1 rounded-xl border border-blue-100/50 dark:border-blue-900/30">
               <TabsTrigger
                 value="my-forms"
-                className="flex-1 sm:flex-none rounded-lg px-5 text-sm data-[state=active]:bg-white dark:data-[state=active]:bg-blue-900/40 data-[state=active]:text-blue-700 dark:data-[state=active]:text-blue-300 data-[state=active]:shadow-sm data-[state=active]:border data-[state=active]:border-blue-200/50 dark:data-[state=active]:border-blue-800/50 transition-all"
+                className="rounded-lg text-sm font-medium data-[state=active]:bg-white dark:data-[state=active]:bg-blue-900/40 data-[state=active]:text-blue-700 dark:data-[state=active]:text-blue-300 data-[state=active]:shadow-sm data-[state=active]:border data-[state=active]:border-blue-200/50 dark:data-[state=active]:border-blue-800/50 transition-all"
               >
                 My Forms
               </TabsTrigger>
               <TabsTrigger
                 value="create"
-                className="flex-1 sm:flex-none rounded-lg px-5 text-sm data-[state=active]:bg-white dark:data-[state=active]:bg-blue-900/40 data-[state=active]:text-blue-700 dark:data-[state=active]:text-blue-300 data-[state=active]:shadow-sm data-[state=active]:border data-[state=active]:border-blue-200/50 dark:data-[state=active]:border-blue-800/50 transition-all"
+                className="rounded-lg text-sm font-medium data-[state=active]:bg-white dark:data-[state=active]:bg-blue-900/40 data-[state=active]:text-blue-700 dark:data-[state=active]:text-blue-300 data-[state=active]:shadow-sm data-[state=active]:border data-[state=active]:border-blue-200/50 dark:data-[state=active]:border-blue-800/50 transition-all"
               >
                 {editingForm ? 'Edit Form' : 'Create Form'}
               </TabsTrigger>

@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Plus, Loader2, FileText, Settings } from 'lucide-react';
+import { Plus, Loader2, FileText, Settings, Check } from 'lucide-react';
 import { FormFieldCard } from './FormFieldCard';
 import { FormSettingsPanel } from './FormSettingsPanel';
 import { LeadMappingConfig } from './LeadMappingConfig';
@@ -120,22 +120,22 @@ export function CreateFormInline({ editingForm, onSuccess }: Props) {
   return (
     <div className="space-y-4">
       <Tabs value={activeSubTab} onValueChange={setActiveSubTab} className="w-full">
-        <div className="flex items-center justify-between">
-          <TabsList className="bg-blue-50/80 dark:bg-blue-950/30 p-1 rounded-xl border border-blue-100/50 dark:border-blue-900/30 w-auto">
-            <TabsTrigger value="questions" className="rounded-lg px-4 text-sm gap-1.5 data-[state=active]:bg-white dark:data-[state=active]:bg-blue-900/40 data-[state=active]:text-blue-700 dark:data-[state=active]:text-blue-300 data-[state=active]:shadow-sm">
+        <div className="flex items-center gap-2">
+          <TabsList className="flex-1 grid grid-cols-2 h-9 bg-blue-50/80 dark:bg-blue-950/30 p-1 rounded-xl border border-blue-100/50 dark:border-blue-900/30">
+            <TabsTrigger value="questions" className="rounded-lg text-sm gap-1.5 data-[state=active]:bg-white dark:data-[state=active]:bg-blue-900/40 data-[state=active]:text-blue-700 dark:data-[state=active]:text-blue-300 data-[state=active]:shadow-sm">
               <FileText className="h-3.5 w-3.5" /> Questions
             </TabsTrigger>
-            <TabsTrigger value="settings" className="rounded-lg px-4 text-sm gap-1.5 data-[state=active]:bg-white dark:data-[state=active]:bg-blue-900/40 data-[state=active]:text-blue-700 dark:data-[state=active]:text-blue-300 data-[state=active]:shadow-sm">
+            <TabsTrigger value="settings" className="rounded-lg text-sm gap-1.5 data-[state=active]:bg-white dark:data-[state=active]:bg-blue-900/40 data-[state=active]:text-blue-700 dark:data-[state=active]:text-blue-300 data-[state=active]:shadow-sm">
               <Settings className="h-3.5 w-3.5" /> Settings
             </TabsTrigger>
           </TabsList>
           <Button
             onClick={handleSave}
             disabled={saving || !title.trim()}
-            className="bg-blue-600 hover:bg-blue-700 text-white rounded-full px-6 shadow-md shadow-blue-200/50 dark:shadow-blue-900/30"
+            size="icon"
+            className="h-9 w-9 shrink-0 rounded-full bg-blue-600 hover:bg-blue-700 text-white shadow-md shadow-blue-200/50 dark:shadow-blue-900/30"
           >
-            {saving ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
-            {editingForm ? 'Save Changes' : 'Create Form'}
+            {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-5 w-5" />}
           </Button>
         </div>
 
