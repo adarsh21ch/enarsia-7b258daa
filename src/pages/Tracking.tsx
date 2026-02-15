@@ -122,23 +122,25 @@ export default function Tracking() {
               <p className="text-xs text-muted-foreground font-medium">Track Your Numbers</p>
             </div>
           </div>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={handleOpenDashboard}
-            className="h-8 gap-1.5 text-xs font-medium"
-          >
-            <ExternalLink className="h-3.5 w-3.5" />
-            Team Tracking
-          </Button>
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => setShowSettings(true)}
-            className="h-8 w-8"
-          >
-            <Settings className="h-4 w-4" />
-          </Button>
+          <div className="flex items-center gap-1">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleOpenDashboard}
+              className="h-8 gap-1.5 text-xs font-medium"
+            >
+              <ExternalLink className="h-3.5 w-3.5" />
+              Team Tracking
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setShowSettings(true)}
+              className="h-8 w-8"
+            >
+              <Settings className="h-4 w-4" />
+            </Button>
+          </div>
         </div>
 
         {/* Mode selectors */}
