@@ -400,6 +400,20 @@ export default function Profile() {
             <ExternalLink className="h-5 w-5 text-muted-foreground" />
           </button>
 
+          {/* Nevorai Forms */}
+          <button onClick={() => navigate('/forms')} className={cn("w-full relative overflow-hidden rounded-xl p-4", "bg-gradient-to-r backdrop-blur-sm", "border border-blue-500/30 shadow-sm", "flex items-center justify-between", "transition-all duration-300 hover:shadow-md hover:scale-[1.01]", "from-blue-500/20 to-blue-500/5")}>
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-lg bg-blue-500/10">
+                <FileText className="h-5 w-5 text-blue-500" />
+              </div>
+              <div className="text-left">
+                <span className="font-medium block">Nevorai Forms</span>
+                <span className="text-xs text-muted-foreground">Create & manage forms</span>
+              </div>
+            </div>
+            <ChevronRight className="h-5 w-5 text-muted-foreground" />
+          </button>
+
           {/* Settings Section - Collapsible */}
           <Collapsible className="rounded-2xl bg-card border border-border/50 overflow-hidden">
             <CollapsibleTrigger className="w-full p-4 flex items-center justify-between hover:bg-muted/50 transition-colors">
