@@ -17,10 +17,10 @@ export function LeadMappingConfig({ fields, mapping, onChange }: Props) {
   const textFields = fields.filter(f => ['short_text', 'email', 'phone'].includes(f.field_type));
 
   return (
-    <Collapsible open={open} onOpenChange={setOpen} className="border rounded-xl bg-card">
-      <CollapsibleTrigger className="flex items-center justify-between w-full p-4 hover:bg-muted/30 rounded-xl transition-colors">
+    <Collapsible open={open} onOpenChange={setOpen} className="border border-blue-100/50 dark:border-blue-900/30 rounded-2xl bg-white/80 dark:bg-card/80 shadow-sm shadow-blue-100/40 dark:shadow-blue-900/20">
+      <CollapsibleTrigger className="flex items-center justify-between w-full p-4 hover:bg-blue-50/30 dark:hover:bg-blue-950/10 rounded-2xl transition-colors">
         <div className="flex items-center gap-2">
-          <Link className="h-4 w-4 text-muted-foreground" />
+          <Link className="h-4 w-4 text-blue-500" />
           <span className="text-sm font-medium">Lead Mapping</span>
         </div>
         {open ? <ChevronUp className="h-4 w-4 text-muted-foreground" /> : <ChevronDown className="h-4 w-4 text-muted-foreground" />}

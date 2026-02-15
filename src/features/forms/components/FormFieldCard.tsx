@@ -67,10 +67,10 @@ export function FormFieldCard({ field, index, allFields, onChange, onDelete, onD
   };
 
   return (
-    <div className="border border-border/60 rounded-xl p-4 bg-card space-y-3">
-      {/* Top row: drag handle, question input, type selector */}
+    <div className="border border-blue-100/60 dark:border-blue-900/30 rounded-2xl p-4 bg-white/80 dark:bg-card/80 shadow-sm shadow-blue-100/40 dark:shadow-blue-900/20 space-y-3 hover:border-blue-200/80 dark:hover:border-blue-800/50 transition-colors">
+      {/* Top row */}
       <div className="flex items-center gap-3">
-        <GripVertical className="h-5 w-5 text-muted-foreground/40 cursor-grab shrink-0" />
+        <GripVertical className="h-5 w-5 text-blue-300/60 dark:text-blue-700/40 cursor-grab shrink-0" />
         <Input
           value={field.label}
           onChange={e => {
@@ -80,7 +80,7 @@ export function FormFieldCard({ field, index, allFields, onChange, onDelete, onD
             });
           }}
           placeholder="Question"
-          className="flex-1 border-0 border-b-2 border-primary/40 rounded-none px-0 text-sm font-medium focus-visible:ring-0 focus-visible:border-primary bg-transparent"
+          className="flex-1 border-0 border-b-2 border-blue-400/50 dark:border-blue-600/40 rounded-none px-0 text-sm font-medium focus-visible:ring-0 focus-visible:border-blue-500 bg-transparent"
         />
         <Select
           value={field.field_type}
@@ -96,7 +96,7 @@ export function FormFieldCard({ field, index, allFields, onChange, onDelete, onD
             updateField(newField);
           }}
         >
-          <SelectTrigger className="w-[130px] shrink-0 rounded-full border-border/50 h-9 text-sm">
+          <SelectTrigger className="w-[130px] shrink-0 rounded-full border-blue-200/60 dark:border-blue-800/40 h-9 text-sm bg-blue-50/50 dark:bg-blue-950/20">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -107,7 +107,7 @@ export function FormFieldCard({ field, index, allFields, onChange, onDelete, onD
         </Select>
       </div>
 
-      {/* Choice options if applicable */}
+      {/* Choice options */}
       {hasChoices && (
         <div className="space-y-2 pl-8">
           {(opts.choices || []).map((c, i) => (
@@ -118,13 +118,13 @@ export function FormFieldCard({ field, index, allFields, onChange, onDelete, onD
               </Button>
             </div>
           ))}
-          <Button variant="ghost" size="sm" onClick={addChoice} className="text-xs text-primary">
+          <Button variant="ghost" size="sm" onClick={addChoice} className="text-xs text-blue-600 dark:text-blue-400">
             <Plus className="h-3 w-3 mr-1" /> Add Option
           </Button>
         </div>
       )}
 
-      {/* Linear scale options */}
+      {/* Linear scale */}
       {field.field_type === 'linear_scale' && (
         <div className="grid grid-cols-2 gap-3 pl-8">
           <div>
@@ -146,27 +146,27 @@ export function FormFieldCard({ field, index, allFields, onChange, onDelete, onD
         </div>
       )}
 
-      {/* Bottom actions row */}
-      <div className="flex items-center justify-between pt-1 border-t border-border/30">
+      {/* Bottom actions */}
+      <div className="flex items-center justify-between pt-1 border-t border-blue-100/40 dark:border-blue-900/20">
         <div className="flex items-center gap-1">
           {onDuplicate && (
-            <Button variant="ghost" size="icon" onClick={onDuplicate} className="h-8 w-8">
-              <Copy className="h-4 w-4 text-muted-foreground" />
+            <Button variant="ghost" size="icon" onClick={onDuplicate} className="h-8 w-8 text-blue-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-950/30">
+              <Copy className="h-4 w-4" />
             </Button>
           )}
-          <Button variant="ghost" size="icon" onClick={onDelete} className="h-8 w-8">
-            <Trash2 className="h-4 w-4 text-muted-foreground" />
+          <Button variant="ghost" size="icon" onClick={onDelete} className="h-8 w-8 text-blue-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30">
+            <Trash2 className="h-4 w-4" />
           </Button>
         </div>
         <div className="flex items-center gap-3">
           <button
             onClick={() => setMoreOpen(!moreOpen)}
-            className="text-xs text-muted-foreground flex items-center gap-1 hover:text-foreground transition-colors"
+            className="text-xs text-muted-foreground flex items-center gap-1 hover:text-blue-600 transition-colors"
           >
             {moreOpen ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
             More options
           </button>
-          <div className="flex items-center gap-2 border-l border-border/30 pl-3">
+          <div className="flex items-center gap-2 border-l border-blue-100/40 dark:border-blue-900/20 pl-3">
             <Label className="text-xs text-muted-foreground">Required</Label>
             <Switch checked={field.required} onCheckedChange={v => updateField({ required: v })} className="scale-90" />
           </div>
@@ -175,7 +175,7 @@ export function FormFieldCard({ field, index, allFields, onChange, onDelete, onD
 
       {/* Expanded options */}
       {moreOpen && (
-        <div className="space-y-3 pl-8 pt-2 border-t border-border/30">
+        <div className="space-y-3 pl-8 pt-2 border-t border-blue-100/40 dark:border-blue-900/20">
           <Input
             value={field.placeholder || ''}
             onChange={e => updateField({ placeholder: e.target.value })}
