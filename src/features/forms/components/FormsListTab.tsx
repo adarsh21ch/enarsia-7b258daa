@@ -53,7 +53,7 @@ export function FormsListTab({ onEdit }: Props) {
   if (loading) {
     return (
       <div className="flex justify-center py-12">
-        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+        <Loader2 className="h-6 w-6 animate-spin text-blue-500" />
       </div>
     );
   }
@@ -69,10 +69,10 @@ export function FormsListTab({ onEdit }: Props) {
 
   return (
     <>
-      <div className="border rounded-xl overflow-hidden bg-card">
+      <div className="border border-blue-100/50 dark:border-blue-900/30 rounded-2xl overflow-hidden bg-white/80 dark:bg-card/80 shadow-sm shadow-blue-100/40 dark:shadow-blue-900/20">
         <Table>
           <TableHeader>
-            <TableRow className="border-b border-border/50 hover:bg-transparent">
+            <TableRow className="border-b border-blue-100/40 dark:border-blue-900/20 hover:bg-transparent bg-blue-50/30 dark:bg-blue-950/10">
               <TableHead className="text-xs font-medium text-muted-foreground">Form Name</TableHead>
               <TableHead className="text-xs font-medium text-muted-foreground">Type</TableHead>
               <TableHead className="text-xs font-medium text-muted-foreground">Submissions</TableHead>
@@ -83,10 +83,10 @@ export function FormsListTab({ onEdit }: Props) {
           </TableHeader>
           <TableBody>
             {forms.map(form => (
-              <TableRow key={form.id} className="cursor-pointer hover:bg-muted/30" onClick={() => onEdit(form)}>
+              <TableRow key={form.id} className="cursor-pointer hover:bg-blue-50/30 dark:hover:bg-blue-950/10 border-b border-blue-50/50 dark:border-blue-950/20" onClick={() => onEdit(form)}>
                 <TableCell className="font-medium text-sm">{form.title}</TableCell>
                 <TableCell>
-                  <Badge variant="outline" className="text-[10px] border-orange-300 text-orange-600 bg-orange-50">
+                  <Badge variant="outline" className="text-[10px] border-orange-300 text-orange-600 bg-orange-50 dark:border-orange-700 dark:text-orange-400 dark:bg-orange-950/30">
                     {form.form_type || 'Custom'}
                   </Badge>
                 </TableCell>
@@ -98,8 +98,8 @@ export function FormsListTab({ onEdit }: Props) {
                   <Badge
                     variant="outline"
                     className={`text-[10px] ${form.is_accepting
-                      ? 'border-green-300 text-green-700 bg-green-50'
-                      : 'border-red-300 text-red-600 bg-red-50'
+                      ? 'border-emerald-300 text-emerald-700 bg-emerald-50 dark:border-emerald-700 dark:text-emerald-400 dark:bg-emerald-950/30'
+                      : 'border-red-300 text-red-600 bg-red-50 dark:border-red-700 dark:text-red-400 dark:bg-red-950/30'
                     }`}
                   >
                     {form.is_accepting ? 'Active' : 'Closed'}
@@ -107,16 +107,16 @@ export function FormsListTab({ onEdit }: Props) {
                 </TableCell>
                 <TableCell className="text-right" onClick={e => e.stopPropagation()}>
                   <div className="flex items-center justify-end gap-1">
-                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => navigate(`/forms/${form.id}/responses`)}>
-                      <Eye className="h-4 w-4 text-muted-foreground" />
+                    <Button variant="ghost" size="icon" className="h-8 w-8 text-blue-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-950/30" onClick={() => navigate(`/forms/${form.id}/responses`)}>
+                      <Eye className="h-4 w-4" />
                     </Button>
-                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleShare(form)}>
-                      <Share2 className="h-4 w-4 text-muted-foreground" />
+                    <Button variant="ghost" size="icon" className="h-8 w-8 text-blue-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-950/30" onClick={() => handleShare(form)}>
+                      <Share2 className="h-4 w-4" />
                     </Button>
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon" className="h-8 w-8">
-                          <MoreHorizontal className="h-4 w-4 text-muted-foreground" />
+                        <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground">
+                          <MoreHorizontal className="h-4 w-4" />
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">

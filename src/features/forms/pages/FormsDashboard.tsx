@@ -32,22 +32,30 @@ export default function FormsDashboard() {
   if (!user) return null;
 
   return (
-    <div className="app-layout bg-background">
-      <header className="fixed-header z-40 bg-card/80 backdrop-blur-xl border-b border-border/50">
+    <div className="app-layout bg-gradient-to-b from-blue-50/60 to-background dark:from-blue-950/20 dark:to-background">
+      <header className="fixed-header z-40 bg-white/80 dark:bg-card/80 backdrop-blur-xl border-b border-blue-100/50 dark:border-border/50">
         <div className="flex items-center gap-3 px-4 py-3">
           <Button variant="ghost" size="icon" onClick={() => navigate('/profile')} className="shrink-0">
             <ArrowLeft className="h-5 w-5" />
           </Button>
-          <h1 className="text-lg font-bold">Nevorai Forms</h1>
+          <h1 className="text-lg font-bold bg-gradient-to-r from-blue-600 to-blue-400 bg-clip-text text-transparent">Nevorai Forms</h1>
         </div>
       </header>
 
       <main className="scrollable-content">
         <div className="max-w-4xl mx-auto py-4 px-4 pb-20">
           <Tabs value={activeTab} onValueChange={v => { setActiveTab(v); if (v === 'my-forms') setEditingForm(null); }}>
-            <TabsList className="bg-muted/50 p-1 rounded-lg w-auto">
-              <TabsTrigger value="my-forms" className="rounded-md px-4 text-sm">My Forms</TabsTrigger>
-              <TabsTrigger value="create" className="rounded-md px-4 text-sm">
+            <TabsList className="w-full sm:w-auto bg-blue-50/80 dark:bg-blue-950/30 p-1 rounded-xl border border-blue-100/50 dark:border-blue-900/30">
+              <TabsTrigger
+                value="my-forms"
+                className="flex-1 sm:flex-none rounded-lg px-5 text-sm data-[state=active]:bg-white dark:data-[state=active]:bg-blue-900/40 data-[state=active]:text-blue-700 dark:data-[state=active]:text-blue-300 data-[state=active]:shadow-sm data-[state=active]:border data-[state=active]:border-blue-200/50 dark:data-[state=active]:border-blue-800/50 transition-all"
+              >
+                My Forms
+              </TabsTrigger>
+              <TabsTrigger
+                value="create"
+                className="flex-1 sm:flex-none rounded-lg px-5 text-sm data-[state=active]:bg-white dark:data-[state=active]:bg-blue-900/40 data-[state=active]:text-blue-700 dark:data-[state=active]:text-blue-300 data-[state=active]:shadow-sm data-[state=active]:border data-[state=active]:border-blue-200/50 dark:data-[state=active]:border-blue-800/50 transition-all"
+              >
                 {editingForm ? 'Edit Form' : 'Create Form'}
               </TabsTrigger>
             </TabsList>

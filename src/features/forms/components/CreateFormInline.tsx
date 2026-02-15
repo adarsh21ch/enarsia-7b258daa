@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Plus, Loader2, FileText, Settings } from 'lucide-react';
@@ -120,85 +119,82 @@ export function CreateFormInline({ editingForm, onSuccess }: Props) {
 
   return (
     <div className="space-y-4">
-      {/* Sub-tabs: Questions | Settings + Create button */}
-      <div className="flex items-center justify-between">
-        <Tabs value={activeSubTab} onValueChange={setActiveSubTab} className="w-full">
-          <div className="flex items-center justify-between">
-            <TabsList className="bg-muted/50 p-1 rounded-lg w-auto">
-              <TabsTrigger value="questions" className="rounded-md px-4 text-sm gap-1.5">
-                <FileText className="h-3.5 w-3.5" /> Questions
-              </TabsTrigger>
-              <TabsTrigger value="settings" className="rounded-md px-4 text-sm gap-1.5">
-                <Settings className="h-3.5 w-3.5" /> Settings
-              </TabsTrigger>
-            </TabsList>
-            <Button
-              onClick={handleSave}
-              disabled={saving || !title.trim()}
-              className="bg-primary hover:bg-primary/90 text-primary-foreground rounded-full px-6"
-            >
-              {saving ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
-              {editingForm ? 'Save Changes' : 'Create Form'}
-            </Button>
+      <Tabs value={activeSubTab} onValueChange={setActiveSubTab} className="w-full">
+        <div className="flex items-center justify-between">
+          <TabsList className="bg-blue-50/80 dark:bg-blue-950/30 p-1 rounded-xl border border-blue-100/50 dark:border-blue-900/30 w-auto">
+            <TabsTrigger value="questions" className="rounded-lg px-4 text-sm gap-1.5 data-[state=active]:bg-white dark:data-[state=active]:bg-blue-900/40 data-[state=active]:text-blue-700 dark:data-[state=active]:text-blue-300 data-[state=active]:shadow-sm">
+              <FileText className="h-3.5 w-3.5" /> Questions
+            </TabsTrigger>
+            <TabsTrigger value="settings" className="rounded-lg px-4 text-sm gap-1.5 data-[state=active]:bg-white dark:data-[state=active]:bg-blue-900/40 data-[state=active]:text-blue-700 dark:data-[state=active]:text-blue-300 data-[state=active]:shadow-sm">
+              <Settings className="h-3.5 w-3.5" /> Settings
+            </TabsTrigger>
+          </TabsList>
+          <Button
+            onClick={handleSave}
+            disabled={saving || !title.trim()}
+            className="bg-blue-600 hover:bg-blue-700 text-white rounded-full px-6 shadow-md shadow-blue-200/50 dark:shadow-blue-900/30"
+          >
+            {saving ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+            {editingForm ? 'Save Changes' : 'Create Form'}
+          </Button>
+        </div>
+
+        <TabsContent value="questions" className="mt-4 space-y-4">
+          {/* Form title/description card */}
+          <div className="border-2 border-blue-300/60 dark:border-blue-700/40 rounded-2xl p-5 bg-white/80 dark:bg-card/80 shadow-sm shadow-blue-100/50 dark:shadow-blue-900/20 space-y-3">
+            <Input
+              value={title}
+              onChange={e => setTitle(e.target.value)}
+              placeholder="Untitled Form"
+              className="text-lg font-medium border-0 border-b-2 border-blue-200/60 dark:border-blue-800/40 rounded-none px-0 focus-visible:ring-0 focus-visible:border-blue-500 bg-transparent"
+            />
+            <Input
+              value={description}
+              onChange={e => setDescription(e.target.value)}
+              placeholder="Form description (optional)"
+              className="text-sm text-muted-foreground border-0 px-0 focus-visible:ring-0 bg-transparent"
+            />
           </div>
 
-          <TabsContent value="questions" className="mt-4 space-y-4">
-            {/* Form title/description card */}
-            <div className="border-2 border-primary/30 rounded-xl p-5 bg-card space-y-3">
-              <Input
-                value={title}
-                onChange={e => setTitle(e.target.value)}
-                placeholder="Untitled Form"
-                className="text-lg font-medium border-0 border-b border-border/50 rounded-none px-0 focus-visible:ring-0 focus-visible:border-primary bg-transparent"
-              />
-              <Input
-                value={description}
-                onChange={e => setDescription(e.target.value)}
-                placeholder="Form description (optional)"
-                className="text-sm text-muted-foreground border-0 px-0 focus-visible:ring-0 bg-transparent"
-              />
+          {/* Field cards */}
+          {fields.length === 0 ? (
+            <div className="border-2 border-dashed border-blue-200/60 dark:border-blue-800/30 rounded-2xl p-8 text-center bg-white/50 dark:bg-card/50">
+              <p className="text-muted-foreground mb-3">No questions yet</p>
+              <Button variant="outline" onClick={addField} className="rounded-full border-blue-300 text-blue-600 hover:bg-blue-50 dark:border-blue-700 dark:text-blue-400 dark:hover:bg-blue-950/30">
+                <Plus className="h-4 w-4 mr-2" /> Add your first question
+              </Button>
             </div>
-
-            {/* Field cards */}
-            {fields.length === 0 ? (
-              <div className="border border-dashed border-border/60 rounded-xl p-8 text-center bg-card">
-                <p className="text-muted-foreground mb-3">No questions yet</p>
-                <Button variant="outline" onClick={addField} className="rounded-full">
-                  <Plus className="h-4 w-4 mr-2" /> Add your first question
+          ) : (
+            <>
+              {fields.map((field, index) => (
+                <FormFieldCard
+                  key={field.id || index}
+                  field={field}
+                  index={index}
+                  allFields={fields}
+                  onChange={updated => updateFieldAt(index, updated)}
+                  onDelete={() => deleteFieldAt(index)}
+                  onDuplicate={() => duplicateField(index)}
+                />
+              ))}
+              <div className="flex justify-center">
+                <Button variant="outline" onClick={addField} className="rounded-full border-blue-300 text-blue-600 hover:bg-blue-50 dark:border-blue-700 dark:text-blue-400 dark:hover:bg-blue-950/30">
+                  <Plus className="h-4 w-4 mr-2" /> Add Question
                 </Button>
               </div>
-            ) : (
-              <>
-                {fields.map((field, index) => (
-                  <FormFieldCard
-                    key={field.id || index}
-                    field={field}
-                    index={index}
-                    allFields={fields}
-                    onChange={updated => updateFieldAt(index, updated)}
-                    onDelete={() => deleteFieldAt(index)}
-                    onDuplicate={() => duplicateField(index)}
-                  />
-                ))}
-                <div className="flex justify-center">
-                  <Button variant="outline" onClick={addField} className="rounded-full">
-                    <Plus className="h-4 w-4 mr-2" /> Add Question
-                  </Button>
-                </div>
-              </>
-            )}
-          </TabsContent>
+            </>
+          )}
+        </TabsContent>
 
-          <TabsContent value="settings" className="mt-4">
-            <div className="border rounded-xl p-5 bg-card space-y-6">
-              <FormSettingsPanel settings={settings} onChange={setSettings} />
-            </div>
-            <div className="mt-4">
-              <LeadMappingConfig fields={fields} mapping={leadMapping} onChange={setLeadMapping} />
-            </div>
-          </TabsContent>
-        </Tabs>
-      </div>
+        <TabsContent value="settings" className="mt-4">
+          <div className="border border-blue-100/50 dark:border-blue-900/30 rounded-2xl p-5 bg-white/80 dark:bg-card/80 shadow-sm shadow-blue-100/50 dark:shadow-blue-900/20 space-y-6">
+            <FormSettingsPanel settings={settings} onChange={setSettings} />
+          </div>
+          <div className="mt-4">
+            <LeadMappingConfig fields={fields} mapping={leadMapping} onChange={setLeadMapping} />
+          </div>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
