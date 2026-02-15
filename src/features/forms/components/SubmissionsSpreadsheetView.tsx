@@ -1,10 +1,8 @@
 import { useState, useMemo } from 'react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Download, ArrowUpDown, FileSpreadsheet } from 'lucide-react';
+import { ArrowUpDown } from 'lucide-react';
 import { format } from 'date-fns';
-import * as XLSX from 'xlsx';
 import type { NevoraFormField, SubmissionWithAnswers, FieldOptions } from '../types';
 
 interface Props {
@@ -15,7 +13,7 @@ interface Props {
 
 const CHOICE_TYPES = ['select', 'radio', 'checkbox', 'multiselect'];
 
-export function SubmissionsSpreadsheetView({ fields, submissions, formTitle }: Props) {
+export function SubmissionsSpreadsheetView({ fields, submissions }: Props) {
   const [sortField, setSortField] = useState<string>('created_at');
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc');
   const [filters, setFilters] = useState<Record<string, string>>({});
@@ -57,47 +55,9 @@ export function SubmissionsSpreadsheetView({ fields, submissions, formTitle }: P
     }
   };
 
-  const exportCSV = () => {
-    const headers = [...fields.map(f => f.label), 'Date & Time'];
-    const rows = filtered.map(s => {
-      const row: string[] = fields.map(f => {
-        const a = s.answers.find(ans => ans.field_key === f.field_key);
-        return a?.value || '';
-      });
-      row.push(format(new Date(s.created_at), 'yyyy-MM-dd HH:mm'));
-      return row;
-    });
-
-    const csvContent = [headers, ...rows].map(row => row.map(cell => `"${cell.replace(/"/g, '""')}"`).join(',')).join('\n');
-    const blob = new Blob([csvContent], { type: 'text/csv' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `${formTitle}_responses.csv`;
-    a.click();
-    URL.revokeObjectURL(url);
-  };
-
-  const exportXLSX = () => {
-    const headers = [...fields.map(f => f.label), 'Date & Time'];
-    const rows = filtered.map(s => {
-      const row: string[] = fields.map(f => {
-        const a = s.answers.find(ans => ans.field_key === f.field_key);
-        return a?.value || '';
-      });
-      row.push(format(new Date(s.created_at), 'yyyy-MM-dd HH:mm'));
-      return row;
-    });
-
-    const ws = XLSX.utils.aoa_to_sheet([headers, ...rows]);
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, 'Responses');
-    XLSX.writeFile(wb, `${formTitle}_responses.xlsx`);
-  };
-
   return (
-    <div className="space-y-4">
-      {/* Filters row */}
+    <div className="space-y-3">
+      {/* Filters */}
       {choiceFields.length > 0 && (
         <div className="flex gap-2 flex-wrap">
           {choiceFields.map(f => {
@@ -108,7 +68,7 @@ export function SubmissionsSpreadsheetView({ fields, submissions, formTitle }: P
                 value={filters[f.field_key] || '_all'}
                 onValueChange={v => setFilters(prev => ({ ...prev, [f.field_key]: v }))}
               >
-                <SelectTrigger className="h-8 w-auto min-w-[120px] text-xs">
+                <SelectTrigger className="h-7 w-auto min-w-[100px] text-xs rounded-lg">
                   <SelectValue placeholder={f.label} />
                 </SelectTrigger>
                 <SelectContent>
@@ -121,32 +81,32 @@ export function SubmissionsSpreadsheetView({ fields, submissions, formTitle }: P
         </div>
       )}
 
-      <div className="border rounded-xl overflow-hidden bg-card">
+      <div className="border border-blue-100/50 dark:border-blue-900/30 rounded-xl overflow-hidden bg-card">
         <Table>
           <TableHeader>
-            <TableRow className="border-b border-border/50 hover:bg-transparent">
-              <TableHead className="text-xs font-medium text-muted-foreground w-[40px]">#</TableHead>
+            <TableRow className="bg-blue-50/60 dark:bg-blue-950/20 border-b border-blue-100/50 dark:border-blue-900/30 hover:bg-blue-50/60 dark:hover:bg-blue-950/20">
+              <TableHead className="text-[11px] font-semibold text-blue-700/70 dark:text-blue-300/70 w-[36px]">#</TableHead>
               {fields.map(f => (
                 <TableHead
                   key={f.field_key}
-                  className="text-xs font-medium text-muted-foreground cursor-pointer whitespace-nowrap"
+                  className="text-[11px] font-semibold text-blue-700/70 dark:text-blue-300/70 cursor-pointer whitespace-nowrap"
                   onClick={() => toggleSort(f.field_key)}
                 >
                   <div className="flex items-center gap-1">
                     {f.label}
-                    {f.field_type && CHOICE_TYPES.includes(f.field_type) && (
-                      <ArrowUpDown className="h-3 w-3 opacity-40" />
+                    {CHOICE_TYPES.includes(f.field_type) && (
+                      <ArrowUpDown className="h-2.5 w-2.5 opacity-40" />
                     )}
                   </div>
                 </TableHead>
               ))}
               <TableHead
-                className="text-xs font-medium text-muted-foreground cursor-pointer whitespace-nowrap"
+                className="text-[11px] font-semibold text-blue-700/70 dark:text-blue-300/70 cursor-pointer whitespace-nowrap"
                 onClick={() => toggleSort('created_at')}
               >
                 <div className="flex items-center gap-1">
                   Date & Time
-                  <ArrowUpDown className="h-3 w-3 opacity-40" />
+                  <ArrowUpDown className="h-2.5 w-2.5 opacity-40" />
                 </div>
               </TableHead>
             </TableRow>
@@ -154,23 +114,23 @@ export function SubmissionsSpreadsheetView({ fields, submissions, formTitle }: P
           <TableBody>
             {filtered.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={fields.length + 2} className="text-center text-muted-foreground text-sm py-12">
+                <TableCell colSpan={fields.length + 2} className="text-center text-muted-foreground text-sm py-10">
                   No responses yet
                 </TableCell>
               </TableRow>
             ) : (
               filtered.map((s, i) => (
-                <TableRow key={s.id} className="hover:bg-muted/20">
-                  <TableCell className="text-sm text-muted-foreground font-medium">{i + 1}</TableCell>
+                <TableRow key={s.id} className="hover:bg-blue-50/30 dark:hover:bg-blue-950/10 transition-colors">
+                  <TableCell className="text-xs text-muted-foreground font-medium py-2">{i + 1}</TableCell>
                   {fields.map(f => {
                     const a = s.answers.find(ans => ans.field_key === f.field_key);
                     return (
-                      <TableCell key={f.field_key} className="text-sm max-w-[300px]">
+                      <TableCell key={f.field_key} className="text-xs max-w-[280px] truncate py-2">
                         {a?.value || '-'}
                       </TableCell>
                     );
                   })}
-                  <TableCell className="text-sm whitespace-nowrap text-muted-foreground">
+                  <TableCell className="text-xs whitespace-nowrap text-muted-foreground py-2">
                     {format(new Date(s.created_at), 'MMM d, h:mm a')}
                   </TableCell>
                 </TableRow>
