@@ -1,10 +1,12 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { ArrowLeft, Loader2, FileSpreadsheet, Download, LayoutGrid, Table2, Search, X, MoreVertical } from 'lucide-react';
+import { toast } from 'sonner';
 import { BottomNav } from '@/components/layout/BottomNav';
 import { SubmissionsSpreadsheetView } from '../components/SubmissionsSpreadsheetView';
 import { SubmissionCardView } from '../components/SubmissionCardView';
@@ -105,6 +107,19 @@ export default function FormResponsesPage() {
     setDetailSub(s);
     setDetailOpen(true);
   };
+
+  const handleDeleteSubmission = useCallback(async (submissionId: string) => {
+    try {
+      await supabase.from('nevorai_submission_attachments').delete().eq('submission_id', submissionId);
+      await supabase.from('nevorai_submission_answers').delete().eq('submission_id', submissionId);
+      const { error } = await supabase.from('nevorai_form_submissions').delete().eq('id', submissionId);
+      if (error) throw error;
+      setSubmissions(prev => prev.filter(s => s.id !== submissionId));
+      toast.success('Submission deleted');
+    } catch {
+      toast.error('Failed to delete submission');
+    }
+  }, []);
 
   if (!user) return null;
 
@@ -207,7 +222,8 @@ export default function FormResponsesPage() {
             <SubmissionCardView
               fields={form.fields}
               submissions={filtered}
-              onViewDetail={openDetail} /> :
+              onViewDetail={openDetail}
+              onDelete={handleDeleteSubmission} /> :
 
 
             <SubmissionsSpreadsheetView
@@ -221,7 +237,8 @@ export default function FormResponsesPage() {
               open={detailOpen}
               onOpenChange={setDetailOpen}
               submission={detailSub}
-              fields={form.fields} />
+              fields={form.fields}
+              onDelete={handleDeleteSubmission} />
 
             </> :
 
