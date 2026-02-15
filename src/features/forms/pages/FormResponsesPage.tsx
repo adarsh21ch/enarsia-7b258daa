@@ -15,7 +15,7 @@ import * as XLSX from 'xlsx';
 import type { NevoraFormWithFields, SubmissionWithAnswers } from '../types';
 
 export default function FormResponsesPage() {
-  const { formId } = useParams<{ formId: string }>();
+  const { formId } = useParams<{formId: string;}>();
   const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
   const isMobile = useIsMobile();
@@ -41,9 +41,9 @@ export default function FormResponsesPage() {
     const load = async () => {
       setLoading(true);
       const [f, s] = await Promise.all([
-        fetchFormWithFields(formId),
-        fetchSubmissions(formId),
-      ]);
+      fetchFormWithFields(formId),
+      fetchSubmissions(formId)]
+      );
       setForm(f);
       setSubmissions(s);
       setLoading(false);
@@ -54,27 +54,27 @@ export default function FormResponsesPage() {
   const filtered = useMemo(() => {
     if (!searchQuery.trim()) return submissions;
     const q = searchQuery.toLowerCase();
-    return submissions.filter(s =>
-      s.answers.some(a => (a.value || '').toLowerCase().includes(q)) ||
-      (s.submitter_name || '').toLowerCase().includes(q)
+    return submissions.filter((s) =>
+    s.answers.some((a) => (a.value || '').toLowerCase().includes(q)) ||
+    (s.submitter_name || '').toLowerCase().includes(q)
     );
   }, [submissions, searchQuery]);
 
-  const todayCount = useMemo(() => submissions.filter(s => isToday(new Date(s.created_at))).length, [submissions]);
-  const weekCount = useMemo(() => submissions.filter(s => isThisWeek(new Date(s.created_at))).length, [submissions]);
+  const todayCount = useMemo(() => submissions.filter((s) => isToday(new Date(s.created_at))).length, [submissions]);
+  const weekCount = useMemo(() => submissions.filter((s) => isThisWeek(new Date(s.created_at))).length, [submissions]);
 
   const exportCSV = () => {
     if (!form) return;
-    const headers = [...form.fields.map(f => f.label), 'Date & Time'];
-    const rows = filtered.map(s => {
-      const row: string[] = form.fields.map(f => {
-        const a = s.answers.find(ans => ans.field_key === f.field_key);
+    const headers = [...form.fields.map((f) => f.label), 'Date & Time'];
+    const rows = filtered.map((s) => {
+      const row: string[] = form.fields.map((f) => {
+        const a = s.answers.find((ans) => ans.field_key === f.field_key);
         return a?.value || '';
       });
       row.push(format(new Date(s.created_at), 'yyyy-MM-dd HH:mm'));
       return row;
     });
-    const csvContent = [headers, ...rows].map(row => row.map(cell => `"${cell.replace(/"/g, '""')}"`).join(',')).join('\n');
+    const csvContent = [headers, ...rows].map((row) => row.map((cell) => `"${cell.replace(/"/g, '""')}"`).join(',')).join('\n');
     const blob = new Blob([csvContent], { type: 'text/csv' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -86,10 +86,10 @@ export default function FormResponsesPage() {
 
   const exportXLSX = () => {
     if (!form) return;
-    const headers = [...form.fields.map(f => f.label), 'Date & Time'];
-    const rows = filtered.map(s => {
-      const row: string[] = form.fields.map(f => {
-        const a = s.answers.find(ans => ans.field_key === f.field_key);
+    const headers = [...form.fields.map((f) => f.label), 'Date & Time'];
+    const rows = filtered.map((s) => {
+      const row: string[] = form.fields.map((f) => {
+        const a = s.answers.find((ans) => ans.field_key === f.field_key);
         return a?.value || '';
       });
       row.push(format(new Date(s.created_at), 'yyyy-MM-dd HH:mm'));
@@ -111,22 +111,22 @@ export default function FormResponsesPage() {
   return (
     <div className="app-layout bg-background">
       <main className="scrollable-content">
-        <div className="max-w-6xl mx-auto pt-3 px-3 sm:px-4 pb-20">
+        <div className="max-w-6xl mx-auto pt-3 px-3 sm:px-4 pb-20 py-[20px]">
           {/* Back */}
           <button
             onClick={() => navigate('/forms')}
-            className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground mb-2 transition-colors"
-          >
+            className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground mb-2 transition-colors">
+
             <ArrowLeft className="h-3.5 w-3.5" />
             Back to Forms
           </button>
 
-          {loading ? (
-            <div className="flex justify-center py-12">
+          {loading ?
+          <div className="flex justify-center py-12">
               <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-            </div>
-          ) : form ? (
-            <>
+            </div> :
+          form ?
+          <>
               {/* Compact header row */}
               <div className="flex items-center justify-between gap-2 mb-2">
                 <div className="min-w-0 flex-1">
@@ -138,15 +138,15 @@ export default function FormResponsesPage() {
                   {/* View toggle */}
                   <div className="flex items-center rounded-lg border border-blue-200/60 dark:border-blue-800/40 overflow-hidden">
                     <button
-                      onClick={() => setViewMode('card')}
-                      className={`p-1.5 transition-colors ${viewMode === 'card' ? 'bg-blue-50 dark:bg-blue-950/50 text-blue-600 dark:text-blue-400' : 'text-muted-foreground hover:bg-muted/50'}`}
-                    >
+                    onClick={() => setViewMode('card')}
+                    className={`p-1.5 transition-colors ${viewMode === 'card' ? 'bg-blue-50 dark:bg-blue-950/50 text-blue-600 dark:text-blue-400' : 'text-muted-foreground hover:bg-muted/50'}`}>
+
                       <LayoutGrid className="h-3.5 w-3.5" />
                     </button>
                     <button
-                      onClick={() => setViewMode('table')}
-                      className={`p-1.5 transition-colors ${viewMode === 'table' ? 'bg-blue-50 dark:bg-blue-950/50 text-blue-600 dark:text-blue-400' : 'text-muted-foreground hover:bg-muted/50'}`}
-                    >
+                    onClick={() => setViewMode('table')}
+                    className={`p-1.5 transition-colors ${viewMode === 'table' ? 'bg-blue-50 dark:bg-blue-950/50 text-blue-600 dark:text-blue-400' : 'text-muted-foreground hover:bg-muted/50'}`}>
+
                       <Table2 className="h-3.5 w-3.5" />
                     </button>
                   </div>
@@ -171,8 +171,8 @@ export default function FormResponsesPage() {
               </div>
 
               {/* Stats bar (desktop) */}
-              {!isMobile && (
-                <div className="flex items-center gap-4 mb-3 text-xs">
+              {!isMobile &&
+            <div className="flex items-center gap-4 mb-3 text-xs">
                   <span className="px-2.5 py-1 rounded-lg bg-blue-50/80 dark:bg-blue-950/30 text-blue-700 dark:text-blue-300 font-medium border border-blue-100/60 dark:border-blue-800/40">
                     Total: {submissions.length}
                   </span>
@@ -183,54 +183,54 @@ export default function FormResponsesPage() {
                     This Week: {weekCount}
                   </span>
                 </div>
-              )}
+            }
 
               {/* Search */}
               <div className="relative mb-3">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground pointer-events-none" />
                 <input
-                  type="text"
-                  value={searchQuery}
-                  onChange={e => setSearchQuery(e.target.value)}
-                  placeholder="Search name, phone, answers..."
-                  className="w-full h-8 pl-8 pr-8 bg-muted/40 rounded-lg border border-blue-100/40 dark:border-blue-900/30 text-sm placeholder:text-muted-foreground/50 focus:outline-none focus:border-blue-400/60 focus:ring-1 focus:ring-blue-400/20 transition-all"
-                />
-                {searchQuery && (
-                  <button onClick={() => setSearchQuery('')} className="absolute right-2 top-1/2 -translate-y-1/2 p-0.5 rounded-full hover:bg-muted">
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search name, phone, answers..."
+                className="w-full h-8 pl-8 pr-8 bg-muted/40 rounded-lg border border-blue-100/40 dark:border-blue-900/30 text-sm placeholder:text-muted-foreground/50 focus:outline-none focus:border-blue-400/60 focus:ring-1 focus:ring-blue-400/20 transition-all" />
+
+                {searchQuery &&
+              <button onClick={() => setSearchQuery('')} className="absolute right-2 top-1/2 -translate-y-1/2 p-0.5 rounded-full hover:bg-muted">
                     <X className="h-3.5 w-3.5 text-muted-foreground" />
                   </button>
-                )}
+              }
               </div>
 
               {/* Content */}
-              {viewMode === 'card' ? (
-                <SubmissionCardView
-                  fields={form.fields}
-                  submissions={filtered}
-                  onViewDetail={openDetail}
-                />
-              ) : (
-                <SubmissionsSpreadsheetView
-                  fields={form.fields}
-                  submissions={filtered}
-                  formTitle={form.title}
-                />
-              )}
+              {viewMode === 'card' ?
+            <SubmissionCardView
+              fields={form.fields}
+              submissions={filtered}
+              onViewDetail={openDetail} /> :
+
+
+            <SubmissionsSpreadsheetView
+              fields={form.fields}
+              submissions={filtered}
+              formTitle={form.title} />
+
+            }
 
               <SubmissionDetailDrawer
-                open={detailOpen}
-                onOpenChange={setDetailOpen}
-                submission={detailSub}
-                fields={form.fields}
-              />
-            </>
-          ) : (
-            <p className="text-center text-muted-foreground py-12">Form not found</p>
-          )}
+              open={detailOpen}
+              onOpenChange={setDetailOpen}
+              submission={detailSub}
+              fields={form.fields} />
+
+            </> :
+
+          <p className="text-center text-muted-foreground py-12">Form not found</p>
+          }
         </div>
       </main>
 
       <BottomNav />
-    </div>
-  );
+    </div>);
+
 }
