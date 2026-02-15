@@ -2,7 +2,8 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Loader2, Copy, Trash2, Share2, MoreHorizontal, Edit, Eye, FileText } from 'lucide-react';
+import { Loader2, Copy, Trash2, Share2, MoreHorizontal, Edit, Eye, FileText, MessageCircle } from 'lucide-react';
+import { toast } from 'sonner';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { ShareFormDialog } from './ShareFormDialog';
@@ -40,7 +41,16 @@ export function FormsListTab({ onEdit }: Props) {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [forms.length]);
 
-  const handleShare = async (form: NevoraFormWithFields) => {
+  const handleShareCopy = async (form: NevoraFormWithFields) => {
+    const token = await getShareToken(form.id);
+    if (token) {
+      const url = getShareUrl(token);
+      navigator.clipboard.writeText(url);
+      toast.success('Form link copied!');
+    }
+  };
+
+  const handleShareModal = async (form: NevoraFormWithFields) => {
     const token = await getShareToken(form.id);
     if (token) {
       setShareUrl(getShareUrl(token));
@@ -98,7 +108,7 @@ export function FormsListTab({ onEdit }: Props) {
               </div>
 
               <div className="flex items-center gap-1 shrink-0" onClick={e => e.stopPropagation()}>
-                <Button variant="ghost" size="icon" className="h-8 w-8 text-blue-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-950/30" onClick={() => handleShare(form)}>
+                <Button variant="ghost" size="icon" className="h-8 w-8 text-blue-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-950/30" onClick={() => handleShareCopy(form)}>
                   <Share2 className="h-4 w-4" />
                 </Button>
                 <DropdownMenu>
@@ -113,6 +123,9 @@ export function FormsListTab({ onEdit }: Props) {
                     </DropdownMenuItem>
                     <DropdownMenuItem onClick={() => navigate(`/forms/${form.id}/responses`)}>
                       <Eye className="h-4 w-4 mr-2" /> View Responses
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => handleShareModal(form)}>
+                      <MessageCircle className="h-4 w-4 mr-2" /> Share Options
                     </DropdownMenuItem>
                     <DropdownMenuItem onClick={() => duplicateForm(form.id)}>
                       <Copy className="h-4 w-4 mr-2" /> Duplicate
