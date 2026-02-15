@@ -1,7 +1,7 @@
 import { useEffect, useState, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { format, subMonths, addMonths } from 'date-fns';
-import { ChevronLeft, ChevronRight, ExternalLink } from 'lucide-react';
+import { ChevronLeft, ChevronRight, ExternalLink, Settings } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { BottomNav } from '@/components/layout/BottomNav';
 import { TrialBanner } from '@/components/subscription/TrialBanner';
@@ -15,6 +15,7 @@ import { FunnelWiseTable } from '@/components/trackup-v2/FunnelWiseTable';
 import { MonthlyTotalsTable } from '@/components/trackup-v2/MonthlyTotalsTable';
 import { ManualUpdateDrawer } from '@/components/trackup-v2/ManualUpdateDrawer';
 import { FloatingUpdateButton } from '@/components/trackup-v2/FloatingUpdateButton';
+import { TrackingSettingsDialog } from '@/components/trackup-v2/TrackingSettingsDialog';
 import { AIAssistantButton } from '@/components/ai/AIAssistantButton';
 import { AIAssistantChat } from '@/components/ai/AIAssistantChat';
 import { useFeatureAccess } from '@/hooks/useFeatureAccess';
@@ -36,6 +37,7 @@ export default function Tracking() {
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [showUpdateDrawer, setShowUpdateDrawer] = useState(false);
   const [showAIChat, setShowAIChat] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
   const { canAccess: canAccessAI } = useFeatureAccess('ai_assistant');
   
 
@@ -129,6 +131,14 @@ export default function Tracking() {
             <ExternalLink className="h-3.5 w-3.5" />
             Team Tracking
           </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => setShowSettings(true)}
+            className="h-8 w-8"
+          >
+            <Settings className="h-4 w-4" />
+          </Button>
         </div>
 
         {/* Mode selectors */}
@@ -139,6 +149,13 @@ export default function Tracking() {
             onDataModeChange={setDataMode}
             onViewTypeChange={setViewType}
           />
+        </div>
+
+        {/* Active mode status strip */}
+        <div className="flex items-center gap-2 text-[10px] text-muted-foreground px-4 pb-2">
+          <span>Personal: {personalSource === 'AUTO' ? 'Automatic' : 'Manual'}</span>
+          <span className="text-border">|</span>
+          <span>Total: {teamSource === 'AUTO' ? 'Automatic' : 'Manual'}</span>
         </div>
       </header>
 
@@ -224,6 +241,9 @@ export default function Tracking() {
         totalSnapshots={totalSnapshots}
         uplineLeaderId={directLeaderUserId}
       />
+
+      {/* Tracking Settings Dialog */}
+      <TrackingSettingsDialog open={showSettings} onOpenChange={setShowSettings} />
 
       <BottomNav />
     </div>

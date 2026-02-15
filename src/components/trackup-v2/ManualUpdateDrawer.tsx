@@ -1,6 +1,6 @@
 import { useState, useCallback, useMemo, useEffect, useRef } from 'react';
 import { format, isToday, parseISO } from 'date-fns';
-import { Check, Settings } from 'lucide-react';
+import { Settings } from 'lucide-react';
 import { useQueryClient } from '@tanstack/react-query';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -11,11 +11,7 @@ import {
   DrawerTitle,
 } from '@/components/ui/drawer';
 import { useCalendarStrip } from '@/hooks/useCalendarStrip';
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from '@/components/ui/popover';
+import { Badge } from '@/components/ui/badge';
 import { usePersonalSnapshotV2Write } from '@/hooks/usePersonalSnapshotV2Write';
 import { useTotalSnapshotV2Write } from '@/hooks/useTotalSnapshotV2Write';
 import { useTrackingSourcePreferences } from '@/hooks/useTrackingSourcePreferences';
@@ -57,7 +53,7 @@ export function ManualUpdateDrawer({
   const queryClient = useQueryClient();
   const { savePersonal, saving: savingPersonal } = usePersonalSnapshotV2Write();
   const { saveTotal, saving: savingTotal } = useTotalSnapshotV2Write();
-  const { personalSource, teamSource, setPersonalSource, setTeamSource, isLoading: prefsLoading } =
+  const { personalSource, teamSource, isLoading: prefsLoading } =
     useTrackingSourcePreferences();
 
   const dateStr = format(selectedDate, 'yyyy-MM-dd');
@@ -281,31 +277,17 @@ export function ManualUpdateDrawer({
               Personal
               {prefsLoading ? (
                 <Settings className="h-3 w-3 text-accent-foreground/60 animate-spin" />
-              ) : (
-                <SourceGear
-                  value={personalSource}
-                  options={[
-                    { label: 'Manual', value: 'MANUAL' },
-                    { label: 'Application', value: 'AUTO' },
-                  ]}
-                  onChange={(v) => setPersonalSource(v as any)}
-                />
-              )}
+              ) : personalSource === 'AUTO' ? (
+                <Badge variant="secondary" className="text-[9px] px-1.5 py-0 h-4 font-medium">Auto</Badge>
+              ) : null}
             </div>
             <div className="text-center font-semibold py-1.5 bg-accent text-accent-foreground rounded flex items-center justify-center gap-1">
               Total
               {prefsLoading ? (
                 <Settings className="h-3 w-3 text-accent-foreground/60 animate-spin" />
-              ) : (
-                <SourceGear
-                  value={teamSource}
-                  options={[
-                    { label: 'Manual', value: 'MANUAL' },
-                    { label: 'Automated', value: 'AUTO' },
-                  ]}
-                  onChange={(v) => setTeamSource(v as any)}
-                />
-              )}
+              ) : teamSource === 'AUTO' ? (
+                <Badge variant="secondary" className="text-[9px] px-1.5 py-0 h-4 font-medium">Auto</Badge>
+              ) : null}
             </div>
 
             {/* Leads & Responses rows - only show in Leads tab */}
@@ -425,45 +407,6 @@ export function ManualUpdateDrawer({
 }
 
 /* ── Sub-components ────────────────────────────────── */
-
-function SourceGear({
-  value,
-  options,
-  onChange,
-}: {
-  value: string;
-  options: { label: string; value: string }[];
-  onChange: (v: string) => void;
-}) {
-  return (
-    <Popover>
-      <PopoverTrigger asChild>
-        <button className="p-0.5 rounded hover:bg-accent/80 transition-colors">
-          <Settings className="h-3 w-3 text-accent-foreground/70" />
-        </button>
-      </PopoverTrigger>
-      <PopoverContent className="w-40 p-1" align="center" side="bottom">
-        {options.map((opt) => (
-          <button
-            key={opt.value}
-            onClick={() => onChange(opt.value)}
-            className={cn(
-              'w-full flex items-center justify-between px-2 py-1.5 text-xs rounded transition-colors',
-              value === opt.value
-                ? 'bg-accent text-accent-foreground font-semibold'
-                : 'hover:bg-muted text-foreground'
-            )}
-          >
-            {opt.label}
-            {value === opt.value && (
-              <Check className="h-3.5 w-3.5 text-accent-foreground" />
-            )}
-          </button>
-        ))}
-      </PopoverContent>
-    </Popover>
-  );
-}
 
 function TagInputRow({
   name,
