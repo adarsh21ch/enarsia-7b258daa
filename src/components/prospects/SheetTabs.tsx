@@ -242,7 +242,7 @@ export function SheetTabs({
             <button className="px-3 py-2 text-xs text-muted-foreground hover:text-foreground hover:bg-muted/80 border-l border-border/50 shrink-0 bg-muted/50">
               <Plus className="h-3.5 w-3.5 inline mr-1" />
               <span className="hidden sm:inline">Add Sheet</span>
-              <span className="sm:hidden">+</span>
+              
             </button>
           </DialogTrigger>
           <DialogContent className="sm:max-w-[400px]">
