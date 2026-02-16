@@ -112,6 +112,20 @@ export default function Dashboard() {
   // Collapsible header for search bar
   const { isCollapsed, scrollContainerRef, expandHeader } = useCollapsibleHeader();
 
+  // Measure fixed header height for sticky table header
+  const headerRef = useRef<HTMLElement>(null);
+  const [stickyHeaderTop, setStickyHeaderTop] = useState(0);
+  useEffect(() => {
+    const measure = () => {
+      if (headerRef.current) {
+        setStickyHeaderTop(headerRef.current.offsetHeight);
+      }
+    };
+    measure();
+    window.addEventListener('resize', measure);
+    return () => window.removeEventListener('resize', measure);
+  }, [isCollapsed]);
+
   // Sheets
   const {
     sheets,
@@ -235,7 +249,7 @@ export default function Dashboard() {
 
   return <div className="app-layout bg-gradient-to-b from-background via-background to-muted/20">
       {/* Compact Header - matching To-Do density */}
-      <header className="fixed-header z-40 bg-card/80 backdrop-blur-xl border-b border-border/50">
+      <header ref={headerRef} className="fixed-header z-40 bg-card/80 backdrop-blur-xl border-b border-border/50">
         {/* Row A: Page title - compact */}
         <div className="flex items-center justify-between px-4 py-3">
           <div className="flex items-center gap-3">
@@ -342,6 +356,7 @@ export default function Dashboard() {
               kpiTagCounts={kpiTagCounts}
               loadedCount={loadedCount}
               fetchAllForExport={fetchAllForExport}
+              stickyHeaderTop={stickyHeaderTop}
             />
           ) : (
             <ProspectTable 
@@ -373,6 +388,7 @@ export default function Dashboard() {
               kpiTagCounts={kpiTagCounts}
               loadedCount={loadedCount}
               fetchAllForExport={fetchAllForExport}
+              stickyHeaderTop={stickyHeaderTop}
             />
           )}
         </div>

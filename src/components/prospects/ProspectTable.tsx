@@ -78,6 +78,8 @@ interface ProspectTableProps {
   kpiTagCounts?: Record<string, number>;
   // Fetch all prospects for export (bypasses pagination)
   fetchAllForExport?: (sheetId?: string | null) => Promise<Prospect[]>;
+  // Sticky header top offset for parent scroll
+  stickyHeaderTop?: number;
 }
 
 // Simplified column configuration - only 3 columns, no horizontal scroll needed
@@ -151,6 +153,7 @@ interface TableContentProps {
   scrollContainerRef?: React.RefObject<HTMLDivElement>;
   hasNextPage?: boolean;
   isLoadingMore?: boolean;
+  stickyHeaderTop?: number;
 }
 function TableContent({
   isMobile,
@@ -189,14 +192,15 @@ function TableContent({
   sentinelRef,
   scrollContainerRef,
   hasNextPage,
-  isLoadingMore
+  isLoadingMore,
+  stickyHeaderTop = 0
 }: TableContentProps) {
-  return <div className="relative flex flex-col h-full">
-      {/* Table - scrollable area */}
-      <div ref={scrollContainerRef} className="flex-1 overflow-y-auto min-h-0">
+  return <div className="relative flex flex-col">
+      {/* Table - no inner scroll, parent handles scrolling */}
+      <div>
         <table className="w-full text-sm border-collapse bg-card table-fixed">
           {/* Header row */}
-          <thead className="sticky top-0 z-20 shadow-sm">
+          <thead className="sticky z-20 shadow-sm" style={{ top: stickyHeaderTop }}>
             <tr className="bg-muted text-xs font-semibold text-muted-foreground border-b border-border">
               {/* Selection checkbox header */}
               {selectionMode.active && <th className="w-10 px-2 py-2.5 bg-muted">
@@ -327,7 +331,8 @@ export function ProspectTable({
   loadedCount,
   kpiTotal,
   kpiTagCounts,
-  fetchAllForExport
+  fetchAllForExport,
+  stickyHeaderTop = 0
 }: ProspectTableProps) {
   const {
     logBulkActivity
@@ -366,19 +371,6 @@ export function ProspectTable({
 
   // Infinite scroll sentinel ref
   const sentinelRef = useRef<HTMLDivElement>(null);
-
-  // Scroll container ref for resetting scroll position
-  const scrollContainerRef = useRef<HTMLDivElement>(null);
-
-  // Reset scroll position when sheet changes
-  useEffect(() => {
-    if (scrollContainerRef.current) {
-      scrollContainerRef.current.scrollTo({
-        top: 0,
-        behavior: 'auto'
-      });
-    }
-  }, [selectedSheetId]);
 
   // Intersection Observer for infinite scroll with prefetch
   // Trigger at rootMargin of 200px (roughly ~5 rows before bottom)
@@ -1034,12 +1026,12 @@ export function ProspectTable({
       </div>
 
       {/* Table */}
-      <div className="bg-card rounded-xl border border-border/50 shadow-sm overflow-hidden flex-1 flex flex-col min-h-0 pb-[5px]">
+      <div className="bg-card rounded-xl border border-border/50 shadow-sm pb-[5px]">
         {enableDragAndDrop ? <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleRowDragEnd}>
             <SortableContext items={filteredProspects.map(p => p.id)} strategy={verticalListSortingStrategy}>
-              <TableContent isMobile={isMobile} COLUMN_ORDER={COLUMN_ORDER} selectionMode={selectionMode} selectedIds={selectedIds} selectionProspects={selectionProspects} handleSelectAll={handleSelectAll} sheets={sheets} selectedSheetId={selectedSheetId} onSelectSheet={onSelectSheet} onAddSheet={onAddSheet} handleUpdateSheetWithUndo={handleUpdateSheetWithUndo} onDeleteSheet={onDeleteSheet} handleEnterSelectMode={handleEnterSelectMode} handleDeleteAllInSheet={handleDeleteAllInSheet} filteredProspects={filteredProspects} prospects={prospects} sheetFilteredProspects={sheetFilteredProspects} setFilters={setFilters} isCalling={isCalling} expandedRowId={expandedRowId} handleToggleExpand={handleToggleExpand} handleUpdateWithUndo={handleUpdateWithUndo} handleDeleteWithUndo={handleDeleteWithUndo} handleToggleSelect={handleToggleSelect} enableDragAndDrop={enableDragAndDrop} callingTrackingTags={callingTrackingTags} stageTrackingTags={stageTrackingTags} onOpenResponseTagsDialog={() => setResponseTagsDialogOpen(true)} onOpenStageTagsDialog={() => setStageTagsDialogOpen(true)} lastContactedId={lastContactedId} onMarkLastContacted={handleMarkLastContacted} onExportSheet={exportSheet} onExportAll={exportToExcel} sentinelRef={sentinelRef} scrollContainerRef={scrollContainerRef} hasNextPage={hasNextPage} isLoadingMore={isLoadingMore} />
+              <TableContent isMobile={isMobile} COLUMN_ORDER={COLUMN_ORDER} selectionMode={selectionMode} selectedIds={selectedIds} selectionProspects={selectionProspects} handleSelectAll={handleSelectAll} sheets={sheets} selectedSheetId={selectedSheetId} onSelectSheet={onSelectSheet} onAddSheet={onAddSheet} handleUpdateSheetWithUndo={handleUpdateSheetWithUndo} onDeleteSheet={onDeleteSheet} handleEnterSelectMode={handleEnterSelectMode} handleDeleteAllInSheet={handleDeleteAllInSheet} filteredProspects={filteredProspects} prospects={prospects} sheetFilteredProspects={sheetFilteredProspects} setFilters={setFilters} isCalling={isCalling} expandedRowId={expandedRowId} handleToggleExpand={handleToggleExpand} handleUpdateWithUndo={handleUpdateWithUndo} handleDeleteWithUndo={handleDeleteWithUndo} handleToggleSelect={handleToggleSelect} enableDragAndDrop={enableDragAndDrop} callingTrackingTags={callingTrackingTags} stageTrackingTags={stageTrackingTags} onOpenResponseTagsDialog={() => setResponseTagsDialogOpen(true)} onOpenStageTagsDialog={() => setStageTagsDialogOpen(true)} lastContactedId={lastContactedId} onMarkLastContacted={handleMarkLastContacted} onExportSheet={exportSheet} onExportAll={exportToExcel} sentinelRef={sentinelRef} hasNextPage={hasNextPage} isLoadingMore={isLoadingMore} stickyHeaderTop={stickyHeaderTop} />
             </SortableContext>
-          </DndContext> : <TableContent isMobile={isMobile} COLUMN_ORDER={COLUMN_ORDER} selectionMode={selectionMode} selectedIds={selectedIds} selectionProspects={selectionProspects} handleSelectAll={handleSelectAll} sheets={sheets} selectedSheetId={selectedSheetId} onSelectSheet={onSelectSheet} onAddSheet={onAddSheet} handleUpdateSheetWithUndo={handleUpdateSheetWithUndo} onDeleteSheet={onDeleteSheet} handleEnterSelectMode={handleEnterSelectMode} handleDeleteAllInSheet={handleDeleteAllInSheet} filteredProspects={filteredProspects} prospects={prospects} sheetFilteredProspects={sheetFilteredProspects} setFilters={setFilters} isCalling={isCalling} expandedRowId={expandedRowId} handleToggleExpand={handleToggleExpand} handleUpdateWithUndo={handleUpdateWithUndo} handleDeleteWithUndo={handleDeleteWithUndo} handleToggleSelect={handleToggleSelect} enableDragAndDrop={enableDragAndDrop} callingTrackingTags={callingTrackingTags} stageTrackingTags={stageTrackingTags} onOpenResponseTagsDialog={() => setResponseTagsDialogOpen(true)} onOpenStageTagsDialog={() => setStageTagsDialogOpen(true)} lastContactedId={lastContactedId} onMarkLastContacted={handleMarkLastContacted} onExportSheet={exportSheet} onExportAll={exportToExcel} sentinelRef={sentinelRef} scrollContainerRef={scrollContainerRef} hasNextPage={hasNextPage} isLoadingMore={isLoadingMore} />}
+          </DndContext> : <TableContent isMobile={isMobile} COLUMN_ORDER={COLUMN_ORDER} selectionMode={selectionMode} selectedIds={selectedIds} selectionProspects={selectionProspects} handleSelectAll={handleSelectAll} sheets={sheets} selectedSheetId={selectedSheetId} onSelectSheet={onSelectSheet} onAddSheet={onAddSheet} handleUpdateSheetWithUndo={handleUpdateSheetWithUndo} onDeleteSheet={onDeleteSheet} handleEnterSelectMode={handleEnterSelectMode} handleDeleteAllInSheet={handleDeleteAllInSheet} filteredProspects={filteredProspects} prospects={prospects} sheetFilteredProspects={sheetFilteredProspects} setFilters={setFilters} isCalling={isCalling} expandedRowId={expandedRowId} handleToggleExpand={handleToggleExpand} handleUpdateWithUndo={handleUpdateWithUndo} handleDeleteWithUndo={handleDeleteWithUndo} handleToggleSelect={handleToggleSelect} enableDragAndDrop={enableDragAndDrop} callingTrackingTags={callingTrackingTags} stageTrackingTags={stageTrackingTags} onOpenResponseTagsDialog={() => setResponseTagsDialogOpen(true)} onOpenStageTagsDialog={() => setStageTagsDialogOpen(true)} lastContactedId={lastContactedId} onMarkLastContacted={handleMarkLastContacted} onExportSheet={exportSheet} onExportAll={exportToExcel} sentinelRef={sentinelRef} hasNextPage={hasNextPage} isLoadingMore={isLoadingMore} stickyHeaderTop={stickyHeaderTop} />}
       </div>
 
       {/* Delete confirmation dialog */}
