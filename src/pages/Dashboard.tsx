@@ -112,19 +112,7 @@ export default function Dashboard() {
   // Collapsible header for search bar
   const { isCollapsed, scrollContainerRef, expandHeader } = useCollapsibleHeader();
 
-  // Measure fixed header height for sticky table header
   const headerRef = useRef<HTMLElement>(null);
-  const [stickyHeaderTop, setStickyHeaderTop] = useState(0);
-  useEffect(() => {
-    const measure = () => {
-      if (headerRef.current) {
-        setStickyHeaderTop(headerRef.current.offsetHeight);
-      }
-    };
-    measure();
-    window.addEventListener('resize', measure);
-    return () => window.removeEventListener('resize', measure);
-  }, [isCollapsed]);
 
   // Sheets
   const {
@@ -356,7 +344,7 @@ export default function Dashboard() {
               kpiTagCounts={kpiTagCounts}
               loadedCount={loadedCount}
               fetchAllForExport={fetchAllForExport}
-              stickyHeaderTop={stickyHeaderTop}
+              stickyHeaderTop={0}
             />
           ) : (
             <ProspectTable 
@@ -388,7 +376,7 @@ export default function Dashboard() {
               kpiTagCounts={kpiTagCounts}
               loadedCount={loadedCount}
               fetchAllForExport={fetchAllForExport}
-              stickyHeaderTop={stickyHeaderTop}
+              stickyHeaderTop={0}
             />
           )}
         </div>
