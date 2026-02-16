@@ -21,5 +21,9 @@ export function getPasswordRecoveryRedirectUrl(): string {
  * Generate a shareable form URL for nevorai.com
  */
 export function getFormShareUrl(token: string): string {
+  const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+  if (supabaseUrl) {
+    return `${supabaseUrl}/functions/v1/og-share?type=form&token=${encodeURIComponent(token)}`;
+  }
   return `${NEVORAI_WEBSITE_URL}/f/${token}`;
 }

@@ -62,3 +62,6 @@ verify_jwt = false
 
 [functions.nevorai-ai]
 verify_jwt = false
+
+[functions.og-share]
+verify_jwt = false

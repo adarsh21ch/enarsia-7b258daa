@@ -110,6 +110,10 @@ export function generateSlug(title: string): string {
 }
 
 export function getFunnelPublicUrl(slug: string): string {
+  const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+  if (supabaseUrl) {
+    return `${supabaseUrl}/functions/v1/og-share?type=funnel&slug=${encodeURIComponent(slug)}`;
+  }
   const baseUrl = window.location.origin;
   return `${baseUrl}/f/${slug}`;
 }
