@@ -16,9 +16,6 @@ import { TrialBanner } from '@/components/subscription/TrialBanner';
 import { Loader2, Phone, Layers, Flame } from 'lucide-react';
 import nevoraLogo from '@/assets/nevorai-logo.jpeg';
 import { useStreak } from '@/hooks/useStreak';
-import { AIAssistantButton } from '@/components/ai/AIAssistantButton';
-import { AIAssistantChat } from '@/components/ai/AIAssistantChat';
-import { useFeatureAccess } from '@/hooks/useFeatureAccess';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 
@@ -106,8 +103,6 @@ export default function Dashboard() {
 
   // Search state
   const [searchQuery, setSearchQuery] = useState('');
-  const [showAIChat, setShowAIChat] = useState(false);
-  const { canAccess: canAccessAI } = useFeatureAccess('ai_assistant');
 
   const headerRef = useRef<HTMLElement>(null);
 
@@ -368,14 +363,6 @@ export default function Dashboard() {
           )}
         </div>
       </main>
-
-      {/* AI Assistant */}
-      {canAccessAI && (
-        <>
-          <AIAssistantButton onClick={() => setShowAIChat(true)} />
-          <AIAssistantChat open={showAIChat} onOpenChange={setShowAIChat} />
-        </>
-      )}
 
       <BottomNav />
 
