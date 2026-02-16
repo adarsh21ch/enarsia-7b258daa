@@ -45,26 +45,30 @@ export const DEFAULT_TAG_COLORS: Record<string, string> = {
   'DND': '#64748b',             // slate-500
   '30-70': '#f97316',           // orange-500 (leaning negative)
   
-  // Stage tags - purple progression shades
-  'Day 1': '#8b5cf6',           // violet-500
-  'Day 2': '#a855f7',           // purple-500
-  'Day 3': '#c084fc',           // purple-400
-  'Minimum Bill': '#f59e0b',    // amber-500
-  'Level Up': '#06b6d4',        // cyan-500
-  '2CC': '#14b8a6',             // teal-500
+  // Stage tags - DISTINCT colors for each stage (no more all-violet!)
+  'Day 1': '#3b82f6',           // blue-500
+  'Day 2': '#f97316',           // orange-500
+  'Day 3': '#22c55e',           // green-500
+  'Minimum Bill': '#eab308',    // yellow-500
+  'MB': '#eab308',              // yellow-500 (alias)
+  'Level Up': '#ec4899',        // pink-500
+  '2CC': '#06b6d4',             // cyan-500
+  'DAY1': '#3b82f6',            // blue-500 (alias)
+  'DAY2': '#f97316',            // orange-500 (alias)
+  'DAY3': '#22c55e',            // green-500 (alias)
   
-  // Generic stage progression
-  'Stage 1': '#8b5cf6',         // violet-500
-  'Stage 2': '#a855f7',         // purple-500
-  'Stage 3': '#c084fc',         // purple-400
-  'Stage 4': '#d8b4fe',         // purple-300
-  'Complete': '#22c55e',        // green-500
-  'Done': '#22c55e',            // green-500
+  // Generic stage progression - also diversified
+  'Stage 1': '#3b82f6',         // blue-500
+  'Stage 2': '#f97316',         // orange-500
+  'Stage 3': '#22c55e',         // green-500
+  'Stage 4': '#ec4899',         // pink-500
+  'Complete': '#10b981',        // emerald-500
+  'Done': '#10b981',            // emerald-500
 };
 
 // Fallback color palettes for new tags
 const RESPONSE_COLORS = ['#3b82f6', '#6366f1', '#8b5cf6', '#a855f7', '#ec4899', '#f43f5e'];
-const STAGE_COLORS = ['#8b5cf6', '#a855f7', '#c084fc', '#d8b4fe', '#7c3aed', '#6d28d9'];
+const STAGE_COLORS = ['#3b82f6', '#f97316', '#22c55e', '#ec4899', '#06b6d4', '#eab308'];
 const QUALITY_COLORS = ['#22c55e', '#eab308', '#ef4444', '#f97316', '#84cc16', '#14b8a6'];
 const DEFAULT_COLORS = ['#6b7280', '#9ca3af', '#64748b', '#78716c', '#71717a', '#737373'];
 
