@@ -194,8 +194,12 @@ export const ProspectRow = memo(function ProspectRow({
         );
       
       case 'name':
-        // Show phone number below name (not age/state)
+        // Show phone number and age/city below name
         const phoneDisplay = prospect.phone || '';
+        const ageCityParts: string[] = [];
+        if (prospect.age_or_dob) ageCityParts.push(prospect.age_or_dob);
+        if (prospect.address) ageCityParts.push(prospect.address);
+        const ageCityDisplay = ageCityParts.join(', ');
         
         return (
           <td 
@@ -229,6 +233,15 @@ export const ProspectRow = memo(function ProspectRow({
                       isMobileTable ? "text-[9px]" : "text-[10px]"
                     )} title={phoneDisplay}>
                       {phoneDisplay}
+                    </span>
+                  )}
+                  {/* Age, City below phone */}
+                  {ageCityDisplay && (
+                    <span className={cn(
+                      "text-muted-foreground/70 truncate",
+                      isMobileTable ? "text-[8px]" : "text-[9px]"
+                    )} title={ageCityDisplay}>
+                      {ageCityDisplay}
                     </span>
                   )}
                 </div>
@@ -350,6 +363,8 @@ export const ProspectRow = memo(function ProspectRow({
     prevProps.prospect.funnel_stage === nextProps.prospect.funnel_stage &&
     prevProps.prospect.name === nextProps.prospect.name &&
     prevProps.prospect.phone === nextProps.prospect.phone &&
+    prevProps.prospect.age_or_dob === nextProps.prospect.age_or_dob &&
+    prevProps.prospect.address === nextProps.prospect.address &&
     prevProps.index === nextProps.index &&
     prevProps.isExpanded === nextProps.isExpanded &&
     prevProps.isEven === nextProps.isEven &&
