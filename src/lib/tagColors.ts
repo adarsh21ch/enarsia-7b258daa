@@ -10,40 +10,44 @@ export const DEFAULT_TAG_COLORS: Record<string, string> = {
   'Warm': '#f97316',      // orange-500 (interested)
   'Cold': '#3b82f6',      // blue-500 (cold/distant)
   
-  // Response tags - COLORED BY SENTIMENT
+  // Response tags - BOLD, DISTINCT colors (visible on white/gray backgrounds)
   // Positive responses (green shades)
-  'Interested': '#22c55e',     // green-500
-  'Very Interested': '#16a34a', // green-600
-  'Enrollment': '#10b981',      // emerald-500
-  'Enrolled': '#10b981',        // emerald-500
-  'Confirmed': '#22c55e',       // green-500
-  'Yes': '#22c55e',             // green-500
-  'Positive': '#22c55e',        // green-500
-  '+VE': '#22c55e',             // green-500
-  'Joined': '#14b8a6',          // teal-500
-  'Paid': '#059669',            // emerald-600
+  'Interested': '#16a34a',       // green-600
+  'Very Interested': '#15803d',  // green-700
+  'Enrollment': '#059669',       // emerald-600
+  'Enrolment': '#059669',        // emerald-600 (alias)
+  'Enrolled': '#059669',         // emerald-600
+  'Confirmed': '#16a34a',        // green-600
+  'Yes': '#16a34a',              // green-600
+  'Positive': '#16a34a',         // green-600
+  '+VE': '#16a34a',              // green-600
+  'Joined': '#0d9488',           // teal-600
+  'Paid': '#047857',             // emerald-700
   
-  // Neutral responses (blue/purple shades)
-  'Video Sent': '#3b82f6',      // blue-500
-  'Call Back': '#8b5cf6',       // violet-500
-  'Follow Up': '#6366f1',       // indigo-500
-  'Thinking': '#a855f7',        // purple-500
-  'Maybe': '#8b5cf6',           // violet-500
-  '50-50': '#8b5cf6',           // violet-500
-  'Pending': '#6366f1',         // indigo-500
-  'Scheduled': '#0ea5e9',       // sky-500
+  // Neutral responses (blue/indigo/violet - each distinct)
+  'Video Sent': '#2563eb',       // blue-600
+  'Video Send': '#2563eb',       // blue-600 (alias)
+  'Call Back': '#7c3aed',        // violet-600
+  'Follow Up': '#4f46e5',        // indigo-600
+  'Thinking': '#9333ea',         // purple-600
+  'Maybe': '#7c3aed',           // violet-600
+  '50-50': '#6d28d9',           // violet-700
+  'Pending': '#4f46e5',          // indigo-600
+  'Scheduled': '#0284c7',        // sky-600
   
-  // Negative responses (gray/red shades)
-  'Not Picked': '#6b7280',      // gray-500
-  'Call Cut': '#dc2626',        // red-600
-  'Not Interested': '#9ca3af',  // gray-400
-  'Busy': '#f59e0b',            // amber-500
-  'No': '#ef4444',              // red-500
-  '-VE': '#ef4444',             // red-500
-  'Rejected': '#dc2626',        // red-600
-  'Wrong Number': '#71717a',    // zinc-500
-  'DND': '#64748b',             // slate-500
-  '30-70': '#f97316',           // orange-500 (leaning negative)
+  // Negative responses (red/gray - bold and clear)
+  'Not Picked': '#4b5563',       // gray-600
+  'Call Cut': '#dc2626',         // red-600
+  'Not Interested': '#6b7280',   // gray-500
+  'Not Intrested': '#6b7280',    // gray-500 (typo alias)
+  'Busy': '#ea580c',             // orange-600 (darker, visible)
+  'No': '#dc2626',               // red-600
+  '-VE': '#dc2626',              // red-600
+  'Rejected': '#b91c1c',         // red-700
+  'Wrong Number': '#52525b',     // zinc-600
+  'DND': '#475569',              // slate-600
+  '30-70': '#c2410c',            // orange-700
+  'FLP': '#e11d48',              // rose-600
   
   // Stage tags - DISTINCT colors for each stage (no more all-violet!)
   'Day 1': '#3b82f6',           // blue-500
@@ -66,11 +70,11 @@ export const DEFAULT_TAG_COLORS: Record<string, string> = {
   'Done': '#10b981',            // emerald-500
 };
 
-// Fallback color palettes for new tags
-const RESPONSE_COLORS = ['#3b82f6', '#6366f1', '#8b5cf6', '#a855f7', '#ec4899', '#f43f5e'];
+// Fallback color palettes - all bold/dark enough for white backgrounds
+const RESPONSE_COLORS = ['#2563eb', '#4f46e5', '#7c3aed', '#9333ea', '#dc2626', '#e11d48'];
 const STAGE_COLORS = ['#3b82f6', '#f97316', '#22c55e', '#ec4899', '#06b6d4', '#eab308'];
-const QUALITY_COLORS = ['#22c55e', '#eab308', '#ef4444', '#f97316', '#84cc16', '#14b8a6'];
-const DEFAULT_COLORS = ['#6b7280', '#9ca3af', '#64748b', '#78716c', '#71717a', '#737373'];
+const QUALITY_COLORS = ['#16a34a', '#ea580c', '#dc2626', '#0284c7', '#65a30d', '#0d9488'];
+const DEFAULT_COLORS = ['#4b5563', '#6b7280', '#475569', '#57534e', '#52525b', '#525252'];
 
 // Get color for a specific tag
 export function getTagColor(tagValue: string, tagType: 'response' | 'stage' | 'quality' | 'default', customColor?: string | null): string {
