@@ -1,63 +1,66 @@
 
 
-# Switch All Selected Tabs/Toggles from Black to Blue
+# Fix Link Preview (OG Tags) for Funnel & Form Share Links
 
-## Recommendation
+## Problem
 
-**Blue is the better choice.** Here's why:
+When you share a funnel link on WhatsApp (or any social platform), the preview shows the generic "Nevorai - Sales Follow-Up & Team Tracking System" title and description instead of the actual funnel title, thumbnail, and description. This happens because the app is a single-page application (SPA) -- social media crawlers cannot execute JavaScript, so they only see the default meta tags from the HTML file.
 
-- Your brand identity is built around blue and light-blue tones
-- The Leads/Funnel toggle already uses blue (`bg-primary`) and looks great
-- Black selected states feel generic -- blue creates a cohesive, premium SaaS feel
-- Every major SaaS app (Notion, Linear, etc.) uses their brand color for active states, not plain black
+## Solution
+
+Create a backend function called `og-share` that serves a small HTML page with the correct title, description, and thumbnail for each funnel or form. When WhatsApp crawls the link, it gets the right preview. When a real user clicks the link, they are automatically redirected to the actual funnel/form page.
+
+## How It Works
+
+1. User copies a share link (e.g., `https://nevorai.com/share/f/my-funnel-slug`)
+2. WhatsApp crawler visits the link and hits the `og-share` backend function
+3. The function fetches the funnel's title, description, and thumbnail from the database
+4. It returns an HTML page with the correct preview tags
+5. When a real user clicks the link, the page instantly redirects them to the actual funnel
 
 ## What Changes
 
-Every tab, toggle, and sheet selector across the app will switch from black (`bg-foreground text-background`) to blue (`bg-accent text-accent-foreground`) for their selected/active state.
+### 1. New backend function: `og-share`
+- Accepts query parameters: `type` (funnel or form) and `slug`/`token`
+- Fetches the relevant data from the database
+- Returns HTML with correct Open Graph meta tags (title, description, image)
+- Includes an automatic redirect for real users
+- Falls back to default NevorAI branding if data is missing
 
-### Affected Components
+### 2. Update share URL format
+- **`src/types/funnels.ts`** -- Update `getFunnelPublicUrl()` to generate the new share URL format pointing to the backend function
+- **`src/config/siteUrl.ts`** -- Update `getFormShareUrl()` similarly for forms
 
-1. **`src/components/ui/tabs.tsx`** (global TabsTrigger) -- this one change affects ALL pages using the Tabs component:
-   - Calling page: Leads / Funnel toggle
-   - To-Do page: Daily Tasks / To-Do List toggle
-   - Follow-Up page: Leads / Funnel toggle
-   - TrackUp page: Personal / Team and Leads / Funnel toggles
-
-2. **`src/components/prospects/SheetTabs.tsx`** -- the "All", "16 Feb", "10 Feb" sheet tabs at the bottom:
-   - Change `bg-foreground text-background` to `bg-accent text-accent-foreground`
-
-3. **`src/components/ui/BottomViewToggle.tsx`** -- the floating bottom toggle:
-   - Change `bg-foreground text-background` to `bg-accent text-accent-foreground`
-
-4. **`src/components/trackup-v2/ModeSelectors.tsx`** -- TrackUp mode selectors:
-   - Change `bg-foreground text-background` to `bg-accent text-accent-foreground`
-
-5. **`src/components/trackup-v2/ManualUpdateDrawer.tsx`** -- Leads/Funnel category toggle inside the manual update drawer:
-   - Change `bg-foreground text-background` to `bg-accent text-accent-foreground`
-
-### What Stays the Same
-
-- Buttons (`bg-primary`) -- these are action buttons, not tab selectors
-- Calendar selected day -- already uses `bg-primary` correctly
-- Profile level dropdown -- this is a different UI pattern, not a tab
-- Badge and other UI primitives -- not tab-related
+### 3. Update `index.html`
+- Update the default OG image URL from the Lovable placeholder to the actual NevorAI brand image/logo
 
 ## Technical Details
 
-### The Key Change (tabs.tsx)
+### Edge Function: `supabase/functions/og-share/index.ts`
 
-The `TabsTrigger` default active style changes from:
-```
-data-[state=active]:bg-foreground data-[state=active]:text-background
-```
-to:
-```
-data-[state=active]:bg-accent data-[state=active]:text-accent-foreground
-```
+The function will:
+- Parse `type` and `slug`/`token` from query params
+- Query the database for the funnel/form record
+- Generate HTML with these OG meta tags:
+  - `og:title` -- Funnel/form title
+  - `og:description` -- Funnel/form description or default text
+  - `og:image` -- Thumbnail URL or default brand image
+  - `og:url` -- The canonical share URL
+- Include a `<meta http-equiv="refresh">` and JS redirect to the actual SPA page (`/f/:slug` for funnels, `/share/form/:token` for forms)
 
-This single change cascades to every page using the `Tabs` component (Calling, Follow-Up, To-Do, TrackUp).
+### Share URL Format
 
-### Other Files
+Current: `https://app.nevorai.com/f/my-funnel-slug` (no OG tags, just SPA)
 
-Each of the 4 remaining files just needs a simple find-and-replace of `bg-foreground text-background` with `bg-accent text-accent-foreground` in their active/selected state classes.
+New: Points to the edge function URL which serves proper OG HTML, then redirects the user to the SPA page.
+
+The `getFunnelPublicUrl` and `getFormShareUrl` functions will be updated to generate these new URLs.
+
+### Files to Create
+- `supabase/functions/og-share/index.ts`
+
+### Files to Modify
+- `src/types/funnels.ts` -- Update `getFunnelPublicUrl()`
+- `src/config/siteUrl.ts` -- Update `getFormShareUrl()`
+- `index.html` -- Replace placeholder OG image with NevorAI brand image
 
