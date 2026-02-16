@@ -233,7 +233,7 @@ export default function Dashboard() {
       {/* Compact Header - matching To-Do density */}
       <header className="fixed-header z-40 bg-card/80 backdrop-blur-xl border-b border-border/50">
         {/* Row A: Page title - compact */}
-        <div className="flex items-center justify-between px-4 py-3">
+        <div className="flex items-center justify-between px-4 py-2.5">
           <div className="flex items-center gap-3">
             <img src={nevoraLogo} alt="NevorAI Logo" className="h-10 w-10 rounded-xl object-cover shadow-md" />
             <div>
@@ -275,7 +275,7 @@ export default function Dashboard() {
         
         {/* Row C: Search Bar - more compact */}
         <div className="px-4 pb-2">
-          <SearchBar value={searchQuery} onChange={setSearchQuery} placeholder="Search name, phone..." className="h-8" />
+          <SearchBar value={searchQuery} onChange={setSearchQuery} placeholder="Search name, phone..." className="h-8 border-primary/20 focus-within:border-primary/40" />
         </div>
       </header>
 

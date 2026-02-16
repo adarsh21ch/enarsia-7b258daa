@@ -168,9 +168,9 @@ export const ProspectRow = memo(function ProspectRow({
 
   const renderCell = (columnId: string) => {
     const cellClass = cn(
-      "px-2 py-2.5 whitespace-nowrap",
+      "px-2 py-3 whitespace-nowrap",
       isLastContacted ? "bg-primary/10" : (isEven ? "bg-card" : "bg-muted"),
-      isMobileTable && "text-xs px-1.5 py-2"
+      isMobileTable && "text-xs px-1.5 py-2.5"
     );
     
     switch (columnId) {
@@ -182,7 +182,7 @@ export const ProspectRow = memo(function ProspectRow({
             style={{ width: '10%', minWidth: '40px' }}
           >
             <span className={cn(
-              "text-xs font-semibold text-muted-foreground bg-muted/60 rounded px-1.5 py-0.5",
+              "text-xs font-semibold text-primary bg-primary/10 rounded px-1.5 py-0.5",
               isMobileTable && "text-[10px] px-1"
             )}>
               {index}
@@ -191,8 +191,10 @@ export const ProspectRow = memo(function ProspectRow({
         );
       
       case 'name':
-        // Show phone number below name (not age/state)
         const phoneDisplay = prospect.phone || '';
+        const cityDisplay = prospect.address || '';
+        const ageDisplay = prospect.age_or_dob || '';
+        const subInfo = [phoneDisplay, cityDisplay, ageDisplay].filter(Boolean).join(' · ');
         
         return (
           <td 
@@ -202,8 +204,11 @@ export const ProspectRow = memo(function ProspectRow({
             onPointerDown={(e) => e.stopPropagation()}
           >
             <div className="flex items-center gap-1.5">
-              {/* Call icon only */}
-              <CallIconButton onClick={openCall} className={isMobileTable ? "p-0.5 h-6 w-6" : "h-7 w-7"} />
+              {/* Call icon - larger on mobile for easier tapping */}
+              <CallIconButton onClick={openCall} className={cn(
+                "shrink-0 rounded-lg bg-primary/10 text-primary hover:bg-primary/20",
+                isMobileTable ? "p-1 h-8 w-8" : "p-1.5 h-8 w-8"
+              )} />
               <button
                 onClick={onToggleExpand}
                 className={cn(
@@ -213,19 +218,19 @@ export const ProspectRow = memo(function ProspectRow({
               >
                 <div className="flex flex-col overflow-hidden min-w-0 flex-1">
                   <span className={cn(
-                    "font-semibold text-foreground group-hover:text-primary truncate transition-colors",
-                    isMobileTable && "text-xs",
+                    "font-bold text-foreground group-hover:text-primary truncate transition-colors",
+                    isMobileTable ? "text-xs" : "text-sm",
                     isExpanded && "text-primary"
                   )} title={prospect.name}>
                     {prospect.name}
                   </span>
-                  {/* Phone number below name */}
-                  {phoneDisplay && (
+                  {/* Phone · City · Age below name */}
+                  {subInfo && (
                     <span className={cn(
                       "text-muted-foreground truncate",
                       isMobileTable ? "text-[9px]" : "text-[10px]"
-                    )} title={phoneDisplay}>
-                      {phoneDisplay}
+                    )} title={subInfo}>
+                      {subInfo}
                     </span>
                   )}
                 </div>

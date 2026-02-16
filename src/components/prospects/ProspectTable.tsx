@@ -197,15 +197,15 @@ function TableContent({
         <table className="w-full text-sm border-collapse bg-card table-fixed">
           {/* Header row */}
           <thead className="sticky top-0 z-20 shadow-sm">
-            <tr className="bg-muted text-xs font-semibold text-muted-foreground border-b border-border">
+            <tr className="bg-primary/5 text-xs font-semibold text-muted-foreground border-b border-primary/15">
               {/* Selection checkbox header */}
-              {selectionMode.active && <th className="w-10 px-2 py-2.5 bg-muted">
+              {selectionMode.active && <th className="w-10 px-2 py-2.5 bg-primary/5">
                   <Checkbox checked={selectedIds.size === selectionProspects.length && selectionProspects.length > 0} onCheckedChange={handleSelectAll} />
                 </th>}
               {COLUMN_ORDER.map(columnId => {
               const col = COLUMNS.find(c => c.id === columnId);
               if (!col) return null;
-              return <th key={columnId} className={cn("px-2 py-2.5 text-left whitespace-nowrap bg-muted select-none", columnId === 'index' && "text-center", isMobile && "text-[11px] px-1.5")} style={{
+              return <th key={columnId} className={cn("px-2 py-2.5 text-left whitespace-nowrap bg-primary/5 select-none", columnId === 'index' && "text-center", isMobile && "text-[11px] px-1.5")} style={{
                 width: col.width,
                 minWidth: `${col.minWidth}px`
               }}>
@@ -985,7 +985,7 @@ export function ProspectTable({
         </div>
       </div>;
   }
-  return <div className="flex flex-col h-full gap-2">
+  return <div className="flex flex-col h-full gap-1.5">
       {/* KPI Strip - horizontal scrolling on mobile */}
       <div className="flex-shrink-0">
         <KPIStrip prospects={filteredProspects} isCalling={isCalling} className="my-0 py-[2px]" kpiTotal={kpiTotal} kpiTagCounts={kpiTagCounts} />
@@ -1034,7 +1034,7 @@ export function ProspectTable({
       </div>
 
       {/* Table */}
-      <div className="bg-card rounded-xl border border-border/50 shadow-sm overflow-hidden flex-1 flex flex-col min-h-0 pb-[5px]">
+      <div className="bg-card rounded-xl border border-primary/20 shadow-sm overflow-hidden flex-1 flex flex-col min-h-0 pb-[5px]">
         {enableDragAndDrop ? <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleRowDragEnd}>
             <SortableContext items={filteredProspects.map(p => p.id)} strategy={verticalListSortingStrategy}>
               <TableContent isMobile={isMobile} COLUMN_ORDER={COLUMN_ORDER} selectionMode={selectionMode} selectedIds={selectedIds} selectionProspects={selectionProspects} handleSelectAll={handleSelectAll} sheets={sheets} selectedSheetId={selectedSheetId} onSelectSheet={onSelectSheet} onAddSheet={onAddSheet} handleUpdateSheetWithUndo={handleUpdateSheetWithUndo} onDeleteSheet={onDeleteSheet} handleEnterSelectMode={handleEnterSelectMode} handleDeleteAllInSheet={handleDeleteAllInSheet} filteredProspects={filteredProspects} prospects={prospects} sheetFilteredProspects={sheetFilteredProspects} setFilters={setFilters} isCalling={isCalling} expandedRowId={expandedRowId} handleToggleExpand={handleToggleExpand} handleUpdateWithUndo={handleUpdateWithUndo} handleDeleteWithUndo={handleDeleteWithUndo} handleToggleSelect={handleToggleSelect} enableDragAndDrop={enableDragAndDrop} callingTrackingTags={callingTrackingTags} stageTrackingTags={stageTrackingTags} onOpenResponseTagsDialog={() => setResponseTagsDialogOpen(true)} onOpenStageTagsDialog={() => setStageTagsDialogOpen(true)} lastContactedId={lastContactedId} onMarkLastContacted={handleMarkLastContacted} onExportSheet={exportSheet} onExportAll={exportToExcel} sentinelRef={sentinelRef} scrollContainerRef={scrollContainerRef} hasNextPage={hasNextPage} isLoadingMore={isLoadingMore} />

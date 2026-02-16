@@ -109,12 +109,12 @@ export function CallIconButton({ onClick, className }: { onClick: (e: React.Mous
     <button
       onClick={onClick}
       className={cn(
-        "p-1 rounded-md hover:bg-muted transition-colors",
+        "p-1 rounded-md hover:bg-muted transition-colors flex items-center justify-center",
         className
       )}
       aria-label="Call"
     >
-      <PhoneOutlineIcon className="h-3.5 w-3.5" />
+      <PhoneOutlineIcon className="h-4 w-4" />
     </button>
   );
 }

@@ -152,7 +152,7 @@ export const InlineSelect = memo(function InlineSelect<T extends string>({
       >
         <SelectTrigger 
           className={cn(
-            'h-9 sm:h-8 text-xs border-0 bg-transparent hover:bg-muted/50 focus:ring-1 focus:ring-border/30 focus:bg-transparent min-w-[70px]',
+            'h-10 sm:h-8 text-xs border-0 bg-transparent hover:bg-muted/50 focus:ring-1 focus:ring-primary/20 focus:bg-transparent min-w-[80px]',
             className
           )}
           hideChevron
