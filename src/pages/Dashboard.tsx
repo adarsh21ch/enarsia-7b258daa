@@ -275,6 +275,16 @@ export default function Dashboard() {
         <div className="px-4 pb-1.5">
           <TopTabBar options={toggleOptions} value={mainTab} onChange={handleTabChange} />
         </div>
+
+        {/* Search Bar - fixed below tabs */}
+        <div className="px-4 py-2">
+          <SearchBar 
+            value={searchQuery} 
+            onChange={setSearchQuery} 
+            placeholder="Search name, phone..." 
+            className="h-8" 
+          />
+        </div>
         
       </header>
 
@@ -286,16 +296,6 @@ export default function Dashboard() {
         {/* Trial Banner */}
         <div className="px-4 pt-2">
           <TrialBanner tabId="dashboard" />
-        </div>
-
-        {/* Search Bar - scrolls with content */}
-        <div className="px-4 pt-2">
-          <SearchBar 
-            value={searchQuery} 
-            onChange={setSearchQuery} 
-            placeholder="Search name, phone..." 
-            className="h-8" 
-          />
         </div>
         
         {/* Table area - flex-1 to fill remaining space, pb for bottom nav */}
