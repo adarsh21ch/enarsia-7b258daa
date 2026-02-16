@@ -20,7 +20,7 @@ import { AIAssistantButton } from '@/components/ai/AIAssistantButton';
 import { AIAssistantChat } from '@/components/ai/AIAssistantChat';
 import { useFeatureAccess } from '@/hooks/useFeatureAccess';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { useCollapsibleHeader } from '@/hooks/useCollapsibleHeader';
+
 
 // Pull-to-refresh hook - fixed to not interfere with normal scrolling
 function usePullToRefresh(onRefresh: () => Promise<void>, threshold = 100) {
@@ -108,9 +108,6 @@ export default function Dashboard() {
   const [searchQuery, setSearchQuery] = useState('');
   const [showAIChat, setShowAIChat] = useState(false);
   const { canAccess: canAccessAI } = useFeatureAccess('ai_assistant');
-
-  // Collapsible header for search bar
-  const { isCollapsed, scrollContainerRef, expandHeader } = useCollapsibleHeader();
 
   const headerRef = useRef<HTMLElement>(null);
 
@@ -279,29 +276,9 @@ export default function Dashboard() {
           <TopTabBar options={toggleOptions} value={mainTab} onChange={handleTabChange} />
         </div>
         
-        {/* Row C: Search Bar - collapsible on scroll */}
-        <div 
-          className="px-4 overflow-hidden transition-all duration-200 ease-in-out"
-          style={{ 
-            maxHeight: isCollapsed ? 0 : 44,
-            paddingBottom: isCollapsed ? 0 : 8,
-            opacity: isCollapsed ? 0 : 1,
-          }}
-        >
-          <SearchBar 
-            value={searchQuery} 
-            onChange={(v) => { setSearchQuery(v); if (v) expandHeader(); }} 
-            placeholder="Search name, phone..." 
-            className="h-8" 
-          />
-        </div>
       </header>
 
-      <main ref={(node) => {
-        // Merge pullRef and scrollContainerRef
-        (pullRef as any).current = node;
-        scrollContainerRef(node as HTMLDivElement);
-      }} className="flex-1 flex flex-col min-h-0 overflow-y-auto overflow-x-hidden" style={{
+      <main ref={pullRef} className="flex-1 flex flex-col min-h-0 overflow-y-auto overflow-x-hidden" style={{
       touchAction: 'pan-x pan-y'
     }}>
         <PullToRefreshIndicator isRefreshing={isRefreshing} pullDistance={pullDistance} showIndicator={showIndicator} />
@@ -309,6 +286,16 @@ export default function Dashboard() {
         {/* Trial Banner */}
         <div className="px-4 pt-2">
           <TrialBanner tabId="dashboard" />
+        </div>
+
+        {/* Search Bar - scrolls with content */}
+        <div className="px-4 pt-2">
+          <SearchBar 
+            value={searchQuery} 
+            onChange={setSearchQuery} 
+            placeholder="Search name, phone..." 
+            className="h-8" 
+          />
         </div>
         
         {/* Table area - flex-1 to fill remaining space, pb for bottom nav */}
