@@ -1,108 +1,65 @@
 
 
-# Calling Tab UI/UX Upgrade Plan
+# Sticky Table Header on Scroll
 
-## Overview
-A focused set of improvements to make the Calling tab faster, more space-efficient, and visually polished -- keeping the premium blue brand identity intact.
+## What Changes
 
----
+When you scroll down through your leads list, the KPI strip, filter bar, and action buttons will scroll up and disappear -- giving you maximum screen space for calling. But the column headers (**#**, **Name**, **Response/Stage**) will stay pinned right below the Leads/Funnel toggle, so you always know which column is which.
 
-## 1. Auto-Hiding Search Bar (Scroll-Aware)
+When you scroll back up, the KPI strip and filters smoothly reappear.
 
-**Current:** Search bar is always visible in the fixed header, taking ~40px of vertical space even when not needed.
+## How It Works
 
-**Upgrade:** Hide the search bar when the user scrolls down (more room for the prospect list). When they scroll back up, the search bar smoothly slides back in.
-
-- Uses the existing `useCollapsibleHeader` pattern (already in the codebase) to track scroll direction
-- Animated height transition (200ms ease) so it feels smooth, not jarring
-- Header sections: Row A (logo + title) and Row B (Leads/Funnel toggle) stay fixed; Row C (search) collapses/expands
-
----
-
-## 2. Compact Horizontal KPI Strip with Color Coding
-
-**Current:** KPI strip shows small gray pills with counts -- functional but visually flat.
-
-**Upgrade:** Redesign as a single-line horizontal scrollable strip where each tag gets its own distinct color (pulled from the existing `tagColors.ts` color system).
-
-- Total count pill: blue (brand color)
-- Each response/stage tag pill: uses the tag's assigned color as a subtle tinted background (same colors already used in badges)
-- Format: `[color dot] TagName  count` in each pill
-- Horizontally scrollable with hidden scrollbar
-- More compact: pills use slightly smaller padding for density
-
----
-
-## 3. Full-Width Tappable Tag Cells in Table Rows
-
-**Current:** The Response/Stage column shows a small badge. The clickable area is just the badge itself -- lots of blank space around it goes unused.
-
-**Upgrade:** Make the entire cell act as the tap target for tag selection.
-
-- The `InlineSelect` trigger expands to fill the full cell width and height
-- The colored badge stretches to fill the cell with a subtle tinted background matching the tag color
-- When no tag is assigned, the full cell shows "Select..." in a muted style, making it obvious it's tappable
-- This eliminates the "dead space" problem and makes tag assignment feel instant
-
----
-
-## 4. Distinct Colors for Every Stage/Response Tag
-
-**Current:** Tags already have colors defined in `tagColors.ts`, but the table badges use a light tint (`color + 15% opacity` background). Some tags with similar names can look alike.
-
-**Upgrade:** Enhance visual differentiation:
-
-- Each tag badge uses a stronger tint (20-25% opacity background instead of 15%)
-- Add a small 4px left-border accent in the tag's full color on each table row when a tag is assigned (like a color indicator stripe)
-- In the KPI strip, each tag pill gets a colored dot or left-border accent
-- The color palette from `tagColors.ts` already covers: green (positive), blue/purple (neutral), red/gray (negative), violet (stages) -- these will be more prominent
-
----
-
-## 5. Streamlined Filter/Action Bar
-
-**Current:** The Retargeting dropdown, Export button, Import button, and Add button are all on one line. On mobile, it feels cramped.
-
-**Upgrade:**
-- Group the Retargeting filter dropdown and Export into a single compact row
-- Import and Add (+) buttons remain right-aligned but with slightly larger touch targets (44px min)
-- Remove redundant label text on mobile -- icons only for Import/Export with tooltips
-- The filter row gets a subtle bottom border to visually separate it from the table
-
----
+The current layout has a separate scroll container inside `ProspectTable`. The fix restructures the scroll so that the KPI strip, filters, and table are all in the **same scrollable area** (the Dashboard's `<main>`), while the table header uses CSS `sticky` positioning to pin itself below the fixed header.
 
 ## Technical Details
 
-### Files to Modify:
+### File: `src/components/prospects/ProspectTable.tsx`
 
-1. **`src/pages/Dashboard.tsx`**
-   - Integrate scroll-direction detection for the search bar
-   - Add CSS transition for search bar collapse/expand
-   - Pass scroll state to control search visibility
+**TableContent changes (lines 194-299):**
+- Remove the inner `overflow-y-auto` scroll wrapper from `TableContent`
+- The `<thead>` already has `sticky top-0` -- change it to use a CSS variable or a prop-based `top` value so it sticks just below the fixed header (Leads/Funnel toggle height)
+- Add a new prop `stickyHeaderTop` (number in px) to `TableContent` so the parent can tell it exactly where to pin the header
 
-2. **`src/components/prospects/KPIStrip.tsx`**
-   - Import `getTagColor` from `tagColors.ts`
-   - Apply per-tag colors to each KPI pill background
-   - Add colored dot indicator before each tag name
+**ProspectTable return (lines 988-1043):**
+- Remove `overflow-hidden` and `flex-1 flex flex-col min-h-0` from the table wrapper since scrolling is now handled by the parent `<main>`
+- The KPI strip, action bar, and table all flow naturally in the document, scrolling with the page
 
-3. **`src/components/prospects/ProspectRow.tsx`**
-   - Expand `InlineSelect` trigger to `w-full h-full` within cells
-   - Add colored left-border accent when a tag is assigned
+### File: `src/pages/Dashboard.tsx`
 
-4. **`src/components/prospects/InlineSelect.tsx`**
-   - Make `SelectTrigger` fill parent width/height
-   - Show full-cell colored background matching the selected tag
+**Main scroll area (lines ~280-340):**
+- The `<main>` element is already `overflow-y-auto` -- this becomes the single scroll container
+- Calculate the fixed header height (logo row + tab row = approximately 110px when search is collapsed, ~154px when expanded)
+- Pass `stickyHeaderTop` value to `ProspectTable` matching the fixed header height so the table header pins correctly
 
-5. **`src/components/prospects/StatusBadge.tsx`**
-   - Increase badge background opacity from 15% to 20% for stronger color differentiation
+### File: `src/hooks/useCollapsibleHeader.ts`
 
-6. **`src/lib/tagColors.ts`**
-   - Update `getTagStyle` default opacity from `15` to `20` hex suffix for non-filter badges
-   - No new colors needed -- existing palette is comprehensive
+- No changes needed -- it already tracks scroll direction on the main container
 
-7. **`src/components/ui/SearchBar.tsx`**
-   - Add support for animated show/hide via a `visible` prop with CSS transition
+### Summary of Behavior
 
-### No Database Changes Required
-All improvements are purely frontend UI/UX changes.
+```text
+Fixed Header (always visible):
+  [Logo]  Calling  [Bell icon]
+  [Leads | Funnel toggle]
+  [Search bar - collapses on scroll down]
+
+Scrollable Content:
+  [KPI Strip]        <-- scrolls away
+  [Filters + Actions] <-- scrolls away
+  ─────────────────────────────────
+  # | Name | Response  <-- STICKS below fixed header
+  ─────────────────────────────────
+  1 | John | Interested
+  2 | Jane | Call Back
+  ...
+```
+
+### Key Implementation Points
+
+1. `TableContent` thead gets `style={{ top: stickyHeaderTop }}` with `position: sticky` and `z-index: 20`
+2. Remove the inner scroll div in `TableContent` -- let the parent handle scrolling
+3. The table wrapper in `ProspectTable` loses its `overflow-hidden` constraint
+4. SheetTabs at the bottom remain sticky via `position: sticky; bottom: 0`
+5. The sentinel for infinite scroll continues to work since it's in the same scroll flow
 
