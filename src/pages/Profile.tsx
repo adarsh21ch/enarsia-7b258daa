@@ -109,7 +109,7 @@ export default function Profile() {
   } = useAdmin();
   const {
     isPaid: isPro,
-    isLoading: subLoading,
+    isLoading: subLoading
   } = usePermissions();
   const {
     refreshFormat
@@ -419,27 +419,27 @@ export default function Profile() {
           </button>
 
           {/* AI Assistant */}
-          {canAccessAI && (
-            <button onClick={() => setShowAIChat(true)} className={cn(
-              "w-full relative overflow-hidden rounded-xl p-4",
-              "bg-gradient-to-r backdrop-blur-sm",
-              "border border-primary/30 shadow-sm",
-              "flex items-center justify-between",
-              "transition-all duration-300 hover:shadow-md hover:scale-[1.01]",
-              "from-primary/20 to-primary/5"
-            )}>
+          {canAccessAI &&
+        <button onClick={() => setShowAIChat(true)} className={cn(
+          "w-full relative overflow-hidden rounded-xl p-4",
+          "bg-gradient-to-r backdrop-blur-sm",
+          "border border-primary/30 shadow-sm",
+          "flex items-center justify-between",
+          "transition-all duration-300 hover:shadow-md hover:scale-[1.01]",
+          "from-primary/20 to-primary/5"
+        )}>
               <div className="flex items-center gap-3">
                 <div className="p-2 rounded-lg bg-primary/10">
                   <Sparkles className="h-5 w-5 text-primary" />
                 </div>
                 <div className="text-left">
-                  <span className="font-medium block">AI Assistant</span>
+                  <span className="font-medium block">Nevorai AI  Assistant</span>
                   <span className="text-xs text-muted-foreground">Smart help for follow-ups, replies & strategy</span>
                 </div>
               </div>
               <ChevronRight className="h-5 w-5 text-muted-foreground" />
             </button>
-          )}
+        }
 
           {/* Settings Section - Collapsible */}
           <Collapsible className="rounded-2xl bg-card border border-border/50 overflow-hidden">
@@ -470,14 +470,14 @@ export default function Profile() {
           </Collapsible>
 
           {/* Recently Deleted - Restore deleted prospects */}
-          <RecentlyDeletedDrawer 
-            trigger={
-              <button className={cn(
-                "w-full relative overflow-hidden rounded-xl p-4",
-                "bg-card border border-border/50",
-                "flex items-center justify-between",
-                "transition-all duration-300 hover:bg-muted/50"
-              )}>
+          <RecentlyDeletedDrawer
+          trigger={
+          <button className={cn(
+            "w-full relative overflow-hidden rounded-xl p-4",
+            "bg-card border border-border/50",
+            "flex items-center justify-between",
+            "transition-all duration-300 hover:bg-muted/50"
+          )}>
                 <div className="flex items-center gap-3">
                   <div className="p-2 rounded-lg bg-destructive/10">
                     <Trash2 className="h-5 w-5 text-destructive" />
@@ -489,8 +489,8 @@ export default function Profile() {
                 </div>
                 <ChevronRight className="h-5 w-5 text-muted-foreground" />
               </button>
-            }
-          />
+          } />
+
 
           {/* User Guide - Video tutorials & help */}
           <UserGuideDrawer />
