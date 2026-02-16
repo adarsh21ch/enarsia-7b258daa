@@ -94,8 +94,18 @@ serve(async (req) => {
     // ============================================
     
     // Check if user already exists in auth
-    const { data: existingUserData } = await supabase.auth.admin.getUserByEmail(normalizedEmail);
-    const existingUser = existingUserData?.user ?? null;
+    // Look up existing user via profiles table (has email), then get auth user by ID
+    let existingUser = null;
+    const { data: profileMatch } = await supabase
+      .from('profiles')
+      .select('user_id')
+      .eq('email', normalizedEmail)
+      .maybeSingle();
+    
+    if (profileMatch) {
+      const { data: userData } = await supabase.auth.admin.getUserById(profileMatch.user_id);
+      existingUser = userData?.user ?? null;
+    }
     
     let userId: string;
     let isExistingUser = false;
