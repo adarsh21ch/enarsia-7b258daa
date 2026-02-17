@@ -291,8 +291,10 @@ export default function Auth() {
   if (authLoading) {
     return (
       <div className="auth-page-layout bg-background">
-        <div className="auth-page-content">
+        <div className="auth-page-content flex flex-col items-center gap-4">
+          <img src={nevoraLogo} alt="NevorAI Logo" className="w-16 h-16 rounded-xl" />
           <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          <p className="text-sm text-muted-foreground">Loading...</p>
         </div>
       </div>
     );
