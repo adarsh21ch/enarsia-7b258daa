@@ -1,5 +1,8 @@
 project_id = "kisankusogixarejjphi"
 
+[functions.get-encryption-key]
+verify_jwt = false
+
 [functions.encrypt-data]
 verify_jwt = true
 
