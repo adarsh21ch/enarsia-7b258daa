@@ -4473,6 +4473,96 @@ export type Database = {
         }
         Relationships: []
       }
+      video_plays: {
+        Row: {
+          country: string | null
+          device: string | null
+          duration_watched_seconds: number
+          funnel_id: string | null
+          id: string
+          is_completed: boolean
+          played_at: string
+          referrer: string | null
+          session_id: string
+          user_id: string | null
+          utm_campaign: string | null
+          utm_medium: string | null
+          utm_source: string | null
+          video_asset_id: string | null
+          video_duration_seconds: number
+        }
+        Insert: {
+          country?: string | null
+          device?: string | null
+          duration_watched_seconds?: number
+          funnel_id?: string | null
+          id?: string
+          is_completed?: boolean
+          played_at?: string
+          referrer?: string | null
+          session_id: string
+          user_id?: string | null
+          utm_campaign?: string | null
+          utm_medium?: string | null
+          utm_source?: string | null
+          video_asset_id?: string | null
+          video_duration_seconds?: number
+        }
+        Update: {
+          country?: string | null
+          device?: string | null
+          duration_watched_seconds?: number
+          funnel_id?: string | null
+          id?: string
+          is_completed?: boolean
+          played_at?: string
+          referrer?: string | null
+          session_id?: string
+          user_id?: string | null
+          utm_campaign?: string | null
+          utm_medium?: string | null
+          utm_source?: string | null
+          video_asset_id?: string | null
+          video_duration_seconds?: number
+        }
+        Relationships: []
+      }
+      video_stats_daily: {
+        Row: {
+          completions: number
+          creator_user_id: string | null
+          date: string
+          funnel_id: string | null
+          id: string
+          plays: number
+          total_watch_seconds: number
+          uniques: number
+          video_asset_id: string
+        }
+        Insert: {
+          completions?: number
+          creator_user_id?: string | null
+          date: string
+          funnel_id?: string | null
+          id?: string
+          plays?: number
+          total_watch_seconds?: number
+          uniques?: number
+          video_asset_id: string
+        }
+        Update: {
+          completions?: number
+          creator_user_id?: string | null
+          date?: string
+          funnel_id?: string | null
+          id?: string
+          plays?: number
+          total_watch_seconds?: number
+          uniques?: number
+          video_asset_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       ac_user_full_profile: {
@@ -4868,6 +4958,7 @@ export type Database = {
         Args: { p_suspend: boolean; p_user_id: string }
         Returns: boolean
       }
+      aggregate_video_stats: { Args: never; Returns: undefined }
       batch_reorder_prospects: {
         Args: { p_updates: Json; p_user_id: string }
         Returns: boolean
