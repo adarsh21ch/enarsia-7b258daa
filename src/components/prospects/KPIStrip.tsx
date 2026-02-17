@@ -76,8 +76,7 @@ export function KPIStrip({ prospects, isCalling, kpiTotal, kpiTagCounts }: KPISt
         return (
           <div 
             key={tag}
-            className="flex items-center gap-1.5 shrink-0 rounded-full px-2.5 py-1"
-            style={{ backgroundColor: `${tagColor}18` }}
+            className="flex items-center gap-1.5 shrink-0 rounded-full px-2.5 py-1 bg-muted/50"
           >
             {/* Color dot indicator */}
             <span 
@@ -85,16 +84,10 @@ export function KPIStrip({ prospects, isCalling, kpiTotal, kpiTagCounts }: KPISt
               style={{ backgroundColor: tagColor }}
             />
             {isFunnelTag && <Star className="h-2.5 w-2.5 text-yellow-500 fill-yellow-500 shrink-0" />}
-            <span 
-              className="text-xs font-medium truncate max-w-[60px]"
-              style={{ color: tagColor }}
-            >
+            <span className="text-xs font-medium truncate max-w-[60px] text-muted-foreground">
               {tag}
             </span>
-            <span 
-              className="text-xs font-bold"
-              style={{ color: tagColor }}
-            >
+            <span className="text-xs font-bold text-foreground">
               {count}
             </span>
           </div>
