@@ -1,37 +1,61 @@
 
 
-# Fix og-share Edge Function Deployment
+# Separate Achievers Club Users from Nevorai Users in Admin KPIs
 
 ## Problem
-The `og-share` edge function deploys successfully but returns 404. This is likely because the Lovable Cloud edge runtime is not registering it properly. The function code and config are correct.
+Currently, the admin dashboard KPIs (Total Users: 6,429, Free Users: 6,392, etc.) include **both** Nevorai and Achievers Club users. The database shows 4,108 Nevorai users and 2,264 Achievers Club users, inflating the numbers. You need accurate Nevorai-only metrics.
 
-## Solution
+## What Changes
 
-The most reliable fix is to update the CORS headers to match exactly what the other working functions use (the extended header list), and redeploy. If that still fails, we will try an alternative approach: use the `npm:` import specifier instead of `esm.sh`.
+The following KPIs and lists will be updated to only count **Nevorai users** (users with `product = 'nevorai'` in the `user_products` table):
 
-## Changes
+| KPI / Feature | Current (all users) | After fix (Nevorai only) |
+|---|---|---|
+| Total Users | ~6,429 | ~4,108 |
+| Free Users | ~6,392 | Recalculated |
+| Conversion Rate | 0.82% | Recalculated |
+| Subscription Pie Chart | Includes AC users | Nevorai only |
+| Free Users list (drawer) | All free users | Nevorai only |
+| Cohort Analysis | All signups | Nevorai only |
+| Churn Risk Alerts | All users | Nevorai only |
+| Trial Analytics | All users | Nevorai only |
 
-### 1. Update `supabase/functions/og-share/index.ts`
-- Update CORS `Access-Control-Allow-Headers` to match the full set used by all other working functions in this project:
-  ```
-  authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version
-  ```
-- This ensures consistency with all other deployed functions and eliminates any CORS mismatch as a cause.
+**Already correct** (no changes needed): DAU, WAU, Today Active, Lead Importers, Active Callers, Total Leads -- these already filter by `app = 'neverai'` via `user_app_access`.
 
-### 2. Redeploy and Test
-- Deploy the function and wait for it to register.
-- Test with a real funnel slug from the database to verify the HTML response includes the correct OG tags.
+## Technical Details
 
-### 3. If Still 404 — Fallback Plan
-If the function still returns 404 after the update, we will:
-- Delete and recreate the function with a slightly different name (e.g., `ogshare` without the hyphen) as hyphens in function names can sometimes cause routing issues in certain edge runtimes.
-- Update `src/types/funnels.ts` and `src/config/siteUrl.ts` to use the new function name.
+### 1. Update Database Functions (SQL Migrations)
+
+**a) `admin_get_conversion_analytics`** -- Add `JOIN user_products` filter:
+```sql
+FROM profiles p
+JOIN user_products up ON up.user_id = p.user_id AND up.product = 'nevorai'
+LEFT JOIN user_subscriptions us ON us.user_id = p.user_id
+```
+
+**b) `admin_get_free_users_paginated`** -- Add `JOIN user_products` filter so the free users list and count exclude Achievers Club-only users.
+
+**c) `admin_get_signup_cohort_analytics`** -- Add `JOIN user_products` filter in the cohorts CTE.
+
+**d) `admin_get_churn_risk_users`** -- Add `JOIN user_products` filter in the user_risk CTE.
+
+**e) `admin_get_trial_analytics`** -- Add `JOIN user_products` filter to all CTEs.
+
+### 2. Update Frontend Hook (`useAdminAnalytics.ts`)
+
+**a) Total signups query** -- Change from counting all `profiles` to counting only profiles that have a `user_products` entry with `product = 'nevorai'`:
+```ts
+supabase.rpc('admin_get_nevorai_user_count')
+```
+(Or use a simple filtered query joining profiles with user_products.)
+
+**b) Subscription breakdown query** -- Filter `user_subscriptions` to only include users who are in `user_products` with `product = 'nevorai'`.
+
+### 3. New RPC Function
+
+Create `admin_get_nevorai_user_count` to return the count of Nevorai-only users for the Total Users KPI, replacing the unfiltered `profiles` count.
 
 ## Files to Modify
-- `supabase/functions/og-share/index.ts` — Update CORS headers
+- **SQL Migration**: Update 6 RPC functions to filter by `user_products.product = 'nevorai'`
+- **`src/hooks/useAdminAnalytics.ts`**: Update `totalSignups` and `subscriptionBreakdown` queries to filter by Nevorai product
 
-## Files Potentially Modified (fallback only)
-- Rename function folder to `supabase/functions/ogshare/index.ts`
-- `supabase/config.toml` — Update function config name
-- `src/types/funnels.ts` — Update URL to new function name
-- `src/config/siteUrl.ts` — Update URL to new function name
