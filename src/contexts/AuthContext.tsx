@@ -35,6 +35,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // Prevent concurrent refresh attempts
   const isRefreshing = useRef(false);
 
+  // Safety timeout: if auth loading hangs for 10s (common in PWA/offline), force loading=false
+  useEffect(() => {
+    if (!loading) return;
+    const timeout = setTimeout(() => {
+      if (loading) {
+        logAuth('Auth loading timeout after 10s - forcing loading=false');
+        setLoading(false);
+      }
+    }, 10_000);
+    return () => clearTimeout(timeout);
+  }, [loading]);
+
   // Refresh session if it's close to expiry
   const refreshSessionIfNeeded = useCallback(async () => {
     if (isRefreshing.current) {
