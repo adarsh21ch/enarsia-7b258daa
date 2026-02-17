@@ -10,7 +10,10 @@ import {
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Crown } from 'lucide-react';
 import { useTrackingSourcePreferences, type TrackingSource } from '@/hooks/useTrackingSourcePreferences';
+import { usePermissions } from '@/contexts/PermissionsContext';
 
 interface TrackingSettingsDialogProps {
   open: boolean;
@@ -19,17 +22,20 @@ interface TrackingSettingsDialogProps {
 
 export function TrackingSettingsDialog({ open, onOpenChange }: TrackingSettingsDialogProps) {
   const { personalSource, teamSource, setPreferences, isUpdating } = useTrackingSourcePreferences();
+  const { checkFeature } = usePermissions();
 
+  const canPersonalAuto = checkFeature('personal_auto_tracking');
+  const canTotalAuto = checkFeature('total_auto_tracking');
   const [localPersonal, setLocalPersonal] = useState<TrackingSource>(personalSource);
   const [localTeam, setLocalTeam] = useState<TrackingSource>(teamSource);
 
-  // Sync local state when dialog opens
+  // Sync local state when dialog opens, and enforce permissions
   useEffect(() => {
     if (open) {
-      setLocalPersonal(personalSource);
-      setLocalTeam(teamSource);
+      setLocalPersonal(!canPersonalAuto && personalSource === 'AUTO' ? 'MANUAL' : personalSource);
+      setLocalTeam(!canTotalAuto && teamSource === 'AUTO' ? 'MANUAL' : teamSource);
     }
-  }, [open, personalSource, teamSource]);
+  }, [open, personalSource, teamSource, canPersonalAuto, canTotalAuto]);
 
   const handleSave = async () => {
     try {
@@ -70,10 +76,15 @@ export function TrackingSettingsDialog({ open, onOpenChange }: TrackingSettingsD
                 </Label>
               </div>
               <div className="flex items-start gap-3">
-                <RadioGroupItem value="AUTO" id="personal-auto" className="mt-0.5" />
-                <Label htmlFor="personal-auto" className="text-sm font-normal cursor-pointer">
+                <RadioGroupItem value="AUTO" id="personal-auto" className="mt-0.5" disabled={!canPersonalAuto} />
+                <Label htmlFor="personal-auto" className={`text-sm font-normal ${canPersonalAuto ? 'cursor-pointer' : 'text-muted-foreground cursor-not-allowed'}`}>
                   Automatic (From Application)
                 </Label>
+                {!canPersonalAuto && (
+                  <Badge variant="outline" className="text-[10px] gap-1 border-amber-500/50 text-amber-600">
+                    <Crown className="h-3 w-3" /> Pro
+                  </Badge>
+                )}
               </div>
             </RadioGroup>
             <p className="text-[11px] text-muted-foreground leading-relaxed">
@@ -96,10 +107,15 @@ export function TrackingSettingsDialog({ open, onOpenChange }: TrackingSettingsD
                 </Label>
               </div>
               <div className="flex items-start gap-3">
-                <RadioGroupItem value="AUTO" id="total-auto" className="mt-0.5" />
-                <Label htmlFor="total-auto" className="text-sm font-normal cursor-pointer">
+                <RadioGroupItem value="AUTO" id="total-auto" className="mt-0.5" disabled={!canTotalAuto} />
+                <Label htmlFor="total-auto" className={`text-sm font-normal ${canTotalAuto ? 'cursor-pointer' : 'text-muted-foreground cursor-not-allowed'}`}>
                   Automatic (Personal + Team Auto Calculation)
                 </Label>
+                {!canTotalAuto && (
+                  <Badge variant="outline" className="text-[10px] gap-1 border-amber-500/50 text-amber-600">
+                    <Crown className="h-3 w-3" /> Pro
+                  </Badge>
+                )}
               </div>
             </RadioGroup>
             <p className="text-[11px] text-muted-foreground leading-relaxed">
