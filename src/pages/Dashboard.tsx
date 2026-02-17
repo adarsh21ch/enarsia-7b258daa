@@ -13,10 +13,12 @@ import { TopTabBar } from '@/components/ui/TopTabBar';
 import { FilterTagSetupDialog, useFilterTagSetup } from '@/components/prospects/FilterTagSetupDialog';
 import { SearchBar } from '@/components/ui/SearchBar';
 import { TrialBanner } from '@/components/subscription/TrialBanner';
-import { Loader2, Phone, Layers, Flame } from 'lucide-react';
+import { RecentActivityView } from '@/components/todo/RecentActivityView';
+import { Loader2, Phone, Layers, Flame, Clock } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import nevoraLogo from '@/assets/nevorai-logo.jpeg';
 import { useStreak } from '@/hooks/useStreak';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { cn } from '@/lib/utils';
 
 
 // Pull-to-refresh hook - fixed to not interfere with normal scrolling
@@ -103,6 +105,9 @@ export default function Dashboard() {
 
   // Search state
   const [searchQuery, setSearchQuery] = useState('');
+
+  // Recent activity toggle
+  const [showRecentActivity, setShowRecentActivity] = useState(false);
 
   const headerRef = useRef<HTMLElement>(null);
 
@@ -235,41 +240,33 @@ export default function Dashboard() {
           <div className="flex items-center gap-3">
             <img src={nevoraLogo} alt="NevorAI Logo" className="h-10 w-10 rounded-xl object-cover shadow-md" />
             <div>
-              <div className="flex items-center gap-2">
-                <h1 className="text-xl font-bold tracking-tight">Calling</h1>
-                {streakEnabled && (
-                  <TooltipProvider>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <div className="flex items-center gap-1 px-2 py-1 rounded-lg bg-orange-500/10 cursor-default">
-                          <Flame className="h-4 w-4 text-orange-500" />
-                          <span className="text-sm font-bold text-orange-600">{currentStreak}</span>
-                        </div>
-                      </TooltipTrigger>
-                      <TooltipContent side="bottom" className="max-w-[200px]">
-                        {currentStreak > 0
-                          ? `You're on a ${currentStreak}-day streak! Keep going by adding leads or making calls daily.`
-                          : 'Start your streak by being active today!'}
-                        {isInGracePeriod && (
-                          <p className="text-amber-500 mt-1 text-xs font-medium">You missed a day! Stay active to keep your streak.</p>
-                        )}
-                      </TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
-                )}
-              </div>
-              <p className="text-xs text-muted-foreground font-medium">Manage your prospects</p>
+              <h1 className="text-xl font-bold tracking-tight">
+                {showRecentActivity ? 'Recent Activity' : 'Calling'}
+              </h1>
+              <p className="text-xs text-muted-foreground font-medium">
+                {showRecentActivity ? "Today's Updates" : 'Manage your prospects'}
+              </p>
             </div>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1">
+            {streakEnabled && !showRecentActivity && (
+              <div className="flex items-center gap-1 px-2 py-1 rounded-lg bg-orange-500/10">
+                <Flame className="h-4 w-4 text-orange-500" />
+                <span className="text-sm font-bold text-orange-600">{currentStreak}</span>
+              </div>
+            )}
+            <Button variant="ghost" size="icon" onClick={() => setShowRecentActivity(!showRecentActivity)} className={cn("h-10 w-10 rounded-full", showRecentActivity && "bg-primary/10 text-primary")}>
+              <Clock className="h-[22px] w-[22px]" />
+            </Button>
           </div>
         </div>
         
-        {/* Row B: Segmented control - compact like To-Do */}
-        <div className="px-4 pb-1.5">
-          <TopTabBar options={toggleOptions} value={mainTab} onChange={handleTabChange} />
-        </div>
-
+        {/* Row B: Segmented control - hidden when Recent Activity is active */}
+        {!showRecentActivity && (
+          <div className="px-4 pb-1.5">
+            <TopTabBar options={toggleOptions} value={mainTab} onChange={handleTabChange} />
+          </div>
+        )}
       </header>
 
       <main ref={pullRef} className="flex-1 flex flex-col min-h-0 overflow-y-auto overflow-x-hidden" style={{
@@ -277,23 +274,33 @@ export default function Dashboard() {
     }}>
         <PullToRefreshIndicator isRefreshing={isRefreshing} pullDistance={pullDistance} showIndicator={showIndicator} />
 
-        {/* Search Bar - scrolls with content, tight below header */}
-        <div className="px-4 pt-2">
-          <SearchBar 
-            value={searchQuery} 
-            onChange={setSearchQuery} 
-            placeholder="Search name, phone..." 
-            className="h-8" 
-          />
-        </div>
-        
-        {/* Trial Banner */}
-        <div className="px-4 pt-2">
-          <TrialBanner tabId="dashboard" />
-        </div>
-        
-        {/* Table area - flex-1 to fill remaining space, pb for bottom nav */}
-        <div className="flex-1 min-h-0 px-4 pb-40 md:pb-24 lg:pb-16">
+        {showRecentActivity ? (
+          <div className="px-4 pt-2 pb-40 md:pb-24 lg:pb-16">
+            <RecentActivityView 
+              selectedDate={new Date()} 
+              searchQuery={searchQuery} 
+              onSearchChange={setSearchQuery} 
+            />
+          </div>
+        ) : (
+          <>
+            {/* Search Bar - scrolls with content, tight below header */}
+            <div className="px-4 pt-2">
+              <SearchBar 
+                value={searchQuery} 
+                onChange={setSearchQuery} 
+                placeholder="Search name, phone..." 
+                className="h-8" 
+              />
+            </div>
+            
+            {/* Trial Banner */}
+            <div className="px-4 pt-2">
+              <TrialBanner tabId="dashboard" />
+            </div>
+            
+            {/* Table area - flex-1 to fill remaining space, pb for bottom nav */}
+            <div className="flex-1 min-h-0 px-4 pb-40 md:pb-24 lg:pb-16">
           {mainTab === 'leads' ? (
             <ProspectTable 
               key={`leads-${tableScrollKey.current}`}
@@ -360,7 +367,9 @@ export default function Dashboard() {
               stickyHeaderTop={0}
             />
           )}
-        </div>
+            </div>
+          </>
+        )}
       </main>
 
       <BottomNav />

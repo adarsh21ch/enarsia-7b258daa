@@ -255,8 +255,8 @@ export default function TodoUp() {
           </div>
           <div className="flex items-center gap-1">
             {/* Recent Activity Toggle */}
-            <Button variant="ghost" size="icon" onClick={toggleRecentActivity} className={cn("h-9 w-9 rounded-full", isRecentActivity && "bg-primary/10 text-primary")}>
-              <Clock className="h-5 w-5" />
+            <Button variant="ghost" size="icon" onClick={toggleRecentActivity} className={cn("h-10 w-10 rounded-full", isRecentActivity && "bg-primary/10 text-primary")}>
+              <Clock className="h-[22px] w-[22px]" />
             </Button>
             
           </div>
