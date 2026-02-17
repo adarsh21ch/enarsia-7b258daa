@@ -2,6 +2,9 @@ import { cn } from '@/lib/utils';
 import { getTagStyle } from '@/lib/tagColors';
 import { ProspectStatus, PriorityLevel, FunnelStage, EnrollmentStatus, ActionTaken } from '@/types/prospect';
 
+// Shared badge class for consistent SaaS-style tags
+const BADGE_BASE = "inline-flex items-center justify-center px-3 h-7 rounded-md text-xs font-semibold border whitespace-nowrap min-w-[48px]";
+
 interface StatusBadgeProps {
   status: ProspectStatus;
 }
@@ -10,10 +13,7 @@ export function StatusBadge({ status }: StatusBadgeProps) {
   const style = getTagStyle(status, 'quality');
   
   return (
-    <span 
-      className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium border whitespace-nowrap"
-      style={style}
-    >
+    <span className={BADGE_BASE} style={style}>
       {status}
     </span>
   );
@@ -31,10 +31,7 @@ export function PriorityBadge({ priority }: PriorityBadgeProps) {
   };
 
   return (
-    <span className={cn(
-      'inline-flex items-center px-2 py-1 rounded-full text-xs font-medium border whitespace-nowrap',
-      colorClasses[priority]
-    )}>
+    <span className={cn(BADGE_BASE, colorClasses[priority])}>
       {priority}
     </span>
   );
@@ -48,10 +45,7 @@ export function StageBadge({ stage }: StageBadgeProps) {
   const style = getTagStyle(stage, 'stage');
   
   return (
-    <span 
-      className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium border whitespace-nowrap"
-      style={style}
-    >
+    <span className={BADGE_BASE} style={style}>
       {stage}
     </span>
   );
@@ -68,10 +62,7 @@ export function EnrollBadge({ status }: EnrollBadgeProps) {
   };
 
   return (
-    <span className={cn(
-      'inline-flex items-center px-2 py-1 rounded-full text-xs font-medium border whitespace-nowrap',
-      colorClasses[status]
-    )}>
+    <span className={cn(BADGE_BASE, colorClasses[status])}>
       {status}
     </span>
   );
@@ -90,10 +81,7 @@ export function ActionBadge({ action }: ActionBadgeProps) {
   const style = getTagStyle(action, 'response');
 
   return (
-    <span 
-      className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium border whitespace-nowrap"
-      style={style}
-    >
+    <span className={BADGE_BASE} style={style}>
       {action}
     </span>
   );
@@ -110,10 +98,7 @@ export function GenericTagBadge({ value, type, customColor }: GenericTagBadgePro
   const style = getTagStyle(value, type, customColor);
   
   return (
-    <span 
-      className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium border whitespace-nowrap"
-      style={style}
-    >
+    <span className={BADGE_BASE} style={style}>
       {value}
     </span>
   );

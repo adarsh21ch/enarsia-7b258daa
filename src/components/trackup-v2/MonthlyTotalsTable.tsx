@@ -34,7 +34,7 @@ export function MonthlyTotalsTable({
   ];
 
   return (
-    <div className="rounded-xl border border-border/50 overflow-hidden">
+    <div className="rounded-lg border border-border/50 overflow-hidden">
       <div className="overflow-x-auto">
         <table className="w-full text-xs">
           <thead>

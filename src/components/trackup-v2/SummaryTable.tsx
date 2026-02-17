@@ -64,7 +64,7 @@ export function SummaryTable({
   }
 
   return (
-    <div className="rounded-xl border border-border/50 overflow-hidden">
+    <div className="rounded-lg border border-border/50 overflow-hidden">
       <div ref={scrollRef} className="overflow-x-auto">
         <table className="w-max min-w-full text-xs">
           {/* Header: date labels */}

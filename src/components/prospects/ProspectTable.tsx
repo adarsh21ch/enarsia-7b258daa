@@ -201,15 +201,15 @@ function TableContent({
         <table className="w-full text-sm border-collapse bg-card table-fixed">
           {/* Header row */}
           <thead className="sticky z-20 shadow-sm" style={{ top: stickyHeaderTop }}>
-            <tr className="bg-muted text-xs font-semibold text-muted-foreground border-b border-border">
+            <tr className="bg-muted/60 text-xs font-semibold text-muted-foreground border-b-2 border-accent/30">
               {/* Selection checkbox header */}
-              {selectionMode.active && <th className="w-10 px-2 py-2.5 bg-muted">
+              {selectionMode.active && <th className="w-10 px-2 py-2.5 bg-muted/60">
                   <Checkbox checked={selectedIds.size === selectionProspects.length && selectionProspects.length > 0} onCheckedChange={handleSelectAll} />
                 </th>}
               {COLUMN_ORDER.map(columnId => {
               const col = COLUMNS.find(c => c.id === columnId);
               if (!col) return null;
-              return <th key={columnId} className={cn("px-2 py-2.5 text-left whitespace-nowrap bg-muted select-none", columnId === 'index' && "text-center", isMobile && "text-[11px] px-1.5")} style={{
+              return <th key={columnId} className={cn("px-2 py-2.5 text-left whitespace-nowrap bg-muted/60 select-none", columnId === 'index' && "text-center", isMobile && "text-[11px] px-1.5")} style={{
                 width: col.width,
                 minWidth: `${col.minWidth}px`
               }}>

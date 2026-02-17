@@ -38,7 +38,7 @@ export function FunnelWiseTable({
   }
 
   return (
-    <div className="rounded-xl border border-border/50 overflow-hidden">
+    <div className="rounded-lg border border-border/50 overflow-hidden">
       <div className="overflow-x-auto">
         <table className="w-max min-w-full text-xs">
           <thead>

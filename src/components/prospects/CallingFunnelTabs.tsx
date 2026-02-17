@@ -17,9 +17,9 @@ export function CallingFunnelTabs({ activeTab, onTabChange, callingCount, funnel
       <button
         onClick={() => onTabChange('calling')}
         className={cn(
-          "flex items-center gap-2 px-4 py-2.5 rounded-xl font-medium text-sm transition-all duration-200",
+          "flex items-center gap-2 px-4 py-2.5 rounded-lg font-medium text-sm transition-all duration-200",
           activeTab === 'calling'
-            ? "bg-primary text-primary-foreground shadow-md shadow-primary/20"
+            ? "bg-accent text-accent-foreground shadow-sm"
             : "bg-muted/50 text-muted-foreground hover:bg-muted hover:text-foreground"
         )}
       >
@@ -28,8 +28,8 @@ export function CallingFunnelTabs({ activeTab, onTabChange, callingCount, funnel
         <span className={cn(
           "ml-1 text-xs px-2 py-0.5 rounded-full font-semibold",
           activeTab === 'calling'
-            ? "bg-primary-foreground/20 text-primary-foreground"
-            : "bg-primary/10 text-primary"
+            ? "bg-accent-foreground/20 text-accent-foreground"
+            : "bg-accent/10 text-accent"
         )}>
           {callingCount}
         </span>
@@ -38,9 +38,9 @@ export function CallingFunnelTabs({ activeTab, onTabChange, callingCount, funnel
       <button
         onClick={() => onTabChange('funnel')}
         className={cn(
-          "flex items-center gap-2 px-4 py-2.5 rounded-xl font-medium text-sm transition-all duration-200",
+          "flex items-center gap-2 px-4 py-2.5 rounded-lg font-medium text-sm transition-all duration-200",
           activeTab === 'funnel'
-            ? "bg-primary text-primary-foreground shadow-md shadow-primary/20"
+            ? "bg-accent text-accent-foreground shadow-sm"
             : "bg-muted/50 text-muted-foreground hover:bg-muted hover:text-foreground"
         )}
       >
@@ -49,8 +49,8 @@ export function CallingFunnelTabs({ activeTab, onTabChange, callingCount, funnel
         <span className={cn(
           "ml-1 text-xs px-2 py-0.5 rounded-full font-semibold",
           activeTab === 'funnel'
-            ? "bg-primary-foreground/20 text-primary-foreground"
-            : "bg-primary/10 text-primary"
+            ? "bg-accent-foreground/20 text-accent-foreground"
+            : "bg-accent/10 text-accent"
         )}>
           {funnelCount}
         </span>

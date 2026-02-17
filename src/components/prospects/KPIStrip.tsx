@@ -60,7 +60,7 @@ export function KPIStrip({ prospects, isCalling, kpiTotal, kpiTagCounts }: KPISt
   return (
     <div className="flex items-center gap-2 overflow-x-auto pb-0.5 -mx-1 px-1 scrollbar-hide">
       {/* Total Leads */}
-      <div className="flex items-center gap-1.5 shrink-0 rounded-full px-2.5 py-1 bg-primary/10">
+      <div className="flex items-center gap-1.5 shrink-0 rounded-md px-2.5 py-1 bg-primary/10 border border-primary/20">
         <Users className="h-3 w-3 text-primary" />
         <span className="text-xs font-semibold text-primary">{kpis.total}</span>
       </div>
@@ -76,7 +76,7 @@ export function KPIStrip({ prospects, isCalling, kpiTotal, kpiTagCounts }: KPISt
         return (
           <div 
             key={tag}
-            className="flex items-center gap-1.5 shrink-0 rounded-full px-2.5 py-1 bg-muted/50"
+            className="flex items-center gap-1.5 shrink-0 rounded-md px-2.5 py-1 bg-muted/50 border border-border/50"
           >
             {/* Color dot indicator */}
             <span 
