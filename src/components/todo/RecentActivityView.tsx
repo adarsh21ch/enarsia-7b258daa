@@ -1,7 +1,9 @@
-// Recent Activity View - Integrated into To-Do tab
-import { useMemo } from 'react';
+// Recent Activity View - Universal component with built-in calendar
+import { useMemo, useState } from 'react';
 import { useProspectsQuery } from '@/hooks/useProspectsQuery';
 import { useGlobalTodos } from '@/contexts/TodosContext';
+import { useCalendarStrip } from '@/hooks/useCalendarStrip';
+import { CalendarStrip } from '@/components/calendar/CalendarStrip';
 import { SearchBar } from '@/components/ui/SearchBar';
 import { Clock, Loader2 } from 'lucide-react';
 import { parseISO, format, isSameDay } from 'date-fns';
@@ -21,12 +23,23 @@ const WhatsAppIcon = ({ className }: { className?: string }) => (
 );
 
 interface RecentActivityViewProps {
-  selectedDate: Date;
-  searchQuery: string;
-  onSearchChange: (query: string) => void;
+  /** Optional: if provided externally, the built-in calendar is hidden */
+  selectedDate?: Date;
+  searchQuery?: string;
+  onSearchChange?: (query: string) => void;
+  /** Hide the built-in calendar (e.g. when parent already shows one) */
+  hideCalendar?: boolean;
 }
 
-export function RecentActivityView({ selectedDate, searchQuery, onSearchChange }: RecentActivityViewProps) {
+export function RecentActivityView({ selectedDate: externalDate, searchQuery: externalSearch, onSearchChange: externalOnSearchChange, hideCalendar = false }: RecentActivityViewProps) {
+  // Internal state for calendar and search when not controlled externally
+  const [internalSearch, setInternalSearch] = useState('');
+  const calendar = useCalendarStrip();
+
+  const selectedDate = externalDate ?? calendar.selectedDate;
+  const searchQuery = externalSearch ?? internalSearch;
+  const onSearchChange = externalOnSearchChange ?? setInternalSearch;
+
   const { prospects, loading: prospectsLoading } = useProspectsQuery();
   const { todos, loading: todosLoading } = useGlobalTodos();
 
@@ -93,6 +106,20 @@ export function RecentActivityView({ selectedDate, searchQuery, onSearchChange }
 
   return (
     <div className="space-y-3">
+      {/* Built-in Calendar Strip */}
+      {!hideCalendar && (
+        <CalendarStrip
+          selectedDate={calendar.selectedDate}
+          daysInMonth={calendar.daysInMonth}
+          monthYearLabel={calendar.monthYearLabel}
+          onSelectDate={calendar.selectDate}
+          onPreviousMonth={calendar.goToPreviousMonth}
+          onNextMonth={calendar.goToNextMonth}
+          onTodayClick={calendar.goToToday}
+          className="rounded-lg"
+        />
+      )}
+
       {/* Search Bar */}
       <SearchBar 
         value={searchQuery} 

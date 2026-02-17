@@ -289,7 +289,7 @@ export default function TodoUp() {
           <TrialBanner tabId="todoup" />
           
           {/* Recent Activity View */}
-          {isRecentActivity && <RecentActivityView selectedDate={calendar.selectedDate} searchQuery={activitySearchQuery} onSearchChange={setActivitySearchQuery} />}
+          {isRecentActivity && <RecentActivityView selectedDate={calendar.selectedDate} searchQuery={activitySearchQuery} onSearchChange={setActivitySearchQuery} hideCalendar />}
 
           {/* Daily Tasks View */}
           {viewMode === 'daily-tasks' && <DailyTasksView selectedDate={calendar.selectedDate} selectedDateString={calendar.selectedDateString} userTasks={userDailyTasks} userTasksLoading={userDailyTasksLoading} markUserTask={markDailyTask} deleteUserTask={deleteDailyTask} />}

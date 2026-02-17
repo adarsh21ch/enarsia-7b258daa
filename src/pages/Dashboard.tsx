@@ -278,11 +278,7 @@ export default function Dashboard() {
 
         {showRecentActivity ? (
           <div className="px-4 pt-2 pb-40 md:pb-24 lg:pb-16">
-            <RecentActivityView 
-              selectedDate={new Date()} 
-              searchQuery={searchQuery} 
-              onSearchChange={setSearchQuery} 
-            />
+            <RecentActivityView />
           </div>
         ) : (
           <>
