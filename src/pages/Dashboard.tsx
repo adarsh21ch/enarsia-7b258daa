@@ -257,7 +257,7 @@ export default function Dashboard() {
             </div>
           </div>
           <div className="flex items-center gap-1">
-            <Button variant="ghost" size="icon" onClick={() => setShowRecentActivity(!showRecentActivity)} className={cn("h-10 w-10 rounded-full", showRecentActivity ? "bg-primary text-primary-foreground hover:bg-primary/90" : "text-muted-foreground")}>
+            <Button variant="ghost" size="icon" onClick={() => setShowRecentActivity(!showRecentActivity)} className={cn("h-10 w-10 rounded-full", showRecentActivity ? "bg-accent text-accent-foreground hover:bg-accent/90" : "text-muted-foreground")}>
               <Clock className="h-[22px] w-[22px]" />
             </Button>
           </div>
