@@ -4640,6 +4640,7 @@ export type Database = {
           user_id: string
         }[]
       }
+      admin_get_nevorai_user_count: { Args: never; Returns: number }
       admin_get_offer_analytics: {
         Args: never
         Returns: {

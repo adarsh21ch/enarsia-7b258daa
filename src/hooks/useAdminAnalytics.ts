@@ -155,10 +155,8 @@ export function useAdminAnalytics() {
         // Get recent payments with user info (deduplicated, from Jan 17, 2026)
         supabase.rpc('admin_get_recent_payments', { limit_count: 50 }),
         
-        // Get total signups count
-        supabase
-          .from('profiles')
-          .select('id', { count: 'exact', head: true }),
+        // Get total Nevorai users count (excludes Achievers Club)
+        supabase.rpc('admin_get_nevorai_user_count'),
 
         // Get revenue stats
         supabase.rpc('admin_get_revenue_stats'),
@@ -233,7 +231,7 @@ export function useAdminAnalytics() {
       }
 
       // Calculate free users (total users minus paid users)
-      const totalSignups = totalSignupsRes.count || 0;
+      const totalSignups = Number(totalSignupsRes.data) || 0;
       const paidUsersCount = (breakdown.pro?.count || 0) + (breakdown.mini?.count || 0);
       freeUsersCount = totalSignups - paidUsersCount;
 
