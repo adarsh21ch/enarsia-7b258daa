@@ -643,22 +643,30 @@ export function ProspectTable({
     }
   };
   const handleAddProspect = async (prospect: Partial<Prospect>) => {
-    // Auto-assign to today's date sheet for Leads tab
-    if (filterMode === 'calling' && getOrCreateTodaySheet) {
+    // If a specific sheet is selected, always use it
+    if (selectedSheetId) {
+      prospect.sheet_id = selectedSheetId;
+    } else if (filterMode === 'calling' && getOrCreateTodaySheet) {
+      // Only auto-assign to today's sheet when viewing "All"
       const todaySheetId = await getOrCreateTodaySheet();
       if (todaySheetId) {
         prospect.sheet_id = todaySheetId;
       }
-    } else if (selectedSheetId) {
-      prospect.sheet_id = selectedSheetId;
     }
     return onAdd(prospect);
   };
   const handleImportProspects = async (prospectsData: Partial<Prospect>[], onProgress?: (imported: number, total: number) => void) => {
     let targetSheetId: string | null = null;
 
-    // Auto-assign to today's date sheet for Leads tab
-    if (filterMode === 'calling' && getOrCreateTodaySheet) {
+    // If a specific sheet is selected, always use it
+    if (selectedSheetId) {
+      targetSheetId = selectedSheetId;
+      prospectsData = prospectsData.map(p => ({
+        ...p,
+        sheet_id: selectedSheetId
+      }));
+    } else if (filterMode === 'calling' && getOrCreateTodaySheet) {
+      // Only auto-assign to today's sheet when viewing "All" (no sheet selected)
       targetSheetId = await getOrCreateTodaySheet();
       if (targetSheetId) {
         prospectsData = prospectsData.map(p => ({
@@ -666,12 +674,6 @@ export function ProspectTable({
           sheet_id: targetSheetId
         }));
       }
-    } else if (selectedSheetId) {
-      targetSheetId = selectedSheetId;
-      prospectsData = prospectsData.map(p => ({
-        ...p,
-        sheet_id: selectedSheetId
-      }));
     }
     const result = await onImport(prospectsData, onProgress);
 
