@@ -165,9 +165,14 @@ export function PlansManager() {
             plan={editingPlan}
             onSave={async (data) => {
             try {
-                // Validation: payment_link is required
-                if (!data.payment_link?.trim()) {
-                  toast.error('Payment link is required');
+                // Validation based on billing_type
+                const billingType = data.billing_type || 'one_time';
+                if (billingType === 'one_time' && !data.payment_link?.trim()) {
+                  toast.error('Payment link is required for one-time plans');
+                  return;
+                }
+                if (billingType === 'recurring' && !data.razorpay_plan_id?.trim()) {
+                  toast.error('Razorpay Plan ID is required for recurring plans');
                   return;
                 }
 
@@ -266,10 +271,21 @@ function PlanCard({
               <Clock className="h-3 w-3" />
               {plan.duration_days} days
             </span>
-            {plan.payment_link && (
+            {plan.billing_type === 'recurring' && (
+              <Badge variant="outline" className="text-xs bg-blue-500/10 text-blue-600 border-blue-500/30">
+                Recurring
+              </Badge>
+            )}
+            {plan.billing_type !== 'recurring' && plan.payment_link && (
               <span className="flex items-center gap-1 truncate max-w-[200px]">
                 <LinkIcon className="h-3 w-3 shrink-0" />
                 <span className="truncate">{plan.payment_link}</span>
+              </span>
+            )}
+            {plan.billing_type === 'recurring' && plan.razorpay_plan_id && (
+              <span className="flex items-center gap-1 truncate max-w-[200px]">
+                <LinkIcon className="h-3 w-3 shrink-0" />
+                <span className="truncate">{plan.razorpay_plan_id}</span>
               </span>
             )}
           </div>
@@ -313,6 +329,8 @@ function PlanEditForm({
     price_inr: plan?.price_inr || 99,
     duration_days: plan?.duration_days || 30,
     payment_link: plan?.payment_link || '',
+    billing_type: (plan?.billing_type || 'one_time') as 'one_time' | 'recurring',
+    razorpay_plan_id: plan?.razorpay_plan_id || '',
     badge_text: plan?.badge_text || '',
     features: (plan?.features || []).join('\n'),
     sort_order: plan?.sort_order || 0,
@@ -402,14 +420,40 @@ function PlanEditForm({
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="payment_link">Razorpay Payment Link</Label>
-        <Input
-          id="payment_link"
-          placeholder="https://rzp.io/..."
-          value={formData.payment_link}
-          onChange={(e) => setFormData(prev => ({ ...prev, payment_link: e.target.value }))}
-        />
+        <Label htmlFor="billing_type">Billing Type</Label>
+        <select
+          id="billing_type"
+          value={formData.billing_type}
+          onChange={(e) => setFormData(prev => ({ ...prev, billing_type: e.target.value as 'one_time' | 'recurring' }))}
+          className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+        >
+          <option value="one_time">One Time</option>
+          <option value="recurring">Recurring</option>
+        </select>
       </div>
+
+      {formData.billing_type === 'one_time' ? (
+        <div className="space-y-2">
+          <Label htmlFor="payment_link">Razorpay Payment Link</Label>
+          <Input
+            id="payment_link"
+            placeholder="https://rzp.io/..."
+            value={formData.payment_link}
+            onChange={(e) => setFormData(prev => ({ ...prev, payment_link: e.target.value }))}
+          />
+        </div>
+      ) : (
+        <div className="space-y-2">
+          <Label htmlFor="razorpay_plan_id">Razorpay Plan ID</Label>
+          <Input
+            id="razorpay_plan_id"
+            placeholder="plan_XXXXX"
+            value={formData.razorpay_plan_id}
+            onChange={(e) => setFormData(prev => ({ ...prev, razorpay_plan_id: e.target.value }))}
+          />
+          <p className="text-xs text-muted-foreground">Create a plan in Razorpay Dashboard → Subscriptions → Plans</p>
+        </div>
+      )}
 
       <div className="space-y-2">
         <Label htmlFor="badge_text">Badge Text (optional)</Label>

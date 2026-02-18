@@ -170,5 +170,101 @@ export function useRazorpay() {
     }
   }, [user, loadRazorpayScript, toast, config.plans]);
 
-  return { initiatePayment, loading };
+  const initiateSubscription = useCallback(async (options?: RazorpayOptions) => {
+    if (!user) {
+      toast({
+        title: "Login Required",
+        description: "Please login to upgrade.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const planKey = options?.planType || 'monthly';
+    setLoading(true);
+
+    try {
+      // Load Razorpay script
+      const scriptLoaded = await loadRazorpayScript();
+      if (!scriptLoaded) {
+        throw new Error('Failed to load payment gateway');
+      }
+
+      // Create subscription via edge function
+      const { data, error } = await supabase.functions.invoke('create-razorpay-subscription', {
+        body: {
+          user_id: user.id,
+          user_email: user.email,
+          plan_type: planKey,
+        },
+      });
+
+      if (error) {
+        throw new Error(error.message || 'Failed to create subscription');
+      }
+      if (data?.error) {
+        throw new Error(data.error);
+      }
+      if (!data?.subscription_id) {
+        throw new Error('Failed to create subscription');
+      }
+
+      const { subscription_id, key_id } = data;
+
+      // Open Razorpay checkout with subscription_id
+      const razorpayOptions = {
+        key: key_id,
+        subscription_id: subscription_id,
+        name: BRAND_NAME,
+        description: `Recurring Pro Plan`,
+        prefill: {
+          email: user.email,
+        },
+        theme: {
+          color: '#3b82f6',
+        },
+        handler: function(response: any) {
+          console.log('Subscription payment successful', response);
+          // Redirect to success page - webhook will activate access
+          const params = new URLSearchParams({
+            type: 'subscription',
+            subscription_id: subscription_id,
+            razorpay_payment_id: response.razorpay_payment_id || '',
+            razorpay_subscription_id: response.razorpay_subscription_id || subscription_id,
+          });
+          window.location.href = `${window.location.origin}/payment-success?${params.toString()}`;
+        },
+        modal: {
+          ondismiss: () => {
+            setLoading(false);
+          },
+        },
+      };
+
+      const razorpay = new window.Razorpay(razorpayOptions);
+      razorpay.on('payment.failed', (response: any) => {
+        console.error('Subscription payment failed:', response.error);
+        toast({
+          title: "Payment Failed",
+          description: response.error?.description || "Something went wrong. Please try again.",
+          variant: "destructive",
+        });
+        options?.onError?.(response.error?.description);
+        setLoading(false);
+      });
+
+      razorpay.open();
+    } catch (err: any) {
+      console.error('Subscription initiation error:', err);
+      toast({
+        title: "Payment Error",
+        description: err.message || "Could not initiate subscription. Please try again.",
+        variant: "destructive",
+      });
+      options?.onError?.(err.message);
+      setLoading(false);
+    }
+  }, [user, loadRazorpayScript, toast]);
+
+  return { initiatePayment, initiateSubscription, loading };
 }

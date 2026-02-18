@@ -14,6 +14,8 @@ export interface SubscriptionPlan {
   price_inr: number;
   duration_days: number;
   payment_link: string | null;
+  billing_type: 'one_time' | 'recurring';
+  razorpay_plan_id: string | null;
   features: string[];
   is_active: boolean;
   is_default: boolean;
@@ -70,6 +72,8 @@ export const SAFE_DEFAULTS: AppConfig = {
       price_inr: 299,
       duration_days: 180,
       payment_link: 'https://rzp.io/rzp/CPQRHdp',
+      billing_type: 'one_time' as const,
+      razorpay_plan_id: null,
       features: [
         'Unlimited prospects',
         'Auto-sync from teammates',
@@ -90,6 +94,8 @@ export const SAFE_DEFAULTS: AppConfig = {
       price_inr: 99,
       duration_days: 30,
       payment_link: 'https://rzp.io/rzp/HhAdokE',
+      billing_type: 'one_time' as const,
+      razorpay_plan_id: null,
       features: [
         'Unlimited prospects',
         'Manual personal tracking',

@@ -68,3 +68,6 @@ verify_jwt = false
 
 [functions.og-share]
 verify_jwt = false
+
+[functions.create-razorpay-subscription]
+verify_jwt = false

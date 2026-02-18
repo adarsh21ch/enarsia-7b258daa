@@ -16,23 +16,33 @@ interface UpgradeCardProps {
 export function UpgradeCard({ appContext = 'nevorai' }: UpgradeCardProps) {
   const { isPro, isPaid, isAdminOverride, daysRemaining, subscription, loading, refetch } = useSubscription();
   const { isPaid: permPaid, isLoading: permLoading } = usePermissions();
-  const { initiatePayment, loading: paymentLoading } = useRazorpay();
+  const { initiatePayment, initiateSubscription, loading: paymentLoading } = useRazorpay();
   const { toast } = useToast();
   const [selectedPlan, setSelectedPlan] = useState<PlanType>('quarterly');
 
   const handleUpgrade = (planType: PlanType) => {
+    const plan = PLAN_CONFIG[planType];
+    
+    // Route to correct flow based on billing_type
+    if (plan?.billing_type === 'recurring') {
+      initiateSubscription({
+        planType,
+        onSuccess: () => {
+          toast({ title: "Subscription Started 🎉", description: "Your recurring plan has been initiated." });
+          refetch();
+        },
+        onError: (error) => console.error('Subscription error:', error),
+      });
+      return;
+    }
+    
     initiatePayment({
       planType,
       onSuccess: () => {
-        toast({
-          title: "Pro Activated 🎉",
-          description: "Welcome to premium! All features are now unlocked.",
-        });
+        toast({ title: "Pro Activated 🎉", description: "Welcome to premium! All features are now unlocked." });
         refetch();
       },
-      onError: (error) => {
-        console.error('Payment error:', error);
-      }
+      onError: (error) => console.error('Payment error:', error),
     });
   };
 

@@ -24,9 +24,6 @@ async function verifySignature(payload: string, signature: string, secret: strin
   return expectedSignature === signature;
 }
 
-// NO HARDCODED DURATION MAPPING - Admin Panel is the single source of truth
-// Duration MUST come from order notes (set by create-razorpay-order from database)
-
 // Log payment to database
 async function logPayment(
   supabase: any, 
@@ -57,8 +54,91 @@ async function logPayment(
   }
 }
 
+// Helper: find user by email from profiles table
+async function findUserByEmail(supabase: any, email: string) {
+  const { data, error } = await supabase
+    .from('profiles')
+    .select('user_id')
+    .ilike('email', email)
+    .maybeSingle();
+  if (error) throw error;
+  return data?.user_id || null;
+}
+
+// Helper: upsert app subscription
+async function upsertAppSub(supabase: any, userId: string, updates: any) {
+  const { data: existingSub } = await supabase
+    .from('user_subscriptions')
+    .select('id')
+    .eq('user_id', userId)
+    .maybeSingle();
+
+  if (existingSub) {
+    const { error } = await supabase
+      .from('user_subscriptions')
+      .update(updates)
+      .eq('user_id', userId);
+    if (error) throw error;
+  } else {
+    const { error } = await supabase
+      .from('user_subscriptions')
+      .insert({ user_id: userId, ...updates });
+    if (error) throw error;
+  }
+}
+
+// Helper: upsert funnel subscription
+async function upsertFunnelSub(supabase: any, userId: string, updates: any) {
+  const { data: existingSub } = await supabase
+    .from('user_funnel_subscriptions')
+    .select('id')
+    .eq('user_id', userId)
+    .maybeSingle();
+
+  if (existingSub) {
+    const { error } = await supabase
+      .from('user_funnel_subscriptions')
+      .update(updates)
+      .eq('user_id', userId);
+    if (error) throw error;
+  } else {
+    const { error } = await supabase
+      .from('user_funnel_subscriptions')
+      .insert({ user_id: userId, ...updates });
+    if (error) throw error;
+  }
+}
+
+// Helper: activate subscription based on scope
+async function activateSubscription(supabase: any, userId: string, planScope: string, updates: any) {
+  if (planScope === 'funnels') {
+    await upsertFunnelSub(supabase, userId, updates);
+  } else if (planScope === 'combined') {
+    await upsertAppSub(supabase, userId, updates);
+    await upsertFunnelSub(supabase, userId, updates);
+  } else {
+    await upsertAppSub(supabase, userId, updates);
+  }
+}
+
+// Look up plan by razorpay_plan_id to get duration_days and plan_scope
+async function lookupPlanByRazorpayId(supabase: any, razorpayPlanId: string) {
+  const { data, error } = await supabase
+    .from('admin_subscription_plans')
+    .select('plan_key, duration_days')
+    .eq('razorpay_plan_id', razorpayPlanId)
+    .maybeSingle();
+  if (error) throw error;
+  if (!data) return null;
+  
+  let planScope = 'app';
+  if (data.plan_key.startsWith('funnels_')) planScope = 'funnels';
+  if (data.plan_key.startsWith('combined_')) planScope = 'combined';
+  
+  return { duration_days: data.duration_days, plan_scope: planScope };
+}
+
 Deno.serve(async (req) => {
-  // Handle CORS preflight
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
@@ -70,7 +150,6 @@ Deno.serve(async (req) => {
     });
   }
 
-  // Initialize Supabase client with service role
   const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
   const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
   const supabase = createClient(supabaseUrl, supabaseServiceKey);
@@ -85,19 +164,16 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Get the raw body and signature
     const rawBody = await req.text();
     const signature = req.headers.get('x-razorpay-signature');
 
     if (!signature) {
-      console.error('Missing x-razorpay-signature header');
       return new Response(JSON.stringify({ error: 'Missing signature' }), {
         status: 401,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       });
     }
 
-    // Verify the signature
     const isValid = await verifySignature(rawBody, signature, webhookSecret);
     if (!isValid) {
       console.error('Invalid webhook signature');
@@ -109,18 +185,16 @@ Deno.serve(async (req) => {
 
     console.log('Webhook signature verified successfully');
 
-    // Parse the webhook payload
     const payload = JSON.parse(rawBody);
     const event = payload.event;
-
     console.log('Received Razorpay event:', event);
 
-    // Handle payment.captured event
+    // =========================================
+    // ONE-TIME: payment.captured (existing flow)
+    // =========================================
     if (event === 'payment.captured') {
       const payment = payload.payload?.payment?.entity;
-      
       if (!payment) {
-        console.error('No payment entity in payload');
         return new Response(JSON.stringify({ error: 'Invalid payload structure' }), {
           status: 400,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' }
@@ -128,35 +202,25 @@ Deno.serve(async (req) => {
       }
 
       const paymentId = payment.id;
-      const amount = payment.amount; // in paise
+      const amount = payment.amount;
       const notes = payment.notes || {};
-
-      // Try to get email from multiple sources:
-      // 1. payment.notes.user_email (from our dynamic order)
-      // 2. payment.email (from Razorpay)
       const email = notes.user_email || payment.email;
 
-      console.log(`Payment captured: ${paymentId}, email: ${email}, amount: ${amount}, notes:`, JSON.stringify(notes));
+      console.log(`Payment captured: ${paymentId}, email: ${email}, amount: ${amount}`);
 
       if (!email) {
-        console.error('No email in payment entity or notes');
         await logPayment(supabase, 'payment.captured', null, paymentId, amount, 'error', 'No email found', null, false, payload);
-        // Return 200 to prevent Razorpay from retrying
-        return new Response(JSON.stringify({ error: 'No email in payment - cannot identify user' }), {
+        return new Response(JSON.stringify({ error: 'No email in payment' }), {
           status: 200,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' }
         });
       }
 
-      // Find the user by email using profiles table (more reliable than auth.admin.listUsers)
-      const { data: profileData, error: profileError } = await supabase
-        .from('profiles')
-        .select('user_id')
-        .ilike('email', email)
-        .maybeSingle();
-      
-      if (profileError) {
-        console.error('Error fetching profile:', profileError);
+      let userId: string | null = null;
+      try {
+        userId = await findUserByEmail(supabase, email);
+      } catch (err) {
+        console.error('Error fetching profile:', err);
         await logPayment(supabase, 'payment.captured', email, paymentId, amount, 'error', 'Failed to fetch profile', null, false, payload);
         return new Response(JSON.stringify({ error: 'Failed to fetch user profile' }), {
           status: 500,
@@ -164,131 +228,41 @@ Deno.serve(async (req) => {
         });
       }
 
-      if (!profileData) {
-        console.error(`User not found for email: ${email}`);
+      if (!userId) {
         await logPayment(supabase, 'payment.captured', email, paymentId, amount, 'error', 'User not found', null, false, payload);
-        // Return 200 to prevent retries
         return new Response(JSON.stringify({ error: 'User not found' }), {
           status: 200,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' }
         });
       }
 
-      const userId = profileData.user_id;
-      console.log(`Found user: ${userId} for email: ${email}`);
-
-      // CRITICAL: Get duration_days from order notes - NO FALLBACK
       const durationDays = notes.duration_days ? parseInt(notes.duration_days) : null;
-      const planScope = notes.plan_scope || 'app'; // 'app', 'funnels', or 'combined'
+      const planScope = notes.plan_scope || 'app';
       
       if (!durationDays) {
-        console.error('Missing duration_days in payment notes');
         await logPayment(supabase, 'payment.captured', email, paymentId, amount, 'error', 'Missing duration_days in notes', userId, true, payload);
-        return new Response(JSON.stringify({ 
-          error: 'Payment processed but duration not found. Contact support.',
-          payment_id: paymentId,
-          user_id: userId
-        }), {
+        return new Response(JSON.stringify({ error: 'Missing duration_days' }), {
           status: 200,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' }
         });
       }
 
-      console.log(`Duration: ${durationDays} days, Scope: ${planScope}`);
-
       const now = new Date();
       const expiresAt = new Date(now);
       expiresAt.setDate(expiresAt.getDate() + durationDays);
-      const paymentReference = paymentId;
-
-      // Helper to upsert app subscription
-      const upsertAppSub = async () => {
-        const { data: existingSub } = await supabase
-          .from('user_subscriptions')
-          .select('id')
-          .eq('user_id', userId)
-          .maybeSingle();
-
-        if (existingSub) {
-          const { error } = await supabase
-            .from('user_subscriptions')
-            .update({
-              plan: 'pro',
-              status: 'active',
-              subscribed_at: now.toISOString(),
-              expires_at: expiresAt.toISOString(),
-              payment_id: paymentReference,
-              updated_at: now.toISOString()
-            })
-            .eq('user_id', userId);
-          if (error) throw error;
-        } else {
-          const { error } = await supabase
-            .from('user_subscriptions')
-            .insert({
-              user_id: userId,
-              plan: 'pro',
-              status: 'active',
-              subscribed_at: now.toISOString(),
-              expires_at: expiresAt.toISOString(),
-              payment_id: paymentReference
-            });
-          if (error) throw error;
-        }
-      };
-
-      // Helper to upsert funnel subscription
-      const upsertFunnelSub = async () => {
-        const { data: existingSub } = await supabase
-          .from('user_funnel_subscriptions')
-          .select('id')
-          .eq('user_id', userId)
-          .maybeSingle();
-
-        if (existingSub) {
-          const { error } = await supabase
-            .from('user_funnel_subscriptions')
-            .update({
-              plan: 'pro',
-              status: 'active',
-              subscribed_at: now.toISOString(),
-              expires_at: expiresAt.toISOString(),
-              payment_id: paymentReference,
-              updated_at: now.toISOString()
-            })
-            .eq('user_id', userId);
-          if (error) throw error;
-        } else {
-          const { error } = await supabase
-            .from('user_funnel_subscriptions')
-            .insert({
-              user_id: userId,
-              plan: 'pro',
-              status: 'active',
-              subscribed_at: now.toISOString(),
-              expires_at: expiresAt.toISOString(),
-              payment_id: paymentReference
-            });
-          if (error) throw error;
-        }
-      };
 
       try {
-        if (planScope === 'funnels') {
-          await upsertFunnelSub();
-          console.log(`Funnels Pro activated (${durationDays} days) for user: ${userId}`);
-          await logPayment(supabase, 'payment.captured', email, paymentId, amount, 'success', `Funnels Pro (${durationDays} days)`, userId, true, null);
-        } else if (planScope === 'combined') {
-          await upsertAppSub();
-          await upsertFunnelSub();
-          console.log(`Combined Pro activated (${durationDays} days) for user: ${userId}`);
-          await logPayment(supabase, 'payment.captured', email, paymentId, amount, 'success', `Combined Pro (${durationDays} days)`, userId, true, null);
-        } else {
-          // Default: app only
-          await upsertAppSub();
-          console.log(`App Pro activated (${durationDays} days) for user: ${userId}`);
-          await logPayment(supabase, 'payment.captured', email, paymentId, amount, 'success', `App Pro (${durationDays} days)`, userId, true, null);
-        }
+        await activateSubscription(supabase, userId, planScope, {
+          plan: 'pro',
+          status: 'active',
+          subscribed_at: now.toISOString(),
+          expires_at: expiresAt.toISOString(),
+          payment_id: paymentId,
+          updated_at: now.toISOString(),
+        });
+
+        console.log(`Pro activated (${durationDays} days, scope: ${planScope}) for user: ${userId}`);
+        await logPayment(supabase, 'payment.captured', email, paymentId, amount, 'success', `Pro ${planScope} (${durationDays} days)`, userId, true, null);
       } catch (subError) {
         console.error('Error updating subscription:', subError);
         await logPayment(supabase, 'payment.captured', email, paymentId, amount, 'error', 'Failed to update subscription', userId, true, null);
@@ -300,7 +274,6 @@ Deno.serve(async (req) => {
 
       return new Response(JSON.stringify({ 
         success: true, 
-        message: 'User marked as Pro',
         user_id: userId,
         plan: 'pro',
         duration_days: durationDays,
@@ -309,6 +282,200 @@ Deno.serve(async (req) => {
         status: 200,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       });
+    }
+
+    // =========================================
+    // RECURRING: subscription.activated
+    // =========================================
+    if (event === 'subscription.activated') {
+      const subscription = payload.payload?.subscription?.entity;
+      if (!subscription) {
+        return new Response(JSON.stringify({ error: 'Invalid payload' }), {
+          status: 400,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      }
+
+      const subId = subscription.id;
+      const notes = subscription.notes || {};
+      const email = notes.user_email;
+      const razorpayPlanId = subscription.plan_id;
+
+      console.log(`Subscription activated: ${subId}, email: ${email}, plan: ${razorpayPlanId}`);
+
+      if (!email) {
+        await logPayment(supabase, 'subscription.activated', null, subId, null, 'error', 'No email in notes', null, false, payload);
+        return new Response(JSON.stringify({ error: 'No email' }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+      }
+
+      const userId = await findUserByEmail(supabase, email);
+      if (!userId) {
+        await logPayment(supabase, 'subscription.activated', email, subId, null, 'error', 'User not found', null, false, payload);
+        return new Response(JSON.stringify({ error: 'User not found' }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+      }
+
+      // Look up duration from plan config
+      let durationDays = notes.duration_days ? parseInt(notes.duration_days) : null;
+      let planScope = notes.plan_scope || 'app';
+
+      if (!durationDays && razorpayPlanId) {
+        const planInfo = await lookupPlanByRazorpayId(supabase, razorpayPlanId);
+        if (planInfo) {
+          durationDays = planInfo.duration_days;
+          planScope = planInfo.plan_scope;
+        }
+      }
+
+      if (!durationDays) {
+        await logPayment(supabase, 'subscription.activated', email, subId, null, 'error', 'Missing duration_days', userId, true, payload);
+        return new Response(JSON.stringify({ error: 'Missing duration' }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+      }
+
+      const now = new Date();
+      const expiresAt = new Date(now);
+      expiresAt.setDate(expiresAt.getDate() + durationDays);
+
+      try {
+        await activateSubscription(supabase, userId, planScope, {
+          plan: 'pro',
+          status: 'active',
+          subscribed_at: now.toISOString(),
+          expires_at: expiresAt.toISOString(),
+          razorpay_subscription_id: subId,
+          updated_at: now.toISOString(),
+        });
+
+        console.log(`Subscription Pro activated (${durationDays} days, scope: ${planScope}) for user: ${userId}`);
+        await logPayment(supabase, 'subscription.activated', email, subId, null, 'success', `Sub Pro ${planScope} (${durationDays} days)`, userId, true, null);
+      } catch (err) {
+        console.error('Error activating subscription:', err);
+        await logPayment(supabase, 'subscription.activated', email, subId, null, 'error', 'Failed to activate', userId, true, null);
+      }
+
+      return new Response(JSON.stringify({ success: true }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    }
+
+    // =========================================
+    // RECURRING: subscription.charged (renewal)
+    // =========================================
+    if (event === 'subscription.charged') {
+      const subscription = payload.payload?.subscription?.entity;
+      const payment = payload.payload?.payment?.entity;
+      if (!subscription) {
+        return new Response(JSON.stringify({ error: 'Invalid payload' }), {
+          status: 400,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      }
+
+      const subId = subscription.id;
+      const razorpayPlanId = subscription.plan_id;
+      const notes = subscription.notes || {};
+      const email = notes.user_email;
+      const paymentId = payment?.id || null;
+      const amount = payment?.amount || null;
+
+      console.log(`Subscription charged: ${subId}, payment: ${paymentId}`);
+
+      // Get duration from plan config
+      let durationDays = notes.duration_days ? parseInt(notes.duration_days) : null;
+      let planScope = notes.plan_scope || 'app';
+
+      if (!durationDays && razorpayPlanId) {
+        const planInfo = await lookupPlanByRazorpayId(supabase, razorpayPlanId);
+        if (planInfo) {
+          durationDays = planInfo.duration_days;
+          planScope = planInfo.plan_scope;
+        }
+      }
+
+      if (!durationDays) {
+        await logPayment(supabase, 'subscription.charged', email, paymentId, amount, 'error', 'Missing duration', null, false, payload);
+        return new Response(JSON.stringify({ error: 'Missing duration' }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+      }
+
+      // Find user by razorpay_subscription_id
+      const tables = planScope === 'funnels' ? ['user_funnel_subscriptions'] : 
+                     planScope === 'combined' ? ['user_subscriptions', 'user_funnel_subscriptions'] : 
+                     ['user_subscriptions'];
+
+      for (const table of tables) {
+        const { data: sub } = await supabase
+          .from(table)
+          .select('user_id, expires_at')
+          .eq('razorpay_subscription_id', subId)
+          .maybeSingle();
+
+        if (sub) {
+          // Extend expiry from current expiry or now, whichever is later
+          const currentExpiry = sub.expires_at ? new Date(sub.expires_at) : new Date();
+          const base = currentExpiry > new Date() ? currentExpiry : new Date();
+          const newExpiry = new Date(base);
+          newExpiry.setDate(newExpiry.getDate() + durationDays);
+
+          const { error } = await supabase
+            .from(table)
+            .update({
+              expires_at: newExpiry.toISOString(),
+              status: 'active',
+              updated_at: new Date().toISOString(),
+            })
+            .eq('razorpay_subscription_id', subId);
+
+          if (error) console.error(`Error extending ${table}:`, error);
+          else console.log(`Extended ${table} by ${durationDays} days for sub ${subId}`);
+        }
+      }
+
+      await logPayment(supabase, 'subscription.charged', email, paymentId, amount, 'success', `Renewal +${durationDays} days`, null, true, null);
+      return new Response(JSON.stringify({ success: true }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    }
+
+    // =========================================
+    // RECURRING: subscription.cancelled
+    // =========================================
+    if (event === 'subscription.cancelled') {
+      const subscription = payload.payload?.subscription?.entity;
+      if (!subscription) {
+        return new Response(JSON.stringify({ error: 'Invalid payload' }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+      }
+
+      const subId = subscription.id;
+      console.log(`Subscription cancelled: ${subId}`);
+
+      // Update status in both tables (whichever has this subscription)
+      for (const table of ['user_subscriptions', 'user_funnel_subscriptions']) {
+        await supabase
+          .from(table)
+          .update({ status: 'cancelled', updated_at: new Date().toISOString() })
+          .eq('razorpay_subscription_id', subId);
+      }
+
+      await logPayment(supabase, 'subscription.cancelled', null, subId, null, 'success', 'Subscription cancelled', null, true, null);
+      return new Response(JSON.stringify({ success: true }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    }
+
+    // =========================================
+    // RECURRING: subscription.completed
+    // =========================================
+    if (event === 'subscription.completed') {
+      const subscription = payload.payload?.subscription?.entity;
+      if (!subscription) {
+        return new Response(JSON.stringify({ error: 'Invalid payload' }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+      }
+
+      const subId = subscription.id;
+      console.log(`Subscription completed: ${subId}`);
+
+      for (const table of ['user_subscriptions', 'user_funnel_subscriptions']) {
+        await supabase
+          .from(table)
+          .update({ status: 'expired', updated_at: new Date().toISOString() })
+          .eq('razorpay_subscription_id', subId);
+      }
+
+      await logPayment(supabase, 'subscription.completed', null, subId, null, 'success', 'Subscription completed', null, true, null);
+      return new Response(JSON.stringify({ success: true }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
 
     // For other events, just acknowledge
