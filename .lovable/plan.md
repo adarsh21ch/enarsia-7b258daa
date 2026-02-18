@@ -1,56 +1,131 @@
 
 
-# Fix Plan Creation Bug and Improve Feature Flags Module Grouping
+# Restructure Upgrade UI: Two Tier Cards (Pro + Premium)
 
-## Issues Found
+## Overview
 
-1. **Plan creation error** -- "duplicate key value violates unique constraint" occurs because the user tried creating a new Premium plan with `plan_key = 'monthly'`, which already exists. The form needs to validate uniqueness and auto-suggest unique keys.
+Replace the current "flat list of plan cards" in both `UpgradeDrawer` and `FunnelsUpgradeDrawer` with a **two-card layout** grouped by tier. Each card (Pro / Premium) shows feature highlights at the top, duration options as selectable radio-style buttons inside, and a single "Upgrade Now" CTA.
 
-2. **All feature flags have `module = 'application'`** -- The migration defaulted everything to `application`. Funnel-related features (like `funnel_create`, `funnel_video_upload`, etc.) need to be updated to `module = 'funnels'`.
-
-3. **Feature flags UI doesn't group by module** -- Currently groups by category only (Calling, Leads, etc.), making it hard to see which features belong to Application vs Funnels.
+No database, webhook, or subscription logic changes.
 
 ---
 
-## Fix 1: Plan Key Duplicate Prevention
+## Current State
 
-**File: `src/components/admin/PlansManager.tsx`**
+- **UpgradeDrawer** (main app): Shows all plans as individual selectable cards (Pro Monthly, Pro 4 Months, Premium Monthly)
+- **FunnelsUpgradeDrawer**: Separate drawer filtering for `funnels_` / `combined_` plan keys (now deleted) -- effectively broken
+- **UpgradeModal**: Used for lead-limit prompts, shows primary + secondary plan cards
 
-- When creating a new plan, auto-generate a unique `plan_key` based on tier and billing type (e.g., `premium_monthly`, `premium_yearly`)
-- Show a validation error if the user manually enters a `plan_key` that already exists
-- Display a user-friendly toast with the actual error ("A plan with this key already exists") instead of the generic "Failed to save plan"
+### Active Plans in Database
 
-## Fix 2: Update Funnel Feature Flags Module
+| plan_key | tier | price | duration | billing |
+|---|---|---|---|---|
+| monthly | pro | 99 | 30 days | recurring |
+| pro_4_months | pro | 299 | 120 days | one_time |
+| premium_recurring | premium | 499 | 30 days | recurring |
 
-**Database update (data fix, not schema):**
+---
 
-Update all feature flags with `category = 'funnels'` or `feature_key LIKE 'funnel_%'` to set `module = 'funnels'` instead of `'application'`.
+## New UI Structure
 
-Affected features:
-- `funnel_create`, `funnel_advanced_analytics`, `funnel_custom_branding`
-- `funnel_lead_export`, `funnel_max_funnels`, `funnel_max_leads`
-- `funnel_price_options`, `funnel_qr_code`, `funnel_video_upload`
-- `funnel_whatsapp_auto`, `funnel_analytics`
-
-## Fix 3: Feature Flags UI -- Group by Module First, Then Category
-
-**File: `src/components/admin/FeatureFlagsManager.tsx`**
-
-- Primary grouping: **Module** (Application / TrackUp / Funnels) with clear section headers
-- Secondary grouping: **Category** within each module
-- Each module section gets a distinct header with a colored border/background
-- This gives the admin a clear view of which features belong to which app
-
-### Visual structure:
 ```text
---- APPLICATION ---
-  Calling: [flags...]
-  Leads: [flags...]
-  Team: [flags...]
-  
---- FUNNELS ---
-  Funnels: [flags...]
++------------------------------------------+
+| Unlock Pro Features                      |
+| Choose a plan that works for you         |
++------------------------------------------+
+|                                          |
+| +--------------------------------------+ |
+| | PRO                                  | |
+| | Full Application Access              | |
+| | TrackUp Dashboard                    | |
+| | Higher limits                        | |
+| | Productivity tools                   | |
+| |                                      | |
+| | ( ) 1 Month - Rs.99/mo  [recurring]  | |
+| | (x) 4 Months - Rs.74/mo [Best Value] | |
+| +--------------------------------------+ |
+|                                          |
+| +======================================+ |
+| | PREMIUM  [Recommended for Leaders]   | |
+| | Everything in Pro                    | |
+| | Nevorai Funnels                      | |
+| | Funnel Insights                      | |
+| | Advanced analytics                   | |
+| | Leader tools                         | |
+| |                                      | |
+| | (x) 1 Month - Rs.499/mo [recurring]  | |
+| +======================================+ |
+|                                          |
+| [  Upgrade Now - Get Pro 4 Months Rs.299 ]|
+| Secure payment via Razorpay              |
++------------------------------------------+
 ```
+
+---
+
+## Implementation Details
+
+### 1. Rewrite `UpgradeDrawer.tsx` PlanContent
+
+**Group plans by tier:**
+- Fetch plans via `usePaymentLinks()` (no change to data layer)
+- Group: `proPlans = plans.filter(p => p.tier === 'pro')`, `premiumPlans = plans.filter(p => p.tier === 'premium')`
+- Ignore `basic` tier plans
+
+**Tier Card component (`TierCard`):**
+- Props: `tierName`, `plans[]`, `features[]`, `isPremium`, `selectedPlanKey`, `onSelectPlan`
+- Header: tier name + feature highlights (hardcoded per tier or from first plan's features)
+- Body: radio-style duration options for each plan in that tier
+  - Shows: duration label, price, per-month calculation for multi-month, badge text
+  - Clicking selects that plan_key
+- Premium card gets: amber/gold border highlight, "Recommended for Leaders" badge, slightly different button color emphasis
+
+**Selection state:**
+- Single `selectedPlanKey` state across both cards
+- Selecting a duration in either card deselects the other
+- Bottom CTA button dynamically shows selected plan name + price
+
+**Keep existing:**
+- Coupon code section (unchanged)
+- Payment handler logic (unchanged -- `handleUpgrade` with `initiatePayment` / `initiateSubscription`)
+- Mobile Drawer vs Desktop Sheet pattern (unchanged)
+- Trigger button variants (unchanged)
+
+### 2. Update `FunnelsUpgradeDrawer.tsx`
+
+Replace the entire content to reuse the same tier-card pattern:
+- Remove dependency on `useFunnelSubscription` (use `useSubscription` instead)
+- Show the same two tier cards (Pro + Premium)
+- Premium card is pre-selected by default (since this is the funnel upgrade context)
+- Keep the same Drawer/Sheet mobile/desktop pattern
+
+### 3. Update `UpgradeModal.tsx`
+
+Apply the same two-tier-card layout inside the modal dialog:
+- Group plans by tier
+- Show Pro and Premium as two cards with duration selectors
+- Keep existing lead-limit messaging and CTA logic
+
+### 4. Feature Highlights (Hardcoded per Tier)
+
+**Pro:**
+- Full Application Access (Calling + Follow-up)
+- TrackUp Dashboard (Advanced Tracking)
+- Higher Limits and Productivity Tools
+- Faster Workflow and Automation
+
+**Premium:**
+- Everything in Pro
+- Nevorai Funnels
+- Funnel Videos Insights
+- Advanced Analytics
+- Leader Tools
+- Premium Support
+
+### 5. Visual Differentiation
+
+- **Pro card**: Standard border (`border-border`), primary color accents
+- **Premium card**: Gold/amber border (`border-amber-500/50`), subtle gradient background, "Recommended for Leaders" badge at top-right, amber-tinted CTA when selected
 
 ---
 
@@ -58,6 +133,17 @@ Affected features:
 
 | File | Change |
 |---|---|
-| `src/components/admin/PlansManager.tsx` | Add plan_key uniqueness validation, better error messages |
-| `src/components/admin/FeatureFlagsManager.tsx` | Group by module first, then by category |
-| Database (data update) | Set `module = 'funnels'` for funnel-related feature flags |
+| `src/components/subscription/UpgradeDrawer.tsx` | Rewrite PlanContent to use TierCard grouping with duration selectors |
+| `src/components/subscription/UpgradeModal.tsx` | Same tier-card layout inside the modal |
+| `src/components/funnels/FunnelsUpgradeDrawer.tsx` | Replace with unified tier cards, remove `useFunnelSubscription` dependency |
+
+## Files NOT Modified
+
+- `usePaymentLinks.ts` -- data layer stays the same
+- `useSubscription.ts` -- no changes
+- `useRazorpay.ts` -- no changes
+- `useAdminConfig.ts` -- no changes
+- Database schema -- no changes
+- Edge functions -- no changes
+- Webhook logic -- no changes
+
