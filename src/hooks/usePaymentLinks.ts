@@ -20,6 +20,7 @@ export interface PlanConfig {
   badgeText?: string | null;
   isDefault?: boolean;
   sortOrder: number;
+  tier: 'basic' | 'pro' | 'premium';
 }
 
 // Legacy constants for backward compatibility (will be overridden by dynamic config)
@@ -37,6 +38,7 @@ export const PLAN_CONFIG: Record<string, PlanConfig> = {
     price: 299,
     paymentLink: PAYMENT_LINKS.pro_6_months,
     billing_type: 'one_time',
+    tier: 'pro',
     description: '6 Months Access – Best Value',
     durationDays: 180,
     badgeText: 'Best Value',
@@ -57,6 +59,7 @@ export const PLAN_CONFIG: Record<string, PlanConfig> = {
     price: 99,
     paymentLink: PAYMENT_LINKS.monthly,
     billing_type: 'one_time',
+    tier: 'pro',
     description: '1 Month Access',
     durationDays: 30,
     sortOrder: 2,
@@ -89,6 +92,7 @@ export function usePaymentLinks() {
     badgeText: plan.badge_text,
     isDefault: plan.is_default,
     sortOrder: plan.sort_order || 0,
+    tier: plan.tier || 'pro',
   }));
 
   // Get dynamic free lead limit from config
