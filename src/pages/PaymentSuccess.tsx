@@ -43,9 +43,44 @@ export default function PaymentSuccess() {
     }
 
     if (user) {
-      verifyAndActivate();
+      const type = searchParams.get('type');
+      if (type === 'subscription') {
+        handleSubscriptionActivation();
+      } else {
+        verifyAndActivate();
+      }
     }
   }, [user, authLoading]);
+
+  // Poll for subscription activation via webhook
+  const handleSubscriptionActivation = async () => {
+    setStatus('processing');
+    const subId = searchParams.get('subscription_id');
+    
+    // Poll user_subscriptions for up to 30 seconds
+    for (let i = 0; i < 10; i++) {
+      const { data } = await supabase
+        .from('user_subscriptions')
+        .select('plan, status, expires_at, razorpay_subscription_id')
+        .eq('user_id', user!.id)
+        .eq('status', 'active')
+        .maybeSingle();
+
+      if (data && data.plan === 'pro' && (data.razorpay_subscription_id === subId || !subId)) {
+        await refetch();
+        setStatus('success');
+        setPlanScope('app');
+        toast({ title: "Pro Plan Activated!", description: "Your recurring subscription is now active." });
+        return;
+      }
+      await new Promise(r => setTimeout(r, 3000));
+    }
+
+    // If we get here, webhook hasn't fired yet but payment went through
+    setStatus('success');
+    setPlanScope('app');
+    toast({ title: "Subscription Initiated!", description: "Your plan will activate shortly." });
+  };
 
   const verifyAndActivate = async () => {
     try {
@@ -53,17 +88,12 @@ export default function PaymentSuccess() {
       const razorpayOrderId = searchParams.get('razorpay_order_id');
       const razorpaySignature = searchParams.get('razorpay_signature');
 
-      // Check if we have all required parameters
       if (!razorpayPaymentId || !razorpayOrderId || !razorpaySignature) {
-        console.error('Missing payment parameters');
         setStatus('missing_params');
         setErrorMessage('Payment information is incomplete. If you completed payment, please contact support.');
         return;
       }
 
-      console.log('Verifying payment...', { razorpayPaymentId, razorpayOrderId });
-
-      // Verify payment on server
       const { data, error } = await supabase.functions.invoke('verify-razorpay-payment', {
         body: {
           razorpay_order_id: razorpayOrderId,
@@ -74,19 +104,16 @@ export default function PaymentSuccess() {
       });
 
       if (error || !data?.success) {
-        console.error('Verification failed:', error || data);
         setErrorMessage(error?.message || data?.error || 'Payment verification failed');
         setStatus('error');
         return;
       }
 
-      // Store duration and scope from response for display
       if (data?.duration_days) setDurationDays(data.duration_days);
       const scope = data?.plan_scope || 'app';
       setPlanScope(scope);
 
       await refetch();
-      // Also refresh funnel subscription if relevant
       if (scope === 'funnels' || scope === 'combined') {
         queryClient.invalidateQueries({ queryKey: ['funnel-subscription'] });
       }
@@ -94,12 +121,8 @@ export default function PaymentSuccess() {
       
       const durationText = data?.duration_days ? formatDuration(data.duration_days) : '';
       const scopeTitle = scope === 'combined' ? 'All-in-One Pro Activated!' : scope === 'funnels' ? 'Funnels Pro Activated!' : 'Pro Plan Activated!';
-      toast({
-        title: scopeTitle,
-        description: `Enjoy all premium features${durationText ? ` for ${durationText}` : ''}.`,
-      });
+      toast({ title: scopeTitle, description: `Enjoy all premium features${durationText ? ` for ${durationText}` : ''}.` });
     } catch (err: any) {
-      console.error('Activation error:', err);
       setErrorMessage(err.message || 'Something went wrong');
       setStatus('error');
     }

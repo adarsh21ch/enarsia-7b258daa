@@ -19,7 +19,7 @@ interface UpgradeDrawerProps {
 
 export function UpgradeDrawer({ variant = 'default', triggerText }: UpgradeDrawerProps) {
   const { isPaid: permPaid, isLoading: permLoading } = usePermissions();
-  const { initiatePayment, loading: paymentLoading } = useRazorpay();
+  const { initiatePayment, initiateSubscription, loading: paymentLoading } = useRazorpay();
   const { toast } = useToast();
   const { refetch } = useSubscription();
   const { plans, getDefaultPlan, loading: plansLoading } = usePaymentLinks();
@@ -107,7 +107,26 @@ export function UpgradeDrawer({ variant = 'default', triggerText }: UpgradeDrawe
   const handleUpgrade = (planKey: string) => {
     const plan = plans.find(p => p.plan_key === planKey);
     
-    // Build offer details if a coupon is applied
+    // Route to correct flow based on billing_type
+    if (plan?.billing_type === 'recurring') {
+      initiateSubscription({
+        planType: planKey,
+        onSuccess: () => {
+          toast({
+            title: "Subscription Started 🎉",
+            description: "Your recurring subscription has been initiated.",
+          });
+          refetch();
+          setOpen(false);
+        },
+        onError: (error) => {
+          console.error('Subscription error:', error);
+        }
+      });
+      return;
+    }
+    
+    // One-time payment flow (existing)
     const offerDetails = appliedOffer && plan ? {
       offerId: appliedOffer.id,
       promoCode: appliedOffer.promo_code || '',
@@ -116,7 +135,6 @@ export function UpgradeDrawer({ variant = 'default', triggerText }: UpgradeDrawe
       discountedAmount: getDisplayPrice(plan),
     } : undefined;
     
-    // Use dynamic payment flow (popup checkout)
     initiatePayment({
       planType: planKey,
       offer: offerDetails,

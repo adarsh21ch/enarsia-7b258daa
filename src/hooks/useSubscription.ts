@@ -15,6 +15,7 @@ export interface Subscription {
   payment_id: string | null;
   status: string;
   subscription_source: string | null;
+  razorpay_subscription_id: string | null;
   created_at: string;
   updated_at: string;
 }

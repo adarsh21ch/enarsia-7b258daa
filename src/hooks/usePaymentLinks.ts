@@ -12,6 +12,8 @@ export interface PlanConfig {
   name: string;
   price: number;
   paymentLink: string;
+  billing_type: 'one_time' | 'recurring';
+  razorpay_plan_id?: string | null;
   features: string[];
   description: string;
   durationDays: number;
@@ -34,6 +36,7 @@ export const PLAN_CONFIG: Record<string, PlanConfig> = {
     name: 'Pro 6-Month',
     price: 299,
     paymentLink: PAYMENT_LINKS.pro_6_months,
+    billing_type: 'one_time',
     description: '6 Months Access – Best Value',
     durationDays: 180,
     badgeText: 'Best Value',
@@ -53,6 +56,7 @@ export const PLAN_CONFIG: Record<string, PlanConfig> = {
     name: 'Pro Monthly',
     price: 99,
     paymentLink: PAYMENT_LINKS.monthly,
+    billing_type: 'one_time',
     description: '1 Month Access',
     durationDays: 30,
     sortOrder: 2,
@@ -77,6 +81,8 @@ export function usePaymentLinks() {
     name: plan.plan_name,
     price: plan.price_inr,
     paymentLink: plan.payment_link || '',
+    billing_type: plan.billing_type || 'one_time',
+    razorpay_plan_id: plan.razorpay_plan_id,
     features: Array.isArray(plan.features) ? plan.features : [],
     description: plan.description || '',
     durationDays: plan.duration_days,

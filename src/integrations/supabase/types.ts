@@ -1052,6 +1052,7 @@ export type Database = {
       admin_subscription_plans: {
         Row: {
           badge_text: string | null
+          billing_type: string
           created_at: string | null
           description: string | null
           duration_days: number
@@ -1063,11 +1064,13 @@ export type Database = {
           plan_key: string
           plan_name: string
           price_inr: number
+          razorpay_plan_id: string | null
           sort_order: number | null
           updated_at: string | null
         }
         Insert: {
           badge_text?: string | null
+          billing_type?: string
           created_at?: string | null
           description?: string | null
           duration_days: number
@@ -1079,11 +1082,13 @@ export type Database = {
           plan_key: string
           plan_name: string
           price_inr: number
+          razorpay_plan_id?: string | null
           sort_order?: number | null
           updated_at?: string | null
         }
         Update: {
           badge_text?: string | null
+          billing_type?: string
           created_at?: string | null
           description?: string | null
           duration_days?: number
@@ -1095,6 +1100,7 @@ export type Database = {
           plan_key?: string
           plan_name?: string
           price_inr?: number
+          razorpay_plan_id?: string | null
           sort_order?: number | null
           updated_at?: string | null
         }
@@ -4114,6 +4120,7 @@ export type Database = {
           is_admin_override: boolean | null
           payment_id: string | null
           plan: string
+          razorpay_subscription_id: string | null
           status: string
           subscribed_at: string | null
           subscription_source: string | null
@@ -4127,6 +4134,7 @@ export type Database = {
           is_admin_override?: boolean | null
           payment_id?: string | null
           plan?: string
+          razorpay_subscription_id?: string | null
           status?: string
           subscribed_at?: string | null
           subscription_source?: string | null
@@ -4140,6 +4148,7 @@ export type Database = {
           is_admin_override?: boolean | null
           payment_id?: string | null
           plan?: string
+          razorpay_subscription_id?: string | null
           status?: string
           subscribed_at?: string | null
           subscription_source?: string | null
@@ -4276,6 +4285,7 @@ export type Database = {
           is_admin_override: boolean
           payment_id: string | null
           plan: Database["public"]["Enums"]["user_plan"]
+          razorpay_subscription_id: string | null
           status: string
           subscribed_at: string | null
           subscription_source: string | null
@@ -4289,6 +4299,7 @@ export type Database = {
           is_admin_override?: boolean
           payment_id?: string | null
           plan?: Database["public"]["Enums"]["user_plan"]
+          razorpay_subscription_id?: string | null
           status?: string
           subscribed_at?: string | null
           subscription_source?: string | null
@@ -4302,6 +4313,7 @@ export type Database = {
           is_admin_override?: boolean
           payment_id?: string | null
           plan?: Database["public"]["Enums"]["user_plan"]
+          razorpay_subscription_id?: string | null
           status?: string
           subscribed_at?: string | null
           subscription_source?: string | null
