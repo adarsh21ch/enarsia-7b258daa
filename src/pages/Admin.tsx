@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
-import { Loader2, Shield, Users, Crown, ArrowLeft, BarChart3, MessageSquare, Tag, Sliders, Sparkles, History } from 'lucide-react';
+import { Loader2, Shield, Users, Crown, ArrowLeft, BarChart3, MessageSquare, Tag, Sliders, Sparkles, History, Video } from 'lucide-react';
 import nevoraLogo from '@/assets/nevorai-logo.jpeg';
 import { AdminAnalyticsDashboard } from '@/components/admin/AdminAnalyticsDashboard';
 import { AdminSupportPanel } from '@/components/admin/AdminSupportPanel';
@@ -17,6 +17,7 @@ import { UsageLimitsManager } from '@/components/admin/UsageLimitsManager';
 import { FeatureFlagsManager } from '@/components/admin/FeatureFlagsManager';
 import { EnhancedUsersTab } from '@/components/admin/EnhancedUsersTab';
 import { AuditLogViewer } from '@/components/admin/AuditLogViewer';
+import { AdminFunnelsTab } from '@/components/admin/AdminFunnelsTab';
 
 export default function Admin() {
   const navigate = useNavigate();
@@ -107,6 +108,10 @@ export default function Admin() {
                   <Sparkles className="h-3.5 w-3.5 mr-1" />
                   Features
                 </TabsTrigger>
+                <TabsTrigger value="funnels" className="text-xs px-3">
+                  <Video className="h-3.5 w-3.5 mr-1" />
+                  Funnels
+                </TabsTrigger>
               <TabsTrigger value="support" className="text-xs px-3">
                   <MessageSquare className="h-3.5 w-3.5 mr-1" />
                   Support
@@ -147,6 +152,11 @@ export default function Admin() {
             {/* Features Tab */}
             <TabsContent value="features" className="mt-4">
               <FeatureFlagsManager />
+            </TabsContent>
+
+            {/* Funnels Tab */}
+            <TabsContent value="funnels" className="mt-4">
+              <AdminFunnelsTab />
             </TabsContent>
 
             {/* Support Tab */}
