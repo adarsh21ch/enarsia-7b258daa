@@ -268,7 +268,7 @@ export function UpgradeDrawer({ variant = 'default', triggerText }: UpgradeDrawe
         ) : selectedPlan ? (
           <>
             <Crown className="h-5 w-5 mr-2" />
-            Get {selectedPlan.name} – ₹{getDisplayPrice(selectedPlan)}
+            Get {selectedPlan.displayName || selectedPlan.name} – ₹{getDisplayPrice(selectedPlan)}
           </>
         ) : (
           <>

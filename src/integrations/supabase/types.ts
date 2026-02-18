@@ -1061,6 +1061,7 @@ export type Database = {
           billing_type: string
           created_at: string | null
           description: string | null
+          display_name: string | null
           duration_days: number
           features: Json | null
           id: string
@@ -1080,6 +1081,7 @@ export type Database = {
           billing_type?: string
           created_at?: string | null
           description?: string | null
+          display_name?: string | null
           duration_days: number
           features?: Json | null
           id?: string
@@ -1099,6 +1101,7 @@ export type Database = {
           billing_type?: string
           created_at?: string | null
           description?: string | null
+          display_name?: string | null
           duration_days?: number
           features?: Json | null
           id?: string

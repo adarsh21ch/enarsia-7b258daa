@@ -12,6 +12,7 @@ export interface SubscriptionPlan {
   id: string;
   plan_key: string;
   plan_name: string;
+  display_name?: string | null;
   description: string | null;
   price_inr: number;
   duration_days: number;

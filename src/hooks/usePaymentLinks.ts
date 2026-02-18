@@ -10,6 +10,7 @@ export interface PlanConfig {
   id: string;
   plan_key: string;
   name: string;
+  displayName?: string | null;
   price: number;
   paymentLink: string;
   billing_type: 'one_time' | 'recurring';
@@ -82,6 +83,7 @@ export function usePaymentLinks() {
     id: plan.id,
     plan_key: plan.plan_key,
     name: plan.plan_name,
+    displayName: plan.display_name,
     price: plan.price_inr,
     paymentLink: plan.payment_link || '',
     billing_type: plan.billing_type || 'one_time',

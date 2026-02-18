@@ -38,12 +38,6 @@ export function TierCard({ tierName, plans, isPremium = false, selectedPlanKey, 
   const isThisTierSelected = plans.some(p => p.plan_key === selectedPlanKey);
   const sortedPlans = [...plans].sort((a, b) => a.sortOrder - b.sortOrder);
 
-  const formatDuration = (days: number) => {
-    const months = Math.round(days / 30);
-    if (months <= 1) return '1 Month';
-    return `${months} Months`;
-  };
-
   const getMonthlyPrice = (plan: PlanConfig) => {
     const months = Math.round(plan.durationDays / 30);
     if (months > 1) return Math.floor(plan.price / months);
@@ -128,7 +122,7 @@ export function TierCard({ tierName, plans, isPremium = false, selectedPlanKey, 
                   )}
                 </div>
                 <div>
-                  <span className="text-sm font-medium text-foreground">{formatDuration(plan.durationDays)}</span>
+                  <span className="text-sm font-medium text-foreground">{plan.displayName || plan.name}</span>
                   {plan.billing_type === 'recurring' && (
                     <span className="text-[10px] text-muted-foreground ml-1.5">recurring</span>
                   )}

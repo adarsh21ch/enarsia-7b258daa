@@ -258,6 +258,9 @@ function PlanCard({
           <div className="flex items-center gap-2 mb-1">
             <Crown className="h-4 w-4 text-primary" />
             <span className="font-semibold">{plan.plan_name}</span>
+            {(plan as any).display_name && (
+              <span className="text-xs text-muted-foreground">→ {(plan as any).display_name}</span>
+            )}
             <Badge variant="outline" className="text-[10px] uppercase">
               {plan.tier || 'pro'}
             </Badge>
@@ -338,6 +341,7 @@ function PlanEditForm({
   const [formData, setFormData] = useState({
     plan_key: plan?.plan_key || '',
     plan_name: plan?.plan_name || '',
+    display_name: (plan as any)?.display_name || '',
     description: plan?.description || '',
     price_inr: plan?.price_inr || 99,
     duration_days: plan?.duration_days || 30,
@@ -378,7 +382,7 @@ function PlanEditForm({
           />
         </div>
         <div className="space-y-2">
-          <Label htmlFor="plan_name">Display Name</Label>
+          <Label htmlFor="plan_name">Internal Name</Label>
           <Input
             id="plan_name"
             placeholder="e.g., Pro Monthly"
@@ -387,6 +391,17 @@ function PlanEditForm({
             required
           />
         </div>
+      </div>
+
+      <div className="space-y-2">
+        <Label htmlFor="display_name">Display Name (shown to users)</Label>
+        <Input
+          id="display_name"
+          placeholder="e.g., 3 Months + 1 Month FREE"
+          value={formData.display_name}
+          onChange={(e) => setFormData(prev => ({ ...prev, display_name: e.target.value }))}
+        />
+        <p className="text-xs text-muted-foreground">Marketing-friendly name shown on upgrade page. Leave empty to use internal name.</p>
       </div>
 
       <div className="space-y-2">
