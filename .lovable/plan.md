@@ -1,49 +1,63 @@
 
 
-# Phase 1: Safe 3-Tier Subscription Migration
+# Fix Plan Creation Bug and Improve Feature Flags Module Grouping
 
-## ✅ COMPLETED
+## Issues Found
 
-### Database Migration
-- ✅ Added `premium` to `user_plan` enum
-- ✅ Added `tier` column to `user_subscriptions` (backfilled)
-- ✅ Added `tier` column to `user_funnel_subscriptions` (backfilled)
-- ✅ Added `tier` column to `admin_subscription_plans`
-- ✅ Added `required_tier` + `module` to `admin_feature_flags` (backfilled)
-- ✅ Added `basic_value`, `pro_value`, `premium_value`, `module` to `admin_usage_limits`
-- ✅ Updated `get_app_config` RPC with new fields (`limits_tiered`, `required_tier`, `module`, `tier`)
+1. **Plan creation error** -- "duplicate key value violates unique constraint" occurs because the user tried creating a new Premium plan with `plan_key = 'monthly'`, which already exists. The form needs to validate uniqueness and auto-suggest unique keys.
 
-### Core Permission System
-- ✅ `src/hooks/useAdminConfig.ts` — Added `SubscriptionTier`, `TieredLimit`, `meetsRequiredTier()`, `TIER_RANK`, updated interfaces and SAFE_DEFAULTS
-- ✅ `src/hooks/useSubscription.ts` — Added `userTier`, `isPremium`, kept `isPro`/`isPaid` as backward-compat computed props
-- ✅ `src/hooks/useFunnelSubscription.ts` — Added `funnelTier` export
-- ✅ `src/hooks/useFeatureAccess.ts` — Tier-based access check with legacy fallback
-- ✅ `src/hooks/useFunnelFeatureAccess.ts` — Tier-based check with legacy fallback
-- ✅ `src/contexts/PermissionsContext.tsx` — Tier-based permissions with `userTier`, `isPro`, `isPremium`
+2. **All feature flags have `module = 'application'`** -- The migration defaulted everything to `application`. Funnel-related features (like `funnel_create`, `funnel_video_upload`, etc.) need to be updated to `module = 'funnels'`.
 
-### Admin Panel UI
-- ✅ `src/components/admin/PlansManager.tsx` — Tier dropdown in form, tier badge on cards, grouped by tier
-- ✅ `src/components/admin/FeatureFlagsManager.tsx` — Required Tier selector + Module selector (auto-syncs legacy booleans)
-- ✅ `src/components/admin/UsageLimitsManager.tsx` — Updated `updateLimit` signature for tier values
+3. **Feature flags UI doesn't group by module** -- Currently groups by category only (Calling, Leads, etc.), making it hard to see which features belong to Application vs Funnels.
 
 ---
 
-## 🔲 REMAINING (Phase 4)
+## Fix 1: Plan Key Duplicate Prevention
 
-### Edge Functions
-- 🔲 `supabase/functions/razorpay-webhook/index.ts` — Read `tier` from `admin_subscription_plans`, store in subscription upsert
-- 🔲 `supabase/functions/create-razorpay-order/index.ts` — Include `tier` in order notes
-- 🔲 `supabase/functions/create-razorpay-subscription/index.ts` — Include `tier` in subscription notes
+**File: `src/components/admin/PlansManager.tsx`**
+
+- When creating a new plan, auto-generate a unique `plan_key` based on tier and billing type (e.g., `premium_monthly`, `premium_yearly`)
+- Show a validation error if the user manually enters a `plan_key` that already exists
+- Display a user-friendly toast with the actual error ("A plan with this key already exists") instead of the generic "Failed to save plan"
+
+## Fix 2: Update Funnel Feature Flags Module
+
+**Database update (data fix, not schema):**
+
+Update all feature flags with `category = 'funnels'` or `feature_key LIKE 'funnel_%'` to set `module = 'funnels'` instead of `'application'`.
+
+Affected features:
+- `funnel_create`, `funnel_advanced_analytics`, `funnel_custom_branding`
+- `funnel_lead_export`, `funnel_max_funnels`, `funnel_max_leads`
+- `funnel_price_options`, `funnel_qr_code`, `funnel_video_upload`
+- `funnel_whatsapp_auto`, `funnel_analytics`
+
+## Fix 3: Feature Flags UI -- Group by Module First, Then Category
+
+**File: `src/components/admin/FeatureFlagsManager.tsx`**
+
+- Primary grouping: **Module** (Application / TrackUp / Funnels) with clear section headers
+- Secondary grouping: **Category** within each module
+- Each module section gets a distinct header with a colored border/background
+- This gives the admin a clear view of which features belong to which app
+
+### Visual structure:
+```text
+--- APPLICATION ---
+  Calling: [flags...]
+  Leads: [flags...]
+  Team: [flags...]
+  
+--- FUNNELS ---
+  Funnels: [flags...]
+```
 
 ---
 
-## Backward Compatibility Guarantees
+## Files to Modify
 
-- `user_plan` enum: `free` and `pro` values untouched, `premium` added
-- `free_access` / `pro_access` / `trial_access` columns: **kept** in `admin_feature_flags`
-- Existing `config_value` column: **kept** in `admin_usage_limits`
-- `plan` column in `user_subscriptions`: **kept** as-is, `tier` is a new parallel column
-- All existing Pro users: `tier` backfilled to `'pro'`, no access change
-- All existing Free users: `tier` backfilled to `'basic'`, no access change
-- Webhook `payment.captured`: existing logic unchanged, `tier` defaults to `'pro'` if missing
-- `isPro` and `isPaid` exports: kept as computed values from `tier`
+| File | Change |
+|---|---|
+| `src/components/admin/PlansManager.tsx` | Add plan_key uniqueness validation, better error messages |
+| `src/components/admin/FeatureFlagsManager.tsx` | Group by module first, then by category |
+| Database (data update) | Set `module = 'funnels'` for funnel-related feature flags |
