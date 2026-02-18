@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useMemo } from 'react';
-import { useAdminConfig, FeatureFlag } from '@/hooks/useAdminConfig';
+import { useAdminConfig, FeatureFlag, meetsRequiredTier, SubscriptionTier } from '@/hooks/useAdminConfig';
 import { useSubscription } from '@/hooks/useSubscription';
 import { useFreeTrial } from '@/hooks/useFreeTrial';
 
@@ -17,8 +17,14 @@ interface PermissionsContextValue {
   getPermission: (featureKey: string) => FeaturePermission;
   /** All computed permissions */
   permissions: Record<string, FeaturePermission>;
+  /** User's current tier */
+  userTier: SubscriptionTier;
   /** Whether user is on a paid plan */
   isPaid: boolean;
+  /** Whether user is Pro or higher */
+  isPro: boolean;
+  /** Whether user is Premium */
+  isPremium: boolean;
   /** Whether trial is active */
   isTrialActive: boolean;
   /** Loading state */
@@ -29,10 +35,13 @@ const PermissionsContext = createContext<PermissionsContextValue | null>(null);
 
 export function PermissionsProvider({ children }: { children: React.ReactNode }) {
   const { config, loading: configLoading } = useAdminConfig();
-  const { isPaid, loading: subLoading } = useSubscription();
+  const { userTier, isPaid, isPro, isPremium, loading: subLoading } = useSubscription();
   const { isTrialActive, loading: trialLoading } = useFreeTrial();
 
   const isLoading = configLoading || subLoading || trialLoading;
+
+  // Effective tier: trial users get pro-level access
+  const effectiveTier: SubscriptionTier = isTrialActive && userTier === 'basic' ? 'pro' : userTier;
 
   // Compute all permissions once from the config
   const permissions = useMemo(() => {
@@ -44,20 +53,31 @@ export function PermissionsProvider({ children }: { children: React.ReactNode })
         continue;
       }
 
-      if (isTrialActive) {
-        map[key] = { canAccess: feature.trial_access, limit: feature.trial_limit };
-      } else if (isPaid) {
-        map[key] = { canAccess: feature.pro_access, limit: feature.pro_limit };
+      // Tier-based access check
+      const canAccess = meetsRequiredTier(effectiveTier, feature.required_tier);
+
+      // Determine limit from tiered limits or legacy
+      let limit: number | null = null;
+      const tieredLimit = config.limits_tiered[key];
+      if (tieredLimit) {
+        if (effectiveTier === 'premium') limit = tieredLimit.premium_value;
+        else if (effectiveTier === 'pro') limit = tieredLimit.pro_value;
+        else limit = tieredLimit.basic_value;
       } else {
-        map[key] = { canAccess: feature.free_access, limit: feature.free_limit };
+        // Legacy fallback
+        if (isTrialActive) limit = feature.trial_limit;
+        else if (isPaid) limit = feature.pro_limit;
+        else limit = feature.free_limit;
       }
+
+      map[key] = { canAccess, limit };
     }
 
     return map;
-  }, [config.features, isPaid, isTrialActive]);
+  }, [config.features, config.limits_tiered, effectiveTier, isPaid, isTrialActive]);
 
   const checkFeature = (featureKey: string): boolean => {
-    return permissions[featureKey]?.canAccess ?? true; // Default allow if not in registry
+    return permissions[featureKey]?.canAccess ?? true;
   };
 
   const getLimit = (featureKey: string): number | null => {
@@ -73,10 +93,13 @@ export function PermissionsProvider({ children }: { children: React.ReactNode })
     getLimit,
     getPermission,
     permissions,
+    userTier,
     isPaid,
+    isPro,
+    isPremium,
     isTrialActive,
     isLoading,
-  }), [permissions, isPaid, isTrialActive, isLoading]);
+  }), [permissions, userTier, isPaid, isPro, isPremium, isTrialActive, isLoading]);
 
   return (
     <PermissionsContext.Provider value={value}>
@@ -88,13 +111,6 @@ export function PermissionsProvider({ children }: { children: React.ReactNode })
 /**
  * Access the global permissions context.
  * Must be used within <PermissionsProvider>.
- * 
- * @example
- * ```tsx
- * const { checkFeature, getLimit } = usePermissions();
- * if (!checkFeature('export_data')) return <UpgradePrompt />;
- * const dailyLimit = getLimit('daily_lead_limit'); // 50 for free, null for pro
- * ```
  */
 export function usePermissions() {
   const ctx = useContext(PermissionsContext);

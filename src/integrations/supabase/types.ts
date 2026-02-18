@@ -961,8 +961,10 @@ export type Database = {
           free_limit: number | null
           id: string
           is_enabled: boolean | null
+          module: string
           pro_access: boolean | null
           pro_limit: number | null
+          required_tier: string
           trial_access: boolean | null
           trial_limit: number | null
           updated_at: string | null
@@ -977,8 +979,10 @@ export type Database = {
           free_limit?: number | null
           id?: string
           is_enabled?: boolean | null
+          module?: string
           pro_access?: boolean | null
           pro_limit?: number | null
+          required_tier?: string
           trial_access?: boolean | null
           trial_limit?: number | null
           updated_at?: string | null
@@ -993,8 +997,10 @@ export type Database = {
           free_limit?: number | null
           id?: string
           is_enabled?: boolean | null
+          module?: string
           pro_access?: boolean | null
           pro_limit?: number | null
+          required_tier?: string
           trial_access?: boolean | null
           trial_limit?: number | null
           updated_at?: string | null
@@ -1066,6 +1072,7 @@ export type Database = {
           price_inr: number
           razorpay_plan_id: string | null
           sort_order: number | null
+          tier: string
           updated_at: string | null
         }
         Insert: {
@@ -1084,6 +1091,7 @@ export type Database = {
           price_inr: number
           razorpay_plan_id?: string | null
           sort_order?: number | null
+          tier?: string
           updated_at?: string | null
         }
         Update: {
@@ -1102,35 +1110,48 @@ export type Database = {
           price_inr?: number
           razorpay_plan_id?: string | null
           sort_order?: number | null
+          tier?: string
           updated_at?: string | null
         }
         Relationships: []
       }
       admin_usage_limits: {
         Row: {
+          basic_value: number | null
           config_key: string
           config_value: number
           description: string | null
           id: string
           is_enabled: boolean | null
+          module: string
+          premium_value: number | null
+          pro_value: number | null
           updated_at: string | null
           updated_by: string | null
         }
         Insert: {
+          basic_value?: number | null
           config_key: string
           config_value: number
           description?: string | null
           id?: string
           is_enabled?: boolean | null
+          module?: string
+          premium_value?: number | null
+          pro_value?: number | null
           updated_at?: string | null
           updated_by?: string | null
         }
         Update: {
+          basic_value?: number | null
           config_key?: string
           config_value?: number
           description?: string | null
           id?: string
           is_enabled?: boolean | null
+          module?: string
+          premium_value?: number | null
+          pro_value?: number | null
           updated_at?: string | null
           updated_by?: string | null
         }
@@ -4124,6 +4145,7 @@ export type Database = {
           status: string
           subscribed_at: string | null
           subscription_source: string | null
+          tier: string | null
           updated_at: string | null
           user_id: string
         }
@@ -4138,6 +4160,7 @@ export type Database = {
           status?: string
           subscribed_at?: string | null
           subscription_source?: string | null
+          tier?: string | null
           updated_at?: string | null
           user_id: string
         }
@@ -4152,6 +4175,7 @@ export type Database = {
           status?: string
           subscribed_at?: string | null
           subscription_source?: string | null
+          tier?: string | null
           updated_at?: string | null
           user_id?: string
         }
@@ -4289,6 +4313,7 @@ export type Database = {
           status: string
           subscribed_at: string | null
           subscription_source: string | null
+          tier: string | null
           updated_at: string
           user_id: string
         }
@@ -4303,6 +4328,7 @@ export type Database = {
           status?: string
           subscribed_at?: string | null
           subscription_source?: string | null
+          tier?: string | null
           updated_at?: string
           user_id: string
         }
@@ -4317,6 +4343,7 @@ export type Database = {
           status?: string
           subscribed_at?: string | null
           subscription_source?: string | null
+          tier?: string | null
           updated_at?: string
           user_id?: string
         }
@@ -5349,7 +5376,7 @@ export type Database = {
       prospect_status: "+VE" | "-VE" | "50-50" | "30-70"
       snapshot_source: "MANUAL" | "APPLICATION"
       team_snapshot_source: "MANUAL" | "TEAM_MEMBERS"
-      user_plan: "free" | "pro"
+      user_plan: "free" | "pro" | "premium"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -5511,7 +5538,7 @@ export const Constants = {
       prospect_status: ["+VE", "-VE", "50-50", "30-70"],
       snapshot_source: ["MANUAL", "APPLICATION"],
       team_snapshot_source: ["MANUAL", "TEAM_MEMBERS"],
-      user_plan: ["free", "pro"],
+      user_plan: ["free", "pro", "premium"],
     },
   },
 } as const

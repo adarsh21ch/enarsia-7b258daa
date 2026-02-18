@@ -6,6 +6,8 @@ import { useMemo } from 'react';
 // TYPES
 // =============================================
 
+export type SubscriptionTier = 'basic' | 'pro' | 'premium';
+
 export interface SubscriptionPlan {
   id: string;
   plan_key: string;
@@ -16,6 +18,7 @@ export interface SubscriptionPlan {
   payment_link: string | null;
   billing_type: 'one_time' | 'recurring';
   razorpay_plan_id: string | null;
+  tier: SubscriptionTier;
   features: string[];
   is_active: boolean;
   is_default: boolean;
@@ -48,6 +51,18 @@ export interface FeatureFlag {
   pro_limit: number | null;
   trial_limit: number | null;
   category: string;
+  /** New tier-based fields */
+  required_tier: SubscriptionTier;
+  module: 'application' | 'trackup' | 'funnels';
+}
+
+export interface TieredLimit {
+  module: string;
+  basic_value: number | null;
+  pro_value: number | null;
+  premium_value: number | null;
+  is_enabled: boolean;
+  description: string | null;
 }
 
 export interface AppConfig {
@@ -55,7 +70,20 @@ export interface AppConfig {
   offers: Offer[];
   limits: Record<string, number>;
   limits_enabled: Record<string, boolean>;
+  limits_tiered: Record<string, TieredLimit>;
   features: Record<string, FeatureFlag>;
+}
+
+/** Tier hierarchy helper: returns numeric rank for comparison */
+export const TIER_RANK: Record<SubscriptionTier, number> = {
+  basic: 0,
+  pro: 1,
+  premium: 2,
+};
+
+/** Check if userTier meets or exceeds requiredTier */
+export function meetsRequiredTier(userTier: SubscriptionTier, requiredTier: SubscriptionTier): boolean {
+  return TIER_RANK[userTier] >= TIER_RANK[requiredTier];
 }
 
 // =============================================
@@ -74,6 +102,7 @@ export const SAFE_DEFAULTS: AppConfig = {
       payment_link: 'https://rzp.io/rzp/CPQRHdp',
       billing_type: 'one_time' as const,
       razorpay_plan_id: null,
+      tier: 'pro' as SubscriptionTier,
       features: [
         'Unlimited prospects',
         'Auto-sync from teammates',
@@ -96,6 +125,7 @@ export const SAFE_DEFAULTS: AppConfig = {
       payment_link: 'https://rzp.io/rzp/HhAdokE',
       billing_type: 'one_time' as const,
       razorpay_plan_id: null,
+      tier: 'pro' as SubscriptionTier,
       features: [
         'Unlimited prospects',
         'Manual personal tracking',
@@ -135,12 +165,13 @@ export const SAFE_DEFAULTS: AppConfig = {
     warning_threshold_3: true,
     hard_limit: true,
   },
+  limits_tiered: {},
   features: {
-    insights: { feature_name: 'View Insights', description: null, free_access: true, pro_access: true, trial_access: true, is_enabled: true, free_limit: null, pro_limit: null, trial_limit: null, category: 'analytics' },
-    export: { feature_name: 'Export Data', description: null, free_access: true, pro_access: true, trial_access: true, is_enabled: true, free_limit: null, pro_limit: null, trial_limit: null, category: 'export' },
-    ai_tips: { feature_name: 'AI Tips', description: null, free_access: true, pro_access: true, trial_access: true, is_enabled: true, free_limit: null, pro_limit: null, trial_limit: null, category: 'analytics' },
-    team_sync: { feature_name: 'Team Sync', description: null, free_access: false, pro_access: true, trial_access: true, is_enabled: true, free_limit: null, pro_limit: null, trial_limit: null, category: 'team' },
-    team_view: { feature_name: 'Team View', description: null, free_access: false, pro_access: true, trial_access: true, is_enabled: true, free_limit: null, pro_limit: null, trial_limit: null, category: 'team' },
+    insights: { feature_name: 'View Insights', description: null, free_access: true, pro_access: true, trial_access: true, is_enabled: true, free_limit: null, pro_limit: null, trial_limit: null, category: 'analytics', required_tier: 'basic', module: 'application' },
+    export: { feature_name: 'Export Data', description: null, free_access: true, pro_access: true, trial_access: true, is_enabled: true, free_limit: null, pro_limit: null, trial_limit: null, category: 'export', required_tier: 'basic', module: 'application' },
+    ai_tips: { feature_name: 'AI Tips', description: null, free_access: true, pro_access: true, trial_access: true, is_enabled: true, free_limit: null, pro_limit: null, trial_limit: null, category: 'analytics', required_tier: 'basic', module: 'application' },
+    team_sync: { feature_name: 'Team Sync', description: null, free_access: false, pro_access: true, trial_access: true, is_enabled: true, free_limit: null, pro_limit: null, trial_limit: null, category: 'team', required_tier: 'pro', module: 'application' },
+    team_view: { feature_name: 'Team View', description: null, free_access: false, pro_access: true, trial_access: true, is_enabled: true, free_limit: null, pro_limit: null, trial_limit: null, category: 'team', required_tier: 'pro', module: 'application' },
   },
 };
 
@@ -161,6 +192,7 @@ async function fetchAppConfig(): Promise<AppConfig> {
     plans: SubscriptionPlan[] | null;
     offers: Offer[] | null;
     limits: Record<string, number> | null;
+    limits_tiered: Record<string, TieredLimit> | null;
     features: Record<string, FeatureFlag> | null;
   } | null;
   
@@ -171,6 +203,7 @@ async function fetchAppConfig(): Promise<AppConfig> {
     offers: config.offers || [],
     limits: { ...SAFE_DEFAULTS.limits, ...(config.limits || {}) },
     limits_enabled: { ...SAFE_DEFAULTS.limits_enabled, ...((config as any).limits_enabled || {}) },
+    limits_tiered: { ...SAFE_DEFAULTS.limits_tiered, ...(config.limits_tiered || {}) },
     features: { ...SAFE_DEFAULTS.features, ...(config.features || {}) },
   };
 }
@@ -362,10 +395,22 @@ export function useAdminUsageLimits() {
     queryClient.invalidateQueries({ queryKey: ['admin-config'] });
   };
 
-  const updateLimit = async (id: string, config_value: number, is_enabled: boolean) => {
+  const updateLimit = async (id: string, updates: {
+    config_value?: number;
+    is_enabled?: boolean;
+    module?: string;
+    basic_value?: number | null;
+    pro_value?: number | null;
+    premium_value?: number | null;
+  }) => {
+    // Keep config_value synced with basic_value for backward compat
+    const payload: any = { ...updates };
+    if (updates.basic_value !== undefined && updates.config_value === undefined) {
+      payload.config_value = updates.basic_value ?? 0;
+    }
     const { error } = await supabase
       .from('admin_usage_limits')
-      .update({ config_value, is_enabled })
+      .update(payload)
       .eq('id', id);
     if (error) throw error;
     invalidateAllCaches();
@@ -374,7 +419,7 @@ export function useAdminUsageLimits() {
   const createLimit = async (config_key: string, config_value: number, description: string) => {
     const { error } = await supabase
       .from('admin_usage_limits')
-      .insert({ config_key, config_value, description });
+      .insert({ config_key, config_value, description, basic_value: config_value });
     if (error) throw error;
     invalidateAllCaches();
   };
@@ -411,6 +456,8 @@ export function useAdminFeatureFlags() {
     pro_limit: number | null;
     trial_limit: number | null;
     category: string;
+    required_tier: string;
+    module: string;
   }>) => {
     const { error } = await supabase
       .from('admin_feature_flags')
@@ -431,6 +478,8 @@ export function useAdminFeatureFlags() {
     free_limit?: number | null;
     pro_limit?: number | null;
     trial_limit?: number | null;
+    required_tier?: string;
+    module?: string;
   }) => {
     const { error } = await supabase
       .from('admin_feature_flags')

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useAdminPlans, SubscriptionPlan } from '@/hooks/useAdminConfig';
+import { useAdminPlans, SubscriptionPlan, SubscriptionTier } from '@/hooks/useAdminConfig';
 import { logAdminAction } from '@/hooks/useAuditLogs';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -101,8 +101,16 @@ export function PlansManager() {
     );
   }
 
-  const activePlans = plans.filter(p => p.is_active);
-  const inactivePlans = plans.filter(p => !p.is_active);
+  // Group plans by tier
+  const tierOrder: SubscriptionTier[] = ['basic', 'pro', 'premium'];
+  const tierLabels: Record<SubscriptionTier, string> = { basic: '🆓 Basic (Free)', pro: '⭐ Pro', premium: '💎 Premium' };
+
+  const plansByTier = tierOrder.map(tier => ({
+    tier,
+    label: tierLabels[tier],
+    active: plans.filter(p => p.is_active && (p.tier || 'pro') === tier),
+    inactive: plans.filter(p => !p.is_active && (p.tier || 'pro') === tier),
+  })).filter(g => g.active.length > 0 || g.inactive.length > 0);
 
   return (
     <div className="space-y-6">
@@ -117,43 +125,39 @@ export function PlansManager() {
         </Button>
       </div>
 
-      {/* Active Plans */}
-      {activePlans.length > 0 && (
-        <div className="space-y-3">
-          <h3 className="text-sm font-medium text-muted-foreground">Active Plans</h3>
-          <div className="grid gap-3">
-            {activePlans.map((plan) => (
-              <PlanCard 
-                key={plan.id} 
-                plan={plan}
-                onEdit={() => openEditSheet(plan)}
-                onToggleActive={() => handleToggleActive(plan)}
-                onToggleDefault={() => handleToggleDefault(plan)}
-                onDelete={() => handleDelete(plan)}
-              />
-            ))}
-          </div>
+      {plansByTier.map(({ tier, label, active, inactive }) => (
+        <div key={tier} className="space-y-3">
+          <h3 className="text-sm font-medium text-muted-foreground">{label}</h3>
+          {active.length > 0 && (
+            <div className="grid gap-3">
+              {active.map((plan) => (
+                <PlanCard 
+                  key={plan.id} 
+                  plan={plan}
+                  onEdit={() => openEditSheet(plan)}
+                  onToggleActive={() => handleToggleActive(plan)}
+                  onToggleDefault={() => handleToggleDefault(plan)}
+                  onDelete={() => handleDelete(plan)}
+                />
+              ))}
+            </div>
+          )}
+          {inactive.length > 0 && (
+            <div className="grid gap-3 opacity-60">
+              {inactive.map((plan) => (
+                <PlanCard 
+                  key={plan.id} 
+                  plan={plan}
+                  onEdit={() => openEditSheet(plan)}
+                  onToggleActive={() => handleToggleActive(plan)}
+                  onToggleDefault={() => handleToggleDefault(plan)}
+                  onDelete={() => handleDelete(plan)}
+                />
+              ))}
+            </div>
+          )}
         </div>
-      )}
-
-      {/* Inactive Plans */}
-      {inactivePlans.length > 0 && (
-        <div className="space-y-3">
-          <h3 className="text-sm font-medium text-muted-foreground">Inactive Plans</h3>
-          <div className="grid gap-3 opacity-60">
-            {inactivePlans.map((plan) => (
-              <PlanCard 
-                key={plan.id} 
-                plan={plan}
-                onEdit={() => openEditSheet(plan)}
-                onToggleActive={() => handleToggleActive(plan)}
-                onToggleDefault={() => handleToggleDefault(plan)}
-                onDelete={() => handleDelete(plan)}
-              />
-            ))}
-          </div>
-        </div>
-      )}
+      ))}
 
       {/* Edit/Create Sheet */}
       <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
@@ -249,6 +253,9 @@ function PlanCard({
           <div className="flex items-center gap-2 mb-1">
             <Crown className="h-4 w-4 text-primary" />
             <span className="font-semibold">{plan.plan_name}</span>
+            <Badge variant="outline" className="text-[10px] uppercase">
+              {plan.tier || 'pro'}
+            </Badge>
             {plan.badge_text && (
               <Badge variant="secondary" className="text-xs">
                 <Star className="h-3 w-3 mr-1" />
@@ -331,6 +338,7 @@ function PlanEditForm({
     payment_link: plan?.payment_link || '',
     billing_type: (plan?.billing_type || 'one_time') as 'one_time' | 'recurring',
     razorpay_plan_id: plan?.razorpay_plan_id || '',
+    tier: (plan?.tier || 'pro') as SubscriptionTier,
     badge_text: plan?.badge_text || '',
     features: (plan?.features || []).join('\n'),
     sort_order: plan?.sort_order || 0,
@@ -419,17 +427,39 @@ function PlanEditForm({
         </div>
       </div>
 
-      <div className="space-y-2">
-        <Label htmlFor="billing_type">Billing Type</Label>
-        <select
-          id="billing_type"
-          value={formData.billing_type}
-          onChange={(e) => setFormData(prev => ({ ...prev, billing_type: e.target.value as 'one_time' | 'recurring' }))}
-          className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-        >
-          <option value="one_time">One Time</option>
-          <option value="recurring">Recurring</option>
-        </select>
+      <div className="grid grid-cols-2 gap-4">
+        <div className="space-y-2">
+          <Label htmlFor="tier">Tier</Label>
+          <select
+            id="tier"
+            value={formData.tier}
+            onChange={(e) => {
+              const tier = e.target.value as SubscriptionTier;
+              setFormData(prev => ({
+                ...prev,
+                tier,
+                price_inr: tier === 'basic' ? 0 : prev.price_inr,
+              }));
+            }}
+            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+          >
+            <option value="basic">Basic (Free)</option>
+            <option value="pro">Pro</option>
+            <option value="premium">Premium</option>
+          </select>
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="billing_type">Billing Type</Label>
+          <select
+            id="billing_type"
+            value={formData.billing_type}
+            onChange={(e) => setFormData(prev => ({ ...prev, billing_type: e.target.value as 'one_time' | 'recurring' }))}
+            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+          >
+            <option value="one_time">One Time</option>
+            <option value="recurring">Recurring</option>
+          </select>
+        </div>
       </div>
 
       {formData.billing_type === 'one_time' ? (

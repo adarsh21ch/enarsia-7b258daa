@@ -1,4 +1,4 @@
-import { useAdminConfig, FeatureFlag } from './useAdminConfig';
+import { useAdminConfig, FeatureFlag, meetsRequiredTier, SubscriptionTier } from './useAdminConfig';
 import { useSubscription } from './useSubscription';
 import { useFreeTrial } from './useFreeTrial';
 import { useMemo } from 'react';
@@ -21,21 +21,11 @@ export interface FeatureAccessResult {
 
 /**
  * Central hook to check if the current user has access to a specific feature.
- * Reads from admin-configured feature flags and integrates subscription + trial state.
- * 
- * @param featureKey - The unique key of the feature to check
- * @returns FeatureAccessResult with access status, numeric limit, and reason
- * 
- * @example
- * ```tsx
- * const { canAccess, limit } = useFeatureAccess('daily_lead_limit');
- * if (!canAccess) return <UpgradePrompt />;
- * // limit is 50 for free, null (unlimited) for pro
- * ```
+ * Uses tier-based check (required_tier) with fallback to legacy boolean logic.
  */
 export function useFeatureAccess(featureKey: string): FeatureAccessResult {
   const { config, loading: configLoading } = useAdminConfig();
-  const { isPaid, loading: subLoading } = useSubscription();
+  const { isPaid, userTier, loading: subLoading } = useSubscription();
   const { isTrialActive, loading: trialLoading } = useFreeTrial();
 
   const isLoading = configLoading || subLoading || trialLoading;
@@ -43,83 +33,79 @@ export function useFeatureAccess(featureKey: string): FeatureAccessResult {
   return useMemo(() => {
     const feature = config.features[featureKey] ?? null;
 
-    // If feature doesn't exist in config, default to allowing access
     if (!feature) {
       return { canAccess: true, limit: null, feature: null, isLoading, reason: 'feature_not_found' as AccessReason };
     }
 
-    // Check if feature is globally disabled
     if (!feature.is_enabled) {
       return { canAccess: false, limit: null, feature, isLoading, reason: 'feature_disabled' as AccessReason };
     }
 
-    // Determine access based on user state: Trial > Paid > Free
-    if (isTrialActive) {
-      const hasAccess = feature.trial_access;
-      const limit = feature.trial_limit; // null = unlimited (follows pro)
-      return {
-        canAccess: hasAccess,
-        limit: hasAccess ? limit : null,
-        feature,
-        isLoading,
-        reason: hasAccess ? 'trial_active' as AccessReason : 'plan_restriction' as AccessReason,
-      };
+    // NEW: Tier-based access check (primary path)
+    // Determine effective tier: trial users get pro-level access
+    const effectiveTier: SubscriptionTier = isTrialActive && userTier === 'basic' ? 'pro' : userTier;
+    const hasAccess = meetsRequiredTier(effectiveTier, feature.required_tier);
+
+    // Determine limit based on effective tier
+    let limit: number | null = null;
+    const tieredLimit = config.limits_tiered[featureKey];
+    if (tieredLimit) {
+      if (effectiveTier === 'premium') limit = tieredLimit.premium_value;
+      else if (effectiveTier === 'pro') limit = tieredLimit.pro_value;
+      else limit = tieredLimit.basic_value;
+    } else {
+      // Fallback to legacy limits
+      if (isTrialActive) limit = feature.trial_limit;
+      else if (isPaid) limit = feature.pro_limit;
+      else limit = feature.free_limit;
     }
 
-    if (isPaid) {
-      return {
-        canAccess: feature.pro_access,
-        limit: feature.pro_limit, // null = unlimited
-        feature,
-        isLoading,
-        reason: feature.pro_access ? 'allowed' as AccessReason : 'plan_restriction' as AccessReason,
-      };
-    }
+    const reason: AccessReason = hasAccess
+      ? (isTrialActive ? 'trial_active' : 'allowed')
+      : 'plan_restriction';
 
-    // Free user
-    return {
-      canAccess: feature.free_access,
-      limit: feature.free_limit,
-      feature,
-      isLoading,
-      reason: feature.free_access ? 'allowed' as AccessReason : 'plan_restriction' as AccessReason,
-    };
-  }, [config.features, featureKey, isPaid, isTrialActive, isLoading]);
+    return { canAccess: hasAccess, limit, feature, isLoading, reason };
+  }, [config.features, config.limits_tiered, featureKey, isPaid, userTier, isTrialActive, isLoading]);
 }
 
 /**
  * Hook to check multiple features at once.
- * Useful for components that depend on multiple feature flags.
+ * Uses tier-based logic with fallback to legacy booleans.
  */
 export function useMultipleFeatureAccess(featureKeys: string[]) {
   const { config, loading: configLoading } = useAdminConfig();
-  const { isPaid, loading: subLoading } = useSubscription();
+  const { userTier, loading: subLoading } = useSubscription();
   const { isTrialActive, loading: trialLoading } = useFreeTrial();
 
   const isLoading = configLoading || subLoading || trialLoading;
 
   return useMemo(() => {
     const accessMap: Record<string, { canAccess: boolean; limit: number | null }> = {};
+    const effectiveTier: SubscriptionTier = isTrialActive && userTier === 'basic' ? 'pro' : userTier;
 
     for (const key of featureKeys) {
       const feature = config.features[key];
       if (!feature || !feature.is_enabled) {
-        accessMap[key] = { canAccess: !feature, limit: null }; // Allow if not found, deny if disabled
+        accessMap[key] = { canAccess: !feature, limit: null };
         continue;
       }
 
-      if (isTrialActive) {
-        accessMap[key] = { canAccess: feature.trial_access, limit: feature.trial_limit };
-      } else if (isPaid) {
-        accessMap[key] = { canAccess: feature.pro_access, limit: feature.pro_limit };
-      } else {
-        accessMap[key] = { canAccess: feature.free_access, limit: feature.free_limit };
+      const hasAccess = meetsRequiredTier(effectiveTier, feature.required_tier);
+
+      let limit: number | null = null;
+      const tieredLimit = config.limits_tiered[key];
+      if (tieredLimit) {
+        if (effectiveTier === 'premium') limit = tieredLimit.premium_value;
+        else if (effectiveTier === 'pro') limit = tieredLimit.pro_value;
+        else limit = tieredLimit.basic_value;
       }
+
+      accessMap[key] = { canAccess: hasAccess, limit };
     }
 
     const allAllowed = featureKeys.every(key => accessMap[key]?.canAccess);
     const anyAllowed = featureKeys.some(key => accessMap[key]?.canAccess);
 
     return { accessMap, allAllowed, anyAllowed, isLoading };
-  }, [config.features, featureKeys, isPaid, isTrialActive, isLoading]);
+  }, [config.features, config.limits_tiered, featureKeys, userTier, isTrialActive, isLoading]);
 }

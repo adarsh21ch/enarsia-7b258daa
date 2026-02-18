@@ -4,6 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 
 export type SubscriptionPlan = 'free' | 'pro';
+export type SubscriptionTier = 'basic' | 'pro' | 'premium';
 
 export interface Subscription {
   id: string;
@@ -103,8 +104,28 @@ export function useSubscription() {
     return subscription.plan as SubscriptionPlan;
   }, [subscription]);
 
-  const isPro = plan === 'pro';
-  const isPaid = isPro; // Simplified - only Pro exists now
+  // New tier-based derived state
+  const userTier = useMemo((): SubscriptionTier => {
+    if (!subscription) return 'basic';
+    const tier = (subscription as any).tier as string | null;
+    // If tier column exists and is set, use it
+    if (tier && ['basic', 'pro', 'premium'].includes(tier)) {
+      // But verify subscription is still active
+      if (tier !== 'basic') {
+        const isAdminOvr = subscription.is_admin_override;
+        if (isAdminOvr) return tier as SubscriptionTier;
+        if (subscription.expires_at && new Date(subscription.expires_at) <= new Date()) return 'basic';
+        if (subscription.status !== 'active') return 'basic';
+      }
+      return tier as SubscriptionTier;
+    }
+    // Fallback: derive from plan
+    return plan === 'pro' ? 'pro' : 'basic';
+  }, [subscription, plan]);
+
+  const isPro = userTier === 'pro' || userTier === 'premium';
+  const isPremium = userTier === 'premium';
+  const isPaid = userTier !== 'basic';
 
   const isAdminOverride = subscription?.is_admin_override || false;
 
@@ -153,7 +174,9 @@ export function useSubscription() {
     subscription: subscription ?? null, 
     loading, 
     plan,
+    userTier,
     isPro, 
+    isPremium,
     isPaid,
     isAdminOverride, 
     daysRemaining,

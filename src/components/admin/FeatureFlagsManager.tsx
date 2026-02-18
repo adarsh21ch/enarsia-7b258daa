@@ -47,6 +47,24 @@ export function FeatureFlagsManager() {
     }
   };
 
+  const handleFieldChange = async (id: string, field: string, value: string, flag: any) => {
+    try {
+      const oldValue = { [field]: flag[field] };
+      const newValue = { [field]: value };
+      // Auto-sync legacy columns when required_tier changes
+      const updates: any = { [field]: value };
+      if (field === 'required_tier') {
+        updates.free_access = value === 'basic';
+        updates.pro_access = value === 'basic' || value === 'pro';
+      }
+      await updateFlag(id, updates);
+      await logAdminAction('feature_flag_updated', 'feature', id, oldValue, newValue, `Feature "${flag.feature_name}" - ${field} changed to ${value}`);
+      toast.success('Feature updated');
+    } catch (err) {
+      toast.error('Failed to update feature');
+    }
+  };
+
   const handleLimitChange = async (id: string, field: 'free_limit' | 'pro_limit' | 'trial_limit', value: string, flag: any) => {
     const numVal = value === '' ? null : parseInt(value, 10);
     if (value !== '' && isNaN(numVal!)) return;
@@ -138,11 +156,14 @@ export function FeatureFlagsManager() {
                   <div className="flex items-center gap-2 flex-wrap">
                     <span className="font-medium text-sm">{flag.feature_name}</span>
                     <Badge variant="outline" className="text-[10px] font-mono">{flag.feature_key}</Badge>
+                    {flag.module && flag.module !== 'application' && (
+                      <Badge variant="secondary" className="text-[10px]">{flag.module}</Badge>
+                    )}
                     {!flag.is_enabled && <Badge variant="destructive" className="text-[10px]">Off</Badge>}
                   </div>
                   {flag.description && <p className="text-xs text-muted-foreground">{flag.description}</p>}
 
-                  {/* Access & Enable row */}
+                  {/* Tier & Module row */}
                   <div className="flex flex-wrap items-center gap-3">
                     {/* Master enable toggle */}
                     <div className="flex items-center gap-1.5">
@@ -151,41 +172,35 @@ export function FeatureFlagsManager() {
                     </div>
                     <div className="h-4 w-px bg-border" />
 
-                    {/* Access level: segmented Free | Pro Only */}
-                    <div className={`inline-flex rounded-lg border overflow-hidden text-[11px] font-medium ${!flag.is_enabled ? 'opacity-40 pointer-events-none' : ''}`}>
-                      <button
-                        onClick={() => {
-                          if (!flag.free_access) handleToggle(flag.id, 'free_access', true, flag);
-                        }}
-                        className={`px-3 py-1.5 flex items-center gap-1 transition-colors ${
-                          flag.free_access
-                            ? 'bg-primary text-primary-foreground'
-                            : 'bg-muted/50 text-muted-foreground hover:bg-muted'
-                        }`}
-                      >
-                        <Users className="h-3 w-3" />
-                        Free
-                      </button>
-                      <button
-                        onClick={() => {
-                          if (flag.free_access) handleToggle(flag.id, 'free_access', false, flag);
-                        }}
-                        className={`px-3 py-1.5 flex items-center gap-1 transition-colors ${
-                          !flag.free_access
-                            ? 'bg-emerald-500 text-white'
-                            : 'bg-muted/50 text-muted-foreground hover:bg-muted'
-                        }`}
-                      >
-                        <Crown className="h-3 w-3" />
-                        Pro Only
-                      </button>
-                    </div>
-
-                    {/* Trial toggle */}
+                    {/* Required Tier selector */}
                     <div className={`flex items-center gap-1.5 ${!flag.is_enabled ? 'opacity-40 pointer-events-none' : ''}`}>
-                      <FlaskConical className="h-3 w-3 text-blue-500" />
-                      <span className="text-[10px] text-muted-foreground">Trial</span>
-                      <Switch checked={flag.trial_access ?? true} disabled={!flag.is_enabled} onCheckedChange={v => handleToggle(flag.id, 'trial_access', v, flag)} />
+                      <Crown className="h-3 w-3 text-muted-foreground" />
+                      <span className="text-[10px] text-muted-foreground">Tier:</span>
+                      <select
+                        value={flag.required_tier || 'basic'}
+                        onChange={e => handleFieldChange(flag.id, 'required_tier', e.target.value, flag)}
+                        className="h-6 text-[11px] border rounded px-1 bg-background"
+                      >
+                        <option value="basic">Basic</option>
+                        <option value="pro">Pro</option>
+                        <option value="premium">Premium</option>
+                      </select>
+                    </div>
+                    <div className="h-4 w-px bg-border" />
+
+                    {/* Module selector */}
+                    <div className={`flex items-center gap-1.5 ${!flag.is_enabled ? 'opacity-40 pointer-events-none' : ''}`}>
+                      <Sparkles className="h-3 w-3 text-muted-foreground" />
+                      <span className="text-[10px] text-muted-foreground">Module:</span>
+                      <select
+                        value={flag.module || 'application'}
+                        onChange={e => handleFieldChange(flag.id, 'module', e.target.value, flag)}
+                        className="h-6 text-[11px] border rounded px-1 bg-background"
+                      >
+                        <option value="application">Application</option>
+                        <option value="trackup">TrackUp</option>
+                        <option value="funnels">Funnels</option>
+                      </select>
                     </div>
                   </div>
 

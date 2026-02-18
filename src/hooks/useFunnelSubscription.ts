@@ -4,6 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 
 export type FunnelPlan = 'free' | 'pro';
+export type FunnelTier = 'basic' | 'pro' | 'premium';
 
 export interface FunnelSubscription {
   id: string;
@@ -84,6 +85,21 @@ export function useFunnelSubscription() {
   const isFunnelsPro = plan === 'pro';
   const isAdminOverride = subscription?.is_admin_override || false;
 
+  // New tier-based state
+  const funnelTier = useMemo((): FunnelTier => {
+    if (!subscription) return 'basic';
+    const tier = (subscription as any).tier as string | null;
+    if (tier && ['basic', 'pro', 'premium'].includes(tier)) {
+      if (tier !== 'basic') {
+        if (subscription.is_admin_override) return tier as FunnelTier;
+        if (subscription.expires_at && new Date(subscription.expires_at) <= new Date()) return 'basic';
+        if (subscription.status !== 'active') return 'basic';
+      }
+      return tier as FunnelTier;
+    }
+    return isFunnelsPro ? 'pro' : 'basic';
+  }, [subscription, isFunnelsPro]);
+
   const daysRemaining = useMemo(() => {
     if (!subscription?.expires_at || !isFunnelsPro) return 0;
     const diff = new Date(subscription.expires_at).getTime() - Date.now();
@@ -94,6 +110,7 @@ export function useFunnelSubscription() {
     subscription: subscription ?? null,
     loading,
     plan,
+    funnelTier,
     isFunnelsPro,
     isAdminOverride,
     daysRemaining,

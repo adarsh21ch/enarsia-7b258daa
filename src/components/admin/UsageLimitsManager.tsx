@@ -223,7 +223,7 @@ export function UsageLimitsManager() {
           is_enabled: originalLimit.is_enabled,
         } : null;
 
-        await updateLimit(id, changes.value, changes.enabled);
+        await updateLimit(id, { config_value: changes.value, is_enabled: changes.enabled });
 
         if (originalLimit) {
           await logAdminAction(

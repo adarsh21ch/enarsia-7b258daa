@@ -1,4 +1,4 @@
-import { useAdminConfig, FeatureFlag } from './useAdminConfig';
+import { useAdminConfig, FeatureFlag, meetsRequiredTier, SubscriptionTier } from './useAdminConfig';
 import { useFunnelSubscription } from './useFunnelSubscription';
 import { useMemo } from 'react';
 
@@ -8,50 +8,45 @@ export interface FunnelFeatureAccessResult {
   feature: FeatureFlag | null;
   isLoading: boolean;
   isFunnelsPro: boolean;
+  funnelTier: SubscriptionTier;
 }
 
 /**
  * Check if the current user can access a funnel-specific feature.
- * Uses the user's FUNNEL subscription (not app subscription) to determine access.
- * Feature flags are from admin_feature_flags with category "funnels".
+ * Uses tier-based check with fallback to legacy boolean logic.
  */
 export function useFunnelFeatureAccess(featureKey: string): FunnelFeatureAccessResult {
   const { config, loading: configLoading } = useAdminConfig();
-  const { isFunnelsPro, loading: subLoading } = useFunnelSubscription();
+  const { isFunnelsPro, funnelTier, loading: subLoading } = useFunnelSubscription();
 
   const isLoading = configLoading || subLoading;
 
   return useMemo(() => {
     const feature = config.features[featureKey] ?? null;
 
-    // If feature doesn't exist in config, default to allowing access
     if (!feature) {
-      return { canAccess: true, limit: null, feature: null, isLoading, isFunnelsPro };
+      return { canAccess: true, limit: null, feature: null, isLoading, isFunnelsPro, funnelTier };
     }
 
-    // Check if feature is globally disabled
     if (!feature.is_enabled) {
-      return { canAccess: false, limit: null, feature, isLoading, isFunnelsPro };
+      return { canAccess: false, limit: null, feature, isLoading, isFunnelsPro, funnelTier };
     }
 
-    // Funnel Pro users get pro-tier access
-    if (isFunnelsPro) {
-      return {
-        canAccess: feature.pro_access,
-        limit: feature.pro_limit,
-        feature,
-        isLoading,
-        isFunnelsPro,
-      };
+    // Tier-based access check
+    const hasAccess = meetsRequiredTier(funnelTier, feature.required_tier);
+
+    // Determine limit
+    let limit: number | null = null;
+    const tieredLimit = config.limits_tiered[featureKey];
+    if (tieredLimit) {
+      if (funnelTier === 'premium') limit = tieredLimit.premium_value;
+      else if (funnelTier === 'pro') limit = tieredLimit.pro_value;
+      else limit = tieredLimit.basic_value;
+    } else {
+      // Legacy fallback
+      limit = isFunnelsPro ? feature.pro_limit : feature.free_limit;
     }
 
-    // Free users
-    return {
-      canAccess: feature.free_access,
-      limit: feature.free_limit,
-      feature,
-      isLoading,
-      isFunnelsPro,
-    };
-  }, [config.features, featureKey, isFunnelsPro, isLoading]);
+    return { canAccess: hasAccess, limit, feature, isLoading, isFunnelsPro, funnelTier };
+  }, [config.features, config.limits_tiered, featureKey, funnelTier, isFunnelsPro, isLoading]);
 }
