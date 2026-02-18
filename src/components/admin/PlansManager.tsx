@@ -164,23 +164,31 @@ export function PlansManager() {
           <PlanEditForm 
             plan={editingPlan}
             onSave={async (data) => {
-              try {
+            try {
                 // Validation: payment_link is required
                 if (!data.payment_link?.trim()) {
                   toast.error('Payment link is required');
                   return;
                 }
+
+                // Ensure proper data types for numeric fields
+                const sanitizedData = {
+                  ...data,
+                  price_inr: Number(data.price_inr) || 0,
+                  duration_days: Number(data.duration_days) || 30,
+                  sort_order: Number(data.sort_order) || 0,
+                };
                 
                 if (isCreating) {
-                  const newPlan = await createPlan(data);
+                  const newPlan = await createPlan(sanitizedData);
                   // Log audit action
                   await logAdminAction(
                     'plan_created',
                     'plan',
                     newPlan?.id || 'unknown',
                     null,
-                    { plan_name: data.plan_name, plan_key: data.plan_key, price_inr: data.price_inr },
-                    `Created plan "${data.plan_name}"`
+                    { plan_name: sanitizedData.plan_name, plan_key: sanitizedData.plan_key, price_inr: sanitizedData.price_inr },
+                    `Created plan "${sanitizedData.plan_name}"`
                   );
                   toast.success('Plan created');
                 } else if (editingPlan) {
@@ -190,20 +198,21 @@ export function PlansManager() {
                     duration_days: editingPlan.duration_days,
                     payment_link: editingPlan.payment_link,
                   };
-                  await updatePlan(editingPlan.id, data);
+                  await updatePlan(editingPlan.id, sanitizedData);
                   // Log audit action
                   await logAdminAction(
                     'plan_updated',
                     'plan',
                     editingPlan.id,
                     oldData,
-                    { plan_name: data.plan_name, price_inr: data.price_inr, duration_days: data.duration_days, payment_link: data.payment_link },
-                    `Updated plan "${data.plan_name}"`
+                    { plan_name: sanitizedData.plan_name, price_inr: sanitizedData.price_inr, duration_days: sanitizedData.duration_days, payment_link: sanitizedData.payment_link },
+                    `Updated plan "${sanitizedData.plan_name}"`
                   );
                   toast.success('Plan updated');
                 }
                 setSheetOpen(false);
               } catch (err) {
+                console.error('Plan save error:', err);
                 toast.error('Failed to save plan');
               }
             }}
