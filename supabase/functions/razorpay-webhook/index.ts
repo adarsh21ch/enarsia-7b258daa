@@ -178,14 +178,12 @@ Deno.serve(async (req) => {
       console.log(`Found user: ${userId} for email: ${email}`);
 
       // CRITICAL: Get duration_days from order notes - NO FALLBACK
-      // Duration was set by create-razorpay-order from admin_subscription_plans database
       const durationDays = notes.duration_days ? parseInt(notes.duration_days) : null;
+      const planScope = notes.plan_scope || 'app'; // 'app', 'funnels', or 'combined'
       
       if (!durationDays) {
-        console.error('Missing duration_days in payment notes - cannot determine subscription length');
+        console.error('Missing duration_days in payment notes');
         await logPayment(supabase, 'payment.captured', email, paymentId, amount, 'error', 'Missing duration_days in notes', userId, true, payload);
-        // Return 200 to prevent Razorpay from retrying, but log the error
-        // The payment was successful, but we need manual intervention to set duration
         return new Response(JSON.stringify({ 
           error: 'Payment processed but duration not found. Contact support.',
           payment_id: paymentId,
@@ -196,71 +194,108 @@ Deno.serve(async (req) => {
         });
       }
 
-      console.log(`Duration from order notes: ${durationDays} days`);
+      console.log(`Duration: ${durationDays} days, Scope: ${planScope}`);
 
       const now = new Date();
       const expiresAt = new Date(now);
       expiresAt.setDate(expiresAt.getDate() + durationDays);
-
-      // Store payment reference
       const paymentReference = paymentId;
 
-      // Update or insert subscription - ALWAYS Pro
-      const { data: existingSub } = await supabase
-        .from('user_subscriptions')
-        .select('id')
-        .eq('user_id', userId)
-        .maybeSingle();
-
-      if (existingSub) {
-        // Update existing subscription
-        const { error: updateError } = await supabase
+      // Helper to upsert app subscription
+      const upsertAppSub = async () => {
+        const { data: existingSub } = await supabase
           .from('user_subscriptions')
-          .update({
-            plan: 'pro', // Always Pro
-            status: 'active',
-            subscribed_at: now.toISOString(),
-            expires_at: expiresAt.toISOString(),
-            payment_id: paymentReference,
-            updated_at: now.toISOString()
-          })
-          .eq('user_id', userId);
+          .select('id')
+          .eq('user_id', userId)
+          .maybeSingle();
 
-        if (updateError) {
-          console.error('Error updating subscription:', updateError);
-          await logPayment(supabase, 'payment.captured', email, paymentId, amount, 'error', 'Failed to update subscription', userId, true, null);
-          return new Response(JSON.stringify({ error: 'Failed to update subscription' }), {
-            status: 500,
-            headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-          });
+        if (existingSub) {
+          const { error } = await supabase
+            .from('user_subscriptions')
+            .update({
+              plan: 'pro',
+              status: 'active',
+              subscribed_at: now.toISOString(),
+              expires_at: expiresAt.toISOString(),
+              payment_id: paymentReference,
+              updated_at: now.toISOString()
+            })
+            .eq('user_id', userId);
+          if (error) throw error;
+        } else {
+          const { error } = await supabase
+            .from('user_subscriptions')
+            .insert({
+              user_id: userId,
+              plan: 'pro',
+              status: 'active',
+              subscribed_at: now.toISOString(),
+              expires_at: expiresAt.toISOString(),
+              payment_id: paymentReference
+            });
+          if (error) throw error;
         }
+      };
 
-        console.log(`Updated subscription to Pro (${durationDays} days) for user: ${userId}`);
-        await logPayment(supabase, 'payment.captured', email, paymentId, amount, 'success', `Updated to Pro (${durationDays} days)`, userId, true, null);
-      } else {
-        // Insert new subscription
-        const { error: insertError } = await supabase
-          .from('user_subscriptions')
-          .insert({
-            user_id: userId,
-            plan: 'pro', // Always Pro
-            status: 'active',
-            subscribed_at: now.toISOString(),
-            expires_at: expiresAt.toISOString(),
-            payment_id: paymentReference
-          });
+      // Helper to upsert funnel subscription
+      const upsertFunnelSub = async () => {
+        const { data: existingSub } = await supabase
+          .from('user_funnel_subscriptions')
+          .select('id')
+          .eq('user_id', userId)
+          .maybeSingle();
 
-        if (insertError) {
-          console.error('Error inserting subscription:', insertError);
-          await logPayment(supabase, 'payment.captured', email, paymentId, amount, 'error', 'Failed to create subscription', userId, true, null);
-          return new Response(JSON.stringify({ error: 'Failed to create subscription' }), {
-            status: 500,
-            headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-          });
+        if (existingSub) {
+          const { error } = await supabase
+            .from('user_funnel_subscriptions')
+            .update({
+              plan: 'pro',
+              status: 'active',
+              subscribed_at: now.toISOString(),
+              expires_at: expiresAt.toISOString(),
+              payment_id: paymentReference,
+              updated_at: now.toISOString()
+            })
+            .eq('user_id', userId);
+          if (error) throw error;
+        } else {
+          const { error } = await supabase
+            .from('user_funnel_subscriptions')
+            .insert({
+              user_id: userId,
+              plan: 'pro',
+              status: 'active',
+              subscribed_at: now.toISOString(),
+              expires_at: expiresAt.toISOString(),
+              payment_id: paymentReference
+            });
+          if (error) throw error;
         }
+      };
 
-        console.log(`Created Pro subscription (${durationDays} days) for user: ${userId}`);
-        await logPayment(supabase, 'payment.captured', email, paymentId, amount, 'success', `Created Pro (${durationDays} days)`, userId, true, null);
+      try {
+        if (planScope === 'funnels') {
+          await upsertFunnelSub();
+          console.log(`Funnels Pro activated (${durationDays} days) for user: ${userId}`);
+          await logPayment(supabase, 'payment.captured', email, paymentId, amount, 'success', `Funnels Pro (${durationDays} days)`, userId, true, null);
+        } else if (planScope === 'combined') {
+          await upsertAppSub();
+          await upsertFunnelSub();
+          console.log(`Combined Pro activated (${durationDays} days) for user: ${userId}`);
+          await logPayment(supabase, 'payment.captured', email, paymentId, amount, 'success', `Combined Pro (${durationDays} days)`, userId, true, null);
+        } else {
+          // Default: app only
+          await upsertAppSub();
+          console.log(`App Pro activated (${durationDays} days) for user: ${userId}`);
+          await logPayment(supabase, 'payment.captured', email, paymentId, amount, 'success', `App Pro (${durationDays} days)`, userId, true, null);
+        }
+      } catch (subError) {
+        console.error('Error updating subscription:', subError);
+        await logPayment(supabase, 'payment.captured', email, paymentId, amount, 'error', 'Failed to update subscription', userId, true, null);
+        return new Response(JSON.stringify({ error: 'Failed to update subscription' }), {
+          status: 500,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
       }
 
       return new Response(JSON.stringify({ 

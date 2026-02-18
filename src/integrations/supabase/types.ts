@@ -4106,6 +4106,48 @@ export type Database = {
         }
         Relationships: []
       }
+      user_funnel_subscriptions: {
+        Row: {
+          created_at: string | null
+          expires_at: string | null
+          id: string
+          is_admin_override: boolean | null
+          payment_id: string | null
+          plan: string
+          status: string
+          subscribed_at: string | null
+          subscription_source: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          expires_at?: string | null
+          id?: string
+          is_admin_override?: boolean | null
+          payment_id?: string | null
+          plan?: string
+          status?: string
+          subscribed_at?: string | null
+          subscription_source?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          expires_at?: string | null
+          id?: string
+          is_admin_override?: boolean | null
+          payment_id?: string | null
+          plan?: string
+          status?: string
+          subscribed_at?: string | null
+          subscription_source?: string | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_kyc_submissions: {
         Row: {
           age: number | null

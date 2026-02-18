@@ -153,19 +153,89 @@ serve(async (req) => {
     const expiresAt = new Date(now);
     expiresAt.setDate(expiresAt.getDate() + durationDays);
 
-    // Always set plan to 'pro'
-    const { error: updateError } = await supabase
-      .from('user_subscriptions')
-      .update({
-        plan: 'pro', // Always Pro
-        status: 'active',
-        subscribed_at: now.toISOString(),
-        expires_at: expiresAt.toISOString(),
-        payment_id: razorpay_payment_id,
-      })
-      .eq('user_id', user_id);
+    // Determine plan scope from order notes
+    const planScope = (() => {
+      // Try to get from order notes first
+      try {
+        const authHeader2 = btoa(`${RAZORPAY_KEY_ID}:${RAZORPAY_KEY_SECRET}`);
+        // We already fetched order details above, reuse the scope
+      } catch {}
+      return 'app'; // default
+    })();
 
-    if (updateError) {
+    // Re-fetch order to get plan_scope (we need it from notes)
+    let resolvedScope = 'app';
+    try {
+      const orderResp = await fetch(`https://api.razorpay.com/v1/orders/${razorpay_order_id}`, {
+        headers: { 'Authorization': `Basic ${btoa(`${RAZORPAY_KEY_ID}:${RAZORPAY_KEY_SECRET}`)}` },
+      });
+      if (orderResp.ok) {
+        const od = await orderResp.json();
+        resolvedScope = od.notes?.plan_scope || 'app';
+      }
+    } catch {}
+
+    // Helper to upsert app subscription
+    const upsertApp = async () => {
+      const { error } = await supabase
+        .from('user_subscriptions')
+        .update({
+          plan: 'pro',
+          status: 'active',
+          subscribed_at: now.toISOString(),
+          expires_at: expiresAt.toISOString(),
+          payment_id: razorpay_payment_id,
+        })
+        .eq('user_id', user_id);
+      if (error) throw error;
+    };
+
+    // Helper to upsert funnel subscription
+    const upsertFunnel = async () => {
+      const { data: existing } = await supabase
+        .from('user_funnel_subscriptions')
+        .select('id')
+        .eq('user_id', user_id)
+        .maybeSingle();
+
+      if (existing) {
+        const { error } = await supabase
+          .from('user_funnel_subscriptions')
+          .update({
+            plan: 'pro',
+            status: 'active',
+            subscribed_at: now.toISOString(),
+            expires_at: expiresAt.toISOString(),
+            payment_id: razorpay_payment_id,
+            updated_at: now.toISOString(),
+          })
+          .eq('user_id', user_id);
+        if (error) throw error;
+      } else {
+        const { error } = await supabase
+          .from('user_funnel_subscriptions')
+          .insert({
+            user_id,
+            plan: 'pro',
+            status: 'active',
+            subscribed_at: now.toISOString(),
+            expires_at: expiresAt.toISOString(),
+            payment_id: razorpay_payment_id,
+          });
+        if (error) throw error;
+      }
+    };
+
+    try {
+      if (resolvedScope === 'funnels') {
+        await upsertFunnel();
+      } else if (resolvedScope === 'combined') {
+        await upsertApp();
+        await upsertFunnel();
+      } else {
+        await upsertApp();
+      }
+    } catch (updateError: any) {
       console.error('Error updating subscription:', updateError);
       return new Response(
         JSON.stringify({ error: 'Failed to activate subscription' }),
@@ -173,7 +243,8 @@ serve(async (req) => {
       );
     }
 
-    console.log(`Pro subscription activated for user: ${user_id}, duration: ${durationDays} days, expires: ${expiresAt.toISOString()}`);
+    const scopeLabel = resolvedScope === 'combined' ? 'Combined Pro' : resolvedScope === 'funnels' ? 'Funnels Pro' : 'Pro';
+    console.log(`${scopeLabel} activated for user: ${user_id}, duration: ${durationDays} days, expires: ${expiresAt.toISOString()}`);
 
     await supabase.from('payments_log').insert({
       event_type: 'payment_verified',
@@ -182,14 +253,15 @@ serve(async (req) => {
       amount: amount,
       status: 'success',
       found_user: true,
-      action_taken: `subscription_activated_pro_${durationDays}days`,
+      action_taken: `subscription_activated_${resolvedScope}_${durationDays}days`,
     });
 
     return new Response(
       JSON.stringify({ 
         success: true, 
-        message: 'Pro subscription activated successfully',
+        message: `${scopeLabel} subscription activated successfully`,
         plan: 'pro',
+        plan_scope: resolvedScope,
         duration_days: durationDays,
         expires_at: expiresAt.toISOString()
       }),

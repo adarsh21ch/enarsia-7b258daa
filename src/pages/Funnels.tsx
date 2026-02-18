@@ -17,6 +17,9 @@ import {
 } from '@/components/ui/alert-dialog';
 import { useState } from 'react';
 import { Funnel } from '@/types/funnels';
+import { useFunnelFeatureAccess } from '@/hooks/useFunnelFeatureAccess';
+import { FunnelsUpgradeDrawer } from '@/components/funnels/FunnelsUpgradeDrawer';
+import { FunnelsProBadge } from '@/components/funnels/FunnelsProBadge';
 
 export default function Funnels() {
   const navigate = useNavigate();
@@ -25,6 +28,10 @@ export default function Funnels() {
   const deleteFunnel = useDeleteFunnel();
   const publishFunnel = usePublishFunnel();
   const [deleteTarget, setDeleteTarget] = useState<Funnel | null>(null);
+  const { canAccess: canCreateFunnel, limit: funnelLimit, isFunnelsPro } = useFunnelFeatureAccess('funnel_create');
+  
+  const funnelCount = funnels?.length || 0;
+  const atLimit = !isFunnelsPro && funnelLimit !== null && funnelCount >= funnelLimit;
 
   // Redirect to auth if not logged in
   if (!authLoading && !user) {
@@ -66,10 +73,17 @@ export default function Funnels() {
               Create video funnels to capture leads and collect payments
             </p>
           </div>
-          <Button onClick={() => navigate('/funnels/new')}>
-            <Plus className="w-4 h-4 mr-2" />
-            Create Funnel
-          </Button>
+          <div className="flex items-center gap-2">
+            {!isFunnelsPro && <FunnelsProBadge />}
+            {atLimit ? (
+              <FunnelsUpgradeDrawer triggerText="Upgrade to Create More" />
+            ) : (
+              <Button onClick={() => navigate('/funnels/new')}>
+                <Plus className="w-4 h-4 mr-2" />
+                Create Funnel
+              </Button>
+            )}
+          </div>
         </div>
 
         {/* Content */}

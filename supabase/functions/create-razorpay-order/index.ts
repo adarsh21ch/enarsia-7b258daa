@@ -95,10 +95,16 @@ serve(async (req) => {
     }
 
     // Plan found - extract config from database
+    // Determine plan scope based on plan_key prefix
+    const isFunnelsPlan = plan_type.startsWith('funnels_');
+    const isCombinedPlan = plan_type.startsWith('combined_');
+    const planScope = isCombinedPlan ? 'combined' : isFunnelsPlan ? 'funnels' : 'app';
+
     const planConfig = {
       amount: planData.price_inr * 100, // Convert rupees to paise
       duration_days: planData.duration_days,
       plan_name: 'pro', // All plans grant Pro access
+      plan_scope: planScope, // 'app', 'funnels', or 'combined'
       description: planData.plan_name,
     };
 
@@ -162,6 +168,7 @@ serve(async (req) => {
         user_email: user_email,
         plan: 'pro', // Always Pro
         plan_variant: plan_type, // Plan key for reference
+        plan_scope: planConfig.plan_scope, // 'app', 'funnels', or 'combined'
         duration_days: planConfig.duration_days, // CRITICAL: Pass duration to webhook/verify
         original_amount: planConfig.amount,
         final_amount: finalAmount,
