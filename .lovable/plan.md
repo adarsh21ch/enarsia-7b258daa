@@ -1,128 +1,90 @@
 
-# Phase 2: Combined Plan Integration, Feature Gates, and Admin Panel
 
-## What This Phase Covers
+# Add "Funnels" Tab to Admin Panel with Feature Controls and New Feature Flags
 
-Phase 1 established the database, hooks, edge functions, and the FunnelsUpgradeDrawer. Phase 2 completes the system by:
+## Overview
 
-1. Gating features in FunnelEditor and FunnelAnalytics pages
-2. Fixing the existing UpgradeDrawer to exclude funnel/combined plans (it currently shows ALL plans)
-3. Adding the combined plan option to the existing UpgradeDrawer (so app users see it too)
-4. Updating PaymentSuccess page to handle funnel/combined plan confirmations
-5. Adding Funnels subscription management to the Admin Panel
+Add a dedicated "Funnels" tab to the Admin Panel that combines:
+1. **KPI Stats** -- Total Creators, Funnels, Videos, Leads, Pro Users
+2. **Funnel Feature Controls** -- Filtered view of funnel-category feature flags (same UI as the existing Features tab but showing only `category = 'funnels'` flags)
+3. **Subscribers Management** -- List of Funnels Pro users with grant/revoke
+4. **New Feature Flags** -- Additional funnel gates for more granular control
 
----
+## New Feature Flags to Add
 
-## Changes
+These will be inserted into `admin_feature_flags` with `category = 'funnels'`:
 
-### 1. Fix UpgradeDrawer -- filter out funnel-only plans, show combined plans
+| Feature Key | Name | Description | Free Limit | Pro Limit |
+|---|---|---|---|---|
+| `funnel_max_leads` | Max Leads Per Funnel | Maximum leads a funnel can capture | 50 | unlimited |
+| `funnel_qr_code` | QR Code Upload | Upload custom QR codes for payments | false (Pro Only) | true |
+| `funnel_whatsapp_auto` | WhatsApp Auto Message | Auto-send WhatsApp message on lead capture | false (Pro Only) | true |
+| `funnel_lead_export` | Export Funnel Leads | Export leads data from funnels | false (Pro Only) | true |
 
-**File:** `src/components/subscription/UpgradeDrawer.tsx`
+## Database Changes
 
-The existing UpgradeDrawer shows ALL plans from `admin_subscription_plans` with no filtering. This means funnel-only plans (`funnels_pro_monthly`) appear in the app upgrade flow, which is wrong.
+Insert new feature flag rows via the data insert tool (no schema changes needed -- the `admin_feature_flags` table already exists).
 
-- Filter `sortedPlans` to exclude plans starting with `funnels_` (keep `combined_` plans visible as a "Best Value" upsell)
-- Combined plans get a special "App + Funnels" badge to differentiate from app-only plans
+## Frontend Changes
 
-### 2. Gate features in FunnelEditor
+### 1. New Component: `AdminFunnelsTab.tsx`
 
-**File:** `src/pages/FunnelEditor.tsx`
+Main tab component with sections:
+- **Stats Grid** -- 6 KPI cards (Total Creators, Total Funnels, Total Videos, Total Leads, Funnels Pro Users, Combined Pro Users)
+- **Feature Controls** -- Reuses the same card layout as `FeatureFlagsManager` but filtered to only show flags with `category = 'funnels'`. Includes the "Add Feature" button scoped to the funnels category.
+- **Subscribers** -- Table of `user_funnel_subscriptions` rows with user info, plan status, expiry, and grant/revoke actions.
 
-- Import `useFunnelFeatureAccess` and `FunnelsUpgradeDrawer`
-- Gate the Price Options / multiple pricing section behind `funnel_price_options` feature flag
-- Gate video upload behind `funnel_video_upload` feature flag (show Pro badge + upgrade prompt when limit reached)
-- Show `FunnelsProBadge` on gated sections with an inline upgrade trigger
+### 2. New Component: `FunnelsStatsGrid.tsx`
 
-### 3. Gate advanced analytics in FunnelAnalytics
+Fetches aggregated stats using client-side queries:
+- `SELECT count(DISTINCT owner_user_id) FROM funnels` -- Total Creators
+- `SELECT count(*) FROM funnels` -- Total Funnels
+- `SELECT count(*) FROM video_assets` -- Total Videos
+- `SELECT count(*) FROM funnel_leads` -- Total Leads
+- `SELECT count(*) FROM user_funnel_subscriptions WHERE plan = 'pro'` -- Pro Users
 
-**File:** `src/pages/FunnelAnalytics.tsx`
+### 3. New Component: `FunnelsFeaturesControl.tsx`
 
-- Import `useFunnelFeatureAccess` and `FunnelsUpgradeDrawer`
-- Gate the detailed stats grid (completion rate, paid leads) behind `funnel_advanced_analytics`
-- Free users see total leads count only; other stats show a blurred/locked overlay with upgrade prompt
+A focused version of FeatureFlagsManager that:
+- Only shows flags where `category = 'funnels'`
+- Uses the exact same toggle/limit UI (Power toggle, Free/Pro Only segmented control, Trial toggle, numeric limits)
+- Supports adding new funnel-specific features
+- Reuses the `useAdminFeatureFlags` hook with a category filter applied in the component
 
-### 4. Update PaymentSuccess page for funnel/combined plans
+### 4. New Component: `FunnelsSubscribersTable.tsx`
 
-**File:** `src/pages/PaymentSuccess.tsx`
+Shows all users from `user_funnel_subscriptions` joined with `profiles`:
+- Display name, email, plan, status, expiry, admin override badge
+- "Grant Pro" / "Revoke Pro" action buttons
+- Filter: All / Active / Expired / Admin Override
 
-- After verification, check `plan_scope` from the response data
-- Show different success messages based on scope:
-  - `funnels`: "Funnels Pro Activated" with funnel-specific feature list
-  - `combined`: "All-in-One Pro Activated" with both app + funnel features
-  - Default: existing "Pro Plan Activated" message
-- Also refetch `funnel-subscription` query when scope is `funnels` or `combined`
+### 5. Modify: `Admin.tsx`
 
-### 5. Update verify-razorpay-payment to return plan_scope
-
-**File:** `supabase/functions/verify-razorpay-payment/index.ts`
-
-- Include `plan_scope` in the success response so PaymentSuccess can determine what was purchased
-
-### 6. Admin Panel -- Funnels Subscription Management
-
-**File:** `src/components/admin/EnhancedUsersTab.tsx`
-
-- Add a "Funnels Pro" filter option to the plan filter dropdown
-- Show funnel subscription status (badge) alongside app subscription for each user
-- Add "Grant Funnels Pro" action in the user override drawer
-
-**File:** `src/components/admin/UserOverrideDrawer.tsx`
-
-- Add a "Grant Funnels Pro" toggle that upserts `user_funnel_subscriptions` with `is_admin_override = true`
-
-**File:** `src/components/admin/AdminAnalyticsDashboard.tsx`
-
-- Add a small stats card showing: Total Funnels Pro users, Combined Pro users, Funnels revenue this month
-
----
-
-## Technical Details
-
-### UpgradeDrawer Plan Filtering Logic
-```text
-App UpgradeDrawer:
-  Show: plans NOT starting with "funnels_"
-  (monthly, pro_4_months, Pro_Yearly, combined_pro_monthly, combined_pro_yearly)
-
-Funnels UpgradeDrawer (already done):
-  Show: plans starting with "funnels_" or "combined_"
+Add a "Funnels" tab trigger (with Video icon) between "Features" and "Support":
 ```
-
-### FunnelEditor Gating Points
-| Section | Feature Key | Free Behavior | Pro Behavior |
-|---|---|---|---|
-| Video Upload | `funnel_video_upload` | Limited uploads, show count + upgrade | Unlimited |
-| Price Options Manager | `funnel_price_options` | Hidden, show locked card with upgrade | Full access |
-| Custom Branding | `funnel_custom_branding` | N/A (future) | N/A (future) |
-
-### FunnelAnalytics Gating
-| Stat Card | Feature Key | Free Behavior | Pro Behavior |
-|---|---|---|---|
-| Total Leads | Always visible | Shows count | Shows count |
-| Video Completed | `funnel_advanced_analytics` | Blurred with lock icon | Full access |
-| Completion Rate | `funnel_advanced_analytics` | Blurred with lock icon | Full access |
-| Paid Leads | `funnel_advanced_analytics` | Blurred with lock icon | Full access |
-
-### PaymentSuccess Plan Scope Detection
-The `verify-razorpay-payment` response will include `plan_scope: 'app' | 'funnels' | 'combined'` so the page can show the correct confirmation UI.
-
-### Admin Funnels Pro Grant Flow
-1. Admin opens user override drawer
-2. Toggles "Grant Funnels Pro"
-3. System upserts `user_funnel_subscriptions` with `plan: 'pro'`, `is_admin_override: true`, no expiry
-4. Audit log entry created
-
----
+Users | Analytics | Plans | Offers | Limits | Features | Funnels | Support | Audit Log
+```
 
 ## Files Summary
 
 | File | Action |
 |---|---|
-| `src/components/subscription/UpgradeDrawer.tsx` | Modify (filter out funnels_ plans, style combined plans) |
-| `src/pages/FunnelEditor.tsx` | Modify (add feature gates on price options, video upload) |
-| `src/pages/FunnelAnalytics.tsx` | Modify (gate advanced stats behind feature flag) |
-| `src/pages/PaymentSuccess.tsx` | Modify (handle funnels/combined plan scope in success UI) |
-| `supabase/functions/verify-razorpay-payment/index.ts` | Modify (return plan_scope in response) |
-| `src/components/admin/EnhancedUsersTab.tsx` | Modify (add Funnels Pro filter + badge) |
-| `src/components/admin/UserOverrideDrawer.tsx` | Modify (add Grant Funnels Pro toggle) |
-| `src/components/admin/AdminAnalyticsDashboard.tsx` | Modify (add funnels subscription stats) |
+| Database insert (new feature flags) | Insert 4 new rows into `admin_feature_flags` |
+| `src/components/admin/AdminFunnelsTab.tsx` | Create -- main tab with sub-sections |
+| `src/components/admin/FunnelsStatsGrid.tsx` | Create -- KPI cards |
+| `src/components/admin/FunnelsFeaturesControl.tsx` | Create -- funnel-only feature flags manager |
+| `src/components/admin/FunnelsSubscribersTable.tsx` | Create -- subscribers list with actions |
+| `src/pages/Admin.tsx` | Modify -- add Funnels tab trigger and content |
+
+## Component Structure
+
+```text
+Admin.tsx
+  Tabs
+    ...existing tabs...
+    TabsContent value="funnels"
+      AdminFunnelsTab
+        +-- FunnelsStatsGrid (6 KPI cards)
+        +-- FunnelsFeaturesControl (filtered feature flags with toggles/limits)
+        +-- FunnelsSubscribersTable (user list with grant/revoke)
+```
