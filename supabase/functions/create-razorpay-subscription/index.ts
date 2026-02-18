@@ -80,6 +80,8 @@ Deno.serve(async (req) => {
     if (plan.plan_key.startsWith('funnels_')) planScope = 'funnels';
     if (plan.plan_key.startsWith('combined_')) planScope = 'combined';
 
+    const tier = plan.tier || 'pro'; // 3-tier support
+
     // Create Razorpay subscription
     const razorpayKeyId = Deno.env.get('RAZORPAY_KEY_ID')!;
     const razorpayKeySecret = Deno.env.get('RAZORPAY_KEY_SECRET')!;
@@ -93,6 +95,7 @@ Deno.serve(async (req) => {
         user_id: user_id,
         user_email: user_email,
         plan_scope: planScope,
+        tier: tier,
         plan_key: plan.plan_key,
         duration_days: String(plan.duration_days),
       },

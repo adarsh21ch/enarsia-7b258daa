@@ -121,11 +121,11 @@ async function activateSubscription(supabase: any, userId: string, planScope: st
   }
 }
 
-// Look up plan by razorpay_plan_id to get duration_days and plan_scope
+// Look up plan by razorpay_plan_id to get duration_days, plan_scope, and tier
 async function lookupPlanByRazorpayId(supabase: any, razorpayPlanId: string) {
   const { data, error } = await supabase
     .from('admin_subscription_plans')
-    .select('plan_key, duration_days')
+    .select('plan_key, duration_days, tier')
     .eq('razorpay_plan_id', razorpayPlanId)
     .maybeSingle();
   if (error) throw error;
@@ -135,7 +135,7 @@ async function lookupPlanByRazorpayId(supabase: any, razorpayPlanId: string) {
   if (data.plan_key.startsWith('funnels_')) planScope = 'funnels';
   if (data.plan_key.startsWith('combined_')) planScope = 'combined';
   
-  return { duration_days: data.duration_days, plan_scope: planScope };
+  return { duration_days: data.duration_days, plan_scope: planScope, tier: data.tier || 'pro' };
 }
 
 Deno.serve(async (req) => {
@@ -238,6 +238,7 @@ Deno.serve(async (req) => {
 
       const durationDays = notes.duration_days ? parseInt(notes.duration_days) : null;
       const planScope = notes.plan_scope || 'app';
+      const tier = notes.tier || 'pro'; // Default to 'pro' for backward compat
       
       if (!durationDays) {
         await logPayment(supabase, 'payment.captured', email, paymentId, amount, 'error', 'Missing duration_days in notes', userId, true, payload);
@@ -254,6 +255,7 @@ Deno.serve(async (req) => {
       try {
         await activateSubscription(supabase, userId, planScope, {
           plan: 'pro',
+          tier: tier,
           status: 'active',
           subscribed_at: now.toISOString(),
           expires_at: expiresAt.toISOString(),
@@ -261,8 +263,8 @@ Deno.serve(async (req) => {
           updated_at: now.toISOString(),
         });
 
-        console.log(`Pro activated (${durationDays} days, scope: ${planScope}) for user: ${userId}`);
-        await logPayment(supabase, 'payment.captured', email, paymentId, amount, 'success', `Pro ${planScope} (${durationDays} days)`, userId, true, null);
+        console.log(`Tier ${tier} activated (${durationDays} days, scope: ${planScope}) for user: ${userId}`);
+        await logPayment(supabase, 'payment.captured', email, paymentId, amount, 'success', `${tier} ${planScope} (${durationDays} days)`, userId, true, null);
       } catch (subError) {
         console.error('Error updating subscription:', subError);
         await logPayment(supabase, 'payment.captured', email, paymentId, amount, 'error', 'Failed to update subscription', userId, true, null);
@@ -314,15 +316,17 @@ Deno.serve(async (req) => {
         return new Response(JSON.stringify({ error: 'User not found' }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
       }
 
-      // Look up duration from plan config
+      // Look up duration and tier from plan config
       let durationDays = notes.duration_days ? parseInt(notes.duration_days) : null;
       let planScope = notes.plan_scope || 'app';
+      let tier = notes.tier || 'pro';
 
-      if (!durationDays && razorpayPlanId) {
+      if (razorpayPlanId) {
         const planInfo = await lookupPlanByRazorpayId(supabase, razorpayPlanId);
         if (planInfo) {
-          durationDays = planInfo.duration_days;
+          if (!durationDays) durationDays = planInfo.duration_days;
           planScope = planInfo.plan_scope;
+          tier = planInfo.tier;
         }
       }
 
@@ -338,6 +342,7 @@ Deno.serve(async (req) => {
       try {
         await activateSubscription(supabase, userId, planScope, {
           plan: 'pro',
+          tier: tier,
           status: 'active',
           subscribed_at: now.toISOString(),
           expires_at: expiresAt.toISOString(),
@@ -345,8 +350,8 @@ Deno.serve(async (req) => {
           updated_at: now.toISOString(),
         });
 
-        console.log(`Subscription Pro activated (${durationDays} days, scope: ${planScope}) for user: ${userId}`);
-        await logPayment(supabase, 'subscription.activated', email, subId, null, 'success', `Sub Pro ${planScope} (${durationDays} days)`, userId, true, null);
+        console.log(`Subscription tier ${tier} activated (${durationDays} days, scope: ${planScope}) for user: ${userId}`);
+        await logPayment(supabase, 'subscription.activated', email, subId, null, 'success', `Sub ${tier} ${planScope} (${durationDays} days)`, userId, true, null);
       } catch (err) {
         console.error('Error activating subscription:', err);
         await logPayment(supabase, 'subscription.activated', email, subId, null, 'error', 'Failed to activate', userId, true, null);
@@ -377,14 +382,14 @@ Deno.serve(async (req) => {
 
       console.log(`Subscription charged: ${subId}, payment: ${paymentId}`);
 
-      // Get duration from plan config
+      // Get duration and tier from plan config
       let durationDays = notes.duration_days ? parseInt(notes.duration_days) : null;
       let planScope = notes.plan_scope || 'app';
 
-      if (!durationDays && razorpayPlanId) {
+      if (razorpayPlanId) {
         const planInfo = await lookupPlanByRazorpayId(supabase, razorpayPlanId);
         if (planInfo) {
-          durationDays = planInfo.duration_days;
+          if (!durationDays) durationDays = planInfo.duration_days;
           planScope = planInfo.plan_scope;
         }
       }
@@ -470,7 +475,7 @@ Deno.serve(async (req) => {
       for (const table of ['user_subscriptions', 'user_funnel_subscriptions']) {
         await supabase
           .from(table)
-          .update({ status: 'expired', updated_at: new Date().toISOString() })
+          .update({ status: 'expired', tier: 'basic', updated_at: new Date().toISOString() })
           .eq('razorpay_subscription_id', subId);
       }
 

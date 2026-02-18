@@ -153,8 +153,9 @@ serve(async (req) => {
     const expiresAt = new Date(now);
     expiresAt.setDate(expiresAt.getDate() + durationDays);
 
-    // Determine plan scope from order notes (reuse existing fetch)
+    // Determine plan scope and tier from order notes
     let resolvedScope = 'app';
+    let resolvedTier = 'pro'; // Default for backward compat
     try {
       const orderResp = await fetch(`https://api.razorpay.com/v1/orders/${razorpay_order_id}`, {
         headers: { 'Authorization': `Basic ${btoa(`${RAZORPAY_KEY_ID}:${RAZORPAY_KEY_SECRET}`)}` },
@@ -162,6 +163,7 @@ serve(async (req) => {
       if (orderResp.ok) {
         const od = await orderResp.json();
         resolvedScope = od.notes?.plan_scope || 'app';
+        resolvedTier = od.notes?.tier || 'pro';
       }
     } catch {}
 
@@ -171,6 +173,7 @@ serve(async (req) => {
         .from('user_subscriptions')
         .update({
           plan: 'pro',
+          tier: resolvedTier,
           status: 'active',
           subscribed_at: now.toISOString(),
           expires_at: expiresAt.toISOString(),
@@ -193,6 +196,7 @@ serve(async (req) => {
           .from('user_funnel_subscriptions')
           .update({
             plan: 'pro',
+            tier: resolvedTier,
             status: 'active',
             subscribed_at: now.toISOString(),
             expires_at: expiresAt.toISOString(),
@@ -207,6 +211,7 @@ serve(async (req) => {
           .insert({
             user_id,
             plan: 'pro',
+            tier: resolvedTier,
             status: 'active',
             subscribed_at: now.toISOString(),
             expires_at: expiresAt.toISOString(),

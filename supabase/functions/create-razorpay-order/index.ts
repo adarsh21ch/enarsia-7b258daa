@@ -105,6 +105,7 @@ serve(async (req) => {
       duration_days: planData.duration_days,
       plan_name: 'pro', // All plans grant Pro access
       plan_scope: planScope, // 'app', 'funnels', or 'combined'
+      tier: planData.tier || 'pro', // 3-tier: basic/pro/premium
       description: planData.plan_name,
     };
 
@@ -169,6 +170,7 @@ serve(async (req) => {
         plan: 'pro', // Always Pro
         plan_variant: plan_type, // Plan key for reference
         plan_scope: planConfig.plan_scope, // 'app', 'funnels', or 'combined'
+        tier: planConfig.tier, // 3-tier: basic/pro/premium
         duration_days: planConfig.duration_days, // CRITICAL: Pass duration to webhook/verify
         original_amount: planConfig.amount,
         final_amount: finalAmount,
