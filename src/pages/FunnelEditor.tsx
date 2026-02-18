@@ -18,8 +18,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { ArrowLeft, Loader2, Save, Globe } from 'lucide-react';
+import { ArrowLeft, Loader2, Save, Globe, Lock } from 'lucide-react';
 import { toast } from 'sonner';
+import { useFunnelFeatureAccess } from '@/hooks/useFunnelFeatureAccess';
+import { FunnelsProBadge } from '@/components/funnels/FunnelsProBadge';
+import { FunnelsUpgradeDrawer } from '@/components/funnels/FunnelsUpgradeDrawer';
 
 export default function FunnelEditor() {
   const navigate = useNavigate();
@@ -31,6 +34,9 @@ export default function FunnelEditor() {
   const createFunnel = useCreateFunnel();
   const updateFunnel = useUpdateFunnel();
   const checkSlug = useCheckSlug();
+
+  const priceOptionsAccess = useFunnelFeatureAccess('funnel_price_options');
+  const videoUploadAccess = useFunnelFeatureAccess('funnel_video_upload');
 
   const [formData, setFormData] = useState<CreateFunnelInput>({
     title: '',
@@ -351,18 +357,32 @@ export default function FunnelEditor() {
                     </p>
                   </div>
 
-                  {/* Price Options Manager - only show for existing funnels */}
-                  {isEditing && id && (
-                    <PriceOptionsManager 
-                      funnelId={id} 
-                      defaultUpiId={formData.upi_id}
-                    />
-                  )}
-                  
-                  {!isEditing && (
-                    <p className="text-sm text-muted-foreground bg-muted p-3 rounded-lg">
-                      Save the funnel first, then you can add multiple price options with QR codes.
-                    </p>
+                  {/* Price Options Manager - gated behind funnel_price_options */}
+                  {priceOptionsAccess.canAccess ? (
+                    <>
+                      {isEditing && id && (
+                        <PriceOptionsManager 
+                          funnelId={id} 
+                          defaultUpiId={formData.upi_id}
+                        />
+                      )}
+                      {!isEditing && (
+                        <p className="text-sm text-muted-foreground bg-muted p-3 rounded-lg">
+                          Save the funnel first, then you can add multiple price options with QR codes.
+                        </p>
+                      )}
+                    </>
+                  ) : (
+                    <div className="p-4 rounded-lg border border-dashed border-amber-500/50 bg-amber-500/5 flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <Lock className="h-5 w-5 text-amber-600" />
+                        <div>
+                          <p className="font-medium text-sm">Multiple Price Options</p>
+                          <p className="text-xs text-muted-foreground">Upgrade to Funnels Pro to add multiple pricing tiers with QR codes</p>
+                        </div>
+                      </div>
+                      <FunnelsUpgradeDrawer variant="compact" triggerText="Unlock" />
+                    </div>
                   )}
                 </div>
               )}

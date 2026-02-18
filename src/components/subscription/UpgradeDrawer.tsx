@@ -27,9 +27,14 @@ export function UpgradeDrawer({ variant = 'default', triggerText }: UpgradeDrawe
   const isMobile = useIsMobile();
   const [open, setOpen] = useState(false);
   
-  const defaultPlan = getDefaultPlan();
+  // Filter out funnel-only plans from the app upgrade drawer
+  const appPlans = useMemo(() => 
+    plans.filter(p => !p.plan_key.startsWith('funnels_')),
+    [plans]
+  );
+  const defaultPlan = appPlans.find(p => p.isDefault) || appPlans[0];
   const [selectedPlanKey, setSelectedPlanKey] = useState<string>(defaultPlan?.plan_key || 'quarterly');
-  
+
   // Coupon code state
   const [couponCode, setCouponCode] = useState('');
   const [validatingCoupon, setValidatingCoupon] = useState(false);
@@ -148,8 +153,8 @@ export function UpgradeDrawer({ variant = 'default', triggerText }: UpgradeDrawe
   if (permLoading || permPaid) return null;
 
   const buttonText = triggerText || 'Upgrade to Pro';
-  const sortedPlans = [...plans].sort((a, b) => a.sortOrder - b.sortOrder);
-  const selectedPlan = plans.find(p => p.plan_key === selectedPlanKey) || defaultPlan;
+  const sortedPlans = [...appPlans].sort((a, b) => a.sortOrder - b.sortOrder);
+  const selectedPlan = appPlans.find(p => p.plan_key === selectedPlanKey) || defaultPlan;
 
   // Calculate discounted price if offer applied
   const getDisplayPrice = (plan: PlanConfig) => {
@@ -204,6 +209,11 @@ export function UpgradeDrawer({ variant = 'default', triggerText }: UpgradeDrawe
             : 'border-border bg-card hover:border-primary/50'
         }`}
       >
+        {plan.plan_key.startsWith('combined_') && (
+          <div className="absolute -top-2.5 left-3 px-2 py-0.5 bg-gradient-to-r from-primary to-amber-500 text-white text-xs font-semibold rounded-full">
+            App + Funnels
+          </div>
+        )}
         {plan.badgeText && (
           <div className="absolute -top-2.5 right-3 px-2 py-0.5 bg-amber-500 text-white text-xs font-semibold rounded-full flex items-center gap-1">
             <Star className="h-3 w-3" />

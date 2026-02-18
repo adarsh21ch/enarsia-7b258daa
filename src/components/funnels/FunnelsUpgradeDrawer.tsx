@@ -12,9 +12,10 @@ import { useState, useMemo } from 'react';
 interface FunnelsUpgradeDrawerProps {
   triggerText?: string;
   trigger?: React.ReactNode;
+  variant?: 'default' | 'compact';
 }
 
-export function FunnelsUpgradeDrawer({ triggerText, trigger }: FunnelsUpgradeDrawerProps) {
+export function FunnelsUpgradeDrawer({ triggerText, trigger, variant = 'default' }: FunnelsUpgradeDrawerProps) {
   const { isFunnelsPro, loading: subLoading } = useFunnelSubscription();
   const { initiatePayment, loading: paymentLoading } = useRazorpay();
   const { toast } = useToast();
@@ -59,10 +60,16 @@ export function FunnelsUpgradeDrawer({ triggerText, trigger }: FunnelsUpgradeDra
   if (subLoading || isFunnelsPro) return null;
 
   const TriggerButton = trigger || (
-    <Button variant="default" size="sm" className="gap-2">
-      <Crown className="h-4 w-4" />
-      {triggerText || 'Upgrade Funnels'}
-    </Button>
+    variant === 'compact' ? (
+      <Button variant="ghost" size="sm" className="h-6 px-2 text-xs font-medium text-amber-700 dark:text-amber-400 hover:bg-amber-500/20">
+        {triggerText || 'Upgrade Funnels'}
+      </Button>
+    ) : (
+      <Button variant="default" size="sm" className="gap-2">
+        <Crown className="h-4 w-4" />
+        {triggerText || 'Upgrade Funnels'}
+      </Button>
+    )
   );
 
   const PlanCard = ({ plan, isSelected }: { plan: PlanConfig; isSelected: boolean }) => {

@@ -36,6 +36,7 @@ const PLAN_FILTER_OPTIONS = [
   { value: 'all', label: 'All Plans' },
   { value: 'free', label: 'Free' },
   { value: 'pro', label: 'Pro' },
+  { value: 'funnels_pro', label: 'Funnels Pro' },
 ];
 
 export function EnhancedUsersTab() {

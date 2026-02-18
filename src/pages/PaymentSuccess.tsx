@@ -3,9 +3,10 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useSubscription } from '@/hooks/useSubscription';
 import { supabase } from '@/integrations/supabase/client';
-import { Loader2, CheckCircle, XCircle, Crown } from 'lucide-react';
+import { Loader2, CheckCircle, XCircle, Crown, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
+import { useQueryClient } from '@tanstack/react-query';
 import nevoraLogo from '@/assets/nevorai-logo.jpeg';
 
 // Format duration dynamically based on days
@@ -29,9 +30,11 @@ export default function PaymentSuccess() {
   const { user, loading: authLoading } = useAuth();
   const { refetch } = useSubscription();
   const { toast } = useToast();
+  const queryClient = useQueryClient();
   const [status, setStatus] = useState<'processing' | 'success' | 'error' | 'missing_params'>('processing');
   const [errorMessage, setErrorMessage] = useState('');
   const [durationDays, setDurationDays] = useState<number | null>(null);
+  const [planScope, setPlanScope] = useState<'app' | 'funnels' | 'combined'>('app');
 
   useEffect(() => {
     if (!user && !authLoading) {
@@ -77,19 +80,23 @@ export default function PaymentSuccess() {
         return;
       }
 
-      // Store duration from response for display
-      if (data?.duration_days) {
-        setDurationDays(data.duration_days);
-      }
+      // Store duration and scope from response for display
+      if (data?.duration_days) setDurationDays(data.duration_days);
+      const scope = data?.plan_scope || 'app';
+      setPlanScope(scope);
 
       await refetch();
+      // Also refresh funnel subscription if relevant
+      if (scope === 'funnels' || scope === 'combined') {
+        queryClient.invalidateQueries({ queryKey: ['funnel-subscription'] });
+      }
       setStatus('success');
       
-      // Dynamic toast message based on actual duration
       const durationText = data?.duration_days ? formatDuration(data.duration_days) : '';
+      const scopeTitle = scope === 'combined' ? 'All-in-One Pro Activated!' : scope === 'funnels' ? 'Funnels Pro Activated!' : 'Pro Plan Activated!';
       toast({
-        title: "Pro Plan Activated!",
-        description: `Welcome to NevorAI Pro! Enjoy all premium features${durationText ? ` for ${durationText}` : ''}.`,
+        title: scopeTitle,
+        description: `Enjoy all premium features${durationText ? ` for ${durationText}` : ''}.`,
       });
     } catch (err: any) {
       console.error('Activation error:', err);
@@ -134,26 +141,43 @@ export default function PaymentSuccess() {
             </div>
             <h1 className="text-2xl font-bold text-green-600">Payment Successful!</h1>
             <p className="text-muted-foreground">
-              Your Pro plan is now active{durationDays ? ` for ${formatDuration(durationDays)}` : ''}.
+              {planScope === 'combined'
+                ? `Your All-in-One Pro plan is now active${durationDays ? ` for ${formatDuration(durationDays)}` : ''}.`
+                : planScope === 'funnels'
+                ? `Your Funnels Pro plan is now active${durationDays ? ` for ${formatDuration(durationDays)}` : ''}.`
+                : `Your Pro plan is now active${durationDays ? ` for ${formatDuration(durationDays)}` : ''}.`}
             </p>
             
             <div className="bg-card border border-border/50 rounded-2xl p-4 mt-6">
               <div className="flex items-center justify-center gap-2 mb-2">
-                <Crown className="h-5 w-5 text-primary" />
-                <span className="font-semibold">Pro Features Unlocked</span>
+                {planScope === 'combined' ? <Sparkles className="h-5 w-5 text-primary" /> : <Crown className="h-5 w-5 text-primary" />}
+                <span className="font-semibold">
+                  {planScope === 'combined' ? 'All-in-One Pro Unlocked' : planScope === 'funnels' ? 'Funnels Pro Unlocked' : 'Pro Features Unlocked'}
+                </span>
               </div>
               <ul className="text-sm text-muted-foreground space-y-1">
-                <li>✓ TrackUp - Funnel & Leads Tracker</li>
-                <li>✓ ActionUp - Activity Center</li>
-                <li>✓ Advanced Analytics</li>
+                {(planScope === 'app' || planScope === 'combined') && (
+                  <>
+                    <li>✓ TrackUp - Funnel & Leads Tracker</li>
+                    <li>✓ ActionUp - Activity Center</li>
+                    <li>✓ Advanced Analytics</li>
+                  </>
+                )}
+                {(planScope === 'funnels' || planScope === 'combined') && (
+                  <>
+                    <li>✓ Unlimited Video Funnels</li>
+                    <li>✓ Multiple Price Options & QR Codes</li>
+                    <li>✓ Advanced Funnel Analytics</li>
+                  </>
+                )}
               </ul>
             </div>
 
             <Button 
-              onClick={() => navigate('/dashboard')} 
+              onClick={() => navigate(planScope === 'funnels' ? '/funnels' : '/dashboard')} 
               className="w-full h-12 mt-6"
             >
-              Go to Dashboard
+              {planScope === 'funnels' ? 'Go to Funnels' : 'Go to Dashboard'}
             </Button>
           </div>
         )}
