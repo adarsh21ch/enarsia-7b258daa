@@ -153,17 +153,7 @@ serve(async (req) => {
     const expiresAt = new Date(now);
     expiresAt.setDate(expiresAt.getDate() + durationDays);
 
-    // Determine plan scope from order notes
-    const planScope = (() => {
-      // Try to get from order notes first
-      try {
-        const authHeader2 = btoa(`${RAZORPAY_KEY_ID}:${RAZORPAY_KEY_SECRET}`);
-        // We already fetched order details above, reuse the scope
-      } catch {}
-      return 'app'; // default
-    })();
-
-    // Re-fetch order to get plan_scope (we need it from notes)
+    // Determine plan scope from order notes (reuse existing fetch)
     let resolvedScope = 'app';
     try {
       const orderResp = await fetch(`https://api.razorpay.com/v1/orders/${razorpay_order_id}`, {

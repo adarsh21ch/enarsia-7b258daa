@@ -36,6 +36,9 @@ export function UserOverrideDrawer({
   // Find existing override for this user
   const existingOverride = overrides.find(o => o.user_id === userId);
 
+  const [grantingFunnelsPro, setGrantingFunnelsPro] = useState(false);
+  const [funnelsProGranted, setFunnelsProGranted] = useState(false);
+
   const [formData, setFormData] = useState({
     force_pro_access: false,
     custom_daily_limit: '',
@@ -43,6 +46,19 @@ export function UserOverrideDrawer({
     custom_expiry_date: '',
     notes: '',
   });
+
+  // Check if user already has funnels pro
+  useEffect(() => {
+    if (!open) return;
+    (async () => {
+      const { data } = await supabase
+        .from('user_funnel_subscriptions')
+        .select('plan, is_admin_override')
+        .eq('user_id', userId)
+        .maybeSingle();
+      setFunnelsProGranted(data?.plan === 'pro' || false);
+    })();
+  }, [userId, open]);
 
   // Reset form when user changes or override loads
   useEffect(() => {
@@ -185,6 +201,59 @@ export function UserOverrideDrawer({
               value={formData.notes}
               onChange={(e) => setFormData(prev => ({ ...prev, notes: e.target.value }))}
               rows={3}
+            />
+          </div>
+
+          {/* Grant Funnels Pro */}
+          <div className="flex items-center justify-between p-4 rounded-lg border">
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-lg bg-amber-500/10">
+                <Crown className="h-4 w-4 text-amber-500" />
+              </div>
+              <div>
+                <p className="font-medium">Funnels Pro</p>
+                <p className="text-xs text-muted-foreground">
+                  {funnelsProGranted ? 'User has Funnels Pro access' : 'Grant Funnels Pro access'}
+                </p>
+              </div>
+            </div>
+            <Switch
+              checked={funnelsProGranted}
+              disabled={grantingFunnelsPro}
+              onCheckedChange={async (checked) => {
+                setGrantingFunnelsPro(true);
+                try {
+                  if (checked) {
+                    const { data: existing } = await supabase
+                      .from('user_funnel_subscriptions')
+                      .select('id')
+                      .eq('user_id', userId)
+                      .maybeSingle();
+                    if (existing) {
+                      await supabase.from('user_funnel_subscriptions').update({
+                        plan: 'pro', status: 'active', is_admin_override: true, updated_at: new Date().toISOString(),
+                      }).eq('user_id', userId);
+                    } else {
+                      await supabase.from('user_funnel_subscriptions').insert({
+                        user_id: userId, plan: 'pro', status: 'active', is_admin_override: true,
+                      });
+                    }
+                    await logAdminAction('funnels_pro_granted', 'user', userId, null, { plan: 'pro' }, `Granted Funnels Pro to ${userEmail}`);
+                    toast.success('Funnels Pro granted');
+                  } else {
+                    await supabase.from('user_funnel_subscriptions').update({
+                      plan: 'free', status: 'inactive', is_admin_override: false, updated_at: new Date().toISOString(),
+                    }).eq('user_id', userId);
+                    await logAdminAction('funnels_pro_revoked', 'user', userId, { plan: 'pro' }, { plan: 'free' }, `Revoked Funnels Pro from ${userEmail}`);
+                    toast.success('Funnels Pro revoked');
+                  }
+                  setFunnelsProGranted(checked);
+                } catch (err) {
+                  toast.error('Failed to update Funnels Pro');
+                } finally {
+                  setGrantingFunnelsPro(false);
+                }
+              }}
             />
           </div>
 
