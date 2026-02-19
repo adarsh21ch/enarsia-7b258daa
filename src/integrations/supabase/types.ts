@@ -1626,30 +1626,36 @@ export type Database = {
       }
       course_leads: {
         Row: {
+          city: string | null
           course_id: string
           created_at: string
           email: string | null
           id: string
           name: string | null
           phone: string | null
+          state: string | null
           user_identifier: string | null
         }
         Insert: {
+          city?: string | null
           course_id: string
           created_at?: string
           email?: string | null
           id?: string
           name?: string | null
           phone?: string | null
+          state?: string | null
           user_identifier?: string | null
         }
         Update: {
+          city?: string | null
           course_id?: string
           created_at?: string
           email?: string | null
           id?: string
           name?: string | null
           phone?: string | null
+          state?: string | null
           user_identifier?: string | null
         }
         Relationships: [
