@@ -1481,9 +1481,14 @@ export type Database = {
         Row: {
           created_at: string
           description: string | null
+          estimated_duration_minutes: number | null
           id: string
+          is_free_preview: boolean
+          is_locked: boolean
           module_id: string
           required_watch_percent: number
+          resource_label: string | null
+          resource_url: string | null
           sort_order: number
           title: string | null
           video_asset_id: string
@@ -1491,9 +1496,14 @@ export type Database = {
         Insert: {
           created_at?: string
           description?: string | null
+          estimated_duration_minutes?: number | null
           id?: string
+          is_free_preview?: boolean
+          is_locked?: boolean
           module_id: string
           required_watch_percent?: number
+          resource_label?: string | null
+          resource_url?: string | null
           sort_order?: number
           title?: string | null
           video_asset_id: string
@@ -1501,9 +1511,14 @@ export type Database = {
         Update: {
           created_at?: string
           description?: string | null
+          estimated_duration_minutes?: number | null
           id?: string
+          is_free_preview?: boolean
+          is_locked?: boolean
           module_id?: string
           required_watch_percent?: number
+          resource_label?: string | null
+          resource_url?: string | null
           sort_order?: number
           title?: string | null
           video_asset_id?: string
@@ -1514,6 +1529,53 @@ export type Database = {
             columns: ["module_id"]
             isOneToOne: false
             referencedRelation: "course_modules"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      course_coupons: {
+        Row: {
+          code: string
+          course_id: string
+          created_at: string
+          current_uses: number
+          discount_type: string
+          discount_value: number
+          expiry_date: string | null
+          id: string
+          is_active: boolean
+          max_uses: number | null
+        }
+        Insert: {
+          code: string
+          course_id: string
+          created_at?: string
+          current_uses?: number
+          discount_type?: string
+          discount_value?: number
+          expiry_date?: string | null
+          id?: string
+          is_active?: boolean
+          max_uses?: number | null
+        }
+        Update: {
+          code?: string
+          course_id?: string
+          created_at?: string
+          current_uses?: number
+          discount_type?: string
+          discount_value?: number
+          expiry_date?: string | null
+          id?: string
+          is_active?: boolean
+          max_uses?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "course_coupons_course_id_fkey"
+            columns: ["course_id"]
+            isOneToOne: false
+            referencedRelation: "courses"
             referencedColumns: ["id"]
           },
         ]
@@ -1562,12 +1624,52 @@ export type Database = {
           },
         ]
       }
+      course_leads: {
+        Row: {
+          course_id: string
+          created_at: string
+          email: string | null
+          id: string
+          name: string | null
+          phone: string | null
+          user_identifier: string | null
+        }
+        Insert: {
+          course_id: string
+          created_at?: string
+          email?: string | null
+          id?: string
+          name?: string | null
+          phone?: string | null
+          user_identifier?: string | null
+        }
+        Update: {
+          course_id?: string
+          created_at?: string
+          email?: string | null
+          id?: string
+          name?: string | null
+          phone?: string | null
+          user_identifier?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "course_leads_course_id_fkey"
+            columns: ["course_id"]
+            isOneToOne: false
+            referencedRelation: "courses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       course_modules: {
         Row: {
           course_id: string
           created_at: string
           description: string | null
           id: string
+          is_free_preview: boolean
+          is_locked: boolean
           sort_order: number
           title: string
         }
@@ -1576,6 +1678,8 @@ export type Database = {
           created_at?: string
           description?: string | null
           id?: string
+          is_free_preview?: boolean
+          is_locked?: boolean
           sort_order?: number
           title: string
         }
@@ -1584,6 +1688,8 @@ export type Database = {
           created_at?: string
           description?: string | null
           id?: string
+          is_free_preview?: boolean
+          is_locked?: boolean
           sort_order?: number
           title?: string
         }
@@ -1685,73 +1791,118 @@ export type Database = {
       }
       courses: {
         Row: {
+          access_duration_days: number | null
           access_type: string
           allow_forward_seek: boolean
           allow_manual_complete: boolean
           allow_speed_control: boolean
           cover_image_url: string | null
           created_at: string
+          currency: string
           description: string | null
           id: string
+          instagram_url: string | null
+          instructor_avatar_url: string | null
+          instructor_bio: string | null
+          instructor_name: string | null
           is_published: boolean
+          lead_form_fields: Json
+          lifetime_access: boolean
+          linkedin_url: string | null
+          outcomes: Json
           owner_user_id: string
           price: number
           progression_mode_chapter: string
           progression_mode_module: string
           qr_image_url: string | null
+          require_lead_form: boolean
+          requirements: Json
           sequential_unlock: boolean
+          skill_level: string
           slug: string
           subtitle: string | null
           thumbnail_url: string | null
           title: string
           updated_at: string
           upi_id: string | null
+          what_you_learn: Json
+          youtube_url: string | null
         }
         Insert: {
+          access_duration_days?: number | null
           access_type?: string
           allow_forward_seek?: boolean
           allow_manual_complete?: boolean
           allow_speed_control?: boolean
           cover_image_url?: string | null
           created_at?: string
+          currency?: string
           description?: string | null
           id?: string
+          instagram_url?: string | null
+          instructor_avatar_url?: string | null
+          instructor_bio?: string | null
+          instructor_name?: string | null
           is_published?: boolean
+          lead_form_fields?: Json
+          lifetime_access?: boolean
+          linkedin_url?: string | null
+          outcomes?: Json
           owner_user_id: string
           price?: number
           progression_mode_chapter?: string
           progression_mode_module?: string
           qr_image_url?: string | null
+          require_lead_form?: boolean
+          requirements?: Json
           sequential_unlock?: boolean
+          skill_level?: string
           slug: string
           subtitle?: string | null
           thumbnail_url?: string | null
           title: string
           updated_at?: string
           upi_id?: string | null
+          what_you_learn?: Json
+          youtube_url?: string | null
         }
         Update: {
+          access_duration_days?: number | null
           access_type?: string
           allow_forward_seek?: boolean
           allow_manual_complete?: boolean
           allow_speed_control?: boolean
           cover_image_url?: string | null
           created_at?: string
+          currency?: string
           description?: string | null
           id?: string
+          instagram_url?: string | null
+          instructor_avatar_url?: string | null
+          instructor_bio?: string | null
+          instructor_name?: string | null
           is_published?: boolean
+          lead_form_fields?: Json
+          lifetime_access?: boolean
+          linkedin_url?: string | null
+          outcomes?: Json
           owner_user_id?: string
           price?: number
           progression_mode_chapter?: string
           progression_mode_module?: string
           qr_image_url?: string | null
+          require_lead_form?: boolean
+          requirements?: Json
           sequential_unlock?: boolean
+          skill_level?: string
           slug?: string
           subtitle?: string | null
           thumbnail_url?: string | null
           title?: string
           updated_at?: string
           upi_id?: string | null
+          what_you_learn?: Json
+          youtube_url?: string | null
         }
         Relationships: []
       }
