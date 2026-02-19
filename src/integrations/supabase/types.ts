@@ -1426,6 +1426,98 @@ export type Database = {
         }
         Relationships: []
       }
+      course_chapter_progress: {
+        Row: {
+          chapter_id: string
+          completed: boolean
+          enrollment_id: string
+          id: string
+          last_heartbeat_at: string | null
+          last_position: number
+          updated_at: string
+          watch_percentage: number
+          watch_seconds: number
+        }
+        Insert: {
+          chapter_id: string
+          completed?: boolean
+          enrollment_id: string
+          id?: string
+          last_heartbeat_at?: string | null
+          last_position?: number
+          updated_at?: string
+          watch_percentage?: number
+          watch_seconds?: number
+        }
+        Update: {
+          chapter_id?: string
+          completed?: boolean
+          enrollment_id?: string
+          id?: string
+          last_heartbeat_at?: string | null
+          last_position?: number
+          updated_at?: string
+          watch_percentage?: number
+          watch_seconds?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "course_chapter_progress_chapter_id_fkey"
+            columns: ["chapter_id"]
+            isOneToOne: false
+            referencedRelation: "course_chapters"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "course_chapter_progress_enrollment_id_fkey"
+            columns: ["enrollment_id"]
+            isOneToOne: false
+            referencedRelation: "course_enrollments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      course_chapters: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          module_id: string
+          required_watch_percent: number
+          sort_order: number
+          title: string | null
+          video_asset_id: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          module_id: string
+          required_watch_percent?: number
+          sort_order?: number
+          title?: string | null
+          video_asset_id: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          module_id?: string
+          required_watch_percent?: number
+          sort_order?: number
+          title?: string | null
+          video_asset_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "course_chapters_module_id_fkey"
+            columns: ["module_id"]
+            isOneToOne: false
+            referencedRelation: "course_modules"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       course_enrollments: {
         Row: {
           course_id: string
@@ -1463,6 +1555,41 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "course_enrollments_course_id_fkey"
+            columns: ["course_id"]
+            isOneToOne: false
+            referencedRelation: "courses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      course_modules: {
+        Row: {
+          course_id: string
+          created_at: string
+          description: string | null
+          id: string
+          sort_order: number
+          title: string
+        }
+        Insert: {
+          course_id: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          sort_order?: number
+          title: string
+        }
+        Update: {
+          course_id?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          sort_order?: number
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "course_modules_course_id_fkey"
             columns: ["course_id"]
             isOneToOne: false
             referencedRelation: "courses"
@@ -1559,6 +1686,7 @@ export type Database = {
       courses: {
         Row: {
           access_type: string
+          allow_manual_complete: boolean
           cover_image_url: string | null
           created_at: string
           description: string | null
@@ -1566,15 +1694,20 @@ export type Database = {
           is_published: boolean
           owner_user_id: string
           price: number
+          progression_mode_chapter: string
+          progression_mode_module: string
           qr_image_url: string | null
           sequential_unlock: boolean
           slug: string
+          subtitle: string | null
+          thumbnail_url: string | null
           title: string
           updated_at: string
           upi_id: string | null
         }
         Insert: {
           access_type?: string
+          allow_manual_complete?: boolean
           cover_image_url?: string | null
           created_at?: string
           description?: string | null
@@ -1582,15 +1715,20 @@ export type Database = {
           is_published?: boolean
           owner_user_id: string
           price?: number
+          progression_mode_chapter?: string
+          progression_mode_module?: string
           qr_image_url?: string | null
           sequential_unlock?: boolean
           slug: string
+          subtitle?: string | null
+          thumbnail_url?: string | null
           title: string
           updated_at?: string
           upi_id?: string | null
         }
         Update: {
           access_type?: string
+          allow_manual_complete?: boolean
           cover_image_url?: string | null
           created_at?: string
           description?: string | null
@@ -1598,9 +1736,13 @@ export type Database = {
           is_published?: boolean
           owner_user_id?: string
           price?: number
+          progression_mode_chapter?: string
+          progression_mode_module?: string
           qr_image_url?: string | null
           sequential_unlock?: boolean
           slug?: string
+          subtitle?: string | null
+          thumbnail_url?: string | null
           title?: string
           updated_at?: string
           upi_id?: string | null
