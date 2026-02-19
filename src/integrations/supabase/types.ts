@@ -1686,7 +1686,9 @@ export type Database = {
       courses: {
         Row: {
           access_type: string
+          allow_forward_seek: boolean
           allow_manual_complete: boolean
+          allow_speed_control: boolean
           cover_image_url: string | null
           created_at: string
           description: string | null
@@ -1707,7 +1709,9 @@ export type Database = {
         }
         Insert: {
           access_type?: string
+          allow_forward_seek?: boolean
           allow_manual_complete?: boolean
+          allow_speed_control?: boolean
           cover_image_url?: string | null
           created_at?: string
           description?: string | null
@@ -1728,7 +1732,9 @@ export type Database = {
         }
         Update: {
           access_type?: string
+          allow_forward_seek?: boolean
           allow_manual_complete?: boolean
+          allow_speed_control?: boolean
           cover_image_url?: string | null
           created_at?: string
           description?: string | null
