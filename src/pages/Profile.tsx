@@ -25,7 +25,7 @@ import { PullToRefreshIndicator } from '@/components/PullToRefreshIndicator';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import { User, LogOut, ChevronRight, ChevronDown, Phone, Building2, MapPin, Loader2, FileText, Shield, Receipt, Mail, Settings, ExternalLink, BarChart3, Crown, Gift, Trash2, Sparkles } from 'lucide-react';
+import { User, LogOut, ChevronRight, ChevronDown, Phone, Building2, MapPin, Loader2, FileText, Shield, Receipt, Mail, Settings, ExternalLink, BarChart3, Crown, Gift, Trash2, Sparkles, Lock } from 'lucide-react';
 import { AIAssistantChat } from '@/components/ai/AIAssistantChat';
 import { useFeatureAccess } from '@/hooks/useFeatureAccess';
 import { toast } from 'sonner';
@@ -418,28 +418,43 @@ export default function Profile() {
             <ChevronRight className="h-5 w-5 text-muted-foreground" />
           </button>
 
-          {/* AI Assistant */}
-          {canAccessAI &&
-        <button onClick={() => setShowAIChat(true)} className={cn(
-          "w-full relative overflow-hidden rounded-xl p-4",
-          "bg-gradient-to-r backdrop-blur-sm",
-          "border border-primary/30 shadow-sm",
-          "flex items-center justify-between",
-          "transition-all duration-300 hover:shadow-md hover:scale-[1.01]",
-          "from-primary/20 to-primary/5"
-        )}>
-              <div className="flex items-center gap-3">
-                <div className="p-2 rounded-lg bg-primary/10">
-                  <Sparkles className="h-5 w-5 text-primary" />
-                </div>
-                <div className="text-left">
-                  <span className="font-medium block">Nevorai AI  Assistant</span>
-                  <span className="text-xs text-muted-foreground">Smart help for follow-ups, replies & strategy</span>
-                </div>
+          {/* AI Assistant - visible to all, locked for basic */}
+          <button onClick={() => {
+            if (canAccessAI) {
+              setShowAIChat(true);
+            } else {
+              toast('Upgrade to Pro to unlock AI Assistant', { icon: '🔒' });
+            }
+          }} className={cn(
+            "w-full relative overflow-hidden rounded-xl p-4",
+            "bg-gradient-to-r backdrop-blur-sm",
+            "border shadow-sm",
+            "flex items-center justify-between",
+            "transition-all duration-300 hover:shadow-md hover:scale-[1.01]",
+            canAccessAI
+              ? "from-primary/20 to-primary/5 border-primary/30"
+              : "from-muted/40 to-muted/20 border-border/50 opacity-80"
+          )}>
+            <div className="flex items-center gap-3">
+              <div className={cn("p-2 rounded-lg", canAccessAI ? "bg-primary/10" : "bg-muted")}>
+                <Sparkles className={cn("h-5 w-5", canAccessAI ? "text-primary" : "text-muted-foreground")} />
               </div>
+              <div className="text-left">
+                <span className="font-medium block flex items-center gap-1.5">
+                  Nevorai AI Assistant
+                  {!canAccessAI && <Lock className="h-3.5 w-3.5 text-muted-foreground" />}
+                </span>
+                <span className="text-xs text-muted-foreground">
+                  {canAccessAI ? "Smart help for follow-ups, replies & strategy" : "Upgrade to Pro to unlock AI Assistant"}
+                </span>
+              </div>
+            </div>
+            {canAccessAI ? (
               <ChevronRight className="h-5 w-5 text-muted-foreground" />
-            </button>
-        }
+            ) : (
+              <Crown className="h-5 w-5 text-amber-500" />
+            )}
+          </button>
 
           {/* Settings Section - Collapsible */}
           <Collapsible className="rounded-2xl bg-card border border-border/50 overflow-hidden">
@@ -562,7 +577,7 @@ export default function Profile() {
 
       <EditProfileDialog open={editOpen} onOpenChange={setEditOpen} profile={profile} onSave={updateProfile} updating={updating} />
 
-      {canAccessAI && <AIAssistantChat open={showAIChat} onOpenChange={setShowAIChat} />}
+      <AIAssistantChat open={showAIChat} onOpenChange={setShowAIChat} />
 
       <BottomNav />
     </div>;
