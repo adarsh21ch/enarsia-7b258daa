@@ -1,0 +1,3 @@
+ALTER TABLE public.courses
+  ADD COLUMN IF NOT EXISTS allow_speed_control BOOLEAN NOT NULL DEFAULT false,
+  ADD COLUMN IF NOT EXISTS allow_forward_seek BOOLEAN NOT NULL DEFAULT false;
