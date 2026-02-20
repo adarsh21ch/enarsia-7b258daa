@@ -33,6 +33,11 @@ export function CollapsibleKPI({ kpi, responseTagNames, stageTagNames, viewType 
 
   return (
     <div className="rounded-xl border border-border/50 bg-card overflow-hidden">
+      {/* Section title */}
+      <div className="px-3 pt-2.5 pb-0.5">
+        <p className="text-xs font-semibold text-foreground">Current Status</p>
+        <p className="text-[10px] text-muted-foreground">People in each stage right now</p>
+      </div>
       {/* Collapsed compact row */}
       <button
         onClick={() => setExpanded(!expanded)}
