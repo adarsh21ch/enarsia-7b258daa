@@ -1,7 +1,7 @@
 import { useEffect, useState, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { format, subMonths, addMonths } from 'date-fns';
-import { ChevronLeft, ChevronRight, ExternalLink, Settings } from 'lucide-react';
+import { ChevronLeft, ChevronRight, ExternalLink, Settings, Info, BarChart3 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { BottomNav } from '@/components/layout/BottomNav';
 import { TrialBanner } from '@/components/subscription/TrialBanner';
@@ -16,6 +16,13 @@ import { MonthlyTotalsTable } from '@/components/trackup-v2/MonthlyTotalsTable';
 import { ManualUpdateDrawer } from '@/components/trackup-v2/ManualUpdateDrawer';
 import { FloatingUpdateButton } from '@/components/trackup-v2/FloatingUpdateButton';
 import { TrackingSettingsDialog } from '@/components/trackup-v2/TrackingSettingsDialog';
+import { PersonalTagsDistribution } from '@/components/trackup-v2/PersonalTagsDistribution';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 import { useTrackingModes } from '@/hooks/useTrackingModes';
 import { usePersonalSnapshotV2Read } from '@/hooks/usePersonalSnapshotV2Read';
 import { useTotalSnapshotV2Read } from '@/hooks/useTotalSnapshotV2Read';
@@ -179,6 +186,23 @@ export default function Tracking() {
             <CollapsibleKPI kpi={kpiData} responseTagNames={responseTagNames} stageTagNames={computedStageNames} viewType={viewType} />
           </div>
 
+          {/* Total Activity Section Header */}
+          <div className="flex items-center gap-2 mb-2">
+            <BarChart3 className="h-4 w-4 text-primary" />
+            <h3 className="text-sm font-semibold text-foreground">Total Activity</h3>
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Info className="h-3.5 w-3.5 text-muted-foreground/60 cursor-help" />
+                </TooltipTrigger>
+                <TooltipContent side="top" className="max-w-[220px] text-xs">
+                  Shows total actions done in selected period.
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          </div>
+          <p className="text-[11px] text-muted-foreground mb-3">All actions done so far</p>
+
           {/* Active table view */}
           <div>
             {viewMode === 'summary' && (
@@ -213,6 +237,9 @@ export default function Tracking() {
               />
             )}
           </div>
+
+          {/* Personal Tags Distribution */}
+          <PersonalTagsDistribution />
         </div>
       </main>
 
