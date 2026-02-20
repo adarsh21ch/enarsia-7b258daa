@@ -38,11 +38,6 @@ interface DailyTagMetric {
   tagCounts: Record<string, number>;
 }
 
-// Teal-themed header/sticky classes
-const HEADER_BG = 'bg-[hsl(var(--personal-tag-bg))]';
-const HEADER_TEXT = 'text-[hsl(var(--personal-tag-foreground))]';
-const TODAY_HIGHLIGHT = 'bg-[hsl(var(--personal-tag)/0.12)]';
-
 export function PersonalTagsDistribution({
   monthYear,
   monthLabel,
@@ -138,14 +133,16 @@ export function PersonalTagsDistribution({
 
   if (allPersonalTags.length === 0) return null;
 
-  // Shared transposed table renderer for date-wise & summary
   const renderDateTable = () => (
-    <div className="rounded-xl border border-[hsl(var(--personal-tag)/0.25)] overflow-hidden">
+    <div
+      id="personal-tags-date-table"
+      className="rounded-xl border border-[hsl(var(--personal-tag-border))] overflow-hidden"
+    >
       <div ref={scrollRef} className="overflow-x-auto">
         <table className="w-max min-w-full text-xs">
           <thead>
-            <tr className={cn(HEADER_BG, HEADER_TEXT)}>
-              <th className={cn('sticky left-0 z-10 px-3 py-2 text-left font-semibold min-w-[100px]', HEADER_BG, HEADER_TEXT)}>
+            <tr className="bg-[hsl(var(--personal-tag-header))] text-[hsl(var(--personal-tag-header-text))]">
+              <th className="sticky left-0 z-10 bg-[hsl(var(--personal-tag-header))] text-[hsl(var(--personal-tag-header-text))] px-3 py-2 text-left font-semibold min-w-[100px]">
                 Tag
               </th>
               {dailyMetrics.map((m) => (
@@ -153,7 +150,7 @@ export function PersonalTagsDistribution({
                   key={m.date}
                   className={cn(
                     'px-2 py-2 text-center font-medium min-w-[56px]',
-                    m.isToday && 'bg-[hsl(var(--personal-tag)/0.18)]'
+                    m.isToday && 'bg-muted/60'
                   )}
                 >
                   <div className="text-[10px] opacity-70">{m.dayOfWeek}</div>
@@ -164,8 +161,8 @@ export function PersonalTagsDistribution({
           </thead>
           <tbody>
             {allPersonalTags.map((tag) => (
-              <tr key={tag} className="border-t border-[hsl(var(--personal-tag)/0.12)]">
-                <td className={cn('sticky left-0 z-10 px-3 py-2 font-medium whitespace-nowrap', HEADER_BG, HEADER_TEXT)}>
+              <tr key={tag} className="border-t border-[hsl(var(--personal-tag-border))]">
+                <td className="sticky left-0 z-10 bg-[hsl(var(--personal-tag-header))] text-[hsl(var(--personal-tag-header-text))] px-3 py-2 font-medium whitespace-nowrap">
                   {tag}
                 </td>
                 {dailyMetrics.map((m, i) => {
@@ -174,8 +171,8 @@ export function PersonalTagsDistribution({
                     <td
                       key={i}
                       className={cn(
-                        'px-2 py-2 text-center',
-                        m.isToday && TODAY_HIGHLIGHT,
+                        'px-2 py-2 text-center bg-card',
+                        m.isToday && 'bg-muted/40',
                         val > 0 ? 'text-foreground font-medium' : 'text-muted-foreground'
                       )}
                     >
@@ -192,13 +189,15 @@ export function PersonalTagsDistribution({
   );
 
   return (
-    <div className="mt-4">
+    <div id="personal-tags-section" className="mt-4">
       <div className="border-t border-border/40 mb-4" />
 
       <div className="flex items-center justify-between mb-1">
         <div className="flex items-center gap-2">
-          <Tag className="h-4 w-4 text-[hsl(var(--personal-tag))]" />
-          <h3 className="text-sm font-semibold text-foreground">Personal Tags – Current Distribution</h3>
+          <Tag className="h-4 w-4 text-muted-foreground" />
+          <h3 id="personal-tags-title" className="text-sm font-semibold text-foreground">
+            Personal Tags – Current Distribution
+          </h3>
           <TooltipProvider>
             <Tooltip>
               <TooltipTrigger asChild>
@@ -216,31 +215,37 @@ export function PersonalTagsDistribution({
           onViewModeChange={(m) => setViewMode(m as PersonalViewMode)}
         />
       </div>
-      <p className="text-[11px] text-muted-foreground mb-3">
+      <p id="personal-tags-subtitle" className="text-[11px] text-muted-foreground mb-3">
         Shows how many leads currently have each personal tag.
       </p>
 
       {(viewMode === 'date-wise' || viewMode === 'summary') && renderDateTable()}
 
       {viewMode === 'monthly-totals' && (
-        <div className="rounded-xl border border-[hsl(var(--personal-tag)/0.25)] overflow-hidden">
+        <div
+          id="personal-tags-monthly-table"
+          className="rounded-xl border border-[hsl(var(--personal-tag-border))] overflow-hidden"
+        >
           <div className="overflow-x-auto">
             <table className="w-full text-xs">
               <thead>
                 <tr>
-                  <th className={cn('sticky left-0 z-10 px-3 py-2 text-left font-semibold min-w-[100px]', HEADER_BG, HEADER_TEXT)}>
+                  <th className="sticky left-0 z-10 bg-[hsl(var(--personal-tag-header))] text-[hsl(var(--personal-tag-header-text))] px-3 py-2 text-left font-semibold min-w-[100px]">
                     Month
                   </th>
                   {allPersonalTags.map((tag) => (
-                    <th key={tag} className={cn('px-3 py-2 text-center font-semibold', HEADER_BG, HEADER_TEXT)}>
+                    <th
+                      key={tag}
+                      className="bg-[hsl(var(--personal-tag-header))] text-[hsl(var(--personal-tag-header-text))] px-3 py-2 text-center font-semibold"
+                    >
                       {tag}
                     </th>
                   ))}
                 </tr>
               </thead>
               <tbody>
-                <tr className="border-t border-[hsl(var(--personal-tag)/0.12)]">
-                  <td className={cn('sticky left-0 z-10 px-3 py-2 font-medium', HEADER_BG, HEADER_TEXT)}>
+                <tr className="border-t border-[hsl(var(--personal-tag-border))]">
+                  <td className="sticky left-0 z-10 bg-[hsl(var(--personal-tag-header))] text-[hsl(var(--personal-tag-header-text))] px-3 py-2 font-medium">
                     {monthLabel}
                   </td>
                   {allPersonalTags.map((tag) => {
@@ -249,7 +254,7 @@ export function PersonalTagsDistribution({
                       <td
                         key={tag}
                         className={cn(
-                          'px-3 py-2 text-center',
+                          'px-3 py-2 text-center bg-card',
                           val > 0 ? 'text-foreground font-medium' : 'text-muted-foreground'
                         )}
                       >
