@@ -995,6 +995,22 @@ export function LeaderTrackingFormatSettings({
                 </Button>
               )}
             </div>
+            <p className="text-[10px] text-muted-foreground">
+              Leads and Responses are automatically tracked. You do not need to assign tags for them.
+            </p>
+
+            {/* System Auto-Calculated Metrics */}
+            <div className="flex items-center gap-2 p-2 bg-muted/20 rounded-lg border border-border/40">
+              <span className="text-xs text-muted-foreground w-6 shrink-0">#1</span>
+              <span className="text-sm font-medium flex-1">Leads</span>
+              <Badge variant="secondary" className="text-[9px] px-1.5 py-0 h-4 text-muted-foreground">System Calculated</Badge>
+            </div>
+            <div className="flex items-center gap-2 p-2 bg-muted/20 rounded-lg border border-border/40">
+              <span className="text-xs text-muted-foreground w-6 shrink-0">#2</span>
+              <span className="text-sm font-medium flex-1">Responses</span>
+              <Badge variant="secondary" className="text-[9px] px-1.5 py-0 h-4 text-muted-foreground">System Calculated</Badge>
+            </div>
+
             <p className="text-xs text-muted-foreground">
               These tags are used in the Leads tab and are counted in analytics. Mark one as ★ Funnel Tag to move leads to the Funnel tab.
             </p>
@@ -1002,11 +1018,11 @@ export function LeaderTrackingFormatSettings({
             <div className="space-y-2">
               {leadsTrackingTags.map((tag, index) => (
                 <div key={index} className="flex items-center gap-2 p-2 bg-muted/30 rounded-lg">
-                  <span className="text-xs text-muted-foreground w-6">#{index + 1}</span>
+                  <span className="text-xs text-muted-foreground w-6">#{index + 3}</span>
                   <Input 
                     value={tag.name} 
                     onChange={e => handleLeadsTagChange(index, 'name', e.target.value)} 
-                    placeholder={`Response ${index + 1}`} 
+                    placeholder={`Response ${index + 3}`} 
                     className="flex-1 h-8" 
                   />
                   <div className="flex items-center gap-2 shrink-0">

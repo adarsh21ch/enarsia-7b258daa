@@ -379,6 +379,25 @@ export function ManageResponseTagsDialog({ open, onOpenChange }: ManageResponseT
         </DialogHeader>
 
         <div className="space-y-6">
+          {/* System Auto-Calculated Metrics */}
+          <div className="space-y-2">
+            <p className="text-[10px] text-muted-foreground">
+              Leads and Responses are automatically tracked. You do not need to assign tags for them.
+            </p>
+            <div className="flex items-center gap-2 p-2 bg-muted/20 rounded-lg border border-border/40">
+              <span className="text-xs text-muted-foreground w-6 shrink-0">#1</span>
+              <span className="text-sm font-medium flex-1">Leads</span>
+              <Badge variant="secondary" className="text-[9px] px-1.5 py-0 h-4 text-muted-foreground">System Calculated</Badge>
+            </div>
+            <div className="flex items-center gap-2 p-2 bg-muted/20 rounded-lg border border-border/40">
+              <span className="text-xs text-muted-foreground w-6 shrink-0">#2</span>
+              <span className="text-sm font-medium flex-1">Responses</span>
+              <Badge variant="secondary" className="text-[9px] px-1.5 py-0 h-4 text-muted-foreground">System Calculated</Badge>
+            </div>
+          </div>
+
+          <Separator />
+
           {/* SECTION A: Tracking Tags */}
           <div className="space-y-3">
             <div className="flex items-center justify-between">
@@ -410,7 +429,7 @@ export function ManageResponseTagsDialog({ open, onOpenChange }: ManageResponseT
                 <div className="flex flex-wrap gap-2">
                   {leadsTrackingTags.map((tag, idx) => (
                     <Badge key={idx} variant="secondary" className="text-xs gap-1">
-                      {tag.name}
+                      #{idx + 3} {tag.name}
                       {tag.isStageTag && <Star className="h-3 w-3 text-yellow-500 fill-yellow-500" />}
                     </Badge>
                   ))}
@@ -427,10 +446,11 @@ export function ManageResponseTagsDialog({ open, onOpenChange }: ManageResponseT
               <div className="space-y-2">
                 {trackingTags.map((tag, index) => (
                   <div key={index} className="flex items-center gap-2 p-2 bg-muted/30 rounded-lg">
+                    <span className="text-xs text-muted-foreground w-6 shrink-0">#{index + 3}</span>
                     <Input
                       value={tag.name}
                       onChange={(e) => handleTrackingTagChange(index, 'name', e.target.value.toUpperCase())}
-                      placeholder={`Response ${index + 1}`}
+                      placeholder={`Response ${index + 3}`}
                       className="flex-1 h-8 uppercase"
                     />
                     <div className="flex items-center gap-2 shrink-0">
