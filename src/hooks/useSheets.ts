@@ -5,8 +5,9 @@ import { Sheet } from '@/types/prospect';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
+import { toIST } from '@/lib/dateUtils';
 
-const getTodaySheetName = () => format(new Date(), 'd MMM');
+const getTodaySheetName = () => format(toIST(new Date()), 'd MMM');
 const SELECTED_SHEET_KEY = 'trackup_selected_sheet_id';
 
 export function useSheets() {
