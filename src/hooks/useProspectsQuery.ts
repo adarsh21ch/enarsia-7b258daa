@@ -12,6 +12,7 @@ import { Prospect, mapOldStatusToNew } from '@/types/prospect';
 import { toast } from 'sonner';
 import { useCallback, useMemo, useEffect } from 'react';
 import { useEncryption } from '@/hooks/useEncryption';
+import { getTodayIST } from '@/lib/dateUtils';
 
 const PAGE_SIZE = 50;
 
@@ -572,7 +573,7 @@ export function useProspectsQuery(options: UseProspectsQueryOptions = {}) {
         instagram: (p as any).instagram || null,
         profession: (p as any).profession || null,
         sheet_id: p.sheet_id || null,
-        batch_date: p.batch_date || new Date().toISOString().split('T')[0],
+        batch_date: p.batch_date || getTodayIST(),
         // Preserve exact Excel row order: row 1 = sort_order 1, row 2 = sort_order 2, etc.
         // Use timestamp offset to keep different imports in separate "batches"
         sort_order: index + 1,
@@ -631,7 +632,7 @@ export function useProspectsQuery(options: UseProspectsQueryOptions = {}) {
       // Record streak activity for import (fire-and-forget)
       if (totalImported > 0) {
         supabase.from('user_daily_activity' as any).upsert(
-          { user_id: user!.id, activity_date: new Date().toISOString().split('T')[0], has_activity: true, activity_sources: ['import'] },
+          { user_id: user!.id, activity_date: getTodayIST(), has_activity: true, activity_sources: ['import'] },
           { onConflict: 'user_id,activity_date' }
         ).then(() => {
           queryClient.invalidateQueries({ queryKey: ['user-streak', user?.id] });
