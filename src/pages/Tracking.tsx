@@ -239,7 +239,7 @@ export default function Tracking() {
           </div>
 
           {/* Personal Tags Distribution */}
-          <PersonalTagsDistribution />
+          <PersonalTagsDistribution monthYear={monthYear} monthLabel={monthLabel} />
         </div>
       </main>
 
