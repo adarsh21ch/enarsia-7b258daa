@@ -180,6 +180,10 @@ export default function Tracking() {
           </div>
 
           {/* Active table view */}
+          <div className="mb-1">
+            <p className="text-xs font-semibold text-foreground">Total Activity</p>
+            <p className="text-[10px] text-muted-foreground mb-2">All actions done so far</p>
+          </div>
           <div>
             {viewMode === 'summary' && (
               <SummaryTable
