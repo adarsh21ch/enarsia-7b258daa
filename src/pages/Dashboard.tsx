@@ -14,6 +14,7 @@ import { FilterTagSetupDialog, useFilterTagSetup } from '@/components/prospects/
 import { SearchBar } from '@/components/ui/SearchBar';
 import { TrialBanner } from '@/components/subscription/TrialBanner';
 import { RecentActivityView } from '@/components/todo/RecentActivityView';
+import { CurrentLeadStatus } from '@/components/prospects/CurrentLeadStatus';
 import { Loader2, Phone, Layers, Flame, Clock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import nevoraLogo from '@/assets/nevorai-logo.jpeg';
@@ -300,38 +301,45 @@ export default function Dashboard() {
             {/* Table area - flex-1 to fill remaining space, pb for bottom nav */}
             <div className="flex-1 min-h-0 px-4 pb-40 md:pb-24 lg:pb-16">
           {mainTab === 'leads' ? (
-            <ProspectTable 
-              key={`leads-${tableScrollKey.current}`}
-              prospects={prospects} 
-              loading={loading} 
-              onAdd={addProspect} 
-              onUpdate={updateProspect} 
-              onDelete={deleteProspect} 
-              onBulkDelete={bulkDeleteProspects} 
-              onBulkDeleteBySheet={bulkDeleteBySheet}
-              onRestoreProspect={restoreProspect} 
-              onRestoreProspects={restoreProspects} 
-              onImport={importProspects} 
-              onReorderProspects={reorderProspects}
-              sheets={sheets} 
-              selectedSheetId={selectedSheetId} 
-              onSelectSheet={setSelectedSheetId} 
-              onAddSheet={addSheet} 
-              onUpdateSheet={updateSheet} 
-              onDeleteSheet={deleteSheet} 
-              getOrCreateTodaySheet={getOrCreateTodaySheet} 
-              filterMode="calling" 
-              subFilter="all" 
-              externalSearch={searchQuery}
-              hasNextPage={hasNextPage}
-              onLoadMore={fetchNextPage}
-              isLoadingMore={isFetchingNextPage}
-              kpiTotal={kpiTotal}
-              kpiTagCounts={kpiTagCounts}
-              loadedCount={loadedCount}
-              fetchAllForExport={fetchAllForExport}
-              stickyHeaderTop={0}
-            />
+            <>
+              <ProspectTable 
+                key={`leads-${tableScrollKey.current}`}
+                prospects={prospects} 
+                loading={loading} 
+                onAdd={addProspect} 
+                onUpdate={updateProspect} 
+                onDelete={deleteProspect} 
+                onBulkDelete={bulkDeleteProspects} 
+                onBulkDeleteBySheet={bulkDeleteBySheet}
+                onRestoreProspect={restoreProspect} 
+                onRestoreProspects={restoreProspects} 
+                onImport={importProspects} 
+                onReorderProspects={reorderProspects}
+                sheets={sheets} 
+                selectedSheetId={selectedSheetId} 
+                onSelectSheet={setSelectedSheetId} 
+                onAddSheet={addSheet} 
+                onUpdateSheet={updateSheet} 
+                onDeleteSheet={deleteSheet} 
+                getOrCreateTodaySheet={getOrCreateTodaySheet} 
+                filterMode="calling" 
+                subFilter="all" 
+                externalSearch={searchQuery}
+                hasNextPage={hasNextPage}
+                onLoadMore={fetchNextPage}
+                isLoadingMore={isFetchingNextPage}
+                kpiTotal={kpiTotal}
+                kpiTagCounts={kpiTagCounts}
+                loadedCount={loadedCount}
+                fetchAllForExport={fetchAllForExport}
+                stickyHeaderTop={0}
+              />
+              <CurrentLeadStatus
+                kpiTotal={kpiTotal}
+                kpiTagCounts={kpiTagCounts}
+                prospects={prospects}
+              />
+            </>
           ) : (
             <ProspectTable 
               key={`funnel-${tableScrollKey.current}`}
