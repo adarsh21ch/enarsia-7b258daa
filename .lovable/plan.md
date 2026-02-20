@@ -1,80 +1,55 @@
 
 
-# Fix: Import Leads Not Showing on Today's Date Sheet
+# UI Clarity Update: Section Renaming and System Metrics
 
-## Investigation Results
+## Overview
+This is a UI-only update to reduce user confusion between KPI, TrackUp, and Response Tags sections. No backend logic or calculations will be modified.
 
-The database shows that the sheet auto-creation IS working -- a "21 Feb" sheet exists and 15 leads are correctly assigned to it. However, there are two real bugs found:
+## Changes
 
-### Bug 1: `batch_date` Uses UTC Instead of IST
+### Part 1: Rename Sections
 
-In `src/hooks/useProspectsQuery.ts` (line 575):
-```
-batch_date: p.batch_date || new Date().toISOString().split('T')[0]
-```
+**File: `src/components/trackup-v2/CollapsibleKPI.tsx`**
+- Add a small title/subtitle above the collapsible row: **"Current Status"** with subtitle **"People in each stage right now"**
+- Implementation: Add a tiny header inside the card, before the toggle button. Text will be `text-xs font-semibold` for title, `text-[10px] text-muted-foreground` for subtitle.
 
-This produces UTC date. At 2:45 AM IST on Feb 21, it stores `2026-02-20` instead of `2026-02-21`. This causes date-based views/filters that rely on `batch_date` to show leads under the wrong date.
+**File: `src/pages/Tracking.tsx`**
+- Add a small label above the table views section: **"Total Activity"** with subtitle **"All actions done so far"**
+- Implementation: Add a minimal header `div` just before the table rendering block (around line 183).
 
-### Bug 2: Sheet Name Uses Browser Locale (Not Explicitly IST)
+### Part 2: System Auto Metrics in Manage Response Tags
 
-In `src/hooks/useSheets.ts` (line 9):
-```
-const getTodaySheetName = () => format(new Date(), 'd MMM');
-```
+**File: `src/components/prospects/ManageResponseTagsDialog.tsx`**
+- At the top of "Section A: Tracking Tags" (line ~382), before the user-created tags, insert two fixed system-level items:
+  1. **Leads** with badge "System Calculated"
+  2. **Responses** with badge "System Calculated"
+- These items will be styled as non-editable rows (no input, no delete, no reorder) with a muted/locked appearance.
+- A single line of helper text beneath: "These are automatically tracked and cannot be modified."
+- Both the read-only member view and the editable root leader view will show these system items.
 
-This uses the browser's local timezone. While it works for IST browsers, it should use the explicit IST utility for consistency with the rest of the codebase (in case the user's device timezone is misconfigured).
+### Part 3: Hierarchy Alignment in Settings
 
-### Bug 3: `activity_date` in Streak Uses UTC
+**File: `src/components/profile/LeaderTrackingFormatSettings.tsx`**
+- In the "Leads Tracking Tags (Responses)" section (line ~984), add the same two system metrics at the top before user tags.
+- Update numbering: system items show as #1 and #2, user-created tags start from #3 onward (change `#{index + 1}` on line 1005 to `#{index + 3}`).
 
-In `src/hooks/useProspectsQuery.ts` (line 634):
-```
-activity_date: new Date().toISOString().split('T')[0]
-```
+### Part 4: Clean UI Design
 
-Same UTC issue -- streak activity may be logged under the wrong IST date.
-
----
-
-## Fix Plan
-
-### File 1: `src/hooks/useProspectsQuery.ts`
-
-- **Line 575**: Replace `new Date().toISOString().split('T')[0]` with `getTodayIST()` from `src/lib/dateUtils.ts`
-- **Line 634**: Replace `new Date().toISOString().split('T')[0]` with `getTodayIST()`
-- Add import for `getTodayIST` from `@/lib/dateUtils`
-
-### File 2: `src/hooks/useSheets.ts`
-
-- **Line 9**: Replace `format(new Date(), 'd MMM')` with an IST-aware version using `toIST()` from dateUtils
-- This ensures the sheet name matches the IST date even if the browser timezone is wrong
-- Add import for `toIST` from `@/lib/dateUtils`
-
-### No Database Changes Needed
-
-The `date_added` column (TIMESTAMPTZ) is correctly stored in UTC. The `sheet_id` foreign key is working. Only the derived `batch_date` string and sheet naming need IST alignment.
-
----
+All additions will follow existing design patterns:
+- System metric rows use `bg-muted/20` with a `Lock` icon and a small muted `Badge` saying "System Calculated"
+- No large explanation blocks -- just one small helper line
+- Consistent `text-[10px]` sizing for helper/badge text
+- Minimal spacing changes
 
 ## Technical Details
 
-### `batch_date` fix:
-```typescript
-import { getTodayIST } from '@/lib/dateUtils';
-// Before: new Date().toISOString().split('T')[0]
-// After:  getTodayIST()  // returns "YYYY-MM-DD" in IST
-```
-
-### Sheet name fix:
-```typescript
-import { toIST } from '@/lib/dateUtils';
-import { format } from 'date-fns';
-const getTodaySheetName = () => {
-  const ist = toIST(new Date());
-  return format(ist, 'd MMM');
-};
-```
-
 ### Files to modify:
-1. `src/hooks/useProspectsQuery.ts` -- 2 lines (batch_date + activity_date)
-2. `src/hooks/useSheets.ts` -- 1 line (sheet name function)
+1. `src/components/trackup-v2/CollapsibleKPI.tsx` -- Add section title + subtitle
+2. `src/pages/Tracking.tsx` -- Add section title + subtitle above tables
+3. `src/components/prospects/ManageResponseTagsDialog.tsx` -- Add 2 system metric rows in tracking tags section
+4. `src/components/profile/LeaderTrackingFormatSettings.tsx` -- Add 2 system metric rows + update tag numbering
 
+### No changes to:
+- Any hooks, contexts, or data computation logic
+- Backend functions or database queries
+- Tag counting or KPI calculation formulas
