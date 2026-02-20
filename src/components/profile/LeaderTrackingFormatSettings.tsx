@@ -999,23 +999,10 @@ export function LeaderTrackingFormatSettings({
               These tags are used in the Leads tab and are counted in analytics. Mark one as ★ Funnel Tag to move leads to the Funnel tab.
             </p>
             
-            {/* System auto-calculated metrics */}
-            <div className="space-y-1.5 mb-2">
-              {['Leads', 'Responses'].map((name, i) => (
-                <div key={name} className="flex items-center gap-2 p-2 bg-muted/20 rounded-lg opacity-75">
-                  <span className="text-xs text-muted-foreground w-6">#{i + 1}</span>
-                  <Lock className="h-3 w-3 text-muted-foreground" />
-                  <span className="text-sm font-medium text-muted-foreground">{name}</span>
-                  <Badge variant="secondary" className="text-[10px] ml-auto">System Calculated</Badge>
-                </div>
-              ))}
-              <p className="text-[10px] text-muted-foreground pl-1">These are automatically tracked and cannot be modified.</p>
-            </div>
-
             <div className="space-y-2">
               {leadsTrackingTags.map((tag, index) => (
                 <div key={index} className="flex items-center gap-2 p-2 bg-muted/30 rounded-lg">
-                  <span className="text-xs text-muted-foreground w-6">#{index + 3}</span>
+                  <span className="text-xs text-muted-foreground w-6">#{index + 1}</span>
                   <Input 
                     value={tag.name} 
                     onChange={e => handleLeadsTagChange(index, 'name', e.target.value)} 

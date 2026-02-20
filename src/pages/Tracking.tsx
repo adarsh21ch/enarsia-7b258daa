@@ -8,7 +8,7 @@ import { TrialBanner } from '@/components/subscription/TrialBanner';
 import { Button } from '@/components/ui/button';
 import { ModeSelectors } from '@/components/trackup-v2/ModeSelectors';
 import { ViewSelector } from '@/components/trackup-v2/ViewSelector';
-
+import { CollapsibleKPI } from '@/components/trackup-v2/CollapsibleKPI';
 import { SummaryTable } from '@/components/trackup-v2/SummaryTable';
 import { DateWiseTable } from '@/components/trackup-v2/DateWiseTable';
 import { FunnelWiseTable } from '@/components/trackup-v2/FunnelWiseTable';
@@ -174,11 +174,12 @@ export default function Tracking() {
             <ViewSelector viewMode={viewMode} options={viewModeOptions} onViewModeChange={setViewMode} />
           </div>
 
-          {/* Active table view */}
-          <div className="mb-1">
-            <p className="text-xs font-semibold text-foreground">Total Activity</p>
-            <p className="text-[10px] text-muted-foreground mb-2">All actions done so far</p>
+          {/* Collapsible KPI */}
+          <div className="mb-3">
+            <CollapsibleKPI kpi={kpiData} responseTagNames={responseTagNames} stageTagNames={computedStageNames} viewType={viewType} />
           </div>
+
+          {/* Active table view */}
           <div>
             {viewMode === 'summary' && (
               <SummaryTable
