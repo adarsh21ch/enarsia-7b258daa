@@ -36,17 +36,17 @@ export function PersonalTagExpandableRows({
         onClick={() => setExpanded((v) => !v)}
       >
         <td
-          className="sticky left-0 z-10 bg-muted/60 px-2 py-2 font-medium whitespace-nowrap text-xs overflow-hidden text-ellipsis"
+          className="sticky left-0 z-10 bg-muted/60 px-2 py-2 font-medium whitespace-nowrap text-xs"
+          style={{ width: '90px' }}
         >
-          <div className="flex items-center gap-1.5">
+          <div className="flex items-center gap-1">
             <ChevronRight
               className={cn(
-                'h-4 w-4 text-primary transition-transform duration-200',
+                'h-3.5 w-3.5 shrink-0 text-primary transition-transform duration-200',
                 expanded && 'rotate-90'
               )}
             />
-            <span className="text-foreground/80 text-[11px]">Personal Tags</span>
-            <span className="text-[10px] text-muted-foreground font-normal">– Current Distribution</span>
+            <span className="text-foreground/80 text-[11px] truncate">Personal Tags</span>
           </div>
         </td>
         {/* Fill remaining columns with empty cells to maintain alignment */}

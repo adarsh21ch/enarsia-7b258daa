@@ -21,12 +21,13 @@ export function DateWiseTable({
   const scrollRef = useRef<HTMLDivElement>(null);
 
   const metricRows = useMemo(() => {
-    const rows: { label: string; isStar: boolean; values: number[] }[] = [
-      { label: 'Leads', isStar: false, values: dailyMetrics.map((m) => m.totalLeads) },
-      { label: 'Responses', isStar: false, values: dailyMetrics.map((m) => m.totalResponses) },
-      ...responseTagNames.map((name) => ({
-        label: name, isStar: name === finalTagName, values: dailyMetrics.map((m) => m.responseTags[name] ?? 0),
-      })),
+    const rows: { label: string; isStar: boolean; values: number[]; total: number }[] = [
+      { label: 'Leads', isStar: false, values: dailyMetrics.map((m) => m.totalLeads), total: dailyMetrics.reduce((s, m) => s + m.totalLeads, 0) },
+      { label: 'Responses', isStar: false, values: dailyMetrics.map((m) => m.totalResponses), total: dailyMetrics.reduce((s, m) => s + m.totalResponses, 0) },
+      ...responseTagNames.map((name) => {
+        const values = dailyMetrics.map((m) => m.responseTags[name] ?? 0);
+        return { label: name, isStar: name === finalTagName, values, total: values.reduce((s, v) => s + v, 0) };
+      }),
     ];
     return rows;
   }, [dailyMetrics, responseTagNames, finalTagName]);
@@ -59,12 +60,13 @@ export function DateWiseTable({
   return (
     <div className="rounded-xl border border-border/50 overflow-hidden">
       <div ref={scrollRef} className="overflow-x-auto">
-        <table className="text-xs" style={{ tableLayout: 'fixed', width: `${dailyMetrics.length * 48 + 90}px` }}>
+        <table className="text-xs" style={{ tableLayout: 'fixed', width: `${dailyMetrics.length * 48 + 90 + 52}px` }}>
           <colgroup>
             <col style={{ width: '90px' }} />
             {dailyMetrics.map((m) => (
               <col key={m.date} style={{ width: '48px' }} />
             ))}
+            <col style={{ width: '52px' }} />
           </colgroup>
           <thead>
             <tr className="bg-accent text-accent-foreground">
@@ -75,6 +77,7 @@ export function DateWiseTable({
                   <div className="font-semibold">{m.dateLabel.split(' ')[1]}</div>
                 </th>
               ))}
+              <th className="px-2 py-2 text-center font-semibold bg-accent/90 text-accent-foreground">Total</th>
             </tr>
           </thead>
           <tbody>
@@ -86,12 +89,15 @@ export function DateWiseTable({
                     {formatTrackingValue(val)}
                   </td>
                 ))}
+                <td className={cn('px-2 py-2 text-center font-semibold bg-muted/30', row.total > 0 ? 'text-foreground' : 'text-muted-foreground')}>
+                  {formatTrackingValue(row.total)}
+                </td>
               </tr>
             ))}
             <PersonalTagExpandableRows
               tagNames={personalTagData?.tagNames ?? []}
               tagRows={personalTagRows}
-              columnCount={dailyMetrics.length}
+              columnCount={dailyMetrics.length + 1}
               todayIndices={todayIndices}
             />
           </tbody>
