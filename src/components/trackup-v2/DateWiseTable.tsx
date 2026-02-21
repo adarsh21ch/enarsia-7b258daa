@@ -16,19 +16,19 @@ export function DateWiseTable({
   dailyMetrics,
   responseTagNames,
   finalTagName,
-  personalTagData,
+  personalTagData
 }: DateWiseTableProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
 
   const metricRows = useMemo(() => {
-    const rows: { label: string; isStar: boolean; values: number[]; total: number }[] = [
-      { label: 'Leads', isStar: false, values: dailyMetrics.map((m) => m.totalLeads), total: dailyMetrics.reduce((s, m) => s + m.totalLeads, 0) },
-      { label: 'Responses', isStar: false, values: dailyMetrics.map((m) => m.totalResponses), total: dailyMetrics.reduce((s, m) => s + m.totalResponses, 0) },
-      ...responseTagNames.map((name) => {
-        const values = dailyMetrics.map((m) => m.responseTags[name] ?? 0);
-        return { label: name, isStar: name === finalTagName, values, total: values.reduce((s, v) => s + v, 0) };
-      }),
-    ];
+    const rows: {label: string;isStar: boolean;values: number[];total: number;}[] = [
+    { label: 'Leads', isStar: false, values: dailyMetrics.map((m) => m.totalLeads), total: dailyMetrics.reduce((s, m) => s + m.totalLeads, 0) },
+    { label: 'Responses', isStar: false, values: dailyMetrics.map((m) => m.totalResponses), total: dailyMetrics.reduce((s, m) => s + m.totalResponses, 0) },
+    ...responseTagNames.map((name) => {
+      const values = dailyMetrics.map((m) => m.responseTags[name] ?? 0);
+      return { label: name, isStar: name === finalTagName, values, total: values.reduce((s, v) => s + v, 0) };
+    })];
+
     return rows;
   }, [dailyMetrics, responseTagNames, finalTagName]);
 
@@ -37,10 +37,10 @@ export function DateWiseTable({
       return { personalTagRows: [], todayIndices: [] };
     }
     const todayIdx: number[] = [];
-    dailyMetrics.forEach((m, i) => { if (m.isToday) todayIdx.push(i); });
+    dailyMetrics.forEach((m, i) => {if (m.isToday) todayIdx.push(i);});
     const rows = personalTagData.tagNames.map((tag) => ({
       label: tag,
-      values: personalTagData.dailyMetrics.map((dm) => dm.tagCounts[tag] ?? 0),
+      values: personalTagData.dailyMetrics.map((dm) => dm.tagCounts[tag] ?? 0)
     }));
     return { personalTagRows: rows, todayIndices: todayIdx };
   }, [personalTagData, dailyMetrics]);
@@ -63,46 +63,46 @@ export function DateWiseTable({
         <table className="text-xs" style={{ tableLayout: 'fixed', width: `${dailyMetrics.length * 48 + 90 + 52}px` }}>
           <colgroup>
             <col style={{ width: '90px' }} />
-            {dailyMetrics.map((m) => (
-              <col key={m.date} style={{ width: '48px' }} />
-            ))}
+            {dailyMetrics.map((m) =>
+            <col key={m.date} style={{ width: '48px' }} />
+            )}
             <col style={{ width: '52px' }} />
           </colgroup>
           <thead>
             <tr className="bg-accent text-accent-foreground">
               <th className="sticky left-0 z-10 bg-accent text-accent-foreground px-2 py-2 text-left font-semibold whitespace-nowrap">Metric</th>
-              {dailyMetrics.map((m) => (
-                <th key={m.date} className={cn('px-2 py-2 text-center font-medium min-w-[48px]', m.isToday && 'bg-accent/80')}>
+              {dailyMetrics.map((m) =>
+              <th key={m.date} className={cn('px-2 py-2 text-center font-medium min-w-[48px]', m.isToday && 'bg-accent/80')}>
                   <div className="text-[10px] text-accent-foreground/70">{m.dayOfWeek}</div>
                   <div className="font-semibold">{m.dateLabel.split(' ')[1]}</div>
                 </th>
-              ))}
+              )}
               <th className="px-2 py-2 text-center font-semibold bg-accent/90 text-accent-foreground">Total</th>
             </tr>
           </thead>
           <tbody>
-            {metricRows.map((row) => (
-              <tr key={row.label} className="border-t border-border/30">
+            {metricRows.map((row) =>
+            <tr key={row.label} className="border-t border-border/30">
                 <td className="sticky left-0 z-10 bg-accent text-accent-foreground px-2 py-2 font-medium whitespace-nowrap overflow-hidden text-ellipsis">{row.label}</td>
-                {row.values.map((val, i) => (
-                  <td key={i} className={cn('px-2 py-2 text-center', dailyMetrics[i]?.isToday && 'bg-accent/10', val > 0 ? 'text-foreground font-medium' : 'text-muted-foreground')}>
+                {row.values.map((val, i) =>
+              <td key={i} className={cn('px-2 py-2 text-center', dailyMetrics[i]?.isToday && 'bg-accent/10', val > 0 ? 'text-foreground font-medium' : 'text-muted-foreground')}>
                     {formatTrackingValue(val)}
                   </td>
-                ))}
-                <td className={cn('px-2 py-2 text-center font-semibold bg-muted/30', row.total > 0 ? 'text-foreground' : 'text-muted-foreground')}>
+              )}
+                <td className={cn("px-2 py-2 text-center font-semibold bg-accent text-primary-foreground", row.total > 0 ? 'text-foreground' : 'text-muted-foreground')}>
                   {formatTrackingValue(row.total)}
                 </td>
               </tr>
-            ))}
+            )}
             <PersonalTagExpandableRows
               tagNames={personalTagData?.tagNames ?? []}
               tagRows={personalTagRows}
               columnCount={dailyMetrics.length + 1}
-              todayIndices={todayIndices}
-            />
+              todayIndices={todayIndices} />
+
           </tbody>
         </table>
       </div>
-    </div>
-  );
+    </div>);
+
 }
