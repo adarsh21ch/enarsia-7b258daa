@@ -177,44 +177,43 @@ const [localData, setLocalData] = useState<Partial<Prospect>>({});
   return (
     <tr className="animate-in fade-in-0 slide-in-from-top-2 duration-200">
       <td colSpan={colSpan} className="p-0">
-        <div className="px-3 py-2 border-t border-b border-primary/20 bg-gradient-to-b from-muted/40 to-background/50 backdrop-blur-sm shadow-inner">
-          {/* Row 1: Name + Tags + Close */}
-          <div className="flex items-center justify-between gap-2 flex-wrap mb-2">
-            <div className="flex items-center gap-2 flex-wrap">
-              <span className="font-semibold text-foreground text-sm">{localData.name}</span>
-              {localData.instagram && (
-                <Button variant="ghost" size="icon" className="h-6 w-6 text-pink-500 hover:text-pink-600 hover:bg-pink-500/10" onClick={openInstagram}>
-                  <Instagram className="h-3.5 w-3.5" />
-                </Button>
-              )}
-              {/* Editable Tracking Tags (Response/Stage/Quality) */}
-              <div className="flex items-center gap-1.5 flex-wrap">
-                <EditableTag
-                  value={localData.action_taken as ActionTaken}
-                  options={actionOptions}
-                  onChange={(val) => handleFieldChange('action_taken', val)}
-                  renderBadge={(val) => <ActionBadge action={val} />}
-                  placeholder="Response (tracking)"
-                />
-                <EditableTag
-                  value={localData.funnel_stage as FunnelStage}
-                  options={stageOptions}
-                  onChange={(val) => handleFieldChange('funnel_stage', val)}
-                  renderBadge={(val) => <StageBadge stage={val} />}
-                  placeholder="Stage (tracking)"
-                />
-                <EditableTag
-                  value={localData.prospect_status as ProspectStatus}
-                  options={STATUSES}
-                  onChange={(val) => handleFieldChange('prospect_status', val)}
-                  renderBadge={(val) => <StatusBadge status={val} />}
-                  placeholder="Quality"
-                />
-              </div>
-            </div>
-            <Button variant="ghost" size="icon" onClick={onClose} className="h-6 w-6">
-              <X className="h-3 w-3" />
-            </Button>
+        <div className="relative px-3 py-2 border-t border-b border-primary/20 bg-gradient-to-b from-muted/40 to-background/50 backdrop-blur-sm shadow-inner">
+          {/* Close button - top right */}
+          <Button variant="ghost" size="icon" onClick={onClose} className="absolute top-1.5 right-1.5 h-6 w-6 z-10">
+            <X className="h-3 w-3" />
+          </Button>
+
+          {/* Row 1: Name + Tags */}
+          <div className="flex items-center gap-2 flex-wrap mb-1 pr-7">
+            <span className="font-semibold text-foreground text-sm">{localData.name}</span>
+            {localData.instagram && (
+              <Button variant="ghost" size="icon" className="h-6 w-6 text-pink-500 hover:text-pink-600 hover:bg-pink-500/10" onClick={openInstagram}>
+                <Instagram className="h-3.5 w-3.5" />
+              </Button>
+            )}
+          </div>
+          <div className="flex items-center gap-1.5 flex-wrap mb-2">
+            <EditableTag
+              value={localData.action_taken as ActionTaken}
+              options={actionOptions}
+              onChange={(val) => handleFieldChange('action_taken', val)}
+              renderBadge={(val) => <ActionBadge action={val} />}
+              placeholder="Response (tracking)"
+            />
+            <EditableTag
+              value={localData.funnel_stage as FunnelStage}
+              options={stageOptions}
+              onChange={(val) => handleFieldChange('funnel_stage', val)}
+              renderBadge={(val) => <StageBadge stage={val} />}
+              placeholder="Stage (tracking)"
+            />
+            <EditableTag
+              value={localData.prospect_status as ProspectStatus}
+              options={STATUSES}
+              onChange={(val) => handleFieldChange('prospect_status', val)}
+              renderBadge={(val) => <StatusBadge status={val} />}
+              placeholder="Quality"
+            />
           </div>
 
           {/* Row 1.5: Action Buttons - Call / Text / WhatsApp */}
