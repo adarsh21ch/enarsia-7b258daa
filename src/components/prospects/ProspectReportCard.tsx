@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
 import { StageBadge, StatusBadge, PriorityBadge, EnrollBadge } from './StatusBadge';
-import { Phone, MessageCircle, Calendar as CalendarIcon, Clock, User, MapPin, Target, Briefcase, Save } from 'lucide-react';
+import { Phone, MessageCircle, MessageSquareText, Calendar as CalendarIcon, Clock, User, MapPin, Target, Briefcase, Save } from 'lucide-react';
 import { format, parseISO, formatDistanceToNow } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
@@ -104,6 +104,10 @@ export function ProspectReportCard({ prospect, open, onOpenChange, onUpdate }: P
     window.location.href = `tel:${cleanPhoneNumber(prospect.phone)}`;
   };
 
+  const openSMS = () => {
+    window.location.href = `sms:${cleanPhoneNumber(prospect.phone)}`;
+  };
+
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent className="w-full sm:max-w-lg overflow-y-auto flex flex-col">
@@ -117,6 +121,10 @@ export function ProspectReportCard({ prospect, open, onOpenChange, onUpdate }: P
             <Button onClick={openCall} variant="outline" className="flex-1 gap-2">
               <Phone className="h-4 w-4" />
               Call
+            </Button>
+            <Button onClick={openSMS} variant="outline" className="flex-1 gap-2 text-blue-600 hover:text-blue-600">
+              <MessageSquareText className="h-4 w-4" />
+              Text
             </Button>
             <Button onClick={openWhatsApp} variant="outline" className="flex-1 gap-2 text-green-600 hover:text-green-600">
               <MessageCircle className="h-4 w-4" />
