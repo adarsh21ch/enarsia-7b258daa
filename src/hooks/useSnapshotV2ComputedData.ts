@@ -171,8 +171,7 @@ export function useSnapshotV2ComputedData(
 
     dailyMetrics.forEach((m) => {
       const daysSince = differenceInCalendarDays(parseISO(m.date), monthStart) + 1;
-      if (daysSince < 1) return; // before funnel cycle starts this month
-      const periodNum = Math.ceil(daysSince / funnelLength);
+      const periodNum = daysSince < 1 ? 1 : Math.ceil(daysSince / funnelLength);
       if (!buckets.has(periodNum)) buckets.set(periodNum, []);
       buckets.get(periodNum)!.push(m);
     });
