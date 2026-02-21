@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Checkbox } from '@/components/ui/checkbox';
-import { X, Download, ChevronDown, Loader2, Settings2, Lock } from 'lucide-react';
+import { X, ChevronDown, Settings2, Lock } from 'lucide-react';
 import { FUNNEL_STAGES, EXTENDED_ACTIONS, FunnelStage, ProspectQuality, ExtendedActionTaken } from '@/types/prospect';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useTrackingFormatContext } from '@/contexts/TrackingFormatContext';
@@ -21,9 +21,6 @@ interface Filters {
 interface ProspectFiltersProps {
   filters: Filters;
   onFiltersChange: (filters: Filters) => void;
-  onExport: () => Promise<void>;
-  exporting?: boolean;
-  filteredCount?: number;
   showStagesFilter?: boolean;
   showResponsesFilter?: boolean;
   filterTagButton?: React.ReactNode;
@@ -32,9 +29,6 @@ interface ProspectFiltersProps {
 export function ProspectFilters({
   filters,
   onFiltersChange,
-  onExport,
-  exporting = false,
-  filteredCount = 0,
   showStagesFilter = true,
   showResponsesFilter = true,
   filterTagButton,
@@ -44,7 +38,6 @@ export function ProspectFilters({
   const isMobile = useIsMobile();
   const { checkFeature } = usePermissions();
   const canRetarget = checkFeature('retargeting_by_tags');
-  const canExport = checkFeature('export') || checkFeature('export_data');
 
   // Use TrackingFormatContext for tag options (unified source of truth)
   const {
@@ -169,19 +162,6 @@ export function ProspectFilters({
           <X className="h-3.5 w-3.5 sm:mr-1" />
           {!isMobile && 'Clear'}
         </Button>}
-
-        {/* Export button - show on both mobile and desktop, gated by feature flag */}
-        <Button 
-          variant="outline" 
-          size="sm" 
-          onClick={canExport ? onExport : () => toast.error('Upgrade to Pro to export data')} 
-          disabled={exporting || (canExport && filteredCount === 0)} 
-          className={cn("h-9 gap-1.5 shrink-0", !canExport && "opacity-60")}
-        >
-          {!canExport && <Lock className="h-3 w-3" />}
-          {exporting ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Download className="h-3.5 w-3.5" />}
-          {isMobile ? '' : (exporting ? 'Exporting...' : `Export${filteredCount > 0 ? ` (${filteredCount})` : ''}`)}
-        </Button>
       </div>
     </div>
 

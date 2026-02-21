@@ -16,7 +16,8 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
-import { Users, Undo2, Redo2, X, Trash2, Edit, Star, FileSpreadsheet, Upload, Share2 } from 'lucide-react';
+import { Users, Undo2, Redo2, X, Trash2, Edit, Star, FileSpreadsheet, Upload, Share2, MoreHorizontal, Plus, Download, Lock, UserPlus, Loader2 } from 'lucide-react';
+import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
@@ -1004,14 +1005,14 @@ export function ProspectTable({
       <div className="flex-shrink-0 flex items-center justify-between gap-2">
         {/* Left side - Filters */}
         <div className="flex items-center gap-2 flex-1 min-w-0">
-          <ProspectFilters filters={filters} onFiltersChange={setFilters} onExport={exportToExcel} exporting={exporting} filteredCount={filteredProspects.length} showStagesFilter={!isCalling} showResponsesFilter={isCalling} filterTagButton={!isCalling ? <ChangeFilterTagButton /> : undefined} hideSearch={!!externalSearch} />
+          <ProspectFilters filters={filters} onFiltersChange={setFilters} showStagesFilter={!isCalling} showResponsesFilter={isCalling} filterTagButton={!isCalling ? <ChangeFilterTagButton /> : undefined} hideSearch={!!externalSearch} />
         </div>
 
         {/* Right side - Actions */}
         <div className="flex items-center gap-1.5 shrink-0">
           {/* Selection mode controls */}
           {selectionMode.active ? <div className="flex items-center gap-2 bg-muted/50 rounded-lg px-2 py-1">
-              <span className="text-xs font-medium">{selectedIds.size}</span>
+              <span className="text-xs font-medium">{selectedIds.size} Selected</span>
               <Button variant="destructive" size="sm" onClick={() => setDeleteConfirmOpen(true)} disabled={selectedIds.size === 0} className="h-7 px-2">
                 <Trash2 className="h-3.5 w-3.5" />
               </Button>
@@ -1025,19 +1026,46 @@ export function ProspectTable({
                 <X className="h-3.5 w-3.5" />
               </Button>
             </div> : <>
-              {/* Undo/Redo buttons - desktop only */}
-              {!isMobile && <div className="flex items-center">
-                  <Button variant="ghost" size="icon" onClick={handleUndo} disabled={!canUndo} className="h-8 w-8">
-                    <Undo2 className="h-4 w-4" />
-                  </Button>
-                  <Button variant="ghost" size="icon" onClick={handleRedo} disabled={!canRedo} className="h-8 w-8">
-                    <Redo2 className="h-4 w-4" />
-                  </Button>
-                </div>}
-
-              {/* Import & Add buttons - same line */}
+              {/* Import button */}
               <ImportExcelDialog onImport={handleImportProspects} />
+
+              {/* + Add button */}
               <AddProspectDialog onAdd={handleAddProspect} existingProspects={prospects} />
+
+              {/* More menu (...) */}
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" size="icon" className="h-9 w-9">
+                    <MoreHorizontal className="h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-48 bg-popover border-border z-50">
+                  <DropdownMenuItem onClick={() => {
+                    const addBtn = document.querySelector('[data-add-trigger]') as HTMLButtonElement;
+                    if (addBtn) addBtn.click();
+                  }} className="gap-2">
+                    <UserPlus className="h-4 w-4" />
+                    Add Prospect
+                  </DropdownMenuItem>
+                  <DropdownMenuItem 
+                    onClick={canExport ? exportToExcel : () => toast.error('Upgrade to Pro to export data')}
+                    disabled={exporting}
+                    className="gap-2"
+                  >
+                    {!canExport && <Lock className="h-3.5 w-3.5" />}
+                    {exporting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
+                    {exporting ? 'Exporting...' : 'Export Leads'}
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem 
+                    onClick={() => handleEnterSelectMode(selectedSheetId)}
+                    className="gap-2"
+                  >
+                    <Share2 className="h-4 w-4" />
+                    Share Leads
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </>}
         </div>
       </div>
