@@ -59,14 +59,10 @@ export function DateWiseTable({
   return (
     <div className="rounded-xl border border-border/50 overflow-hidden">
       <div ref={scrollRef} className="overflow-x-auto">
-        <table className="w-max min-w-full text-xs" style={{ tableLayout: 'fixed' }}>
-          <colgroup>
-            <col style={{ width: '120px' }} />
-            {dailyMetrics.map((m) => <col key={m.date} />)}
-          </colgroup>
+        <table className="w-max min-w-full text-xs" style={{ tableLayout: 'auto' }}>
           <thead>
             <tr className="bg-accent text-accent-foreground">
-              <th className="sticky left-0 z-10 bg-accent text-accent-foreground px-2 py-2 text-left font-semibold whitespace-nowrap">Metric</th>
+              <th className="sticky left-0 z-10 bg-accent text-accent-foreground px-2 py-2 text-left font-semibold whitespace-nowrap w-0">Metric</th>
               {dailyMetrics.map((m) => (
                 <th key={m.date} className={cn('px-2 py-2 text-center font-medium min-w-[48px]', m.isToday && 'bg-accent/80')}>
                   <div className="text-[10px] text-accent-foreground/70">{m.dayOfWeek}</div>

@@ -40,14 +40,10 @@ export function MonthlyTotalsTable({
   return (
     <div className="rounded-xl border border-border/50 overflow-hidden">
       <div className="overflow-x-auto">
-        <table className="w-full text-xs" style={{ tableLayout: 'fixed' }}>
-          <colgroup>
-            <col style={{ width: '120px' }} />
-            {allTags.map((t) => <col key={t.label} />)}
-          </colgroup>
+        <table className="w-full text-xs" style={{ tableLayout: 'auto' }}>
           <thead>
             <tr>
-              <th className="sticky left-0 z-10 bg-accent text-accent-foreground px-2 py-2 text-left font-semibold whitespace-nowrap">Month</th>
+              <th className="sticky left-0 z-10 bg-accent text-accent-foreground px-2 py-2 text-left font-semibold whitespace-nowrap w-0">Month</th>
               {allTags.map((tag) => (
                 <th key={tag.label} className="bg-accent text-accent-foreground px-2 py-2 text-center font-semibold whitespace-nowrap">{tag.label}</th>
               ))}
