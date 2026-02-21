@@ -23,7 +23,7 @@ export function AddProspectDialog({ onAdd, existingProspects = [] }: AddProspect
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [errors, setErrors] = useState<{ name?: string; phone?: string }>({});
+  const [errors, setErrors] = useState<{name?: string;phone?: string;}>({});
   const [showLimitModal, setShowLimitModal] = useState(false);
   const isMobile = useIsMobile();
   const { isAtLimit, canAddLead, incrementLeadCount, isPaid } = useLifetimeLeadLimit();
@@ -32,10 +32,10 @@ export function AddProspectDialog({ onAdd, existingProspects = [] }: AddProspect
   const duplicateProspect = useMemo(() => {
     if (!phone.trim() || phone.trim().length < 7) return null;
     const normalized = normalizePhone(phone.trim());
-    return existingProspects.find(p => 
-      normalizePhone(p.phone) === normalized || 
-      normalizePhone(p.phone).endsWith(normalized) ||
-      normalized.endsWith(normalizePhone(p.phone))
+    return existingProspects.find((p) =>
+    normalizePhone(p.phone) === normalized ||
+    normalizePhone(p.phone).endsWith(normalized) ||
+    normalized.endsWith(normalizePhone(p.phone))
     );
   }, [phone, existingProspects]);
 
@@ -53,7 +53,7 @@ export function AddProspectDialog({ onAdd, existingProspects = [] }: AddProspect
     const trimmedPhone = phone.trim();
 
     // Simple validation
-    const fieldErrors: { name?: string; phone?: string } = {};
+    const fieldErrors: {name?: string;phone?: string;} = {};
     if (!trimmedName) {
       fieldErrors.name = 'Name is required';
     }
@@ -69,7 +69,7 @@ export function AddProspectDialog({ onAdd, existingProspects = [] }: AddProspect
     setIsSubmitting(true);
     const prospectResult = await onAdd({
       name: trimmedName,
-      phone: trimmedPhone,
+      phone: trimmedPhone
     });
 
     if (prospectResult) {
@@ -96,10 +96,10 @@ export function AddProspectDialog({ onAdd, existingProspects = [] }: AddProspect
     <>
       <Dialog open={open} onOpenChange={handleOpenChange}>
         <DialogTrigger asChild>
-          <Button data-add-trigger size="sm" className="h-8 gap-1 text-xs px-2">
-            <Plus className="h-3.5 w-3.5" />
-            <span className="hidden sm:inline">Add</span>
-          </Button>
+          
+
+
+
         </DialogTrigger>
         <DialogContent className="sm:max-w-md bg-card border-border">
           <DialogHeader>
@@ -115,11 +115,11 @@ export function AddProspectDialog({ onAdd, existingProspects = [] }: AddProspect
                 onChange={(e) => setName(e.target.value)}
                 placeholder="Enter name"
                 maxLength={100}
-                className={errors.name ? 'border-destructive' : ''}
-              />
-              {errors.name && (
-                <p className="text-xs text-destructive">{errors.name}</p>
-              )}
+                className={errors.name ? 'border-destructive' : ''} />
+
+              {errors.name &&
+              <p className="text-xs text-destructive">{errors.name}</p>
+              }
             </div>
             <div className="space-y-2">
               <Label htmlFor="phone">Phone *</Label>
@@ -132,39 +132,39 @@ export function AddProspectDialog({ onAdd, existingProspects = [] }: AddProspect
                 className={cn(
                   errors.phone ? 'border-destructive' : '',
                   duplicateProspect ? 'border-yellow-500 focus-visible:ring-yellow-500' : ''
-                )}
-              />
-              {errors.phone && (
-                <p className="text-xs text-destructive">{errors.phone}</p>
-              )}
+                )} />
+
+              {errors.phone &&
+              <p className="text-xs text-destructive">{errors.phone}</p>
+              }
               {/* Duplicate warning */}
-              {duplicateProspect && !errors.phone && (
-                <div className="flex items-start gap-2 p-2 bg-yellow-500/10 border border-yellow-500/30 rounded-md">
+              {duplicateProspect && !errors.phone &&
+              <div className="flex items-start gap-2 p-2 bg-yellow-500/10 border border-yellow-500/30 rounded-md">
                   <AlertTriangle className="h-4 w-4 text-yellow-500 shrink-0 mt-0.5" />
                   <div className="text-xs">
                     <p className="font-medium text-yellow-600">Lead already exists!</p>
                     <p className="text-muted-foreground">
                       <span className="font-medium">{duplicateProspect.name}</span>
-                      {duplicateProspect.action_taken && (
-                        <span> • Response: <span className="font-medium">{duplicateProspect.action_taken}</span></span>
-                      )}
-                      {duplicateProspect.funnel_stage && (
-                        <span> • Stage: <span className="font-medium">{duplicateProspect.funnel_stage}</span></span>
-                      )}
+                      {duplicateProspect.action_taken &&
+                    <span> • Response: <span className="font-medium">{duplicateProspect.action_taken}</span></span>
+                    }
+                      {duplicateProspect.funnel_stage &&
+                    <span> • Stage: <span className="font-medium">{duplicateProspect.funnel_stage}</span></span>
+                    }
                     </p>
                   </div>
                 </div>
-              )}
+              }
             </div>
             <div className="flex justify-end gap-2 pt-2">
               <Button type="button" variant="outline" onClick={() => setOpen(false)}>
                 Cancel
               </Button>
-              <Button 
-                type="submit" 
+              <Button
+                type="submit"
                 disabled={isSubmitting}
-                variant={duplicateProspect ? 'outline' : 'default'}
-              >
+                variant={duplicateProspect ? 'outline' : 'default'}>
+
                 {isSubmitting ? 'Adding...' : duplicateProspect ? 'Add Anyway' : 'Add Lead'}
               </Button>
             </div>
@@ -173,10 +173,10 @@ export function AddProspectDialog({ onAdd, existingProspects = [] }: AddProspect
       </Dialog>
       
       {/* Hard Limit Modal - shown when user hits the limit */}
-      <HardLimitModal 
-        forceOpen={showLimitModal} 
-        onClose={() => setShowLimitModal(false)} 
-      />
-    </>
-  );
+      <HardLimitModal
+        forceOpen={showLimitModal}
+        onClose={() => setShowLimitModal(false)} />
+
+    </>);
+
 }
