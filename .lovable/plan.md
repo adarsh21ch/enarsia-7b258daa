@@ -1,80 +1,63 @@
 
+# TrackUp Table Layout Stabilization
 
-# Fix: Import Leads Not Showing on Today's Date Sheet
+## Problem
+The Metric column expands too wide after all rows load because `table-layout: auto` recalculates widths as new rows render. This causes visible layout shifts and wastes horizontal space.
 
-## Investigation Results
+## Solution
+Switch all four tables to `table-layout: fixed` with a `<colgroup>` that locks the Metric column to a narrow fixed width, giving remaining space to date columns.
 
-The database shows that the sheet auto-creation IS working -- a "21 Feb" sheet exists and 15 leads are correctly assigned to it. However, there are two real bugs found:
+## Changes
 
-### Bug 1: `batch_date` Uses UTC Instead of IST
+### 1. DateWiseTable.tsx
+- Change `tableLayout: 'auto'` to `tableLayout: 'fixed'`
+- Add `<colgroup>` with first `<col>` set to `width: 120px` and remaining date columns set to equal distribution
+- Remove `w-0` from the metric `<th>` (no longer needed with fixed layout)
+- Keep `whitespace-nowrap` and `px-2` on metric cells
 
-In `src/hooks/useProspectsQuery.ts` (line 575):
-```
-batch_date: p.batch_date || new Date().toISOString().split('T')[0]
-```
+### 2. SummaryTable.tsx
+- Same `table-layout: fixed` + `<colgroup>` approach
+- First column: `120px` fixed width
+- Remaining columns: auto-distributed
 
-This produces UTC date. At 2:45 AM IST on Feb 21, it stores `2026-02-20` instead of `2026-02-21`. This causes date-based views/filters that rely on `batch_date` to show leads under the wrong date.
+### 3. FunnelWiseTable.tsx
+- Same `table-layout: fixed` + `<colgroup>` approach
+- First "Stage" column: `120px` fixed width
 
-### Bug 2: Sheet Name Uses Browser Locale (Not Explicitly IST)
+### 4. MonthlyTotalsTable.tsx
+- Same `table-layout: fixed` + `<colgroup>` approach
+- First "Month" column: `120px` fixed width
 
-In `src/hooks/useSheets.ts` (line 9):
-```
-const getTodaySheetName = () => format(new Date(), 'd MMM');
-```
-
-This uses the browser's local timezone. While it works for IST browsers, it should use the explicit IST utility for consistency with the rest of the codebase (in case the user's device timezone is misconfigured).
-
-### Bug 3: `activity_date` in Streak Uses UTC
-
-In `src/hooks/useProspectsQuery.ts` (line 634):
-```
-activity_date: new Date().toISOString().split('T')[0]
-```
-
-Same UTC issue -- streak activity may be logged under the wrong IST date.
-
----
-
-## Fix Plan
-
-### File 1: `src/hooks/useProspectsQuery.ts`
-
-- **Line 575**: Replace `new Date().toISOString().split('T')[0]` with `getTodayIST()` from `src/lib/dateUtils.ts`
-- **Line 634**: Replace `new Date().toISOString().split('T')[0]` with `getTodayIST()`
-- Add import for `getTodayIST` from `@/lib/dateUtils`
-
-### File 2: `src/hooks/useSheets.ts`
-
-- **Line 9**: Replace `format(new Date(), 'd MMM')` with an IST-aware version using `toIST()` from dateUtils
-- This ensures the sheet name matches the IST date even if the browser timezone is wrong
-- Add import for `toIST` from `@/lib/dateUtils`
-
-### No Database Changes Needed
-
-The `date_added` column (TIMESTAMPTZ) is correctly stored in UTC. The `sheet_id` foreign key is working. Only the derived `batch_date` string and sheet naming need IST alignment.
-
----
+### 5. PersonalTagExpandableRows.tsx
+- No structural changes needed -- it already renders matching `<td>` cells per column, so it inherits the fixed column grid automatically
+- The helper text row with `colSpan` will also align correctly under fixed layout
 
 ## Technical Details
 
-### `batch_date` fix:
-```typescript
-import { getTodayIST } from '@/lib/dateUtils';
-// Before: new Date().toISOString().split('T')[0]
-// After:  getTodayIST()  // returns "YYYY-MM-DD" in IST
+The key change in each table component:
+
+```text
+Before:
+  <table style={{ tableLayout: 'auto' }}>
+    <thead>
+      <tr>
+        <th className="... w-0">Metric</th>
+        ...
+
+After:
+  <table style={{ tableLayout: 'fixed' }}>
+    <colgroup>
+      <col style={{ width: '120px' }} />
+      {columns.map(() => <col key={...} />)}
+    </colgroup>
+    <thead>
+      <tr>
+        <th className="...">Metric</th>
+        ...
 ```
 
-### Sheet name fix:
-```typescript
-import { toIST } from '@/lib/dateUtils';
-import { format } from 'date-fns';
-const getTodaySheetName = () => {
-  const ist = toIST(new Date());
-  return format(ist, 'd MMM');
-};
-```
-
-### Files to modify:
-1. `src/hooks/useProspectsQuery.ts` -- 2 lines (batch_date + activity_date)
-2. `src/hooks/useSheets.ts` -- 1 line (sheet name function)
-
+- `table-layout: fixed` locks column widths after first render based on `<colgroup>` definitions
+- Date/data columns without explicit width share remaining space equally
+- No layout recalculation when new rows appear
+- Personal tag expansion adds rows but cannot change column widths
+- `w-max min-w-full` on the table ensures horizontal scroll still works when there are many date columns
