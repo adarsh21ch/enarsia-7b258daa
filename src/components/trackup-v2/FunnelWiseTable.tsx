@@ -52,10 +52,14 @@ export function FunnelWiseTable({
   return (
     <div className="rounded-xl border border-border/50 overflow-hidden">
       <div className="overflow-x-auto">
-        <table className="w-max min-w-full text-xs" style={{ tableLayout: 'auto' }}>
+        <table className="w-max min-w-full text-xs" style={{ tableLayout: 'fixed' }}>
+          <colgroup>
+            <col style={{ width: '120px' }} />
+            {funnelPeriods.map((p) => <col key={p.label} />)}
+          </colgroup>
           <thead>
             <tr className="bg-accent text-accent-foreground">
-              <th className="sticky left-0 z-10 bg-accent text-accent-foreground px-2 py-2 text-left font-semibold whitespace-nowrap w-0">Stage</th>
+              <th className="sticky left-0 z-10 bg-accent text-accent-foreground px-2 py-2 text-left font-semibold whitespace-nowrap">Stage</th>
               {funnelPeriods.map((period, index) => (
                 <th key={period.label} className="px-2 py-2 text-center font-semibold min-w-[80px]">
                   <div className="font-bold text-[11px]">Funnel {index + 1}</div>
