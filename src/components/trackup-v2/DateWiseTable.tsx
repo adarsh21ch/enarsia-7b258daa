@@ -49,7 +49,10 @@ export function DateWiseTable({
     if (!scrollRef.current) return;
     const todayIdx = dailyMetrics.findIndex((m) => m.isToday);
     if (todayIdx >= 0) {
-      scrollRef.current.scrollLeft = Math.max(0, todayIdx * 56 - 100);
+      const colWidth = 48;
+      const stickyCol = 90;
+      const containerWidth = scrollRef.current.clientWidth;
+      scrollRef.current.scrollLeft = Math.max(0, todayIdx * colWidth - (containerWidth - stickyCol) / 2);
     }
   }, [dailyMetrics]);
 

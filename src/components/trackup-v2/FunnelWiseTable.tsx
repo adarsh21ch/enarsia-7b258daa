@@ -1,7 +1,7 @@
-import { useMemo } from 'react';
+import { useRef, useEffect, useMemo } from 'react';
 import { cn } from '@/lib/utils';
 import { formatTrackingValue } from '@/lib/snapshotSlotUtils';
-import { format, parseISO } from 'date-fns';
+import { format, parseISO, isWithinInterval } from 'date-fns';
 import { PersonalTagExpandableRows } from './PersonalTagExpandableRows';
 import type { FunnelPeriod } from '@/hooks/useSnapshotV2ComputedData';
 import type { PersonalTagData } from '@/hooks/usePersonalTagMetrics';
@@ -28,6 +28,23 @@ export function FunnelWiseTable({
   finalTagName,
   personalTagData,
 }: FunnelWiseTableProps) {
+  const scrollRef = useRef<HTMLDivElement>(null);
+
+  // Auto-scroll to current funnel period
+  useEffect(() => {
+    if (!scrollRef.current || funnelPeriods.length === 0) return;
+    const today = format(new Date(), 'yyyy-MM-dd');
+    const currentIdx = funnelPeriods.findIndex((p) =>
+      today >= p.startDate && today <= p.endDate
+    );
+    if (currentIdx >= 0) {
+      const colWidth = 100;
+      const stickyCol = 90;
+      const containerWidth = scrollRef.current.clientWidth;
+      scrollRef.current.scrollLeft = Math.max(0, currentIdx * colWidth - (containerWidth - stickyCol) / 2);
+    }
+  }, [funnelPeriods]);
+
   // Aggregate personal tag daily data into funnel period buckets
   const personalTagRows = useMemo(() => {
     if (!personalTagData || personalTagData.tagNames.length === 0 || funnelPeriods.length === 0) return [];
@@ -51,7 +68,7 @@ export function FunnelWiseTable({
 
   return (
     <div className="rounded-xl border border-border/50 overflow-hidden">
-      <div className="overflow-x-auto">
+      <div ref={scrollRef} className="overflow-x-auto">
         <table className="text-xs" style={{ tableLayout: 'fixed', width: `${funnelPeriods.length * 100 + 90}px` }}>
           <colgroup>
             <col style={{ width: '90px' }} />
