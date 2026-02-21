@@ -41,7 +41,7 @@ export function PersonalTagExpandableRows({
           <div className="flex items-center gap-1.5">
             <ChevronRight
               className={cn(
-                'h-3 w-3 text-muted-foreground transition-transform duration-200',
+                'h-4 w-4 text-primary transition-transform duration-200',
                 expanded && 'rotate-90'
               )}
             />
