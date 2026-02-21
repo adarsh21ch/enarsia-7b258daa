@@ -55,7 +55,7 @@ export function FunnelWiseTable({
         <table className="w-max text-xs" style={{ tableLayout: 'auto' }}>
           <thead>
             <tr className="bg-accent text-accent-foreground">
-              <th className="sticky left-0 z-10 bg-accent text-accent-foreground px-2 py-2 text-left font-semibold whitespace-nowrap w-0">Stage</th>
+              <th className="sticky left-0 z-10 bg-accent text-accent-foreground px-2 py-2 text-left font-semibold whitespace-nowrap" style={{ width: '1px' }}>Stage</th>
               {funnelPeriods.map((period, index) => (
                 <th key={period.label} className="px-2 py-2 text-center font-semibold min-w-[80px]">
                   <div className="font-bold text-[11px]">Funnel {index + 1}</div>
@@ -67,7 +67,7 @@ export function FunnelWiseTable({
           <tbody>
             {stageTagNames.map((stageName) => (
               <tr key={stageName} className="border-t border-border/30">
-                <td className="sticky left-0 z-10 bg-accent text-accent-foreground px-2 py-2 font-medium whitespace-nowrap w-0">{stageName}</td>
+                <td className="sticky left-0 z-10 bg-accent text-accent-foreground px-2 py-2 font-medium whitespace-nowrap" style={{ width: '1px' }}>{stageName}</td>
                 {funnelPeriods.map((period) => {
                   const val = period.stageTotals[stageName] ?? 0;
                   return (
