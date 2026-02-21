@@ -178,32 +178,15 @@ const [localData, setLocalData] = useState<Partial<Prospect>>({});
     <tr className="animate-in fade-in-0 slide-in-from-top-2 duration-200">
       <td colSpan={colSpan} className="p-0">
         <div className="px-3 py-2 border-t border-b border-primary/20 bg-gradient-to-b from-muted/40 to-background/50 backdrop-blur-sm shadow-inner">
-          {/* Row 1: Header - Name with Call/WhatsApp, Tags, Close */}
+          {/* Row 1: Name + Tags + Close */}
           <div className="flex items-center justify-between gap-2 flex-wrap mb-2">
             <div className="flex items-center gap-2 flex-wrap">
               <span className="font-semibold text-foreground text-sm">{localData.name}</span>
-              {/* Quick Call/WhatsApp/Instagram */}
-              <div className="flex items-center gap-0.5">
-                <Button variant="ghost" size="icon" className="h-7 w-7 hover:bg-accent/10" onClick={openCall}>
-                  <Phone className="h-3.5 w-3.5 text-accent" />
+              {localData.instagram && (
+                <Button variant="ghost" size="icon" className="h-6 w-6 text-pink-500 hover:text-pink-600 hover:bg-pink-500/10" onClick={openInstagram}>
+                  <Instagram className="h-3.5 w-3.5" />
                 </Button>
-                <Button variant="ghost" size="icon" className="h-7 w-7 text-blue-500 hover:text-blue-600 hover:bg-blue-500/10" onClick={openSMS}>
-                  <MessageSquareText className="h-3.5 w-3.5" />
-                </Button>
-                <Button 
-                  variant="ghost" 
-                  size="icon" 
-                  className="h-7 w-7 bg-green-500 text-white hover:bg-green-600 rounded-md" 
-                  onClick={openWhatsApp}
-                >
-                  <WhatsAppIcon className="h-4 w-4" />
-                </Button>
-                {localData.instagram && (
-                  <Button variant="ghost" size="icon" className="h-7 w-7 text-pink-500 hover:text-pink-600 hover:bg-pink-500/10" onClick={openInstagram}>
-                    <Instagram className="h-3.5 w-3.5" />
-                  </Button>
-                )}
-              </div>
+              )}
               {/* Editable Tracking Tags (Response/Stage/Quality) */}
               <div className="flex items-center gap-1.5 flex-wrap">
                 <EditableTag
@@ -229,11 +212,37 @@ const [localData, setLocalData] = useState<Partial<Prospect>>({});
                 />
               </div>
             </div>
-            <div className="flex items-center gap-1">
-              <Button variant="ghost" size="icon" onClick={onClose} className="h-6 w-6">
-                <X className="h-3 w-3" />
-              </Button>
-            </div>
+            <Button variant="ghost" size="icon" onClick={onClose} className="h-6 w-6">
+              <X className="h-3 w-3" />
+            </Button>
+          </div>
+
+          {/* Row 1.5: Action Buttons - Call / Text / WhatsApp */}
+          <div className="flex items-center gap-2 mb-3">
+            <Button
+              variant="outline"
+              className="flex-1 h-8 gap-1.5 text-xs font-medium border-accent/30 text-accent hover:bg-accent/10"
+              onClick={openCall}
+            >
+              <Phone className="h-3.5 w-3.5" />
+              Call
+            </Button>
+            <Button
+              variant="outline"
+              className="flex-1 h-8 gap-1.5 text-xs font-medium border-blue-400/30 text-blue-500 hover:bg-blue-500/10"
+              onClick={openSMS}
+            >
+              <MessageSquareText className="h-3.5 w-3.5" />
+              Text
+            </Button>
+            <Button
+              variant="outline"
+              className="flex-1 h-8 gap-1.5 text-xs font-medium border-green-400/30 text-green-600 hover:bg-green-500/10"
+              onClick={openWhatsApp}
+            >
+              <WhatsAppIcon className="h-3.5 w-3.5" />
+              WhatsApp
+            </Button>
           </div>
 
           {/* Row 2: Compact editable fields grid */}
