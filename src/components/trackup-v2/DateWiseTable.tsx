@@ -92,7 +92,7 @@ export function DateWiseTable({
                     {formatTrackingValue(val)}
                   </td>
               )}
-                <td className={cn("px-2 py-2 text-center font-semibold bg-accent text-secondary", row.total > 0 ? 'text-foreground' : 'text-muted-foreground')}>
+                <td className={cn("px-2 py-2 text-center font-semibold bg-accent text-accent-foreground", row.total > 0 ? 'text-foreground' : 'text-muted-foreground')}>
                   {formatTrackingValue(row.total)}
                 </td>
               </tr>
