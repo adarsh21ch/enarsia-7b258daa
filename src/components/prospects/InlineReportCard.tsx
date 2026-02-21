@@ -7,7 +7,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Button } from '@/components/ui/button';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { StageBadge, StatusBadge, ActionBadge } from './StatusBadge';
-import { X, Phone, ChevronDown, Instagram, Clock, Trash2 } from 'lucide-react';
+import { X, Phone, ChevronDown, Instagram, Clock, Trash2, MessageSquareText } from 'lucide-react';
 import { WhatsAppIcon } from '@/components/ui/ActionIcons';
 import { formatDistanceToNow, parseISO, format } from 'date-fns';
 import { toast } from 'sonner';
@@ -168,6 +168,10 @@ const [localData, setLocalData] = useState<Partial<Prospect>>({});
     }
   };
 
+  const openSMS = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    window.location.href = `sms:${cleanPhoneNumber(prospect.phone)}`;
+  };
 
 
   return (
@@ -182,6 +186,9 @@ const [localData, setLocalData] = useState<Partial<Prospect>>({});
               <div className="flex items-center gap-0.5">
                 <Button variant="ghost" size="icon" className="h-7 w-7 hover:bg-accent/10" onClick={openCall}>
                   <Phone className="h-3.5 w-3.5 text-accent" />
+                </Button>
+                <Button variant="ghost" size="icon" className="h-7 w-7 text-blue-500 hover:text-blue-600 hover:bg-blue-500/10" onClick={openSMS}>
+                  <MessageSquareText className="h-3.5 w-3.5" />
                 </Button>
                 <Button 
                   variant="ghost" 
