@@ -62,7 +62,7 @@ export function DateWiseTable({
         <table className="w-max text-xs" style={{ tableLayout: 'auto' }}>
           <thead>
             <tr className="bg-accent text-accent-foreground">
-              <th className="sticky left-0 z-10 bg-accent text-accent-foreground px-2 py-2 text-left font-semibold whitespace-nowrap w-0">Metric</th>
+              <th className="sticky left-0 z-10 bg-accent text-accent-foreground px-2 py-2 text-left font-semibold whitespace-nowrap" style={{ width: '1px' }}>Metric</th>
               {dailyMetrics.map((m) => (
                 <th key={m.date} className={cn('px-2 py-2 text-center font-medium min-w-[48px]', m.isToday && 'bg-accent/80')}>
                   <div className="text-[10px] text-accent-foreground/70">{m.dayOfWeek}</div>
@@ -74,7 +74,7 @@ export function DateWiseTable({
           <tbody>
             {metricRows.map((row) => (
               <tr key={row.label} className="border-t border-border/30">
-                <td className="sticky left-0 z-10 bg-accent text-accent-foreground px-2 py-2 font-medium whitespace-nowrap w-0">{row.label}</td>
+                <td className="sticky left-0 z-10 bg-accent text-accent-foreground px-2 py-2 font-medium whitespace-nowrap" style={{ width: '1px' }}>{row.label}</td>
                 {row.values.map((val, i) => (
                   <td key={i} className={cn('px-2 py-2 text-center', dailyMetrics[i]?.isToday && 'bg-accent/10', val > 0 ? 'text-foreground font-medium' : 'text-muted-foreground')}>
                     {formatTrackingValue(val)}

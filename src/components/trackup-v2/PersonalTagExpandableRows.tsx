@@ -36,7 +36,8 @@ export function PersonalTagExpandableRows({
         onClick={() => setExpanded((v) => !v)}
       >
         <td
-          className="sticky left-0 z-10 bg-muted/60 px-2 py-2 font-medium whitespace-nowrap text-xs w-0"
+          className="sticky left-0 z-10 bg-muted/60 px-2 py-2 font-medium whitespace-nowrap text-xs"
+          style={{ width: '1px' }}
         >
           <div className="flex items-center gap-1.5">
             <ChevronRight
@@ -72,7 +73,7 @@ export function PersonalTagExpandableRows({
           {isMonthlyMode && tagTotals
             ? tagTotals.map((tag) => (
                 <tr key={tag.label} className="border-t border-border/20">
-                  <td className="sticky left-0 z-10 bg-muted/20 px-2 py-2 text-xs font-medium whitespace-nowrap w-0">
+                  <td className="sticky left-0 z-10 bg-muted/20 px-2 py-2 text-xs font-medium whitespace-nowrap" style={{ width: '1px' }}>
                     {tag.label}
                     <span className="text-[10px] text-muted-foreground/60 ml-1 font-normal">(Personal)</span>
                   </td>
@@ -94,7 +95,7 @@ export function PersonalTagExpandableRows({
               ))
             : tagRows?.map((row) => (
                 <tr key={row.label} className="border-t border-border/20">
-                  <td className="sticky left-0 z-10 bg-muted/20 px-2 py-2 text-xs font-medium whitespace-nowrap w-0">
+                  <td className="sticky left-0 z-10 bg-muted/20 px-2 py-2 text-xs font-medium whitespace-nowrap" style={{ width: '1px' }}>
                     {row.label}
                     <span className="text-[10px] text-muted-foreground/60 ml-1 font-normal">(Personal)</span>
                   </td>
