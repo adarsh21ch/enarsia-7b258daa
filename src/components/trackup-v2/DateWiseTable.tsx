@@ -59,10 +59,16 @@ export function DateWiseTable({
   return (
     <div className="rounded-xl border border-border/50 overflow-hidden">
       <div ref={scrollRef} className="overflow-x-auto">
-        <table className="w-max text-xs" style={{ tableLayout: 'auto' }}>
+        <table className="text-xs" style={{ tableLayout: 'fixed', width: `${dailyMetrics.length * 48 + 90}px` }}>
+          <colgroup>
+            <col style={{ width: '90px' }} />
+            {dailyMetrics.map((m) => (
+              <col key={m.date} style={{ width: '48px' }} />
+            ))}
+          </colgroup>
           <thead>
             <tr className="bg-accent text-accent-foreground">
-              <th className="sticky left-0 z-10 bg-accent text-accent-foreground px-2 py-2 text-left font-semibold whitespace-nowrap" style={{ width: '1px' }}>Metric</th>
+              <th className="sticky left-0 z-10 bg-accent text-accent-foreground px-2 py-2 text-left font-semibold whitespace-nowrap">Metric</th>
               {dailyMetrics.map((m) => (
                 <th key={m.date} className={cn('px-2 py-2 text-center font-medium min-w-[48px]', m.isToday && 'bg-accent/80')}>
                   <div className="text-[10px] text-accent-foreground/70">{m.dayOfWeek}</div>
@@ -74,7 +80,7 @@ export function DateWiseTable({
           <tbody>
             {metricRows.map((row) => (
               <tr key={row.label} className="border-t border-border/30">
-                <td className="sticky left-0 z-10 bg-accent text-accent-foreground px-2 py-2 font-medium whitespace-nowrap" style={{ width: '1px' }}>{row.label}</td>
+                <td className="sticky left-0 z-10 bg-accent text-accent-foreground px-2 py-2 font-medium whitespace-nowrap overflow-hidden text-ellipsis">{row.label}</td>
                 {row.values.map((val, i) => (
                   <td key={i} className={cn('px-2 py-2 text-center', dailyMetrics[i]?.isToday && 'bg-accent/10', val > 0 ? 'text-foreground font-medium' : 'text-muted-foreground')}>
                     {formatTrackingValue(val)}
