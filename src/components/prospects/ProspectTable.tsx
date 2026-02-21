@@ -347,6 +347,7 @@ export function ProspectTable({
   const isMobile = useIsMobile();
   const { checkFeature } = usePermissions();
   const canExport = checkFeature('export') || checkFeature('export_data');
+  const canShareLeads = checkFeature('share_leads');
 
   // Selection mode state
   const [selectionMode, setSelectionMode] = useState<{
@@ -1058,9 +1059,10 @@ export function ProspectTable({
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem 
-                    onClick={() => handleEnterSelectMode(selectedSheetId)}
+                    onClick={canShareLeads ? () => handleEnterSelectMode(selectedSheetId) : () => toast.error('Upgrade to Pro to share leads')}
                     className="gap-2"
                   >
+                    {!canShareLeads && <Lock className="h-3.5 w-3.5" />}
                     <Share2 className="h-4 w-4" />
                     Share Leads
                   </DropdownMenuItem>
