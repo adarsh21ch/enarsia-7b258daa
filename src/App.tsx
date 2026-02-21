@@ -36,6 +36,7 @@ import FunnelView from "./pages/FunnelView";
 import FormsDashboard from "./features/forms/pages/FormsDashboard";
 import FormResponsesPage from "./features/forms/pages/FormResponsesPage";
 import PublicFormPage from "./features/forms/pages/PublicFormPage";
+import SharedLeads from "./pages/SharedLeads";
 
 // Error Boundary to catch rendering errors
 class ErrorBoundary extends Component<{ children: ReactNode }, { hasError: boolean; error: Error | null }> {
@@ -118,6 +119,7 @@ function App() {
                       <Route path="/forms" element={<FormsDashboard />} />
                       <Route path="/forms/:formId/responses" element={<FormResponsesPage />} />
                       <Route path="/share/form/:token" element={<PublicFormPage />} />
+                      <Route path="/shared-leads" element={<SharedLeads />} />
                       <Route path="*" element={<NotFound />} />
                     </Routes>
                     </TodosProvider>

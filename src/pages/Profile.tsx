@@ -26,7 +26,7 @@ import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { User, LogOut, ChevronRight, ChevronDown, Phone, Building2, MapPin, Loader2, FileText, Shield, Receipt, Mail, Settings, ExternalLink, BarChart3, Crown, Gift, Trash2, Sparkles, Lock, Share2 } from 'lucide-react';
-import { SharedLeadsDrawer } from '@/components/profile/SharedLeadsDrawer';
+
 import { useSharedLeads } from '@/hooks/useSharedLeads';
 import { AIAssistantChat } from '@/components/ai/AIAssistantChat';
 import { useFeatureAccess } from '@/hooks/useFeatureAccess';
@@ -126,7 +126,7 @@ export default function Profile() {
   } = useFreeTrial();
   const [editOpen, setEditOpen] = useState(false);
   const [showAIChat, setShowAIChat] = useState(false);
-  const [sharedLeadsOpen, setSharedLeadsOpen] = useState(false);
+  
   const { canAccess: canAccessAI } = useFeatureAccess('ai_assistant');
   const { pendingCount } = useSharedLeads();
 
@@ -423,7 +423,7 @@ export default function Profile() {
           </button>
 
           {/* Shared Leads */}
-          <button onClick={() => setSharedLeadsOpen(true)} className={cn(
+          <button onClick={() => navigate('/shared-leads')} className={cn(
             "w-full relative overflow-hidden rounded-xl p-4",
             "bg-gradient-to-r backdrop-blur-sm",
             "border border-orange-500/30 shadow-sm",
@@ -609,7 +609,7 @@ export default function Profile() {
 
       <AIAssistantChat open={showAIChat} onOpenChange={setShowAIChat} />
 
-      <SharedLeadsDrawer open={sharedLeadsOpen} onOpenChange={setSharedLeadsOpen} />
+      
 
       <BottomNav />
     </div>;

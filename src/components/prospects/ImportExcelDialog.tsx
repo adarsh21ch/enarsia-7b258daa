@@ -1,10 +1,11 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import * as XLSX from 'xlsx';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
-import { Upload, FileSpreadsheet, AlertCircle } from 'lucide-react';
+import { Upload, FileSpreadsheet, AlertCircle, Share2 } from 'lucide-react';
 import { Prospect } from '@/types/prospect';
 import { toast } from 'sonner';
 import { sanitizeImportString, validateImportedProspect } from '@/lib/validations';
@@ -52,6 +53,7 @@ const FIELD_PLACEHOLDERS: Record<keyof ColumnMapping, string> = {
 };
 
 export function ImportExcelDialog({ onImport }: ImportExcelDialogProps) {
+  const navigate = useNavigate();
   const [open, setOpen] = useState(false);
   const { logBulkActivity } = useActivityLog();
   const [step, setStep] = useState<'upload' | 'mapping'>('upload');
@@ -373,6 +375,29 @@ export function ImportExcelDialog({ onImport }: ImportExcelDialogProps) {
 
         {step === 'upload' && (
           <div className="space-y-4">
+            {/* Import source options */}
+            <div className="grid grid-cols-2 gap-3">
+              <div
+                className="border-2 border-dashed border-border rounded-lg p-5 text-center hover:border-accent/50 transition-colors cursor-pointer flex flex-col items-center gap-2"
+                onClick={() => fileInputRef.current?.click()}
+              >
+                <Upload className="h-8 w-8 text-muted-foreground" />
+                <p className="text-sm font-medium">From Excel/CSV</p>
+                <p className="text-[10px] text-muted-foreground">.xlsx, .xls, .csv</p>
+              </div>
+              <div
+                className="border-2 border-dashed border-border rounded-lg p-5 text-center hover:border-accent/50 transition-colors cursor-pointer flex flex-col items-center gap-2"
+                onClick={() => {
+                  setOpen(false);
+                  navigate('/shared-leads');
+                }}
+              >
+                <Share2 className="h-8 w-8 text-muted-foreground" />
+                <p className="text-sm font-medium">From Shared Leads</p>
+                <p className="text-[10px] text-muted-foreground">Team shared leads</p>
+              </div>
+            </div>
+
             {/* WhatsApp guidance */}
             <div className="flex gap-2.5 p-3 bg-muted/50 rounded-lg border border-border/50">
               <span className="text-lg shrink-0">📱</span>
@@ -386,16 +411,6 @@ export function ImportExcelDialog({ onImport }: ImportExcelDialogProps) {
               </div>
             </div>
 
-            <div
-              className="border-2 border-dashed border-border rounded-lg p-8 text-center hover:border-accent/50 transition-colors cursor-pointer"
-              onClick={() => fileInputRef.current?.click()}
-            >
-              <Upload className="h-10 w-10 mx-auto text-muted-foreground mb-3" />
-              <p className="text-sm font-medium">Click to upload or drag and drop</p>
-              <p className="text-xs text-muted-foreground mt-1">
-                Supports .xlsx, .xls, .csv files
-              </p>
-            </div>
             <input
               ref={fileInputRef}
               type="file"

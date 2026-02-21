@@ -90,7 +90,7 @@ export function useSharedLeads() {
 
   const pendingCount = pendingShares.filter(s => s.status === 'pending').length;
 
-  const shareLeads = async (receiverIds: string[], leads: Prospect[]) => {
+  const shareLeads = async (receiverIds: string[], leads: Prospect[], sheetName?: string) => {
     if (!user) return false;
 
     const leadSnapshots = leads.map(l => ({
@@ -104,6 +104,7 @@ export function useSharedLeads() {
       notes: l.notes || null,
       why_need: l.why_need || null,
       priority: l.priority || null,
+      sheet_name: sheetName || null,
     }));
 
     const rows = receiverIds.map(receiverId => ({
@@ -164,6 +165,37 @@ export function useSharedLeads() {
           ? `${lead.notes}\nShared by ${share.sender_name || 'Team Member'}`
           : `Shared by ${share.sender_name || 'Team Member'}`,
       });
+    }
+
+    // Determine sheet for import - use original sheet name with * marker
+    let targetSheetId: string | null = null;
+    const originalSheetName = share.lead_data?.[0]?.sheet_name;
+    if (originalSheetName) {
+      const markedName = `${originalSheetName} *`;
+      // Check if sheet already exists
+      const { data: existingSheet } = await supabase
+        .from('sheets')
+        .select('id')
+        .eq('user_id', user.id)
+        .eq('name', markedName)
+        .maybeSingle();
+
+      if (existingSheet) {
+        targetSheetId = existingSheet.id;
+      } else {
+        // Create new sheet with * marker
+        const { data: newSheet } = await supabase
+          .from('sheets')
+          .insert({ name: markedName, user_id: user.id })
+          .select('id')
+          .single();
+        if (newSheet) targetSheetId = newSheet.id;
+      }
+    }
+
+    // Add sheet_id to imports if we have a target sheet
+    if (targetSheetId) {
+      toImport.forEach(item => { item.sheet_id = targetSheetId; });
     }
 
     let imported = 0;

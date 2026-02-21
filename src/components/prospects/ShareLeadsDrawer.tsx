@@ -16,9 +16,10 @@ interface ShareLeadsDrawerProps {
   onOpenChange: (open: boolean) => void;
   selectedProspects: Prospect[];
   onComplete: () => void;
+  sheetName?: string;
 }
 
-export function ShareLeadsDrawer({ open, onOpenChange, selectedProspects, onComplete }: ShareLeadsDrawerProps) {
+export function ShareLeadsDrawer({ open, onOpenChange, selectedProspects, onComplete, sheetName }: ShareLeadsDrawerProps) {
   const isMobile = useIsMobile();
   const { members, loading: teamLoading } = useDirectTeam();
   const { shareLeads } = useSharedLeads();
@@ -36,7 +37,7 @@ export function ShareLeadsDrawer({ open, onOpenChange, selectedProspects, onComp
   const handleShare = async () => {
     if (selectedMembers.size === 0 || selectedProspects.length === 0) return;
     setSharing(true);
-    const success = await shareLeads(Array.from(selectedMembers), selectedProspects);
+    const success = await shareLeads(Array.from(selectedMembers), selectedProspects, sheetName || undefined);
     setSharing(false);
     if (success) {
       toast.success(`${selectedProspects.length} leads shared with ${selectedMembers.size} member${selectedMembers.size > 1 ? 's' : ''}`);

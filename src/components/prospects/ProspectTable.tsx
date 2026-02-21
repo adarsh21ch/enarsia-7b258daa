@@ -1112,6 +1112,7 @@ export function ProspectTable({
         onOpenChange={setShareDrawerOpen}
         selectedProspects={prospects.filter(p => selectedIds.has(p.id))}
         onComplete={handleExitSelectMode}
+        sheetName={selectionMode.sheetId ? sheets.find(s => s.id === selectionMode.sheetId)?.name : undefined}
       />
     </div>;
 }
