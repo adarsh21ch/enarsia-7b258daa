@@ -227,8 +227,10 @@ export default function Profile() {
           {/* Trial Banner - show for users with active trial */}
           <TrialBanner tabId="profile" />
           
-          {/* Upgrade Button - show for non-Pro users when not in trial */}
-          {!isPro && !isTrialActive && <UpgradeButton className="w-full" />}
+          {/* Upgrade Button - prominent golden card for non-Pro users */}
+          {!isPro && !isTrialActive && (
+            <UpgradeButton className="w-full" variant="prominent" />
+          )}
           
           {/* Progressive Upgrade Nudge Banner - non-spammy, stage-based */}
           {!isPaid && <ProgressiveNudgeBanner context="profile" />}
@@ -237,40 +239,13 @@ export default function Profile() {
           <LeaderTrackingFormatDrawer profile={profile} updating={updating} onUpdateProfile={updateProfile} onUpdateUplineByEmail={updateUplineByEmail} onClearLeaderHierarchy={clearLeaderHierarchy} />
 
 
-          {/* Profile Details */}
-          {(profile?.phone || profile?.company_name || profile?.city || profile?.bio) && <div className="rounded-2xl p-4 bg-card border border-border/50 space-y-3">
-              {profile?.phone && <div className="flex items-center gap-3">
-                  <div className="p-2 rounded-lg bg-primary/10">
-                    <Phone className="h-4 w-4 text-primary" />
-                  </div>
-                  <div>
-                    <p className="text-xs text-muted-foreground">Phone</p>
-                    <p className="text-sm font-medium">{profile.phone}</p>
-                  </div>
-                </div>}
-              {profile?.company_name && <div className="flex items-center gap-3">
-                  <div className="p-2 rounded-lg bg-violet-500/10">
-                    <Building2 className="h-4 w-4 text-violet-500" />
-                  </div>
-                  <div>
-                    <p className="text-xs text-muted-foreground">Company</p>
-                    <p className="text-sm font-medium">{profile.company_name}</p>
-                  </div>
-                </div>}
-              {profile?.city && <div className="flex items-center gap-3">
-                  <div className="p-2 rounded-lg bg-emerald-500/10">
-                    <MapPin className="h-4 w-4 text-emerald-500" />
-                  </div>
-                  <div>
-                    <p className="text-xs text-muted-foreground">Location</p>
-                    <p className="text-sm font-medium">{profile.city}</p>
-                  </div>
-                </div>}
-              {profile?.bio && <div className="pt-2 border-t border-border/50">
-                  <p className="text-xs text-muted-foreground mb-1">Bio</p>
-                  <p className="text-sm">{profile.bio}</p>
-                </div>}
-            </div>}
+          {/* Bio only - phone/company/location hidden for cleaner UI */}
+          {profile?.bio && (
+            <div className="rounded-2xl p-4 bg-card border border-border/50">
+              <p className="text-xs text-muted-foreground mb-1">Bio</p>
+              <p className="text-sm">{profile.bio}</p>
+            </div>
+          )}
 
           {/* TrackUp Dashboard - External link to web dashboard */}
           <button onClick={handleOpenTrackUp} className={cn("w-full relative overflow-hidden rounded-xl p-4", "bg-gradient-to-r backdrop-blur-sm", "border border-emerald-500/30 shadow-sm", "flex items-center justify-between", "transition-all duration-300 hover:shadow-md hover:scale-[1.01]", "from-emerald-500/20 to-emerald-500/5")}>
