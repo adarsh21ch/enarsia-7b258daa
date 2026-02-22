@@ -304,7 +304,7 @@ export default function SharedLeads() {
                                 setDeleteConfirm({ id: share.id, name: sheetName });
                               }}>
 
-                                <Trash2 className="h-3.5 w-3.5" />
+                                <Trash2 className="h-3.5 w-3.5 text-red-600" />
                               </Button>
                             </div>
                           </td>
