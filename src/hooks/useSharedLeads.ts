@@ -223,6 +223,20 @@ export function useSharedLeads() {
     return { imported, skipped };
   };
 
+  const deleteShare = async (shareId: string) => {
+    const { error } = await supabase
+      .from('shared_leads')
+      .delete()
+      .eq('id', shareId);
+
+    if (error) {
+      console.error('Error deleting shared lead:', error);
+      return false;
+    }
+    await fetchShares();
+    return true;
+  };
+
   return {
     pendingShares,
     sentShares,
@@ -230,6 +244,7 @@ export function useSharedLeads() {
     loading,
     shareLeads,
     importSharedLeads,
+    deleteShare,
     refetch: fetchShares
   };
 }

@@ -5,8 +5,9 @@ import { useSharedLeads, SharedLeadRecord } from '@/hooks/useSharedLeads';
 import { BottomNav } from '@/components/layout/BottomNav';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Loader2, ChevronLeft, Download, Package, Search, X, MoreVertical, FileSpreadsheet } from 'lucide-react';
+import { Loader2, ChevronLeft, Download, Package, Search, X, MoreVertical, FileSpreadsheet, Trash2 } from 'lucide-react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { useQueryClient } from '@tanstack/react-query';
@@ -39,11 +40,13 @@ function ExpandedLeads({ leads }: { leads: any[] }) {
 export default function SharedLeads() {
   const navigate = useNavigate();
   const { user, loading: authLoading } = useAuth();
-  const { pendingShares, loading, importSharedLeads } = useSharedLeads();
+  const { pendingShares, loading, importSharedLeads, deleteShare } = useSharedLeads();
   const queryClient = useQueryClient();
   const [searchQuery, setSearchQuery] = useState('');
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [importingId, setImportingId] = useState<string | null>(null);
+  const [deleteConfirm, setDeleteConfirm] = useState<{ id: string; name: string } | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
     if (!user && !authLoading) navigate('/auth');
@@ -89,7 +92,17 @@ export default function SharedLeads() {
     setImportingId(null);
   }, [importSharedLeads, queryClient, user]);
 
-  /* Export */
+  /* Delete shared lead batch */
+  const handleDelete = useCallback(async () => {
+    if (!deleteConfirm) return;
+    setDeleting(true);
+    const ok = await deleteShare(deleteConfirm.id);
+    if (ok) toast.success('Shared batch deleted');
+    else toast.error('Failed to delete');
+    setDeleting(false);
+    setDeleteConfirm(null);
+  }, [deleteConfirm, deleteShare]);
+
   const exportAll = (type: 'csv' | 'xlsx') => {
     const allLeads = pendingShares.flatMap(share =>
       (share.lead_data || []).map((l: any) => ({
@@ -239,17 +252,30 @@ export default function SharedLeads() {
                             {format(new Date(share.created_at), 'dd MMM, hh:mm a')}
                           </td>
                           <td className="px-4 py-3 text-right">
-                            <Button
-                              size="sm"
-                              className="h-7 text-xs gap-1 px-3"
-                              disabled={importingId === share.id}
-                              onClick={(e) => handleImport(e, share.id)}
-                            >
-                              {importingId === share.id
-                                ? <Loader2 className="h-3 w-3 animate-spin" />
-                                : <Download className="h-3 w-3" />}
-                              Import
-                            </Button>
+                            <div className="flex items-center justify-end gap-1">
+                              <Button
+                                size="sm"
+                                className="h-7 text-xs gap-1 px-3"
+                                disabled={importingId === share.id}
+                                onClick={(e) => handleImport(e, share.id)}
+                              >
+                                {importingId === share.id
+                                  ? <Loader2 className="h-3 w-3 animate-spin" />
+                                  : <Download className="h-3 w-3" />}
+                                Import
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                className="h-7 w-7 p-0 text-muted-foreground hover:text-destructive"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setDeleteConfirm({ id: share.id, name: sheetName });
+                                }}
+                              >
+                                <Trash2 className="h-3.5 w-3.5" />
+                              </Button>
+                            </div>
                           </td>
                         </tr>
                         {isExpanded && <ExpandedLeads key={`${share.id}-detail`} leads={share.lead_data} />}
@@ -262,6 +288,29 @@ export default function SharedLeads() {
           )}
         </div>
       </main>
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={!!deleteConfirm} onOpenChange={(open) => !open && setDeleteConfirm(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete shared batch?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will permanently remove the shared batch "<span className="font-medium">{deleteConfirm?.name}</span>" and its lead data. This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleting}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDelete}
+              disabled={deleting}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {deleting ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : null}
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       <BottomNav />
     </div>
