@@ -1,5 +1,5 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { SharedLeadsDrawer } from '@/components/profile/SharedLeadsDrawer';
 import * as XLSX from 'xlsx';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -53,8 +53,8 @@ const FIELD_PLACEHOLDERS: Record<keyof ColumnMapping, string> = {
 };
 
 export function ImportExcelDialog({ onImport }: ImportExcelDialogProps) {
-  const navigate = useNavigate();
   const [open, setOpen] = useState(false);
+  const [sharedLeadsOpen, setSharedLeadsOpen] = useState(false);
   const { logBulkActivity } = useActivityLog();
   const [step, setStep] = useState<'upload' | 'mapping'>('upload');
   const [columns, setColumns] = useState<string[]>([]);
@@ -352,6 +352,7 @@ export function ImportExcelDialog({ onImport }: ImportExcelDialogProps) {
   };
 
   return (
+    <>
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>
         <Button data-import-trigger variant="outline" size="sm" className="h-8 gap-1 text-xs px-2">
@@ -402,13 +403,13 @@ export function ImportExcelDialog({ onImport }: ImportExcelDialogProps) {
               </div>
             </div>
 
-            {/* Secondary: Shared Leads - subtle horizontal link */}
+             {/* Secondary: Shared Leads - opens drawer */}
             <div className="border-t border-border pt-3">
               <button
                 className="w-full flex items-center justify-center gap-2 py-2.5 rounded-lg text-sm text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-colors"
                 onClick={() => {
                   setOpen(false);
-                  navigate('/shared-leads');
+                  setSharedLeadsOpen(true);
                 }}
               >
                 <Share2 className="h-4 w-4" />
@@ -562,5 +563,12 @@ export function ImportExcelDialog({ onImport }: ImportExcelDialogProps) {
         onClose={() => setShowLimitModal(false)} 
       />
     </Dialog>
+
+    <SharedLeadsDrawer
+      open={sharedLeadsOpen}
+      onOpenChange={setSharedLeadsOpen}
+      closeOnImport
+    />
+    </>
   );
 }
