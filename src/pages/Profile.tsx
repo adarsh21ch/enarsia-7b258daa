@@ -25,7 +25,7 @@ import { PullToRefreshIndicator } from '@/components/PullToRefreshIndicator';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import { User, LogOut, ChevronRight, ChevronDown, Phone, Building2, MapPin, Loader2, FileText, Shield, Receipt, Mail, Settings, ExternalLink, BarChart3, Crown, Gift, Trash2, Sparkles, Lock, Share2 } from 'lucide-react';
+import { User, LogOut, ChevronRight, ChevronDown, Loader2, FileText, Shield, Receipt, Settings, ExternalLink, BarChart3, Crown, Gift, Trash2, Sparkles, Lock, Share2 } from 'lucide-react';
 
 import { useSharedLeads } from '@/hooks/useSharedLeads';
 import { AIAssistantChat } from '@/components/ai/AIAssistantChat';
@@ -363,7 +363,7 @@ export default function Profile() {
             </CollapsibleContent>
           </Collapsible>
 
-          {/* Recently Deleted - Restore deleted prospects */}
+          {/* Recently Deleted */}
           <RecentlyDeletedDrawer
           trigger={
           <button className={cn(
@@ -385,12 +385,49 @@ export default function Profile() {
               </button>
           } />
 
-
-          {/* User Guide - Video tutorials & help */}
+          {/* User Guide */}
           <UserGuideDrawer />
 
-          {/* Help & Support */}
+          {/* Help & Support (includes Contact Us) */}
           <HelpSupportDrawer />
+
+          {/* Legal & Policies - Collapsible */}
+          <Collapsible className="rounded-xl bg-card border border-border/50 overflow-hidden">
+            <CollapsibleTrigger className="w-full px-4 py-2.5 flex items-center justify-between hover:bg-muted/50 transition-colors">
+              <div className="flex items-center gap-3">
+                <div className="p-1.5 rounded-lg bg-muted">
+                  <FileText className="h-4 w-4 text-muted-foreground" />
+                </div>
+                <span className="font-medium text-sm">Legal & Policies</span>
+              </div>
+              <ChevronDown className="h-4 w-4 text-muted-foreground transition-transform [[data-state=open]>&]:rotate-180" />
+            </CollapsibleTrigger>
+            <CollapsibleContent>
+              <div className="px-4 pb-3 space-y-1">
+                <Link to="/terms" className="w-full flex items-center justify-between p-2.5 rounded-lg hover:bg-muted/50 transition-colors">
+                  <div className="flex items-center gap-3">
+                    <FileText className="h-4 w-4 text-muted-foreground" />
+                    <span className="text-sm">Terms & Conditions</span>
+                  </div>
+                  <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                </Link>
+                <Link to="/privacy" className="w-full flex items-center justify-between p-2.5 rounded-lg hover:bg-muted/50 transition-colors">
+                  <div className="flex items-center gap-3">
+                    <Shield className="h-4 w-4 text-muted-foreground" />
+                    <span className="text-sm">Privacy Policy</span>
+                  </div>
+                  <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                </Link>
+                <Link to="/refund" className="w-full flex items-center justify-between p-2.5 rounded-lg hover:bg-muted/50 transition-colors">
+                  <div className="flex items-center gap-3">
+                    <Receipt className="h-4 w-4 text-muted-foreground" />
+                    <span className="text-sm">Refund Policy</span>
+                  </div>
+                  <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                </Link>
+              </div>
+            </CollapsibleContent>
+          </Collapsible>
 
           {/* Admin Panel Link - Only visible to admin */}
           {isAdmin && <Link to="/admin" className={cn("w-full rounded-xl px-4 py-2.5 block", "bg-gradient-to-r backdrop-blur-sm", "border border-destructive/30", "flex items-center justify-between", "transition-all duration-200 hover:shadow-md", "from-destructive/20 to-destructive/5")}>
@@ -403,52 +440,9 @@ export default function Profile() {
               <ChevronRight className="h-4 w-4 text-muted-foreground" />
             </Link>}
 
-          {/* Contact Us */}
-          <div className="rounded-2xl p-4 bg-card border border-border/50">
-            <h3 className="text-sm font-semibold text-foreground mb-3">Contact Us</h3>
-            <a href="mailto:teamnevorai@gmail.com" className="flex items-center justify-between p-3 rounded-lg hover:bg-muted/50 transition-colors">
-              <div className="flex items-center gap-3">
-                <Mail className="h-4 w-4 text-primary" />
-                <div>
-                  <span className="text-sm">Email us at:</span>
-                  <p className="text-sm font-medium text-primary">teamnevorai@gmail.com</p>
-                </div>
-              </div>
-              <ChevronRight className="h-4 w-4 text-muted-foreground" />
-            </a>
-          </div>
-
-          {/* Legal & Policies */}
-          <div className="rounded-2xl p-4 bg-card border border-border/50">
-            <h3 className="text-sm font-semibold text-foreground mb-3">Legal & Policies</h3>
-            <div className="space-y-2">
-              <Link to="/terms" className="flex items-center justify-between p-3 rounded-lg hover:bg-muted/50 transition-colors">
-                <div className="flex items-center gap-3">
-                  <FileText className="h-4 w-4 text-muted-foreground" />
-                  <span className="text-sm">Terms & Conditions</span>
-                </div>
-                <ChevronRight className="h-4 w-4 text-muted-foreground" />
-              </Link>
-              <Link to="/privacy" className="flex items-center justify-between p-3 rounded-lg hover:bg-muted/50 transition-colors">
-                <div className="flex items-center gap-3">
-                  <Shield className="h-4 w-4 text-muted-foreground" />
-                  <span className="text-sm">Privacy Policy</span>
-                </div>
-                <ChevronRight className="h-4 w-4 text-muted-foreground" />
-              </Link>
-              <Link to="/refund" className="flex items-center justify-between p-3 rounded-lg hover:bg-muted/50 transition-colors">
-                <div className="flex items-center gap-3">
-                  <Receipt className="h-4 w-4 text-muted-foreground" />
-                  <span className="text-sm">Refund Policy</span>
-                </div>
-                <ChevronRight className="h-4 w-4 text-muted-foreground" />
-              </Link>
-            </div>
-          </div>
-
           {/* Sign Out */}
-          <Button variant="destructive" className="w-full h-12 rounded-xl shadow-lg shadow-destructive/20 mt-4" onClick={handleSignOut}>
-            <LogOut className="h-5 w-5 mr-2" />
+          <Button variant="destructive" className="w-full h-11 rounded-xl shadow-lg shadow-destructive/20 mt-2" onClick={handleSignOut}>
+            <LogOut className="h-4 w-4 mr-2" />
             Sign Out
           </Button>
         </div>

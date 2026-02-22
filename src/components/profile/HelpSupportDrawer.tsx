@@ -3,9 +3,8 @@ import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerTrigger, Drawer
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Input } from '@/components/ui/input';
-import { HelpCircle, ChevronRight, Loader2, CheckCircle2, Bug, GraduationCap, CreditCard, MessageSquare } from 'lucide-react';
+import { HelpCircle, ChevronRight, Loader2, CheckCircle2, Bug, GraduationCap, CreditCard, MessageSquare, Mail, ArrowLeft } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useSupportTickets, TicketCategory } from '@/hooks/useSupportTickets';
 
@@ -70,30 +69,38 @@ export function HelpSupportDrawer() {
       <DrawerTrigger asChild>
         <button
           className={cn(
-            "w-full rounded-xl p-4",
+            "w-full rounded-xl px-4 py-2.5",
             "bg-card border border-border/50",
             "flex items-center justify-between",
             "transition-all duration-200 hover:bg-muted/50"
           )}
         >
           <div className="flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-muted">
-              <HelpCircle className="h-5 w-5 text-muted-foreground" />
+            <div className="p-1.5 rounded-lg bg-muted">
+              <HelpCircle className="h-4 w-4 text-muted-foreground" />
             </div>
-            <span className="font-medium">Help & Support</span>
+            <div className="text-left">
+              <span className="font-medium text-sm block">Help & Support</span>
+              <span className="text-[11px] text-muted-foreground">Contact us or raise a ticket</span>
+            </div>
           </div>
-          <ChevronRight className="h-5 w-5 text-muted-foreground" />
+          <ChevronRight className="h-4 w-4 text-muted-foreground" />
         </button>
       </DrawerTrigger>
 
       <DrawerContent className="max-h-[90vh]">
         <DrawerHeader className="text-left">
           <DrawerTitle className="flex items-center gap-2">
+            {step === 'form' && (
+              <button onClick={() => setStep('category')} className="p-1 -ml-1 rounded hover:bg-muted/50">
+                <ArrowLeft className="h-4 w-4" />
+              </button>
+            )}
             <HelpCircle className="h-5 w-5 text-primary" />
             Help & Support
           </DrawerTitle>
           <DrawerDescription>
-            {step === 'category' && 'Select a category for your request'}
+            {step === 'category' && 'How can we help you?'}
             {step === 'form' && 'Describe your issue or question'}
             {step === 'success' && 'Request submitted successfully'}
           </DrawerDescription>
@@ -102,24 +109,45 @@ export function HelpSupportDrawer() {
         <div className="px-4 pb-8 overflow-y-auto">
           {step === 'category' && (
             <div className="space-y-3">
+              {/* Contact email - quick access */}
+              <a
+                href="mailto:teamnevorai@gmail.com"
+                className={cn(
+                  "w-full px-4 py-3 rounded-xl border border-primary/20",
+                  "flex items-center gap-3 text-left",
+                  "transition-all hover:bg-primary/5"
+                )}
+              >
+                <div className="p-1.5 rounded-lg bg-primary/10">
+                  <Mail className="h-4 w-4 text-primary" />
+                </div>
+                <div className="flex-1">
+                  <p className="font-medium text-sm">Email Us</p>
+                  <p className="text-[11px] text-primary">teamnevorai@gmail.com</p>
+                </div>
+                <ChevronRight className="h-4 w-4 text-muted-foreground" />
+              </a>
+
+              <p className="text-xs text-muted-foreground font-medium px-1 pt-1">Or raise a support ticket:</p>
+
               {CATEGORY_OPTIONS.map((option) => (
                 <button
                   key={option.value}
                   onClick={() => handleCategorySelect(option.value)}
                   className={cn(
-                    "w-full p-4 rounded-xl border border-border/50",
-                    "flex items-center gap-4 text-left",
+                    "w-full px-4 py-3 rounded-xl border border-border/50",
+                    "flex items-center gap-3 text-left",
                     "transition-all hover:bg-muted/50 hover:border-primary/30"
                   )}
                 >
-                  <div className="p-2 rounded-lg bg-primary/10">
-                    <option.icon className="h-5 w-5 text-primary" />
+                  <div className="p-1.5 rounded-lg bg-primary/10">
+                    <option.icon className="h-4 w-4 text-primary" />
                   </div>
                   <div className="flex-1">
-                    <p className="font-medium">{option.label}</p>
-                    <p className="text-sm text-muted-foreground">{option.description}</p>
+                    <p className="font-medium text-sm">{option.label}</p>
+                    <p className="text-[11px] text-muted-foreground">{option.description}</p>
                   </div>
-                  <ChevronRight className="h-5 w-5 text-muted-foreground" />
+                  <ChevronRight className="h-4 w-4 text-muted-foreground" />
                 </button>
               ))}
             </div>
