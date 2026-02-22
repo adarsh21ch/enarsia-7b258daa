@@ -103,6 +103,24 @@ export default function SharedLeads() {
     setDeleteConfirm(null);
   }, [deleteConfirm, deleteShare]);
 
+  /* Export single batch */
+  const exportBatch = (share: SharedLeadRecord) => {
+    const leads = (share.lead_data || []).map((l: any) => ({
+      Name: l.name || '',
+      Phone: l.phone || '',
+      Sheet: l.sheet_name || '',
+      Notes: l.notes || '',
+      Priority: l.priority || '',
+    }));
+    if (leads.length === 0) { toast.info('No leads to export'); return; }
+    const ws = XLSX.utils.json_to_sheet(leads);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Leads');
+    XLSX.writeFile(wb, `shared_leads_${(share.lead_data?.[0]?.sheet_name || 'batch').replace(/\s+/g, '_')}.xlsx`);
+    toast.success('Exported');
+  };
+
+  /* Export all */
   const exportAll = (type: 'csv' | 'xlsx') => {
     const allLeads = pendingShares.flatMap(share =>
       (share.lead_data || []).map((l: any) => ({
@@ -267,7 +285,20 @@ export default function SharedLeads() {
                               <Button
                                 size="sm"
                                 variant="ghost"
+                                className="h-7 w-7 p-0 text-muted-foreground hover:text-foreground"
+                                title="Export this batch"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  exportBatch(share);
+                                }}
+                              >
+                                <FileSpreadsheet className="h-3.5 w-3.5" />
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="ghost"
                                 className="h-7 w-7 p-0 text-muted-foreground hover:text-destructive"
+                                title="Delete this batch"
                                 onClick={(e) => {
                                   e.stopPropagation();
                                   setDeleteConfirm({ id: share.id, name: sheetName });
