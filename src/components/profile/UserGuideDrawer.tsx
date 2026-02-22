@@ -627,25 +627,12 @@ export function UserGuideDrawer() {
   return (
     <Drawer open={open} onOpenChange={setOpen}>
       <DrawerTrigger asChild>
-        <button
-          className={cn(
-            "w-full rounded-xl px-4 py-2.5",
-            "bg-gradient-to-r from-primary/10 to-primary/5",
-            "border border-primary/20",
-            "flex items-center justify-between",
-            "transition-all duration-200 hover:bg-primary/15"
-          )}
-        >
-          <div className="flex items-center gap-3">
-            <div className="p-1.5 rounded-lg bg-primary/10">
-              <BookOpen className="h-4 w-4 text-primary" />
-            </div>
-            <div className="text-left">
-              <span className="font-medium text-sm block">User Guide</span>
-              <span className="text-[11px] text-muted-foreground">Video tutorials & step-by-step help</span>
-            </div>
+        <button className="w-full rounded-xl px-4 py-2 bg-card border border-border/50 flex items-center justify-between transition-colors hover:bg-muted/50">
+          <div className="flex items-center gap-2.5">
+            <BookOpen className="h-4 w-4 text-muted-foreground" />
+            <span className="font-medium text-sm">User Guide</span>
           </div>
-          <ChevronRight className="h-4 w-4 text-muted-foreground" />
+          <ChevronRight className="h-3.5 w-3.5 text-muted-foreground" />
         </button>
       </DrawerTrigger>
 

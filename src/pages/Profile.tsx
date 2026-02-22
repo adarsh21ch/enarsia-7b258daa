@@ -338,110 +338,94 @@ export default function Profile() {
             )}
           </button>
 
-          {/* Settings Section - Collapsible */}
-          <Collapsible className="rounded-xl bg-card border border-border/50 overflow-hidden">
-            <CollapsibleTrigger className="w-full px-4 py-2.5 flex items-center justify-between hover:bg-muted/50 transition-colors">
-              <div className="flex items-center gap-3">
-                <div className="p-1.5 rounded-lg bg-muted">
-                  <Settings className="h-4 w-4 text-muted-foreground" />
-                </div>
-                <span className="font-medium text-sm">Settings</span>
-              </div>
-              <ChevronDown className="h-4 w-4 text-muted-foreground transition-transform [[data-state=open]>&]:rotate-180" />
-            </CollapsibleTrigger>
-            <CollapsibleContent>
-              <div className="px-4 pb-3 space-y-1">
-                <button onClick={() => setEditOpen(true)} className="w-full flex items-center justify-between p-2.5 rounded-lg hover:bg-muted/50 transition-colors">
-                  <div className="flex items-center gap-3">
-                    <User className="h-4 w-4 text-muted-foreground" />
-                    <span className="text-sm">Edit Profile</span>
-                  </div>
-                  <ChevronRight className="h-4 w-4 text-muted-foreground" />
-                </button>
-                <ChangePasswordDialog />
-              </div>
-            </CollapsibleContent>
-          </Collapsible>
-
           {/* Recently Deleted */}
           <RecentlyDeletedDrawer
           trigger={
-          <button className={cn(
-            "w-full rounded-xl px-4 py-2.5",
-            "bg-card border border-border/50",
-            "flex items-center justify-between",
-            "transition-all duration-200 hover:bg-muted/50"
-          )}>
-                <div className="flex items-center gap-3">
-                  <div className="p-1.5 rounded-lg bg-destructive/10">
-                    <Trash2 className="h-4 w-4 text-destructive" />
-                  </div>
-                  <div className="text-left">
-                    <span className="font-medium text-sm block">Recently Deleted</span>
-                    <span className="text-[11px] text-muted-foreground">Restore deleted prospects</span>
-                  </div>
+          <button className="w-full rounded-xl px-4 py-2 bg-card border border-border/50 flex items-center justify-between transition-colors hover:bg-muted/50">
+                <div className="flex items-center gap-2.5">
+                  <Trash2 className="h-4 w-4 text-destructive" />
+                  <span className="font-medium text-sm">Recently Deleted</span>
                 </div>
-                <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                <ChevronRight className="h-3.5 w-3.5 text-muted-foreground" />
               </button>
           } />
 
           {/* User Guide */}
           <UserGuideDrawer />
 
-          {/* Help & Support (includes Contact Us) */}
+          {/* Help & Support */}
           <HelpSupportDrawer />
+
+          {/* Settings Section - Collapsible */}
+          <Collapsible className="rounded-xl bg-card border border-border/50 overflow-hidden">
+            <CollapsibleTrigger className="w-full px-4 py-2 flex items-center justify-between hover:bg-muted/50 transition-colors">
+              <div className="flex items-center gap-2.5">
+                <Settings className="h-4 w-4 text-muted-foreground" />
+                <span className="font-medium text-sm">Settings</span>
+              </div>
+              <ChevronDown className="h-3.5 w-3.5 text-muted-foreground transition-transform [[data-state=open]>&]:rotate-180" />
+            </CollapsibleTrigger>
+            <CollapsibleContent>
+              <div className="px-4 pb-2 space-y-0.5">
+                <button onClick={() => setEditOpen(true)} className="w-full flex items-center justify-between p-2 rounded-lg hover:bg-muted/50 transition-colors">
+                  <div className="flex items-center gap-2.5">
+                    <User className="h-3.5 w-3.5 text-muted-foreground" />
+                    <span className="text-sm">Edit Profile</span>
+                  </div>
+                  <ChevronRight className="h-3.5 w-3.5 text-muted-foreground" />
+                </button>
+                <ChangePasswordDialog />
+              </div>
+            </CollapsibleContent>
+          </Collapsible>
 
           {/* Legal & Policies - Collapsible */}
           <Collapsible className="rounded-xl bg-card border border-border/50 overflow-hidden">
-            <CollapsibleTrigger className="w-full px-4 py-2.5 flex items-center justify-between hover:bg-muted/50 transition-colors">
-              <div className="flex items-center gap-3">
-                <div className="p-1.5 rounded-lg bg-muted">
-                  <FileText className="h-4 w-4 text-muted-foreground" />
-                </div>
+            <CollapsibleTrigger className="w-full px-4 py-2 flex items-center justify-between hover:bg-muted/50 transition-colors">
+              <div className="flex items-center gap-2.5">
+                <FileText className="h-4 w-4 text-muted-foreground" />
                 <span className="font-medium text-sm">Legal & Policies</span>
               </div>
-              <ChevronDown className="h-4 w-4 text-muted-foreground transition-transform [[data-state=open]>&]:rotate-180" />
+              <ChevronDown className="h-3.5 w-3.5 text-muted-foreground transition-transform [[data-state=open]>&]:rotate-180" />
             </CollapsibleTrigger>
             <CollapsibleContent>
-              <div className="px-4 pb-3 space-y-1">
-                <Link to="/terms" className="w-full flex items-center justify-between p-2.5 rounded-lg hover:bg-muted/50 transition-colors">
-                  <div className="flex items-center gap-3">
-                    <FileText className="h-4 w-4 text-muted-foreground" />
+              <div className="px-4 pb-2 space-y-0.5">
+                <Link to="/terms" className="w-full flex items-center justify-between p-2 rounded-lg hover:bg-muted/50 transition-colors">
+                  <div className="flex items-center gap-2.5">
+                    <FileText className="h-3.5 w-3.5 text-muted-foreground" />
                     <span className="text-sm">Terms & Conditions</span>
                   </div>
-                  <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                  <ChevronRight className="h-3.5 w-3.5 text-muted-foreground" />
                 </Link>
-                <Link to="/privacy" className="w-full flex items-center justify-between p-2.5 rounded-lg hover:bg-muted/50 transition-colors">
-                  <div className="flex items-center gap-3">
-                    <Shield className="h-4 w-4 text-muted-foreground" />
+                <Link to="/privacy" className="w-full flex items-center justify-between p-2 rounded-lg hover:bg-muted/50 transition-colors">
+                  <div className="flex items-center gap-2.5">
+                    <Shield className="h-3.5 w-3.5 text-muted-foreground" />
                     <span className="text-sm">Privacy Policy</span>
                   </div>
-                  <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                  <ChevronRight className="h-3.5 w-3.5 text-muted-foreground" />
                 </Link>
-                <Link to="/refund" className="w-full flex items-center justify-between p-2.5 rounded-lg hover:bg-muted/50 transition-colors">
-                  <div className="flex items-center gap-3">
-                    <Receipt className="h-4 w-4 text-muted-foreground" />
+                <Link to="/refund" className="w-full flex items-center justify-between p-2 rounded-lg hover:bg-muted/50 transition-colors">
+                  <div className="flex items-center gap-2.5">
+                    <Receipt className="h-3.5 w-3.5 text-muted-foreground" />
                     <span className="text-sm">Refund Policy</span>
                   </div>
-                  <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                  <ChevronRight className="h-3.5 w-3.5 text-muted-foreground" />
                 </Link>
               </div>
             </CollapsibleContent>
           </Collapsible>
 
           {/* Admin Panel Link - Only visible to admin */}
-          {isAdmin && <Link to="/admin" className={cn("w-full rounded-xl px-4 py-2.5 block", "bg-gradient-to-r backdrop-blur-sm", "border border-destructive/30", "flex items-center justify-between", "transition-all duration-200 hover:shadow-md", "from-destructive/20 to-destructive/5")}>
-              <div className="flex items-center gap-3">
-                <div className="p-1.5 rounded-lg bg-destructive/10">
-                  <Shield className="h-4 w-4 text-destructive" />
-                </div>
+          {isAdmin && <Link to="/admin" className="w-full rounded-xl px-4 py-2 block bg-card border border-destructive/30 flex items-center justify-between transition-colors hover:bg-muted/50">
+              <div className="flex items-center gap-2.5">
+                <Shield className="h-4 w-4 text-destructive" />
                 <span className="font-medium text-sm">Admin Panel</span>
               </div>
-              <ChevronRight className="h-4 w-4 text-muted-foreground" />
+              <ChevronRight className="h-3.5 w-3.5 text-muted-foreground" />
             </Link>}
 
           {/* Sign Out */}
-          <Button variant="destructive" className="w-full h-11 rounded-xl shadow-lg shadow-destructive/20 mt-2" onClick={handleSignOut}>
+          <Button variant="destructive" className="w-full h-10 rounded-xl shadow-md shadow-destructive/20 mt-1" onClick={handleSignOut}>
             <LogOut className="h-4 w-4 mr-2" />
             Sign Out
           </Button>

@@ -67,24 +67,12 @@ export function HelpSupportDrawer() {
   return (
     <Drawer open={open} onOpenChange={handleOpenChange}>
       <DrawerTrigger asChild>
-        <button
-          className={cn(
-            "w-full rounded-xl px-4 py-2.5",
-            "bg-card border border-border/50",
-            "flex items-center justify-between",
-            "transition-all duration-200 hover:bg-muted/50"
-          )}
-        >
-          <div className="flex items-center gap-3">
-            <div className="p-1.5 rounded-lg bg-muted">
-              <HelpCircle className="h-4 w-4 text-muted-foreground" />
-            </div>
-            <div className="text-left">
-              <span className="font-medium text-sm block">Help & Support</span>
-              <span className="text-[11px] text-muted-foreground">Contact us or raise a ticket</span>
-            </div>
+        <button className="w-full rounded-xl px-4 py-2 bg-card border border-border/50 flex items-center justify-between transition-colors hover:bg-muted/50">
+          <div className="flex items-center gap-2.5">
+            <HelpCircle className="h-4 w-4 text-muted-foreground" />
+            <span className="font-medium text-sm">Help & Support</span>
           </div>
-          <ChevronRight className="h-4 w-4 text-muted-foreground" />
+          <ChevronRight className="h-3.5 w-3.5 text-muted-foreground" />
         </button>
       </DrawerTrigger>
 
