@@ -488,13 +488,6 @@ export function ProspectTable({
     return baseProspects.filter(p => p.sheet_id === selectedSheetId);
   }, [baseProspects, selectedSheetId]);
 
-  // Get prospects for selection mode (based on selection sheet, not current view)
-  const selectionProspects = useMemo(() => {
-    if (!selectionMode.active) return [];
-    if (selectionMode.sheetId === null) return baseProspects;
-    return baseProspects.filter(p => p.sheet_id === selectionMode.sheetId);
-  }, [baseProspects, selectionMode]);
-
   // Apply search and other filters
   const filteredProspects = useMemo(() => {
     return sheetFilteredProspects.filter(prospect => {
@@ -507,6 +500,12 @@ export function ProspectTable({
       return matchesSearch && matchesStage && matchesQuality && matchesAction && matchesIncomplete;
     });
   }, [sheetFilteredProspects, filters, effectiveSearch]);
+
+  // Get prospects for selection mode - respects active filters (search, retargeting)
+  const selectionProspects = useMemo(() => {
+    if (!selectionMode.active) return [];
+    return filteredProspects;
+  }, [filteredProspects, selectionMode]);
   const getFilterLabel = (): string => {
     if (filters.stages.length > 0) return filters.stages.join('_').replace(/\s+/g, '');
     if (filters.actions.length > 0) return filters.actions.join('_').replace(/\s+/g, '');
