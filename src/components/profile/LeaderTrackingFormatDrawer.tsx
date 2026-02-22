@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerTrigger } from '@/components/ui/drawer';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Users, ChevronRight } from 'lucide-react';
+import { Sliders, ChevronRight, Users } from 'lucide-react';
 import { LeaderTrackingFormatSettings } from './LeaderTrackingFormatSettings';
 import { Profile, ProfileUpdate } from '@/hooks/useProfile';
 
@@ -27,17 +27,12 @@ export function LeaderTrackingFormatDrawer({
   const isMobile = useIsMobile();
 
   const TriggerButton = (
-    <button className="w-full relative overflow-hidden rounded-xl p-4 bg-gradient-to-r from-primary/20 to-primary/5 backdrop-blur-sm border border-primary/20 shadow-sm flex items-center justify-between transition-all duration-300 hover:shadow-md hover:scale-[1.01]">
-      <div className="flex items-center gap-3">
-        <div className="p-2 rounded-lg bg-primary/10">
-          <Users className="h-5 w-5 text-primary" />
-        </div>
-        <div className="text-left">
-          <span className="font-medium block">Upline Tracking Format</span>
-          <span className="text-xs text-muted-foreground">Tags, levels & funnel settings</span>
-        </div>
+    <button className="w-full rounded-xl px-4 py-2 bg-card border border-border/50 flex items-center justify-between transition-colors hover:bg-muted/50">
+      <div className="flex items-center gap-2.5">
+        <Sliders className="h-4 w-4 text-muted-foreground" />
+        <span className="font-medium text-sm">Tracking Format</span>
       </div>
-      <ChevronRight className="h-5 w-5 text-muted-foreground" />
+      <ChevronRight className="h-3.5 w-3.5 text-muted-foreground" />
     </button>
   );
 

@@ -14,6 +14,7 @@ import { HeaderBellIcon } from '@/components/layout/HeaderBellIcon';
 import { EditProfileDialog } from '@/components/profile/EditProfileDialog';
 import { ChangePasswordDialog } from '@/components/profile/ChangePasswordDialog';
 import { LeaderTrackingFormatDrawer } from '@/components/profile/LeaderTrackingFormatDrawer';
+import { ConnectUplineCard } from '@/components/profile/ConnectUplineCard';
 import { ProfileLevelDropdown } from '@/components/profile/ProfileLevelDropdown';
 import { HelpSupportDrawer } from '@/components/profile/HelpSupportDrawer';
 import { UserGuideDrawer } from '@/components/profile/UserGuideDrawer';
@@ -25,7 +26,7 @@ import { PullToRefreshIndicator } from '@/components/PullToRefreshIndicator';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import { User, LogOut, ChevronRight, ChevronDown, Loader2, FileText, Shield, Receipt, Settings, ExternalLink, BarChart3, Crown, Gift, Trash2, Sparkles, Lock, Share2, Video } from 'lucide-react';
+import { User, LogOut, ChevronRight, ChevronDown, Loader2, FileText, Shield, Receipt, Settings, ExternalLink, BarChart3, Crown, Gift, Trash2, Sparkles, Lock, Share2, Video, Sliders } from 'lucide-react';
 
 import { useSharedLeads } from '@/hooks/useSharedLeads';
 import { AIAssistantChat } from '@/components/ai/AIAssistantChat';
@@ -253,8 +254,8 @@ export default function Profile() {
           {/* Progressive Upgrade Nudge Banner - non-spammy, stage-based */}
           {!isPaid && <ProgressiveNudgeBanner context="profile" />}
 
-          {/* Upline & Tracking Format Settings - Opens in Sidebar */}
-          <LeaderTrackingFormatDrawer profile={profile} updating={updating} onUpdateProfile={updateProfile} onUpdateUplineByEmail={updateUplineByEmail} onClearLeaderHierarchy={clearLeaderHierarchy} />
+          {/* Connect to Upline - Collapsible card */}
+          <ConnectUplineCard profile={profile} updating={updating} onUpdateProfile={updateProfile} onUpdateUplineByEmail={updateUplineByEmail} onClearLeaderHierarchy={clearLeaderHierarchy} />
 
 
           {/* Bio only - phone/company/location hidden for cleaner UI */}
@@ -369,6 +370,9 @@ export default function Profile() {
               <Crown className="h-4 w-4 text-amber-500" />
             )}
           </button>
+
+          {/* Tracking Format - Opens drawer with full settings */}
+          <LeaderTrackingFormatDrawer profile={profile} updating={updating} onUpdateProfile={updateProfile} onUpdateUplineByEmail={updateUplineByEmail} onClearLeaderHierarchy={clearLeaderHierarchy} />
 
           {/* Recently Deleted */}
           <RecentlyDeletedDrawer
