@@ -175,9 +175,19 @@ export function useSheets() {
     },
   });
 
-  // Delete sheet mutation
+  // Delete sheet mutation — also deletes all prospects in that sheet
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
+      // First delete all prospects belonging to this sheet
+      const { error: prospectsError } = await supabase
+        .from('prospects')
+        .delete()
+        .eq('sheet_id', id)
+        .eq('user_id', user!.id);
+
+      if (prospectsError) throw prospectsError;
+
+      // Then delete the sheet itself
       const { error } = await supabase
         .from('sheets')
         .delete()
@@ -193,7 +203,10 @@ export function useSheets() {
       if (selectedSheetId === id) {
         setSelectedSheetId(null);
       }
-      toast.success('Sheet deleted');
+      // Also invalidate prospects cache so "All" view updates
+      queryClient.invalidateQueries({ queryKey: ['prospects', user!.id] });
+      queryClient.invalidateQueries({ queryKey: ['prospects-kpi', user!.id] });
+      toast.success('Sheet and its leads deleted');
     },
     onError: () => {
       toast.error('Failed to delete sheet');
