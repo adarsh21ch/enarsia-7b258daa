@@ -375,26 +375,17 @@ export function ImportExcelDialog({ onImport }: ImportExcelDialogProps) {
 
         {step === 'upload' && (
           <div className="space-y-4">
-            {/* Import source options */}
-            <div className="grid grid-cols-2 gap-3">
-              <div
-                className="border-2 border-dashed border-border rounded-lg p-5 text-center hover:border-accent/50 transition-colors cursor-pointer flex flex-col items-center gap-2"
-                onClick={() => fileInputRef.current?.click()}
-              >
-                <Upload className="h-8 w-8 text-muted-foreground" />
-                <p className="text-sm font-medium">From Excel/CSV</p>
-                <p className="text-[10px] text-muted-foreground">.xlsx, .xls, .csv</p>
+            {/* Primary: Excel/CSV upload - large prominent area */}
+            <div
+              className="border-2 border-dashed border-primary/30 rounded-xl p-8 text-center hover:border-primary/60 hover:bg-primary/5 transition-all cursor-pointer flex flex-col items-center gap-3"
+              onClick={() => fileInputRef.current?.click()}
+            >
+              <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center">
+                <Upload className="h-6 w-6 text-primary" />
               </div>
-              <div
-                className="border-2 border-dashed border-border rounded-lg p-5 text-center hover:border-accent/50 transition-colors cursor-pointer flex flex-col items-center gap-2"
-                onClick={() => {
-                  setOpen(false);
-                  navigate('/shared-leads');
-                }}
-              >
-                <Share2 className="h-8 w-8 text-muted-foreground" />
-                <p className="text-sm font-medium">From Shared Leads</p>
-                <p className="text-[10px] text-muted-foreground">Team shared leads</p>
+              <div>
+                <p className="text-base font-semibold">Import from Excel / CSV</p>
+                <p className="text-xs text-muted-foreground mt-1">.xlsx, .xls, .csv — Tap to select file</p>
               </div>
             </div>
 
@@ -409,6 +400,20 @@ export function ImportExcelDialog({ onImport }: ImportExcelDialogProps) {
                   <li>Then select it here to import</li>
                 </ol>
               </div>
+            </div>
+
+            {/* Secondary: Shared Leads - subtle horizontal link */}
+            <div className="border-t border-border pt-3">
+              <button
+                className="w-full flex items-center justify-center gap-2 py-2.5 rounded-lg text-sm text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-colors"
+                onClick={() => {
+                  setOpen(false);
+                  navigate('/shared-leads');
+                }}
+              >
+                <Share2 className="h-4 w-4" />
+                <span>Import from Shared Leads</span>
+              </button>
             </div>
 
             <input
