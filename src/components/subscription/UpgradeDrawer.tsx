@@ -165,11 +165,24 @@ export function UpgradeDrawer({ variant = 'default', triggerText }: UpgradeDrawe
     <Button variant="ghost" size="sm" className="h-6 px-2 text-xs font-medium text-amber-700 dark:text-amber-400 hover:bg-amber-500/20">
       {buttonText}
     </Button>
+  ) : variant === 'prominent' ? (
+    <button className="w-full relative overflow-hidden rounded-2xl p-5 bg-gradient-to-r from-amber-500/20 via-amber-400/10 to-amber-500/5 border-2 border-amber-500/40 shadow-lg shadow-amber-500/10 flex items-center justify-between transition-all duration-300 hover:shadow-xl hover:scale-[1.01] active:scale-[0.99]">
+      <div className="flex items-center gap-4">
+        <div className="p-3 rounded-xl bg-amber-500/20">
+          <Crown className="h-6 w-6 text-amber-500" />
+        </div>
+        <div className="text-left">
+          <span className="font-bold text-base block text-amber-700 dark:text-amber-300">{buttonText}</span>
+          <span className="text-xs text-amber-600/80 dark:text-amber-400/80">Unlock all features & unlimited leads</span>
+        </div>
+      </div>
+      <Sparkles className="h-5 w-5 text-amber-500/70" />
+    </button>
   ) : (
     <Button
-      variant={variant === 'prominent' ? 'default' : 'outline'}
+      variant="outline"
       size="sm"
-      className={variant === 'prominent' ? 'gap-2 shadow-lg shadow-primary/20' : 'gap-2'}
+      className="gap-2"
     >
       <Crown className="h-4 w-4" />
       {buttonText}
