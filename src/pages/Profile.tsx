@@ -248,171 +248,48 @@ export default function Profile() {
           )}
 
           {/* TrackUp Dashboard - External link to web dashboard */}
-          <button onClick={handleOpenTrackUp} className={cn("w-full relative overflow-hidden rounded-xl p-4", "bg-gradient-to-r backdrop-blur-sm", "border border-emerald-500/30 shadow-sm", "flex items-center justify-between", "transition-all duration-300 hover:shadow-md hover:scale-[1.01]", "from-emerald-500/20 to-emerald-500/5")}>
+          <button onClick={handleOpenTrackUp} className={cn("w-full rounded-xl px-4 py-2.5", "bg-gradient-to-r backdrop-blur-sm", "border border-emerald-500/30", "flex items-center justify-between", "transition-all duration-200 hover:shadow-md", "from-emerald-500/20 to-emerald-500/5")}>
             <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-emerald-500/10">
-                <BarChart3 className="h-5 w-5 text-emerald-500" />
+              <div className="p-1.5 rounded-lg bg-emerald-500/10">
+                <BarChart3 className="h-4 w-4 text-emerald-500" />
               </div>
               <div className="text-left">
-                <span className="font-medium block">TrackUp Dashboard 
-    
- 
-                                       
-    
- 
-                                       
-    
- 
-                                       
-    
- 
-                                       
-    
- 
-                                       
-    
- 
-                                       
-    
- 
-                                       
-    
- 
-                                       
-    
- 
-                                       
-    
- 
-                                        
-    
- 
-                                       
-    
- 
-                                        
-    
- 
-                                       
-    
- 
-                                       
-    
- 
-                                       
-    
- 
-                                       
-    
- 
-                                       
-    
- 
-                                       
-    
- 
-                                       
-    
- 
-                                        
-    
- 
-                                         
-    
- 
-                                          
-    
- 
-                                           
-    
- 
-                                            
-    
- 
-                                             
-    
- 
-                                              
-    
- 
-                                               
-    
- 
-                                                
-    
- 
-                                                 
-    
- 
-                                                  
-    
- 
-                                                   
-    
- 
-                                                    
-    
- 
-                                                     
-    
- 
-                                                      
-    
- 
-                                                       
-    
- 
-                                                        
-    
- 
-                                                         
-    
- 
-                                                          
-    
- 
-                                                           
-    
- 
-                                       </span>
-                <span className="text-xs text-muted-foreground">
-                  Team tracking on nevorai.com
-                </span>
+                <span className="font-medium text-sm block">TrackUp Dashboard</span>
+                <span className="text-[11px] text-muted-foreground">Team tracking on nevorai.com</span>
               </div>
             </div>
-            <ExternalLink className="h-5 w-5 text-muted-foreground" />
+            <ExternalLink className="h-4 w-4 text-muted-foreground" />
           </button>
 
           {/* Nevorai Forms */}
-          <button onClick={() => navigate('/forms')} className={cn("w-full relative overflow-hidden rounded-xl p-4", "bg-gradient-to-r backdrop-blur-sm", "border border-blue-500/30 shadow-sm", "flex items-center justify-between", "transition-all duration-300 hover:shadow-md hover:scale-[1.01]", "from-blue-500/20 to-blue-500/5")}>
+          <button onClick={() => navigate('/forms')} className={cn("w-full rounded-xl px-4 py-2.5", "bg-gradient-to-r backdrop-blur-sm", "border border-blue-500/30", "flex items-center justify-between", "transition-all duration-200 hover:shadow-md", "from-blue-500/20 to-blue-500/5")}>
             <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-blue-500/10">
-                <FileText className="h-5 w-5 text-blue-500" />
+              <div className="p-1.5 rounded-lg bg-blue-500/10">
+                <FileText className="h-4 w-4 text-blue-500" />
               </div>
               <div className="text-left">
-                <span className="font-medium block">Nevorai Forms</span>
-                <span className="text-xs text-muted-foreground">Create & manage forms</span>
+                <span className="font-medium text-sm block">Nevorai Forms</span>
+                <span className="text-[11px] text-muted-foreground">Create & manage forms</span>
               </div>
             </div>
-            <ChevronRight className="h-5 w-5 text-muted-foreground" />
+            <ChevronRight className="h-4 w-4 text-muted-foreground" />
           </button>
 
-          {/* Shared Leads */}
           <button onClick={() => navigate('/shared-leads')} className={cn(
-            "w-full relative overflow-hidden rounded-xl p-4",
+            "w-full rounded-xl px-4 py-2.5",
             "bg-gradient-to-r backdrop-blur-sm",
-            "border border-orange-500/30 shadow-sm",
+            "border border-orange-500/30",
             "flex items-center justify-between",
-            "transition-all duration-300 hover:shadow-md hover:scale-[1.01]",
+            "transition-all duration-200 hover:shadow-md",
             "from-orange-500/20 to-orange-500/5"
           )}>
             <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-orange-500/10">
-                <Share2 className="h-5 w-5 text-orange-500" />
+              <div className="p-1.5 rounded-lg bg-orange-500/10">
+                <Share2 className="h-4 w-4 text-orange-500" />
               </div>
               <div className="text-left">
-                <span className="font-medium block">Shared Leads</span>
-                <span className="text-xs text-muted-foreground">View & import leads from your team</span>
+                <span className="font-medium text-sm block">Shared Leads</span>
+                <span className="text-[11px] text-muted-foreground">View & import leads from your team</span>
               </div>
             </div>
             <div className="flex items-center gap-2">
@@ -421,7 +298,7 @@ export default function Profile() {
                   {pendingCount}
                 </span>
               )}
-              <ChevronRight className="h-5 w-5 text-muted-foreground" />
+              <ChevronRight className="h-4 w-4 text-muted-foreground" />
             </div>
           </button>
           <button onClick={() => {
@@ -431,59 +308,56 @@ export default function Profile() {
               toast('Upgrade to Pro to unlock AI Assistant', { icon: '🔒' });
             }
           }} className={cn(
-            "w-full relative overflow-hidden rounded-xl p-4",
+            "w-full rounded-xl px-4 py-2.5",
             "bg-gradient-to-r backdrop-blur-sm",
-            "border shadow-sm",
+            "border",
             "flex items-center justify-between",
-            "transition-all duration-300 hover:shadow-md hover:scale-[1.01]",
+            "transition-all duration-200 hover:shadow-md",
             canAccessAI
               ? "from-primary/20 to-primary/5 border-primary/30"
               : "from-muted/40 to-muted/20 border-border/50 opacity-80"
           )}>
             <div className="flex items-center gap-3">
-              <div className={cn("p-2 rounded-lg", canAccessAI ? "bg-primary/10" : "bg-muted")}>
-                <Sparkles className={cn("h-5 w-5", canAccessAI ? "text-primary" : "text-muted-foreground")} />
+              <div className={cn("p-1.5 rounded-lg", canAccessAI ? "bg-primary/10" : "bg-muted")}>
+                <Sparkles className={cn("h-4 w-4", canAccessAI ? "text-primary" : "text-muted-foreground")} />
               </div>
               <div className="text-left">
-                <span className="font-medium block flex items-center gap-1.5">
+                <span className="font-medium text-sm block flex items-center gap-1.5">
                   Nevorai AI Assistant
-                  {!canAccessAI && <Lock className="h-3.5 w-3.5 text-muted-foreground" />}
+                  {!canAccessAI && <Lock className="h-3 w-3 text-muted-foreground" />}
                 </span>
-                <span className="text-xs text-muted-foreground">
-                  {canAccessAI ? "Smart help for follow-ups, replies & strategy" : "Upgrade to Pro to unlock AI Assistant"}
+                <span className="text-[11px] text-muted-foreground">
+                  {canAccessAI ? "Smart help for follow-ups & strategy" : "Upgrade to Pro to unlock"}
                 </span>
               </div>
             </div>
             {canAccessAI ? (
-              <ChevronRight className="h-5 w-5 text-muted-foreground" />
+              <ChevronRight className="h-4 w-4 text-muted-foreground" />
             ) : (
-              <Crown className="h-5 w-5 text-amber-500" />
+              <Crown className="h-4 w-4 text-amber-500" />
             )}
           </button>
 
           {/* Settings Section - Collapsible */}
-          <Collapsible className="rounded-2xl bg-card border border-border/50 overflow-hidden">
-            <CollapsibleTrigger className="w-full p-4 flex items-center justify-between hover:bg-muted/50 transition-colors">
+          <Collapsible className="rounded-xl bg-card border border-border/50 overflow-hidden">
+            <CollapsibleTrigger className="w-full px-4 py-2.5 flex items-center justify-between hover:bg-muted/50 transition-colors">
               <div className="flex items-center gap-3">
-                <div className="p-2 rounded-lg bg-muted">
-                  <Settings className="h-5 w-5 text-muted-foreground" />
+                <div className="p-1.5 rounded-lg bg-muted">
+                  <Settings className="h-4 w-4 text-muted-foreground" />
                 </div>
-                <span className="font-semibold">Settings</span>
+                <span className="font-medium text-sm">Settings</span>
               </div>
-              <ChevronDown className="h-5 w-5 text-muted-foreground transition-transform [[data-state=open]>&]:rotate-180" />
+              <ChevronDown className="h-4 w-4 text-muted-foreground transition-transform [[data-state=open]>&]:rotate-180" />
             </CollapsibleTrigger>
             <CollapsibleContent>
-              <div className="px-4 pb-4 space-y-1">
-                {/* Edit Profile - Neutral list item */}
-                <button onClick={() => setEditOpen(true)} className="w-full flex items-center justify-between p-3 rounded-lg hover:bg-muted/50 transition-colors">
+              <div className="px-4 pb-3 space-y-1">
+                <button onClick={() => setEditOpen(true)} className="w-full flex items-center justify-between p-2.5 rounded-lg hover:bg-muted/50 transition-colors">
                   <div className="flex items-center gap-3">
                     <User className="h-4 w-4 text-muted-foreground" />
                     <span className="text-sm">Edit Profile</span>
                   </div>
                   <ChevronRight className="h-4 w-4 text-muted-foreground" />
                 </button>
-
-                {/* Change Password - Neutral list item */}
                 <ChangePasswordDialog />
               </div>
             </CollapsibleContent>
@@ -493,21 +367,21 @@ export default function Profile() {
           <RecentlyDeletedDrawer
           trigger={
           <button className={cn(
-            "w-full relative overflow-hidden rounded-xl p-4",
+            "w-full rounded-xl px-4 py-2.5",
             "bg-card border border-border/50",
             "flex items-center justify-between",
-            "transition-all duration-300 hover:bg-muted/50"
+            "transition-all duration-200 hover:bg-muted/50"
           )}>
                 <div className="flex items-center gap-3">
-                  <div className="p-2 rounded-lg bg-destructive/10">
-                    <Trash2 className="h-5 w-5 text-destructive" />
+                  <div className="p-1.5 rounded-lg bg-destructive/10">
+                    <Trash2 className="h-4 w-4 text-destructive" />
                   </div>
                   <div className="text-left">
-                    <span className="font-medium block">Recently Deleted</span>
-                    <span className="text-xs text-muted-foreground">Restore deleted prospects</span>
+                    <span className="font-medium text-sm block">Recently Deleted</span>
+                    <span className="text-[11px] text-muted-foreground">Restore deleted prospects</span>
                   </div>
                 </div>
-                <ChevronRight className="h-5 w-5 text-muted-foreground" />
+                <ChevronRight className="h-4 w-4 text-muted-foreground" />
               </button>
           } />
 
@@ -519,14 +393,14 @@ export default function Profile() {
           <HelpSupportDrawer />
 
           {/* Admin Panel Link - Only visible to admin */}
-          {isAdmin && <Link to="/admin" className={cn("w-full relative overflow-hidden rounded-xl p-4 block", "bg-gradient-to-r backdrop-blur-sm", "border border-destructive/30 shadow-sm", "flex items-center justify-between", "transition-all duration-300 hover:shadow-md hover:scale-[1.01]", "from-destructive/20 to-destructive/5")}>
+          {isAdmin && <Link to="/admin" className={cn("w-full rounded-xl px-4 py-2.5 block", "bg-gradient-to-r backdrop-blur-sm", "border border-destructive/30", "flex items-center justify-between", "transition-all duration-200 hover:shadow-md", "from-destructive/20 to-destructive/5")}>
               <div className="flex items-center gap-3">
-                <div className="p-2 rounded-lg bg-destructive/10">
-                  <Shield className="h-5 w-5 text-destructive" />
+                <div className="p-1.5 rounded-lg bg-destructive/10">
+                  <Shield className="h-4 w-4 text-destructive" />
                 </div>
-                <span className="font-medium">Admin Panel</span>
+                <span className="font-medium text-sm">Admin Panel</span>
               </div>
-              <ChevronRight className="h-5 w-5 text-muted-foreground" />
+              <ChevronRight className="h-4 w-4 text-muted-foreground" />
             </Link>}
 
           {/* Contact Us */}
