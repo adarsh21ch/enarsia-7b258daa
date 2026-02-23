@@ -67,7 +67,7 @@ export function ExportFunnelData({ prospects }: ExportFunnelDataProps) {
 
   const handleExport = async () => {
     if (!isPro) {
-      toast.error('Upgrade to Pro to export data');
+      toast.error('Upgrade your plan to export data');
       return;
     }
 
@@ -195,7 +195,7 @@ export function ExportFunnelData({ prospects }: ExportFunnelDataProps) {
 
       {!isPro && (
         <p className="text-xs text-muted-foreground mt-3 text-center">
-          Upgrade to Pro to export data
+          Upgrade your plan to export data
         </p>
       )}
     </div>

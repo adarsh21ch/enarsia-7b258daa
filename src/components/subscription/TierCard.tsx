@@ -2,22 +2,22 @@ import { Crown, Check, Star, Gem, X } from 'lucide-react';
 import { PlanConfig } from '@/hooks/usePaymentLinks';
 import { Badge } from '@/components/ui/badge';
 
-const PRO_FEATURES = [
+const BASIC_FEATURES = [
   'Full Application Access (Calling + Follow-up)',
   'TrackUp Dashboard (Advanced Tracking)',
   'Higher Limits & Productivity Tools',
   'Faster Workflow & Automation',
 ];
 
-const PRO_EXCLUDED_FEATURES = [
+const BASIC_EXCLUDED_FEATURES = [
   'Nevorai Funnels',
   'Funnel Video Insights',
   'Advanced Analytics',
   'Leader Tools',
 ];
 
-const PREMIUM_FEATURES = [
-  'Everything in Pro',
+const PRO_FEATURES = [
+  'Everything in Basic',
   'Nevorai Funnels',
   'Funnel Video Insights',
   'Advanced Analytics',
@@ -34,7 +34,7 @@ interface TierCardProps {
 }
 
 export function TierCard({ tierName, plans, isPremium = false, selectedPlanKey, onSelectPlan }: TierCardProps) {
-  const features = isPremium ? PREMIUM_FEATURES : PRO_FEATURES;
+  const features = isPremium ? PRO_FEATURES : BASIC_FEATURES;
   const isThisTierSelected = plans.some(p => p.plan_key === selectedPlanKey);
   const sortedPlans = [...plans].sort((a, b) => a.sortOrder - b.sortOrder);
 
@@ -57,7 +57,7 @@ export function TierCard({ tierName, plans, isPremium = false, selectedPlanKey, 
       }`}
     >
       {/* Header */}
-      <div className={`px-4 pt-4 pb-3 relative ${isPremium ? '' : ''}`}>
+      <div className={`px-4 pt-4 pb-3 relative`}>
         {isPremium && (
           <Badge className="absolute -top-0 right-3 bg-amber-500 text-white border-0 text-[10px] px-2 py-0.5 rounded-b-lg rounded-t-none">
             Recommended for Leaders
@@ -78,7 +78,7 @@ export function TierCard({ tierName, plans, isPremium = false, selectedPlanKey, 
               <span>{feature}</span>
             </div>
           ))}
-          {!isPremium && PRO_EXCLUDED_FEATURES.map((feature, i) => (
+          {!isPremium && BASIC_EXCLUDED_FEATURES.map((feature, i) => (
             <div key={`ex-${i}`} className="flex items-center gap-1.5 text-xs text-muted-foreground/50">
               <X className="h-3 w-3 shrink-0 text-destructive/50" />
               <span className="line-through">{feature}</span>

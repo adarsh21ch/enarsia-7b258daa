@@ -97,7 +97,7 @@ export function ProspectFilters({
         {showStagesFilter && <Popover>
           <PopoverTrigger asChild>
             <Button variant="outline" className={cn("h-9 min-w-[90px] w-auto text-xs shrink-0 justify-between gap-1", filters.stages.length > 0 && "border-primary/50 bg-primary/5", !canRetarget && "opacity-60")}
-              onClick={!canRetarget ? (e: React.MouseEvent) => { e.preventDefault(); toast.error('Upgrade to Pro to use retargeting filters'); } : undefined}
+              onClick={!canRetarget ? (e: React.MouseEvent) => { e.preventDefault(); toast.error('Upgrade your plan to use retargeting filters'); } : undefined}
             >
               {!canRetarget && <Lock className="h-3 w-3 mr-0.5" />}
               <span className="truncate text-sm">{getStagesLabel()}</span>
@@ -128,7 +128,7 @@ export function ProspectFilters({
         {showResponsesFilter && <Popover>
           <PopoverTrigger asChild>
             <Button variant="outline" className={cn("h-9 min-w-[90px] w-auto shrink-0 justify-between gap-1 text-sm", filters.actions.length > 0 && "border-primary/50 bg-primary/5", !canRetarget && "opacity-60")}
-              onClick={!canRetarget ? (e: React.MouseEvent) => { e.preventDefault(); toast.error('Upgrade to Pro to use retargeting filters'); } : undefined}
+              onClick={!canRetarget ? (e: React.MouseEvent) => { e.preventDefault(); toast.error('Upgrade your plan to use retargeting filters'); } : undefined}
             >
               {!canRetarget && <Lock className="h-3 w-3 mr-0.5" />}
               <span className="truncate">{getActionsLabel()}</span>

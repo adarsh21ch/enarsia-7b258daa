@@ -12,7 +12,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useState, useMemo } from 'react';
 import { TierCard } from './TierCard';
-
+import { getTierDisplayName } from '@/config/tierLabels';
 interface UpgradeDrawerProps {
   variant?: 'default' | 'prominent' | 'compact';
   triggerText?: string;
@@ -134,11 +134,13 @@ export function UpgradeDrawer({ variant = 'default', triggerText }: UpgradeDrawe
       discountValue: appliedOffer.discount_value,
       discountedAmount: getDisplayPrice(plan),
     } : undefined;
+    const selectedPlan2 = plans.find(p => p.plan_key === planKey);
+    const tierLabel = selectedPlan2 ? getTierDisplayName(selectedPlan2.tier) : 'Plan';
     initiatePayment({
       planType: planKey,
       offer: offerDetails,
       onSuccess: () => {
-        toast({ title: "Pro Activated 🎉", description: "Welcome to premium! All features are now unlocked." });
+        toast({ title: `${tierLabel} Plan Activated 🎉`, description: "All features are now unlocked." });
         refetch();
         setOpen(false);
       },
@@ -159,7 +161,7 @@ export function UpgradeDrawer({ variant = 'default', triggerText }: UpgradeDrawe
 
   if (permLoading || permPaid) return null;
 
-  const buttonText = triggerText || 'Upgrade to Pro';
+  const buttonText = triggerText || 'Upgrade Now';
 
   const TriggerButton = variant === 'compact' ? (
     <Button variant="ghost" size="sm" className="h-6 px-2 text-xs font-medium text-amber-700 dark:text-amber-400 hover:bg-amber-500/20">
@@ -191,7 +193,7 @@ export function UpgradeDrawer({ variant = 'default', triggerText }: UpgradeDrawe
           <Sparkles className="h-6 w-6 text-primary" />
         </div>
         <div>
-          <h3 className="font-bold text-lg">Unlock Pro Features</h3>
+          <h3 className="font-bold text-lg">Upgrade Your Plan</h3>
           <p className="text-xs text-muted-foreground">Choose a plan that works for you</p>
         </div>
       </div>
@@ -205,7 +207,7 @@ export function UpgradeDrawer({ variant = 'default', triggerText }: UpgradeDrawe
         <div className="space-y-3">
           {proPlans.length > 0 && (
             <TierCard
-              tierName="Pro"
+              tierName="Basic"
               plans={proPlans}
               selectedPlanKey={selectedPlanKey}
               onSelectPlan={handlePlanChange}
@@ -213,7 +215,7 @@ export function UpgradeDrawer({ variant = 'default', triggerText }: UpgradeDrawe
           )}
           {premiumPlans.length > 0 && (
             <TierCard
-              tierName="Premium"
+              tierName="Pro"
               plans={premiumPlans}
               isPremium
               selectedPlanKey={selectedPlanKey}

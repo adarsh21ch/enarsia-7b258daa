@@ -514,7 +514,7 @@ export function ProspectTable({
     return filterMode === 'calling' ? 'Calling' : 'Filter';
   };
   const exportToExcel = async () => {
-    if (!canExport) { toast.error('Upgrade to Pro to export data'); return; }
+    if (!canExport) { toast.error('Upgrade your plan to export data'); return; }
     setExporting(true);
     try {
       // If filters are active, export only the filtered prospects (respects retargeting)
@@ -602,7 +602,7 @@ export function ProspectTable({
 
   // Export specific sheet - fetches ALL data from DB, not just loaded pages
   const exportSheet = async (sheetId: string | null) => {
-    if (!canExport) { toast.error('Upgrade to Pro to export data'); return; }
+    if (!canExport) { toast.error('Upgrade your plan to export data'); return; }
     setExporting(true);
     try {
       // Use fetchAllForExport if available to get ALL prospects (bypasses pagination)
@@ -1048,7 +1048,7 @@ export function ProspectTable({
                     Add Prospect
                   </DropdownMenuItem>
                   <DropdownMenuItem 
-                    onClick={canExport ? exportToExcel : () => toast.error('Upgrade to Pro to export data')}
+                    onClick={canExport ? exportToExcel : () => toast.error('Upgrade your plan to export data')}
                     disabled={exporting}
                     className="gap-2"
                   >
@@ -1058,7 +1058,7 @@ export function ProspectTable({
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem 
-                    onClick={canShareLeads ? () => handleEnterSelectMode(selectedSheetId) : () => toast.error('Upgrade to Pro to share leads')}
+                    onClick={canShareLeads ? () => handleEnterSelectMode(selectedSheetId) : () => toast.error('Upgrade your plan to share leads')}
                     className="gap-2"
                   >
                     {!canShareLeads && <Lock className="h-3.5 w-3.5" />}

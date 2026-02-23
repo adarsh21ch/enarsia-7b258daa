@@ -15,6 +15,7 @@ import { useToast } from '@/hooks/use-toast';
 import { usePaymentLinks } from '@/hooks/usePaymentLinks';
 import { useAdminConfig } from '@/hooks/useAdminConfig';
 import { useFreeTrial } from '@/hooks/useFreeTrial';
+import { getTierDisplayName } from '@/config/tierLabels';
 
 interface HardLimitModalProps {
   /** External control for modal visibility */
@@ -81,12 +82,14 @@ export function HardLimitModal({ forceOpen, onClose }: HardLimitModalProps) {
   };
 
   const handleUpgrade = () => {
+    const plan = plans.find(p => p.plan_key === selectedPlanKey);
+    const tierLabel = plan ? getTierDisplayName(plan.tier) : 'Plan';
     initiatePayment({
       planType: selectedPlanKey,
       onSuccess: () => {
         toast({
-          title: "Pro Activated 🎉",
-          description: "Welcome to premium! All limits removed.",
+          title: `${tierLabel} Plan Activated 🎉`,
+          description: "All limits removed.",
         });
         refetch();
         handleClose();
@@ -122,7 +125,7 @@ export function HardLimitModal({ forceOpen, onClose }: HardLimitModalProps) {
           <DialogTitle className="text-xl">Free Limit Reached</DialogTitle>
           <DialogDescription className="text-center">
             You've reached the free limit of {hardLimit} prospects.
-            Upgrade to Pro for unlimited access.
+            Upgrade for unlimited access.
           </DialogDescription>
         </DialogHeader>
 
@@ -197,7 +200,7 @@ export function HardLimitModal({ forceOpen, onClose }: HardLimitModalProps) {
             ) : selectedPlan ? (
               <>
                 <Crown className="h-5 w-5 mr-2" />
-                Upgrade to Pro – ₹{(() => { const m = Math.round(selectedPlan.durationDays / 30); return m > 1 ? `${Math.floor(selectedPlan.price / m)}/month` : selectedPlan.price; })()}
+             Upgrade Now – ₹{(() => { const m = Math.round(selectedPlan.durationDays / 30); return m > 1 ? `${Math.floor(selectedPlan.price / m)}/month` : selectedPlan.price; })()}
               </>
             ) : (
               <>

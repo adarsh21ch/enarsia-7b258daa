@@ -70,7 +70,7 @@ export default function PaymentSuccess() {
         await refetch();
         setStatus('success');
         setPlanScope('app');
-        toast({ title: "Pro Plan Activated!", description: "Your recurring subscription is now active." });
+        toast({ title: "Plan Activated!", description: "Your recurring subscription is now active." });
         return;
       }
       await new Promise(r => setTimeout(r, 3000));
@@ -120,8 +120,8 @@ export default function PaymentSuccess() {
       setStatus('success');
       
       const durationText = data?.duration_days ? formatDuration(data.duration_days) : '';
-      const scopeTitle = scope === 'combined' ? 'All-in-One Pro Activated!' : scope === 'funnels' ? 'Funnels Pro Activated!' : 'Pro Plan Activated!';
-      toast({ title: scopeTitle, description: `Enjoy all premium features${durationText ? ` for ${durationText}` : ''}.` });
+      const scopeTitle = scope === 'combined' ? 'All-in-One Pro Activated!' : scope === 'funnels' ? 'Funnels Pro Activated!' : 'Plan Activated!';
+      toast({ title: scopeTitle, description: `Enjoy all features${durationText ? ` for ${durationText}` : ''}.` });
     } catch (err: any) {
       setErrorMessage(err.message || 'Something went wrong');
       setStatus('error');
@@ -175,7 +175,7 @@ export default function PaymentSuccess() {
               <div className="flex items-center justify-center gap-2 mb-2">
                 {planScope === 'combined' ? <Sparkles className="h-5 w-5 text-primary" /> : <Crown className="h-5 w-5 text-primary" />}
                 <span className="font-semibold">
-                  {planScope === 'combined' ? 'All-in-One Pro Unlocked' : planScope === 'funnels' ? 'Funnels Pro Unlocked' : 'Pro Features Unlocked'}
+                  {planScope === 'combined' ? 'All-in-One Pro Unlocked' : planScope === 'funnels' ? 'Funnels Pro Unlocked' : 'Features Unlocked'}
                 </span>
               </div>
               <ul className="text-sm text-muted-foreground space-y-1">

@@ -7,10 +7,11 @@ export const BRAND_NAME = 'NevorAI';
 export const BRAND_NAME_UPPER = 'NEVORAI';
 export const BRAND_NAME_LOWER = 'nevorai';
 
-// Plan names - Now both are Pro with different durations
+// Plan names – display-facing (Basic = internal "pro", Pro = internal "premium")
+export const PLAN_NAME_BASIC = `${BRAND_NAME} Basic`;
 export const PLAN_NAME_PRO = `${BRAND_NAME} Pro`;
-export const PLAN_NAME_MONTHLY = 'Pro Monthly';
-export const PLAN_NAME_QUARTERLY = 'Pro 4-Month';
+export const PLAN_NAME_MONTHLY = 'Basic Monthly';
+export const PLAN_NAME_QUARTERLY = 'Basic 4-Month';
 
 // Support email
 export const SUPPORT_EMAIL = 'teamnevorai@gmail.com';

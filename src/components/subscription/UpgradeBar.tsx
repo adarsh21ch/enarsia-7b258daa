@@ -7,6 +7,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useLeadLimit } from '@/hooks/useLeadLimit';
 import { useAdminConfig } from '@/hooks/useAdminConfig';
 import { useSubscription } from '@/hooks/useSubscription';
+import { getTierDisplayName } from '@/config/tierLabels';
 
 interface UpgradeBarProps {
   /** Which app context - affects messaging and plan suggestion */
@@ -37,12 +38,13 @@ export function UpgradeBar({ appContext = 'nevorai', suggestPro = true, onUpgrad
 
   const handleSubscribe = () => {
     const planKey = defaultPlan?.plan_key || 'quarterly';
+    const tierLabel = defaultPlan ? getTierDisplayName(defaultPlan.tier) : 'Plan';
     initiatePayment({
       planType: planKey,
       onSuccess: () => {
         toast({
-          title: "Pro Activated 🎉",
-          description: "Welcome to premium! All features are now unlocked.",
+          title: `${tierLabel} Plan Activated 🎉`,
+          description: "All features are now unlocked.",
         });
         refetch();
         onUpgrade?.();

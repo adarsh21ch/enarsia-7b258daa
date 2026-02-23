@@ -7,6 +7,7 @@ import { useRazorpay } from '@/hooks/useRazorpay';
 import { format } from 'date-fns';
 import { useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
+import { getTierDisplayName } from '@/config/tierLabels';
 
 interface UpgradeCardProps {
   /** Which app is showing this card - affects which plans are shown */
@@ -36,10 +37,12 @@ export function UpgradeCard({ appContext = 'nevorai' }: UpgradeCardProps) {
       return;
     }
     
+    const selectedPlanConfig = PLAN_CONFIG[planType];
+    const tierLabel = selectedPlanConfig ? getTierDisplayName(selectedPlanConfig.tier) : 'Plan';
     initiatePayment({
       planType,
       onSuccess: () => {
-        toast({ title: "Pro Activated 🎉", description: "Welcome to premium! All features are now unlocked." });
+        toast({ title: `${tierLabel} Plan Activated 🎉`, description: "All features are now unlocked." });
         refetch();
       },
       onError: (error) => console.error('Payment error:', error),
@@ -90,7 +93,7 @@ export function UpgradeCard({ appContext = 'nevorai' }: UpgradeCardProps) {
           <Sparkles className="h-6 w-6 text-primary" />
         </div>
         <div>
-          <h3 className="font-bold text-lg">Unlock Pro Features</h3>
+          <h3 className="font-bold text-lg">Upgrade Your Plan</h3>
           <p className="text-xs text-muted-foreground">Choose a plan that works for you</p>
         </div>
       </div>

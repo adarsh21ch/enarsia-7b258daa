@@ -96,7 +96,7 @@ export const SAFE_DEFAULTS: AppConfig = {
     {
       id: 'default-pro-6-months',
       plan_key: 'pro_6_months',
-      plan_name: 'Pro 6-Month',
+      plan_name: 'Basic 6-Month',
       description: '6 Months Access – Best Value',
       price_inr: 299,
       duration_days: 180,
@@ -119,7 +119,7 @@ export const SAFE_DEFAULTS: AppConfig = {
     {
       id: 'default-monthly',
       plan_key: 'monthly',
-      plan_name: 'Pro Monthly',
+      plan_name: 'Basic Monthly',
       description: '1 Month Access',
       price_inr: 99,
       duration_days: 30,

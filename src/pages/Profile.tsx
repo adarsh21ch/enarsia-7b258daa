@@ -338,7 +338,7 @@ export default function Profile() {
             if (canAccessAI) {
               setShowAIChat(true);
             } else {
-              toast('Upgrade to Pro to unlock AI Assistant', { icon: '🔒' });
+              toast('Upgrade your plan to unlock AI Assistant', { icon: '🔒' });
             }
           }} className={cn(
             "w-full rounded-xl px-4 py-2.5",
@@ -360,7 +360,7 @@ export default function Profile() {
                   {!canAccessAI && <Lock className="h-3 w-3 text-muted-foreground" />}
                 </span>
                 <span className="text-[11px] text-muted-foreground">
-                  {canAccessAI ? "Smart help for follow-ups & strategy" : "Upgrade to Pro to unlock"}
+                  {canAccessAI ? "Smart help for follow-ups & strategy" : "Upgrade to unlock"}
                 </span>
               </div>
             </div>

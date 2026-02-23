@@ -143,7 +143,7 @@ export function ProgressiveNudgeBanner({ context = 'calling' }: ProgressiveNudge
           <div className="shrink-0">
             <UpgradeDrawer 
               variant="prominent" 
-              triggerText="Upgrade to Pro" 
+              triggerText="Upgrade Now" 
             />
           </div>
         </div>

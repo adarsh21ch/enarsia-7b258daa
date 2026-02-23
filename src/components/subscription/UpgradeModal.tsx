@@ -8,6 +8,7 @@ import { useSubscription } from '@/hooks/useSubscription';
 import { useAdminConfig } from '@/hooks/useAdminConfig';
 import { useEffect, useMemo, useState } from 'react';
 import { TierCard } from './TierCard';
+import { getTierDisplayName } from '@/config/tierLabels';
 
 interface UpgradeModalProps {
   open: boolean;
@@ -61,14 +62,15 @@ export function UpgradeModal({
       });
       return;
     }
+    const tierLabel = plan ? getTierDisplayName(plan.tier) : 'Plan';
     initiatePayment({
       planType: planKey,
-      onSuccess: () => { toast({ title: "Pro Activated 🎉", description: "Welcome to premium! All features are now unlocked." }); refetch(); onClose(); },
+      onSuccess: () => { toast({ title: `${tierLabel} Plan Activated 🎉`, description: "All features are now unlocked." }); refetch(); onClose(); },
       onError: (error) => console.error('Payment error:', error),
     });
   };
 
-  const modalTitle = title || (isAtLimit ? 'Lead Limit Reached' : 'Unlock Pro Features');
+  const modalTitle = title || (isAtLimit ? 'Lead Limit Reached' : 'Upgrade Your Plan');
   const modalDescription = description || (
     isAtLimit 
       ? `You've reached the free limit of ${freeLimit ?? ''} prospects. Upgrade to continue.`
@@ -99,10 +101,10 @@ export function UpgradeModal({
           ) : (
             <>
               {proPlans.length > 0 && (
-                <TierCard tierName="Pro" plans={proPlans} selectedPlanKey={selectedPlanKey} onSelectPlan={setSelectedPlanKey} />
+              <TierCard tierName="Basic" plans={proPlans} selectedPlanKey={selectedPlanKey} onSelectPlan={setSelectedPlanKey} />
               )}
               {premiumPlans.length > 0 && (
-                <TierCard tierName="Premium" plans={premiumPlans} isPremium selectedPlanKey={selectedPlanKey} onSelectPlan={setSelectedPlanKey} />
+                <TierCard tierName="Pro" plans={premiumPlans} isPremium selectedPlanKey={selectedPlanKey} onSelectPlan={setSelectedPlanKey} />
               )}
             </>
           )}

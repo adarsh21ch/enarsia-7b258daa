@@ -35,7 +35,7 @@ export const PLAN_CONFIG: Record<string, PlanConfig> = {
   pro_6_months: {
     id: 'pro_6_months',
     plan_key: 'pro_6_months',
-    name: 'Pro 6-Month',
+    name: 'Basic 6-Month',
     price: 299,
     paymentLink: PAYMENT_LINKS.pro_6_months,
     billing_type: 'one_time',
@@ -56,7 +56,7 @@ export const PLAN_CONFIG: Record<string, PlanConfig> = {
   monthly: {
     id: 'monthly',
     plan_key: 'monthly',
-    name: 'Pro Monthly',
+    name: 'Basic Monthly',
     price: 99,
     paymentLink: PAYMENT_LINKS.monthly,
     billing_type: 'one_time',
