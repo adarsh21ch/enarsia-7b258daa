@@ -11,6 +11,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { Loader2, Plus, Pencil, Crown, Link as LinkIcon, Clock, IndianRupee, Star, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
+import { getTierDisplayName } from '@/config/tierLabels';
 
 export function PlansManager() {
   const { plans, loading, createPlan, updatePlan, deletePlan } = useAdminPlans();
@@ -262,7 +263,7 @@ function PlanCard({
               <span className="text-xs text-muted-foreground">→ {(plan as any).display_name}</span>
             )}
             <Badge variant="outline" className="text-[10px] uppercase">
-              {plan.tier || 'pro'}
+              {getTierDisplayName(plan.tier || 'pro')}
             </Badge>
             {plan.badge_text && (
               <Badge variant="secondary" className="text-xs">

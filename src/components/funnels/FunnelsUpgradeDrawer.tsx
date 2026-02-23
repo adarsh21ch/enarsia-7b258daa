@@ -9,6 +9,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useState, useMemo } from 'react';
 import { TierCard } from '@/components/subscription/TierCard';
+import { getTierDisplayName } from '@/config/tierLabels';
 
 interface FunnelsUpgradeDrawerProps {
   triggerText?: string;
@@ -25,32 +26,33 @@ export function FunnelsUpgradeDrawer({ triggerText, trigger, variant = 'default'
   const isMobile = useIsMobile();
   const [open, setOpen] = useState(false);
 
-  const { proPlans, premiumPlans } = useMemo(() => ({
-    proPlans: plans.filter(p => p.tier === 'pro').sort((a, b) => a.sortOrder - b.sortOrder),
-    premiumPlans: plans.filter(p => p.tier === 'premium').sort((a, b) => a.sortOrder - b.sortOrder),
+  const { basicPlans, proPlans } = useMemo(() => ({
+    basicPlans: plans.filter(p => p.tier === 'pro').sort((a, b) => a.sortOrder - b.sortOrder),
+    proPlans: plans.filter(p => p.tier === 'premium').sort((a, b) => a.sortOrder - b.sortOrder),
   }), [plans]);
 
-  const allPlans = [...proPlans, ...premiumPlans];
-  // Default to premium for funnel upgrade context
-  const defaultKey = premiumPlans[0]?.plan_key || proPlans.find(p => p.badgeText)?.plan_key || proPlans[0]?.plan_key || '';
+  const allPlans = [...basicPlans, ...proPlans];
+  // Default to pro for funnel upgrade context
+  const defaultKey = proPlans[0]?.plan_key || basicPlans.find(p => p.badgeText)?.plan_key || basicPlans[0]?.plan_key || '';
   const [selectedPlanKey, setSelectedPlanKey] = useState<string>(defaultKey);
 
   const selectedPlan = allPlans.find(p => p.plan_key === selectedPlanKey) || allPlans[0];
-  const isPremiumSelected = selectedPlan?.tier === 'premium';
+  const isProSelected = selectedPlan?.tier === 'premium';
 
   const handleUpgrade = (planKey: string) => {
     const plan = plans.find(p => p.plan_key === planKey);
+    const tierLabel = plan ? getTierDisplayName(plan.tier) : 'Plan';
     if (plan?.billing_type === 'recurring') {
       initiateSubscription({
         planType: planKey,
-        onSuccess: () => { toast({ title: "Premium Activated 🎉", description: "All features including Funnels are now unlocked!" }); refetch(); setOpen(false); },
+        onSuccess: () => { toast({ title: `${tierLabel} Plan Activated 🎉`, description: "All features including Funnels are now unlocked!" }); refetch(); setOpen(false); },
         onError: (error) => console.error('Subscription error:', error),
       });
       return;
     }
     initiatePayment({
       planType: planKey,
-      onSuccess: () => { toast({ title: "Premium Activated 🎉", description: "All features including Funnels are now unlocked!" }); refetch(); setOpen(false); },
+      onSuccess: () => { toast({ title: `${tierLabel} Plan Activated 🎉`, description: "All features including Funnels are now unlocked!" }); refetch(); setOpen(false); },
       onError: (error) => console.error('Payment error:', error),
     });
   };
@@ -89,18 +91,18 @@ export function FunnelsUpgradeDrawer({ triggerText, trigger, variant = 'default'
         </div>
       ) : (
         <div className="space-y-3">
-          {proPlans.length > 0 && (
-            <TierCard tierName="Pro" plans={proPlans} selectedPlanKey={selectedPlanKey} onSelectPlan={setSelectedPlanKey} />
+          {basicPlans.length > 0 && (
+            <TierCard tierName="Basic" plans={basicPlans} selectedPlanKey={selectedPlanKey} onSelectPlan={setSelectedPlanKey} />
           )}
-          {premiumPlans.length > 0 && (
-            <TierCard tierName="Premium" plans={premiumPlans} isPremium selectedPlanKey={selectedPlanKey} onSelectPlan={setSelectedPlanKey} />
+          {proPlans.length > 0 && (
+            <TierCard tierName="Pro" plans={proPlans} isPremium selectedPlanKey={selectedPlanKey} onSelectPlan={setSelectedPlanKey} />
           )}
         </div>
       )}
 
       <Button 
         onClick={() => handleUpgrade(selectedPlanKey)}
-        className={`w-full h-12 text-base font-semibold shadow-lg ${isPremiumSelected ? 'bg-amber-500 hover:bg-amber-600 text-white shadow-amber-500/30' : 'shadow-primary/30'}`}
+        className={`w-full h-12 text-base font-semibold shadow-lg ${isProSelected ? 'bg-amber-500 hover:bg-amber-600 text-white shadow-amber-500/30' : 'shadow-primary/30'}`}
         disabled={paymentLoading || plansLoading || !selectedPlan}
       >
         {paymentLoading ? (

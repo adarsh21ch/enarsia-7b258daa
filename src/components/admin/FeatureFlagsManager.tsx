@@ -193,9 +193,9 @@ export function FeatureFlagsManager() {
                               onChange={e => handleFieldChange(flag.id, 'required_tier', e.target.value, flag)}
                               className="h-6 text-[11px] border rounded px-1 bg-background"
                             >
-                              <option value="basic">Basic</option>
-                              <option value="pro">Pro</option>
-                              <option value="premium">Premium</option>
+                              <option value="basic">Free</option>
+                              <option value="pro">Basic</option>
+                              <option value="premium">Pro</option>
                             </select>
                           </div>
                           <div className="h-4 w-px bg-border" />

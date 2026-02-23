@@ -61,7 +61,7 @@ export function ProfileTrackUp({ isPro }: ProfileTrackUpProps) {
     initiatePayment({
       planType: planKey,
       onSuccess: () => {
-        toast({ title: "Pro Activated 🎉", description: "Welcome to premium! All features are now unlocked." });
+        toast({ title: "Plan Activated 🎉", description: "All features are now unlocked." });
         refetch();
       },
       onError: (error) => console.error('Payment error:', error),
@@ -145,7 +145,7 @@ export function ProfileTrackUp({ isPro }: ProfileTrackUpProps) {
               <Lock className="h-6 w-6 text-primary" />
             </div>
             <div className="text-center">
-              <p className="font-semibold text-sm">Premium Feature</p>
+              <p className="font-semibold text-sm">Pro Feature</p>
               <p className="text-xs text-muted-foreground mt-1 mb-3">
                 Upgrade to unlock personal tracking analytics
               </p>

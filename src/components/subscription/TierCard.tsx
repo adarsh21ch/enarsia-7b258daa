@@ -22,7 +22,7 @@ const PRO_FEATURES = [
   'Funnel Video Insights',
   'Advanced Analytics',
   'Leader Tools',
-  'Premium Support',
+  'Priority Support',
 ];
 
 interface TierCardProps {
