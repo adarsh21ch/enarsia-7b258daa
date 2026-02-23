@@ -50,8 +50,8 @@ export function LeadLimitModal({
       planType: selectedPlanKey,
       onSuccess: () => {
         toast({
-          title: "Pro Activated 🎉",
-          description: "Welcome to premium! All features are now unlocked.",
+          title: "Plan Activated 🎉",
+          description: "All features are now unlocked.",
         });
         refetch();
         onClose();

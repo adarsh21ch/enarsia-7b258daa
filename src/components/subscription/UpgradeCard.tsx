@@ -71,7 +71,7 @@ export function UpgradeCard({ appContext = 'nevorai' }: UpgradeCardProps) {
           </div>
         </div>
         <p className="text-sm text-muted-foreground mb-3">
-          Full access to team sync, analytics, and all premium features.
+          Full access to team sync, analytics, and all pro features.
         </p>
         {expiryDate && !isAdminOverride && (
           <div className="flex items-center gap-2 text-sm bg-emerald-500/10 rounded-lg p-2">

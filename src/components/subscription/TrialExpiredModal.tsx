@@ -74,8 +74,8 @@ export function TrialExpiredModal({ forceOpen, onClose }: TrialExpiredModalProps
       planType: selectedPlanKey,
       onSuccess: () => {
         toast({
-          title: "Pro Activated 🎉",
-          description: "Welcome to premium! All limits removed.",
+          title: "Plan Activated 🎉",
+          description: "All limits removed. Enjoy full access!",
         });
         refetch();
         handleClose();

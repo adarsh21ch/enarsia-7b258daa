@@ -23,7 +23,7 @@ interface PermissionsContextValue {
   isPaid: boolean;
   /** Whether user is Pro or higher */
   isPro: boolean;
-  /** Whether user is Premium */
+  /** Whether user is Pro tier */
   isPremium: boolean;
   /** Whether trial is active */
   isTrialActive: boolean;
