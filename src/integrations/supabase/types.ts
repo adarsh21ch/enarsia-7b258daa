@@ -2691,7 +2691,13 @@ export type Database = {
         Row: {
           allow_forward_seek: boolean | null
           allow_speed_control: boolean | null
+          audio_autoplay: boolean | null
+          audio_enabled: boolean | null
+          audio_lock_video: boolean | null
+          audio_play_position: string | null
           audio_play_timing: string | null
+          audio_show_player: boolean | null
+          audio_skip_allowed: boolean | null
           audio_url: string | null
           contact_email: string | null
           contact_follows_cta: boolean | null
@@ -2705,14 +2711,24 @@ export type Database = {
           description: string | null
           id: string
           intent_type: string | null
+          is_live_mode: boolean | null
           is_published: boolean | null
           lead_form_config: Json | null
+          live_access_type: string | null
+          live_disable_pause: boolean | null
+          live_end_time: string | null
+          live_password: string | null
+          live_start_time: string | null
+          live_status: string | null
+          live_sync_enabled: boolean | null
+          live_viewer_count: number | null
           lock_cta_until_complete: boolean | null
           owner_user_id: string
           payment_confirmation_method: string
           payment_type: string | null
           price: number | null
           razorpay_payment_link: string | null
+          replay_enabled: boolean | null
           show_contact: boolean
           show_cta: boolean
           slug: string
@@ -2732,7 +2748,13 @@ export type Database = {
         Insert: {
           allow_forward_seek?: boolean | null
           allow_speed_control?: boolean | null
+          audio_autoplay?: boolean | null
+          audio_enabled?: boolean | null
+          audio_lock_video?: boolean | null
+          audio_play_position?: string | null
           audio_play_timing?: string | null
+          audio_show_player?: boolean | null
+          audio_skip_allowed?: boolean | null
           audio_url?: string | null
           contact_email?: string | null
           contact_follows_cta?: boolean | null
@@ -2746,14 +2768,24 @@ export type Database = {
           description?: string | null
           id?: string
           intent_type?: string | null
+          is_live_mode?: boolean | null
           is_published?: boolean | null
           lead_form_config?: Json | null
+          live_access_type?: string | null
+          live_disable_pause?: boolean | null
+          live_end_time?: string | null
+          live_password?: string | null
+          live_start_time?: string | null
+          live_status?: string | null
+          live_sync_enabled?: boolean | null
+          live_viewer_count?: number | null
           lock_cta_until_complete?: boolean | null
           owner_user_id: string
           payment_confirmation_method?: string
           payment_type?: string | null
           price?: number | null
           razorpay_payment_link?: string | null
+          replay_enabled?: boolean | null
           show_contact?: boolean
           show_cta?: boolean
           slug: string
@@ -2773,7 +2805,13 @@ export type Database = {
         Update: {
           allow_forward_seek?: boolean | null
           allow_speed_control?: boolean | null
+          audio_autoplay?: boolean | null
+          audio_enabled?: boolean | null
+          audio_lock_video?: boolean | null
+          audio_play_position?: string | null
           audio_play_timing?: string | null
+          audio_show_player?: boolean | null
+          audio_skip_allowed?: boolean | null
           audio_url?: string | null
           contact_email?: string | null
           contact_follows_cta?: boolean | null
@@ -2787,14 +2825,24 @@ export type Database = {
           description?: string | null
           id?: string
           intent_type?: string | null
+          is_live_mode?: boolean | null
           is_published?: boolean | null
           lead_form_config?: Json | null
+          live_access_type?: string | null
+          live_disable_pause?: boolean | null
+          live_end_time?: string | null
+          live_password?: string | null
+          live_start_time?: string | null
+          live_status?: string | null
+          live_sync_enabled?: boolean | null
+          live_viewer_count?: number | null
           lock_cta_until_complete?: boolean | null
           owner_user_id?: string
           payment_confirmation_method?: string
           payment_type?: string | null
           price?: number | null
           razorpay_payment_link?: string | null
+          replay_enabled?: boolean | null
           show_contact?: boolean
           show_cta?: boolean
           slug?: string
@@ -4945,6 +4993,56 @@ export type Database = {
           video_duration_seconds?: number
         }
         Relationships: []
+      }
+      video_requests: {
+        Row: {
+          approved_video_asset_id: string | null
+          created_at: string
+          id: string
+          note: string | null
+          rejection_reason: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          status: string
+          updated_at: string
+          user_id: string
+          youtube_link: string
+        }
+        Insert: {
+          approved_video_asset_id?: string | null
+          created_at?: string
+          id?: string
+          note?: string | null
+          rejection_reason?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          updated_at?: string
+          user_id: string
+          youtube_link: string
+        }
+        Update: {
+          approved_video_asset_id?: string | null
+          created_at?: string
+          id?: string
+          note?: string | null
+          rejection_reason?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string
+          youtube_link?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "video_requests_approved_video_asset_id_fkey"
+            columns: ["approved_video_asset_id"]
+            isOneToOne: false
+            referencedRelation: "video_assets"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       video_stats_daily: {
         Row: {

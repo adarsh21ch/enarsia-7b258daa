@@ -21,6 +21,22 @@ export interface Funnel {
   whatsapp_auto_message_enabled: boolean;
   whatsapp_auto_message?: string | null;
   is_published: boolean;
+  audio_enabled: boolean;
+  audio_play_position: string;
+  audio_autoplay: boolean;
+  audio_lock_video: boolean;
+  audio_skip_allowed: boolean;
+  audio_show_player: boolean;
+  is_live_mode: boolean;
+  live_start_time?: string | null;
+  live_end_time?: string | null;
+  live_status: 'scheduled' | 'live' | 'ended';
+  live_sync_enabled: boolean;
+  replay_enabled: boolean;
+  live_access_type: 'open' | 'password' | 'registration';
+  live_password?: string | null;
+  live_disable_pause: boolean;
+  live_viewer_count: number;
   created_at: string;
   updated_at: string;
   // Computed fields from joins
