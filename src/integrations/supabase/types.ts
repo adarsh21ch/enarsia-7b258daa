@@ -2711,24 +2711,14 @@ export type Database = {
           description: string | null
           id: string
           intent_type: string | null
-          is_live_mode: boolean | null
           is_published: boolean | null
           lead_form_config: Json | null
-          live_access_type: string | null
-          live_disable_pause: boolean | null
-          live_end_time: string | null
-          live_password: string | null
-          live_start_time: string | null
-          live_status: string | null
-          live_sync_enabled: boolean | null
-          live_viewer_count: number | null
           lock_cta_until_complete: boolean | null
           owner_user_id: string
           payment_confirmation_method: string
           payment_type: string | null
           price: number | null
           razorpay_payment_link: string | null
-          replay_enabled: boolean | null
           show_contact: boolean
           show_cta: boolean
           slug: string
@@ -2768,24 +2758,14 @@ export type Database = {
           description?: string | null
           id?: string
           intent_type?: string | null
-          is_live_mode?: boolean | null
           is_published?: boolean | null
           lead_form_config?: Json | null
-          live_access_type?: string | null
-          live_disable_pause?: boolean | null
-          live_end_time?: string | null
-          live_password?: string | null
-          live_start_time?: string | null
-          live_status?: string | null
-          live_sync_enabled?: boolean | null
-          live_viewer_count?: number | null
           lock_cta_until_complete?: boolean | null
           owner_user_id: string
           payment_confirmation_method?: string
           payment_type?: string | null
           price?: number | null
           razorpay_payment_link?: string | null
-          replay_enabled?: boolean | null
           show_contact?: boolean
           show_cta?: boolean
           slug: string
@@ -2825,24 +2805,14 @@ export type Database = {
           description?: string | null
           id?: string
           intent_type?: string | null
-          is_live_mode?: boolean | null
           is_published?: boolean | null
           lead_form_config?: Json | null
-          live_access_type?: string | null
-          live_disable_pause?: boolean | null
-          live_end_time?: string | null
-          live_password?: string | null
-          live_start_time?: string | null
-          live_status?: string | null
-          live_sync_enabled?: boolean | null
-          live_viewer_count?: number | null
           lock_cta_until_complete?: boolean | null
           owner_user_id?: string
           payment_confirmation_method?: string
           payment_type?: string | null
           price?: number | null
           razorpay_payment_link?: string | null
-          replay_enabled?: boolean | null
           show_contact?: boolean
           show_cta?: boolean
           slug?: string

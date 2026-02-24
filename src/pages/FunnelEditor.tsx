@@ -149,7 +149,7 @@ export default function FunnelEditor() {
         await createFunnel.mutateAsync(data);
       }
 
-      navigate('/flow');
+      navigate('/funnels');
     } catch (error) {
       // Error handled by mutation
     } finally {
@@ -170,12 +170,12 @@ export default function FunnelEditor() {
       <div className="container max-w-3xl mx-auto px-4 py-8">
         {/* Header */}
         <div className="flex items-center gap-4 mb-8">
-          <Button variant="ghost" size="icon" onClick={() => navigate('/flow')}>
+          <Button variant="ghost" size="icon" onClick={() => navigate('/funnels')}>
             <ArrowLeft className="w-5 h-5" />
           </Button>
           <div>
             <h1 className="text-2xl font-bold text-foreground">
-              {isEditing ? 'Edit Flow' : 'Create Flow'}
+              {isEditing ? 'Edit Funnel' : 'Create Funnel'}
             </h1>
           </div>
         </div>
@@ -191,7 +191,7 @@ export default function FunnelEditor() {
                 <Label htmlFor="title">Title *</Label>
                 <Input
                   id="title"
-                  placeholder="Enter flow title"
+                  placeholder="Enter funnel title"
                   value={formData.title}
                   onChange={(e) => handleTitleChange(e.target.value)}
                 />
@@ -205,7 +205,7 @@ export default function FunnelEditor() {
                   </span>
                   <Input
                     id="slug"
-                    placeholder="my-flow"
+                    placeholder="my-funnel"
                     value={formData.slug}
                     onChange={(e) => handleSlugChange(e.target.value)}
                   />
@@ -217,7 +217,7 @@ export default function FunnelEditor() {
                 <Label htmlFor="description">Description</Label>
                 <Textarea
                   id="description"
-                  placeholder="Brief description of your flow"
+                  placeholder="Brief description of your funnel"
                   value={formData.description}
                   onChange={(e) =>
                     setFormData((prev) => ({ ...prev, description: e.target.value }))
@@ -368,7 +368,7 @@ export default function FunnelEditor() {
                       )}
                       {!isEditing && (
                         <p className="text-sm text-muted-foreground bg-muted p-3 rounded-lg">
-                          Save the flow first, then you can add multiple price options with QR codes.
+                          Save the funnel first, then you can add multiple price options with QR codes.
                         </p>
                       )}
                     </>
@@ -378,7 +378,7 @@ export default function FunnelEditor() {
                         <Lock className="h-5 w-5 text-amber-600" />
                         <div>
                           <p className="font-medium text-sm">Multiple Price Options</p>
-                          <p className="text-xs text-muted-foreground">Upgrade to Flow Pro to add multiple pricing tiers with QR codes</p>
+                          <p className="text-xs text-muted-foreground">Upgrade to Funnels Pro to add multiple pricing tiers with QR codes</p>
                         </div>
                       </div>
                       <FunnelsUpgradeDrawer variant="compact" triggerText="Unlock" />

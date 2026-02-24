@@ -58,8 +58,8 @@ export default function FunnelAnalytics() {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
-          <h2 className="text-xl font-semibold mb-2">Flow not found</h2>
-          <Button onClick={() => navigate('/flow')}>Back to Flows</Button>
+          <h2 className="text-xl font-semibold mb-2">Funnel not found</h2>
+          <Button onClick={() => navigate('/funnels')}>Back to Funnels</Button>
         </div>
       </div>
     );
@@ -71,7 +71,7 @@ export default function FunnelAnalytics() {
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
           <div className="flex items-center gap-4">
-            <Button variant="ghost" size="icon" onClick={() => navigate('/flow')}>
+            <Button variant="ghost" size="icon" onClick={() => navigate('/funnels')}>
               <ArrowLeft className="w-5 h-5" />
             </Button>
             <div>

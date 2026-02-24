@@ -280,15 +280,15 @@ export default function Profile() {
             <ExternalLink className="h-4 w-4 text-muted-foreground" />
           </button>
 
-          {/* Nevorai Flow - External link with SSO */}
+          {/* Nevorai Funnels - External link with SSO */}
           <button onClick={() => handleSSORedirect('https://nevorai.com/funnels')} className={cn("w-full rounded-xl px-4 py-2.5", "bg-gradient-to-r backdrop-blur-sm", "border border-purple-500/30", "flex items-center justify-between", "transition-all duration-200 hover:shadow-md", "from-purple-500/20 to-purple-500/5")}>
             <div className="flex items-center gap-3">
               <div className="p-1.5 rounded-lg bg-purple-500/10">
                 <Video className="h-4 w-4 text-purple-500" />
               </div>
               <div className="text-left">
-                <span className="font-medium text-sm block">Nevorai Flow</span>
-                <span className="text-[11px] text-muted-foreground">Video flows on nevorai.com</span>
+                <span className="font-medium text-sm block">Nevorai Funnels</span>
+                <span className="text-[11px] text-muted-foreground">Video funnels on nevorai.com</span>
               </div>
             </div>
             <ExternalLink className="h-4 w-4 text-muted-foreground" />

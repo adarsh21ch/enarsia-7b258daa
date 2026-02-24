@@ -188,19 +188,19 @@ export default function PaymentSuccess() {
                 )}
                 {(planScope === 'funnels' || planScope === 'combined') && (
                   <>
-                    <li>✓ Unlimited Video Flows</li>
+                    <li>✓ Unlimited Video Funnels</li>
                     <li>✓ Multiple Price Options & QR Codes</li>
-                    <li>✓ Advanced Flow Analytics</li>
+                    <li>✓ Advanced Funnel Analytics</li>
                   </>
                 )}
               </ul>
             </div>
 
             <Button 
-              onClick={() => navigate(planScope === 'funnels' ? '/flow' : '/dashboard')} 
+              onClick={() => navigate(planScope === 'funnels' ? '/funnels' : '/dashboard')} 
               className="w-full h-12 mt-6"
             >
-              {planScope === 'funnels' ? 'Go to Flow' : 'Go to Dashboard'}
+              {planScope === 'funnels' ? 'Go to Funnels' : 'Go to Dashboard'}
             </Button>
           </div>
         )}

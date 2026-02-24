@@ -53,7 +53,7 @@ export default function FunnelView() {
   useEffect(() => {
     async function loadFunnel() {
       if (!slug) {
-        setError('Invalid flow URL');
+        setError('Invalid funnel URL');
         setPhase('error');
         return;
       }
@@ -66,7 +66,7 @@ export default function FunnelView() {
         .single();
 
       if (error || !data) {
-        setError('Flow not found or not published');
+        setError('Funnel not found or not published');
         setPhase('error');
         return;
       }

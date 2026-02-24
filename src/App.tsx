@@ -1,5 +1,5 @@
 import { Component, ReactNode } from "react";
-import { BrowserRouter, Routes, Route, Navigate, useParams } from "react-router-dom";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { TrackingFormatProvider } from "@/contexts/TrackingFormatContext";
@@ -33,10 +33,6 @@ import Funnels from "./pages/Funnels";
 import FunnelEditor from "./pages/FunnelEditor";
 import FunnelAnalytics from "./pages/FunnelAnalytics";
 import FunnelView from "./pages/FunnelView";
-
-// Redirect helpers for parameterized old funnel routes
-function RedirectFunnelEdit() { const { id } = useParams(); return <Navigate to={`/flow/${id}/edit`} replace />; }
-function RedirectFunnelAnalytics() { const { id } = useParams(); return <Navigate to={`/flow/${id}/analytics`} replace />; }
 import FormsDashboard from "./features/forms/pages/FormsDashboard";
 import FormResponsesPage from "./features/forms/pages/FormResponsesPage";
 import PublicFormPage from "./features/forms/pages/PublicFormPage";
@@ -115,16 +111,11 @@ function App() {
                       <Route path="/refund" element={<Refund />} />
                       <Route path="/admin" element={<Admin />} />
                       <Route path="/payment-success" element={<PaymentSuccess />} />
-                      <Route path="/flow" element={<Funnels />} />
-                      <Route path="/flow/new" element={<FunnelEditor />} />
-                      <Route path="/flow/:id/edit" element={<FunnelEditor />} />
-                      <Route path="/flow/:id/analytics" element={<FunnelAnalytics />} />
+                      <Route path="/funnels" element={<Funnels />} />
+                      <Route path="/funnels/new" element={<FunnelEditor />} />
+                      <Route path="/funnels/:id/edit" element={<FunnelEditor />} />
+                      <Route path="/funnels/:id/analytics" element={<FunnelAnalytics />} />
                       <Route path="/f/:slug" element={<FunnelView />} />
-                      {/* Redirects from old /funnels routes */}
-                      <Route path="/funnels" element={<Navigate to="/flow" replace />} />
-                      <Route path="/funnels/new" element={<Navigate to="/flow/new" replace />} />
-                      <Route path="/funnels/:id/edit" element={<RedirectFunnelEdit />} />
-                      <Route path="/funnels/:id/analytics" element={<RedirectFunnelAnalytics />} />
                       <Route path="/forms" element={<FormsDashboard />} />
                       <Route path="/forms/:formId/responses" element={<FormResponsesPage />} />
                       <Route path="/share/form/:token" element={<PublicFormPage />} />

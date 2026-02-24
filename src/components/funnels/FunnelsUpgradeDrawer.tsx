@@ -45,14 +45,14 @@ export function FunnelsUpgradeDrawer({ triggerText, trigger, variant = 'default'
     if (plan?.billing_type === 'recurring') {
       initiateSubscription({
         planType: planKey,
-        onSuccess: () => { toast({ title: `${tierLabel} Plan Activated 🎉`, description: "All features including Flow are now unlocked!" }); refetch(); setOpen(false); },
+        onSuccess: () => { toast({ title: `${tierLabel} Plan Activated 🎉`, description: "All features including Funnels are now unlocked!" }); refetch(); setOpen(false); },
         onError: (error) => console.error('Subscription error:', error),
       });
       return;
     }
     initiatePayment({
       planType: planKey,
-      onSuccess: () => { toast({ title: `${tierLabel} Plan Activated 🎉`, description: "All features including Flow are now unlocked!" }); refetch(); setOpen(false); },
+      onSuccess: () => { toast({ title: `${tierLabel} Plan Activated 🎉`, description: "All features including Funnels are now unlocked!" }); refetch(); setOpen(false); },
       onError: (error) => console.error('Payment error:', error),
     });
   };
@@ -80,7 +80,7 @@ export function FunnelsUpgradeDrawer({ triggerText, trigger, variant = 'default'
         </div>
         <div>
           <h3 className="font-bold text-lg">Unlock All Features</h3>
-          <p className="text-xs text-muted-foreground">Get access to Flow, Analytics & more</p>
+          <p className="text-xs text-muted-foreground">Get access to Funnels, Analytics & more</p>
         </div>
       </div>
 
