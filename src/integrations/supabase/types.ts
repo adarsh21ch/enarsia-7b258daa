@@ -2691,7 +2691,13 @@ export type Database = {
         Row: {
           allow_forward_seek: boolean | null
           allow_speed_control: boolean | null
+          audio_autoplay: boolean | null
+          audio_enabled: boolean | null
+          audio_lock_video: boolean | null
+          audio_play_position: string | null
           audio_play_timing: string | null
+          audio_show_player: boolean | null
+          audio_skip_allowed: boolean | null
           audio_url: string | null
           contact_email: string | null
           contact_follows_cta: boolean | null
@@ -2732,7 +2738,13 @@ export type Database = {
         Insert: {
           allow_forward_seek?: boolean | null
           allow_speed_control?: boolean | null
+          audio_autoplay?: boolean | null
+          audio_enabled?: boolean | null
+          audio_lock_video?: boolean | null
+          audio_play_position?: string | null
           audio_play_timing?: string | null
+          audio_show_player?: boolean | null
+          audio_skip_allowed?: boolean | null
           audio_url?: string | null
           contact_email?: string | null
           contact_follows_cta?: boolean | null
@@ -2773,7 +2785,13 @@ export type Database = {
         Update: {
           allow_forward_seek?: boolean | null
           allow_speed_control?: boolean | null
+          audio_autoplay?: boolean | null
+          audio_enabled?: boolean | null
+          audio_lock_video?: boolean | null
+          audio_play_position?: string | null
           audio_play_timing?: string | null
+          audio_show_player?: boolean | null
+          audio_skip_allowed?: boolean | null
           audio_url?: string | null
           contact_email?: string | null
           contact_follows_cta?: boolean | null
