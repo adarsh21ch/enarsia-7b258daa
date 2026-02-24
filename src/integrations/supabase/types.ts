@@ -4946,6 +4946,56 @@ export type Database = {
         }
         Relationships: []
       }
+      video_requests: {
+        Row: {
+          approved_video_asset_id: string | null
+          created_at: string
+          id: string
+          note: string | null
+          rejection_reason: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          status: string
+          updated_at: string
+          user_id: string
+          youtube_link: string
+        }
+        Insert: {
+          approved_video_asset_id?: string | null
+          created_at?: string
+          id?: string
+          note?: string | null
+          rejection_reason?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          updated_at?: string
+          user_id: string
+          youtube_link: string
+        }
+        Update: {
+          approved_video_asset_id?: string | null
+          created_at?: string
+          id?: string
+          note?: string | null
+          rejection_reason?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string
+          youtube_link?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "video_requests_approved_video_asset_id_fkey"
+            columns: ["approved_video_asset_id"]
+            isOneToOne: false
+            referencedRelation: "video_assets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       video_stats_daily: {
         Row: {
           completions: number
