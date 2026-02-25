@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useNavigate, Link, useSearchParams } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
+import { withTimeout } from '@/lib/fetchWithTimeout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -77,14 +78,22 @@ export default function Auth() {
           toast.error('Connection is slow. Please check your internet and try again.');
         } else if (errorMessage.includes('invalid login credentials') || errorMessage.includes('invalid credentials')) {
           try {
-            const { data: provisionedData } = await supabase.rpc('check_provisioned_user', {
-              target_email: email
-            });
+            const { data: provisionedData } = await withTimeout(
+              Promise.resolve(supabase.rpc('check_provisioned_user', {
+                target_email: email
+              })),
+              5000,
+              'Provisioned user check'
+            );
             
             if (provisionedData && provisionedData.length > 0 && provisionedData[0].is_provisioned) {
-              const { error: resetError } = await supabase.auth.resetPasswordForEmail(email, {
-                redirectTo: getPasswordRecoveryRedirectUrl(),
-              });
+              const { error: resetError } = await withTimeout(
+                supabase.auth.resetPasswordForEmail(email, {
+                  redirectTo: getPasswordRecoveryRedirectUrl(),
+                }),
+                5000,
+                'Password reset'
+              );
               
               if (!resetError) {
                 toast.success(
