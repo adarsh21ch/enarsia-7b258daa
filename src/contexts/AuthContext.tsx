@@ -250,20 +250,63 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signIn = async (email: string, password: string) => {
     logAuth('Sign in attempt', { email });
+    
+    // Step 1: Try direct signInWithPassword with 8s timeout
     try {
       const { error } = await withTimeout(
         supabase.auth.signInWithPassword({ email, password }),
-        10000,
-        'Sign in'
+        8000,
+        'Sign in (direct)'
       );
       if (error) {
-        logAuth('Sign in error', error.message);
-      } else {
-        logAuth('Sign in successful');
+        logAuth('Direct sign in error', error.message);
+        return { error: error as Error | null };
       }
-      return { error: error as Error | null };
-    } catch (timeoutErr: any) {
-      logAuth('Sign in timed out', timeoutErr.message);
+      logAuth('Direct sign in successful');
+      return { error: null };
+    } catch (directErr: any) {
+      logAuth('Direct sign in timed out, trying proxy fallback...', directErr.message);
+    }
+
+    // Step 2: Fallback to sign-in-proxy edge function
+    try {
+      logAuth('Attempting proxy sign in...');
+      const { data: proxyData, error: proxyError } = await withTimeout(
+        supabase.functions.invoke('sign-in-proxy', {
+          body: { email, password },
+        }),
+        15000,
+        'Sign in (proxy)'
+      );
+
+      if (proxyError) {
+        logAuth('Proxy invocation error', proxyError.message);
+        return { error: new Error(proxyError.message || 'Sign in failed via proxy') };
+      }
+
+      if (proxyData?.error) {
+        logAuth('Proxy auth error', proxyData.error);
+        return { error: new Error(proxyData.error) };
+      }
+
+      if (proxyData?.session?.access_token && proxyData?.session?.refresh_token) {
+        logAuth('Proxy returned session, applying via setSession...');
+        const { error: setErr } = await supabase.auth.setSession({
+          access_token: proxyData.session.access_token,
+          refresh_token: proxyData.session.refresh_token,
+        });
+        if (setErr) {
+          logAuth('setSession error', setErr.message);
+          return { error: setErr as Error };
+        }
+        logAuth('Proxy sign in successful (session applied)');
+        return { error: null };
+      }
+
+      logAuth('Proxy returned unexpected data', proxyData);
+      return { error: new Error('Sign in failed. Please try again.') };
+    } catch (proxyTimeoutErr: any) {
+      logAuth('Proxy sign in also timed out', proxyTimeoutErr.message);
       return { error: new Error('Connection is slow. Please check your internet and try again.') };
     }
   };

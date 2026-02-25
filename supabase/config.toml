@@ -71,3 +71,6 @@ verify_jwt = false
 
 [functions.create-razorpay-subscription]
 verify_jwt = false
+
+[functions.sign-in-proxy]
+verify_jwt = false
