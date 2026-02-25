@@ -268,20 +268,29 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       logAuth('Direct sign in timed out, trying proxy fallback...', directErr.message);
     }
 
-    // Step 2: Fallback to sign-in-proxy edge function
+    // Step 2: Fallback to sign-in-proxy edge function via direct fetch (bypasses SDK proxy)
     try {
-      logAuth('Attempting proxy sign in...');
-      const { data: proxyData, error: proxyError } = await withTimeout(
-        supabase.functions.invoke('sign-in-proxy', {
-          body: { email, password },
+      logAuth('Attempting proxy sign in via direct fetch...');
+      const proxyUrl = `https://${import.meta.env.VITE_SUPABASE_PROJECT_ID}.supabase.co/functions/v1/sign-in-proxy`;
+      
+      const proxyResponse = await withTimeout(
+        fetch(proxyUrl, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'apikey': import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+          },
+          body: JSON.stringify({ email, password }),
         }),
         15000,
         'Sign in (proxy)'
       );
 
-      if (proxyError) {
-        logAuth('Proxy invocation error', proxyError.message);
-        return { error: new Error(proxyError.message || 'Sign in failed via proxy') };
+      const proxyData = await proxyResponse.json();
+
+      if (!proxyResponse.ok) {
+        logAuth('Proxy HTTP error', { status: proxyResponse.status, data: proxyData });
+        return { error: new Error(proxyData?.error || 'Sign in failed via proxy') };
       }
 
       if (proxyData?.error) {
