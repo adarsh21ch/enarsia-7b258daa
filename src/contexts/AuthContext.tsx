@@ -253,7 +253,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       const { error } = await withTimeout(
         supabase.auth.signInWithPassword({ email, password }),
-        15000,
+        10000,
         'Sign in'
       );
       if (error) {
