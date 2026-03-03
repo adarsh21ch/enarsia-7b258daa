@@ -14,6 +14,8 @@ import { Badge } from '@/components/ui/badge';
 import { Crown } from 'lucide-react';
 import { useTrackingSourcePreferences, type TrackingSource } from '@/hooks/useTrackingSourcePreferences';
 import { usePermissions } from '@/contexts/PermissionsContext';
+import { useAdminConfig } from '@/hooks/useAdminConfig';
+import { getTierDisplayName } from '@/config/tierLabels';
 
 interface TrackingSettingsDialogProps {
   open: boolean;
@@ -23,11 +25,18 @@ interface TrackingSettingsDialogProps {
 export function TrackingSettingsDialog({ open, onOpenChange }: TrackingSettingsDialogProps) {
   const { personalSource, teamSource, setPreferences, isUpdating } = useTrackingSourcePreferences();
   const { checkFeature } = usePermissions();
+  const { config } = useAdminConfig();
 
   const canPersonalAuto = checkFeature('personal_auto_tracking');
   const canTotalAuto = checkFeature('total_auto_tracking');
   const [localPersonal, setLocalPersonal] = useState<TrackingSource>(personalSource);
   const [localTeam, setLocalTeam] = useState<TrackingSource>(teamSource);
+
+  // Get dynamic tier labels from feature flags
+  const personalAutoTier = config.features['personal_auto_tracking']?.required_tier;
+  const totalAutoTier = config.features['total_auto_tracking']?.required_tier;
+  const personalTierLabel = personalAutoTier ? getTierDisplayName(personalAutoTier) : 'Basic';
+  const totalTierLabel = totalAutoTier ? getTierDisplayName(totalAutoTier) : 'Basic';
 
   // Sync local state when dialog opens, and enforce permissions
   useEffect(() => {
@@ -82,7 +91,7 @@ export function TrackingSettingsDialog({ open, onOpenChange }: TrackingSettingsD
                 </Label>
                 {!canPersonalAuto && (
                   <Badge variant="outline" className="text-[10px] gap-1 border-amber-500/50 text-amber-600">
-                    <Crown className="h-3 w-3" /> Pro
+                    <Crown className="h-3 w-3" /> {personalTierLabel}
                   </Badge>
                 )}
               </div>
@@ -113,7 +122,7 @@ export function TrackingSettingsDialog({ open, onOpenChange }: TrackingSettingsD
                 </Label>
                 {!canTotalAuto && (
                   <Badge variant="outline" className="text-[10px] gap-1 border-amber-500/50 text-amber-600">
-                    <Crown className="h-3 w-3" /> Pro
+                    <Crown className="h-3 w-3" /> {totalTierLabel}
                   </Badge>
                 )}
               </div>
