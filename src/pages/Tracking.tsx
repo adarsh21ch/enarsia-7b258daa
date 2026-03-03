@@ -5,6 +5,7 @@ import { ChevronLeft, ChevronRight, ExternalLink, Settings, Info, BarChart3 } fr
 import { useAuth } from '@/contexts/AuthContext';
 import { BottomNav } from '@/components/layout/BottomNav';
 import { TrialBanner } from '@/components/subscription/TrialBanner';
+import { UpgradeButton } from '@/components/subscription/UpgradeButton';
 import { Button } from '@/components/ui/button';
 import { ModeSelectors } from '@/components/trackup-v2/ModeSelectors';
 import { ViewSelector } from '@/components/trackup-v2/ViewSelector';
@@ -167,6 +168,7 @@ export default function Tracking() {
       <main className="scrollable-content">
         <div className="container py-2 px-3 pb-24">
           <TrialBanner tabId="tracking" className="mb-3" />
+          <UpgradeButton tabId="tracking" variant="prominent" />
 
           {/* View header row */}
           <div className="flex items-center justify-between mb-3">

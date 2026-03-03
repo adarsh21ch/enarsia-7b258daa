@@ -13,6 +13,7 @@ import { TopTabBar } from '@/components/ui/TopTabBar';
 import { FilterTagSetupDialog, useFilterTagSetup } from '@/components/prospects/FilterTagSetupDialog';
 import { SearchBar } from '@/components/ui/SearchBar';
 import { TrialBanner } from '@/components/subscription/TrialBanner';
+import { UpgradeButton } from '@/components/subscription/UpgradeButton';
 import { RecentActivityView } from '@/components/todo/RecentActivityView';
 import { Loader2, Phone, Layers, Flame, Clock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -295,6 +296,7 @@ export default function Dashboard() {
             {/* Trial Banner */}
             <div className="px-4 pt-2">
               <TrialBanner tabId="dashboard" />
+              <UpgradeButton tabId="dashboard" variant="prominent" />
             </div>
             
             {/* Table area - flex-1 to fill remaining space, pb for bottom nav */}

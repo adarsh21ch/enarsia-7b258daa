@@ -8,6 +8,7 @@ import { BottomNav } from '@/components/layout/BottomNav';
 import { PullToRefreshIndicator } from '@/components/PullToRefreshIndicator';
 import { TopTabBar } from '@/components/ui/TopTabBar';
 import { TrialBanner } from '@/components/subscription/TrialBanner';
+import { UpgradeButton } from '@/components/subscription/UpgradeButton';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Loader2, Filter, ChevronDown, ChevronUp, Tags, X, Eye, Search, Phone, Layers } from 'lucide-react';
@@ -374,6 +375,7 @@ export default function ListUp() {
         <div className="container py-3 px-4 space-y-3">
           {/* Trial Banner */}
           <TrialBanner tabId="listup" />
+          <UpgradeButton tabId="listup" variant="prominent" />
 
           {/* Search Bar */}
           <div className="relative">
