@@ -1,43 +1,42 @@
 
 
-# Plan: Fix Sign-In Proxy to Use Direct fetch() Instead of supabase.functions.invoke()
+# Plan: Fix Upgrade Button Tab Visibility and Dynamic Tier Badges
 
-## Problem Found
-The sign-in proxy edge function **works correctly** -- I tested it server-side and it successfully communicates with the auth service. However, the client's call via `supabase.functions.invoke('sign-in-proxy')` never reaches the function (zero logs). This is because `supabase.functions.invoke()` routes through the same Lovable Cloud proxy layer that is currently hanging for all POST requests.
+## Bug 1: "Upgrade Now" not showing on admin-selected tabs
 
-## Root Cause
-`supabase.functions.invoke()` uses the Supabase client's internal routing, which passes through the same network gateway that's blocking `signInWithPassword`. The proxy bypass only works if we bypass the client SDK entirely.
+**Root Cause**: The `UpgradeButton` component is only rendered in `Profile.tsx`. The other pages (Dashboard, ListUp, TodoUp, Tracking) don't include it at all. The admin's "Trial Banner Visibility" checkboxes only control the `TrialBanner`, not the upgrade prompt.
 
-## Fix: One File Change
+**Fix**: Add the `UpgradeButton` component to all four pages (Dashboard, ListUp, TodoUp, Tracking), using the same `allowedTabs` mechanism from `useFreeTrial` to control visibility. The `UpgradeButton` will check the admin's tab whitelist before rendering.
 
-### `src/contexts/AuthContext.tsx`
-In the `signIn()` function's proxy fallback section, replace:
-```typescript
-supabase.functions.invoke('sign-in-proxy', { body: { email, password } })
-```
-with a direct `fetch()` call:
-```typescript
-fetch(`https://${import.meta.env.VITE_SUPABASE_PROJECT_ID}.supabase.co/functions/v1/sign-in-proxy`, {
-  method: 'POST',
-  headers: {
-    'Content-Type': 'application/json',
-    'apikey': import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
-  },
-  body: JSON.stringify({ email, password }),
-})
-```
+Changes:
+- **`src/components/subscription/UpgradeButton.tsx`**: Add a `tabId` prop. Fetch `allowedTabs` from `useFreeTrial` and hide the button if the tab isn't in the allowed list.
+- **`src/pages/Dashboard.tsx`**: Import and render `<UpgradeButton tabId="dashboard" variant="prominent" />` for non-paid users.
+- **`src/pages/ListUp.tsx`**: Same with `tabId="listup"`.
+- **`src/pages/TodoUp.tsx`**: Same with `tabId="todoup"`.
+- **`src/pages/Tracking.tsx`**: Same with `tabId="tracking"`.
 
-This constructs the URL directly using environment variables, completely bypassing the Supabase JS client and Lovable Cloud's proxy layer.
+## Bug 2: Hardcoded "Pro" badge in Tracking Settings
 
-The rest of the logic (parsing the response, calling `setSession()`, error handling) stays the same.
+**Root Cause**: `TrackingSettingsDialog.tsx` shows a hardcoded `Pro` text in the badge for gated features, even though the admin has set `personal_auto_tracking` to require the "Basic" tier (internal `pro`).
 
-## Why This Will Work
-- I verified the proxy function responds correctly when called directly (server-side test returned auth error for wrong password in ~1 second)
-- Direct `fetch()` bypasses the Lovable Cloud proxy that's causing the hang
-- The project's memory confirms this pattern: "functions must be called using direct fetch() with explicit headers" due to Lovable Cloud's proxy behavior
+**Fix**: Read the `required_tier` from the feature flag and display the correct user-facing tier name using `getTierDisplayName()`.
 
-## No Other Changes Needed
-- Edge function code: unchanged (already working)
-- Config: unchanged
-- Auth page: unchanged
+Changes:
+- **`src/components/trackup-v2/TrackingSettingsDialog.tsx`**:
+  - Import `useAdminConfig` and `getTierDisplayName` 
+  - Look up `config.features['personal_auto_tracking']?.required_tier` and `config.features['total_auto_tracking']?.required_tier`
+  - Replace hardcoded `Pro` text with `getTierDisplayName(required_tier)` (e.g., shows "Basic" when tier is `pro`, "Pro" when tier is `premium`)
+
+## Summary of file changes
+
+| File | Change |
+|------|--------|
+| `UpgradeButton.tsx` | Add `tabId` prop, check `allowedTabs` |
+| `Dashboard.tsx` | Add `UpgradeButton` with `tabId="dashboard"` |
+| `ListUp.tsx` | Add `UpgradeButton` with `tabId="listup"` |
+| `TodoUp.tsx` | Add `UpgradeButton` with `tabId="todoup"` |
+| `Tracking.tsx` | Add `UpgradeButton` with `tabId="tracking"` |
+| `TrackingSettingsDialog.tsx` | Dynamic tier badge from feature flag |
+
+No database changes needed.
 
