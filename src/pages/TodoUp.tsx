@@ -283,7 +283,7 @@ export default function TodoUp() {
         <CalendarStrip selectedDate={calendar.selectedDate} daysInMonth={calendar.daysInMonth} monthYearLabel={calendar.monthYearLabel} onSelectDate={calendar.selectDate} onPreviousMonth={calendar.goToPreviousMonth} onNextMonth={calendar.goToNextMonth} onTodayClick={calendar.goToToday} datesWithTasks={datesWithTasks} />
       </div>
 
-      <main ref={mainRef} className={cn("scrollable-content relative pb-24", isRecentActivity ? "pt-[132px]" : "pt-[168px]")}>
+      <main ref={mainRef} className={cn("scrollable-content relative pb-24", isRecentActivity ? "pt-[128px]" : "pt-[160px]")}>
         <PullToRefreshIndicator isRefreshing={isRefreshing} pullDistance={pullDistance} showIndicator={showIndicator} />
         <div className="container px-4 space-y-3">
           {/* Trial Banner - respects admin config */}
