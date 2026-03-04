@@ -145,7 +145,7 @@ export default function Notes() {
             {!search && <p className="text-xs text-muted-foreground/60">Tap + to create your first note</p>}
           </div>
         ) : (
-          <div className="space-y-3">
+          <div className="rounded-2xl border border-border/50 overflow-hidden bg-card">
             {filtered.map((note) => (
               <NoteCard
                 key={note.id}
