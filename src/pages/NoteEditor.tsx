@@ -5,8 +5,7 @@ import { useNotes, NoteBlock } from '@/hooks/useNotes';
 import { useNoteAttachments } from '@/hooks/useNoteAttachments';
 import { RichTextEditor } from '@/components/notes/RichTextEditor';
 import { NoteToolbar } from '@/components/notes/NoteToolbar';
-import { AudioRecorder, useAudioRecording } from '@/components/notes/AudioRecorder';
-import { PhotoAttachment } from '@/components/notes/PhotoAttachment';
+import { AudioPlayer, useAudioRecording } from '@/components/notes/AudioRecorder';
 import { ArrowLeft, Pin, PinOff, Trash2, MoreVertical, FolderOpen, Loader2, Check, Square as StopIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
@@ -443,22 +442,45 @@ export default function NoteEditor() {
         />
       </div>
 
-      {/* Photos */}
-      <PhotoAttachment attachments={attachments} onDelete={(att) => deleteAttachment.mutate(att)} />
-
-      {/* Audio */}
-      <div className="px-4 py-1">
-        <AudioRecorder
-          isRecording={isRecording}
-          onStartRecording={startRecording}
-          onStopRecording={stopRecording}
-          attachments={attachments}
-          onDelete={(att) => deleteAttachment.mutate(att)}
-        />
-      </div>
-
       {/* Editor */}
       <RichTextEditor blocks={blocks} onChange={setBlocks} onActiveBlockChange={setActiveBlockIndex} />
+
+      {/* Attachments — rendered after text content, in creation order */}
+      {attachments.length > 0 && (
+        <div className="px-4 py-2 space-y-2">
+          {attachments.map(att => {
+            if (att.type === 'audio') {
+              return (
+                <div key={att.id} className="relative group">
+                  <AudioPlayer url={att.publicUrl || ''} fileName={att.file_name} />
+                  <button
+                    onClick={() => deleteAttachment.mutate(att)}
+                    className="absolute -top-1.5 -right-1.5 p-1 bg-destructive text-destructive-foreground rounded-full opacity-0 group-hover:opacity-100 transition-opacity shadow-md"
+                  >
+                    <Trash2 className="h-3 w-3" />
+                  </button>
+                </div>
+              );
+            }
+            if (att.type === 'photo') {
+              return (
+                <div key={att.id} className="relative group inline-block mr-2">
+                  <div className="w-32 h-32 rounded-lg overflow-hidden bg-muted">
+                    <img src={att.publicUrl} alt={att.file_name || 'Photo'} className="w-full h-full object-cover" loading="lazy" />
+                  </div>
+                  <button
+                    onClick={() => deleteAttachment.mutate(att)}
+                    className="absolute top-1 right-1 p-1 bg-destructive/90 text-destructive-foreground rounded-full opacity-0 group-hover:opacity-100 transition-opacity shadow"
+                  >
+                    <Trash2 className="h-3 w-3" />
+                  </button>
+                </div>
+              );
+            }
+            return null;
+          })}
+        </div>
+      )}
 
       {/* Hidden file input */}
       <input
