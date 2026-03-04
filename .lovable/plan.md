@@ -1,42 +1,127 @@
 
 
-# Plan: Fix Upgrade Button Tab Visibility and Dynamic Tier Badges
+# Plan: Nevorai Notes — MVP
 
-## Bug 1: "Upgrade Now" not showing on admin-selected tabs
+## Scope (Apple Notes / Samsung Notes style)
 
-**Root Cause**: The `UpgradeButton` component is only rendered in `Profile.tsx`. The other pages (Dashboard, ListUp, TodoUp, Tracking) don't include it at all. The admin's "Trial Banner Visibility" checkboxes only control the `TrialBanner`, not the upgrade prompt.
+**Included:**
+- Rich text notes (bold, italic, lists, checklists)
+- Audio recording & playback (voice memos)
+- Photo attachments (camera/gallery)
+- Clickable links with smart detection (YouTube, Zoom, PDF URLs auto-preview)
+- Tappable phone numbers (call/text)
+- Color labels, pinning, search
+- Folders/tags for organization
 
-**Fix**: Add the `UpgradeButton` component to all four pages (Dashboard, ListUp, TodoUp, Tracking), using the same `allowedTabs` mechanism from `useFreeTrial` to control visibility. The `UpgradeButton` will check the admin's tab whitelist before rendering.
+**Excluded (for now):**
+- Video recording/attachment
+- Team sharing
+- Prospect linking (can add later)
 
-Changes:
-- **`src/components/subscription/UpgradeButton.tsx`**: Add a `tabId` prop. Fetch `allowedTabs` from `useFreeTrial` and hide the button if the tab isn't in the allowed list.
-- **`src/pages/Dashboard.tsx`**: Import and render `<UpgradeButton tabId="dashboard" variant="prominent" />` for non-paid users.
-- **`src/pages/ListUp.tsx`**: Same with `tabId="listup"`.
-- **`src/pages/TodoUp.tsx`**: Same with `tabId="todoup"`.
-- **`src/pages/Tracking.tsx`**: Same with `tabId="tracking"`.
+---
 
-## Bug 2: Hardcoded "Pro" badge in Tracking Settings
+## Database
 
-**Root Cause**: `TrackingSettingsDialog.tsx` shows a hardcoded `Pro` text in the badge for gated features, even though the admin has set `personal_auto_tracking` to require the "Basic" tier (internal `pro`).
+Create a `notes` table and a `note_attachments` table, plus a `note-attachments` storage bucket.
 
-**Fix**: Read the `required_tier` from the feature flag and display the correct user-facing tier name using `getTierDisplayName()`.
+```sql
+-- notes table
+CREATE TABLE public.notes (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  title TEXT NOT NULL DEFAULT '',
+  content JSONB NOT NULL DEFAULT '[]',  -- rich text blocks
+  color_label TEXT DEFAULT 'default',
+  is_pinned BOOLEAN DEFAULT false,
+  folder TEXT DEFAULT 'General',
+  created_at TIMESTAMPTZ DEFAULT now(),
+  updated_at TIMESTAMPTZ DEFAULT now()
+);
 
-Changes:
-- **`src/components/trackup-v2/TrackingSettingsDialog.tsx`**:
-  - Import `useAdminConfig` and `getTierDisplayName` 
-  - Look up `config.features['personal_auto_tracking']?.required_tier` and `config.features['total_auto_tracking']?.required_tier`
-  - Replace hardcoded `Pro` text with `getTierDisplayName(required_tier)` (e.g., shows "Basic" when tier is `pro`, "Pro" when tier is `premium`)
+-- note_attachments (photos + audio)
+CREATE TABLE public.note_attachments (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  note_id UUID NOT NULL REFERENCES public.notes(id) ON DELETE CASCADE,
+  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  type TEXT NOT NULL CHECK (type IN ('photo', 'audio')),
+  storage_path TEXT NOT NULL,
+  file_name TEXT,
+  file_size INTEGER,
+  duration_seconds INTEGER, -- for audio
+  created_at TIMESTAMPTZ DEFAULT now()
+);
 
-## Summary of file changes
+-- Storage bucket
+INSERT INTO storage.buckets (id, name, public)
+VALUES ('note-attachments', 'note-attachments', false)
+ON CONFLICT (id) DO NOTHING;
 
-| File | Change |
+-- RLS: users can only access their own notes & attachments
+```
+
+## File Structure
+
+```text
+src/
+├── pages/Notes.tsx                    -- Main notes list page
+├── pages/NoteEditor.tsx               -- Single note editor
+├── components/notes/
+│   ├── NoteCard.tsx                   -- Grid/list card preview
+│   ├── NoteToolbar.tsx                -- Bold, list, checklist, attach, audio, color
+│   ├── RichTextEditor.tsx             -- Block-based editor (paragraphs, lists, checklists)
+│   ├── AudioRecorder.tsx              -- Record & playback voice memos
+│   ├── PhotoAttachment.tsx            -- Camera/gallery picker + grid display
+│   ├── LinkPreview.tsx                -- Smart link detection (YT, Zoom, PDF, phone)
+│   ├── FolderSidebar.tsx              -- Folder/tag filter
+│   └── NoteSearchBar.tsx              -- Full-text search across notes
+├── hooks/
+│   ├── useNotes.ts                    -- CRUD operations
+│   └── useNoteAttachments.ts          -- Upload/delete attachments
+```
+
+## Routes & Navigation
+
+- Add `/notes` route in `App.tsx`
+- Add "Notes" entry in Profile page (similar to other menu items) with a notebook icon
+- Notes page: masonry/grid of note cards, FAB to create new note, search bar, folder filter
+
+## Key Features Detail
+
+### Rich Text Editor
+- Lightweight block-based editor (no heavy library needed)
+- Each block: `{ type: 'text'|'checklist'|'heading', content: string, checked?: boolean, style?: 'bold'|'italic' }`
+- Stored as JSON array in `content` column
+
+### Audio Recording
+- Use browser `MediaRecorder` API
+- Record → upload to `note-attachments` bucket
+- Inline playback with waveform-style progress bar
+- Max 5 minutes per recording
+
+### Photo Attachments
+- File input (camera + gallery on mobile)
+- Upload to `note-attachments` bucket
+- Display as inline thumbnails in the note
+
+### Smart Link Detection
+- Auto-detect URLs in text, render as tappable links
+- Phone numbers: detect patterns like `+91 98765 43210`, render with call/WhatsApp buttons
+- YouTube links: show thumbnail preview
+- Other links (Zoom, PDF): show favicon + domain label
+
+### Color Labels & Pinning
+- 6 color options (default, red, orange, yellow, green, blue)
+- Pin to top of list
+- Sort: pinned first, then by `updated_at` desc
+
+## Summary of Changes
+
+| Area | Change |
 |------|--------|
-| `UpgradeButton.tsx` | Add `tabId` prop, check `allowedTabs` |
-| `Dashboard.tsx` | Add `UpgradeButton` with `tabId="dashboard"` |
-| `ListUp.tsx` | Add `UpgradeButton` with `tabId="listup"` |
-| `TodoUp.tsx` | Add `UpgradeButton` with `tabId="todoup"` |
-| `Tracking.tsx` | Add `UpgradeButton` with `tabId="tracking"` |
-| `TrackingSettingsDialog.tsx` | Dynamic tier badge from feature flag |
-
-No database changes needed.
+| Database | Create `notes`, `note_attachments` tables + storage bucket + RLS |
+| `App.tsx` | Add `/notes` and `/notes/:id` routes |
+| `Profile.tsx` | Add "Notes" menu item |
+| New pages | `Notes.tsx` (list), `NoteEditor.tsx` (editor) |
+| New components | 7 components in `src/components/notes/` |
+| New hooks | `useNotes.ts`, `useNoteAttachments.ts` |
 
