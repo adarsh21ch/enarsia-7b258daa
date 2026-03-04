@@ -1,15 +1,15 @@
-import { Pin, Clock, Mic, Image } from 'lucide-react';
+import { Pin, Clock } from 'lucide-react';
 import { Note, NoteBlock } from '@/hooks/useNotes';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 
 const COLOR_MAP: Record<string, string> = {
-  default: 'bg-card border-border/40',
-  red: 'bg-red-50 border-red-200/60 dark:bg-red-950/30 dark:border-red-800/40',
-  orange: 'bg-orange-50 border-orange-200/60 dark:bg-orange-950/30 dark:border-orange-800/40',
-  yellow: 'bg-yellow-50 border-yellow-200/60 dark:bg-yellow-950/30 dark:border-yellow-800/40',
-  green: 'bg-green-50 border-green-200/60 dark:bg-green-950/30 dark:border-green-800/40',
-  blue: 'bg-blue-50 border-blue-200/60 dark:bg-blue-950/30 dark:border-blue-800/40',
+  default: 'bg-card border-border',
+  red: 'bg-red-50 border-red-300/70 dark:bg-red-950/30 dark:border-red-700/50',
+  orange: 'bg-orange-50 border-orange-300/70 dark:bg-orange-950/30 dark:border-orange-700/50',
+  yellow: 'bg-yellow-50 border-yellow-300/70 dark:bg-yellow-950/30 dark:border-yellow-700/50',
+  green: 'bg-green-50 border-green-300/70 dark:bg-green-950/30 dark:border-green-700/50',
+  blue: 'bg-blue-50 border-blue-300/70 dark:bg-blue-950/30 dark:border-blue-700/50',
 };
 
 function getPreviewText(blocks: NoteBlock[]): string {
@@ -36,8 +36,9 @@ export function NoteCard({ note, onClick }: NoteCardProps) {
     <button
       onClick={onClick}
       className={cn(
-        "w-full text-left rounded-2xl border p-3.5 transition-all duration-200",
-        "hover:shadow-md hover:-translate-y-0.5 active:scale-[0.98]",
+        "w-full text-left rounded-2xl border-[1.5px] p-3.5 transition-all duration-200",
+        "hover:shadow-lg hover:-translate-y-0.5 active:scale-[0.98]",
+        "shadow-sm",
         colorClass
       )}
     >
@@ -55,7 +56,7 @@ export function NoteCard({ note, onClick }: NoteCardProps) {
           {preview}
         </p>
       )}
-      <div className="flex items-center gap-1.5 mt-2.5 pt-2 border-t border-border/30">
+      <div className="flex items-center gap-1.5 mt-2.5 pt-2 border-t border-border/50">
         <Clock className="h-2.5 w-2.5 text-muted-foreground/50" />
         <span className="text-[10px] text-muted-foreground/50">
           {format(new Date(note.updated_at), 'MMM d, h:mm a')}
