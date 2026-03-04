@@ -5,8 +5,9 @@ import { useNotes, NoteBlock } from '@/hooks/useNotes';
 import { useNoteAttachments } from '@/hooks/useNoteAttachments';
 import { RichTextEditor } from '@/components/notes/RichTextEditor';
 import { NoteToolbar } from '@/components/notes/NoteToolbar';
+import { NoteShareSheet } from '@/components/notes/NoteShareSheet';
 import { AudioPlayer, useAudioRecording } from '@/components/notes/AudioRecorder';
-import { ArrowLeft, Pin, PinOff, Trash2, MoreVertical, FolderOpen, Loader2, Check, Square as StopIcon, AlertCircle, NotebookPen } from 'lucide-react';
+import { ArrowLeft, Pin, PinOff, Trash2, MoreVertical, FolderOpen, Loader2, Check, Square as StopIcon, AlertCircle, NotebookPen, Share2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
@@ -28,6 +29,7 @@ export default function NoteEditor() {
   const [isSaving, setIsSaving] = useState(false);
   const [hasSaved, setHasSaved] = useState(false);
   const [saveError, setSaveError] = useState(false);
+  const [showShare, setShowShare] = useState(false);
 
   const ensureSessionUserId = useCallback(async () => {
     let activeSession = session;
@@ -386,6 +388,9 @@ export default function NoteEditor() {
                 </span>
               ) : null}
             </div>
+            <button onClick={() => setShowShare(true)} className="p-2 rounded-lg hover:bg-muted/50 transition-colors active:scale-95">
+              <Share2 className="h-4 w-4 text-muted-foreground" />
+            </button>
             <button onClick={() => setIsPinned(!isPinned)} className="p-2 rounded-lg hover:bg-muted/50 transition-colors active:scale-95">
               {isPinned ? <PinOff className="h-4 w-4 text-accent" /> : <Pin className="h-4 w-4 text-muted-foreground" />}
             </button>
@@ -544,6 +549,14 @@ export default function NoteEditor() {
           activeBlock={activeBlock}
         />
       </div>
+
+      <NoteShareSheet
+        open={showShare}
+        onClose={() => setShowShare(false)}
+        title={title}
+        blocks={blocks}
+        updatedAt={note.updated_at}
+      />
     </div>
   );
 }
