@@ -33,56 +33,59 @@ export function NoteToolbar({ onAction, onColorChange, onPhotoAttach, onAudioRec
   ];
 
   return (
-    <div className="flex items-center gap-0.5 px-2 py-1.5 bg-card border-t border-border/50 overflow-x-auto">
+    <div className="flex items-center gap-0.5 px-3 py-2 bg-card/95 backdrop-blur-md border-t border-border/40">
       {tools.map(({ icon: Icon, action, label }) => (
         <button
           key={action}
           onClick={() => onAction(action)}
-          className="p-2 rounded-lg hover:bg-muted/50 active:bg-muted transition-colors"
+          className="p-2.5 rounded-xl hover:bg-accent/10 active:bg-accent/20 transition-colors"
           title={label}
         >
-          <Icon className="h-4 w-4 text-muted-foreground" />
+          <Icon className="h-[18px] w-[18px] text-muted-foreground" />
         </button>
       ))}
 
-      <div className="w-px h-5 bg-border/50 mx-1" />
+      <div className="w-px h-5 bg-border/40 mx-0.5" />
 
-      <button onClick={onPhotoAttach} className="p-2 rounded-lg hover:bg-muted/50 active:bg-muted transition-colors" title="Attach photo">
-        <Image className="h-4 w-4 text-muted-foreground" />
+      <button onClick={onPhotoAttach} className="p-2.5 rounded-xl hover:bg-accent/10 active:bg-accent/20 transition-colors" title="Attach photo">
+        <Image className="h-[18px] w-[18px] text-muted-foreground" />
       </button>
 
       <button
         onClick={onAudioRecord}
-        className={cn("p-2 rounded-lg transition-colors", isRecording ? "bg-red-100 dark:bg-red-900/30" : "hover:bg-muted/50 active:bg-muted")}
+        className={cn("p-2.5 rounded-xl transition-colors", isRecording ? "bg-destructive/10" : "hover:bg-accent/10 active:bg-accent/20")}
         title={isRecording ? 'Stop recording' : 'Record audio'}
       >
-        <Mic className={cn("h-4 w-4", isRecording ? "text-red-500 animate-pulse" : "text-muted-foreground")} />
+        <Mic className={cn("h-[18px] w-[18px]", isRecording ? "text-destructive animate-pulse" : "text-muted-foreground")} />
       </button>
 
-      <div className="w-px h-5 bg-border/50 mx-1" />
+      <div className="w-px h-5 bg-border/40 mx-0.5" />
 
       <div className="relative">
         <button
           onClick={() => setShowColors(!showColors)}
-          className="p-2 rounded-lg hover:bg-muted/50 active:bg-muted transition-colors"
+          className="p-2.5 rounded-xl hover:bg-accent/10 active:bg-accent/20 transition-colors"
           title="Color label"
         >
-          <Palette className="h-4 w-4 text-muted-foreground" />
+          <Palette className="h-[18px] w-[18px] text-muted-foreground" />
         </button>
         {showColors && (
-          <div className="absolute bottom-full left-0 mb-2 flex gap-1.5 bg-card border border-border rounded-lg p-2 shadow-lg z-50">
-            {COLORS.map(c => (
-              <button
-                key={c}
-                onClick={() => { onColorChange(c); setShowColors(false); }}
-                className={cn(
-                  "w-6 h-6 rounded-full border-2 transition-transform",
-                  COLOR_DOT[c],
-                  currentColor === c ? "border-foreground scale-110" : "border-transparent"
-                )}
-              />
-            ))}
-          </div>
+          <>
+            <div className="fixed inset-0 z-40" onClick={() => setShowColors(false)} />
+            <div className="absolute bottom-full left-0 mb-2 flex gap-2 bg-card border border-border rounded-2xl p-2.5 shadow-xl z-50">
+              {COLORS.map(c => (
+                <button
+                  key={c}
+                  onClick={() => { onColorChange(c); setShowColors(false); }}
+                  className={cn(
+                    "w-7 h-7 rounded-full border-2 transition-all",
+                    COLOR_DOT[c],
+                    currentColor === c ? "border-accent scale-110 shadow-sm" : "border-transparent hover:scale-105"
+                  )}
+                />
+              ))}
+            </div>
+          </>
         )}
       </div>
     </div>

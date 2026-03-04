@@ -7,22 +7,24 @@ import { RichTextEditor } from '@/components/notes/RichTextEditor';
 import { NoteToolbar } from '@/components/notes/NoteToolbar';
 import { AudioRecorder, useAudioRecording } from '@/components/notes/AudioRecorder';
 import { PhotoAttachment } from '@/components/notes/PhotoAttachment';
-import { ArrowLeft, Pin, PinOff, Trash2, MoreVertical, FolderOpen, Loader2 } from 'lucide-react';
+import { ArrowLeft, Pin, PinOff, Trash2, MoreVertical, FolderOpen, Loader2, Check, Square as StopIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 
 export default function NoteEditor() {
   const { id } = useParams<{ id: string }>();
   const { user } = useAuth();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const { updateNote, deleteNote } = useNotes();
-  const { attachments, uploadAttachment, deleteAttachment, refetch: refetchAttachments } = useNoteAttachments(id);
+  const { attachments, uploadAttachment, deleteAttachment } = useNoteAttachments(id);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [showMenu, setShowMenu] = useState(false);
   const [folderInput, setFolderInput] = useState('');
   const [showFolderInput, setShowFolderInput] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
 
   // Load the single note
   const noteQuery = useQuery({
@@ -51,6 +53,12 @@ export default function NoteEditor() {
   const [isPinned, setIsPinned] = useState(false);
   const [folder, setFolder] = useState('General');
   const initialized = useRef(false);
+  const lastSavedRef = useRef('');
+
+  // Reset initialized when id changes
+  useEffect(() => {
+    initialized.current = false;
+  }, [id]);
 
   useEffect(() => {
     if (note && !initialized.current) {
@@ -60,29 +68,58 @@ export default function NoteEditor() {
       setIsPinned(note.is_pinned || false);
       setFolder(note.folder || 'General');
       initialized.current = true;
+      // Track initial state to avoid unnecessary saves
+      lastSavedRef.current = JSON.stringify({ title: note.title, content: note.content, color_label: note.color_label, is_pinned: note.is_pinned, folder: note.folder });
     }
   }, [note]);
 
   // Auto-save with debounce
   const saveTimeout = useRef<ReturnType<typeof setTimeout>>();
-  const save = useCallback(() => {
-    if (!id) return;
-    clearTimeout(saveTimeout.current);
-    saveTimeout.current = setTimeout(() => {
-      updateNote.mutate({
-        id,
-        title,
-        content: blocks,
-        color_label: colorLabel,
-        is_pinned: isPinned,
-        folder,
-      });
-    }, 800);
-  }, [id, title, blocks, colorLabel, isPinned, folder, updateNote]);
 
   useEffect(() => {
-    if (initialized.current) save();
-  }, [title, blocks, colorLabel, isPinned, folder]);
+    if (!initialized.current || !id) return;
+
+    const currentState = JSON.stringify({ title, content: blocks, color_label: colorLabel, is_pinned: isPinned, folder });
+    if (currentState === lastSavedRef.current) return;
+
+    clearTimeout(saveTimeout.current);
+    saveTimeout.current = setTimeout(async () => {
+      setIsSaving(true);
+      try {
+        await updateNote.mutateAsync({
+          id,
+          title,
+          content: blocks,
+          color_label: colorLabel,
+          is_pinned: isPinned,
+          folder,
+        });
+        lastSavedRef.current = currentState;
+      } catch {
+        // silent
+      } finally {
+        setIsSaving(false);
+      }
+    }, 600);
+
+    return () => clearTimeout(saveTimeout.current);
+  }, [title, blocks, colorLabel, isPinned, folder, id]);
+
+  // Save on unmount
+  useEffect(() => {
+    return () => {
+      if (saveTimeout.current) {
+        clearTimeout(saveTimeout.current);
+        // Force save
+        if (id && initialized.current) {
+          const payload: any = { title, content: blocks as any, color_label: colorLabel, is_pinned: isPinned, folder };
+          supabase.from('notes').update(payload).eq('id', id).then(() => {
+            queryClient.invalidateQueries({ queryKey: ['notes'] });
+          });
+        }
+      }
+    };
+  }, [id, title, blocks, colorLabel, isPinned, folder]);
 
   // Audio recording
   const { isRecording, recordingDuration, startRecording, stopRecording } = useAudioRecording(
@@ -93,7 +130,6 @@ export default function NoteEditor() {
   );
 
   const handleToolAction = (action: string) => {
-    // Find focused block or use last
     const inputs = document.querySelectorAll('[data-block-input]');
     let focusedIndex = blocks.length - 1;
     inputs.forEach((el, i) => {
@@ -102,13 +138,11 @@ export default function NoteEditor() {
 
     if (action === 'heading') {
       const newBlocks = [...blocks];
-      const newBlock: NoteBlock = { id: crypto.randomUUID().slice(0, 8), type: 'heading', content: '', style: 'normal' };
-      newBlocks.splice(focusedIndex + 1, 0, newBlock);
+      newBlocks.splice(focusedIndex + 1, 0, { id: crypto.randomUUID().slice(0, 8), type: 'heading', content: '', style: 'normal' });
       setBlocks(newBlocks);
     } else if (action === 'checklist') {
       const newBlocks = [...blocks];
-      const newBlock: NoteBlock = { id: crypto.randomUUID().slice(0, 8), type: 'checklist', content: '', checked: false, style: 'normal' };
-      newBlocks.splice(focusedIndex + 1, 0, newBlock);
+      newBlocks.splice(focusedIndex + 1, 0, { id: crypto.randomUUID().slice(0, 8), type: 'checklist', content: '', checked: false, style: 'normal' });
       setBlocks(newBlocks);
     } else if (action === 'list') {
       const block = blocks[focusedIndex];
@@ -162,7 +196,7 @@ export default function NoteEditor() {
   if (noteQuery.isLoading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
-        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+        <Loader2 className="h-6 w-6 animate-spin text-accent" />
       </div>
     );
   }
@@ -179,45 +213,69 @@ export default function NoteEditor() {
   return (
     <div className={cn("min-h-screen flex flex-col", COLOR_BG[colorLabel] || COLOR_BG.default)}>
       {/* Header */}
-      <header className="sticky top-0 z-40 bg-background/80 backdrop-blur-sm border-b border-border/30">
+      <header className="sticky top-0 z-40 bg-background/90 backdrop-blur-md border-b border-border/30">
         <div className="flex items-center justify-between px-4 py-2.5">
-          <button onClick={() => navigate('/notes')} className="p-1">
+          <button onClick={() => navigate('/notes')} className="p-1.5 rounded-lg hover:bg-muted/50 transition-colors">
             <ArrowLeft className="h-5 w-5" />
           </button>
-          <div className="flex items-center gap-1">
-            <button onClick={() => setIsPinned(!isPinned)} className="p-2 rounded-lg hover:bg-muted/50">
-              {isPinned ? <PinOff className="h-4 w-4 text-primary" /> : <Pin className="h-4 w-4 text-muted-foreground" />}
+          <div className="flex items-center gap-0.5">
+            {/* Save indicator */}
+            <div className="px-2 py-1">
+              {isSaving ? (
+                <span className="text-[10px] text-muted-foreground animate-pulse">Saving...</span>
+              ) : initialized.current ? (
+                <span className="text-[10px] text-muted-foreground/60 flex items-center gap-0.5">
+                  <Check className="h-3 w-3" /> Saved
+                </span>
+              ) : null}
+            </div>
+            <button onClick={() => setIsPinned(!isPinned)} className="p-2 rounded-lg hover:bg-muted/50 transition-colors">
+              {isPinned ? <PinOff className="h-4 w-4 text-accent" /> : <Pin className="h-4 w-4 text-muted-foreground" />}
             </button>
             <div className="relative">
-              <button onClick={() => setShowMenu(!showMenu)} className="p-2 rounded-lg hover:bg-muted/50">
+              <button onClick={() => setShowMenu(!showMenu)} className="p-2 rounded-lg hover:bg-muted/50 transition-colors">
                 <MoreVertical className="h-4 w-4 text-muted-foreground" />
               </button>
               {showMenu && (
-                <div className="absolute right-0 top-full mt-1 bg-card border border-border rounded-xl shadow-lg py-1 w-44 z-50">
-                  <button
-                    onClick={() => { setShowFolderInput(true); setFolderInput(folder); setShowMenu(false); }}
-                    className="w-full text-left px-3 py-2 text-sm hover:bg-muted/50 flex items-center gap-2"
-                  >
-                    <FolderOpen className="h-4 w-4" /> Move to folder
-                  </button>
-                  <button
-                    onClick={() => { setShowMenu(false); handleDelete(); }}
-                    className="w-full text-left px-3 py-2 text-sm hover:bg-muted/50 flex items-center gap-2 text-destructive"
-                  >
-                    <Trash2 className="h-4 w-4" /> Delete note
-                  </button>
-                </div>
+                <>
+                  <div className="fixed inset-0 z-40" onClick={() => setShowMenu(false)} />
+                  <div className="absolute right-0 top-full mt-1 bg-card border border-border rounded-xl shadow-xl py-1 w-48 z-50">
+                    <button
+                      onClick={() => { setShowFolderInput(true); setFolderInput(folder); setShowMenu(false); }}
+                      className="w-full text-left px-3 py-2.5 text-sm hover:bg-muted/50 flex items-center gap-2.5"
+                    >
+                      <FolderOpen className="h-4 w-4 text-accent" /> Move to folder
+                    </button>
+                    <div className="h-px bg-border/50 mx-2" />
+                    <button
+                      onClick={() => { setShowMenu(false); handleDelete(); }}
+                      className="w-full text-left px-3 py-2.5 text-sm hover:bg-destructive/10 flex items-center gap-2.5 text-destructive"
+                    >
+                      <Trash2 className="h-4 w-4" /> Delete note
+                    </button>
+                  </div>
+                </>
               )}
             </div>
           </div>
         </div>
-        {/* Recording indicator */}
+
+        {/* Recording banner with STOP button */}
         {isRecording && (
-          <div className="px-4 py-1.5 bg-red-50 dark:bg-red-950/30 flex items-center gap-2">
-            <div className="h-2 w-2 rounded-full bg-red-500 animate-pulse" />
-            <span className="text-xs text-red-600 dark:text-red-400 font-medium">
-              Recording... {Math.floor(recordingDuration / 60)}:{(recordingDuration % 60).toString().padStart(2, '0')}
-            </span>
+          <div className="px-4 py-2 bg-destructive/10 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <div className="h-2.5 w-2.5 rounded-full bg-destructive animate-pulse" />
+              <span className="text-xs font-medium text-destructive">
+                Recording {Math.floor(recordingDuration / 60)}:{(recordingDuration % 60).toString().padStart(2, '0')}
+              </span>
+            </div>
+            <button
+              onClick={stopRecording}
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-destructive text-destructive-foreground rounded-full text-xs font-semibold shadow-sm active:scale-95 transition-transform"
+            >
+              <StopIcon className="h-3 w-3 fill-current" />
+              Stop
+            </button>
           </div>
         )}
       </header>
@@ -225,30 +283,30 @@ export default function NoteEditor() {
       {/* Folder input modal */}
       {showFolderInput && (
         <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4" onClick={() => setShowFolderInput(false)}>
-          <div className="bg-card rounded-xl p-4 w-full max-w-xs space-y-3" onClick={e => e.stopPropagation()}>
+          <div className="bg-card rounded-2xl p-5 w-full max-w-xs space-y-4 shadow-xl" onClick={e => e.stopPropagation()}>
             <h3 className="font-semibold text-sm">Move to folder</h3>
             <input
               value={folderInput}
               onChange={e => setFolderInput(e.target.value)}
               placeholder="Folder name..."
-              className="w-full h-9 px-3 bg-muted/50 rounded-lg text-sm border border-border/50 outline-none focus:border-primary/50"
+              className="w-full h-10 px-3 bg-muted/50 rounded-xl text-sm border border-border/50 outline-none focus:border-accent/50 focus:ring-1 focus:ring-accent/20 transition-all"
               autoFocus
             />
             <div className="flex gap-2 justify-end">
-              <button onClick={() => setShowFolderInput(false)} className="px-3 py-1.5 text-xs rounded-lg hover:bg-muted">Cancel</button>
-              <button onClick={handleFolderSave} className="px-3 py-1.5 text-xs bg-primary text-primary-foreground rounded-lg">Save</button>
+              <button onClick={() => setShowFolderInput(false)} className="px-4 py-2 text-xs rounded-lg hover:bg-muted transition-colors">Cancel</button>
+              <button onClick={handleFolderSave} className="px-4 py-2 text-xs bg-accent text-accent-foreground rounded-lg font-medium">Save</button>
             </div>
           </div>
         </div>
       )}
 
       {/* Title */}
-      <div className="px-4 pt-3">
+      <div className="px-4 pt-4 pb-1">
         <input
           value={title}
           onChange={e => setTitle(e.target.value)}
           placeholder="Note title..."
-          className="w-full text-xl font-bold bg-transparent outline-none placeholder:text-muted-foreground/40"
+          className="w-full text-xl font-bold bg-transparent outline-none placeholder:text-muted-foreground/30"
         />
       </div>
 
@@ -256,7 +314,7 @@ export default function NoteEditor() {
       <PhotoAttachment attachments={attachments} onDelete={(att) => deleteAttachment.mutate(att)} />
 
       {/* Audio */}
-      <div className="px-4">
+      <div className="px-4 py-1">
         <AudioRecorder
           isRecording={isRecording}
           onStartRecording={startRecording}

@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { Play, Pause, Trash2, Mic, Square } from 'lucide-react';
+import { Play, Pause, Trash2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { NoteAttachment } from '@/hooks/useNoteAttachments';
 
@@ -47,26 +47,30 @@ function AudioPlayer({ url, fileName }: { url: string; fileName?: string | null 
   };
 
   return (
-    <div className="flex items-center gap-2 bg-muted/50 rounded-lg px-3 py-2">
+    <div className="flex items-center gap-2.5 bg-accent/5 border border-accent/15 rounded-xl px-3 py-2.5">
       <audio ref={audioRef} src={url} preload="metadata" />
-      <button onClick={toggle} className="shrink-0">
-        {playing ? <Pause className="h-4 w-4 text-primary" /> : <Play className="h-4 w-4 text-primary" />}
+      <button onClick={toggle} className="shrink-0 w-8 h-8 rounded-full bg-accent/10 flex items-center justify-center">
+        {playing ? <Pause className="h-3.5 w-3.5 text-accent" /> : <Play className="h-3.5 w-3.5 text-accent ml-0.5" />}
       </button>
-      <div className="flex-1 h-1.5 bg-border rounded-full overflow-hidden">
-        <div
-          className="h-full bg-primary rounded-full transition-all"
-          style={{ width: `${duration ? (progress / duration) * 100 : 0}%` }}
-        />
+      <div className="flex-1 space-y-1">
+        <div className="h-1.5 bg-accent/10 rounded-full overflow-hidden">
+          <div
+            className="h-full bg-accent rounded-full transition-all"
+            style={{ width: `${duration ? (progress / duration) * 100 : 0}%` }}
+          />
+        </div>
+        <div className="flex justify-between">
+          <span className="text-[10px] text-muted-foreground tabular-nums">{formatTime(progress)}</span>
+          <span className="text-[10px] text-muted-foreground tabular-nums">{formatTime(duration || 0)}</span>
+        </div>
       </div>
-      <span className="text-[10px] text-muted-foreground tabular-nums w-8 text-right">
-        {formatTime(duration || 0)}
-      </span>
     </div>
   );
 }
 
 export function AudioRecorder({ isRecording, onStartRecording, onStopRecording, attachments, onDelete }: AudioRecorderProps) {
   const audioAttachments = attachments.filter(a => a.type === 'audio');
+  if (audioAttachments.length === 0) return null;
 
   return (
     <div className="space-y-2">
@@ -75,7 +79,7 @@ export function AudioRecorder({ isRecording, onStartRecording, onStopRecording, 
           <AudioPlayer url={att.publicUrl || ''} fileName={att.file_name} />
           <button
             onClick={() => onDelete(att)}
-            className="absolute -top-1 -right-1 p-1 bg-destructive text-destructive-foreground rounded-full opacity-0 group-hover:opacity-100 transition-opacity shadow"
+            className="absolute -top-1.5 -right-1.5 p-1 bg-destructive text-destructive-foreground rounded-full opacity-0 group-hover:opacity-100 transition-opacity shadow-md"
           >
             <Trash2 className="h-3 w-3" />
           </button>
@@ -119,18 +123,16 @@ export function useAudioRecording(onRecordComplete: (file: File, duration: numbe
       recorder.start();
       setIsRecording(true);
 
-      // Timer
       timerRef.current = window.setInterval(() => {
         const elapsed = Math.round((Date.now() - startTimeRef.current) / 1000);
         setRecordingDuration(elapsed);
-        // Auto-stop at 5 minutes
         if (elapsed >= 300) {
           recorder.stop();
           clearInterval(timerRef.current);
         }
       }, 1000);
     } catch {
-      // Permission denied or no mic
+      // Permission denied
     }
   };
 
