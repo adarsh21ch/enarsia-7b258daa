@@ -26,7 +26,7 @@ import { PullToRefreshIndicator } from '@/components/PullToRefreshIndicator';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import { User, LogOut, ChevronRight, ChevronDown, Loader2, FileText, Shield, Receipt, Settings, ExternalLink, BarChart3, Crown, Gift, Trash2, Sparkles, Lock, Share2, Video, Sliders } from 'lucide-react';
+import { User, LogOut, ChevronRight, ChevronDown, Loader2, FileText, Shield, Receipt, Settings, ExternalLink, BarChart3, Crown, Gift, Trash2, Sparkles, Lock, Share2, Video, Sliders, StickyNote } from 'lucide-react';
 
 import { useSharedLeads } from '@/hooks/useSharedLeads';
 import { AIAssistantChat } from '@/components/ai/AIAssistantChat';
@@ -308,6 +308,19 @@ export default function Profile() {
             <ChevronRight className="h-4 w-4 text-muted-foreground" />
           </button>
 
+          {/* Nevorai Notes */}
+          <button onClick={() => navigate('/notes')} className={cn("w-full rounded-xl px-4 py-2.5", "bg-gradient-to-r backdrop-blur-sm", "border border-amber-500/30", "flex items-center justify-between", "transition-all duration-200 hover:shadow-md", "from-amber-500/20 to-amber-500/5")}>
+            <div className="flex items-center gap-3">
+              <div className="p-1.5 rounded-lg bg-amber-500/10">
+                <StickyNote className="h-4 w-4 text-amber-500" />
+              </div>
+              <div className="text-left">
+                <span className="font-medium text-sm block">Nevorai Notes</span>
+                <span className="text-[11px] text-muted-foreground">Quick notes, voice memos & more</span>
+              </div>
+            </div>
+            <ChevronRight className="h-4 w-4 text-muted-foreground" />
+          </button>
           <button onClick={() => navigate('/shared-leads')} className={cn(
             "w-full rounded-xl px-4 py-2.5",
             "bg-gradient-to-r backdrop-blur-sm",

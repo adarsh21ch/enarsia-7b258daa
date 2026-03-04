@@ -3398,6 +3398,86 @@ export type Database = {
           },
         ]
       }
+      note_attachments: {
+        Row: {
+          created_at: string | null
+          duration_seconds: number | null
+          file_name: string | null
+          file_size: number | null
+          id: string
+          note_id: string
+          storage_path: string
+          type: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          duration_seconds?: number | null
+          file_name?: string | null
+          file_size?: number | null
+          id?: string
+          note_id: string
+          storage_path: string
+          type: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          duration_seconds?: number | null
+          file_name?: string | null
+          file_size?: number | null
+          id?: string
+          note_id?: string
+          storage_path?: string
+          type?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "note_attachments_note_id_fkey"
+            columns: ["note_id"]
+            isOneToOne: false
+            referencedRelation: "notes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      notes: {
+        Row: {
+          color_label: string | null
+          content: Json
+          created_at: string | null
+          folder: string | null
+          id: string
+          is_pinned: boolean | null
+          title: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          color_label?: string | null
+          content?: Json
+          created_at?: string | null
+          folder?: string | null
+          id?: string
+          is_pinned?: boolean | null
+          title?: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          color_label?: string | null
+          content?: Json
+          created_at?: string | null
+          folder?: string | null
+          id?: string
+          is_pinned?: boolean | null
+          title?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       notifications: {
         Row: {
           body: string | null
