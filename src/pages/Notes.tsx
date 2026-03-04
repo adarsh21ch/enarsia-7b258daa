@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
-import { useNotes } from '@/hooks/useNotes';
+import { useNotes, Note } from '@/hooks/useNotes';
 import { NoteCard } from '@/components/notes/NoteCard';
 import { SearchBar } from '@/components/ui/SearchBar';
 import { BottomNav } from '@/components/layout/BottomNav';
@@ -13,7 +13,11 @@ export default function Notes() {
   const navigate = useNavigate();
   const [search, setSearch] = useState('');
   const [activeFolder, setActiveFolder] = useState('All');
-  const { notes, isLoading, folders, createNote } = useNotes(activeFolder);
+  const [moveTarget, setMoveTarget] = useState<Note | null>(null);
+  const [folderInput, setFolderInput] = useState('General');
+  const [actionNoteId, setActionNoteId] = useState<string | null>(null);
+  const [isMoving, setIsMoving] = useState(false);
+  const { notes, isLoading, folders, createNote, deleteNote, updateNote } = useNotes(activeFolder);
 
   useEffect(() => {
     if (!user || !session?.access_token) {
@@ -30,6 +34,8 @@ export default function Notes() {
       )
     : notes;
 
+  const folderOptions = folders.filter((f) => f !== 'All');
+
   const handleCreate = async () => {
     try {
       const result = await createNote.mutateAsync({
@@ -38,6 +44,40 @@ export default function Notes() {
       navigate(`/notes/${result.id}`);
     } catch {
       // Error toast is handled in useNotes
+    }
+  };
+
+  const handleDeleteFromList = async (note: Note) => {
+    setActionNoteId(note.id);
+    try {
+      await deleteNote.mutateAsync(note.id);
+    } catch {
+      // Error toast is handled in useNotes
+    } finally {
+      setActionNoteId(null);
+    }
+  };
+
+  const handleOpenMoveDialog = (note: Note) => {
+    setMoveTarget(note);
+    setFolderInput((note.folder || 'General').trim() || 'General');
+  };
+
+  const handleMoveSave = async () => {
+    if (!moveTarget) return;
+
+    const targetFolder = folderInput.trim() || 'General';
+    setIsMoving(true);
+    setActionNoteId(moveTarget.id);
+
+    try {
+      await updateNote.mutateAsync({ id: moveTarget.id, folder: targetFolder });
+      setMoveTarget(null);
+    } catch {
+      // Error toast is handled in useNotes
+    } finally {
+      setIsMoving(false);
+      setActionNoteId(null);
     }
   };
 
@@ -90,7 +130,7 @@ export default function Notes() {
         </div>
       </div>
 
-      {/* Notes grid */}
+      {/* Notes list */}
       <main className="flex-1 container px-4 py-4 pb-24">
         {isLoading ? (
           <div className="flex justify-center py-20">
@@ -105,15 +145,64 @@ export default function Notes() {
             {!search && <p className="text-xs text-muted-foreground/60">Tap + to create your first note</p>}
           </div>
         ) : (
-          <div className="columns-2 gap-3 space-y-3">
+          <div className="space-y-3">
             {filtered.map((note) => (
-              <div key={note.id} className="break-inside-avoid">
-                <NoteCard note={note} onClick={() => navigate(`/notes/${note.id}`)} />
-              </div>
+              <NoteCard
+                key={note.id}
+                note={note}
+                onClick={() => navigate(`/notes/${note.id}`)}
+                onDelete={handleDeleteFromList}
+                onMove={handleOpenMoveDialog}
+                actionLoading={actionNoteId === note.id && (deleteNote.isPending || isMoving)}
+              />
             ))}
           </div>
         )}
       </main>
+
+      {/* Move folder dialog */}
+      {moveTarget && (
+        <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4" onClick={() => setMoveTarget(null)}>
+          <div className="bg-card rounded-2xl p-5 w-full max-w-xs space-y-4 shadow-xl" onClick={(e) => e.stopPropagation()}>
+            <h3 className="font-semibold text-sm">Move to folder</h3>
+            <input
+              value={folderInput}
+              onChange={(e) => setFolderInput(e.target.value)}
+              placeholder="Folder name..."
+              className="w-full h-10 px-3 bg-muted/50 rounded-xl text-sm border border-border/50 outline-none focus:border-accent/50 focus:ring-1 focus:ring-accent/20 transition-all"
+              autoFocus
+            />
+            <div className="flex flex-wrap gap-2">
+              {folderOptions.map((folder) => (
+                <button
+                  key={folder}
+                  onClick={() => setFolderInput(folder)}
+                  className={cn(
+                    'px-2.5 py-1 rounded-full text-[11px] border transition-colors',
+                    folderInput.trim() === folder
+                      ? 'bg-accent text-accent-foreground border-accent'
+                      : 'bg-muted/30 border-border/60 text-muted-foreground hover:bg-muted/50'
+                  )}
+                >
+                  {folder}
+                </button>
+              ))}
+            </div>
+            <div className="flex gap-2 justify-end">
+              <button onClick={() => setMoveTarget(null)} className="px-4 py-2 text-xs rounded-lg hover:bg-muted transition-colors">
+                Cancel
+              </button>
+              <button
+                onClick={handleMoveSave}
+                disabled={isMoving}
+                className="px-4 py-2 text-xs bg-accent text-accent-foreground rounded-lg font-medium disabled:opacity-60"
+              >
+                {isMoving ? 'Saving...' : 'Save'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* FAB */}
       <button
