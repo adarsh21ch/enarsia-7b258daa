@@ -38,7 +38,7 @@ export function NoteToolbar({ onAction, onColorChange, onPhotoAttach, onTakePhot
 
   return (
     <>
-      <div className="flex items-center justify-center gap-1 px-3 py-2.5 mx-3 mb-3 bg-card/95 backdrop-blur-md border border-border/50 rounded-2xl shadow-[0_-2px_20px_-4px_rgba(0,0,0,0.08)]">
+      <div className="flex items-center justify-center gap-1 px-3 py-2 bg-card/98 backdrop-blur-xl border-t border-border/40 shadow-[0_-1px_8px_-2px_rgba(0,0,0,0.06)]">
         {tools.map(({ icon: Icon, action, label, isActive }) => (
           <button
             key={action}

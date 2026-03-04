@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
+import { useState, useEffect, useRef, useCallback, useMemo, useLayoutEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useNotes, NoteBlock } from '@/hooks/useNotes';
@@ -77,6 +77,8 @@ export default function NoteEditor() {
   const [isPinned, setIsPinned] = useState(false);
   const [folder, setFolder] = useState('General');
   const [activeBlockIndex, setActiveBlockIndex] = useState(0);
+  const [keyboardOffset, setKeyboardOffset] = useState(0);
+  const [isKeyboardOpen, setIsKeyboardOpen] = useState(false);
   const initialized = useRef(false);
 
   const latestRef = useRef({ title, blocks, colorLabel, isPinned, folder });
@@ -301,6 +303,27 @@ export default function NoteEditor() {
     return titleWords + blockWords;
   }, [title, blocks]);
 
+  // Track visual viewport to position toolbar above keyboard
+  useEffect(() => {
+    const vv = window.visualViewport;
+    if (!vv) return;
+
+    const update = () => {
+      const offsetFromBottom = window.innerHeight - (vv.offsetTop + vv.height);
+      setKeyboardOffset(offsetFromBottom);
+      setIsKeyboardOpen(offsetFromBottom > 50);
+    };
+
+    vv.addEventListener('resize', update);
+    vv.addEventListener('scroll', update);
+    update();
+
+    return () => {
+      vv.removeEventListener('resize', update);
+      vv.removeEventListener('scroll', update);
+    };
+  }, []);
+
   if (!user || !session?.access_token) {
     navigate('/auth', { replace: true });
     return null;
@@ -499,14 +522,17 @@ export default function NoteEditor() {
       )}
 
       {/* Spacer so content isn't hidden behind toolbar */}
-      <div className="h-20" />
+      <div style={{ height: isKeyboardOpen ? keyboardOffset + 56 : 80 }} />
 
       {/* Hidden file inputs */}
       <input ref={fileInputRef} type="file" accept="image/*" multiple className="hidden" onChange={handleFileChange} />
       <input ref={cameraInputRef} type="file" accept="image/*" capture="environment" className="hidden" onChange={handleFileChange} />
 
-      {/* Floating Toolbar */}
-      <div className="fixed bottom-0 left-0 right-0 z-30 pb-[env(safe-area-inset-bottom)]">
+      {/* Toolbar — sticks to keyboard top edge */}
+      <div
+        className="fixed left-0 right-0 z-30 transition-[bottom] duration-100 ease-out"
+        style={{ bottom: isKeyboardOpen ? keyboardOffset : 0 }}
+      >
         <NoteToolbar
           onAction={handleToolAction}
           onColorChange={setColorLabel}
