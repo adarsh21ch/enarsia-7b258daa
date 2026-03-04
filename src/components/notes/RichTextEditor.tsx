@@ -6,13 +6,14 @@ import { Square, CheckSquare2 } from 'lucide-react';
 interface RichTextEditorProps {
   blocks: NoteBlock[];
   onChange: (blocks: NoteBlock[]) => void;
+  onActiveBlockChange?: (index: number) => void;
 }
 
 function generateId() {
   return crypto.randomUUID().slice(0, 8);
 }
 
-export function RichTextEditor({ blocks, onChange }: RichTextEditorProps) {
+export function RichTextEditor({ blocks, onChange, onActiveBlockChange }: RichTextEditorProps) {
   const containerRef = useRef<HTMLDivElement>(null);
 
   const updateBlock = useCallback((index: number, updates: Partial<NoteBlock>) => {
@@ -32,8 +33,9 @@ export function RichTextEditor({ blocks, onChange }: RichTextEditorProps) {
       const inputs = containerRef.current?.querySelectorAll('[data-block-input]');
       const target = inputs?.[index + 1] as HTMLElement;
       target?.focus();
+      onActiveBlockChange?.(index + 1);
     }, 50);
-  }, [blocks, onChange]);
+  }, [blocks, onChange, onActiveBlockChange]);
 
   const removeBlock = useCallback((index: number) => {
     if (blocks.length <= 1) return;
@@ -41,10 +43,12 @@ export function RichTextEditor({ blocks, onChange }: RichTextEditorProps) {
     onChange(newBlocks);
     setTimeout(() => {
       const inputs = containerRef.current?.querySelectorAll('[data-block-input]');
-      const target = inputs?.[Math.max(0, index - 1)] as HTMLElement;
+      const targetIndex = Math.max(0, index - 1);
+      const target = inputs?.[targetIndex] as HTMLElement;
       target?.focus();
+      onActiveBlockChange?.(targetIndex);
     }, 50);
-  }, [blocks, onChange]);
+  }, [blocks, onChange, onActiveBlockChange]);
 
   const handleKeyDown = useCallback((e: KeyboardEvent<HTMLTextAreaElement>, index: number) => {
     const block = blocks[index];
@@ -111,10 +115,11 @@ export function RichTextEditor({ blocks, onChange }: RichTextEditorProps) {
               "text-sm"
             )}
             style={{ overflow: 'hidden', minHeight: '1.75rem' }}
-            onFocus={(e) => {
-              e.target.style.height = 'auto';
-              e.target.style.height = e.target.scrollHeight + 'px';
-            }}
+             onFocus={(e) => {
+               e.target.style.height = 'auto';
+               e.target.style.height = e.target.scrollHeight + 'px';
+               onActiveBlockChange?.(i);
+             }}
           />
         </div>
       ))}

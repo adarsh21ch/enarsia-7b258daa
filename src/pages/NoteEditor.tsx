@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useNotes, NoteBlock } from '@/hooks/useNotes';
@@ -17,7 +17,7 @@ export default function NoteEditor() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const { updateNote, deleteNote } = useNotes();
+  const { deleteNote } = useNotes();
   const { attachments, uploadAttachment, deleteAttachment } = useNoteAttachments(id);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [showMenu, setShowMenu] = useState(false);
@@ -28,12 +28,13 @@ export default function NoteEditor() {
 
   // Load the single note directly
   const noteQuery = useQuery({
-    queryKey: ['note', id],
+    queryKey: ['note', user?.id, id],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('notes')
         .select('*')
         .eq('id', id!)
+        .eq('user_id', user!.id)
         .single();
       if (error) throw error;
       return {
@@ -42,7 +43,9 @@ export default function NoteEditor() {
       };
     },
     enabled: !!id && !!user?.id,
-    staleTime: Infinity, // Don't auto-refetch while editing
+    staleTime: 0,
+    gcTime: 0,
+    refetchOnMount: 'always',
     refetchOnWindowFocus: false,
   });
 
@@ -54,6 +57,7 @@ export default function NoteEditor() {
   const [colorLabel, setColorLabel] = useState('default');
   const [isPinned, setIsPinned] = useState(false);
   const [folder, setFolder] = useState('General');
+  const [activeBlockIndex, setActiveBlockIndex] = useState(0);
   const initialized = useRef(false);
 
   // Ref to always hold latest state for unmount save
@@ -62,39 +66,80 @@ export default function NoteEditor() {
     latestRef.current = { title, blocks, colorLabel, isPinned, folder };
   });
 
+  const saveTimeout = useRef<ReturnType<typeof setTimeout>>();
+  const lastSavedJson = useRef('');
+  const isNavigatingBackRef = useRef(false);
+
+  const persistSnapshot = useCallback(async (
+    snapshot: { title: string; blocks: NoteBlock[]; colorLabel: string; isPinned: boolean; folder: string },
+    force = false
+  ) => {
+    if (!id || !user?.id) return;
+
+    const json = JSON.stringify(snapshot);
+    if (!force && json === lastSavedJson.current) return;
+
+    const { data, error } = await supabase
+      .from('notes')
+      .update({
+        title: snapshot.title,
+        content: snapshot.blocks as any,
+        color_label: snapshot.colorLabel,
+        is_pinned: snapshot.isPinned,
+        folder: snapshot.folder,
+      })
+      .eq('id', id)
+      .eq('user_id', user.id)
+      .select('*')
+      .single();
+
+    if (error) throw error;
+
+    lastSavedJson.current = json;
+    queryClient.setQueryData(['note', user.id, id], {
+      ...data,
+      content: (Array.isArray(data.content) ? data.content : []) as unknown as NoteBlock[],
+    });
+    queryClient.invalidateQueries({ queryKey: ['notes', user.id] });
+  }, [id, user?.id, queryClient]);
+
   // Reset when note id changes
   useEffect(() => {
     initialized.current = false;
     setHasSaved(false);
+    setActiveBlockIndex(0);
+    lastSavedJson.current = '';
+    isNavigatingBackRef.current = false;
   }, [id]);
 
   // Hydrate local state from fetched note — only once per note
   useEffect(() => {
-    if (note && !initialized.current) {
-      const t = note.title || '';
-      const b: NoteBlock[] = note.content.length > 0
-        ? note.content
-        : [{ id: 'init', type: 'text', content: '', style: 'normal' }];
-      const c = note.color_label || 'default';
-      const p = note.is_pinned || false;
-      const f = note.folder || 'General';
+    if (!note || initialized.current) return;
 
-      setTitle(t);
-      setBlocks(b);
-      setColorLabel(c);
-      setIsPinned(p);
-      setFolder(f);
-      initialized.current = true;
-      latestRef.current = { title: t, blocks: b, colorLabel: c, isPinned: p, folder: f };
-    }
+    const t = note.title || '';
+    const b: NoteBlock[] = note.content.length > 0
+      ? note.content
+      : [{ id: 'init', type: 'text', content: '', style: 'normal' }];
+    const c = note.color_label || 'default';
+    const p = note.is_pinned || false;
+    const f = note.folder || 'General';
+
+    setTitle(t);
+    setBlocks(b);
+    setColorLabel(c);
+    setIsPinned(p);
+    setFolder(f);
+    setActiveBlockIndex(Math.max(0, b.length - 1));
+    setHasSaved(false);
+
+    initialized.current = true;
+    latestRef.current = { title: t, blocks: b, colorLabel: c, isPinned: p, folder: f };
+    lastSavedJson.current = JSON.stringify({ title: t, blocks: b, colorLabel: c, isPinned: p, folder: f });
   }, [note]);
 
   // Debounced auto-save
-  const saveTimeout = useRef<ReturnType<typeof setTimeout>>();
-  const lastSavedJson = useRef('');
-
   useEffect(() => {
-    if (!initialized.current || !id) return;
+    if (!initialized.current || !id || !user?.id) return;
 
     const json = JSON.stringify({ title, blocks, colorLabel, isPinned, folder });
     if (json === lastSavedJson.current) return;
@@ -103,58 +148,26 @@ export default function NoteEditor() {
     saveTimeout.current = setTimeout(async () => {
       setIsSaving(true);
       try {
-        // Direct Supabase update to avoid query invalidation loops
-        const { error } = await supabase
-          .from('notes')
-          .update({
-            title,
-            content: blocks as any,
-            color_label: colorLabel,
-            is_pinned: isPinned,
-            folder,
-          })
-          .eq('id', id);
-
-        if (!error) {
-          lastSavedJson.current = json;
-          setHasSaved(true);
-        }
+        await persistSnapshot({ title, blocks, colorLabel, isPinned, folder });
+        setHasSaved(true);
       } catch {
         // silent
       } finally {
         setIsSaving(false);
       }
-    }, 800);
+    }, 600);
 
     return () => clearTimeout(saveTimeout.current);
-  }, [title, blocks, colorLabel, isPinned, folder, id]);
+  }, [title, blocks, colorLabel, isPinned, folder, id, user?.id, persistSnapshot]);
 
-  // Save on unmount (only once, on actual unmount)
+  // Save on unmount (except when back already did explicit save)
   useEffect(() => {
-    const noteId = id;
     return () => {
-      if (!noteId || !initialized.current) return;
-      const { title: t, blocks: b, colorLabel: c, isPinned: p, folder: f } = latestRef.current;
-      const json = JSON.stringify({ title: t, blocks: b, colorLabel: c, isPinned: p, folder: f });
-      if (json === lastSavedJson.current) return;
-
-      // Fire-and-forget save
-      supabase
-        .from('notes')
-        .update({
-          title: t,
-          content: b as any,
-          color_label: c,
-          is_pinned: p,
-          folder: f,
-        })
-        .eq('id', noteId)
-        .then(() => {
-          queryClient.invalidateQueries({ queryKey: ['notes'] });
-        });
+      if (!id || !initialized.current || isNavigatingBackRef.current) return;
+      clearTimeout(saveTimeout.current);
+      void persistSnapshot(latestRef.current);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [id]);
+  }, [id, persistSnapshot]);
 
   // Audio recording
   const { isRecording, recordingDuration, startRecording, stopRecording } = useAudioRecording(
@@ -165,20 +178,18 @@ export default function NoteEditor() {
   );
 
   const handleToolAction = (action: string) => {
-    const inputs = document.querySelectorAll('[data-block-input]');
-    let focusedIndex = blocks.length - 1;
-    inputs.forEach((el, i) => {
-      if (el === document.activeElement) focusedIndex = i;
-    });
+    const focusedIndex = Math.min(Math.max(activeBlockIndex, 0), Math.max(blocks.length - 1, 0));
 
     if (action === 'heading') {
       const newBlocks = [...blocks];
       newBlocks.splice(focusedIndex + 1, 0, { id: crypto.randomUUID().slice(0, 8), type: 'heading', content: '', style: 'normal' });
       setBlocks(newBlocks);
+      setActiveBlockIndex(focusedIndex + 1);
     } else if (action === 'checklist') {
       const newBlocks = [...blocks];
       newBlocks.splice(focusedIndex + 1, 0, { id: crypto.randomUUID().slice(0, 8), type: 'checklist', content: '', checked: false, style: 'normal' });
       setBlocks(newBlocks);
+      setActiveBlockIndex(focusedIndex + 1);
     } else if (action === 'list') {
       const block = blocks[focusedIndex];
       if (block) {
@@ -227,6 +238,29 @@ export default function NoteEditor() {
     setShowFolderInput(false);
   };
 
+  const handleBackNavigation = async () => {
+    if (!id || !initialized.current) {
+      navigate('/notes');
+      return;
+    }
+
+    let savedOnBack = false;
+    setIsSaving(true);
+    try {
+      await persistSnapshot(latestRef.current);
+      setHasSaved(true);
+      savedOnBack = true;
+    } catch {
+      // silent
+    } finally {
+      setIsSaving(false);
+    }
+
+    isNavigatingBackRef.current = savedOnBack;
+    queryClient.invalidateQueries({ queryKey: ['notes', user?.id] });
+    navigate('/notes');
+  };
+
   if (!user) { navigate('/auth'); return null; }
   if (noteQuery.isLoading) {
     return (
@@ -251,11 +285,7 @@ export default function NoteEditor() {
       <header className="sticky top-0 z-40 bg-background/90 backdrop-blur-md border-b border-border/30">
         <div className="flex items-center justify-between px-4 py-2.5">
           <button
-            onClick={() => {
-              // Invalidate notes list so it picks up latest changes
-              queryClient.invalidateQueries({ queryKey: ['notes'] });
-              navigate('/notes');
-            }}
+            onClick={handleBackNavigation}
             className="p-1.5 rounded-lg hover:bg-muted/50 transition-colors"
           >
             <ArrowLeft className="h-5 w-5" />
@@ -367,7 +397,7 @@ export default function NoteEditor() {
       </div>
 
       {/* Editor */}
-      <RichTextEditor blocks={blocks} onChange={setBlocks} />
+      <RichTextEditor blocks={blocks} onChange={setBlocks} onActiveBlockChange={setActiveBlockIndex} />
 
       {/* Hidden file input */}
       <input
