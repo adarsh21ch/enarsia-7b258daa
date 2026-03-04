@@ -15,11 +15,13 @@ const COLOR_MAP: Record<string, string> = {
 function getPreviewText(blocks: NoteBlock[]): string {
   return blocks
     .slice(0, 5)
-    .map(b => {
-      if (b.type === 'checklist') return `${b.checked ? '☑' : '☐'} ${b.content}`;
-      return b.content;
+    .map((b) => {
+      const raw = (b.content || '').trim();
+      if (!raw) return '';
+      if (b.type === 'checklist') return `${b.checked ? '☑' : '☐'} ${raw}`;
+      return raw;
     })
-    .filter(Boolean)
+    .filter((line) => line.length > 0)
     .join('\n');
 }
 
@@ -30,6 +32,8 @@ interface NoteCardProps {
 
 export function NoteCard({ note, onClick }: NoteCardProps) {
   const preview = getPreviewText(note.content);
+  const normalizedTitle = (note.title || '').trim();
+  const previewText = preview || 'No content yet';
   const colorClass = COLOR_MAP[note.color_label] || COLOR_MAP.default;
 
   return (
@@ -48,14 +52,12 @@ export function NoteCard({ note, onClick }: NoteCardProps) {
           <span className="text-[10px] font-medium text-accent">Pinned</span>
         </div>
       )}
-      {note.title && (
-        <h3 className="font-semibold text-sm line-clamp-1 mb-1">{note.title}</h3>
-      )}
-      {preview && (
-        <p className="text-xs text-muted-foreground line-clamp-5 whitespace-pre-line leading-relaxed">
-          {preview}
-        </p>
-      )}
+      <h3 className="font-semibold text-sm line-clamp-1 mb-1 text-foreground">
+        {normalizedTitle || 'Untitled note'}
+      </h3>
+      <p className="text-xs text-muted-foreground line-clamp-5 whitespace-pre-line leading-relaxed">
+        {previewText}
+      </p>
       <div className="flex items-center gap-1.5 mt-2.5 pt-2 border-t border-border/50">
         <Clock className="h-2.5 w-2.5 text-muted-foreground/50" />
         <span className="text-[10px] text-muted-foreground/50">
