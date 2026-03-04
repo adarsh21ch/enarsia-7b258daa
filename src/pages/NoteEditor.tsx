@@ -11,10 +11,11 @@ import { ArrowLeft, Pin, PinOff, Trash2, MoreVertical, FolderOpen, Loader2, Chec
 import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { toast } from 'sonner';
 
 export default function NoteEditor() {
   const { id } = useParams<{ id: string }>();
-  const { user } = useAuth();
+  const { user, session } = useAuth();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { deleteNote } = useNotes();
@@ -26,30 +27,57 @@ export default function NoteEditor() {
   const [isSaving, setIsSaving] = useState(false);
   const [hasSaved, setHasSaved] = useState(false);
 
+  const ensureSessionUserId = useCallback(async () => {
+    let activeSession = session;
+
+    if (!activeSession?.access_token) {
+      const { data, error } = await supabase.auth.getSession();
+      if (error) throw error;
+      activeSession = data.session;
+    }
+
+    if (!activeSession?.access_token) {
+      const { data, error } = await supabase.auth.refreshSession();
+      if (error) throw error;
+      activeSession = data.session;
+    }
+
+    if (!activeSession?.user?.id) {
+      throw new Error('SESSION_EXPIRED');
+    }
+
+    return activeSession.user.id;
+  }, [session]);
+
   // Load the single note directly
   const noteQuery = useQuery({
-    queryKey: ['note', user?.id, id],
+    queryKey: ['note', session?.access_token ? user?.id : null, id],
     queryFn: async () => {
+      const userId = await ensureSessionUserId();
+
       const { data, error } = await supabase
         .from('notes')
         .select('*')
         .eq('id', id!)
-        .eq('user_id', user!.id)
-        .single();
+        .eq('user_id', userId)
+        .maybeSingle();
+
       if (error) throw error;
+      if (!data) return null;
+
       return {
         ...data,
         content: (Array.isArray(data.content) ? data.content : []) as unknown as NoteBlock[],
       };
     },
-    enabled: !!id && !!user?.id,
+    enabled: !!id && !!user?.id && !!session?.access_token,
     staleTime: 0,
     gcTime: 0,
     refetchOnMount: 'always',
     refetchOnWindowFocus: false,
   });
 
-  const note = noteQuery.data;
+  const note = noteQuery.data ?? null;
 
   // Local state for editing
   const [title, setTitle] = useState('');
@@ -70,38 +98,42 @@ export default function NoteEditor() {
   const lastSavedJson = useRef('');
   const isNavigatingBackRef = useRef(false);
 
-  const persistSnapshot = useCallback(async (
-    snapshot: { title: string; blocks: NoteBlock[]; colorLabel: string; isPinned: boolean; folder: string },
-    force = false
-  ) => {
-    if (!id || !user?.id) return;
+  const persistSnapshot = useCallback(
+    async (
+      snapshot: { title: string; blocks: NoteBlock[]; colorLabel: string; isPinned: boolean; folder: string },
+      force = false
+    ) => {
+      if (!id) return;
 
-    const json = JSON.stringify(snapshot);
-    if (!force && json === lastSavedJson.current) return;
+      const currentUserId = await ensureSessionUserId();
+      const json = JSON.stringify(snapshot);
+      if (!force && json === lastSavedJson.current) return;
 
-    const { data, error } = await supabase
-      .from('notes')
-      .update({
-        title: snapshot.title,
-        content: snapshot.blocks as any,
-        color_label: snapshot.colorLabel,
-        is_pinned: snapshot.isPinned,
-        folder: snapshot.folder,
-      })
-      .eq('id', id)
-      .eq('user_id', user.id)
-      .select('*')
-      .single();
+      const { data, error } = await supabase
+        .from('notes')
+        .update({
+          title: snapshot.title,
+          content: snapshot.blocks as any,
+          color_label: snapshot.colorLabel,
+          is_pinned: snapshot.isPinned,
+          folder: snapshot.folder,
+        })
+        .eq('id', id)
+        .eq('user_id', currentUserId)
+        .select('*')
+        .single();
 
-    if (error) throw error;
+      if (error) throw error;
 
-    lastSavedJson.current = json;
-    queryClient.setQueryData(['note', user.id, id], {
-      ...data,
-      content: (Array.isArray(data.content) ? data.content : []) as unknown as NoteBlock[],
-    });
-    queryClient.invalidateQueries({ queryKey: ['notes', user.id] });
-  }, [id, user?.id, queryClient]);
+      lastSavedJson.current = json;
+      queryClient.setQueryData(['note', currentUserId, id], {
+        ...data,
+        content: (Array.isArray(data.content) ? data.content : []) as unknown as NoteBlock[],
+      });
+      queryClient.invalidateQueries({ queryKey: ['notes', currentUserId] });
+    },
+    [id, ensureSessionUserId, queryClient]
+  );
 
   // Reset when note id changes
   useEffect(() => {
@@ -117,9 +149,7 @@ export default function NoteEditor() {
     if (!note || initialized.current) return;
 
     const t = note.title || '';
-    const b: NoteBlock[] = note.content.length > 0
-      ? note.content
-      : [{ id: 'init', type: 'text', content: '', style: 'normal' }];
+    const b: NoteBlock[] = note.content.length > 0 ? note.content : [{ id: 'init', type: 'text', content: '', style: 'normal' }];
     const c = note.color_label || 'default';
     const p = note.is_pinned || false;
     const f = note.folder || 'General';
@@ -165,17 +195,15 @@ export default function NoteEditor() {
     return () => {
       if (!id || !initialized.current || isNavigatingBackRef.current) return;
       clearTimeout(saveTimeout.current);
-      void persistSnapshot(latestRef.current);
+      void persistSnapshot(latestRef.current, true);
     };
   }, [id, persistSnapshot]);
 
   // Audio recording
-  const { isRecording, recordingDuration, startRecording, stopRecording } = useAudioRecording(
-    async (file, duration) => {
-      if (!id) return;
-      await uploadAttachment.mutateAsync({ noteId: id, file, type: 'audio', durationSeconds: duration });
-    }
-  );
+  const { isRecording, recordingDuration, startRecording, stopRecording } = useAudioRecording(async (file, duration) => {
+    if (!id) return;
+    await uploadAttachment.mutateAsync({ noteId: id, file, type: 'audio', durationSeconds: duration });
+  });
 
   const handleToolAction = (action: string) => {
     const focusedIndex = Math.min(Math.max(activeBlockIndex, 0), Math.max(blocks.length - 1, 0));
@@ -244,28 +272,53 @@ export default function NoteEditor() {
       return;
     }
 
-    let savedOnBack = false;
     setIsSaving(true);
     try {
-      await persistSnapshot(latestRef.current);
+      await persistSnapshot(latestRef.current, true);
       setHasSaved(true);
-      savedOnBack = true;
-    } catch {
-      // silent
+      isNavigatingBackRef.current = true;
+      navigate('/notes');
+    } catch (error) {
+      const message = error instanceof Error ? error.message.toLowerCase() : '';
+      if (
+        message.includes('session_expired') ||
+        message.includes('auth session missing') ||
+        message.includes('jwt') ||
+        message.includes('row-level security')
+      ) {
+        toast.error('Session expired. Please sign in again.');
+        navigate('/auth', { replace: true });
+      } else {
+        toast.error('Save failed. Please try again.');
+      }
     } finally {
       setIsSaving(false);
     }
-
-    isNavigatingBackRef.current = savedOnBack;
-    queryClient.invalidateQueries({ queryKey: ['notes', user?.id] });
-    navigate('/notes');
   };
 
-  if (!user) { navigate('/auth'); return null; }
+  if (!user || !session?.access_token) {
+    navigate('/auth', { replace: true });
+    return null;
+  }
+
   if (noteQuery.isLoading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <Loader2 className="h-6 w-6 animate-spin text-accent" />
+      </div>
+    );
+  }
+
+  if (noteQuery.isError || !note) {
+    return (
+      <div className="min-h-screen bg-background flex flex-col items-center justify-center px-6 text-center gap-4">
+        <p className="text-sm text-muted-foreground">Could not load this note. Please open it again from Notes.</p>
+        <button
+          onClick={() => navigate('/notes')}
+          className="h-10 px-4 rounded-xl bg-accent text-accent-foreground text-sm font-medium"
+        >
+          Back to Notes
+        </button>
       </div>
     );
   }
@@ -280,14 +333,11 @@ export default function NoteEditor() {
   };
 
   return (
-    <div className={cn("min-h-screen flex flex-col", COLOR_BG[colorLabel] || COLOR_BG.default)}>
+    <div className={cn('min-h-screen flex flex-col', COLOR_BG[colorLabel] || COLOR_BG.default)}>
       {/* Header */}
       <header className="sticky top-0 z-40 bg-background/90 backdrop-blur-md border-b border-border/30">
         <div className="flex items-center justify-between px-4 py-2.5">
-          <button
-            onClick={handleBackNavigation}
-            className="p-1.5 rounded-lg hover:bg-muted/50 transition-colors"
-          >
+          <button onClick={handleBackNavigation} className="p-1.5 rounded-lg hover:bg-muted/50 transition-colors">
             <ArrowLeft className="h-5 w-5" />
           </button>
           <div className="flex items-center gap-0.5">
@@ -313,14 +363,21 @@ export default function NoteEditor() {
                   <div className="fixed inset-0 z-40" onClick={() => setShowMenu(false)} />
                   <div className="absolute right-0 top-full mt-1 bg-card border border-border rounded-xl shadow-xl py-1 w-48 z-50">
                     <button
-                      onClick={() => { setShowFolderInput(true); setFolderInput(folder); setShowMenu(false); }}
+                      onClick={() => {
+                        setShowFolderInput(true);
+                        setFolderInput(folder);
+                        setShowMenu(false);
+                      }}
                       className="w-full text-left px-3 py-2.5 text-sm hover:bg-muted/50 flex items-center gap-2.5"
                     >
                       <FolderOpen className="h-4 w-4 text-accent" /> Move to folder
                     </button>
                     <div className="h-px bg-border/50 mx-2" />
                     <button
-                      onClick={() => { setShowMenu(false); handleDelete(); }}
+                      onClick={() => {
+                        setShowMenu(false);
+                        handleDelete();
+                      }}
                       className="w-full text-left px-3 py-2.5 text-sm hover:bg-destructive/10 flex items-center gap-2.5 text-destructive"
                     >
                       <Trash2 className="h-4 w-4" /> Delete note
@@ -355,18 +412,22 @@ export default function NoteEditor() {
       {/* Folder input modal */}
       {showFolderInput && (
         <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4" onClick={() => setShowFolderInput(false)}>
-          <div className="bg-card rounded-2xl p-5 w-full max-w-xs space-y-4 shadow-xl" onClick={e => e.stopPropagation()}>
+          <div className="bg-card rounded-2xl p-5 w-full max-w-xs space-y-4 shadow-xl" onClick={(e) => e.stopPropagation()}>
             <h3 className="font-semibold text-sm">Move to folder</h3>
             <input
               value={folderInput}
-              onChange={e => setFolderInput(e.target.value)}
+              onChange={(e) => setFolderInput(e.target.value)}
               placeholder="Folder name..."
               className="w-full h-10 px-3 bg-muted/50 rounded-xl text-sm border border-border/50 outline-none focus:border-accent/50 focus:ring-1 focus:ring-accent/20 transition-all"
               autoFocus
             />
             <div className="flex gap-2 justify-end">
-              <button onClick={() => setShowFolderInput(false)} className="px-4 py-2 text-xs rounded-lg hover:bg-muted transition-colors">Cancel</button>
-              <button onClick={handleFolderSave} className="px-4 py-2 text-xs bg-accent text-accent-foreground rounded-lg font-medium">Save</button>
+              <button onClick={() => setShowFolderInput(false)} className="px-4 py-2 text-xs rounded-lg hover:bg-muted transition-colors">
+                Cancel
+              </button>
+              <button onClick={handleFolderSave} className="px-4 py-2 text-xs bg-accent text-accent-foreground rounded-lg font-medium">
+                Save
+              </button>
             </div>
           </div>
         </div>
@@ -376,7 +437,7 @@ export default function NoteEditor() {
       <div className="px-4 pt-4 pb-1">
         <input
           value={title}
-          onChange={e => setTitle(e.target.value)}
+          onChange={(e) => setTitle(e.target.value)}
           placeholder="Note title..."
           className="w-full text-xl font-bold bg-transparent outline-none placeholder:text-muted-foreground/30"
         />

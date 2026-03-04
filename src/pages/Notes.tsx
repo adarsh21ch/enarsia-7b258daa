@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useNotes } from '@/hooks/useNotes';
@@ -9,24 +9,36 @@ import { Plus, FolderOpen, ArrowLeft, Loader2, NotebookPen } from 'lucide-react'
 import { cn } from '@/lib/utils';
 
 export default function Notes() {
-  const { user } = useAuth();
+  const { user, session } = useAuth();
   const navigate = useNavigate();
   const [search, setSearch] = useState('');
   const [activeFolder, setActiveFolder] = useState('All');
   const { notes, isLoading, folders, createNote } = useNotes(activeFolder);
 
-  if (!user) { navigate('/auth'); return null; }
+  useEffect(() => {
+    if (!user || !session?.access_token) {
+      navigate('/auth', { replace: true });
+    }
+  }, [user, session?.access_token, navigate]);
+
+  if (!user || !session?.access_token) return null;
 
   const filtered = search
-    ? notes.filter(n =>
-        n.title.toLowerCase().includes(search.toLowerCase()) ||
-        n.content.some(b => b.content.toLowerCase().includes(search.toLowerCase()))
+    ? notes.filter((n) =>
+        (n.title || '').toLowerCase().includes(search.toLowerCase()) ||
+        n.content.some((b) => (b.content || '').toLowerCase().includes(search.toLowerCase()))
       )
     : notes;
 
   const handleCreate = async () => {
-    const result = await createNote.mutateAsync({});
-    navigate(`/notes/${result.id}`);
+    try {
+      const result = await createNote.mutateAsync({
+        content: [{ id: crypto.randomUUID().slice(0, 8), type: 'text', content: '', style: 'normal' }],
+      });
+      navigate(`/notes/${result.id}`);
+    } catch {
+      // Error toast is handled in useNotes
+    }
   };
 
   return (
@@ -55,18 +67,24 @@ export default function Notes() {
       {/* Folder chips */}
       <div className="sticky top-[105px] z-30 bg-background/95 backdrop-blur-md border-b border-border/20">
         <div className="container px-4 py-2 flex gap-2 overflow-x-auto no-scrollbar">
-          {folders.map(f => (
+          {folders.map((f) => (
             <button
               key={f}
               onClick={() => setActiveFolder(f)}
               className={cn(
-                "shrink-0 px-3 py-1.5 rounded-full text-xs font-medium border transition-all duration-200",
+                'shrink-0 px-3 py-1.5 rounded-full text-xs font-medium border transition-all duration-200',
                 activeFolder === f
-                  ? "bg-accent text-accent-foreground border-accent shadow-sm shadow-accent/20"
-                  : "bg-card text-muted-foreground border-border/50 hover:bg-muted/50"
+                  ? 'bg-accent text-accent-foreground border-accent shadow-sm shadow-accent/20'
+                  : 'bg-card text-muted-foreground border-border/50 hover:bg-muted/50'
               )}
             >
-              {f === 'All' ? <span className="flex items-center gap-1"><FolderOpen className="h-3 w-3" /> All</span> : f}
+              {f === 'All' ? (
+                <span className="flex items-center gap-1">
+                  <FolderOpen className="h-3 w-3" /> All
+                </span>
+              ) : (
+                f
+              )}
             </button>
           ))}
         </div>
@@ -83,18 +101,12 @@ export default function Notes() {
             <div className="mx-auto w-16 h-16 rounded-2xl bg-accent/10 flex items-center justify-center">
               <NotebookPen className="h-8 w-8 text-accent" />
             </div>
-            <p className="text-sm text-muted-foreground">
-              {search ? 'No notes found' : 'No notes yet'}
-            </p>
-            {!search && (
-              <p className="text-xs text-muted-foreground/60">
-                Tap + to create your first note
-              </p>
-            )}
+            <p className="text-sm text-muted-foreground">{search ? 'No notes found' : 'No notes yet'}</p>
+            {!search && <p className="text-xs text-muted-foreground/60">Tap + to create your first note</p>}
           </div>
         ) : (
           <div className="columns-2 gap-3 space-y-3">
-            {filtered.map(note => (
+            {filtered.map((note) => (
               <div key={note.id} className="break-inside-avoid">
                 <NoteCard note={note} onClick={() => navigate(`/notes/${note.id}`)} />
               </div>
@@ -109,11 +121,7 @@ export default function Notes() {
         disabled={createNote.isPending}
         className="fixed bottom-20 right-4 z-50 h-14 w-14 rounded-2xl bg-accent text-accent-foreground shadow-lg shadow-accent/30 flex items-center justify-center active:scale-95 transition-transform"
       >
-        {createNote.isPending ? (
-          <Loader2 className="h-6 w-6 animate-spin" />
-        ) : (
-          <Plus className="h-6 w-6" />
-        )}
+        {createNote.isPending ? <Loader2 className="h-6 w-6 animate-spin" /> : <Plus className="h-6 w-6" />}
       </button>
 
       <BottomNav />

@@ -23,17 +23,56 @@ export interface Note {
   updated_at: string;
 }
 
+function getNotesErrorMessage(error: unknown, fallback: string) {
+  const message = error instanceof Error ? error.message.toLowerCase() : '';
+
+  if (
+    message.includes('session_expired') ||
+    message.includes('auth session missing') ||
+    message.includes('jwt') ||
+    message.includes('row-level security')
+  ) {
+    return 'Session expired. Please sign in again.';
+  }
+
+  return fallback;
+}
+
 export function useNotes(folder?: string) {
-  const { user } = useAuth();
+  const { user, session } = useAuth();
   const queryClient = useQueryClient();
 
+  const ensureSessionUserId = async () => {
+    let activeSession = session;
+
+    if (!activeSession?.access_token) {
+      const { data, error } = await supabase.auth.getSession();
+      if (error) throw error;
+      activeSession = data.session;
+    }
+
+    if (!activeSession?.access_token) {
+      const { data, error } = await supabase.auth.refreshSession();
+      if (error) throw error;
+      activeSession = data.session;
+    }
+
+    if (!activeSession?.user?.id) {
+      throw new Error('SESSION_EXPIRED');
+    }
+
+    return activeSession.user.id;
+  };
+
   const notesQuery = useQuery({
-    queryKey: ['notes', user?.id, folder],
+    queryKey: ['notes', session?.access_token ? user?.id : null, folder],
     queryFn: async () => {
+      const userId = await ensureSessionUserId();
+
       let query = supabase
         .from('notes')
         .select('*')
-        .eq('user_id', user!.id)
+        .eq('user_id', userId)
         .order('is_pinned', { ascending: false })
         .order('updated_at', { ascending: false });
 
@@ -43,20 +82,22 @@ export function useNotes(folder?: string) {
 
       const { data, error } = await query;
       if (error) throw error;
-      return (data || []).map(n => ({
+      return (data || []).map((n) => ({
         ...n,
         content: (Array.isArray(n.content) ? n.content : []) as unknown as NoteBlock[],
       })) as Note[];
     },
-    enabled: !!user?.id,
+    enabled: !!user?.id && !!session?.access_token,
   });
 
   const createNote = useMutation({
     mutationFn: async (note: Partial<Note>) => {
+      const userId = await ensureSessionUserId();
+
       const { data, error } = await supabase
         .from('notes')
         .insert({
-          user_id: user!.id,
+          user_id: userId,
           title: note.title || '',
           content: (note.content || []) as any,
           color_label: note.color_label || 'default',
@@ -65,15 +106,21 @@ export function useNotes(folder?: string) {
         })
         .select()
         .single();
+
       if (error) throw error;
       return { ...data, content: data.content as unknown as NoteBlock[] } as Note;
     },
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['notes'] }),
-    onError: () => toast.error('Failed to create note'),
+    onSuccess: (created) => {
+      queryClient.invalidateQueries({ queryKey: ['notes', created.user_id] });
+      queryClient.invalidateQueries({ queryKey: ['note', created.user_id, created.id] });
+    },
+    onError: (error) => toast.error(getNotesErrorMessage(error, 'Failed to create note')),
   });
 
   const updateNote = useMutation({
     mutationFn: async ({ id, ...updates }: Partial<Note> & { id: string }) => {
+      const userId = await ensureSessionUserId();
+
       const payload: any = {};
       if (updates.title !== undefined) payload.title = updates.title;
       if (updates.content !== undefined) payload.content = updates.content as any;
@@ -85,40 +132,54 @@ export function useNotes(folder?: string) {
         .from('notes')
         .update(payload)
         .eq('id', id)
-        .eq('user_id', user!.id);
+        .eq('user_id', userId);
+
       if (error) throw error;
+      return { id, userId };
     },
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['notes'] }),
+    onSuccess: ({ id, userId }) => {
+      queryClient.invalidateQueries({ queryKey: ['notes', userId] });
+      queryClient.invalidateQueries({ queryKey: ['note', userId, id] });
+    },
+    onError: (error) => toast.error(getNotesErrorMessage(error, 'Failed to update note')),
   });
 
   const deleteNote = useMutation({
     mutationFn: async (id: string) => {
+      const userId = await ensureSessionUserId();
+
       const { error } = await supabase
         .from('notes')
         .delete()
         .eq('id', id)
-        .eq('user_id', user!.id);
+        .eq('user_id', userId);
+
       if (error) throw error;
+      return { id, userId };
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['notes'] });
+    onSuccess: ({ id, userId }) => {
+      queryClient.invalidateQueries({ queryKey: ['notes', userId] });
+      queryClient.removeQueries({ queryKey: ['note', userId, id] });
       toast.success('Note deleted');
     },
-    onError: () => toast.error('Failed to delete note'),
+    onError: (error) => toast.error(getNotesErrorMessage(error, 'Failed to delete note')),
   });
 
   const folders = useQuery({
-    queryKey: ['note-folders', user?.id],
+    queryKey: ['note-folders', session?.access_token ? user?.id : null],
     queryFn: async () => {
+      const userId = await ensureSessionUserId();
+
       const { data, error } = await supabase
         .from('notes')
         .select('folder')
-        .eq('user_id', user!.id);
+        .eq('user_id', userId);
+
       if (error) throw error;
-      const unique = [...new Set((data || []).map(d => d.folder || 'General'))];
+      const unique = [...new Set((data || []).map((d) => d.folder || 'General'))];
       return ['All', ...unique.sort()];
     },
-    enabled: !!user?.id,
+    enabled: !!user?.id && !!session?.access_token,
   });
 
   return {
