@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useNotes, NoteBlock } from '@/hooks/useNotes';
@@ -9,7 +9,6 @@ import { AudioRecorder, useAudioRecording } from '@/components/notes/AudioRecord
 import { PhotoAttachment } from '@/components/notes/PhotoAttachment';
 import { ArrowLeft, Pin, PinOff, Trash2, MoreVertical, FolderOpen, Loader2, Check, Square as StopIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 
@@ -25,8 +24,9 @@ export default function NoteEditor() {
   const [folderInput, setFolderInput] = useState('');
   const [showFolderInput, setShowFolderInput] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [hasSaved, setHasSaved] = useState(false);
 
-  // Load the single note
+  // Load the single note directly
   const noteQuery = useQuery({
     queryKey: ['note', id],
     queryFn: async () => {
@@ -42,6 +42,8 @@ export default function NoteEditor() {
       };
     },
     enabled: !!id && !!user?.id,
+    staleTime: Infinity, // Don't auto-refetch while editing
+    refetchOnWindowFocus: false,
   });
 
   const note = noteQuery.data;
@@ -53,73 +55,106 @@ export default function NoteEditor() {
   const [isPinned, setIsPinned] = useState(false);
   const [folder, setFolder] = useState('General');
   const initialized = useRef(false);
-  const lastSavedRef = useRef('');
 
-  // Reset initialized when id changes
+  // Ref to always hold latest state for unmount save
+  const latestRef = useRef({ title, blocks, colorLabel, isPinned, folder });
+  useEffect(() => {
+    latestRef.current = { title, blocks, colorLabel, isPinned, folder };
+  });
+
+  // Reset when note id changes
   useEffect(() => {
     initialized.current = false;
+    setHasSaved(false);
   }, [id]);
 
+  // Hydrate local state from fetched note — only once per note
   useEffect(() => {
     if (note && !initialized.current) {
-      setTitle(note.title || '');
-      setBlocks(note.content.length > 0 ? note.content : [{ id: 'init', type: 'text', content: '', style: 'normal' }]);
-      setColorLabel(note.color_label || 'default');
-      setIsPinned(note.is_pinned || false);
-      setFolder(note.folder || 'General');
+      const t = note.title || '';
+      const b: NoteBlock[] = note.content.length > 0
+        ? note.content
+        : [{ id: 'init', type: 'text', content: '', style: 'normal' }];
+      const c = note.color_label || 'default';
+      const p = note.is_pinned || false;
+      const f = note.folder || 'General';
+
+      setTitle(t);
+      setBlocks(b);
+      setColorLabel(c);
+      setIsPinned(p);
+      setFolder(f);
       initialized.current = true;
-      // Track initial state to avoid unnecessary saves
-      lastSavedRef.current = JSON.stringify({ title: note.title, content: note.content, color_label: note.color_label, is_pinned: note.is_pinned, folder: note.folder });
+      latestRef.current = { title: t, blocks: b, colorLabel: c, isPinned: p, folder: f };
     }
   }, [note]);
 
-  // Auto-save with debounce
+  // Debounced auto-save
   const saveTimeout = useRef<ReturnType<typeof setTimeout>>();
+  const lastSavedJson = useRef('');
 
   useEffect(() => {
     if (!initialized.current || !id) return;
 
-    const currentState = JSON.stringify({ title, content: blocks, color_label: colorLabel, is_pinned: isPinned, folder });
-    if (currentState === lastSavedRef.current) return;
+    const json = JSON.stringify({ title, blocks, colorLabel, isPinned, folder });
+    if (json === lastSavedJson.current) return;
 
     clearTimeout(saveTimeout.current);
     saveTimeout.current = setTimeout(async () => {
       setIsSaving(true);
       try {
-        await updateNote.mutateAsync({
-          id,
-          title,
-          content: blocks,
-          color_label: colorLabel,
-          is_pinned: isPinned,
-          folder,
-        });
-        lastSavedRef.current = currentState;
+        // Direct Supabase update to avoid query invalidation loops
+        const { error } = await supabase
+          .from('notes')
+          .update({
+            title,
+            content: blocks as any,
+            color_label: colorLabel,
+            is_pinned: isPinned,
+            folder,
+          })
+          .eq('id', id);
+
+        if (!error) {
+          lastSavedJson.current = json;
+          setHasSaved(true);
+        }
       } catch {
         // silent
       } finally {
         setIsSaving(false);
       }
-    }, 600);
+    }, 800);
 
     return () => clearTimeout(saveTimeout.current);
   }, [title, blocks, colorLabel, isPinned, folder, id]);
 
-  // Save on unmount
+  // Save on unmount (only once, on actual unmount)
   useEffect(() => {
+    const noteId = id;
     return () => {
-      if (saveTimeout.current) {
-        clearTimeout(saveTimeout.current);
-        // Force save
-        if (id && initialized.current) {
-          const payload: any = { title, content: blocks as any, color_label: colorLabel, is_pinned: isPinned, folder };
-          supabase.from('notes').update(payload).eq('id', id).then(() => {
-            queryClient.invalidateQueries({ queryKey: ['notes'] });
-          });
-        }
-      }
+      if (!noteId || !initialized.current) return;
+      const { title: t, blocks: b, colorLabel: c, isPinned: p, folder: f } = latestRef.current;
+      const json = JSON.stringify({ title: t, blocks: b, colorLabel: c, isPinned: p, folder: f });
+      if (json === lastSavedJson.current) return;
+
+      // Fire-and-forget save
+      supabase
+        .from('notes')
+        .update({
+          title: t,
+          content: b as any,
+          color_label: c,
+          is_pinned: p,
+          folder: f,
+        })
+        .eq('id', noteId)
+        .then(() => {
+          queryClient.invalidateQueries({ queryKey: ['notes'] });
+        });
     };
-  }, [id, title, blocks, colorLabel, isPinned, folder]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [id]);
 
   // Audio recording
   const { isRecording, recordingDuration, startRecording, stopRecording } = useAudioRecording(
@@ -215,7 +250,14 @@ export default function NoteEditor() {
       {/* Header */}
       <header className="sticky top-0 z-40 bg-background/90 backdrop-blur-md border-b border-border/30">
         <div className="flex items-center justify-between px-4 py-2.5">
-          <button onClick={() => navigate('/notes')} className="p-1.5 rounded-lg hover:bg-muted/50 transition-colors">
+          <button
+            onClick={() => {
+              // Invalidate notes list so it picks up latest changes
+              queryClient.invalidateQueries({ queryKey: ['notes'] });
+              navigate('/notes');
+            }}
+            className="p-1.5 rounded-lg hover:bg-muted/50 transition-colors"
+          >
             <ArrowLeft className="h-5 w-5" />
           </button>
           <div className="flex items-center gap-0.5">
@@ -223,7 +265,7 @@ export default function NoteEditor() {
             <div className="px-2 py-1">
               {isSaving ? (
                 <span className="text-[10px] text-muted-foreground animate-pulse">Saving...</span>
-              ) : initialized.current ? (
+              ) : hasSaved ? (
                 <span className="text-[10px] text-muted-foreground/60 flex items-center gap-0.5">
                   <Check className="h-3 w-3" /> Saved
                 </span>
@@ -260,7 +302,7 @@ export default function NoteEditor() {
           </div>
         </div>
 
-        {/* Recording banner with STOP button */}
+        {/* Recording banner */}
         {isRecording && (
           <div className="px-4 py-2 bg-destructive/10 flex items-center justify-between">
             <div className="flex items-center gap-2">

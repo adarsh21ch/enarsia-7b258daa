@@ -5,7 +5,7 @@ import { useNotes } from '@/hooks/useNotes';
 import { NoteCard } from '@/components/notes/NoteCard';
 import { SearchBar } from '@/components/ui/SearchBar';
 import { BottomNav } from '@/components/layout/BottomNav';
-import { Plus, FolderOpen, ArrowLeft, Loader2, StickyNote } from 'lucide-react';
+import { Plus, FolderOpen, ArrowLeft, Loader2, NotebookPen } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 export default function Notes() {
@@ -39,7 +39,7 @@ export default function Notes() {
               <ArrowLeft className="h-5 w-5" />
             </button>
             <div className="flex items-center gap-2 flex-1">
-              <StickyNote className="h-5 w-5 text-accent" />
+              <NotebookPen className="h-5 w-5 text-accent" />
               <h1 className="text-lg font-bold">Notes</h1>
             </div>
             <span className="text-xs text-muted-foreground/60 bg-muted/50 px-2 py-0.5 rounded-full">
@@ -81,7 +81,7 @@ export default function Notes() {
         ) : filtered.length === 0 ? (
           <div className="text-center py-20 space-y-3">
             <div className="mx-auto w-16 h-16 rounded-2xl bg-accent/10 flex items-center justify-center">
-              <StickyNote className="h-8 w-8 text-accent" />
+              <NotebookPen className="h-8 w-8 text-accent" />
             </div>
             <p className="text-sm text-muted-foreground">
               {search ? 'No notes found' : 'No notes yet'}
