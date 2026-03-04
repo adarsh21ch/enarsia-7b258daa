@@ -68,7 +68,7 @@ export function NoteCard({ note, onClick, onDelete, onMove, actionLoading }: Not
             aria-label="Note actions"
             disabled={actionLoading}
           >
-            <MoreVertical className="h-4 w-4 text-muted-foreground/50" />
+            <MoreVertical className="h-4 w-4 text-foreground/70" />
           </button>
 
           {showMenu && (
