@@ -2730,6 +2730,9 @@ export type Database = {
           razorpay_payment_link: string | null
           replay_enabled: boolean | null
           show_contact: boolean
+          show_contact_instagram: boolean | null
+          show_contact_phone: boolean | null
+          show_contact_whatsapp: boolean | null
           show_cta: boolean
           slug: string
           success_message: string | null
@@ -2787,6 +2790,9 @@ export type Database = {
           razorpay_payment_link?: string | null
           replay_enabled?: boolean | null
           show_contact?: boolean
+          show_contact_instagram?: boolean | null
+          show_contact_phone?: boolean | null
+          show_contact_whatsapp?: boolean | null
           show_cta?: boolean
           slug: string
           success_message?: string | null
@@ -2844,6 +2850,9 @@ export type Database = {
           razorpay_payment_link?: string | null
           replay_enabled?: boolean | null
           show_contact?: boolean
+          show_contact_instagram?: boolean | null
+          show_contact_phone?: boolean | null
+          show_contact_whatsapp?: boolean | null
           show_cta?: boolean
           slug?: string
           success_message?: string | null
