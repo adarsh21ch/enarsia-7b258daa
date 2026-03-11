@@ -119,7 +119,7 @@ export function LeaderTrackingFormatSettings({
   const [isSavingForTeam, setIsSavingForTeam] = useState(false);
 
   // Debounce timer ref
-  const saveTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   
   // Flag to prevent re-initialization after initial load
   const initializedRef = useRef(false);
