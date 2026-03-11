@@ -27,7 +27,7 @@ export function ProfileLevelDropdown({
   const [open, setOpen] = useState(false);
   const [noLevelsMessage, setNoLevelsMessage] = useState<string | null>(null);
   const [loadingTimeout, setLoadingTimeout] = useState(false);
-  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Fetch levels for the leader based on their email
   useEffect(() => {

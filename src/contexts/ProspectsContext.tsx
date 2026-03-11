@@ -93,7 +93,7 @@ export function ProspectsProvider({ children }: { children: ReactNode }) {
   const { triggerAutoSync } = useAutoTrackingSync();
   
   // Debounce ref to prevent multiple log writes in quick succession
-  const logDebounceRef = useRef<NodeJS.Timeout | null>(null);
+  const logDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   
   // Function to trigger daily tracking log write (debounced) + auto-sync for APPLICATION source
   const triggerDailyLog = useCallback(() => {

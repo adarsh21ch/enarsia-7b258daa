@@ -76,7 +76,7 @@ export function ManageResponseTagsDialog({ open, onOpenChange }: ManageResponseT
 
   type PendingSaveSnapshot = { trackingTags: LeadsTagInput[]; personalTags: string[] };
 
-  const saveTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const pendingSaveRef = useRef<PendingSaveSnapshot | null>(null);
   const didInitRef = useRef(false);
 

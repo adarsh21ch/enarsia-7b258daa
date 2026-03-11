@@ -362,7 +362,7 @@ export function ProspectTable({
 
   // Last contacted tracking - highlight the prospect for 3 seconds after call/WhatsApp
   const [lastContactedId, setLastContactedId] = useState<string | null>(null);
-  const lastContactedTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const lastContactedTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Tag management dialogs
   const [responseTagsDialogOpen, setResponseTagsDialogOpen] = useState(false);

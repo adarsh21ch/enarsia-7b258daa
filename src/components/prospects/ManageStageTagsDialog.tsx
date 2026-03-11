@@ -74,7 +74,7 @@ export function ManageStageTagsDialog({ open, onOpenChange }: ManageStageTagsDia
 
   type PendingSaveSnapshot = { stageTags: StageTagInput[]; personalTags: string[] };
 
-  const saveTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const pendingSaveRef = useRef<PendingSaveSnapshot | null>(null);
   const didInitRef = useRef(false);
 

@@ -36,7 +36,7 @@ export function ControlledVideoPlayer({
   const [playbackRate, setPlaybackRate] = useState(1);
   const [isLoading, setIsLoading] = useState(true);
   const [showControls, setShowControls] = useState(true);
-  const controlsTimeoutRef = useRef<NodeJS.Timeout>();
+  const controlsTimeoutRef = useRef<ReturnType<typeof setTimeout>>();
 
   const { getPlaybackUrl, isLoading: isLoadingUrl, error } = usePlaybackUrl();
   const [loadingElapsed, setLoadingElapsed] = useState(0);
