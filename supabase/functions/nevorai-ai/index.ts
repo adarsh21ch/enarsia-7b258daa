@@ -950,6 +950,237 @@ async function executeTool(
         });
       }
 
+      case "get_team_tracking_status": {
+        if (team.length === 0) return JSON.stringify({ error: "No team members found." });
+        const today = todayStr();
+        const memberIds = team.map(m => m.user_id);
+        
+        const { data: todaySnapshots } = await supabase
+          .from("total_snapshot_v2")
+          .select("user_id")
+          .in("user_id", memberIds)
+          .eq("date", today);
+        
+        const updatedSet = new Set((todaySnapshots || []).map((r: any) => r.user_id));
+        const updated = team.filter(m => updatedSet.has(m.user_id));
+        const notUpdated = team.filter(m => !updatedSet.has(m.user_id));
+        
+        return JSON.stringify({
+          date: today,
+          team_size: team.length,
+          updated_count: updated.length,
+          not_updated_count: notUpdated.length,
+          updated: updated.map(m => m.display_name),
+          not_updated: notUpdated.slice(0, 20).map(m => m.display_name),
+          has_more: notUpdated.length > 20,
+        });
+      }
+
+      case "get_stale_prospects": {
+        const daysStale = args.days_stale || 7;
+        const limit = args.limit || 15;
+        const cutoffDate = new Date();
+        cutoffDate.setDate(cutoffDate.getDate() - daysStale);
+        const cutoff = cutoffDate.toISOString();
+        
+        const { data } = await supabase
+          .from("prospects")
+          .select("name, funnel_stage, action_taken, prospect_status, updated_at")
+          .eq("user_id", userId)
+          .is("deleted_at", null)
+          .lt("updated_at", cutoff)
+          .not("prospect_status", "eq", "not_interested")
+          .order("updated_at", { ascending: true })
+          .limit(limit);
+        
+        return JSON.stringify({
+          stale_days: daysStale,
+          count: (data || []).length,
+          prospects: (data || []).map((p: any) => ({
+            name: p.name,
+            stage: p.funnel_stage || "N/A",
+            status: p.prospect_status || "N/A",
+            last_activity: p.updated_at?.split("T")[0] || "Unknown",
+          })),
+        });
+      }
+
+      case "get_activity_trend": {
+        const today = new Date();
+        const d7 = new Date(today); d7.setDate(d7.getDate() - 7);
+        const d14 = new Date(today); d14.setDate(d14.getDate() - 14);
+        
+        const [{ data: recent }, { data: prior }] = await Promise.all([
+          supabase.from("total_snapshot_v2")
+            .select("total_leads, total_responses, final_tag_count")
+            .eq("user_id", userId)
+            .gte("date", d7.toISOString().split("T")[0])
+            .lte("date", todayStr()),
+          supabase.from("total_snapshot_v2")
+            .select("total_leads, total_responses, final_tag_count")
+            .eq("user_id", userId)
+            .gte("date", d14.toISOString().split("T")[0])
+            .lt("date", d7.toISOString().split("T")[0]),
+        ]);
+        
+        const sumField = (rows: any[], field: string) => (rows || []).reduce((s: number, r: any) => s + (r[field] || 0), 0);
+        const recentLeads = sumField(recent, "total_leads");
+        const priorLeads = sumField(prior, "total_leads");
+        const recentResponses = sumField(recent, "total_responses");
+        const priorResponses = sumField(prior, "total_responses");
+        
+        const pctChange = (curr: number, prev: number) => prev === 0 ? (curr > 0 ? "+100%" : "0%") : `${curr >= prev ? "+" : ""}${(((curr - prev) / prev) * 100).toFixed(0)}%`;
+        
+        return JSON.stringify({
+          recent_7_days: { leads: recentLeads, responses: recentResponses, days_tracked: (recent || []).length },
+          prior_7_days: { leads: priorLeads, responses: priorResponses, days_tracked: (prior || []).length },
+          leads_change: pctChange(recentLeads, priorLeads),
+          responses_change: pctChange(recentResponses, priorResponses),
+          trend: recentLeads >= priorLeads ? "improving" : "declining",
+        });
+      }
+
+      case "get_daily_snapshot_summary": {
+        const today = todayStr();
+        const { data: todayData } = await supabase
+          .from("total_snapshot_v2")
+          .select("total_leads, total_responses, response_tags, stage_tags, funnel_day, final_tag_count")
+          .eq("user_id", userId)
+          .eq("date", today)
+          .maybeSingle();
+        
+        let teamStatus = null;
+        if (team.length > 0) {
+          const memberIds = team.map(m => m.user_id);
+          const { data: teamToday } = await supabase
+            .from("total_snapshot_v2")
+            .select("user_id")
+            .in("user_id", memberIds)
+            .eq("date", today);
+          teamStatus = {
+            team_size: team.length,
+            updated_today: (teamToday || []).length,
+            pending: team.length - (teamToday || []).length,
+          };
+        }
+        
+        const result: any = { date: today };
+        if (todayData) {
+          const rSlots = coerceToSlots(todayData.response_tags || {}, labels.responseLabels.length, labels.responseLabels, "response_tag_");
+          const rTags = slotsToLabels(rSlots, labels.responseLabels, "response_tag_");
+          result.leads = todayData.total_leads || 0;
+          result.responses = todayData.total_responses || 0;
+          result.enrollments = computeEnrollments([todayData], labels);
+          result.funnel_day = todayData.funnel_day;
+          result.response_breakdown = rTags;
+        } else {
+          result.leads = 0;
+          result.responses = 0;
+          result.enrollments = 0;
+          result.not_tracked_yet = true;
+        }
+        if (teamStatus) result.team_status = teamStatus;
+        
+        return JSON.stringify(result);
+      }
+
+      case "get_funnel_analysis": {
+        // Get funnel config
+        const { data: funnelConfig } = await supabase
+          .from("funnel_configs")
+          .select("funnel_name, funnel_length, day_1_start")
+          .eq("user_id", userId)
+          .order("created_at", { ascending: false })
+          .limit(1)
+          .maybeSingle();
+        
+        // Get last 30 days stage data
+        const d30 = new Date(); d30.setDate(d30.getDate() - 30);
+        const { data: stageData } = await supabase
+          .from("total_snapshot_v2")
+          .select("date, stage_tags, total_leads, funnel_day")
+          .eq("user_id", userId)
+          .gte("date", d30.toISOString().split("T")[0])
+          .order("date", { ascending: true });
+        
+        const rows = stageData || [];
+        const rawStageTags: Record<string, number> = {};
+        const totalLeads = rows.reduce((s: number, r: any) => s + (r.total_leads || 0), 0);
+        
+        for (const r of rows) {
+          if (r.stage_tags && typeof r.stage_tags === "object") {
+            for (const [k, v] of Object.entries(r.stage_tags)) {
+              rawStageTags[k] = (rawStageTags[k] || 0) + (typeof v === "number" ? v : 0);
+            }
+          }
+        }
+        
+        const stageSlots = coerceToSlots(rawStageTags, labels.stageLabels.length, labels.stageLabels, "stage_tag_", labels.stageLabels);
+        const stageTags = slotsToLabels(stageSlots, labels.stageLabels, "stage_tag_");
+        
+        // Calculate drop-offs
+        const stageEntries = Object.entries(stageTags);
+        const dropOffs: any[] = [];
+        for (let i = 1; i < stageEntries.length; i++) {
+          const prev = stageEntries[i - 1];
+          const curr = stageEntries[i];
+          if (prev[1] > 0) {
+            dropOffs.push({
+              from: prev[0],
+              to: curr[0],
+              drop_rate: `${(((prev[1] - curr[1]) / prev[1]) * 100).toFixed(0)}%`,
+              lost: prev[1] - curr[1],
+            });
+          }
+        }
+        
+        return JSON.stringify({
+          funnel_config: funnelConfig || null,
+          period: "Last 30 days",
+          total_leads: totalLeads,
+          stage_distribution: stageTags,
+          drop_offs: dropOffs,
+          current_funnel_day: rows.length > 0 ? rows[rows.length - 1].funnel_day : null,
+        });
+      }
+
+      case "get_coaching_tips": {
+        // Gather recent data for coaching
+        const today = new Date();
+        const d7 = new Date(today); d7.setDate(d7.getDate() - 7);
+        
+        const { data: weekData } = await supabase
+          .from("total_snapshot_v2")
+          .select("total_leads, total_responses, response_tags, final_tag_count")
+          .eq("user_id", userId)
+          .gte("date", d7.toISOString().split("T")[0])
+          .lte("date", todayStr());
+        
+        const rows = weekData || [];
+        const leads = rows.reduce((s: number, r: any) => s + (r.total_leads || 0), 0);
+        const responses = rows.reduce((s: number, r: any) => s + (r.total_responses || 0), 0);
+        const enrollments = computeEnrollments(rows, labels);
+        const daysTracked = rows.length;
+        
+        // Get stale prospects count
+        const cutoff = new Date(); cutoff.setDate(cutoff.getDate() - 5);
+        const { count: staleCount } = await supabase
+          .from("prospects")
+          .select("id", { count: "exact", head: true })
+          .eq("user_id", userId)
+          .is("deleted_at", null)
+          .lt("updated_at", cutoff.toISOString())
+          .not("prospect_status", "eq", "not_interested");
+        
+        return JSON.stringify({
+          week_summary: { leads, responses, enrollments, days_tracked: daysTracked },
+          response_rate: leads > 0 ? `${((responses / leads) * 100).toFixed(0)}%` : "N/A",
+          conversion_rate: leads > 0 ? `${((enrollments / leads) * 100).toFixed(0)}%` : "N/A",
+          stale_prospects: staleCount || 0,
+          consistency: daysTracked >= 6 ? "excellent" : daysTracked >= 4 ? "good" : "needs_improvement",
+        });
+      }
+
       default:
         return JSON.stringify({ error: `Unknown tool: ${name}` });
     }
