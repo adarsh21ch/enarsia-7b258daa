@@ -275,6 +275,7 @@ export default function Tracking() {
 
       {/* Tracking Settings Dialog */}
       <TrackingSettingsDialog open={showSettings} onOpenChange={setShowSettings} />
+      <TrackingGuideSheet open={showGuide} onOpenChange={setShowGuide} />
 
       <BottomNav />
     </div>
