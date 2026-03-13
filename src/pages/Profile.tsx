@@ -406,6 +406,9 @@ export default function Profile() {
           {/* Help & Support */}
           <HelpSupportDrawer />
 
+          {/* Notifications Toggle */}
+          <NotificationToggle />
+
           {/* Settings Section - Collapsible */}
           <Collapsible className="rounded-xl bg-card border border-border/50 overflow-hidden">
             <CollapsibleTrigger className="w-full px-4 py-2 flex items-center justify-between hover:bg-muted/50 transition-colors">
