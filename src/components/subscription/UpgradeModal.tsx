@@ -77,44 +77,53 @@ export function UpgradeModal({
   const modalDescription = description || (
     isAtLimit 
       ? `You've reached the free limit of ${freeLimit ?? ''} prospects. Upgrade to continue.`
-      : 'Choose a plan that works for you.'
+      : 'Compare plans and choose what works best for you.'
   );
 
-  const PlanContent = (
+  const HeaderIcon = (
+    <div className="mx-auto w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center">
+      {isAtLimit ? (
+        <AlertTriangle className="h-7 w-7 text-amber-500" />
+      ) : (
+        <Crown className="h-7 w-7 text-primary" />
+      )}
+    </div>
+  );
+
+  const PlanCards = (
     <>
-      <div className="space-y-3">
-        {plansLoading ? (
-          <div className="space-y-3">
-            <div className="h-36 bg-muted animate-pulse rounded-xl" />
-            <div className="h-36 bg-muted animate-pulse rounded-xl" />
-          </div>
-        ) : (
-          <>
-            {proPlans.length > 0 && (
-              <TierCard tierName="Basic" plans={proPlans} selectedPlanKey={selectedPlanKey} onSelectPlan={setSelectedPlanKey} />
-            )}
-            {premiumPlans.length > 0 && (
-              <TierCard tierName="Pro" plans={premiumPlans} isPremium selectedPlanKey={selectedPlanKey} onSelectPlan={setSelectedPlanKey} />
-            )}
-          </>
-        )}
-      </div>
-
-      <div className="sticky bottom-0 pt-3 pb-1 bg-card space-y-2">
-        <Button 
-          onClick={() => selectedPlan && handleUpgrade(selectedPlanKey)} 
-          className={`w-full h-11 font-semibold ${isPremiumSelected ? 'bg-amber-500 hover:bg-amber-600 text-white' : ''}`}
-          disabled={paymentLoading || plansLoading}
-        >
-          <Crown className="h-4 w-4 mr-2" />
-          {paymentLoading ? 'Opening payment...' : `Get ${selectedPlan?.name ?? 'Pro'} – ₹${selectedPlan?.price ?? ''}`}
-        </Button>
-
-        <Button variant="ghost" onClick={onClose} className="w-full text-muted-foreground">
-          Maybe Later
-        </Button>
-      </div>
+      {plansLoading ? (
+        <div className={`grid ${isMobile ? 'grid-cols-1' : 'grid-cols-2'} gap-4`}>
+          <div className="h-64 bg-muted animate-pulse rounded-2xl" />
+          <div className="h-64 bg-muted animate-pulse rounded-2xl" />
+        </div>
+      ) : (
+        <div className={`grid ${isMobile ? 'grid-cols-1' : 'grid-cols-2'} gap-4`}>
+          {proPlans.length > 0 && (
+            <TierCard tierName="Basic" plans={proPlans} selectedPlanKey={selectedPlanKey} onSelectPlan={setSelectedPlanKey} />
+          )}
+          {premiumPlans.length > 0 && (
+            <TierCard tierName="Pro" plans={premiumPlans} isPremium selectedPlanKey={selectedPlanKey} onSelectPlan={setSelectedPlanKey} />
+          )}
+        </div>
+      )}
     </>
+  );
+
+  const CTAButton = (
+    <div className="shrink-0 pt-3 pb-1 space-y-2">
+      <Button 
+        onClick={() => selectedPlan && handleUpgrade(selectedPlanKey)} 
+        className={`w-full h-12 font-semibold text-[15px] rounded-xl ${isPremiumSelected ? 'bg-amber-500 hover:bg-amber-600 text-white' : ''}`}
+        disabled={paymentLoading || plansLoading}
+      >
+        <Crown className="h-4 w-4 mr-2" />
+        {paymentLoading ? 'Opening payment...' : `Get ${selectedPlan?.name ?? 'Pro'} – ₹${selectedPlan?.price ?? ''}`}
+      </Button>
+      <Button variant="ghost" onClick={onClose} className="w-full text-muted-foreground text-sm">
+        Maybe Later
+      </Button>
+    </div>
   );
 
   if (isMobile) {
@@ -123,18 +132,15 @@ export function UpgradeModal({
         <DrawerContent className="max-h-[92vh] flex flex-col">
           <DrawerHeader className="text-center space-y-3 shrink-0 px-4 pt-4 pb-2">
             <div className="mx-auto w-3 h-1 rounded-full bg-muted-foreground/30 mb-1" />
-            <div className="mx-auto w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center">
-              {isAtLimit ? (
-                <AlertTriangle className="h-7 w-7 text-amber-500" />
-              ) : (
-                <Crown className="h-7 w-7 text-primary" />
-              )}
-            </div>
+            {HeaderIcon}
             <DrawerTitle className="text-lg">{modalTitle}</DrawerTitle>
             <p className="text-sm text-muted-foreground">{modalDescription}</p>
           </DrawerHeader>
-          <div className="flex-1 overflow-y-auto px-4 pb-6">
-            {PlanContent}
+          <div className="flex-1 overflow-y-auto px-4">
+            {PlanCards}
+          </div>
+          <div className="px-4 pb-6">
+            {CTAButton}
           </div>
         </DrawerContent>
       </Drawer>
@@ -143,21 +149,19 @@ export function UpgradeModal({
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-md bg-card border-border max-h-[90vh] flex flex-col overflow-hidden p-0">
-        <DialogHeader className="text-center space-y-4 shrink-0 px-6 pt-6 pb-2">
-          <div className="mx-auto w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center">
-            {isAtLimit ? (
-              <AlertTriangle className="h-8 w-8 text-amber-500" />
-            ) : (
-              <Crown className="h-8 w-8 text-primary" />
-            )}
-          </div>
+      <DialogContent className="sm:max-w-2xl bg-card border-border max-h-[90vh] flex flex-col overflow-hidden p-0">
+        <DialogHeader className="text-center space-y-3 shrink-0 px-6 pt-6 pb-2">
+          {HeaderIcon}
           <DialogTitle className="text-xl">{modalTitle}</DialogTitle>
           <DialogDescription className="text-center">{modalDescription}</DialogDescription>
         </DialogHeader>
 
-        <div className="flex-1 overflow-y-auto px-6 pb-6">
-          {PlanContent}
+        <div className="flex-1 overflow-y-auto px-6">
+          {PlanCards}
+        </div>
+
+        <div className="px-6 pb-5">
+          {CTAButton}
         </div>
       </DialogContent>
     </Dialog>
