@@ -210,6 +210,7 @@ export default function Profile() {
   } = useFreeTrial();
   const [editOpen, setEditOpen] = useState(false);
   const [showAIChat, setShowAIChat] = useState(false);
+  const [showAIInsights, setShowAIInsights] = useState(false);
   
   const { canAccess: canAccessAI } = useFeatureAccess('ai_assistant');
   const { pendingCount } = useSharedLeads();
