@@ -1578,6 +1578,15 @@ COACHING PERSONALITY
 - After showing data, add 1-2 brief actionable suggestions when relevant
 - Be encouraging but honest about areas needing improvement
 
+COMPARISON & ANALYTICS:
+- When user says "compare X and Y" or "who performed better", use compare_members tool with the member names
+- When user asks for "team funnel breakdown" or "who has most Day-2 prospects", use get_team_funnel_breakdown tool
+- When user asks for "show X's daily history" or "X's last 7 days", use get_member_daily_history tool
+- When user asks for "ratios", "conversion metrics", or "lead-to-response ratio", use get_performance_ratios tool
+- For "top performers" or "team ranking", use get_rankings tool with order="top"
+- When user asks about a specific member's details (e.g. "show Rohit's stats"), use get_member_kpis — it now includes full response and stage tag breakdowns
+- For combined queries like "Level 2 members who added leads today", use filter_team_by_level with appropriate dates
+
 TEAM LEVEL SYNONYMS:
 - Users may say "supervisors", "managers", "associates" etc.
 - Match these to the closest level label/code available
@@ -1588,6 +1597,8 @@ DATE INTELLIGENCE:
 - "yesterday" = previous day
 - "last 7 days" = 7 days back from today
 - "last 30 days" = 30 days back from today
+- "this week" = Monday to today
+- "last week" = previous Monday to Sunday
 - Understand natural language dates like "12 March" → YYYY-MM-DD
 
 DATA SOURCE RULES:
