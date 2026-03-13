@@ -42,9 +42,12 @@ const FOLLOW_UP_MAP: Record<string, string[]> = {
 
 function getFollowUps(assistantContent: string): string[] {
   const lower = assistantContent.toLowerCase();
+  if (lower.includes('comparison') || lower.includes('vs') || lower.includes('compared')) return FOLLOW_UP_MAP.comparison;
+  if (lower.includes('ratio') || lower.includes('conversion') || lower.includes('per day')) return FOLLOW_UP_MAP.ratio;
+  if (lower.includes('funnel') || lower.includes('stage') || lower.includes('day 2') || lower.includes('day 3')) return FOLLOW_UP_MAP.funnel;
   if (lower.includes('team') || lower.includes('member')) return FOLLOW_UP_MAP.team;
   if (lower.includes('snapshot') || lower.includes('today') || lower.includes('stats')) return FOLLOW_UP_MAP.snapshot;
-  if (lower.includes('prospect') || lower.includes('lead') || lower.includes('funnel')) return FOLLOW_UP_MAP.prospect;
+  if (lower.includes('prospect') || lower.includes('lead') || lower.includes('stale')) return FOLLOW_UP_MAP.prospect;
   if (lower.includes('coaching') || lower.includes('tip') || lower.includes('improve')) return FOLLOW_UP_MAP.coaching;
   return [];
 }
