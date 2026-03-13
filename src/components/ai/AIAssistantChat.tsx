@@ -14,15 +14,15 @@ const BRIEFING_KEY = 'nevorai-last-briefing-date';
 const SUGGESTION_CATEGORIES = [
   {
     label: 'My Numbers',
-    items: ['Daily snapshot', "This week's stats", 'Activity trend'],
+    items: ['Daily snapshot', "This week's stats", 'My conversion ratios', 'Activity trend'],
   },
   {
     label: 'Team',
-    items: ["Who hasn't updated?", 'Team rankings', 'Team performance this week'],
+    items: ["Who hasn't updated?", 'Team rankings', 'Compare team members', 'Top performers this week'],
   },
   {
     label: 'Prospects',
-    items: ['Stale prospects', 'Follow-up needed', 'Funnel analysis'],
+    items: ['Stale prospects', 'Follow-up needed', 'Team funnel breakdown'],
   },
   {
     label: 'Coaching',
@@ -31,10 +31,13 @@ const SUGGESTION_CATEGORIES = [
 ];
 
 const FOLLOW_UP_MAP: Record<string, string[]> = {
-  snapshot: ['Show breakdown by member', 'Compare with last week'],
-  team: ['Who needs follow-up?', 'Show team rankings'],
-  prospect: ['Show stale prospects', 'Funnel analysis'],
-  coaching: ['What should I improve?', 'Weekly review'],
+  snapshot: ['Show breakdown by member', 'Compare with last week', 'Show my ratios'],
+  team: ['Who needs follow-up?', 'Show team rankings', 'Compare team members'],
+  prospect: ['Show stale prospects', 'Team funnel breakdown', 'Funnel analysis'],
+  coaching: ['What should I improve?', 'Weekly review', 'Show my ratios'],
+  comparison: ['Show daily breakdown', 'Who improved more?', 'Show team rankings'],
+  funnel: ['Team funnel breakdown', 'Show stuck prospects', 'Funnel analysis'],
+  ratio: ['Compare with last week', 'Show member ratios', 'Activity trend'],
 };
 
 function getFollowUps(assistantContent: string): string[] {
