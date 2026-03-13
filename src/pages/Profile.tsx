@@ -133,23 +133,24 @@ export default function Profile() {
 
   // Handle SSO redirect to nevorai.com pages
   const handleSSORedirect = useCallback(async (targetUrl: string) => {
+    // Open blank window synchronously to avoid popup blocker
+    const newWindow = window.open('about:blank', '_blank');
     try {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) {
-        window.open(targetUrl, '_blank', 'noopener,noreferrer');
+        if (newWindow) newWindow.location.href = targetUrl;
         return;
       }
       const response = await supabase.functions.invoke('trackup-sso-link', {
         body: { redirectTo: targetUrl },
       });
-      const link = response.data?.action_link;
-      if (link) {
-        window.open(link, '_blank', 'noopener,noreferrer');
-      } else {
-        window.open(targetUrl, '_blank', 'noopener,noreferrer');
+      if (response.data?.action_link && newWindow) {
+        newWindow.location.href = response.data.action_link;
+      } else if (newWindow) {
+        newWindow.location.href = targetUrl;
       }
     } catch {
-      window.open(targetUrl, '_blank', 'noopener,noreferrer');
+      if (newWindow) newWindow.location.href = targetUrl;
     }
   }, []);
 
