@@ -420,15 +420,6 @@ export function AIAssistantChat({ open, onOpenChange }: AIAssistantChatProps) {
           />
           <Button
             size="icon"
-            variant="ghost"
-            className={`h-10 w-10 rounded-xl flex-shrink-0 ${isListening ? 'text-destructive bg-destructive/10' : ''}`}
-            onClick={toggleVoice}
-            title={isListening ? 'Stop listening' : 'Voice input'}
-          >
-            {isListening ? <MicOff className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
-          </Button>
-          <Button
-            size="icon"
             className="h-10 w-10 rounded-xl flex-shrink-0"
             onClick={() => sendMessage(input)}
             disabled={!input.trim() || isLoading}
