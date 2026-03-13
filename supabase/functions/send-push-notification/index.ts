@@ -22,6 +22,7 @@ type RequestBody = {
   title?: string;
   body?: string;
   url?: string;
+  user_id?: string; // for send-to-user action
 };
 
 Deno.serve(async (req) => {
