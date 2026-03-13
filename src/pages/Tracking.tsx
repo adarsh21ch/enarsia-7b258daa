@@ -1,7 +1,7 @@
 import { useEffect, useState, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { format, subMonths, addMonths } from 'date-fns';
-import { ChevronLeft, ChevronRight, ExternalLink, Settings, Info, BarChart3 } from 'lucide-react';
+import { ChevronLeft, ChevronRight, ExternalLink, Settings, Info, BarChart3, HelpCircle } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { BottomNav } from '@/components/layout/BottomNav';
 import { TrialBanner } from '@/components/subscription/TrialBanner';
@@ -17,6 +17,7 @@ import { MonthlyTotalsTable } from '@/components/trackup-v2/MonthlyTotalsTable';
 import { ManualUpdateDrawer } from '@/components/trackup-v2/ManualUpdateDrawer';
 import { FloatingUpdateButton } from '@/components/trackup-v2/FloatingUpdateButton';
 import { TrackingSettingsDialog } from '@/components/trackup-v2/TrackingSettingsDialog';
+import { TrackingGuideSheet } from '@/components/tracking/TrackingGuideSheet';
 import { usePersonalTagMetrics } from '@/hooks/usePersonalTagMetrics';
 import {
   Tooltip,
@@ -42,6 +43,7 @@ export default function Tracking() {
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [showUpdateDrawer, setShowUpdateDrawer] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
+  const [showGuide, setShowGuide] = useState(false);
   
 
   const monthYear = format(currentMonth, 'yyyy-MM');
@@ -135,6 +137,14 @@ export default function Tracking() {
             >
               <ExternalLink className="h-3.5 w-3.5" />
               Team Tracking
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setShowGuide(true)}
+              className="h-8 w-8"
+            >
+              <HelpCircle className="h-4 w-4" />
             </Button>
             <Button
               variant="ghost"
@@ -265,6 +275,7 @@ export default function Tracking() {
 
       {/* Tracking Settings Dialog */}
       <TrackingSettingsDialog open={showSettings} onOpenChange={setShowSettings} />
+      <TrackingGuideSheet open={showGuide} onOpenChange={setShowGuide} />
 
       <BottomNav />
     </div>
