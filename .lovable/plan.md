@@ -1,102 +1,127 @@
 
 
-# Push Notifications Implementation Plan
+# Plan: Nevorai Notes — MVP
 
-## Overview
-Add Web Push Notifications to the app with:
-1. A **Notifications toggle** in the Profile page (above Settings)
-2. An **Admin Notifications panel** to send push notifications to all app users
+## Scope (Apple Notes / Samsung Notes style)
 
-## Architecture
+**Included:**
+- Rich text notes (bold, italic, lists, checklists)
+- Audio recording & playback (voice memos)
+- Photo attachments (camera/gallery)
+- Clickable links with smart detection (YouTube, Zoom, PDF URLs auto-preview)
+- Tappable phone numbers (call/text)
+- Color labels, pinning, search
+- Folders/tags for organization
 
-```text
-┌─────────────────┐     ┌──────────────────┐     ┌─────────────┐
-│  Profile Page    │     │  Admin Panel      │     │  Service    │
-│  (Toggle ON/OFF) │     │  (Send Notif Tab) │     │  Worker     │
-└───────┬─────────┘     └───────┬──────────┘     └──────┬──────┘
-        │ save subscription      │ invoke edge fn        │ show notif
-        ▼                        ▼                       ▼
-┌─────────────────────────────────────────────────────────────────┐
-│  push_subscriptions table (user_id, endpoint, p256dh, auth)    │
-│  admin_notifications table (title, body, sent_at, sent_by)     │
-└─────────────────────────────────────────────────────────────────┘
-        │                        │
-        ▼                        ▼
-┌─────────────────────────────────────────┐
-│  Edge Function: send-push-notification  │
-│  - Reads push_subscriptions             │
-│  - Sends via Web Push API (web-push)    │
-└─────────────────────────────────────────┘
+**Excluded (for now):**
+- Video recording/attachment
+- Team sharing
+- Prospect linking (can add later)
+
+---
+
+## Database
+
+Create a `notes` table and a `note_attachments` table, plus a `note-attachments` storage bucket.
+
+```sql
+-- notes table
+CREATE TABLE public.notes (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  title TEXT NOT NULL DEFAULT '',
+  content JSONB NOT NULL DEFAULT '[]',  -- rich text blocks
+  color_label TEXT DEFAULT 'default',
+  is_pinned BOOLEAN DEFAULT false,
+  folder TEXT DEFAULT 'General',
+  created_at TIMESTAMPTZ DEFAULT now(),
+  updated_at TIMESTAMPTZ DEFAULT now()
+);
+
+-- note_attachments (photos + audio)
+CREATE TABLE public.note_attachments (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  note_id UUID NOT NULL REFERENCES public.notes(id) ON DELETE CASCADE,
+  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  type TEXT NOT NULL CHECK (type IN ('photo', 'audio')),
+  storage_path TEXT NOT NULL,
+  file_name TEXT,
+  file_size INTEGER,
+  duration_seconds INTEGER, -- for audio
+  created_at TIMESTAMPTZ DEFAULT now()
+);
+
+-- Storage bucket
+INSERT INTO storage.buckets (id, name, public)
+VALUES ('note-attachments', 'note-attachments', false)
+ON CONFLICT (id) DO NOTHING;
+
+-- RLS: users can only access their own notes & attachments
 ```
 
-## Database Changes (2 tables + 1 migration)
+## File Structure
 
-**1. `push_subscriptions`** — stores each user's browser push subscription
-- `id` uuid PK
-- `user_id` uuid references auth.users
-- `endpoint` text NOT NULL
-- `p256dh` text NOT NULL
-- `auth_key` text NOT NULL
-- `created_at` timestamptz
-- `unique(user_id, endpoint)`
-- RLS: users can INSERT/DELETE/SELECT their own rows only
+```text
+src/
+├── pages/Notes.tsx                    -- Main notes list page
+├── pages/NoteEditor.tsx               -- Single note editor
+├── components/notes/
+│   ├── NoteCard.tsx                   -- Grid/list card preview
+│   ├── NoteToolbar.tsx                -- Bold, list, checklist, attach, audio, color
+│   ├── RichTextEditor.tsx             -- Block-based editor (paragraphs, lists, checklists)
+│   ├── AudioRecorder.tsx              -- Record & playback voice memos
+│   ├── PhotoAttachment.tsx            -- Camera/gallery picker + grid display
+│   ├── LinkPreview.tsx                -- Smart link detection (YT, Zoom, PDF, phone)
+│   ├── FolderSidebar.tsx              -- Folder/tag filter
+│   └── NoteSearchBar.tsx              -- Full-text search across notes
+├── hooks/
+│   ├── useNotes.ts                    -- CRUD operations
+│   └── useNoteAttachments.ts          -- Upload/delete attachments
+```
 
-**2. `admin_notifications`** — log of sent notifications
-- `id` uuid PK
-- `title` text NOT NULL
-- `body` text NOT NULL
-- `sent_by` uuid references auth.users
-- `recipient_count` integer
-- `created_at` timestamptz
-- RLS: admin can INSERT/SELECT; regular users no access
+## Routes & Navigation
 
-## Service Worker Update (`public/sw.js`)
-- Add `push` event listener to display notifications
-- Add `notificationclick` event listener to open the app
+- Add `/notes` route in `App.tsx`
+- Add "Notes" entry in Profile page (similar to other menu items) with a notebook icon
+- Notes page: masonry/grid of note cards, FAB to create new note, search bar, folder filter
 
-## VAPID Keys
-- Need to generate VAPID key pair and store:
-  - **Public key**: in codebase (env or constant) for client subscription
-  - **Private key**: as a secret for the edge function
-- Will use `secrets--add_secret` tool for the private key
+## Key Features Detail
 
-## Frontend Changes
+### Rich Text Editor
+- Lightweight block-based editor (no heavy library needed)
+- Each block: `{ type: 'text'|'checklist'|'heading', content: string, checked?: boolean, style?: 'bold'|'italic' }`
+- Stored as JSON array in `content` column
 
-### 1. Profile Page (`src/pages/Profile.tsx`)
-- Add a "Notifications" card with a Switch toggle **above the Settings collapsible**
-- On toggle ON: request browser permission → subscribe via `pushManager.subscribe()` → save subscription to `push_subscriptions` table
-- On toggle OFF: unsubscribe → delete from table
-- Check existing subscription on mount to set initial toggle state
+### Audio Recording
+- Use browser `MediaRecorder` API
+- Record → upload to `note-attachments` bucket
+- Inline playback with waveform-style progress bar
+- Max 5 minutes per recording
 
-### 2. New Hook: `src/hooks/usePushNotifications.ts`
-- `isSupported` — checks if browser supports push
-- `isSubscribed` — checks DB for current subscription
-- `subscribe()` / `unsubscribe()` — manage push subscription
-- Handles permission request flow
+### Photo Attachments
+- File input (camera + gallery on mobile)
+- Upload to `note-attachments` bucket
+- Display as inline thumbnails in the note
 
-### 3. Admin Panel — New "Notify" Tab (`src/components/admin/AdminNotificationsPanel.tsx`)
-- Simple form: Title + Body + "Send to All" button
-- Calls edge function `send-push-notification`
-- Shows history of sent notifications from `admin_notifications` table
+### Smart Link Detection
+- Auto-detect URLs in text, render as tappable links
+- Phone numbers: detect patterns like `+91 98765 43210`, render with call/WhatsApp buttons
+- YouTube links: show thumbnail preview
+- Other links (Zoom, PDF): show favicon + domain label
 
-### 4. Admin Page (`src/pages/Admin.tsx`)
-- Add new "Notify" tab with Bell icon in the tabs list
+### Color Labels & Pinning
+- 6 color options (default, red, orange, yellow, green, blue)
+- Pin to top of list
+- Sort: pinned first, then by `updated_at` desc
 
-## Edge Function: `supabase/functions/send-push-notification/index.ts`
-- Accepts `{ title, body }` from admin
-- Validates admin role via `has_role` check
-- Reads all subscriptions from `push_subscriptions`
-- Sends Web Push using the `web-push` library (or raw fetch to push endpoints)
-- Logs to `admin_notifications`
-- Returns count of successful sends
+## Summary of Changes
 
-## Implementation Order
-1. Generate VAPID keys and add secret
-2. Create database tables via migration
-3. Update service worker with push/click handlers
-4. Create `usePushNotifications` hook
-5. Add notification toggle to Profile page
-6. Create admin notifications panel
-7. Create edge function for sending notifications
-8. Add Notify tab to Admin page
+| Area | Change |
+|------|--------|
+| Database | Create `notes`, `note_attachments` tables + storage bucket + RLS |
+| `App.tsx` | Add `/notes` and `/notes/:id` routes |
+| `Profile.tsx` | Add "Notes" menu item |
+| New pages | `Notes.tsx` (list), `NoteEditor.tsx` (editor) |
+| New components | 7 components in `src/components/notes/` |
+| New hooks | `useNotes.ts`, `useNoteAttachments.ts` |
 

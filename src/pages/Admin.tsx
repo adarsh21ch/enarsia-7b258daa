@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
-import { Loader2, Shield, Users, Crown, ArrowLeft, BarChart3, MessageSquare, Tag, Sliders, Sparkles, History } from 'lucide-react';
+import { Loader2, Shield, Users, Crown, ArrowLeft, BarChart3, MessageSquare, Tag, Sliders, Sparkles, History, Bell } from 'lucide-react';
 import nevoraLogo from '@/assets/nevorai-logo.jpeg';
 import { AdminAnalyticsDashboard } from '@/components/admin/AdminAnalyticsDashboard';
 import { AdminSupportPanel } from '@/components/admin/AdminSupportPanel';
@@ -17,6 +17,7 @@ import { UsageLimitsManager } from '@/components/admin/UsageLimitsManager';
 import { FeatureFlagsManager } from '@/components/admin/FeatureFlagsManager';
 import { EnhancedUsersTab } from '@/components/admin/EnhancedUsersTab';
 import { AuditLogViewer } from '@/components/admin/AuditLogViewer';
+import { AdminNotificationsPanel } from '@/components/admin/AdminNotificationsPanel';
 
 export default function Admin() {
   const navigate = useNavigate();
@@ -115,6 +116,10 @@ export default function Admin() {
                   <History className="h-3.5 w-3.5 mr-1" />
                   Audit Log
                 </TabsTrigger>
+                <TabsTrigger value="notify" className="text-xs px-3">
+                  <Bell className="h-3.5 w-3.5 mr-1" />
+                  Notify
+                </TabsTrigger>
               </TabsList>
               <ScrollBar orientation="horizontal" />
             </ScrollArea>
@@ -157,6 +162,11 @@ export default function Admin() {
             {/* Audit Log Tab */}
             <TabsContent value="audit" className="mt-4">
               <AuditLogViewer />
+            </TabsContent>
+
+            {/* Notify Tab */}
+            <TabsContent value="notify" className="mt-4">
+              <AdminNotificationsPanel />
             </TabsContent>
           </Tabs>
 
