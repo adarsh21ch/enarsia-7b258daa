@@ -125,6 +125,7 @@ function App() {
                       <Route path="/shared-leads" element={<SharedLeads />} />
                       <Route path="/notes" element={<Notes />} />
                       <Route path="/notes/:id" element={<NoteEditor />} />
+                      <Route path="/tracking-format" element={<TrackingFormat />} />
                       <Route path="*" element={<NotFound />} />
                     </Routes>
                     </TodosProvider>

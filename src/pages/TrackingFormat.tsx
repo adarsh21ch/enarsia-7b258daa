@@ -1,7 +1,6 @@
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useProfile } from '@/hooks/useProfile';
-import { useLeaderSetup } from '@/hooks/useLeaderSetup';
 import { LeaderTrackingFormatSettings } from '@/components/profile/LeaderTrackingFormatSettings';
 import { BottomNav } from '@/components/layout/BottomNav';
 import { ArrowLeft, Users } from 'lucide-react';
@@ -9,8 +8,7 @@ import { ArrowLeft, Users } from 'lucide-react';
 export default function TrackingFormat() {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { profile, updateProfile, updating } = useProfile();
-  const { updateUplineByEmail, clearLeaderHierarchy } = useLeaderSetup();
+  const { profile, updateProfile, updating, updateUplineByEmail, clearLeaderHierarchy } = useProfile();
 
   if (!user) {
     navigate('/auth');
