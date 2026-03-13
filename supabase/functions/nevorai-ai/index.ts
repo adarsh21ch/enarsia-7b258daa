@@ -515,6 +515,74 @@ const TOOLS = [
       parameters: { type: "object", properties: {}, additionalProperties: false },
     },
   },
+  {
+    type: "function",
+    function: {
+      name: "compare_members",
+      description: "Compare KPIs of 2 or more team members side-by-side for a date range (leaders only). Use when user asks to compare members or asks 'who performed better'.",
+      parameters: {
+        type: "object",
+        properties: {
+          member_names: { type: "array", items: { type: "string" }, description: "Display names of team members to compare (2 or more)" },
+          start_date: { type: "string", description: "YYYY-MM-DD" },
+          end_date: { type: "string", description: "YYYY-MM-DD" },
+        },
+        required: ["member_names", "start_date", "end_date"],
+        additionalProperties: false,
+      },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "get_team_funnel_breakdown",
+      description: "Get funnel stage counts per team member for a date range (leaders only). Shows who has the most prospects at each funnel stage.",
+      parameters: {
+        type: "object",
+        properties: {
+          start_date: { type: "string", description: "YYYY-MM-DD" },
+          end_date: { type: "string", description: "YYYY-MM-DD" },
+        },
+        required: ["start_date", "end_date"],
+        additionalProperties: false,
+      },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "get_member_daily_history",
+      description: "Get day-by-day leads/responses/enrollments for a specific team member over a date range (leaders only). Useful for 'show X's last 7 days' type queries.",
+      parameters: {
+        type: "object",
+        properties: {
+          member_name: { type: "string", description: "Display name of the team member" },
+          start_date: { type: "string", description: "YYYY-MM-DD" },
+          end_date: { type: "string", description: "YYYY-MM-DD" },
+        },
+        required: ["member_name", "start_date", "end_date"],
+        additionalProperties: false,
+      },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "get_performance_ratios",
+      description: "Calculate performance ratios and conversion metrics for a date range. Works for user's own data or a specific team member. Returns lead-to-response ratio, response-to-enrollment ratio, per-day averages.",
+      parameters: {
+        type: "object",
+        properties: {
+          start_date: { type: "string", description: "YYYY-MM-DD" },
+          end_date: { type: "string", description: "YYYY-MM-DD" },
+          member_name: { type: "string", description: "Optional: team member name. If omitted, uses user's own data." },
+          source: { type: "string", enum: ["total", "personal"], description: "Data source (default: total)" },
+        },
+        required: ["start_date", "end_date"],
+        additionalProperties: false,
+      },
+    },
+  },
 ];
 
 // Helper: compute enrollments from response_tags using enrollmentSlotKey
