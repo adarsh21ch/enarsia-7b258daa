@@ -120,10 +120,8 @@ export function AIAssistantChat({ open, onOpenChange }: AIAssistantChatProps) {
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [streamingContent, setStreamingContent] = useState('');
-  const [isListening, setIsListening] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
-  const recognitionRef = useRef<any>(null);
   const [showBriefing, setShowBriefing] = useState(false);
 
   // Persist messages to localStorage
