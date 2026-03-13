@@ -271,13 +271,19 @@ function PlanCard({
   onEdit, 
   onToggleActive, 
   onToggleDefault,
-  onDelete 
+  onDelete,
+  onMoveUp,
+  onMoveDown,
+  position,
 }: { 
   plan: SubscriptionPlan;
   onEdit: () => void;
   onToggleActive: () => void;
   onToggleDefault: () => void;
   onDelete: () => void;
+  onMoveUp?: () => void;
+  onMoveDown?: () => void;
+  position?: number;
 }) {
   return (
     <Card className="p-4">
