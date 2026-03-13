@@ -266,7 +266,7 @@ export default function Profile() {
           )}
 
           {/* TrackUp Dashboard - External link with SSO */}
-          <button onClick={() => handleSSORedirect('https://nevorai.com/trackup')} className={cn("w-full rounded-xl px-4 py-2.5", "bg-gradient-to-r backdrop-blur-sm", "border border-emerald-500/30", "flex items-center justify-between", "transition-all duration-200 hover:shadow-md", "from-emerald-500/20 to-emerald-500/5")}>
+          <button onClick={() => window.open('https://nevorai.com/auth?redirect=/trackup', '_blank', 'noopener,noreferrer')} className={cn("w-full rounded-xl px-4 py-2.5", "bg-gradient-to-r backdrop-blur-sm", "border border-emerald-500/30", "flex items-center justify-between", "transition-all duration-200 hover:shadow-md", "from-emerald-500/20 to-emerald-500/5")}>
             <div className="flex items-center gap-3">
               <div className="p-1.5 rounded-lg bg-emerald-500/10">
                 <BarChart3 className="h-4 w-4 text-emerald-500" />
