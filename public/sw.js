@@ -72,7 +72,42 @@ self.addEventListener('fetch', event => {
   );
 });
 
-// Push notification handler
+// ─── Smart Notification Grouping ───────────────────────────────
+
+/**
+ * Build a grouped notification title + body from accumulated data.
+ * @param {object} opts
+ * @param {number} opts.count       Total items in this group
+ * @param {string[]} opts.senders   Unique sender names (most recent last)
+ * @param {string} opts.contextName e.g. "Focus Group", "Achievers Club"
+ * @param {string} opts.contextType e.g. "announcements", "updates", "messages"
+ * @returns {{ title: string, body: string }}
+ */
+function buildGroupedText({ count, senders, contextName, contextType }) {
+  const label = contextType || 'updates';
+  const ctx = contextName || 'Achievers Club';
+
+  if (count <= 1 || senders.length === 0) {
+    return null; // caller will use original title/body
+  }
+
+  const latest = senders[senders.length - 1];
+  const othersCount = senders.length - 1;
+
+  let title;
+  if (senders.length === 1) {
+    title = `${latest} posted ${count} ${label}`;
+  } else if (senders.length === 2) {
+    title = `${latest} and ${senders[0]}`;
+  } else {
+    title = `${latest} and ${othersCount} others`;
+  }
+
+  const body = `${count} new ${label} in ${ctx}`;
+  return { title, body };
+}
+
+// Push notification handler with smart grouping
 self.addEventListener('push', event => {
   let data = { title: 'NevorAI', body: 'You have a new notification' };
   try {
@@ -83,17 +118,64 @@ self.addEventListener('push', event => {
     console.error('Push data parse error:', e);
   }
 
-  event.waitUntil(
-    self.registration.showNotification(data.title || 'NevorAI', {
-      body: data.body || '',
+  const tag = data.tag || 'nevorai-push';
+  const isGroupable = Boolean(data.groupKey);
+
+  event.waitUntil((async () => {
+    let title = data.title || 'NevorAI';
+    let body = data.body || '';
+    let notifCount = 1;
+    let senders = [];
+
+    if (isGroupable) {
+      try {
+        // Check existing notifications with the same tag
+        const existing = await self.registration.getNotifications({ tag });
+
+        if (existing.length > 0) {
+          const prev = existing[0].data || {};
+          notifCount = (prev.count || 1) + 1;
+          senders = Array.isArray(prev.senders) ? [...prev.senders] : [];
+        }
+
+        // Add current sender if not already tracked
+        if (data.senderName && !senders.includes(data.senderName)) {
+          senders.push(data.senderName);
+        }
+
+        // Build grouped text if count > 1
+        const grouped = buildGroupedText({
+          count: notifCount,
+          senders,
+          contextName: data.contextName,
+          contextType: data.contextType,
+        });
+
+        if (grouped) {
+          title = grouped.title;
+          body = grouped.body;
+        }
+      } catch (err) {
+        console.error('Grouping error:', err);
+      }
+    }
+
+    await self.registration.showNotification(title, {
+      body,
       icon: '/icons/icon-192.png',
       badge: '/icons/icon-192.png',
       vibrate: [200, 100, 200],
-      data: { url: data.url || '/' },
-      tag: 'nevorai-push',
+      data: {
+        url: data.url || '/',
+        count: notifCount,
+        senders,
+        groupKey: data.groupKey || null,
+        contextName: data.contextName || null,
+      },
+      tag,
       renotify: true,
-    })
-  );
+    });
+  })());
 });
 
 // Notification click handler
