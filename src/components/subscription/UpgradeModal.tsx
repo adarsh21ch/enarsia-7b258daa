@@ -1,7 +1,7 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from '@/components/ui/drawer';
 import { Button } from '@/components/ui/button';
-import { Crown, AlertTriangle, X } from 'lucide-react';
+import { Crown, AlertTriangle } from 'lucide-react';
 import { usePaymentLinks } from '@/hooks/usePaymentLinks';
 import { useRazorpay } from '@/hooks/useRazorpay';
 import { useToast } from '@/hooks/use-toast';
@@ -12,9 +12,66 @@ import { TierCard } from './TierCard';
 import { getTierDisplayName } from '@/config/tierLabels';
 import { useIsMobile } from '@/hooks/use-mobile';
 
-// ... keep existing code
+interface UpgradeModalProps {
+  open: boolean;
+  onClose: () => void;
+  currentLeadCount?: number;
+  hasTeamFeatures?: boolean;
+  appContext?: 'nevorai' | 'trackup';
+  title?: string;
+  description?: string;
+}
 
+export function UpgradeModal({ 
+  open, onClose, currentLeadCount, hasTeamFeatures = false,
+  appContext = 'nevorai', title, description,
+}: UpgradeModalProps) {
+  const { initiatePayment, initiateSubscription, loading: paymentLoading } = useRazorpay();
+  const { toast } = useToast();
+  const { refetch } = useSubscription();
+  const { plans, loading: plansLoading } = usePaymentLinks();
+  const { config } = useAdminConfig();
   const isMobile = useIsMobile();
+
+  const freeLimit = config.limits.hard_limit ?? config.limits.free_total_leads;
+  const isAtLimit = currentLeadCount !== undefined && freeLimit !== undefined
+    ? currentLeadCount >= freeLimit : false;
+
+  const { proPlans, premiumPlans } = useMemo(() => ({
+    proPlans: plans.filter(p => p.tier === 'pro').sort((a, b) => a.sortOrder - b.sortOrder),
+    premiumPlans: plans.filter(p => p.tier === 'premium').sort((a, b) => a.sortOrder - b.sortOrder),
+  }), [plans]);
+
+  const allPlans = [...proPlans, ...premiumPlans];
+  const defaultKey = proPlans.find(p => p.badgeText)?.plan_key || proPlans[0]?.plan_key || premiumPlans[0]?.plan_key || '';
+  const [selectedPlanKey, setSelectedPlanKey] = useState<string>(defaultKey);
+
+  useEffect(() => {
+    if (!open) return;
+    const next = proPlans.find(p => p.badgeText)?.plan_key || proPlans[0]?.plan_key || premiumPlans[0]?.plan_key;
+    if (next) setSelectedPlanKey(next);
+  }, [open, proPlans, premiumPlans]);
+
+  const selectedPlan = allPlans.find(p => p.plan_key === selectedPlanKey) || allPlans[0];
+  const isPremiumSelected = selectedPlan?.tier === 'premium';
+  
+  const handleUpgrade = (planKey: string) => {
+    const plan = plans.find(p => p.plan_key === planKey);
+    if (plan?.billing_type === 'recurring') {
+      initiateSubscription({
+        planType: planKey,
+        onSuccess: () => { toast({ title: "Subscription Started 🎉", description: "Your recurring subscription has been initiated." }); refetch(); onClose(); },
+        onError: (error) => console.error('Subscription error:', error),
+      });
+      return;
+    }
+    const tierLabel = plan ? getTierDisplayName(plan.tier) : 'Plan';
+    initiatePayment({
+      planType: planKey,
+      onSuccess: () => { toast({ title: `${tierLabel} Plan Activated 🎉`, description: "All features are now unlocked." }); refetch(); onClose(); },
+      onError: (error) => console.error('Payment error:', error),
+    });
+  };
 
   const modalTitle = title || (isAtLimit ? 'Lead Limit Reached' : 'Upgrade Your Plan');
   const modalDescription = description || (
