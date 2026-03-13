@@ -10,10 +10,11 @@ import { toast } from 'sonner';
 type Message = { role: 'user' | 'assistant'; content: string };
 
 const SUGGESTIONS = [
-  "My stats today",
-  "Team performance",
-  "Tips to improve",
-  "Monthly summary",
+  "Daily snapshot",
+  "Who hasn't updated today?",
+  "Funnel analysis",
+  "Coaching tips",
+  "Team performance this week",
 ];
 
 const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/nevorai-ai`;
