@@ -81,6 +81,36 @@ Deno.serve(async (req) => {
       return json({ mode: "test-self", ...result });
     }
 
+    // send-to-user: internal action for AI insights (requires service role / admin)
+    if (payload.action === "send-to-user" && payload.user_id) {
+      // Verify caller is admin or service role
+      const isServiceRole = token === Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+      const { data: isAdmin } = await supabase.rpc("has_role", { _user_id: user.id, _role: "admin" });
+      
+      if (!isServiceRole && !isAdmin) {
+        return json({ error: "Admin access required for send-to-user" }, 403);
+      }
+
+      const { data: targetSubs, error: targetError } = await supabase
+        .from("push_subscriptions")
+        .select("id, user_id, endpoint, p256dh, auth_key")
+        .eq("user_id", payload.user_id);
+
+      if (targetError) throw targetError;
+
+      const result = await sendToSubscriptions(
+        supabase,
+        (targetSubs ?? []) as PushRow[],
+        {
+          title: payload.title || "Notification",
+          body: payload.body || "",
+          url: payload.url || "/",
+        },
+      );
+
+      return json({ mode: "send-to-user", ...result });
+    }
+
     const { data: isAdmin, error: adminCheckError } = await supabase.rpc("has_role", {
       _user_id: user.id,
       _role: "admin",
