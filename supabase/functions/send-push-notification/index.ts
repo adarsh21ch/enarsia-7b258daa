@@ -15,7 +15,7 @@ type PushRow = {
   auth_key: string;
 };
 
-type SendAction = "get-public-key" | "test-self";
+type SendAction = "get-public-key" | "test-self" | "send-to-user";
 
 type RequestBody = {
   action?: SendAction;
