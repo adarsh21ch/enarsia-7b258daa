@@ -13,7 +13,7 @@ import { BottomNav } from '@/components/layout/BottomNav';
 import { HeaderBellIcon } from '@/components/layout/HeaderBellIcon';
 import { EditProfileDialog } from '@/components/profile/EditProfileDialog';
 import { ChangePasswordDialog } from '@/components/profile/ChangePasswordDialog';
-import { LeaderTrackingFormatDrawer } from '@/components/profile/LeaderTrackingFormatDrawer';
+
 import { ConnectUplineCard } from '@/components/profile/ConnectUplineCard';
 import { ProfileLevelDropdown } from '@/components/profile/ProfileLevelDropdown';
 import { HelpSupportDrawer } from '@/components/profile/HelpSupportDrawer';
@@ -484,8 +484,17 @@ export default function Profile() {
             <ChevronRight className="h-4 w-4 text-muted-foreground" />
           </button>
 
-          {/* Tracking Format - Opens drawer with full settings */}
-          <LeaderTrackingFormatDrawer profile={profile} updating={updating} onUpdateProfile={updateProfile} onUpdateUplineByEmail={updateUplineByEmail} onClearLeaderHierarchy={clearLeaderHierarchy} />
+          {/* Tracking Format - Full page */}
+          <button
+            onClick={() => navigate('/tracking-format')}
+            className="w-full rounded-xl px-4 py-2 bg-card border border-border/50 flex items-center justify-between transition-colors hover:bg-muted/50"
+          >
+            <div className="flex items-center gap-2.5">
+              <Sliders className="h-4 w-4 text-muted-foreground" />
+              <span className="font-medium text-sm">Tracking Format</span>
+            </div>
+            <ChevronRight className="h-3.5 w-3.5 text-muted-foreground" />
+          </button>
 
           {/* Recently Deleted */}
           <RecentlyDeletedDrawer

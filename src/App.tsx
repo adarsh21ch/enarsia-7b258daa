@@ -39,6 +39,7 @@ import PublicFormPage from "./features/forms/pages/PublicFormPage";
 import SharedLeads from "./pages/SharedLeads";
 import Notes from "./pages/Notes";
 import NoteEditor from "./pages/NoteEditor";
+import TrackingFormat from "./pages/TrackingFormat";
 
 // Error Boundary to catch rendering errors
 class ErrorBoundary extends Component<{ children: ReactNode }, { hasError: boolean; error: Error | null }> {
@@ -124,6 +125,7 @@ function App() {
                       <Route path="/shared-leads" element={<SharedLeads />} />
                       <Route path="/notes" element={<Notes />} />
                       <Route path="/notes/:id" element={<NoteEditor />} />
+                      <Route path="/tracking-format" element={<TrackingFormat />} />
                       <Route path="*" element={<NotFound />} />
                     </Routes>
                     </TodosProvider>
