@@ -464,55 +464,42 @@ export function LeaderTrackingFormatSettings({
 
   return (
     <div className="space-y-5">
-      {/* ─── YOUR EMAIL ─── */}
-      <Section className="bg-gradient-to-br from-primary/8 to-primary/3 border-primary/20">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="p-2 rounded-xl bg-primary/15">
-              <Mail className="h-4 w-4 text-primary" />
-            </div>
-            <div>
-              <p className="text-[11px] text-muted-foreground font-medium uppercase tracking-wider">Your Email</p>
-              <p className="text-sm font-semibold text-foreground">{profile?.email || 'Loading...'}</p>
-            </div>
-          </div>
-          <Button variant="outline" size="icon" onClick={async () => {
-            if (profile?.email) {
-              await navigator.clipboard.writeText(profile.email);
-              setCopiedId(true);
-              toast.success('Email copied');
-              setTimeout(() => setCopiedId(false), 2000);
-            }
-          }} className="h-9 w-9 rounded-lg" disabled={!profile?.email}>
-            {copiedId ? <Check className="h-4 w-4 text-green-500" /> : <Copy className="h-4 w-4" />}
-          </Button>
+      {/* ─── YOUR EMAIL (compact single line) ─── */}
+      <div className="flex items-center justify-between px-3 py-2 rounded-lg bg-muted/40 border border-border/40">
+        <div className="flex items-center gap-2 min-w-0">
+          <Mail className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+          <span className="text-xs text-muted-foreground shrink-0">Your Email:</span>
+          <span className="text-xs font-medium text-foreground truncate">{profile?.email || '…'}</span>
         </div>
-        <p className="text-xs text-muted-foreground leading-relaxed">
-          Share your email with your team so they can connect to your tracking format.
-        </p>
-      </Section>
-
-      {/* ─── CONNECT TO UPLINE ─── */}
-      <Section>
-        <SectionHeader
-          icon={Link2}
-          title="Connect to Upline"
-          badge={
-            autoSaveStatus === 'saving' ? (
-              <span className="text-xs text-muted-foreground flex items-center gap-1">
-                <Loader2 className="h-3 w-3 animate-spin" /> Saving…
-              </span>
-            ) : autoSaveStatus === 'saved' ? (
-              <span className="text-xs text-green-600 flex items-center gap-1">
-                <Check className="h-3 w-3" /> Saved
-              </span>
-            ) : null
+        <button onClick={async () => {
+          if (profile?.email) {
+            await navigator.clipboard.writeText(profile.email);
+            setCopiedId(true);
+            toast.success('Email copied');
+            setTimeout(() => setCopiedId(false), 2000);
           }
-        />
-        
-        <p className="text-xs text-muted-foreground leading-relaxed">
-          Enter your upline's Gmail address to use their tracking format (tags, levels, and funnel logic).
-        </p>
+        }} className="p-1 rounded hover:bg-muted/60 transition-colors shrink-0 ml-2" disabled={!profile?.email}>
+          {copiedId ? <Check className="h-3.5 w-3.5 text-green-500" /> : <Copy className="h-3.5 w-3.5 text-muted-foreground" />}
+        </button>
+      </div>
+
+      {/* ─── CONNECT TO UPLINE (compact) ─── */}
+      <Section className="!p-3 !space-y-2.5">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Link2 className="h-4 w-4 text-primary" />
+            <h3 className="text-sm font-semibold text-foreground">Connect to Upline</h3>
+          </div>
+          {autoSaveStatus === 'saving' ? (
+            <span className="text-[11px] text-muted-foreground flex items-center gap-1">
+              <Loader2 className="h-3 w-3 animate-spin" /> Saving…
+            </span>
+          ) : autoSaveStatus === 'saved' ? (
+            <span className="text-[11px] text-green-600 flex items-center gap-1">
+              <Check className="h-3 w-3" /> Saved
+            </span>
+          ) : null}
+        </div>
 
         {hasLeader ? (
           <div className="space-y-3">
