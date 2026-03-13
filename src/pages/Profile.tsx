@@ -91,7 +91,46 @@ function usePullToRefresh(onRefresh: () => Promise<void>, threshold = 80) {
     showIndicator: pullDistance > 20 || isRefreshing
   };
 }
-// Removed - no longer used
+// Notification toggle component
+function NotificationToggle() {
+  const { isSupported, isSubscribed, loading, subscribe, unsubscribe } = usePushNotifications();
+  const [toggling, setToggling] = useState(false);
+
+  if (!isSupported) return null;
+
+  const handleToggle = async (checked: boolean) => {
+    setToggling(true);
+    if (checked) {
+      const ok = await subscribe();
+      if (!ok) toast.error('Could not enable notifications. Please allow permissions.');
+      else toast.success('Notifications enabled!');
+    } else {
+      await unsubscribe();
+      toast.success('Notifications disabled');
+    }
+    setToggling(false);
+  };
+
+  return (
+    <div className="rounded-xl bg-card border border-border/50 px-4 py-2.5 flex items-center justify-between">
+      <div className="flex items-center gap-2.5">
+        <Bell className="h-4 w-4 text-primary" />
+        <div>
+          <span className="font-medium text-sm block">App Notifications</span>
+          <span className="text-[11px] text-muted-foreground">
+            {isSubscribed ? 'Push notifications are on' : 'Get notified of updates'}
+          </span>
+        </div>
+      </div>
+      <Switch
+        checked={isSubscribed}
+        onCheckedChange={handleToggle}
+        disabled={loading || toggling}
+      />
+    </div>
+  );
+}
+
 
 export default function Profile() {
   const navigate = useNavigate();
