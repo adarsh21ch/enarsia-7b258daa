@@ -1,127 +1,78 @@
 
 
-# Plan: Nevorai Notes — MVP
+# Upgrade Nevorai AI — Advanced Dashboard Intelligence & Team Analytics
 
-## Scope (Apple Notes / Samsung Notes style)
+## Analysis of Current State
 
-**Included:**
-- Rich text notes (bold, italic, lists, checklists)
-- Audio recording & playback (voice memos)
-- Photo attachments (camera/gallery)
-- Clickable links with smart detection (YouTube, Zoom, PDF URLs auto-preview)
-- Tappable phone numbers (call/text)
-- Color labels, pinning, search
-- Folders/tags for organization
+The edge function already has solid tooling:
+- `get_member_kpis` — individual member stats (but **no tag breakdowns**)
+- `get_team_kpis` — aggregated team KPIs
+- `get_rankings` — top/bottom performers
+- `filter_team_by_level` — level-wise filtering
+- `get_funnel_stages` / `get_funnel_analysis` — funnel data
+- `get_activity_trend` — 7-day comparison
+- `get_coaching_tips` — coaching insights
+- `get_team_tracking_status` — who hasn't updated
+- `get_stale_prospects` — stuck prospects
+- `get_conversion_rates` — conversion rates
 
-**Excluded (for now):**
-- Video recording/attachment
-- Team sharing
-- Prospect linking (can add later)
+## What's Missing (Gaps to Fill)
 
----
+| Feature Requested | Status | Action |
+|---|---|---|
+| Individual member detailed analytics with tag breakdowns | Partial — no response/stage tags returned | Enhance `get_member_kpis` |
+| Compare 2+ team members | Missing | New tool: `compare_members` |
+| Level-wise team analysis | Exists but basic | Already good, enhance system prompt |
+| Funnel stage per team member | Missing | New tool: `get_team_funnel_breakdown` |
+| Historical per-member daily data | Missing | New tool: `get_member_daily_history` |
+| Ratio/performance metrics | Missing as dedicated tool | New tool: `get_performance_ratios` |
+| Combined filters (level + metric + date) | Missing | New tool: `query_team_filtered` |
+| Smarter suggestion chips | Basic | Enhance frontend |
 
-## Database
+## Changes
 
-Create a `notes` table and a `note_attachments` table, plus a `note-attachments` storage bucket.
+### 1. Edge Function: `supabase/functions/nevorai-ai/index.ts`
 
-```sql
--- notes table
-CREATE TABLE public.notes (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
-  title TEXT NOT NULL DEFAULT '',
-  content JSONB NOT NULL DEFAULT '[]',  -- rich text blocks
-  color_label TEXT DEFAULT 'default',
-  is_pinned BOOLEAN DEFAULT false,
-  folder TEXT DEFAULT 'General',
-  created_at TIMESTAMPTZ DEFAULT now(),
-  updated_at TIMESTAMPTZ DEFAULT now()
-);
+**Enhance existing tool:**
+- `get_member_kpis` — add full `response_breakdown` and `stage_breakdown` (same pattern as `get_snapshot_kpis`)
 
--- note_attachments (photos + audio)
-CREATE TABLE public.note_attachments (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  note_id UUID NOT NULL REFERENCES public.notes(id) ON DELETE CASCADE,
-  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
-  type TEXT NOT NULL CHECK (type IN ('photo', 'audio')),
-  storage_path TEXT NOT NULL,
-  file_name TEXT,
-  file_size INTEGER,
-  duration_seconds INTEGER, -- for audio
-  created_at TIMESTAMPTZ DEFAULT now()
-);
+**Add 4 new tools:**
 
--- Storage bucket
-INSERT INTO storage.buckets (id, name, public)
-VALUES ('note-attachments', 'note-attachments', false)
-ON CONFLICT (id) DO NOTHING;
+- **`compare_members`** — accepts `member_names` (array of 2+), `start_date`, `end_date`. Returns side-by-side KPIs with auto-generated comparison insight.
 
--- RLS: users can only access their own notes & attachments
-```
+- **`get_team_funnel_breakdown`** — returns funnel stage counts per team member for a date range. Shows who has the most Day-2, Day-3 prospects, etc.
 
-## File Structure
+- **`get_member_daily_history`** — accepts `member_name`, `start_date`, `end_date`. Returns day-by-day leads/responses/enrollments for a specific member (useful for "show Rohit's last 7 days").
 
-```text
-src/
-├── pages/Notes.tsx                    -- Main notes list page
-├── pages/NoteEditor.tsx               -- Single note editor
-├── components/notes/
-│   ├── NoteCard.tsx                   -- Grid/list card preview
-│   ├── NoteToolbar.tsx                -- Bold, list, checklist, attach, audio, color
-│   ├── RichTextEditor.tsx             -- Block-based editor (paragraphs, lists, checklists)
-│   ├── AudioRecorder.tsx              -- Record & playback voice memos
-│   ├── PhotoAttachment.tsx            -- Camera/gallery picker + grid display
-│   ├── LinkPreview.tsx                -- Smart link detection (YT, Zoom, PDF, phone)
-│   ├── FolderSidebar.tsx              -- Folder/tag filter
-│   └── NoteSearchBar.tsx              -- Full-text search across notes
-├── hooks/
-│   ├── useNotes.ts                    -- CRUD operations
-│   └── useNoteAttachments.ts          -- Upload/delete attachments
-```
+- **`get_performance_ratios`** — accepts `start_date`, `end_date`, optional `member_name`. Calculates lead-to-response ratio, response-to-enrollment ratio, and per-day averages. Works for both user's own data and individual team members.
 
-## Routes & Navigation
+**Enhance system prompt:**
+- Add explicit instructions for comparison queries ("compare X and Y", "who performed better")
+- Add ratio/conversion query patterns
+- Add combined filter instructions
+- Increase context window from 6 to 10 messages for multi-turn analytics conversations
 
-- Add `/notes` route in `App.tsx`
-- Add "Notes" entry in Profile page (similar to other menu items) with a notebook icon
-- Notes page: masonry/grid of note cards, FAB to create new note, search bar, folder filter
+### 2. Frontend: `src/components/ai/AIAssistantChat.tsx`
 
-## Key Features Detail
+**Updated suggestion categories:**
+- Add "Compare team members" to Team category
+- Add "My conversion ratios" to My Numbers
+- Add "Team funnel breakdown" to Prospects
+- Add "Top performers this week" to Team
 
-### Rich Text Editor
-- Lightweight block-based editor (no heavy library needed)
-- Each block: `{ type: 'text'|'checklist'|'heading', content: string, checked?: boolean, style?: 'bold'|'italic' }`
-- Stored as JSON array in `content` column
+**Enhanced follow-up map:**
+- After comparison responses → "Show daily breakdown", "Who improved more?"
+- After funnel responses → "Team funnel breakdown", "Show stuck prospects"
+- After ratio responses → "Compare with last week", "Show member ratios"
 
-### Audio Recording
-- Use browser `MediaRecorder` API
-- Record → upload to `note-attachments` bucket
-- Inline playback with waveform-style progress bar
-- Max 5 minutes per recording
+### No Database Changes
+All new tools read from existing `total_snapshot_v2`, `personal_snapshot_v2`, `prospects`, `profiles`, `funnel_configs` tables.
 
-### Photo Attachments
-- File input (camera + gallery on mobile)
-- Upload to `note-attachments` bucket
-- Display as inline thumbnails in the note
-
-### Smart Link Detection
-- Auto-detect URLs in text, render as tappable links
-- Phone numbers: detect patterns like `+91 98765 43210`, render with call/WhatsApp buttons
-- YouTube links: show thumbnail preview
-- Other links (Zoom, PDF): show favicon + domain label
-
-### Color Labels & Pinning
-- 6 color options (default, red, orange, yellow, green, blue)
-- Pin to top of list
-- Sort: pinned first, then by `updated_at` desc
-
-## Summary of Changes
-
-| Area | Change |
-|------|--------|
-| Database | Create `notes`, `note_attachments` tables + storage bucket + RLS |
-| `App.tsx` | Add `/notes` and `/notes/:id` routes |
-| `Profile.tsx` | Add "Notes" menu item |
-| New pages | `Notes.tsx` (list), `NoteEditor.tsx` (editor) |
-| New components | 7 components in `src/components/notes/` |
-| New hooks | `useNotes.ts`, `useNoteAttachments.ts` |
+## Implementation Order
+1. Add 4 new tools to TOOLS array in edge function
+2. Implement tool execution logic in `executeTool` switch
+3. Enhance `get_member_kpis` with tag breakdowns
+4. Update system prompt with new query patterns
+5. Increase conversation context to 10 messages
+6. Update frontend suggestion chips and follow-up map
 
