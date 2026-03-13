@@ -141,6 +141,14 @@ export default function Tracking() {
             <Button
               variant="ghost"
               size="icon"
+              onClick={() => setShowGuide(true)}
+              className="h-8 w-8"
+            >
+              <HelpCircle className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
               onClick={() => setShowSettings(true)}
               className="h-8 w-8"
             >
