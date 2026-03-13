@@ -1007,6 +1007,33 @@ export type Database = {
         }
         Relationships: []
       }
+      admin_notifications: {
+        Row: {
+          body: string
+          created_at: string | null
+          id: string
+          recipient_count: number | null
+          sent_by: string | null
+          title: string
+        }
+        Insert: {
+          body: string
+          created_at?: string | null
+          id?: string
+          recipient_count?: number | null
+          sent_by?: string | null
+          title: string
+        }
+        Update: {
+          body?: string
+          created_at?: string | null
+          id?: string
+          recipient_count?: number | null
+          sent_by?: string | null
+          title?: string
+        }
+        Relationships: []
+      }
       admin_offers: {
         Row: {
           applicable_plan_ids: string[] | null
@@ -3869,6 +3896,33 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      push_subscriptions: {
+        Row: {
+          auth_key: string
+          created_at: string | null
+          endpoint: string
+          id: string
+          p256dh: string
+          user_id: string
+        }
+        Insert: {
+          auth_key: string
+          created_at?: string | null
+          endpoint: string
+          id?: string
+          p256dh: string
+          user_id: string
+        }
+        Update: {
+          auth_key?: string
+          created_at?: string | null
+          endpoint?: string
+          id?: string
+          p256dh?: string
+          user_id?: string
+        }
+        Relationships: []
       }
       reactions: {
         Row: {
