@@ -102,10 +102,13 @@ export function usePushNotifications() {
       let sub = await reg.pushManager.getSubscription();
 
       if (!sub) {
-        const serverKey = urlBase64ToUint8Array(vapidKey);
+        const rawServerKey = urlBase64ToUint8Array(vapidKey);
+        const serverKey = new Uint8Array(rawServerKey.length);
+        serverKey.set(rawServerKey);
+
         sub = await reg.pushManager.subscribe({
           userVisibleOnly: true,
-          applicationServerKey: serverKey.buffer,
+          applicationServerKey: serverKey,
         });
       }
 
