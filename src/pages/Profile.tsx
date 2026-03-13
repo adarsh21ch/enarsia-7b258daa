@@ -491,6 +491,23 @@ export default function Profile() {
           {/* Notifications Toggle */}
           <NotificationToggle canSendTest={isAdmin} />
 
+          {/* AI Insights Settings */}
+          <button
+            onClick={() => setShowAIInsights(true)}
+            className="w-full rounded-xl px-4 py-2.5 bg-gradient-to-r from-primary/15 to-primary/5 backdrop-blur-sm border border-primary/20 flex items-center justify-between transition-all duration-200 hover:shadow-md"
+          >
+            <div className="flex items-center gap-3">
+              <div className="p-1.5 rounded-lg bg-primary/10">
+                <BrainCircuit className="h-4 w-4 text-primary" />
+              </div>
+              <div className="text-left">
+                <span className="font-medium text-sm block">AI Insights</span>
+                <span className="text-[11px] text-muted-foreground">Trackers, alerts & coaching</span>
+              </div>
+            </div>
+            <ChevronRight className="h-4 w-4 text-muted-foreground" />
+          </button>
+
           {/* Settings Section - Collapsible */}
           <Collapsible className="rounded-xl bg-card border border-border/50 overflow-hidden">
             <CollapsibleTrigger className="w-full px-4 py-2 flex items-center justify-between hover:bg-muted/50 transition-colors">
