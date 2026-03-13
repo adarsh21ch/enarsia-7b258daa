@@ -116,6 +116,10 @@ export default function Admin() {
                   <History className="h-3.5 w-3.5 mr-1" />
                   Audit Log
                 </TabsTrigger>
+                <TabsTrigger value="notify" className="text-xs px-3">
+                  <Bell className="h-3.5 w-3.5 mr-1" />
+                  Notify
+                </TabsTrigger>
               </TabsList>
               <ScrollBar orientation="horizontal" />
             </ScrollArea>
