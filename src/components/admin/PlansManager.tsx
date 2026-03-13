@@ -126,39 +126,66 @@ export function PlansManager() {
         </Button>
       </div>
 
-      {plansByTier.map(({ tier, label, active, inactive }) => (
-        <div key={tier} className="space-y-3">
-          <h3 className="text-sm font-medium text-muted-foreground">{label}</h3>
-          {active.length > 0 && (
-            <div className="grid gap-3">
-              {active.map((plan) => (
-                <PlanCard 
-                  key={plan.id} 
-                  plan={plan}
-                  onEdit={() => openEditSheet(plan)}
-                  onToggleActive={() => handleToggleActive(plan)}
-                  onToggleDefault={() => handleToggleDefault(plan)}
-                  onDelete={() => handleDelete(plan)}
-                />
-              ))}
-            </div>
-          )}
-          {inactive.length > 0 && (
-            <div className="grid gap-3 opacity-60">
-              {inactive.map((plan) => (
-                <PlanCard 
-                  key={plan.id} 
-                  plan={plan}
-                  onEdit={() => openEditSheet(plan)}
-                  onToggleActive={() => handleToggleActive(plan)}
-                  onToggleDefault={() => handleToggleDefault(plan)}
-                  onDelete={() => handleDelete(plan)}
-                />
-              ))}
-            </div>
-          )}
-        </div>
-      ))}
+      {plansByTier.map(({ tier, label, active, inactive }) => {
+        const sortedActive = [...active].sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0));
+        const sortedInactive = [...inactive].sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0));
+
+        const handleMove = async (plan: SubscriptionPlan, direction: 'up' | 'down') => {
+          const list = plan.is_active ? sortedActive : sortedInactive;
+          const idx = list.findIndex(p => p.id === plan.id);
+          const swapIdx = direction === 'up' ? idx - 1 : idx + 1;
+          if (swapIdx < 0 || swapIdx >= list.length) return;
+          const other = list[swapIdx];
+          try {
+            await updatePlan(plan.id, { sort_order: other.sort_order ?? swapIdx });
+            await updatePlan(other.id, { sort_order: plan.sort_order ?? idx });
+            await logAdminAction('plan_reordered', 'plan', plan.id, { sort_order: plan.sort_order }, { sort_order: other.sort_order }, `Reordered "${plan.plan_name}" ${direction}`);
+            toast.success('Plan order updated');
+          } catch {
+            toast.error('Failed to reorder');
+          }
+        };
+
+        return (
+          <div key={tier} className="space-y-3">
+            <h3 className="text-sm font-medium text-muted-foreground">{label}</h3>
+            {sortedActive.length > 0 && (
+              <div className="grid gap-3">
+                {sortedActive.map((plan, idx) => (
+                  <PlanCard 
+                    key={plan.id} 
+                    plan={plan}
+                    onEdit={() => openEditSheet(plan)}
+                    onToggleActive={() => handleToggleActive(plan)}
+                    onToggleDefault={() => handleToggleDefault(plan)}
+                    onDelete={() => handleDelete(plan)}
+                    onMoveUp={idx > 0 ? () => handleMove(plan, 'up') : undefined}
+                    onMoveDown={idx < sortedActive.length - 1 ? () => handleMove(plan, 'down') : undefined}
+                    position={idx + 1}
+                  />
+                ))}
+              </div>
+            )}
+            {sortedInactive.length > 0 && (
+              <div className="grid gap-3 opacity-60">
+                {sortedInactive.map((plan, idx) => (
+                  <PlanCard 
+                    key={plan.id} 
+                    plan={plan}
+                    onEdit={() => openEditSheet(plan)}
+                    onToggleActive={() => handleToggleActive(plan)}
+                    onToggleDefault={() => handleToggleDefault(plan)}
+                    onDelete={() => handleDelete(plan)}
+                    onMoveUp={idx > 0 ? () => handleMove(plan, 'up') : undefined}
+                    onMoveDown={idx < sortedInactive.length - 1 ? () => handleMove(plan, 'down') : undefined}
+                    position={idx + 1}
+                  />
+                ))}
+              </div>
+            )}
+          </div>
+        );
+      })}
 
       {/* Edit/Create Sheet */}
       <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
