@@ -92,44 +92,85 @@ function usePullToRefresh(onRefresh: () => Promise<void>, threshold = 80) {
   };
 }
 // Notification toggle component
-function NotificationToggle() {
-  const { isSupported, isSubscribed, loading, subscribe, unsubscribe } = usePushNotifications();
+function NotificationToggle({ canSendTest }: { canSendTest: boolean }) {
+  const { isSupported, isSubscribed, loading, subscribe, unsubscribe, sendTestPush } = usePushNotifications();
   const [toggling, setToggling] = useState(false);
+  const [sendingTest, setSendingTest] = useState(false);
 
   if (!isSupported) return null;
 
   const handleToggle = async (checked: boolean) => {
     setToggling(true);
+
     if (checked) {
-      const ok = await subscribe();
-      if (!ok) toast.error('Could not enable notifications. Please allow permissions.');
-      else toast.success('Notifications enabled!');
+      const result = await subscribe();
+      if (result.ok) {
+        toast.success('Notifications enabled!');
+      } else if (result.reason === 'permission_blocked') {
+        toast.error('Notifications are blocked in browser settings for this site.');
+      } else if (result.reason === 'permission_denied') {
+        toast.error('Please allow notification permission to enable push alerts.');
+      } else {
+        toast.error('Could not enable notifications right now. Please try again.');
+      }
     } else {
       await unsubscribe();
       toast.success('Notifications disabled');
     }
+
     setToggling(false);
   };
 
+  const handleSendTest = async () => {
+    setSendingTest(true);
+    const result = await sendTestPush();
+
+    if (result.ok && result.sent > 0) {
+      toast.success('Test push sent to this device.');
+    } else if (result.ok) {
+      toast.error('No active subscription found on this device. Turn notifications ON first.');
+    } else {
+      toast.error('Failed to send test push. Try again in a moment.');
+    }
+
+    setSendingTest(false);
+  };
+
   return (
-    <div className="rounded-xl bg-card border border-border/50 px-4 py-2.5 flex items-center justify-between">
-      <div className="flex items-center gap-2.5">
-        <Bell className="h-4 w-4 text-primary" />
-        <div>
-          <span className="font-medium text-sm block">App Notifications</span>
-          <span className="text-[11px] text-muted-foreground">
-            {isSubscribed ? 'Push notifications are on' : 'Get notified of updates'}
-          </span>
+    <div className="rounded-xl bg-card border border-border/50 px-4 py-2.5 space-y-2.5">
+      <div className="flex items-center justify-between gap-3">
+        <div className="flex items-center gap-2.5">
+          <Bell className="h-4 w-4 text-primary" />
+          <div>
+            <span className="font-medium text-sm block">App Notifications</span>
+            <span className="text-[11px] text-muted-foreground">
+              {isSubscribed ? 'Push notifications are on' : 'Get notified of updates'}
+            </span>
+          </div>
         </div>
+        <Switch
+          checked={isSubscribed}
+          onCheckedChange={handleToggle}
+          disabled={loading || toggling}
+        />
       </div>
-      <Switch
-        checked={isSubscribed}
-        onCheckedChange={handleToggle}
-        disabled={loading || toggling}
-      />
+
+      {canSendTest && (
+        <Button
+          variant="outline"
+          size="sm"
+          className="w-full"
+          onClick={handleSendTest}
+          disabled={!isSubscribed || sendingTest || loading}
+        >
+          {sendingTest ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Bell className="h-4 w-4 mr-2" />}
+          Send Test Push to This Device
+        </Button>
+      )}
     </div>
   );
 }
+
 
 
 export default function Profile() {
