@@ -324,7 +324,7 @@ export function EnhancedUsersTab({ headerPlanFilter }: EnhancedUsersTabProps) {
 
       <p className="text-xs text-muted-foreground">
         {searching && <Loader2 className="h-3 w-3 animate-spin inline mr-1" />}
-        {users.length} of {totalCount.toLocaleString()} users
+        {totalCount === 0 ? 0 : page * pageSize + 1}–{Math.min((page + 1) * pageSize, totalCount).toLocaleString()} of {totalCount.toLocaleString()} users
       </p>
 
       {/* Users Table */}
