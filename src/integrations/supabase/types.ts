@@ -5696,6 +5696,7 @@ export type Database = {
         Returns: boolean
       }
       aggregate_video_stats: { Args: never; Returns: undefined }
+      auto_downgrade_expired_subscriptions: { Args: never; Returns: number }
       batch_reorder_prospects: {
         Args: { p_updates: Json; p_user_id: string }
         Returns: boolean
