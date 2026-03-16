@@ -7,7 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/table';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger, DropdownMenuSub, DropdownMenuSubContent, DropdownMenuSubTrigger } from '@/components/ui/dropdown-menu';
-import { Loader2, Search, Crown, Gem, Settings, MoreHorizontal, Copy, ChevronUp, ChevronDown, ArrowUpDown } from 'lucide-react';
+import { Loader2, Search, Crown, Gem, Settings, MoreHorizontal, Copy, ChevronUp, ChevronDown, ArrowUpDown, ChevronLeft, ChevronRight } from 'lucide-react';
 import { toast } from 'sonner';
 import { differenceInDays, format } from 'date-fns';
 import { UserOverrideDrawer } from './UserOverrideDrawer';
@@ -120,11 +120,13 @@ function SortableHeader({ label, field, sortField, sortDir, onSort }: { label: s
 
 export function EnhancedUsersTab({ headerPlanFilter }: EnhancedUsersTabProps) {
   const queryClient = useQueryClient();
+  const pageSize = 100;
   const [users, setUsers] = useState<EnhancedUser[]>([]);
   const [loading, setLoading] = useState(true);
   const [searching, setSearching] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [planFilter, setPlanFilter] = useState('all');
+  const [page, setPage] = useState(0);
   const [totalCount, setTotalCount] = useState(0);
   const [overrideUser, setOverrideUser] = useState<EnhancedUser | null>(null);
   const [sortField, setSortField] = useState<SortField>('created_at');
@@ -172,6 +174,10 @@ export function EnhancedUsersTab({ headerPlanFilter }: EnhancedUsersTabProps) {
     else { setSortField(field); setSortDir('desc'); }
   };
 
+  useEffect(() => {
+    setPage(0);
+  }, [searchQuery, planFilter]);
+
   const sortedUsers = useMemo(() => {
     return [...users].sort((a, b) => {
       let cmp = 0;
@@ -184,15 +190,15 @@ export function EnhancedUsersTab({ headerPlanFilter }: EnhancedUsersTabProps) {
   }, [users, sortField, sortDir]);
 
   const fetchUsers = useCallback(async () => {
-    if (users.length === 0) setLoading(true);
+    if (users.length === 0 && page === 0) setLoading(true);
     else setSearching(true);
 
     try {
       const { data, error } = await supabase.rpc('admin_search_users_enhanced' as any, {
         search_query: searchQuery,
         plan_filter: planFilter === 'all' ? null : planFilter,
-        page_size: 100,
-        page_offset: 0,
+        page_size: pageSize,
+        page_offset: page * pageSize,
       });
 
       if (error) throw error;
@@ -216,7 +222,7 @@ export function EnhancedUsersTab({ headerPlanFilter }: EnhancedUsersTabProps) {
       }));
 
       setUsers(mappedUsers);
-      setTotalCount(data?.[0]?.total_count || mappedUsers.length);
+      setTotalCount(data?.[0]?.total_count || 0);
     } catch (err) {
       console.error('Failed to fetch users:', err);
       toast.error('Failed to load users');
@@ -224,7 +230,7 @@ export function EnhancedUsersTab({ headerPlanFilter }: EnhancedUsersTabProps) {
       setLoading(false);
       setSearching(false);
     }
-  }, [searchQuery, planFilter]);
+  }, [searchQuery, planFilter, page, pageSize, users.length]);
 
   useEffect(() => {
     fetchUsers();
@@ -318,7 +324,7 @@ export function EnhancedUsersTab({ headerPlanFilter }: EnhancedUsersTabProps) {
 
       <p className="text-xs text-muted-foreground">
         {searching && <Loader2 className="h-3 w-3 animate-spin inline mr-1" />}
-        {users.length} of {totalCount.toLocaleString()} users
+        {totalCount === 0 ? 0 : page * pageSize + 1}–{Math.min((page + 1) * pageSize, totalCount).toLocaleString()} of {totalCount.toLocaleString()} users
       </p>
 
       {/* Users Table */}
@@ -346,7 +352,7 @@ export function EnhancedUsersTab({ headerPlanFilter }: EnhancedUsersTabProps) {
                 <TableRow key={user.user_id} className={user.is_suspended ? 'opacity-50' : ''}>
                   {/* Row Number */}
                   <TableCell className="py-2 px-3 text-[11px] text-muted-foreground tabular-nums">
-                    {index + 1}
+                    {page * pageSize + index + 1}
                   </TableCell>
 
                   {/* User */}
@@ -460,6 +466,34 @@ export function EnhancedUsersTab({ headerPlanFilter }: EnhancedUsersTabProps) {
           </TableBody>
         </Table>
       </div>
+
+      {totalCount > pageSize && (
+        <div className="flex items-center justify-between gap-2">
+          <p className="text-[11px] text-muted-foreground">
+            Page {page + 1} of {Math.max(1, Math.ceil(totalCount / pageSize))}
+          </p>
+          <div className="flex gap-1">
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-8 px-2"
+              onClick={() => setPage((current) => Math.max(0, current - 1))}
+              disabled={page === 0 || searching}
+            >
+              <ChevronLeft className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-8 px-2"
+              onClick={() => setPage((current) => current + 1)}
+              disabled={page >= Math.ceil(totalCount / pageSize) - 1 || searching}
+            >
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+          </div>
+        </div>
+      )}
 
       {overrideUser && (
         <UserOverrideDrawer
