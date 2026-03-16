@@ -2,12 +2,14 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useQueryClient } from '@tanstack/react-query';
+import type { InternalTier } from '@/config/tierLabels';
 
 interface UserWithSubscription {
   id: string;
   email: string;
   name: string | null;
   plan: 'free' | 'pro';
+  tier: InternalTier;
   is_admin_override: boolean;
   subscribed_at: string | null;
   expires_at: string | null;
@@ -58,7 +60,6 @@ export function useAdmin() {
   const fetchAllUsers = useCallback(async (searchQuery: string = '', planFilter?: 'all' | 'free' | 'pro') => {
     if (!isAdmin) return;
 
-    // Only show full loading on first load
     if (isFirstLoad.current) {
       setInitialLoading(true);
     } else {
@@ -66,7 +67,6 @@ export function useAdmin() {
     }
     
     try {
-      // Use the paginated version with all parameters to avoid function overloading conflict
       const { data, error } = await supabase.rpc('admin_search_users', {
         search_query: searchQuery,
         plan_filter: planFilter === 'all' ? null : planFilter,
@@ -84,6 +84,7 @@ export function useAdmin() {
         email: row.email || row.display_name || `User ${row.user_id?.slice(0, 8)}`,
         name: row.display_name,
         plan: (row.plan || 'free') as 'free' | 'pro',
+        tier: (row.tier || 'basic') as InternalTier,
         is_admin_override: row.is_admin_override || false,
         subscribed_at: row.subscribed_at || null,
         expires_at: row.expires_at || null,
@@ -99,15 +100,16 @@ export function useAdmin() {
     }
   }, [isAdmin]);
 
-  const updateUserSubscription = async (userId: string, plan: 'free' | 'pro', durationDays?: number) => {
+  const updateUserSubscription = async (userId: string, plan: 'free' | 'pro', durationDays?: number, tier?: string) => {
     try {
-      console.log('Calling admin-update-subscription:', { userId, plan, durationDays });
+      console.log('Calling admin-update-subscription:', { userId, plan, durationDays, tier });
       
       const { data, error } = await supabase.functions.invoke('admin-update-subscription', {
         body: {
           user_id: userId,
           plan,
           duration_days: durationDays,
+          tier,
         },
       });
 
@@ -118,13 +120,9 @@ export function useAdmin() {
       
       console.log('Edge function response:', data);
       
-      // Wait a bit for database to sync, then refetch
       await new Promise(resolve => setTimeout(resolve, 500));
-      
-      // Refetch user list
       await fetchAllUsers();
       
-      // Invalidate the pro-users and analytics queries so they refetch
       await queryClient.invalidateQueries({ queryKey: ['admin-pro-users'] });
       await queryClient.invalidateQueries({ queryKey: ['admin-free-users'] });
       await queryClient.invalidateQueries({ queryKey: ['admin-analytics'] });

@@ -6,8 +6,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Loader2, Save, Trash2, Crown, Calendar, Upload, Users, Flame } from 'lucide-react';
-import { format } from 'date-fns';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { logAdminAction } from '@/hooks/useAuditLogs';
@@ -33,7 +33,6 @@ export function UserOverrideDrawer({
   const [resettingStreak, setResettingStreak] = useState(false);
   const queryClient = useQueryClient();
 
-  // Find existing override for this user
   const existingOverride = overrides.find(o => o.user_id === userId);
 
   const [grantingFunnelsPro, setGrantingFunnelsPro] = useState(false);
@@ -41,6 +40,7 @@ export function UserOverrideDrawer({
 
   const [formData, setFormData] = useState({
     force_pro_access: false,
+    force_tier: 'pro' as string, // which tier to force: 'pro' (Basic) or 'premium' (Pro)
     custom_daily_limit: '',
     custom_total_limit: '',
     custom_expiry_date: '',
@@ -65,6 +65,7 @@ export function UserOverrideDrawer({
     if (existingOverride) {
       setFormData({
         force_pro_access: existingOverride.force_pro_access || false,
+        force_tier: 'pro', // default
         custom_daily_limit: existingOverride.custom_daily_limit?.toString() || '',
         custom_total_limit: existingOverride.custom_total_limit?.toString() || '',
         custom_expiry_date: existingOverride.custom_expiry_date || '',
@@ -73,6 +74,7 @@ export function UserOverrideDrawer({
     } else {
       setFormData({
         force_pro_access: false,
+        force_tier: 'pro',
         custom_daily_limit: '',
         custom_total_limit: '',
         custom_expiry_date: '',
@@ -130,21 +132,40 @@ export function UserOverrideDrawer({
             <p className="text-sm text-muted-foreground">{userEmail}</p>
           </div>
 
-          {/* Force Pro Access */}
-          <div className="flex items-center justify-between p-4 rounded-lg border">
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-primary/10">
-                <Crown className="h-4 w-4 text-primary" />
+          {/* Force Plan Access */}
+          <div className="p-4 rounded-lg border space-y-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-lg bg-primary/10">
+                  <Crown className="h-4 w-4 text-primary" />
+                </div>
+                <div>
+                  <p className="font-medium">Force Plan Access</p>
+                  <p className="text-xs text-muted-foreground">Grant plan without payment</p>
+                </div>
               </div>
-              <div>
-                <p className="font-medium">Force Pro Access</p>
-                <p className="text-xs text-muted-foreground">Grant Pro without payment</p>
-              </div>
+              <Switch
+                checked={formData.force_pro_access}
+                onCheckedChange={(value) => setFormData(prev => ({ ...prev, force_pro_access: value }))}
+              />
             </div>
-            <Switch
-              checked={formData.force_pro_access}
-              onCheckedChange={(value) => setFormData(prev => ({ ...prev, force_pro_access: value }))}
-            />
+            {formData.force_pro_access && (
+              <div className="space-y-1.5">
+                <Label className="text-xs">Select Tier</Label>
+                <Select 
+                  value={formData.force_tier} 
+                  onValueChange={(val) => setFormData(prev => ({ ...prev, force_tier: val }))}
+                >
+                  <SelectTrigger className="h-8 text-xs">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="pro">⭐ Basic</SelectItem>
+                    <SelectItem value="premium">💎 Pro</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
           </div>
 
           {/* Custom Daily Limit */}

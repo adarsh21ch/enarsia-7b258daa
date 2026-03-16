@@ -8,8 +8,8 @@ const corsHeaders = {
 
 // Simple in-memory rate limiter for admin actions
 const rateLimitMap = new Map<string, { count: number; resetAt: number }>();
-const RATE_LIMIT_WINDOW_MS = 60 * 1000; // 1 minute
-const RATE_LIMIT_MAX_REQUESTS = 20; // 20 requests per minute for admins
+const RATE_LIMIT_WINDOW_MS = 60 * 1000;
+const RATE_LIMIT_MAX_REQUESTS = 20;
 
 function checkRateLimit(userId: string): boolean {
   const now = Date.now();
@@ -28,6 +28,8 @@ function checkRateLimit(userId: string): boolean {
   entry.count++;
   return true;
 }
+
+const VALID_TIERS = ['basic', 'pro', 'premium'];
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -58,7 +60,6 @@ serve(async (req) => {
       );
     }
 
-    // Rate limiting check
     if (!checkRateLimit(user.id)) {
       return new Response(
         JSON.stringify({ error: 'Too many requests. Please wait a moment before trying again.' }),
@@ -79,7 +80,7 @@ serve(async (req) => {
       );
     }
 
-    const { user_id, plan, duration_days } = await req.json();
+    const { user_id, plan, duration_days, tier } = await req.json();
 
     if (!user_id) {
       return new Response(
@@ -95,6 +96,14 @@ serve(async (req) => {
       );
     }
 
+    // Validate tier if provided
+    if (tier && !VALID_TIERS.includes(tier)) {
+      return new Response(
+        JSON.stringify({ error: 'tier must be "basic", "pro", or "premium"' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
     const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
 
     let expiresAt: string | null = null;
@@ -103,6 +112,9 @@ serve(async (req) => {
       expiry.setDate(expiry.getDate() + parseInt(duration_days));
       expiresAt = expiry.toISOString();
     }
+
+    // Determine tier: when revoking (plan=free) -> basic, when granting use provided tier or default to 'pro'
+    const effectiveTier = plan === 'free' ? 'basic' : (tier || 'pro');
 
     const { data: existing } = await supabaseAdmin
       .from('user_subscriptions')
@@ -113,6 +125,7 @@ serve(async (req) => {
     let result;
     const updateData = {
       plan,
+      tier: effectiveTier,
       status: plan === 'pro' ? 'active' : 'free',
       is_admin_override: plan === 'pro',
       expires_at: expiresAt,
@@ -141,7 +154,7 @@ serve(async (req) => {
       result = data;
     }
 
-    console.log(`Admin ${user.email} updated subscription for ${user_id}: plan=${plan}, expires_at=${expiresAt}`);
+    console.log(`Admin ${user.email} updated subscription for ${user_id}: plan=${plan}, tier=${effectiveTier}, expires_at=${expiresAt}`);
 
     return new Response(
       JSON.stringify({ success: true, subscription: result }),

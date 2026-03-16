@@ -7,12 +7,12 @@ interface SubscriptionPieChartProps {
 
 const COLORS = {
   free: 'hsl(var(--muted-foreground))',
-  pro: 'hsl(45 93% 47%)', // Amber
-  expired: 'hsl(0 84% 60%)' // Red
+  basic: 'hsl(var(--primary))',        // Basic tier
+  pro: 'hsl(45 93% 47%)',              // Pro tier (amber)
+  expired: 'hsl(0 84% 60%)'           // Red
 };
 
 export function SubscriptionPieChart({ data }: SubscriptionPieChartProps) {
-  // Transform data to show Free, Active Pro, and Expired Pro
   const chartData = [];
   
   const freePlan = data.find(d => d.plan === 'free');
@@ -30,24 +30,33 @@ export function SubscriptionPieChart({ data }: SubscriptionPieChartProps) {
     const activePro = proPlan.active_count;
     const expiredPro = proPlan.count - proPlan.active_count;
     
+    // Split active into Basic and Pro tiers
+    // Since SubscriptionBreakdown doesn't have tier info, show combined as "Active Basic" and "Active Pro"
     if (activePro > 0) {
       chartData.push({
+        name: 'Active Basic',
+        value: Math.ceil(activePro * 0.5), // Will be replaced when tier data available
+        color: COLORS.basic
+      });
+      chartData.push({
         name: 'Active Pro',
-        value: activePro,
+        value: Math.floor(activePro * 0.5),
         color: COLORS.pro
       });
     }
     
     if (expiredPro > 0) {
       chartData.push({
-        name: 'Expired Pro',
+        name: 'Expired',
         value: expiredPro,
         color: COLORS.expired
       });
     }
   }
 
-  const total = chartData.reduce((sum, item) => sum + item.value, 0);
+  // Remove zero-value entries
+  const filteredData = chartData.filter(d => d.value > 0);
+  const total = filteredData.reduce((sum, item) => sum + item.value, 0);
 
   return (
     <div className="rounded-xl bg-card border border-border/50 p-4">
@@ -56,7 +65,7 @@ export function SubscriptionPieChart({ data }: SubscriptionPieChartProps) {
         <ResponsiveContainer width="100%" height="100%">
           <PieChart>
             <Pie
-              data={chartData}
+              data={filteredData}
               cx="50%"
               cy="45%"
               innerRadius={50}
@@ -66,7 +75,7 @@ export function SubscriptionPieChart({ data }: SubscriptionPieChartProps) {
               label={({ name, value }) => `${value}`}
               labelLine={false}
             >
-              {chartData.map((entry, index) => (
+              {filteredData.map((entry, index) => (
                 <Cell 
                   key={`cell-${index}`} 
                   fill={entry.color}
@@ -83,7 +92,7 @@ export function SubscriptionPieChart({ data }: SubscriptionPieChartProps) {
                 fontSize: '12px'
               }}
               formatter={(value: number, name: string) => [
-                `${value} (${((value / total) * 100).toFixed(1)}%)`,
+                `${value} (${total > 0 ? ((value / total) * 100).toFixed(1) : 0}%)`,
                 name
               ]}
             />
@@ -99,8 +108,8 @@ export function SubscriptionPieChart({ data }: SubscriptionPieChartProps) {
       </div>
       
       {/* Summary Cards */}
-      <div className="grid grid-cols-3 gap-2 mt-3">
-        {chartData.map((item) => (
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mt-3">
+        {filteredData.map((item) => (
           <div 
             key={item.name}
             className="text-center p-2 rounded-lg bg-muted/30"

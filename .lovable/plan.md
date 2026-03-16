@@ -1,44 +1,127 @@
 
 
-# Update Admin Panel to Support 3-Tier System (Free / Basic / Pro)
+# Plan: Nevorai Notes — MVP
 
-## Context
-The app has a 3-tier system internally: `basic` (Free), `pro` (Basic), `premium` (Pro). The `user_subscriptions` table has both a `plan` column (enum: free/pro) and a `tier` column (string: basic/pro/premium). The admin panel currently only shows Free/Pro and uses the old `plan` field. It needs to reflect the actual 3-tier naming and allow admins to grant Basic or Pro access.
+## Scope (Apple Notes / Samsung Notes style)
 
-## Changes
+**Included:**
+- Rich text notes (bold, italic, lists, checklists)
+- Audio recording & playback (voice memos)
+- Photo attachments (camera/gallery)
+- Clickable links with smart detection (YouTube, Zoom, PDF URLs auto-preview)
+- Tappable phone numbers (call/text)
+- Color labels, pinning, search
+- Folders/tags for organization
 
-### 1. `src/components/admin/EnhancedUsersTab.tsx`
-- **Filter dropdown**: Update `PLAN_FILTER_OPTIONS` to include `basic` and `premium` tiers instead of just `free`/`pro` (keep `funnels_pro`). Labels: "Free", "Basic", "Pro", "Funnels Pro".
-- **User plan badge**: Replace the binary Free/Pro badge with tier-aware badges using `getTierDisplayName` from `tierLabels.ts`. Show crown icon for Basic, gem for Pro.
-- **Grant actions**: Replace "Grant Pro..." dropdown with a two-step select: first pick tier (Basic/Pro), then duration. Simplify to a single "Grant Plan" select with options like "Basic 30d", "Basic 90d", "Pro 30d", "Pro 90d", etc.
-- **Revoke button**: Change "Revoke Pro" to "Revoke Plan" — sets back to free/basic tier.
-- **Trial badge**: Update condition `plan === 'pro'` to also check for `premium` tier.
-- **handleGrantPro → handleGrantPlan**: Accept tier parameter alongside duration. Pass `tier` to the edge function.
+**Excluded (for now):**
+- Video recording/attachment
+- Team sharing
+- Prospect linking (can add later)
 
-### 2. `supabase/functions/admin-update-subscription/index.ts`
-- Accept optional `tier` parameter in the request body (values: `basic`, `pro`, `premium`).
-- Validate `tier` if provided.
-- Include `tier` in the update/insert data alongside the existing `plan` field.
-- When granting Basic (`tier: 'pro'`), set `plan: 'pro'`. When granting Pro (`tier: 'premium'`), set `plan: 'pro'`. When revoking, set `tier: 'basic'`, `plan: 'free'`.
+---
 
-### 3. `src/components/admin/SubscriptionPieChart.tsx`
-- Add Basic tier color (blue/primary).
-- Parse data to show Free / Active Basic / Active Pro / Expired segments.
+## Database
 
-### 4. `src/components/admin/UserOverrideDrawer.tsx`
-- Rename "Force Pro Access" to "Force Plan Access" with a tier selector (Basic/Pro) instead of a simple toggle.
+Create a `notes` table and a `note_attachments` table, plus a `note-attachments` storage bucket.
 
-### 5. `src/hooks/useAdmin.ts`
-- Update `UserWithSubscription` interface to include `tier` field.
-- Update `updateUserSubscription` to accept and pass `tier` parameter.
+```sql
+-- notes table
+CREATE TABLE public.notes (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  title TEXT NOT NULL DEFAULT '',
+  content JSONB NOT NULL DEFAULT '[]',  -- rich text blocks
+  color_label TEXT DEFAULT 'default',
+  is_pinned BOOLEAN DEFAULT false,
+  folder TEXT DEFAULT 'General',
+  created_at TIMESTAMPTZ DEFAULT now(),
+  updated_at TIMESTAMPTZ DEFAULT now()
+);
 
-### 6. Audit log messages
-- Update log messages in EnhancedUsersTab to reflect the actual tier granted (e.g., "Granted Basic access" vs "Granted Pro access").
+-- note_attachments (photos + audio)
+CREATE TABLE public.note_attachments (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  note_id UUID NOT NULL REFERENCES public.notes(id) ON DELETE CASCADE,
+  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  type TEXT NOT NULL CHECK (type IN ('photo', 'audio')),
+  storage_path TEXT NOT NULL,
+  file_name TEXT,
+  file_size INTEGER,
+  duration_seconds INTEGER, -- for audio
+  created_at TIMESTAMPTZ DEFAULT now()
+);
 
-## Files to modify
-- `src/components/admin/EnhancedUsersTab.tsx`
-- `supabase/functions/admin-update-subscription/index.ts`
-- `src/components/admin/SubscriptionPieChart.tsx`
-- `src/components/admin/UserOverrideDrawer.tsx`
-- `src/hooks/useAdmin.ts`
+-- Storage bucket
+INSERT INTO storage.buckets (id, name, public)
+VALUES ('note-attachments', 'note-attachments', false)
+ON CONFLICT (id) DO NOTHING;
+
+-- RLS: users can only access their own notes & attachments
+```
+
+## File Structure
+
+```text
+src/
+├── pages/Notes.tsx                    -- Main notes list page
+├── pages/NoteEditor.tsx               -- Single note editor
+├── components/notes/
+│   ├── NoteCard.tsx                   -- Grid/list card preview
+│   ├── NoteToolbar.tsx                -- Bold, list, checklist, attach, audio, color
+│   ├── RichTextEditor.tsx             -- Block-based editor (paragraphs, lists, checklists)
+│   ├── AudioRecorder.tsx              -- Record & playback voice memos
+│   ├── PhotoAttachment.tsx            -- Camera/gallery picker + grid display
+│   ├── LinkPreview.tsx                -- Smart link detection (YT, Zoom, PDF, phone)
+│   ├── FolderSidebar.tsx              -- Folder/tag filter
+│   └── NoteSearchBar.tsx              -- Full-text search across notes
+├── hooks/
+│   ├── useNotes.ts                    -- CRUD operations
+│   └── useNoteAttachments.ts          -- Upload/delete attachments
+```
+
+## Routes & Navigation
+
+- Add `/notes` route in `App.tsx`
+- Add "Notes" entry in Profile page (similar to other menu items) with a notebook icon
+- Notes page: masonry/grid of note cards, FAB to create new note, search bar, folder filter
+
+## Key Features Detail
+
+### Rich Text Editor
+- Lightweight block-based editor (no heavy library needed)
+- Each block: `{ type: 'text'|'checklist'|'heading', content: string, checked?: boolean, style?: 'bold'|'italic' }`
+- Stored as JSON array in `content` column
+
+### Audio Recording
+- Use browser `MediaRecorder` API
+- Record → upload to `note-attachments` bucket
+- Inline playback with waveform-style progress bar
+- Max 5 minutes per recording
+
+### Photo Attachments
+- File input (camera + gallery on mobile)
+- Upload to `note-attachments` bucket
+- Display as inline thumbnails in the note
+
+### Smart Link Detection
+- Auto-detect URLs in text, render as tappable links
+- Phone numbers: detect patterns like `+91 98765 43210`, render with call/WhatsApp buttons
+- YouTube links: show thumbnail preview
+- Other links (Zoom, PDF): show favicon + domain label
+
+### Color Labels & Pinning
+- 6 color options (default, red, orange, yellow, green, blue)
+- Pin to top of list
+- Sort: pinned first, then by `updated_at` desc
+
+## Summary of Changes
+
+| Area | Change |
+|------|--------|
+| Database | Create `notes`, `note_attachments` tables + storage bucket + RLS |
+| `App.tsx` | Add `/notes` and `/notes/:id` routes |
+| `Profile.tsx` | Add "Notes" menu item |
+| New pages | `Notes.tsx` (list), `NoteEditor.tsx` (editor) |
+| New components | 7 components in `src/components/notes/` |
+| New hooks | `useNotes.ts`, `useNoteAttachments.ts` |
 

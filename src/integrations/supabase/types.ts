@@ -5675,8 +5675,10 @@ export type Database = {
           plan: string
           source_app: string
           subscribed_at: string
+          tier: string
           total_count: number
           total_leads_count: number
+          trial_start_date: string
           user_id: string
         }[]
       }
