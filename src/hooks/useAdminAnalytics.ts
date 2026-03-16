@@ -43,6 +43,7 @@ export interface ProUser {
   email: string | null;
   neverai_id: string | null;
   plan: string;
+  tier: string;
   subscribed_at: string | null;
   expires_at: string | null;
   is_admin_override: boolean;

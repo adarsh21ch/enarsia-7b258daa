@@ -151,9 +151,13 @@ export function EnhancedUsersTab({ headerPlanFilter }: EnhancedUsersTabProps) {
         const total = Number(totalRes.data) || 0;
         let basic = 0, pro = 0;
         (subsRes.data || []).forEach((s: any) => {
-          if (s.plan === 'pro' && s.expires_at && new Date(s.expires_at) > new Date()) {
-            if (s.tier === 'premium') pro++;
-            else basic++;
+          if (s.plan === 'pro') {
+            // Active = no expiry (lifetime/admin) OR expiry in future
+            const isActive = !s.expires_at || new Date(s.expires_at) > new Date();
+            if (isActive) {
+              if (s.tier === 'premium') pro++;
+              else basic++;
+            }
           }
         });
         setTierCounts({ free: total - basic - pro, basic, pro, total });

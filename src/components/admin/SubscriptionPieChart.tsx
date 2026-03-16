@@ -6,6 +6,7 @@ import { Loader2 } from 'lucide-react';
 
 const COLORS: Record<string, string> = {
   free: 'hsl(var(--muted-foreground))',
+  basic: 'hsl(var(--primary))',
   pro: 'hsl(var(--primary))',
   premium: 'hsl(45 93% 47%)',
   expired: 'hsl(0 84% 60%)',
@@ -13,6 +14,7 @@ const COLORS: Record<string, string> = {
 
 const LABELS: Record<string, string> = {
   free: 'Free',
+  basic: 'Active Basic',
   pro: 'Active Basic',
   premium: 'Active Pro',
   expired: 'Expired',
@@ -47,16 +49,16 @@ export function SubscriptionPieChart() {
   let totalExpired = 0;
 
   (tiers || []).forEach(t => {
-    if (t.tier_value === 'free' || t.tier_value === 'basic') {
-      // Combine free + basic tier (both are free users)
-      const existing = chartData.find(d => d.name === 'Free');
+    if (t.tier_value === 'free') {
+      chartData.push({ name: 'Free', value: Number(t.active_count), color: COLORS.free });
+    } else if (t.tier_value === 'basic' || t.tier_value === 'pro') {
+      // Both 'basic' and 'pro' tier values map to "Basic" display name
+      const existing = chartData.find(d => d.name === 'Active Basic');
       if (existing) {
         existing.value += Number(t.active_count);
       } else {
-        chartData.push({ name: 'Free', value: Number(t.active_count), color: COLORS.free });
+        chartData.push({ name: 'Active Basic', value: Number(t.active_count), color: COLORS.pro });
       }
-    } else if (t.tier_value === 'pro') {
-      chartData.push({ name: 'Active Basic', value: Number(t.active_count), color: COLORS.pro });
       totalExpired += Number(t.expired_count);
     } else if (t.tier_value === 'premium') {
       chartData.push({ name: 'Active Pro', value: Number(t.active_count), color: COLORS.premium });
