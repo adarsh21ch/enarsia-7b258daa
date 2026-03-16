@@ -1,73 +1,127 @@
 
 
-# Admin Panel UI/UX Overhaul — Modern SaaS Dashboard
+# Plan: Nevorai Notes — MVP
 
-## Overview
-Transform the admin panel from card-based layouts to clean table-based layouts following Stripe/Supabase patterns. No backend logic changes — purely UI presentation improvements.
+## Scope (Apple Notes / Samsung Notes style)
 
-## Changes
+**Included:**
+- Rich text notes (bold, italic, lists, checklists)
+- Audio recording & playback (voice memos)
+- Photo attachments (camera/gallery)
+- Clickable links with smart detection (YouTube, Zoom, PDF URLs auto-preview)
+- Tappable phone numbers (call/text)
+- Color labels, pinning, search
+- Folders/tags for organization
 
-### 1. Users Tab — Table Layout (`EnhancedUsersTab.tsx`)
-- Replace `UserCard` components with a proper `<Table>` using the existing `table.tsx` UI component
-- Columns: Name, Email, Plan (badge), Status, Expiry, Days Left, Leads, Joined, Actions
-- Keep tier stat chips at top
-- Keep existing search + plan filter
-- Actions column: dropdown with Grant Plan, Override, Revoke, Suspend options
-- Color-coded plan badges (gray/blue/amber)
-- Sortable column headers (click to sort by leads, joined date, expiry)
+**Excluded (for now):**
+- Video recording/attachment
+- Team sharing
+- Prospect linking (can add later)
 
-### 2. Analytics Tab — Product Metrics (`AdminAnalyticsDashboard.tsx` + `EnhancedStatsGrid.tsx`)
-- Reorganize stats grid into 3 sections: Growth, Usage, Revenue
-- Growth: Total Users, New This Week, Trial-to-Paid Conversion
-- Usage: Active Callers, Lead Importers, Today Active
-- Revenue: Total Revenue, This Month, Avg Order Value
-- Keep existing sub-tabs (Overview, Trials, Retention, Revenue, Offers)
+---
 
-### 3. Plans Tab — Table Layout (`PlansManager.tsx`)
-- Convert plan cards to a `<Table>` with columns: Plan Name, Tier, Price, Duration, Status, Default, Actions
-- Keep existing edit sheet, just change the list presentation
-- Actions: Edit, Toggle Active, Set Default, Delete
+## Database
 
-### 4. Features Tab — Table Layout (`FeatureFlagsManager.tsx`)
-- Convert stacked cards to a `<Table>` layout
-- Columns: Feature Name, Module, Free (toggle), Basic (toggle), Pro (toggle), Tier Required, Actions
-- Add module filter dropdown at top
-- Group by module with section headers in the table
-- Keep inline toggle switches for quick access control
-- Keep Add Feature button
+Create a `notes` table and a `note_attachments` table, plus a `note-attachments` storage bucket.
 
-### 5. Audit Log — Table Layout (`AuditLogViewer.tsx`)
-- Convert card-based log entries to a `<Table>`
-- Columns: Timestamp, Admin, Action, Target, Description, Details (expandable)
-- Keep existing filters and pagination
-- Fix the "Failed to load" error by adding better error handling/retry
+```sql
+-- notes table
+CREATE TABLE public.notes (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  title TEXT NOT NULL DEFAULT '',
+  content JSONB NOT NULL DEFAULT '[]',  -- rich text blocks
+  color_label TEXT DEFAULT 'default',
+  is_pinned BOOLEAN DEFAULT false,
+  folder TEXT DEFAULT 'General',
+  created_at TIMESTAMPTZ DEFAULT now(),
+  updated_at TIMESTAMPTZ DEFAULT now()
+);
 
-### 6. Notifications Tab — Targeting (`AdminNotificationsPanel.tsx`)
-- Add a "Target Audience" select dropdown before the send button
-- Options: All Users, Free Users, Basic Users, Pro Users, Trial Users, Expiring Soon
-- Pass selected target to the edge function (UI-only for now, backend already sends to all)
-- Keep existing send form and history
+-- note_attachments (photos + audio)
+CREATE TABLE public.note_attachments (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  note_id UUID NOT NULL REFERENCES public.notes(id) ON DELETE CASCADE,
+  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  type TEXT NOT NULL CHECK (type IN ('photo', 'audio')),
+  storage_path TEXT NOT NULL,
+  file_name TEXT,
+  file_size INTEGER,
+  duration_seconds INTEGER, -- for audio
+  created_at TIMESTAMPTZ DEFAULT now()
+);
 
-### 7. Admin Layout (`Admin.tsx`)
-- Keep sticky KPI bar (already implemented)
-- Improve tab styling with slightly larger text and better spacing
-- Update subtitle from "Manage user subscriptions" to "Admin Dashboard"
+-- Storage bucket
+INSERT INTO storage.buckets (id, name, public)
+VALUES ('note-attachments', 'note-attachments', false)
+ON CONFLICT (id) DO NOTHING;
 
-## Files to Modify
-1. `src/components/admin/EnhancedUsersTab.tsx` — table layout
-2. `src/components/admin/FeatureFlagsManager.tsx` — table layout with toggles
-3. `src/components/admin/PlansManager.tsx` — table layout (list portion only)
-4. `src/components/admin/AuditLogViewer.tsx` — table layout + error fix
-5. `src/components/admin/AdminNotificationsPanel.tsx` — add targeting select
-6. `src/components/admin/AdminAnalyticsDashboard.tsx` — minor reorganization
-7. `src/pages/Admin.tsx` — subtitle update, tab spacing
+-- RLS: users can only access their own notes & attachments
+```
 
-## Design Principles
-- Use `Table/TableHeader/TableBody/TableRow/TableCell/TableHead` from existing UI components
-- Consistent `text-sm` sizing throughout tables
-- Sticky table headers where applicable
-- Badges for status indicators
-- Dropdown menus for actions (DropdownMenu component)
-- Toggle switches inline in tables for boolean fields
-- Clean spacing, no heavy borders
+## File Structure
+
+```text
+src/
+├── pages/Notes.tsx                    -- Main notes list page
+├── pages/NoteEditor.tsx               -- Single note editor
+├── components/notes/
+│   ├── NoteCard.tsx                   -- Grid/list card preview
+│   ├── NoteToolbar.tsx                -- Bold, list, checklist, attach, audio, color
+│   ├── RichTextEditor.tsx             -- Block-based editor (paragraphs, lists, checklists)
+│   ├── AudioRecorder.tsx              -- Record & playback voice memos
+│   ├── PhotoAttachment.tsx            -- Camera/gallery picker + grid display
+│   ├── LinkPreview.tsx                -- Smart link detection (YT, Zoom, PDF, phone)
+│   ├── FolderSidebar.tsx              -- Folder/tag filter
+│   └── NoteSearchBar.tsx              -- Full-text search across notes
+├── hooks/
+│   ├── useNotes.ts                    -- CRUD operations
+│   └── useNoteAttachments.ts          -- Upload/delete attachments
+```
+
+## Routes & Navigation
+
+- Add `/notes` route in `App.tsx`
+- Add "Notes" entry in Profile page (similar to other menu items) with a notebook icon
+- Notes page: masonry/grid of note cards, FAB to create new note, search bar, folder filter
+
+## Key Features Detail
+
+### Rich Text Editor
+- Lightweight block-based editor (no heavy library needed)
+- Each block: `{ type: 'text'|'checklist'|'heading', content: string, checked?: boolean, style?: 'bold'|'italic' }`
+- Stored as JSON array in `content` column
+
+### Audio Recording
+- Use browser `MediaRecorder` API
+- Record → upload to `note-attachments` bucket
+- Inline playback with waveform-style progress bar
+- Max 5 minutes per recording
+
+### Photo Attachments
+- File input (camera + gallery on mobile)
+- Upload to `note-attachments` bucket
+- Display as inline thumbnails in the note
+
+### Smart Link Detection
+- Auto-detect URLs in text, render as tappable links
+- Phone numbers: detect patterns like `+91 98765 43210`, render with call/WhatsApp buttons
+- YouTube links: show thumbnail preview
+- Other links (Zoom, PDF): show favicon + domain label
+
+### Color Labels & Pinning
+- 6 color options (default, red, orange, yellow, green, blue)
+- Pin to top of list
+- Sort: pinned first, then by `updated_at` desc
+
+## Summary of Changes
+
+| Area | Change |
+|------|--------|
+| Database | Create `notes`, `note_attachments` tables + storage bucket + RLS |
+| `App.tsx` | Add `/notes` and `/notes/:id` routes |
+| `Profile.tsx` | Add "Notes" menu item |
+| New pages | `Notes.tsx` (list), `NoteEditor.tsx` (editor) |
+| New components | 7 components in `src/components/notes/` |
+| New hooks | `useNotes.ts`, `useNoteAttachments.ts` |
 

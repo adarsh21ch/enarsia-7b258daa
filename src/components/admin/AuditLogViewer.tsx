@@ -4,7 +4,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Loader2, ChevronLeft, ChevronRight, History, User, Settings, Crown, Gift, Flag } from 'lucide-react';
+import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/table';
+import { Loader2, ChevronLeft, ChevronRight, History, ChevronDown, ChevronUp } from 'lucide-react';
 import { format, formatDistanceToNow } from 'date-fns';
 
 const ACTION_TYPES = [
@@ -32,15 +33,6 @@ const TARGET_TYPES = [
   { value: 'offer', label: 'Offers' },
 ];
 
-function getActionIcon(actionType: string) {
-  if (actionType.includes('plan')) return <Crown className="h-3 w-3" />;
-  if (actionType.includes('user')) return <User className="h-3 w-3" />;
-  if (actionType.includes('limit')) return <Settings className="h-3 w-3" />;
-  if (actionType.includes('offer')) return <Gift className="h-3 w-3" />;
-  if (actionType.includes('feature')) return <Flag className="h-3 w-3" />;
-  return <History className="h-3 w-3" />;
-}
-
 function getActionColor(actionType: string): 'default' | 'secondary' | 'destructive' | 'outline' {
   if (actionType.includes('created') || actionType.includes('granted')) return 'default';
   if (actionType.includes('deleted') || actionType.includes('suspended') || actionType.includes('revoked')) return 'destructive';
@@ -48,57 +40,22 @@ function getActionColor(actionType: string): 'default' | 'secondary' | 'destruct
   return 'outline';
 }
 
-function AuditLogCard({ log }: { log: AuditLog }) {
+function ExpandableDetails({ log }: { log: AuditLog }) {
   const [expanded, setExpanded] = useState(false);
+  if (!log.old_value && !log.new_value) return null;
 
   return (
-    <div className="p-3 border rounded-lg bg-card hover:bg-accent/50 transition-colors">
-      <div className="flex items-start justify-between gap-2">
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2 flex-wrap">
-            <Badge variant={getActionColor(log.action_type)} className="text-xs flex items-center gap-1">
-              {getActionIcon(log.action_type)}
-              {log.action_type.replace(/_/g, ' ')}
-            </Badge>
-            <Badge variant="outline" className="text-xs">
-              {log.target_type}
-            </Badge>
-          </div>
-          <p className="text-sm mt-1 font-medium">{log.description}</p>
-          <p className="text-xs text-muted-foreground mt-1">
-            by {log.admin_email || 'Unknown'} • {formatDistanceToNow(new Date(log.created_at), { addSuffix: true })}
-          </p>
-        </div>
-      </div>
-
-      {(log.old_value || log.new_value) && (
-        <Button
-          variant="ghost"
-          size="sm"
-          className="mt-2 h-6 text-xs"
-          onClick={() => setExpanded(!expanded)}
-        >
-          {expanded ? 'Hide Details' : 'Show Details'}
-        </Button>
-      )}
-
+    <>
+      <Button variant="ghost" size="sm" className="h-5 text-[10px] px-1" onClick={() => setExpanded(!expanded)}>
+        {expanded ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
+      </Button>
       {expanded && (
-        <div className="mt-2 p-2 bg-muted rounded text-xs font-mono overflow-x-auto">
-          {log.old_value && (
-            <div className="mb-2">
-              <span className="text-red-500">- Old:</span>
-              <pre className="whitespace-pre-wrap">{JSON.stringify(log.old_value, null, 2)}</pre>
-            </div>
-          )}
-          {log.new_value && (
-            <div>
-              <span className="text-green-500">+ New:</span>
-              <pre className="whitespace-pre-wrap">{JSON.stringify(log.new_value, null, 2)}</pre>
-            </div>
-          )}
+        <div className="mt-1 p-2 bg-muted rounded text-[10px] font-mono max-w-[300px] overflow-x-auto">
+          {log.old_value && <div className="mb-1"><span className="text-destructive">- </span><pre className="whitespace-pre-wrap inline">{JSON.stringify(log.old_value, null, 2)}</pre></div>}
+          {log.new_value && <div><span className="text-green-600">+ </span><pre className="whitespace-pre-wrap inline">{JSON.stringify(log.new_value, null, 2)}</pre></div>}
         </div>
       )}
-    </div>
+    </>
   );
 }
 
@@ -108,7 +65,7 @@ export function AuditLogViewer() {
   const [page, setPage] = useState(0);
   const pageSize = 20;
 
-  const { data, isLoading, error } = useAuditLogs({
+  const { data, isLoading, error, refetch } = useAuditLogs({
     limit: pageSize,
     offset: page * pageSize,
     actionType: actionFilter === 'all' ? null : actionFilter,
@@ -117,100 +74,114 @@ export function AuditLogViewer() {
 
   const totalPages = Math.ceil((data?.totalCount || 0) / pageSize);
 
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center py-12">
-        <Loader2 className="h-6 w-6 animate-spin text-primary" />
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="text-center py-8 text-muted-foreground">
-        Failed to load audit logs
-      </div>
-    );
-  }
-
   return (
-    <Card>
-      <CardHeader className="pb-3">
-        <CardTitle className="text-lg flex items-center gap-2">
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
           <History className="h-5 w-5" />
-          Audit Log
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        {/* Filters */}
-        <div className="flex gap-2 flex-wrap">
-          <Select value={actionFilter} onValueChange={(v) => { setActionFilter(v); setPage(0); }}>
-            <SelectTrigger className="w-[180px] h-9">
-              <SelectValue placeholder="Filter by action" />
-            </SelectTrigger>
-            <SelectContent>
-              {ACTION_TYPES.map((type) => (
-                <SelectItem key={type.value} value={type.value}>
-                  {type.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-
-          <Select value={targetFilter} onValueChange={(v) => { setTargetFilter(v); setPage(0); }}>
-            <SelectTrigger className="w-[150px] h-9">
-              <SelectValue placeholder="Filter by target" />
-            </SelectTrigger>
-            <SelectContent>
-              {TARGET_TYPES.map((type) => (
-                <SelectItem key={type.value} value={type.value}>
-                  {type.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <h2 className="text-lg font-semibold">Audit Log</h2>
         </div>
+      </div>
 
-        {/* Logs List */}
-        <div className="space-y-2">
-          {data?.logs.length === 0 ? (
-            <p className="text-center py-8 text-muted-foreground">
-              No audit logs found
-            </p>
-          ) : (
-            data?.logs.map((log) => (
-              <AuditLogCard key={log.id} log={log} />
-            ))
-          )}
+      {/* Filters */}
+      <div className="flex gap-2 flex-wrap">
+        <Select value={actionFilter} onValueChange={(v) => { setActionFilter(v); setPage(0); }}>
+          <SelectTrigger className="w-[180px] h-8 text-xs">
+            <SelectValue placeholder="Filter by action" />
+          </SelectTrigger>
+          <SelectContent>
+            {ACTION_TYPES.map((type) => (
+              <SelectItem key={type.value} value={type.value}>{type.label}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <Select value={targetFilter} onValueChange={(v) => { setTargetFilter(v); setPage(0); }}>
+          <SelectTrigger className="w-[150px] h-8 text-xs">
+            <SelectValue placeholder="Filter by target" />
+          </SelectTrigger>
+          <SelectContent>
+            {TARGET_TYPES.map((type) => (
+              <SelectItem key={type.value} value={type.value}>{type.label}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+
+      {/* Table */}
+      {isLoading ? (
+        <div className="flex items-center justify-center py-12">
+          <Loader2 className="h-6 w-6 animate-spin text-primary" />
         </div>
+      ) : error ? (
+        <Card className="p-6 text-center space-y-2">
+          <p className="text-sm text-muted-foreground">Failed to load audit logs</p>
+          <Button variant="outline" size="sm" onClick={() => refetch()}>Retry</Button>
+        </Card>
+      ) : (
+        <div className="rounded-lg border border-border/50 bg-card">
+          <Table>
+            <TableHeader>
+              <TableRow className="hover:bg-transparent">
+                <TableHead className="text-[11px]">Time</TableHead>
+                <TableHead className="text-[11px]">Admin</TableHead>
+                <TableHead className="text-[11px]">Action</TableHead>
+                <TableHead className="text-[11px]">Target</TableHead>
+                <TableHead className="text-[11px]">Description</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {data?.logs.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={5} className="text-center py-8 text-muted-foreground text-sm">
+                    No audit logs found
+                  </TableCell>
+                </TableRow>
+              ) : (
+                data?.logs.map((log) => (
+                  <TableRow key={log.id}>
+                    <TableCell className="py-2 px-3 text-[11px] text-muted-foreground whitespace-nowrap">
+                      <div>{format(new Date(log.created_at), 'MMM d, HH:mm')}</div>
+                      <div className="text-[10px]">{formatDistanceToNow(new Date(log.created_at), { addSuffix: true })}</div>
+                    </TableCell>
+                    <TableCell className="py-2 px-3 text-[11px] max-w-[120px] truncate">
+                      {log.admin_email || 'Unknown'}
+                    </TableCell>
+                    <TableCell className="py-2 px-3">
+                      <Badge variant={getActionColor(log.action_type)} className="text-[10px]">
+                        {log.action_type.replace(/_/g, ' ')}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="py-2 px-3">
+                      <Badge variant="outline" className="text-[10px]">{log.target_type}</Badge>
+                    </TableCell>
+                    <TableCell className="py-2 px-3">
+                      <p className="text-xs truncate max-w-[200px]">{log.description}</p>
+                      <ExpandableDetails log={log} />
+                    </TableCell>
+                  </TableRow>
+                ))
+              )}
+            </TableBody>
+          </Table>
+        </div>
+      )}
 
-        {/* Pagination */}
-        {totalPages > 1 && (
-          <div className="flex items-center justify-between pt-2">
-            <p className="text-sm text-muted-foreground">
-              Showing {page * pageSize + 1}-{Math.min((page + 1) * pageSize, data?.totalCount || 0)} of {data?.totalCount}
-            </p>
-            <div className="flex gap-1">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setPage(p => Math.max(0, p - 1))}
-                disabled={page === 0}
-              >
-                <ChevronLeft className="h-4 w-4" />
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setPage(p => p + 1)}
-                disabled={page >= totalPages - 1}
-              >
-                <ChevronRight className="h-4 w-4" />
-              </Button>
-            </div>
+      {/* Pagination */}
+      {totalPages > 1 && (
+        <div className="flex items-center justify-between pt-1">
+          <p className="text-[11px] text-muted-foreground">
+            {page * pageSize + 1}–{Math.min((page + 1) * pageSize, data?.totalCount || 0)} of {data?.totalCount}
+          </p>
+          <div className="flex gap-1">
+            <Button variant="outline" size="sm" className="h-7" onClick={() => setPage(p => Math.max(0, p - 1))} disabled={page === 0}>
+              <ChevronLeft className="h-4 w-4" />
+            </Button>
+            <Button variant="outline" size="sm" className="h-7" onClick={() => setPage(p => p + 1)} disabled={page >= totalPages - 1}>
+              <ChevronRight className="h-4 w-4" />
+            </Button>
           </div>
-        )}
-      </CardContent>
-    </Card>
+        </div>
+      )}
+    </div>
   );
 }

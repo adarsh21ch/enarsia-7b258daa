@@ -5,13 +5,25 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/table';
 import { Send, Loader2, Bell, Users } from 'lucide-react';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 
+const TARGET_OPTIONS = [
+  { value: 'all', label: 'All Users' },
+  { value: 'free', label: 'Free Users' },
+  { value: 'basic', label: 'Basic Users' },
+  { value: 'pro', label: 'Pro Users' },
+  { value: 'trial', label: 'Trial Users' },
+  { value: 'expiring', label: 'Expiring Soon' },
+];
+
 export function AdminNotificationsPanel() {
   const [title, setTitle] = useState('');
   const [body, setBody] = useState('');
+  const [target, setTarget] = useState('all');
   const [sending, setSending] = useState(false);
   const [history, setHistory] = useState<any[]>([]);
   const [subCount, setSubCount] = useState(0);
@@ -47,7 +59,7 @@ export function AdminNotificationsPanel() {
     setSending(true);
     try {
       const { data, error } = await supabase.functions.invoke('send-push-notification', {
-        body: { title: title.trim(), body: body.trim() },
+        body: { title: title.trim(), body: body.trim(), target },
       });
       if (error) throw error;
       toast.success(`Notification sent: ${data?.sent || 0} delivered${data?.failed ? `, ${data.failed} failed` : ''}`);
@@ -105,47 +117,59 @@ export function AdminNotificationsPanel() {
             rows={3}
             maxLength={300}
           />
+          <Select value={target} onValueChange={setTarget}>
+            <SelectTrigger className="h-9 text-sm">
+              <SelectValue placeholder="Target Audience" />
+            </SelectTrigger>
+            <SelectContent>
+              {TARGET_OPTIONS.map(opt => (
+                <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
           <Button onClick={handleSend} disabled={sending || !title.trim() || !body.trim()} className="w-full">
             {sending ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Send className="h-4 w-4 mr-2" />}
-            Send to All ({subCount})
+            Send to {TARGET_OPTIONS.find(o => o.value === target)?.label || 'All'} ({subCount})
           </Button>
         </CardContent>
       </Card>
 
-      {/* History */}
-      <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="text-sm">Recent Notifications</CardTitle>
-        </CardHeader>
-        <CardContent>
-          {loadingHistory ? (
-            <div className="flex justify-center py-4">
-              <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
-            </div>
-          ) : history.length === 0 ? (
-            <p className="text-sm text-muted-foreground text-center py-4">No notifications sent yet</p>
-          ) : (
-            <div className="space-y-2">
-              {history.map(n => (
-                <div key={n.id} className="rounded-lg border border-border/50 p-3">
-                  <div className="flex items-start justify-between gap-2">
-                    <div className="min-w-0">
-                      <p className="font-medium text-sm truncate">{n.title}</p>
-                      <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2">{n.body}</p>
-                    </div>
-                    <Badge variant="secondary" className="text-[10px] shrink-0">
-                      {n.recipient_count} sent
-                    </Badge>
-                  </div>
-                  <p className="text-[10px] text-muted-foreground mt-1.5">
-                    {format(new Date(n.created_at), 'MMM d, h:mm a')}
-                  </p>
-                </div>
-              ))}
-            </div>
-          )}
-        </CardContent>
-      </Card>
+      {/* History Table */}
+      <div>
+        <h3 className="text-sm font-semibold mb-2">Recent Notifications</h3>
+        {loadingHistory ? (
+          <div className="flex justify-center py-4"><Loader2 className="h-5 w-5 animate-spin text-muted-foreground" /></div>
+        ) : history.length === 0 ? (
+          <p className="text-sm text-muted-foreground text-center py-4">No notifications sent yet</p>
+        ) : (
+          <div className="rounded-lg border border-border/50 bg-card">
+            <Table>
+              <TableHeader>
+                <TableRow className="hover:bg-transparent">
+                  <TableHead className="text-[11px]">Title</TableHead>
+                  <TableHead className="text-[11px]">Body</TableHead>
+                  <TableHead className="text-[11px] w-16">Sent</TableHead>
+                  <TableHead className="text-[11px] w-24">Date</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {history.map(n => (
+                  <TableRow key={n.id}>
+                    <TableCell className="py-2 px-3 text-sm font-medium max-w-[120px] truncate">{n.title}</TableCell>
+                    <TableCell className="py-2 px-3 text-xs text-muted-foreground max-w-[180px] truncate">{n.body}</TableCell>
+                    <TableCell className="py-2 px-3">
+                      <Badge variant="secondary" className="text-[10px]">{n.recipient_count}</Badge>
+                    </TableCell>
+                    <TableCell className="py-2 px-3 text-[11px] text-muted-foreground whitespace-nowrap">
+                      {format(new Date(n.created_at), 'MMM d, h:mm a')}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
