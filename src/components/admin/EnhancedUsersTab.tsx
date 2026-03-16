@@ -7,7 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/table';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger, DropdownMenuSub, DropdownMenuSubContent, DropdownMenuSubTrigger } from '@/components/ui/dropdown-menu';
-import { Loader2, Search, Crown, Gem, Settings, MoreHorizontal, Copy, ChevronUp, ChevronDown, ArrowUpDown } from 'lucide-react';
+import { Loader2, Search, Crown, Gem, Settings, MoreHorizontal, Copy, ChevronUp, ChevronDown, ArrowUpDown, ChevronLeft, ChevronRight } from 'lucide-react';
 import { toast } from 'sonner';
 import { differenceInDays, format } from 'date-fns';
 import { UserOverrideDrawer } from './UserOverrideDrawer';
