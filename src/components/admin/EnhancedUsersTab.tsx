@@ -352,7 +352,7 @@ export function EnhancedUsersTab({ headerPlanFilter }: EnhancedUsersTabProps) {
                 <TableRow key={user.user_id} className={user.is_suspended ? 'opacity-50' : ''}>
                   {/* Row Number */}
                   <TableCell className="py-2 px-3 text-[11px] text-muted-foreground tabular-nums">
-                    {index + 1}
+                    {page * pageSize + index + 1}
                   </TableCell>
 
                   {/* User */}
