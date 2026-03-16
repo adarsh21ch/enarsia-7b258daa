@@ -120,11 +120,13 @@ function SortableHeader({ label, field, sortField, sortDir, onSort }: { label: s
 
 export function EnhancedUsersTab({ headerPlanFilter }: EnhancedUsersTabProps) {
   const queryClient = useQueryClient();
+  const pageSize = 100;
   const [users, setUsers] = useState<EnhancedUser[]>([]);
   const [loading, setLoading] = useState(true);
   const [searching, setSearching] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [planFilter, setPlanFilter] = useState('all');
+  const [page, setPage] = useState(0);
   const [totalCount, setTotalCount] = useState(0);
   const [overrideUser, setOverrideUser] = useState<EnhancedUser | null>(null);
   const [sortField, setSortField] = useState<SortField>('created_at');
