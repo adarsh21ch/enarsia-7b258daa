@@ -6,6 +6,7 @@ import { Loader2 } from 'lucide-react';
 
 const COLORS: Record<string, string> = {
   free: 'hsl(var(--muted-foreground))',
+  basic: 'hsl(var(--primary))',
   pro: 'hsl(var(--primary))',
   premium: 'hsl(45 93% 47%)',
   expired: 'hsl(0 84% 60%)',
@@ -13,6 +14,7 @@ const COLORS: Record<string, string> = {
 
 const LABELS: Record<string, string> = {
   free: 'Free',
+  basic: 'Active Basic',
   pro: 'Active Basic',
   premium: 'Active Pro',
   expired: 'Expired',
