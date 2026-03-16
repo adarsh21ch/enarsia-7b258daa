@@ -5578,6 +5578,15 @@ export type Database = {
           total_users: number
         }[]
       }
+      admin_get_tier_breakdown: {
+        Args: never
+        Returns: {
+          active_count: number
+          expired_count: number
+          tier_value: string
+          total_count: number
+        }[]
+      }
       admin_get_trial_analytics: {
         Args: never
         Returns: {

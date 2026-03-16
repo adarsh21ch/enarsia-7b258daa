@@ -1,13 +1,12 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useMemo } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useQueryClient } from '@tanstack/react-query';
-import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
-import { Loader2, Search, Crown, Gem, Settings, TrendingUp, Clock, Calendar } from 'lucide-react';
+import { Loader2, Search, Crown, Gem, Settings, TrendingUp, Clock, Calendar, Copy, ChevronDown } from 'lucide-react';
 import { toast } from 'sonner';
 import { formatDistanceToNow, format } from 'date-fns';
 import { UserOverrideDrawer } from './UserOverrideDrawer';
@@ -39,7 +38,6 @@ const PLAN_FILTER_OPTIONS = [
   { value: 'free', label: '🆓 Free' },
   { value: 'pro', label: '⭐ Basic' },
   { value: 'premium', label: '💎 Pro' },
-  { value: 'funnels_pro', label: 'Funnels Pro' },
 ];
 
 const GRANT_OPTIONS = [
@@ -52,6 +50,146 @@ const GRANT_OPTIONS = [
   { value: 'premium-120', label: 'Pro 120d', tier: 'premium', days: 120 },
   { value: 'premium-365', label: 'Pro 1yr', tier: 'premium', days: 365 },
 ];
+
+function TierChips({ users }: { users: EnhancedUser[] }) {
+  const counts = useMemo(() => {
+    const free = users.filter(u => u.plan !== 'pro').length;
+    const basic = users.filter(u => u.plan === 'pro' && u.tier === 'pro').length;
+    const pro = users.filter(u => u.plan === 'pro' && u.tier === 'premium').length;
+    return { free, basic, pro };
+  }, [users]);
+
+  return (
+    <div className="flex gap-2 flex-wrap">
+      <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-muted/60 border border-border/50">
+        <span className="text-xs text-muted-foreground">Free</span>
+        <span className="text-sm font-bold">{counts.free}</span>
+      </div>
+      <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-primary/10 border border-primary/30">
+        <Crown className="h-3 w-3 text-primary" />
+        <span className="text-xs text-primary">Basic</span>
+        <span className="text-sm font-bold text-primary">{counts.basic}</span>
+      </div>
+      <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-amber-500/10 border border-amber-500/30">
+        <Gem className="h-3 w-3 text-amber-600" />
+        <span className="text-xs text-amber-600">Pro</span>
+        <span className="text-sm font-bold text-amber-600">{counts.pro}</span>
+      </div>
+    </div>
+  );
+}
+
+function UserCard({ 
+  user, 
+  onGrant, 
+  onRevoke, 
+  onOverride, 
+  onSuspendToggle 
+}: { 
+  user: EnhancedUser;
+  onGrant: (tier: string, days: number) => void;
+  onRevoke: () => void;
+  onOverride: () => void;
+  onSuspendToggle: () => void;
+}) {
+  const tier = (user.tier || 'basic') as InternalTier;
+  const isPaid = user.plan === 'pro';
+  
+  const borderColor = tier === 'premium' ? 'border-l-amber-500' : tier === 'pro' ? 'border-l-primary' : 'border-l-muted-foreground/30';
+
+  const copyEmail = () => {
+    if (user.email) {
+      navigator.clipboard.writeText(user.email);
+      toast.success('Email copied');
+    }
+  };
+
+  const getTrialBadge = () => {
+    if (isPaid) return null;
+    const trialStart = user.trial_start_date || user.created_at;
+    if (!trialStart) return null;
+    const daysSince = Math.floor((Date.now() - new Date(trialStart).getTime()) / (1000 * 60 * 60 * 24));
+    const remaining = TRIAL_DURATION_DAYS - daysSince;
+    if (remaining <= 0) return <Badge variant="outline" className="text-[10px] text-destructive border-destructive/40 px-1.5 py-0">Expired</Badge>;
+    return <Badge variant="outline" className="text-[10px] text-primary border-primary/40 px-1.5 py-0">Day {daysSince + 1}</Badge>;
+  };
+
+  const getTierBadge = () => {
+    const displayName = getTierDisplayName(tier);
+    if (tier === 'premium') return <Badge className="bg-amber-500/20 text-amber-700 dark:text-amber-400 text-[10px] px-1.5 py-0 gap-0.5"><Gem className="h-2.5 w-2.5" />{displayName}</Badge>;
+    if (tier === 'pro') return <Badge className="bg-primary/20 text-primary text-[10px] px-1.5 py-0 gap-0.5"><Crown className="h-2.5 w-2.5" />{displayName}</Badge>;
+    return <Badge variant="secondary" className="text-[10px] px-1.5 py-0">{displayName}</Badge>;
+  };
+
+  return (
+    <div className={`rounded-lg border bg-card border-l-4 ${borderColor} ${user.is_suspended ? 'opacity-50' : ''}`}>
+      <div className="p-3 space-y-2">
+        {/* Row 1: Email + Badges */}
+        <div className="flex items-center gap-1.5 flex-wrap">
+          <button onClick={copyEmail} className="flex items-center gap-1 text-sm font-medium truncate hover:text-primary transition-colors max-w-[200px]" title="Copy email">
+            <span className="truncate">{user.email || 'No email'}</span>
+            <Copy className="h-3 w-3 shrink-0 opacity-40" />
+          </button>
+          {getTierBadge()}
+          {user.is_admin_override && <Badge variant="outline" className="text-[10px] text-yellow-600 px-1.5 py-0">Override</Badge>}
+          {user.is_suspended && <Badge variant="destructive" className="text-[10px] px-1.5 py-0">Suspended</Badge>}
+          {getTrialBadge()}
+        </div>
+
+        {/* Row 2: Name + ID */}
+        <p className="text-xs text-muted-foreground truncate">
+          {user.display_name || 'Unnamed'} {user.neverai_id && `• ${user.neverai_id}`}
+        </p>
+
+        {/* Row 3: Stats */}
+        <div className="flex flex-wrap gap-x-3 gap-y-1 text-[11px] text-muted-foreground">
+          <span className="flex items-center gap-0.5"><TrendingUp className="h-3 w-3" />{user.total_leads_count} leads</span>
+          <span>{user.source_app || 'Direct'}</span>
+          <span className="flex items-center gap-0.5">
+            <Clock className="h-3 w-3" />
+            {user.last_active_at ? formatDistanceToNow(new Date(user.last_active_at), { addSuffix: true }) : 'Never'}
+          </span>
+          {user.expires_at && <span className="flex items-center gap-0.5"><Calendar className="h-3 w-3" />Exp {format(new Date(user.expires_at), 'MMM d')}</span>}
+        </div>
+
+        {/* Row 4: Actions */}
+        <div className="flex items-center gap-1.5 flex-wrap pt-1 border-t border-border/30">
+          <Select onValueChange={(val) => {
+            const opt = GRANT_OPTIONS.find(o => o.value === val);
+            if (opt) onGrant(opt.tier, opt.days);
+          }}>
+            <SelectTrigger className="w-[120px] h-7 text-[11px]">
+              <SelectValue placeholder={isPaid ? 'Change...' : 'Grant...'} />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="__header_basic" disabled className="font-semibold text-[11px]">⭐ Basic</SelectItem>
+              {GRANT_OPTIONS.filter(o => o.tier === 'pro').map(o => (
+                <SelectItem key={o.value} value={o.value} className="text-[11px] pl-6">{o.days >= 365 ? '1 year' : `${o.days} days`}</SelectItem>
+              ))}
+              <SelectItem value="__header_pro" disabled className="font-semibold text-[11px]">💎 Pro</SelectItem>
+              {GRANT_OPTIONS.filter(o => o.tier === 'premium').map(o => (
+                <SelectItem key={o.value} value={o.value} className="text-[11px] pl-6">{o.days >= 365 ? '1 year' : `${o.days} days`}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
+          {isPaid && (
+            <Button variant="outline" size="sm" className="h-7 text-[11px] px-2" onClick={onRevoke}>Revoke</Button>
+          )}
+
+          <Button variant="ghost" size="sm" className="h-7 w-7 p-0" onClick={onOverride} title="Override settings">
+            <Settings className="h-3.5 w-3.5" />
+          </Button>
+
+          <div className="flex items-center gap-1.5 ml-auto">
+            <span className="text-[10px] text-muted-foreground">{user.is_suspended ? 'Off' : 'On'}</span>
+            <Switch checked={user.is_suspended} onCheckedChange={onSuspendToggle} className="scale-75" />
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 export function EnhancedUsersTab() {
   const queryClient = useQueryClient();
@@ -112,19 +250,10 @@ export function EnhancedUsersTab() {
 
   const handleSuspendToggle = async (user: EnhancedUser) => {
     const newStatus = !user.is_suspended;
-    
     try {
-      const { error } = await supabase.rpc('admin_toggle_user_suspension', {
-        p_user_id: user.user_id,
-        p_suspend: newStatus,
-      });
-
+      const { error } = await supabase.rpc('admin_toggle_user_suspension', { p_user_id: user.user_id, p_suspend: newStatus });
       if (error) throw error;
-
-      setUsers(prev => prev.map(u => 
-        u.user_id === user.user_id ? { ...u, is_suspended: newStatus } : u
-      ));
-
+      setUsers(prev => prev.map(u => u.user_id === user.user_id ? { ...u, is_suspended: newStatus } : u));
       toast.success(newStatus ? 'User suspended' : 'User unsuspended');
     } catch (err) {
       console.error('Failed to toggle suspension:', err);
@@ -136,25 +265,10 @@ export function EnhancedUsersTab() {
     const tierDisplayName = getTierDisplayName(tier as InternalTier);
     try {
       const { error } = await supabase.functions.invoke('admin-update-subscription', {
-        body: {
-          user_id: user.user_id,
-          plan: 'pro',
-          tier,
-          duration_days: durationDays,
-        },
+        body: { user_id: user.user_id, plan: 'pro', tier, duration_days: durationDays },
       });
-
       if (error) throw error;
-
-      await logAdminAction(
-        'user_plan_granted',
-        'user',
-        user.user_id,
-        { plan: user.plan, tier: user.tier },
-        { plan: 'pro', tier, duration_days: durationDays },
-        `Granted ${tierDisplayName} access to ${user.email || user.user_id} for ${durationDays} days`
-      );
-
+      await logAdminAction('user_plan_granted', 'user', user.user_id, { plan: user.plan, tier: user.tier }, { plan: 'pro', tier, duration_days: durationDays }, `Granted ${tierDisplayName} access to ${user.email || user.user_id} for ${durationDays} days`);
       await fetchUsers();
       queryClient.invalidateQueries({ queryKey: ['admin-analytics'] });
       toast.success(`${tierDisplayName} access granted`);
@@ -168,24 +282,10 @@ export function EnhancedUsersTab() {
     const currentTierName = getTierDisplayName(user.tier as InternalTier);
     try {
       const { error } = await supabase.functions.invoke('admin-update-subscription', {
-        body: {
-          user_id: user.user_id,
-          plan: 'free',
-          tier: 'basic',
-        },
+        body: { user_id: user.user_id, plan: 'free', tier: 'basic' },
       });
-
       if (error) throw error;
-
-      await logAdminAction(
-        'user_plan_revoked',
-        'user',
-        user.user_id,
-        { plan: user.plan, tier: user.tier },
-        { plan: 'free', tier: 'basic' },
-        `Revoked ${currentTierName} access from ${user.email || user.user_id}`
-      );
-
+      await logAdminAction('user_plan_revoked', 'user', user.user_id, { plan: user.plan, tier: user.tier }, { plan: 'free', tier: 'basic' }, `Revoked ${currentTierName} access from ${user.email || user.user_id}`);
       await fetchUsers();
       queryClient.invalidateQueries({ queryKey: ['admin-analytics'] });
       toast.success(`${currentTierName} access revoked`);
@@ -194,66 +294,6 @@ export function EnhancedUsersTab() {
       toast.error('Failed to revoke access');
     }
   };
-
-  const getSourceBadge = (source: string | null) => {
-    if (!source) return <Badge variant="outline" className="text-xs">Direct</Badge>;
-    if (source.toLowerCase().includes('achievers')) {
-      return <Badge className="text-xs bg-purple-500">Achievers Club</Badge>;
-    }
-    return <Badge variant="outline" className="text-xs">{source}</Badge>;
-  };
-
-  const getTierBadge = (user: EnhancedUser) => {
-    const tier = (user.tier || 'basic') as InternalTier;
-    const displayName = getTierDisplayName(tier);
-
-    if (tier === 'premium') {
-      return (
-        <Badge className="bg-amber-500/20 text-amber-700 dark:text-amber-400 text-xs flex items-center gap-1">
-          <Gem className="h-3 w-3" />
-          {displayName}
-        </Badge>
-      );
-    }
-    if (tier === 'pro') {
-      return (
-        <Badge className="bg-primary/20 text-primary text-xs flex items-center gap-1">
-          <Crown className="h-3 w-3" />
-          {displayName}
-        </Badge>
-      );
-    }
-    return <Badge variant="secondary" className="text-xs">{displayName}</Badge>;
-  };
-
-  const getTrialStatusBadge = (user: EnhancedUser) => {
-    if (user.plan === 'pro') return null;
-    
-    const trialStart = user.trial_start_date || user.created_at;
-    if (!trialStart) return null;
-    
-    const startDate = new Date(trialStart);
-    const now = new Date();
-    const daysSinceStart = Math.floor((now.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24));
-    const daysRemaining = TRIAL_DURATION_DAYS - daysSinceStart;
-    
-    if (daysRemaining <= 0) {
-      return <Badge variant="outline" className="text-xs text-destructive border-destructive/50">Trial Expired</Badge>;
-    }
-    
-    if (daysRemaining === 1) {
-      return <Badge className="text-xs bg-yellow-500 text-yellow-950">Day 7 - Expiring!</Badge>;
-    }
-    
-    const currentDay = daysSinceStart + 1;
-    return (
-      <Badge variant="outline" className="text-xs text-primary border-primary/50">
-        Day {currentDay} of Trial
-      </Badge>
-    );
-  };
-
-  const isPaidUser = (user: EnhancedUser) => user.plan === 'pro';
 
   if (loading) {
     return (
@@ -264,185 +304,56 @@ export function EnhancedUsersTab() {
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-3">
+      {/* Tier Chips */}
+      <TierChips users={users} />
+
       {/* Search and Filters */}
-      <div className="flex gap-2 flex-wrap">
-        <div className="relative flex-1 min-w-[200px]">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+      <div className="flex gap-2">
+        <div className="relative flex-1 min-w-0">
+          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
           <Input
-            placeholder="Search by email, name, or upline..."
+            placeholder="Search email, name, ID..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-9"
+            className="pl-8 h-9 text-sm"
           />
         </div>
         <Select value={planFilter} onValueChange={setPlanFilter}>
-          <SelectTrigger className="w-[140px]">
+          <SelectTrigger className="w-[120px] h-9 text-xs">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
             {PLAN_FILTER_OPTIONS.map((opt) => (
-              <SelectItem key={opt.value} value={opt.value}>
-                {opt.label}
-              </SelectItem>
+              <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
             ))}
           </SelectContent>
         </Select>
       </div>
 
-      {/* Stats */}
-      <p className="text-sm text-muted-foreground">
+      {/* Count */}
+      <p className="text-xs text-muted-foreground">
         {searching && <Loader2 className="h-3 w-3 animate-spin inline mr-1" />}
-        Showing {users.length} of {totalCount} users
+        {users.length} of {totalCount} users
       </p>
 
       {/* Users List */}
-      <div className="space-y-3">
+      <div className="space-y-2">
         {users.map((user) => (
-          <Card key={user.user_id} className={user.is_suspended ? 'opacity-60 border-destructive/50' : ''}>
-            <CardContent className="p-4">
-              {/* Header */}
-              <div className="flex items-start justify-between gap-2 mb-2">
-                <div className="min-w-0 flex-1">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <span className="font-medium truncate">{user.email || 'No email'}</span>
-                    {getTierBadge(user)}
-                    {user.is_admin_override && (
-                      <Badge variant="outline" className="text-xs text-yellow-600">Override</Badge>
-                    )}
-                    {user.is_suspended && (
-                      <Badge variant="destructive" className="text-xs">Suspended</Badge>
-                    )}
-                    {getTrialStatusBadge(user)}
-                  </div>
-                  <p className="text-sm text-muted-foreground truncate">
-                    {user.display_name || 'Unnamed'} {user.neverai_id && `• ${user.neverai_id}`}
-                  </p>
-                </div>
-              </div>
-
-              {/* Stats Row */}
-              <div className="flex flex-wrap gap-3 text-xs text-muted-foreground mb-3">
-                <span className="flex items-center gap-1">
-                  <TrendingUp className="h-3 w-3" />
-                  {user.total_leads_count} leads
-                </span>
-                {getSourceBadge(user.source_app)}
-                <span className="flex items-center gap-1">
-                  <Clock className="h-3 w-3" />
-                  {user.last_active_at 
-                    ? formatDistanceToNow(new Date(user.last_active_at), { addSuffix: true })
-                    : 'Never'}
-                </span>
-                {user.expires_at && (
-                  <span className="flex items-center gap-1">
-                    <Calendar className="h-3 w-3" />
-                    Expires {format(new Date(user.expires_at), 'MMM d')}
-                  </span>
-                )}
-              </div>
-
-              {/* Actions */}
-              <div className="flex items-center gap-2 flex-wrap">
-                {!isPaidUser(user) ? (
-                  <Select onValueChange={(val) => {
-                    const option = GRANT_OPTIONS.find(o => o.value === val);
-                    if (option) handleGrantPlan(user, option.tier, option.days);
-                  }}>
-                    <SelectTrigger className="w-[150px] h-8 text-xs">
-                      <SelectValue placeholder="Grant Plan..." />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="__header_basic" disabled className="font-semibold text-xs">
-                        ⭐ Basic
-                      </SelectItem>
-                      {GRANT_OPTIONS.filter(o => o.tier === 'pro').map(o => (
-                        <SelectItem key={o.value} value={o.value} className="text-xs pl-6">
-                          {o.days >= 365 ? '1 year' : `${o.days} days`}
-                        </SelectItem>
-                      ))}
-                      <SelectItem value="__header_pro" disabled className="font-semibold text-xs">
-                        💎 Pro
-                      </SelectItem>
-                      {GRANT_OPTIONS.filter(o => o.tier === 'premium').map(o => (
-                        <SelectItem key={o.value} value={o.value} className="text-xs pl-6">
-                          {o.days >= 365 ? '1 year' : `${o.days} days`}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                ) : (
-                  <div className="flex items-center gap-2">
-                    {/* Allow upgrading/changing tier */}
-                    <Select onValueChange={(val) => {
-                      const option = GRANT_OPTIONS.find(o => o.value === val);
-                      if (option) handleGrantPlan(user, option.tier, option.days);
-                    }}>
-                      <SelectTrigger className="w-[150px] h-8 text-xs">
-                        <SelectValue placeholder="Change Plan..." />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="__header_basic" disabled className="font-semibold text-xs">
-                          ⭐ Basic
-                        </SelectItem>
-                        {GRANT_OPTIONS.filter(o => o.tier === 'pro').map(o => (
-                          <SelectItem key={o.value} value={o.value} className="text-xs pl-6">
-                            {o.days >= 365 ? '1 year' : `${o.days} days`}
-                          </SelectItem>
-                        ))}
-                        <SelectItem value="__header_pro" disabled className="font-semibold text-xs">
-                          💎 Pro
-                        </SelectItem>
-                        {GRANT_OPTIONS.filter(o => o.tier === 'premium').map(o => (
-                          <SelectItem key={o.value} value={o.value} className="text-xs pl-6">
-                            {o.days >= 365 ? '1 year' : `${o.days} days`}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
-                      className="h-8 text-xs"
-                      onClick={() => handleRevokePlan(user)}
-                    >
-                      Revoke
-                    </Button>
-                  </div>
-                )}
-
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="h-8 text-xs"
-                  onClick={() => setOverrideUser(user)}
-                >
-                  <Settings className="h-3 w-3 mr-1" />
-                  Override
-                </Button>
-
-                <div className="flex items-center gap-2 ml-auto">
-                  <span className="text-xs text-muted-foreground">
-                    {user.is_suspended ? 'Suspended' : 'Active'}
-                  </span>
-                  <Switch
-                    checked={user.is_suspended}
-                    onCheckedChange={() => handleSuspendToggle(user)}
-                  />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+          <UserCard
+            key={user.user_id}
+            user={user}
+            onGrant={(tier, days) => handleGrantPlan(user, tier, days)}
+            onRevoke={() => handleRevokePlan(user)}
+            onOverride={() => setOverrideUser(user)}
+            onSuspendToggle={() => handleSuspendToggle(user)}
+          />
         ))}
-
         {users.length === 0 && (
-          <p className="text-center py-8 text-muted-foreground">
-            No users found
-          </p>
+          <p className="text-center py-8 text-muted-foreground text-sm">No users found</p>
         )}
       </div>
 
-      {/* Override Drawer */}
       {overrideUser && (
         <UserOverrideDrawer
           open={!!overrideUser}

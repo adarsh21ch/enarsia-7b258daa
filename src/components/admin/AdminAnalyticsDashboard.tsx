@@ -61,7 +61,7 @@ export function AdminAnalyticsDashboard() {
         <TabsContent value="overview" className="mt-3 space-y-4">
           <ChurnRiskAlert />
           <SignupTrendChart data={analytics.dailySignups} />
-          <SubscriptionPieChart data={analytics.subscriptionBreakdown} />
+          <SubscriptionPieChart />
         </TabsContent>
 
         <TabsContent value="trials" className="mt-3">

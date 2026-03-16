@@ -1,13 +1,14 @@
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useAdmin } from '@/hooks/useAdmin';
+import { useAdminAnalytics } from '@/hooks/useAdminAnalytics';
 import { BottomNav } from '@/components/layout/BottomNav';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
-import { Loader2, Shield, Users, Crown, ArrowLeft, BarChart3, MessageSquare, Tag, Sliders, Sparkles, History, Bell } from 'lucide-react';
+import { Loader2, Shield, Users, Crown, ArrowLeft, BarChart3, MessageSquare, Tag, Sliders, Sparkles, History, Bell, IndianRupee } from 'lucide-react';
 import nevoraLogo from '@/assets/nevorai-logo.jpeg';
 import { AdminAnalyticsDashboard } from '@/components/admin/AdminAnalyticsDashboard';
 import { AdminSupportPanel } from '@/components/admin/AdminSupportPanel';
@@ -23,6 +24,7 @@ export default function Admin() {
   const navigate = useNavigate();
   const { user, loading: authLoading } = useAuth();
   const { isAdmin, loading } = useAdmin();
+  const { data: analytics } = useAdminAnalytics();
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -56,116 +58,113 @@ export default function Admin() {
     );
   }
 
+  const formatRevenue = (amount: number) => `₹${(amount / 100).toLocaleString('en-IN')}`;
+
   return (
     <div className="app-layout bg-gradient-to-b from-background via-background to-muted/20">
       <header className="fixed-header z-40 bg-card/80 backdrop-blur-xl border-b border-border/50 shrink-0">
-        <div className="flex items-center justify-between px-4 py-3">
+        <div className="flex items-center justify-between px-4 py-2.5">
           <div className="flex items-center gap-3">
             <img 
               src={nevoraLogo} 
               alt="NevorAI Logo" 
-              className="h-10 w-10 rounded-xl object-cover shadow-md"
+              className="h-9 w-9 rounded-xl object-cover shadow-md"
             />
             <div>
-              <h1 className="text-lg font-bold tracking-tight">Admin Panel</h1>
-              <p className="text-[10px] text-muted-foreground font-medium">Manage user subscriptions</p>
+              <h1 className="text-base font-bold tracking-tight">Admin Panel</h1>
+              <p className="text-[10px] text-muted-foreground font-medium">Manage subscriptions & users</p>
             </div>
           </div>
-          <Badge variant="outline" className="bg-destructive/10 text-destructive border-destructive/30">
+          <Badge variant="outline" className="bg-destructive/10 text-destructive border-destructive/30 text-[10px]">
             <Shield className="h-3 w-3 mr-1" />
             Admin
           </Badge>
         </div>
+
+        {/* Sticky KPI Bar */}
+        {analytics && (
+          <div className="flex items-center justify-around px-3 py-1.5 bg-muted/40 border-t border-border/30 text-[11px]">
+            <div className="flex items-center gap-1">
+              <Users className="h-3 w-3 text-muted-foreground" />
+              <span className="font-semibold">{analytics.totalSignups.toLocaleString()}</span>
+              <span className="text-muted-foreground">Users</span>
+            </div>
+            <div className="w-px h-3 bg-border" />
+            <div className="flex items-center gap-1">
+              <Crown className="h-3 w-3 text-yellow-500" />
+              <span className="font-semibold">{analytics.activeProUsers}</span>
+              <span className="text-muted-foreground">Paid</span>
+            </div>
+            <div className="w-px h-3 bg-border" />
+            <div className="flex items-center gap-1">
+              <IndianRupee className="h-3 w-3 text-green-600" />
+              <span className="font-semibold">{formatRevenue(analytics.revenue.totalRevenue)}</span>
+            </div>
+          </div>
+        )}
       </header>
 
       <main className="scrollable-content">
-        <div className="container py-4 px-4 pb-24 space-y-5">
-          {/* Admin Tabs */}
+        <div className="container py-3 px-3 pb-24 space-y-4">
           <Tabs defaultValue="users" className="w-full">
             <ScrollArea className="w-full">
-              <TabsList className="inline-flex w-max gap-1">
-                <TabsTrigger value="users" className="text-xs px-3">
-                  <Users className="h-3.5 w-3.5 mr-1" />
-                  Users
+              <TabsList className="inline-flex w-max gap-0.5 h-9">
+                <TabsTrigger value="users" className="text-[11px] px-2.5 h-7">
+                  <Users className="h-3 w-3 mr-1" />Users
                 </TabsTrigger>
-                <TabsTrigger value="analytics" className="text-xs px-3">
-                  <BarChart3 className="h-3.5 w-3.5 mr-1" />
-                  Analytics
+                <TabsTrigger value="analytics" className="text-[11px] px-2.5 h-7">
+                  <BarChart3 className="h-3 w-3 mr-1" />Analytics
                 </TabsTrigger>
-                <TabsTrigger value="plans" className="text-xs px-3">
-                  <Crown className="h-3.5 w-3.5 mr-1" />
-                  Plans
+                <TabsTrigger value="plans" className="text-[11px] px-2.5 h-7">
+                  <Crown className="h-3 w-3 mr-1" />Plans
                 </TabsTrigger>
-                <TabsTrigger value="offers" className="text-xs px-3">
-                  <Tag className="h-3.5 w-3.5 mr-1" />
-                  Offers
+                <TabsTrigger value="offers" className="text-[11px] px-2.5 h-7">
+                  <Tag className="h-3 w-3 mr-1" />Offers
                 </TabsTrigger>
-                <TabsTrigger value="limits" className="text-xs px-3">
-                  <Sliders className="h-3.5 w-3.5 mr-1" />
-                  Limits
+                <TabsTrigger value="limits" className="text-[11px] px-2.5 h-7">
+                  <Sliders className="h-3 w-3 mr-1" />Limits
                 </TabsTrigger>
-                <TabsTrigger value="features" className="text-xs px-3">
-                  <Sparkles className="h-3.5 w-3.5 mr-1" />
-                  Features
+                <TabsTrigger value="features" className="text-[11px] px-2.5 h-7">
+                  <Sparkles className="h-3 w-3 mr-1" />Features
                 </TabsTrigger>
-              <TabsTrigger value="support" className="text-xs px-3">
-                  <MessageSquare className="h-3.5 w-3.5 mr-1" />
-                  Support
+                <TabsTrigger value="support" className="text-[11px] px-2.5 h-7">
+                  <MessageSquare className="h-3 w-3 mr-1" />Support
                 </TabsTrigger>
-                <TabsTrigger value="audit" className="text-xs px-3">
-                  <History className="h-3.5 w-3.5 mr-1" />
-                  Audit Log
+                <TabsTrigger value="audit" className="text-[11px] px-2.5 h-7">
+                  <History className="h-3 w-3 mr-1" />Audit
                 </TabsTrigger>
-                <TabsTrigger value="notify" className="text-xs px-3">
-                  <Bell className="h-3.5 w-3.5 mr-1" />
-                  Notify
+                <TabsTrigger value="notify" className="text-[11px] px-2.5 h-7">
+                  <Bell className="h-3 w-3 mr-1" />Notify
                 </TabsTrigger>
               </TabsList>
               <ScrollBar orientation="horizontal" />
             </ScrollArea>
 
-            {/* Users Tab - Enhanced */}
-            <TabsContent value="users" className="mt-4">
+            <TabsContent value="users" className="mt-3">
               <EnhancedUsersTab />
             </TabsContent>
-
-            {/* Analytics Tab */}
-            <TabsContent value="analytics" className="mt-4">
+            <TabsContent value="analytics" className="mt-3">
               <AdminAnalyticsDashboard />
             </TabsContent>
-
-            {/* Plans Tab */}
-            <TabsContent value="plans" className="mt-4">
+            <TabsContent value="plans" className="mt-3">
               <PlansManager />
             </TabsContent>
-
-            {/* Offers Tab */}
-            <TabsContent value="offers" className="mt-4">
+            <TabsContent value="offers" className="mt-3">
               <OffersManager />
             </TabsContent>
-
-            {/* Limits Tab */}
-            <TabsContent value="limits" className="mt-4">
+            <TabsContent value="limits" className="mt-3">
               <UsageLimitsManager />
             </TabsContent>
-
-            {/* Features Tab */}
-            <TabsContent value="features" className="mt-4">
+            <TabsContent value="features" className="mt-3">
               <FeatureFlagsManager />
             </TabsContent>
-
-            {/* Support Tab */}
-            <TabsContent value="support" className="mt-4">
+            <TabsContent value="support" className="mt-3">
               <AdminSupportPanel />
             </TabsContent>
-
-            {/* Audit Log Tab */}
-            <TabsContent value="audit" className="mt-4">
+            <TabsContent value="audit" className="mt-3">
               <AuditLogViewer />
             </TabsContent>
-
-            {/* Notify Tab */}
-            <TabsContent value="notify" className="mt-4">
+            <TabsContent value="notify" className="mt-3">
               <AdminNotificationsPanel />
             </TabsContent>
           </Tabs>

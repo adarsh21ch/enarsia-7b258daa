@@ -117,7 +117,7 @@ export function ProUserDrawer({
     <UserListDrawer
       open={open}
       onOpenChange={onOpenChange}
-      title="Pro Users"
+      title="Paid Users (Basic & Pro)"
       users={users}
       loading={loading}
       renderExtra={(user) => {

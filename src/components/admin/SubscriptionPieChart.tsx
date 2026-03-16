@@ -1,60 +1,73 @@
 import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from 'recharts';
-import type { SubscriptionBreakdown } from '@/hooks/useAdminAnalytics';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
+import { Loader2 } from 'lucide-react';
 
-interface SubscriptionPieChartProps {
-  data: SubscriptionBreakdown[];
-}
-
-const COLORS = {
+const COLORS: Record<string, string> = {
   free: 'hsl(var(--muted-foreground))',
-  basic: 'hsl(var(--primary))',        // Basic tier
-  pro: 'hsl(45 93% 47%)',              // Pro tier (amber)
-  expired: 'hsl(0 84% 60%)'           // Red
+  pro: 'hsl(var(--primary))',
+  premium: 'hsl(45 93% 47%)',
+  expired: 'hsl(0 84% 60%)',
 };
 
-export function SubscriptionPieChart({ data }: SubscriptionPieChartProps) {
-  const chartData = [];
-  
-  const freePlan = data.find(d => d.plan === 'free');
-  const proPlan = data.find(d => d.plan === 'pro');
-  
-  if (freePlan) {
-    chartData.push({
-      name: 'Free',
-      value: freePlan.count,
-      color: COLORS.free
-    });
-  }
-  
-  if (proPlan) {
-    const activePro = proPlan.active_count;
-    const expiredPro = proPlan.count - proPlan.active_count;
-    
-    // Split active into Basic and Pro tiers
-    // Since SubscriptionBreakdown doesn't have tier info, show combined as "Active Basic" and "Active Pro"
-    if (activePro > 0) {
-      chartData.push({
-        name: 'Active Basic',
-        value: Math.ceil(activePro * 0.5), // Will be replaced when tier data available
-        color: COLORS.basic
-      });
-      chartData.push({
-        name: 'Active Pro',
-        value: Math.floor(activePro * 0.5),
-        color: COLORS.pro
-      });
-    }
-    
-    if (expiredPro > 0) {
-      chartData.push({
-        name: 'Expired',
-        value: expiredPro,
-        color: COLORS.expired
-      });
-    }
+const LABELS: Record<string, string> = {
+  free: 'Free',
+  pro: 'Active Basic',
+  premium: 'Active Pro',
+  expired: 'Expired',
+};
+
+function useTierBreakdown() {
+  const { user } = useAuth();
+  return useQuery({
+    queryKey: ['admin-tier-breakdown', user?.id],
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc('admin_get_tier_breakdown' as any);
+      if (error) throw error;
+      return (data || []) as Array<{ tier_value: string; total_count: number; active_count: number; expired_count: number }>;
+    },
+    enabled: !!user,
+    staleTime: 2 * 60 * 1000,
+  });
+}
+
+export function SubscriptionPieChart() {
+  const { data: tiers, isLoading } = useTierBreakdown();
+
+  if (isLoading) {
+    return (
+      <div className="rounded-xl bg-card border border-border/50 p-4 flex items-center justify-center h-[300px]">
+        <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+      </div>
+    );
   }
 
-  // Remove zero-value entries
+  const chartData: Array<{ name: string; value: number; color: string }> = [];
+  let totalExpired = 0;
+
+  (tiers || []).forEach(t => {
+    if (t.tier_value === 'free' || t.tier_value === 'basic') {
+      // Combine free + basic tier (both are free users)
+      const existing = chartData.find(d => d.name === 'Free');
+      if (existing) {
+        existing.value += Number(t.active_count);
+      } else {
+        chartData.push({ name: 'Free', value: Number(t.active_count), color: COLORS.free });
+      }
+    } else if (t.tier_value === 'pro') {
+      chartData.push({ name: 'Active Basic', value: Number(t.active_count), color: COLORS.pro });
+      totalExpired += Number(t.expired_count);
+    } else if (t.tier_value === 'premium') {
+      chartData.push({ name: 'Active Pro', value: Number(t.active_count), color: COLORS.premium });
+      totalExpired += Number(t.expired_count);
+    }
+  });
+
+  if (totalExpired > 0) {
+    chartData.push({ name: 'Expired', value: totalExpired, color: COLORS.expired });
+  }
+
   const filteredData = chartData.filter(d => d.value > 0);
   const total = filteredData.reduce((sum, item) => sum + item.value, 0);
 
@@ -72,20 +85,15 @@ export function SubscriptionPieChart({ data }: SubscriptionPieChartProps) {
               outerRadius={80}
               paddingAngle={2}
               dataKey="value"
-              label={({ name, value }) => `${value}`}
+              label={({ value }) => `${value}`}
               labelLine={false}
             >
               {filteredData.map((entry, index) => (
-                <Cell 
-                  key={`cell-${index}`} 
-                  fill={entry.color}
-                  stroke="hsl(var(--card))"
-                  strokeWidth={2}
-                />
+                <Cell key={`cell-${index}`} fill={entry.color} stroke="hsl(var(--card))" strokeWidth={2} />
               ))}
             </Pie>
-            <Tooltip 
-              contentStyle={{ 
+            <Tooltip
+              contentStyle={{
                 backgroundColor: 'hsl(var(--card))',
                 border: '1px solid hsl(var(--border))',
                 borderRadius: '8px',
@@ -96,28 +104,19 @@ export function SubscriptionPieChart({ data }: SubscriptionPieChartProps) {
                 name
               ]}
             />
-            <Legend 
+            <Legend
               verticalAlign="bottom"
               height={36}
-              formatter={(value: string) => (
-                <span className="text-xs text-foreground">{value}</span>
-              )}
+              formatter={(value: string) => <span className="text-xs text-foreground">{value}</span>}
             />
           </PieChart>
         </ResponsiveContainer>
       </div>
-      
-      {/* Summary Cards */}
+
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mt-3">
         {filteredData.map((item) => (
-          <div 
-            key={item.name}
-            className="text-center p-2 rounded-lg bg-muted/30"
-          >
-            <div 
-              className="w-3 h-3 rounded-full mx-auto mb-1"
-              style={{ backgroundColor: item.color }}
-            />
+          <div key={item.name} className="text-center p-2 rounded-lg bg-muted/30">
+            <div className="w-3 h-3 rounded-full mx-auto mb-1" style={{ backgroundColor: item.color }} />
             <p className="text-xs font-medium">{item.value}</p>
             <p className="text-[10px] text-muted-foreground">{item.name}</p>
           </div>
