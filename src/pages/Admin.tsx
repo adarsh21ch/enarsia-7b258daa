@@ -72,7 +72,7 @@ export default function Admin() {
             />
             <div>
               <h1 className="text-base font-bold tracking-tight">Admin Panel</h1>
-              <p className="text-[10px] text-muted-foreground font-medium">Manage subscriptions & users</p>
+              <p className="text-[10px] text-muted-foreground font-medium">Admin Dashboard</p>
             </div>
           </div>
           <Badge variant="outline" className="bg-destructive/10 text-destructive border-destructive/30 text-[10px]">
