@@ -38,6 +38,8 @@ export function TierCard({ tierName, plans, isPremium = false, selectedPlanKey, 
     return Math.ceil(plan.price / plan.durationDays);
   };
 
+  const lowestDailyPrice = Math.min(...sortedPlans.map(p => Math.ceil(p.price / p.durationDays)));
+
   const getDurationLabel = (plan: PlanConfig) => {
     const months = Math.round(plan.durationDays / 30);
     if (months === 1) return '1 Month';
@@ -85,7 +87,10 @@ export function TierCard({ tierName, plans, isPremium = false, selectedPlanKey, 
               <Crown className="h-3 w-3 text-primary" />
             </div>
           )}
-          <h4 className="font-bold text-sm text-foreground">{tierName}</h4>
+          <h4 className="font-bold text-sm text-foreground flex-1">{tierName}</h4>
+          <span className={`text-sm font-bold ${isPremium ? 'text-amber-600 dark:text-amber-400' : 'text-primary'}`}>
+            ₹{lowestDailyPrice}/day
+          </span>
         </div>
 
         <div className={`${compact ? 'space-y-0.5' : 'space-y-1'}`}>
@@ -131,7 +136,7 @@ export function TierCard({ tierName, plans, isPremium = false, selectedPlanKey, 
                   {getDurationLabel(plan)}
                 </span>
                 <span className={`text-sm font-bold leading-tight mt-1 ${isPremium ? 'text-amber-600 dark:text-amber-400' : 'text-primary'}`}>
-                  Only ₹{dailyPrice}/day
+                  ₹{dailyPrice}/day
                 </span>
                 <span className="text-[9px] text-muted-foreground mt-0.5 leading-tight">
                   ₹{plan.price} {getBillingLabel(plan)}
