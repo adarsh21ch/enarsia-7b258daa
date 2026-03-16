@@ -467,6 +467,34 @@ export function EnhancedUsersTab({ headerPlanFilter }: EnhancedUsersTabProps) {
         </Table>
       </div>
 
+      {totalCount > pageSize && (
+        <div className="flex items-center justify-between gap-2">
+          <p className="text-[11px] text-muted-foreground">
+            Page {page + 1} of {Math.max(1, Math.ceil(totalCount / pageSize))}
+          </p>
+          <div className="flex gap-1">
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-8 px-2"
+              onClick={() => setPage((current) => Math.max(0, current - 1))}
+              disabled={page === 0 || searching}
+            >
+              <ChevronLeft className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-8 px-2"
+              onClick={() => setPage((current) => current + 1)}
+              disabled={page >= Math.ceil(totalCount / pageSize) - 1 || searching}
+            >
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+          </div>
+        </div>
+      )}
+
       {overrideUser && (
         <UserOverrideDrawer
           open={!!overrideUser}
