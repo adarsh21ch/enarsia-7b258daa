@@ -34,10 +34,8 @@ export function TierCard({ tierName, plans, isPremium = false, selectedPlanKey, 
   const isThisTierSelected = plans.some(p => p.plan_key === selectedPlanKey);
   const sortedPlans = [...plans].sort((a, b) => a.sortOrder - b.sortOrder);
 
-  const getMonthlyPrice = (plan: PlanConfig) => {
-    const months = Math.round(plan.durationDays / 30);
-    if (months > 1) return Math.floor(plan.price / months);
-    return plan.price;
+  const getDailyPrice = (plan: PlanConfig) => {
+    return Math.ceil(plan.price / plan.durationDays);
   };
 
   const getDurationLabel = (plan: PlanConfig) => {
@@ -46,6 +44,14 @@ export function TierCard({ tierName, plans, isPremium = false, selectedPlanKey, 
     if (months === 6) return '6 Months';
     if (months === 12) return '1 Year';
     return `${months} Mo`;
+  };
+
+  const getBillingLabel = (plan: PlanConfig) => {
+    const months = Math.round(plan.durationDays / 30);
+    if (months === 1) return 'billed monthly';
+    if (months === 6) return 'billed every 6 months';
+    if (months === 12) return 'billed yearly';
+    return `billed every ${months} months`;
   };
 
   return (
