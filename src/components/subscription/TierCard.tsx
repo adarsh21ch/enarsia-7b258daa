@@ -38,6 +38,8 @@ export function TierCard({ tierName, plans, isPremium = false, selectedPlanKey, 
     return Math.ceil(plan.price / plan.durationDays);
   };
 
+  const lowestDailyPrice = Math.min(...sortedPlans.map(p => Math.ceil(p.price / p.durationDays)));
+
   const getDurationLabel = (plan: PlanConfig) => {
     const months = Math.round(plan.durationDays / 30);
     if (months === 1) return '1 Month';
