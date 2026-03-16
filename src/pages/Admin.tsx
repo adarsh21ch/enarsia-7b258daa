@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useAdmin } from '@/hooks/useAdmin';
@@ -8,7 +8,8 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
-import { Loader2, Shield, Users, Crown, ArrowLeft, BarChart3, MessageSquare, Tag, Sliders, Sparkles, History, Bell, IndianRupee } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Loader2, Shield, Users, Crown, ArrowLeft, BarChart3, MessageSquare, Tag, Sliders, Sparkles, History, Bell, IndianRupee, Filter } from 'lucide-react';
 import nevoraLogo from '@/assets/nevorai-logo.jpeg';
 import { AdminAnalyticsDashboard } from '@/components/admin/AdminAnalyticsDashboard';
 import { AdminSupportPanel } from '@/components/admin/AdminSupportPanel';
@@ -20,11 +21,20 @@ import { EnhancedUsersTab } from '@/components/admin/EnhancedUsersTab';
 import { AuditLogViewer } from '@/components/admin/AuditLogViewer';
 import { AdminNotificationsPanel } from '@/components/admin/AdminNotificationsPanel';
 
+const HEADER_PLAN_OPTIONS = [
+  { value: 'all', label: 'All' },
+  { value: 'free', label: 'Free' },
+  { value: 'pro', label: 'Basic' },
+  { value: 'premium', label: 'Pro' },
+];
+
 export default function Admin() {
   const navigate = useNavigate();
   const { user, loading: authLoading } = useAuth();
   const { isAdmin, loading } = useAdmin();
   const { data: analytics } = useAdminAnalytics();
+  const [activeTab, setActiveTab] = useState('users');
+  const [headerPlanFilter, setHeaderPlanFilter] = useState('all');
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -75,10 +85,24 @@ export default function Admin() {
               <p className="text-[10px] text-muted-foreground font-medium">Admin Dashboard</p>
             </div>
           </div>
-          <Badge variant="outline" className="bg-destructive/10 text-destructive border-destructive/30 text-[10px]">
-            <Shield className="h-3 w-3 mr-1" />
-            Admin
-          </Badge>
+          <div className="flex items-center gap-2">
+            {/* Plan filter in header */}
+            <Select value={headerPlanFilter} onValueChange={(v) => { setHeaderPlanFilter(v); setActiveTab('users'); }}>
+              <SelectTrigger className="h-7 w-[80px] text-[10px] border-border/50">
+                <Filter className="h-3 w-3 mr-0.5" />
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {HEADER_PLAN_OPTIONS.map(o => (
+                  <SelectItem key={o.value} value={o.value} className="text-xs">{o.label}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Badge variant="outline" className="bg-destructive/10 text-destructive border-destructive/30 text-[10px]">
+              <Shield className="h-3 w-3 mr-1" />
+              Admin
+            </Badge>
+          </div>
         </div>
 
         {/* Sticky KPI Bar */}
@@ -106,7 +130,7 @@ export default function Admin() {
 
       <main className="scrollable-content">
         <div className="container py-3 px-3 pb-24 space-y-4">
-          <Tabs defaultValue="users" className="w-full">
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
             <ScrollArea className="w-full">
               <TabsList className="inline-flex w-max gap-0.5 h-9">
                 <TabsTrigger value="users" className="text-[11px] px-2.5 h-7">
@@ -141,7 +165,7 @@ export default function Admin() {
             </ScrollArea>
 
             <TabsContent value="users" className="mt-3">
-              <EnhancedUsersTab />
+              <EnhancedUsersTab headerPlanFilter={headerPlanFilter} />
             </TabsContent>
             <TabsContent value="analytics" className="mt-3">
               <AdminAnalyticsDashboard />

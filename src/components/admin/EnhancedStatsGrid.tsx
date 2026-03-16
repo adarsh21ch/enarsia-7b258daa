@@ -1,9 +1,8 @@
-import { Card, CardContent } from '@/components/ui/card';
+import { useState } from 'react';
 import { 
   Users, Crown, UserCheck, Calendar, TrendingUp, Upload,
-  IndianRupee, AlertTriangle, Phone, Gem
+  IndianRupee, AlertTriangle, Phone, Gem, ArrowUp, ArrowDown
 } from 'lucide-react';
-import { useState } from 'react';
 import { ProUserDrawer, FreeUserDrawer } from './UserListDrawer';
 import { useProUsers, useFreeUsers, useExpiringSubscriptions, RevenueStats, ActiveUsageStats, ConversionAnalytics } from '@/hooks/useAdminAnalytics';
 
@@ -20,37 +19,40 @@ interface EnhancedStatsGridProps {
   conversion?: ConversionAnalytics;
 }
 
-interface StatCardProps {
-  label: string;
-  value: number | string;
-  icon: React.ReactNode;
-  subtext?: string;
+function MiniStat({ 
+  label, value, icon, subValue, onClick, accent 
+}: { 
+  label: string; 
+  value: string | number; 
+  icon: React.ReactNode; 
+  subValue?: string; 
   onClick?: () => void;
-  highlight?: 'primary' | 'success' | 'warning' | 'danger';
-}
-
-function StatCard({ label, value, icon, subtext, onClick, highlight }: StatCardProps) {
-  const highlightClasses = {
-    primary: 'border-primary/30 bg-primary/5',
-    success: 'border-green-500/30 bg-green-500/5',
-    warning: 'border-yellow-500/30 bg-yellow-500/5',
-    danger: 'border-red-500/30 bg-red-500/5',
+  accent?: 'primary' | 'green' | 'amber' | 'red';
+}) {
+  const accentBorder = {
+    primary: 'border-l-primary',
+    green: 'border-l-green-500',
+    amber: 'border-l-amber-500',
+    red: 'border-l-red-500',
   };
 
   return (
-    <Card 
-      className={`${onClick ? 'cursor-pointer hover:shadow-md transition-shadow' : ''} ${highlight ? highlightClasses[highlight] : ''}`}
+    <button
       onClick={onClick}
+      disabled={!onClick}
+      className={`flex items-center gap-2.5 px-3 py-2 rounded-lg border bg-card text-left transition-all w-full
+        ${accent ? `border-l-[3px] ${accentBorder[accent]}` : 'border-border/50'}
+        ${onClick ? 'cursor-pointer hover:bg-muted/50 hover:shadow-sm' : 'cursor-default'}`}
     >
-      <CardContent className="pt-3 pb-2.5 px-3">
-        <div className="flex items-center gap-1.5 text-muted-foreground text-[11px]">
-          {icon}
-          <span className="truncate">{label}</span>
-        </div>
-        <p className="text-lg font-bold mt-0.5">{value}</p>
-        {subtext && <p className="text-[10px] text-muted-foreground mt-0.5">{subtext}</p>}
-      </CardContent>
-    </Card>
+      <div className="shrink-0 text-muted-foreground">{icon}</div>
+      <div className="min-w-0 flex-1">
+        <p className="text-[10px] text-muted-foreground truncate">{label}</p>
+        <p className="text-sm font-bold leading-tight">{value}</p>
+      </div>
+      {subValue && (
+        <span className="text-[9px] text-muted-foreground whitespace-nowrap shrink-0">{subValue}</span>
+      )}
+    </button>
   );
 }
 
@@ -67,76 +69,31 @@ export function EnhancedStatsGrid({
   const { data: expiringUsers } = useExpiringSubscriptions(7);
   
   const freeUsers = freeUsersData?.users || [];
-
   const formatRevenue = (amount: number) => `₹${(amount / 100).toLocaleString('en-IN')}`;
 
   return (
     <>
-      <div className="grid grid-cols-2 gap-2.5">
-        <StatCard
-          label="Total Users"
-          value={totalSignups.toLocaleString()}
-          icon={<Users className="h-3 w-3" />}
-          subtext={`${neveraiWeekActive} active this week`}
-        />
-        <StatCard
-          label="Paid Users"
-          value={activeProUsers}
-          icon={<Crown className="h-3 w-3 text-yellow-500" />}
-          onClick={() => setProDrawerOpen(true)}
-          highlight="primary"
-          subtext="Tap to view list"
-        />
-        <StatCard
-          label="Free Users"
-          value={freeUsersCount.toLocaleString()}
-          icon={<UserCheck className="h-3 w-3" />}
-          onClick={() => setFreeDrawerOpen(true)}
-          subtext="Tap to view list"
-        />
-        <StatCard
-          label="Today Active"
-          value={neveraiTodayActive}
-          icon={<Calendar className="h-3 w-3" />}
-          subtext="Logged in today"
-        />
-        <StatCard
-          label="Lead Importers"
-          value={activeUsage.leadsImportersToday}
-          icon={<Upload className="h-3 w-3 text-blue-500" />}
-          highlight="success"
-          subtext={`${activeUsage.leadsImportersWeek} this week`}
-        />
-        <StatCard
-          label="Active Callers"
-          value={activeUsage.activeCallersToday}
-          icon={<Phone className="h-3 w-3 text-green-500" />}
-          highlight="success"
-          subtext={`${activeUsage.activeCallersWeek} this week`}
-        />
-        <StatCard label="Total Leads" value={totalLeads.toLocaleString()} icon={<TrendingUp className="h-3 w-3" />} />
-        <StatCard label="Today's Leads" value={todayLeads} icon={<TrendingUp className="h-3 w-3" />} />
-        <StatCard
-          label="Total Revenue"
-          value={formatRevenue(revenue.totalRevenue)}
-          icon={<IndianRupee className="h-3 w-3 text-green-600" />}
-          highlight="primary"
-          subtext={`${revenue.successfulPayments} payments`}
-        />
-        <StatCard
-          label="Conversion Rate"
-          value={`${conversion?.conversionRate || 0}%`}
-          icon={<TrendingUp className="h-3 w-3 text-blue-500" />}
-          highlight="success"
-          subtext={`${conversion?.conversionsThisMonth || 0} this month`}
-        />
-        <StatCard
-          label="Expiring Soon"
-          value={expiringUsers?.length || 0}
-          icon={<AlertTriangle className="h-3 w-3 text-yellow-500" />}
-          highlight={expiringUsers && expiringUsers.length > 0 ? 'warning' : undefined}
-          subtext="Within 7 days"
-        />
+      {/* Row 1: Core User Metrics */}
+      <div className="grid grid-cols-3 gap-1.5">
+        <MiniStat label="Total Users" value={totalSignups.toLocaleString()} icon={<Users className="h-3.5 w-3.5" />} subValue={`${neveraiWeekActive} wk`} />
+        <MiniStat label="Paid" value={activeProUsers} icon={<Crown className="h-3.5 w-3.5 text-yellow-500" />} onClick={() => setProDrawerOpen(true)} accent="primary" />
+        <MiniStat label="Free" value={freeUsersCount.toLocaleString()} icon={<UserCheck className="h-3.5 w-3.5" />} onClick={() => setFreeDrawerOpen(true)} />
+      </div>
+
+      {/* Row 2: Activity + Usage */}
+      <div className="grid grid-cols-4 gap-1.5">
+        <MiniStat label="Today Active" value={neveraiTodayActive} icon={<Calendar className="h-3.5 w-3.5" />} />
+        <MiniStat label="Importers" value={activeUsage.leadsImportersToday} icon={<Upload className="h-3.5 w-3.5 text-blue-500" />} subValue={`${activeUsage.leadsImportersWeek} wk`} accent="green" />
+        <MiniStat label="Callers" value={activeUsage.activeCallersToday} icon={<Phone className="h-3.5 w-3.5 text-green-500" />} subValue={`${activeUsage.activeCallersWeek} wk`} accent="green" />
+        <MiniStat label="Conversion" value={`${conversion?.conversionRate || 0}%`} icon={<TrendingUp className="h-3.5 w-3.5 text-blue-500" />} subValue={`${conversion?.conversionsThisMonth || 0}/mo`} />
+      </div>
+
+      {/* Row 3: Leads + Revenue */}
+      <div className="grid grid-cols-4 gap-1.5">
+        <MiniStat label="Total Leads" value={totalLeads.toLocaleString()} icon={<TrendingUp className="h-3.5 w-3.5" />} />
+        <MiniStat label="Today Leads" value={todayLeads} icon={<TrendingUp className="h-3.5 w-3.5" />} />
+        <MiniStat label="Revenue" value={formatRevenue(revenue.totalRevenue)} icon={<IndianRupee className="h-3.5 w-3.5 text-green-600" />} subValue={`${revenue.successfulPayments} pay`} accent="primary" />
+        <MiniStat label="Expiring" value={expiringUsers?.length || 0} icon={<AlertTriangle className="h-3.5 w-3.5 text-yellow-500" />} accent={expiringUsers && expiringUsers.length > 0 ? 'amber' : undefined} subValue="7d" />
       </div>
 
       <ProUserDrawer

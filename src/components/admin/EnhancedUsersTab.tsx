@@ -5,15 +5,18 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Switch } from '@/components/ui/switch';
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/table';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger, DropdownMenuSub, DropdownMenuSubContent, DropdownMenuSubTrigger } from '@/components/ui/dropdown-menu';
-import { Loader2, Search, Crown, Gem, Settings, MoreHorizontal, Copy, ArrowUpDown, ChevronUp, ChevronDown } from 'lucide-react';
+import { Loader2, Search, Crown, Gem, Settings, MoreHorizontal, Copy, ChevronUp, ChevronDown, ArrowUpDown } from 'lucide-react';
 import { toast } from 'sonner';
-import { formatDistanceToNow, format, differenceInDays } from 'date-fns';
+import { differenceInDays, format } from 'date-fns';
 import { UserOverrideDrawer } from './UserOverrideDrawer';
 import { logAdminAction } from '@/hooks/useAuditLogs';
 import { getTierDisplayName, type InternalTier } from '@/config/tierLabels';
+
+interface EnhancedUsersTabProps {
+  headerPlanFilter?: string;
+}
 
 interface EnhancedUser {
   user_id: string;
@@ -56,19 +59,20 @@ const GRANT_OPTIONS = [
 type SortField = 'display_name' | 'total_leads_count' | 'created_at' | 'expires_at';
 type SortDir = 'asc' | 'desc';
 
-function TierChips({ users }: { users: EnhancedUser[] }) {
-  const counts = useMemo(() => {
-    const free = users.filter(u => u.plan !== 'pro').length;
-    const basic = users.filter(u => u.plan === 'pro' && u.tier === 'pro').length;
-    const pro = users.filter(u => u.plan === 'pro' && u.tier === 'premium').length;
-    return { free, basic, pro };
-  }, [users]);
+interface TierCounts {
+  free: number;
+  basic: number;
+  pro: number;
+  total: number;
+}
 
+function TierChips({ counts, loading }: { counts: TierCounts; loading: boolean }) {
+  if (loading) return <div className="flex gap-2"><Loader2 className="h-4 w-4 animate-spin" /></div>;
   return (
     <div className="flex gap-2 flex-wrap">
       <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-muted/60 border border-border/50">
         <span className="text-xs text-muted-foreground">Free</span>
-        <span className="text-sm font-bold">{counts.free}</span>
+        <span className="text-sm font-bold">{counts.free.toLocaleString()}</span>
       </div>
       <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-primary/10 border border-primary/30">
         <Crown className="h-3 w-3 text-primary" />
@@ -94,7 +98,6 @@ function StatusBadge({ user }: { user: EnhancedUser }) {
   if (user.is_suspended) return <Badge variant="destructive" className="text-[10px] px-1.5 py-0">Suspended</Badge>;
   if (user.plan === 'pro' && user.expires_at && new Date(user.expires_at) < new Date()) return <Badge variant="outline" className="text-[10px] text-destructive border-destructive/40 px-1.5 py-0">Expired</Badge>;
   if (user.plan === 'pro') return <Badge variant="outline" className="text-[10px] text-green-600 border-green-500/40 px-1.5 py-0">Active</Badge>;
-  // Trial status for free users
   const trialStart = user.trial_start_date || user.created_at;
   if (trialStart) {
     const daysSince = Math.floor((Date.now() - new Date(trialStart).getTime()) / (1000 * 60 * 60 * 24));
@@ -115,7 +118,7 @@ function SortableHeader({ label, field, sortField, sortDir, onSort }: { label: s
   );
 }
 
-export function EnhancedUsersTab() {
+export function EnhancedUsersTab({ headerPlanFilter }: EnhancedUsersTabProps) {
   const queryClient = useQueryClient();
   const [users, setUsers] = useState<EnhancedUser[]>([]);
   const [loading, setLoading] = useState(true);
@@ -126,6 +129,39 @@ export function EnhancedUsersTab() {
   const [overrideUser, setOverrideUser] = useState<EnhancedUser | null>(null);
   const [sortField, setSortField] = useState<SortField>('created_at');
   const [sortDir, setSortDir] = useState<SortDir>('desc');
+  const [tierCounts, setTierCounts] = useState<TierCounts>({ free: 0, basic: 0, pro: 0, total: 0 });
+  const [tierLoading, setTierLoading] = useState(true);
+
+  // Sync header plan filter
+  useEffect(() => {
+    if (headerPlanFilter && headerPlanFilter !== 'all') {
+      setPlanFilter(headerPlanFilter);
+    }
+  }, [headerPlanFilter]);
+
+  // Fetch real tier counts from all users
+  useEffect(() => {
+    async function fetchTierCounts() {
+      setTierLoading(true);
+      try {
+        const [totalRes, subsRes] = await Promise.all([
+          supabase.rpc('admin_get_nevorai_user_count'),
+          supabase.from('user_subscriptions').select('plan, tier, expires_at'),
+        ]);
+        const total = Number(totalRes.data) || 0;
+        let basic = 0, pro = 0;
+        (subsRes.data || []).forEach((s: any) => {
+          if (s.plan === 'pro' && s.expires_at && new Date(s.expires_at) > new Date()) {
+            if (s.tier === 'premium') pro++;
+            else basic++;
+          }
+        });
+        setTierCounts({ free: total - basic - pro, basic, pro, total });
+      } catch { /* ignore */ }
+      setTierLoading(false);
+    }
+    fetchTierCounts();
+  }, []);
 
   const handleSort = (field: SortField) => {
     if (sortField === field) setSortDir(d => d === 'asc' ? 'desc' : 'asc');
@@ -251,7 +287,7 @@ export function EnhancedUsersTab() {
 
   return (
     <div className="space-y-3">
-      <TierChips users={users} />
+      <TierChips counts={tierCounts} loading={tierLoading} />
 
       {/* Search and Filters */}
       <div className="flex gap-2">
@@ -278,7 +314,7 @@ export function EnhancedUsersTab() {
 
       <p className="text-xs text-muted-foreground">
         {searching && <Loader2 className="h-3 w-3 animate-spin inline mr-1" />}
-        {users.length} of {totalCount} users
+        {users.length} of {totalCount.toLocaleString()} users
       </p>
 
       {/* Users Table */}
@@ -286,6 +322,7 @@ export function EnhancedUsersTab() {
         <Table>
           <TableHeader>
             <TableRow className="hover:bg-transparent">
+              <TableHead className="text-[11px] w-10">#</TableHead>
               <SortableHeader label="User" field="display_name" sortField={sortField} sortDir={sortDir} onSort={handleSort} />
               <TableHead className="text-[11px]">Plan</TableHead>
               <TableHead className="text-[11px]">Status</TableHead>
@@ -298,11 +335,16 @@ export function EnhancedUsersTab() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {sortedUsers.map((user) => {
+            {sortedUsers.map((user, index) => {
               const daysLeft = user.expires_at ? differenceInDays(new Date(user.expires_at), new Date()) : null;
 
               return (
                 <TableRow key={user.user_id} className={user.is_suspended ? 'opacity-50' : ''}>
+                  {/* Row Number */}
+                  <TableCell className="py-2 px-3 text-[11px] text-muted-foreground tabular-nums">
+                    {index + 1}
+                  </TableCell>
+
                   {/* User */}
                   <TableCell className="py-2 px-3">
                     <div className="min-w-0">
@@ -406,7 +448,7 @@ export function EnhancedUsersTab() {
             })}
             {users.length === 0 && (
               <TableRow>
-                <TableCell colSpan={7} className="text-center py-8 text-muted-foreground text-sm">
+                <TableCell colSpan={8} className="text-center py-8 text-muted-foreground text-sm">
                   No users found
                 </TableCell>
               </TableRow>
