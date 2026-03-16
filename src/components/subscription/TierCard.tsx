@@ -120,7 +120,7 @@ export function TierCard({ tierName, plans, isPremium = false, selectedPlanKey, 
                 key={plan.plan_key}
                 type="button"
                 onClick={() => onSelectPlan(plan.plan_key)}
-                className={`flex flex-col items-center px-1.5 py-2 rounded-xl border transition-all text-center ${
+                className={`flex flex-col items-center px-1.5 py-2.5 rounded-xl border transition-all text-center ${
                   isSelected
                     ? isPremium
                       ? 'border-amber-500 bg-amber-500/10 shadow-sm'
@@ -131,13 +131,12 @@ export function TierCard({ tierName, plans, isPremium = false, selectedPlanKey, 
                 <span className="text-[10px] font-medium text-muted-foreground leading-tight">
                   {getDurationLabel(plan)}
                 </span>
-                <span className="text-base font-bold text-foreground leading-tight mt-0.5">
-                  ₹{monthlyPrice}
+                <span className={`text-sm font-bold leading-tight mt-1 ${isPremium ? 'text-amber-600 dark:text-amber-400' : 'text-primary'}`}>
+                  Only ₹{dailyPrice}/day
                 </span>
-                <span className="text-[9px] text-muted-foreground">/mo</span>
-                {months > 1 && (
-                  <span className="text-[9px] text-muted-foreground mt-0.5">₹{plan.price} total</span>
-                )}
+                <span className="text-[9px] text-muted-foreground mt-0.5 leading-tight">
+                  ₹{plan.price} {getBillingLabel(plan)}
+                </span>
                 {plan.badgeText && (
                   <span className={`text-[8px] font-semibold mt-1 px-1.5 py-0.5 rounded-full ${
                     isPremium ? 'bg-amber-500/15 text-amber-600 dark:text-amber-400' : 'bg-primary/10 text-primary'
