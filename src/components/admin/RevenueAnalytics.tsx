@@ -33,7 +33,7 @@ function useActivePlans() {
   });
 }
 
-// Fetch payment counts grouped by amount from payments_log
+// Fetch payment counts grouped by amount from payments_log (deduplicated by razorpay_payment_id)
 function usePlanPaymentCounts() {
   const { user } = useAuth();
   return useQuery({
@@ -41,14 +41,19 @@ function usePlanPaymentCounts() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('payments_log')
-        .select('amount')
+        .select('amount, razorpay_payment_id')
         .eq('status', 'success')
-        .not('amount', 'is', null);
+        .not('amount', 'is', null)
+        .gte('created_at', '2026-01-17');
       if (error) throw error;
       
-      // Aggregate by amount (paise)
+      // Deduplicate by razorpay_payment_id (same logic as admin_get_revenue_stats RPC)
+      const seen = new Set<string>();
       const counts: Record<number, { count: number; revenue: number }> = {};
       (data || []).forEach((p: any) => {
+        const payId = p.razorpay_payment_id;
+        if (payId && seen.has(payId)) return;
+        if (payId) seen.add(payId);
         const amt = Number(p.amount) || 0;
         if (amt <= 0) return;
         if (!counts[amt]) counts[amt] = { count: 0, revenue: 0 };
