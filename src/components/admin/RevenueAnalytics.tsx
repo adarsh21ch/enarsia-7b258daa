@@ -84,10 +84,10 @@ export function RevenueAnalytics({ revenue, recentPayments }: RevenueAnalyticsPr
     payments: item.payment_count,
   }));
 
-  // Build plan breakdown from actual active plans + payment data
+  // Build plan breakdown from actual active plans + payment data matched by price
   const planBreakdown = (activePlans || []).map((plan, i) => {
-    const key = plan.plan_key;
-    const stats = planCounts?.[key] || { count: 0, revenue: 0 };
+    const priceInPaise = plan.price_inr * 100;
+    const stats = planCounts?.[priceInPaise] || { count: 0, revenue: 0 };
     const label = plan.display_name || plan.plan_name;
     const price = `₹${plan.price_inr}`;
     return {
@@ -99,7 +99,7 @@ export function RevenueAnalytics({ revenue, recentPayments }: RevenueAnalyticsPr
       tier: plan.tier,
       color: PLAN_COLORS[i % PLAN_COLORS.length],
     };
-  }).filter(p => p.value > 0);
+  });
 
   const monthChange = revenue.lastMonthRevenue > 0 
     ? ((revenue.thisMonthRevenue - revenue.lastMonthRevenue) / revenue.lastMonthRevenue * 100).toFixed(1)
