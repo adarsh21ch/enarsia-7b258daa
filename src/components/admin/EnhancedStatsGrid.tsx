@@ -289,15 +289,23 @@ export function EnhancedStatsGrid({
         <MiniStat label="Free" value={freeUsersCount.toLocaleString()} icon={<UserCheck className="h-3.5 w-3.5" />} onClick={() => setFreeDrawerOpen(true)} />
       </div>
 
-      {/* Row 2: Activity + Usage */}
+      {/* Row 2: DAU / WAU / MAU / Returning */}
       <div className="grid grid-cols-4 gap-1.5">
-        <MiniStat label="Today Active" value={neveraiTodayActive} icon={<Calendar className="h-3.5 w-3.5" />} />
+        <MiniStat label="DAU" value={retention?.dau || neveraiTodayActive} icon={<Calendar className="h-3.5 w-3.5" />} />
+        <MiniStat label="WAU" value={retention?.wau || neveraiWeekActive} icon={<Calendar className="h-3.5 w-3.5" />} />
+        <MiniStat label="MAU" value={retention?.mau || 0} icon={<Calendar className="h-3.5 w-3.5" />} />
+        <MiniStat label="Returning" value={`${retention?.returningRate || 0}%`} icon={<TrendingUp className="h-3.5 w-3.5 text-blue-500" />} />
+      </div>
+
+      {/* Row 3: Usage + Growth */}
+      <div className="grid grid-cols-4 gap-1.5">
         <MiniStat label="Importers" value={activeUsage.leadsImportersToday} icon={<Upload className="h-3.5 w-3.5 text-blue-500" />} subValue={`${activeUsage.leadsImportersWeek} wk`} accent="green" />
         <MiniStat label="Callers" value={activeUsage.activeCallersToday} icon={<Phone className="h-3.5 w-3.5 text-green-500" />} subValue={`${activeUsage.activeCallersWeek} wk`} accent="green" />
+        <MiniStat label="New (Month)" value={newSignupsThisMonth} icon={<ArrowUp className="h-3.5 w-3.5 text-blue-500" />} />
         <MiniStat label="Conversion" value={`${conversion?.conversionRate || 0}%`} icon={<TrendingUp className="h-3.5 w-3.5 text-blue-500" />} subValue={`${conversion?.conversionsThisMonth || 0}/mo`} />
       </div>
 
-      {/* Row 3: Leads + Revenue */}
+      {/* Row 4: Leads + Revenue */}
       <div className="grid grid-cols-4 gap-1.5">
         <MiniStat label="Total Leads" value={totalLeads.toLocaleString()} icon={<TrendingUp className="h-3.5 w-3.5" />} />
         <MiniStat label="Today Leads" value={todayLeads} icon={<TrendingUp className="h-3.5 w-3.5" />} />

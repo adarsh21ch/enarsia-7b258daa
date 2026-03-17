@@ -10,6 +10,7 @@ import { RetentionAnalytics } from './RetentionAnalytics';
 import { CohortAnalytics } from './CohortAnalytics';
 import { OfferPerformance } from './OfferPerformance';
 import { ChurnRiskAlert } from './ChurnRiskAlert';
+import { SubscriberHealthCard } from './SubscriberHealthCard';
 import { Loader2 } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
@@ -46,12 +47,14 @@ export function AdminAnalyticsDashboard() {
         revenue={analytics.revenue}
         activeUsage={analytics.activeUsage}
         conversion={analytics.conversion}
+        newSignupsThisMonth={analytics.newSignupsThisMonth}
       />
 
       {/* Analytics Tabs */}
       <Tabs defaultValue="overview" className="w-full">
-        <TabsList className="w-full grid grid-cols-5">
+        <TabsList className="w-full grid grid-cols-6">
           <TabsTrigger value="overview" className="text-[10px] px-1">Overview</TabsTrigger>
+          <TabsTrigger value="subscribers" className="text-[10px] px-1">Subscribers</TabsTrigger>
           <TabsTrigger value="trials" className="text-[10px] px-1">Trials</TabsTrigger>
           <TabsTrigger value="retention" className="text-[10px] px-1">Retention</TabsTrigger>
           <TabsTrigger value="revenue" className="text-[10px] px-1">Revenue</TabsTrigger>
@@ -62,6 +65,10 @@ export function AdminAnalyticsDashboard() {
           <ChurnRiskAlert />
           <SignupTrendChart data={analytics.dailySignups} />
           <SubscriptionPieChart />
+        </TabsContent>
+
+        <TabsContent value="subscribers" className="mt-3 space-y-4">
+          <SubscriberHealthCard />
         </TabsContent>
 
         <TabsContent value="trials" className="mt-3">
