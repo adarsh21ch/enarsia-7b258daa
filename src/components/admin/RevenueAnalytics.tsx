@@ -146,13 +146,13 @@ export function RevenueAnalytics({ revenue, recentPayments }: RevenueAnalyticsPr
             <CardTitle className="text-xs">Plan Distribution</CardTitle>
           </CardHeader>
           <CardContent className="pb-2 px-3">
-            {planBreakdown.length > 0 ? (
+            {planBreakdownWithData.length > 0 ? (
               <>
                 <div className="h-[120px]">
                   <ResponsiveContainer width="100%" height="100%">
                     <PieChart>
-                      <Pie data={planBreakdown} cx="50%" cy="50%" innerRadius={30} outerRadius={50} paddingAngle={2} dataKey="value">
-                        {planBreakdown.map((entry, i) => (
+                      <Pie data={planBreakdownWithData} cx="50%" cy="50%" innerRadius={30} outerRadius={50} paddingAngle={2} dataKey="value">
+                        {planBreakdownWithData.map((entry, i) => (
                           <Cell key={i} fill={entry.color} />
                         ))}
                       </Pie>
@@ -164,7 +164,7 @@ export function RevenueAnalytics({ revenue, recentPayments }: RevenueAnalyticsPr
                   </ResponsiveContainer>
                 </div>
                 <div className="space-y-0.5 mt-1">
-                  {planBreakdown.map((item, i) => (
+                  {planBreakdownWithData.map((item, i) => (
                     <div key={i} className="flex items-center justify-between text-[10px]">
                       <div className="flex items-center gap-1.5 min-w-0">
                         <div className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: item.color }} />
@@ -186,7 +186,7 @@ export function RevenueAnalytics({ revenue, recentPayments }: RevenueAnalyticsPr
             <CardTitle className="text-xs">Plan Revenue</CardTitle>
           </CardHeader>
           <CardContent className="pb-2 px-3 space-y-1.5">
-            {planBreakdown.length > 0 ? planBreakdown.map((item, i) => (
+            {planBreakdownWithData.length > 0 ? planBreakdownWithData.map((item, i) => (
               <div key={i} className="p-1.5 rounded-md border" style={{ borderLeftColor: item.color, borderLeftWidth: '3px' }}>
                 <p className="text-[10px] text-muted-foreground truncate">{item.shortName} ({item.price})</p>
                 <p className="text-sm font-bold">{formatAmount(item.revenue)}</p>
