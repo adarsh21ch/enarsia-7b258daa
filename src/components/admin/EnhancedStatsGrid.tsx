@@ -255,6 +255,7 @@ export function EnhancedStatsGrid({
   totalSignups, activeProUsers, freeUsersCount,
   neveraiTodayActive, neveraiWeekActive,
   totalLeads, todayLeads, revenue, activeUsage, conversion,
+  newSignupsThisMonth,
 }: EnhancedStatsGridProps) {
   const [paidDrawerOpen, setPaidDrawerOpen] = useState(false);
   const [freeDrawerOpen, setFreeDrawerOpen] = useState(false);
