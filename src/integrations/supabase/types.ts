@@ -5497,7 +5497,9 @@ export type Database = {
           neverai_id: string
           payment_amount: number
           plan: string
+          status: string
           subscribed_at: string
+          tier: string
           user_id: string
         }[]
       }
@@ -5576,6 +5578,18 @@ export type Database = {
           active_pro_users: number
           total_payments: number
           total_users: number
+        }[]
+      }
+      admin_get_subscriber_health: {
+        Args: never
+        Returns: {
+          active_paid: number
+          admin_granted: number
+          dormant_paid: number
+          organic_paid: number
+          renewals_this_month: number
+          repeat_buyers: number
+          total_paid: number
         }[]
       }
       admin_get_tier_breakdown: {
