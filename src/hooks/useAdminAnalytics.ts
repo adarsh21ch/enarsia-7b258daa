@@ -151,36 +151,26 @@ export function useAdminAnalytics() {
       const monthAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000).toISOString();
 
       // Fetch all data in parallel
-      const [analyticsRes, profilesRes, subscriptionsRes, paymentsRes, totalSignupsRes, revenueRes, usageRes, conversionRes] = await Promise.all([
-        // Get core metrics from single source of truth function
+      const [analyticsRes, profilesRes, subscriptionsRes, paymentsRes, totalSignupsRes, revenueRes, usageRes, conversionRes, thisMonthSignupsRes] = await Promise.all([
         supabase.rpc('admin_get_analytics'),
-        
-        // Get profiles for signup analysis (last 30 days)
         supabase
           .from('profiles')
           .select('created_at')
           .gte('created_at', monthAgo)
           .order('created_at', { ascending: true }),
-        
-        // Get subscription breakdown
         supabase
           .from('user_subscriptions')
           .select('plan, expires_at'),
-        
-        // Get recent payments with user info (deduplicated, from Jan 17, 2026)
         supabase.rpc('admin_get_recent_payments', { limit_count: 50 }),
-        
-        // Get total Nevorai users count (excludes Achievers Club)
         supabase.rpc('admin_get_nevorai_user_count'),
-
-        // Get revenue stats
         supabase.rpc('admin_get_revenue_stats'),
-
-        // Get active usage stats
         supabase.rpc('admin_get_active_usage_stats'),
-
-        // Get conversion analytics
         supabase.rpc('admin_get_conversion_analytics'),
+        // New signups this month
+        supabase
+          .from('profiles')
+          .select('user_id', { count: 'exact', head: true })
+          .gte('created_at', monthStart),
       ]);
 
       // Extract core metrics from single source
