@@ -44,12 +44,23 @@ export interface ProUser {
   neverai_id: string | null;
   plan: string;
   tier: string;
+  status: string;
   subscribed_at: string | null;
   expires_at: string | null;
   is_admin_override: boolean;
   is_expired: boolean;
   days_remaining: number | null;
   payment_amount: number | null;
+}
+
+export interface SubscriberHealth {
+  totalPaid: number;
+  activePaid: number;
+  dormantPaid: number;
+  adminGranted: number;
+  organicPaid: number;
+  repeatBuyers: number;
+  renewalsThisMonth: number;
 }
 
 export interface FreeUser {
@@ -125,6 +136,8 @@ export interface AdminAnalytics {
   revenue: RevenueStats;
   // Conversion analytics
   conversion: ConversionAnalytics;
+  // New signups this month
+  newSignupsThisMonth: number;
 }
 
 export function useAdminAnalytics() {
@@ -134,39 +147,30 @@ export function useAdminAnalytics() {
     queryKey: ['admin-analytics', user?.id],
     queryFn: async (): Promise<AdminAnalytics> => {
       const now = new Date();
+      const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
       const monthAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000).toISOString();
 
       // Fetch all data in parallel
-      const [analyticsRes, profilesRes, subscriptionsRes, paymentsRes, totalSignupsRes, revenueRes, usageRes, conversionRes] = await Promise.all([
-        // Get core metrics from single source of truth function
+      const [analyticsRes, profilesRes, subscriptionsRes, paymentsRes, totalSignupsRes, revenueRes, usageRes, conversionRes, thisMonthSignupsRes] = await Promise.all([
         supabase.rpc('admin_get_analytics'),
-        
-        // Get profiles for signup analysis (last 30 days)
         supabase
           .from('profiles')
           .select('created_at')
           .gte('created_at', monthAgo)
           .order('created_at', { ascending: true }),
-        
-        // Get subscription breakdown
         supabase
           .from('user_subscriptions')
           .select('plan, expires_at'),
-        
-        // Get recent payments with user info (deduplicated, from Jan 17, 2026)
         supabase.rpc('admin_get_recent_payments', { limit_count: 50 }),
-        
-        // Get total Nevorai users count (excludes Achievers Club)
         supabase.rpc('admin_get_nevorai_user_count'),
-
-        // Get revenue stats
         supabase.rpc('admin_get_revenue_stats'),
-
-        // Get active usage stats
         supabase.rpc('admin_get_active_usage_stats'),
-
-        // Get conversion analytics
         supabase.rpc('admin_get_conversion_analytics'),
+        // New signups this month
+        supabase
+          .from('profiles')
+          .select('user_id', { count: 'exact', head: true })
+          .gte('created_at', monthStart),
       ]);
 
       // Extract core metrics from single source
@@ -295,11 +299,37 @@ export function useAdminAnalytics() {
         activeUsage,
         revenue,
         conversion,
+        newSignupsThisMonth: thisMonthSignupsRes.count || 0,
       };
     },
     enabled: !!user,
     staleTime: 2 * 60 * 1000,
     gcTime: 10 * 60 * 1000,
+  });
+}
+
+// Hook for Subscriber Health
+export function useSubscriberHealth() {
+  const { user } = useAuth();
+
+  return useQuery({
+    queryKey: ['admin-subscriber-health', user?.id],
+    queryFn: async (): Promise<SubscriberHealth> => {
+      const { data, error } = await supabase.rpc('admin_get_subscriber_health');
+      if (error) throw error;
+      const row = (data?.[0] || {}) as Record<string, unknown>;
+      return {
+        totalPaid: Number(row.total_paid) || 0,
+        activePaid: Number(row.active_paid) || 0,
+        dormantPaid: Number(row.dormant_paid) || 0,
+        adminGranted: Number(row.admin_granted) || 0,
+        organicPaid: Number(row.organic_paid) || 0,
+        repeatBuyers: Number(row.repeat_buyers) || 0,
+        renewalsThisMonth: Number(row.renewals_this_month) || 0,
+      };
+    },
+    enabled: !!user,
+    staleTime: 2 * 60 * 1000,
   });
 }
 
