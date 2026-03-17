@@ -308,6 +308,31 @@ export function useAdminAnalytics() {
   });
 }
 
+// Hook for Subscriber Health
+export function useSubscriberHealth() {
+  const { user } = useAuth();
+
+  return useQuery({
+    queryKey: ['admin-subscriber-health', user?.id],
+    queryFn: async (): Promise<SubscriberHealth> => {
+      const { data, error } = await supabase.rpc('admin_get_subscriber_health');
+      if (error) throw error;
+      const row = (data?.[0] || {}) as Record<string, unknown>;
+      return {
+        totalPaid: Number(row.total_paid) || 0,
+        activePaid: Number(row.active_paid) || 0,
+        dormantPaid: Number(row.dormant_paid) || 0,
+        adminGranted: Number(row.admin_granted) || 0,
+        organicPaid: Number(row.organic_paid) || 0,
+        repeatBuyers: Number(row.repeat_buyers) || 0,
+        renewalsThisMonth: Number(row.renewals_this_month) || 0,
+      };
+    },
+    enabled: !!user,
+    staleTime: 2 * 60 * 1000,
+  });
+}
+
 // Hook for Pro Users list
 export function useProUsers() {
   const { user } = useAuth();
