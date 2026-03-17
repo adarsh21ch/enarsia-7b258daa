@@ -162,7 +162,7 @@ export const InlineSelect = memo(function InlineSelect<T extends string>({
           </SelectValue>
         </SelectTrigger>
         <SelectContent 
-          className="bg-popover border border-border z-[100] max-h-[280px] overflow-y-auto"
+          className="bg-popover border border-border z-[100] max-h-[min(var(--radix-select-content-available-height),480px)] overflow-y-auto"
           position="popper"
           sideOffset={4}
           align="start"
