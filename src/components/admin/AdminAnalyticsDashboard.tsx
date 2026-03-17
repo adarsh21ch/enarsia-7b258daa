@@ -34,8 +34,7 @@ export function AdminAnalyticsDashboard() {
   }
 
   return (
-    <div className="space-y-4">
-      {/* Enhanced Stats Grid with clickable KPIs */}
+    <div className="space-y-3">
       <EnhancedStatsGrid
         totalSignups={analytics.totalSignups}
         activeProUsers={analytics.activeProUsers}
@@ -50,47 +49,46 @@ export function AdminAnalyticsDashboard() {
         newSignupsThisMonth={analytics.newSignupsThisMonth}
       />
 
-      {/* Analytics Tabs */}
       <Tabs defaultValue="overview" className="w-full">
-        <TabsList className="w-full grid grid-cols-6">
-          <TabsTrigger value="overview" className="text-[10px] px-1">Overview</TabsTrigger>
-          <TabsTrigger value="subscribers" className="text-[10px] px-1">Subscribers</TabsTrigger>
-          <TabsTrigger value="trials" className="text-[10px] px-1">Trials</TabsTrigger>
-          <TabsTrigger value="retention" className="text-[10px] px-1">Retention</TabsTrigger>
-          <TabsTrigger value="revenue" className="text-[10px] px-1">Revenue</TabsTrigger>
-          <TabsTrigger value="offers" className="text-[10px] px-1">Offers</TabsTrigger>
+        <TabsList className="w-full grid grid-cols-6 h-8">
+          <TabsTrigger value="overview" className="text-[10px] px-1 h-7">Overview</TabsTrigger>
+          <TabsTrigger value="subscribers" className="text-[10px] px-1 h-7">Subscribers</TabsTrigger>
+          <TabsTrigger value="trials" className="text-[10px] px-1 h-7">Trials</TabsTrigger>
+          <TabsTrigger value="retention" className="text-[10px] px-1 h-7">Retention</TabsTrigger>
+          <TabsTrigger value="revenue" className="text-[10px] px-1 h-7">Revenue</TabsTrigger>
+          <TabsTrigger value="growth" className="text-[10px] px-1 h-7">Growth</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="overview" className="mt-3 space-y-4">
+        <TabsContent value="overview" className="mt-2 space-y-3">
           <ChurnRiskAlert />
           <SignupTrendChart data={analytics.dailySignups} />
           <SubscriptionPieChart />
         </TabsContent>
 
-        <TabsContent value="subscribers" className="mt-3 space-y-4">
+        <TabsContent value="subscribers" className="mt-2 space-y-3">
           <SubscriberHealthCard />
         </TabsContent>
 
-        <TabsContent value="trials" className="mt-3">
+        <TabsContent value="trials" className="mt-2">
           <TrialAnalytics />
         </TabsContent>
 
-        <TabsContent value="retention" className="mt-3 space-y-6">
+        <TabsContent value="retention" className="mt-2 space-y-4">
           <RetentionAnalytics />
           <CohortAnalytics />
         </TabsContent>
 
-        <TabsContent value="revenue" className="mt-3">
+        <TabsContent value="revenue" className="mt-2">
           <RevenueAnalytics 
             revenue={analytics.revenue} 
             recentPayments={analytics.recentPayments}
           />
         </TabsContent>
 
-        <TabsContent value="offers" className="mt-3 space-y-6">
-          <OfferPerformance />
+        <TabsContent value="growth" className="mt-2 space-y-3">
           <UsageAnalytics activeUsage={analytics.activeUsage} />
           <ProspectDistributionSection />
+          <OfferPerformance />
         </TabsContent>
       </Tabs>
     </div>
