@@ -33,7 +33,7 @@ function useActivePlans() {
   });
 }
 
-// Fetch payment counts per plan from payments_log
+// Fetch payment counts grouped by amount from payments_log
 function usePlanPaymentCounts() {
   const { user } = useAuth();
   return useQuery({
@@ -41,17 +41,19 @@ function usePlanPaymentCounts() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('payments_log')
-        .select('plan_key, amount')
-        .eq('status', 'success');
+        .select('amount')
+        .eq('status', 'success')
+        .not('amount', 'is', null);
       if (error) throw error;
       
-      // Aggregate by plan_key
-      const counts: Record<string, { count: number; revenue: number }> = {};
+      // Aggregate by amount (paise)
+      const counts: Record<number, { count: number; revenue: number }> = {};
       (data || []).forEach((p: any) => {
-        const key = p.plan_key || 'unknown';
-        if (!counts[key]) counts[key] = { count: 0, revenue: 0 };
-        counts[key].count++;
-        counts[key].revenue += Number(p.amount) || 0;
+        const amt = Number(p.amount) || 0;
+        if (amt <= 0) return;
+        if (!counts[amt]) counts[amt] = { count: 0, revenue: 0 };
+        counts[amt].count++;
+        counts[amt].revenue += amt;
       });
       return counts;
     },
