@@ -147,6 +147,7 @@ export function useAdminAnalytics() {
     queryKey: ['admin-analytics', user?.id],
     queryFn: async (): Promise<AdminAnalytics> => {
       const now = new Date();
+      const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
       const monthAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000).toISOString();
 
       // Fetch all data in parallel
