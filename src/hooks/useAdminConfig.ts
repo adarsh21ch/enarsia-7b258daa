@@ -309,6 +309,22 @@ export function useAdminPlans() {
     return data;
   };
 
+  const reorderPlans = async (reorderedPlans: Array<Pick<SubscriptionPlan, 'id' | 'sort_order'>>) => {
+    const results = await Promise.all(
+      reorderedPlans.map((plan) =>
+        supabase
+          .from('admin_subscription_plans')
+          .update({ sort_order: plan.sort_order })
+          .eq('id', plan.id)
+      )
+    );
+
+    const failedResult = results.find((result) => result.error);
+    if (failedResult?.error) throw failedResult.error;
+
+    invalidateAllCaches();
+  };
+
   const deletePlan = async (id: string) => {
     const { error } = await supabase
       .from('admin_subscription_plans')
@@ -318,7 +334,7 @@ export function useAdminPlans() {
     invalidateAllCaches();
   };
 
-  return { plans: plans || [], loading: isLoading, createPlan, updatePlan, deletePlan, refetch };
+  return { plans: plans || [], loading: isLoading, createPlan, updatePlan, reorderPlans, deletePlan, refetch };
 }
 
 export function useAdminOffers() {

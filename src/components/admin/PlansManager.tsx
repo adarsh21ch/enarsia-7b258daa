@@ -9,15 +9,17 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
-import { Loader2, Plus, Pencil, Crown, Link as LinkIcon, Clock, IndianRupee, Star, Trash2, ArrowUp, ArrowDown } from 'lucide-react';
+import { Loader2, Plus, Pencil, Crown, Link as LinkIcon, Clock, IndianRupee, Star, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { getTierDisplayName } from '@/config/tierLabels';
+import { PlanSequenceControl } from '@/components/admin/PlanSequenceControl';
 
 export function PlansManager() {
-  const { plans, loading, createPlan, updatePlan, deletePlan } = useAdminPlans();
+  const { plans, loading, createPlan, updatePlan, reorderPlans, deletePlan } = useAdminPlans();
   const [editingPlan, setEditingPlan] = useState<SubscriptionPlan | null>(null);
   const [isCreating, setIsCreating] = useState(false);
   const [sheetOpen, setSheetOpen] = useState(false);
+  const [reorderingPlanId, setReorderingPlanId] = useState<string | null>(null);
 
   const handleToggleActive = async (plan: SubscriptionPlan) => {
     try {
@@ -94,6 +96,48 @@ export function PlansManager() {
     setSheetOpen(true);
   };
 
+  const handleMoveToPosition = async (
+    list: SubscriptionPlan[],
+    plan: SubscriptionPlan,
+    nextPosition: number
+  ) => {
+    const fromIndex = list.findIndex((item) => item.id === plan.id);
+    const toIndex = nextPosition - 1;
+
+    if (fromIndex < 0 || toIndex < 0 || toIndex >= list.length || fromIndex === toIndex) return;
+
+    const reordered = [...list];
+    const [movedPlan] = reordered.splice(fromIndex, 1);
+    reordered.splice(toIndex, 0, movedPlan);
+
+    const planUpdates = reordered
+      .map((item, index) => ({ id: item.id, sort_order: index + 1 }))
+      .filter(({ id, sort_order }) => {
+        const currentPlan = list.find((item) => item.id === id);
+        return (currentPlan?.sort_order ?? 0) !== sort_order;
+      });
+
+    if (planUpdates.length === 0) return;
+
+    setReorderingPlanId(plan.id);
+    try {
+      await reorderPlans(planUpdates);
+      await logAdminAction(
+        'plan_reordered',
+        'plan',
+        plan.id,
+        { position: fromIndex + 1 },
+        { position: nextPosition },
+        `Moved "${plan.plan_name}" to position #${nextPosition}`
+      );
+      toast.success('Plan sequence updated');
+    } catch {
+      toast.error('Failed to update plan sequence');
+    } finally {
+      setReorderingPlanId(null);
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center py-12">
@@ -130,22 +174,6 @@ export function PlansManager() {
         const sortedActive = [...active].sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0));
         const sortedInactive = [...inactive].sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0));
 
-        const handleMove = async (plan: SubscriptionPlan, direction: 'up' | 'down') => {
-          const list = plan.is_active ? sortedActive : sortedInactive;
-          const idx = list.findIndex(p => p.id === plan.id);
-          const swapIdx = direction === 'up' ? idx - 1 : idx + 1;
-          if (swapIdx < 0 || swapIdx >= list.length) return;
-          const other = list[swapIdx];
-          try {
-            await updatePlan(plan.id, { sort_order: other.sort_order ?? swapIdx });
-            await updatePlan(other.id, { sort_order: plan.sort_order ?? idx });
-            await logAdminAction('plan_reordered', 'plan', plan.id, { sort_order: plan.sort_order }, { sort_order: other.sort_order }, `Reordered "${plan.plan_name}" ${direction}`);
-            toast.success('Plan order updated');
-          } catch {
-            toast.error('Failed to reorder');
-          }
-        };
-
         return (
           <div key={tier} className="space-y-3">
             <h3 className="text-sm font-medium text-muted-foreground">{label}</h3>
@@ -159,9 +187,10 @@ export function PlansManager() {
                     onToggleActive={() => handleToggleActive(plan)}
                     onToggleDefault={() => handleToggleDefault(plan)}
                     onDelete={() => handleDelete(plan)}
-                    onMoveUp={idx > 0 ? () => handleMove(plan, 'up') : undefined}
-                    onMoveDown={idx < sortedActive.length - 1 ? () => handleMove(plan, 'down') : undefined}
+                    onReorder={(nextPosition) => handleMoveToPosition(sortedActive, plan, nextPosition)}
                     position={idx + 1}
+                    totalPositions={sortedActive.length}
+                    isReordering={reorderingPlanId === plan.id}
                   />
                 ))}
               </div>
@@ -176,9 +205,10 @@ export function PlansManager() {
                     onToggleActive={() => handleToggleActive(plan)}
                     onToggleDefault={() => handleToggleDefault(plan)}
                     onDelete={() => handleDelete(plan)}
-                    onMoveUp={idx > 0 ? () => handleMove(plan, 'up') : undefined}
-                    onMoveDown={idx < sortedInactive.length - 1 ? () => handleMove(plan, 'down') : undefined}
+                    onReorder={(nextPosition) => handleMoveToPosition(sortedInactive, plan, nextPosition)}
                     position={idx + 1}
+                    totalPositions={sortedInactive.length}
+                    isReordering={reorderingPlanId === plan.id}
                   />
                 ))}
               </div>
@@ -272,33 +302,34 @@ function PlanCard({
   onToggleActive, 
   onToggleDefault,
   onDelete,
-  onMoveUp,
-  onMoveDown,
+  onReorder,
   position,
+  totalPositions,
+  isReordering,
 }: { 
   plan: SubscriptionPlan;
   onEdit: () => void;
   onToggleActive: () => void;
   onToggleDefault: () => void;
   onDelete: () => void;
-  onMoveUp?: () => void;
-  onMoveDown?: () => void;
+  onReorder: (nextPosition: number) => void;
   position?: number;
+  totalPositions: number;
+  isReordering?: boolean;
 }) {
   return (
-    <Card className="p-4">
+    <Card className="border-border/60 bg-card/95 p-4 shadow-sm">
       <div className="flex items-start justify-between gap-4">
         <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2 mb-1">
-            {/* Reorder arrows */}
-            <div className="flex flex-col gap-0.5 mr-1">
-              <Button variant="ghost" size="icon" className="h-5 w-5" onClick={onMoveUp} disabled={!onMoveUp}>
-                <ArrowUp className="h-3 w-3" />
-              </Button>
-              <Button variant="ghost" size="icon" className="h-5 w-5" onClick={onMoveDown} disabled={!onMoveDown}>
-                <ArrowDown className="h-3 w-3" />
-              </Button>
-            </div>
+          <div className="mb-2 flex flex-wrap items-center gap-2">
+            {position ? (
+              <PlanSequenceControl
+                position={position}
+                total={totalPositions}
+                disabled={isReordering}
+                onChange={onReorder}
+              />
+            ) : null}
             {position && (
               <Badge variant="outline" className="text-[10px] tabular-nums">#{position}</Badge>
             )}
@@ -317,7 +348,7 @@ function PlanCard({
               </Badge>
             )}
             {plan.is_default && (
-              <Badge variant="outline" className="text-xs bg-primary/10 text-primary border-primary/30">
+              <Badge variant="outline" className="border-border bg-secondary text-secondary-foreground text-xs">
                 Default
               </Badge>
             )}
@@ -351,16 +382,17 @@ function PlanCard({
             )}
           </div>
         </div>
-        <div className="flex items-center gap-2 shrink-0">
+        <div className="flex items-center gap-1 rounded-full border border-border/60 bg-muted/30 p-1 shrink-0">
           <Switch 
             checked={plan.is_active} 
             onCheckedChange={onToggleActive}
             aria-label="Toggle active"
+            disabled={isReordering}
           />
-          <Button variant="ghost" size="icon" onClick={onEdit}>
+          <Button variant="ghost" size="icon" onClick={onEdit} disabled={isReordering}>
             <Pencil className="h-4 w-4" />
           </Button>
-          <Button variant="ghost" size="icon" onClick={onDelete} className="text-destructive hover:text-destructive">
+          <Button variant="ghost" size="icon" onClick={onDelete} disabled={isReordering} className="text-destructive hover:text-destructive">
             <Trash2 className="h-4 w-4" />
           </Button>
         </div>
