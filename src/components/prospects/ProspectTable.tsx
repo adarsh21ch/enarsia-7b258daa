@@ -517,17 +517,33 @@ export function ProspectTable({
     if (!canExport) { toast.error('Upgrade your plan to export data'); return; }
     setExporting(true);
     try {
-      // If filters are active, export only the filtered prospects (respects retargeting)
       const hasActiveFilters = filters.stages.length > 0 || filters.actions.length > 0 || filters.search;
       let allProspects: Prospect[];
-      if (hasActiveFilters) {
-        // Export only the currently filtered/visible prospects
+
+      if (selectedSheetId) {
+        // A specific sheet is selected — fetch all from that sheet
+        if (fetchAllForExport) {
+          const sheetProspects = await fetchAllForExport(selectedSheetId);
+          // Apply any active retargeting/search filters on top
+          if (hasActiveFilters) {
+            allProspects = applyFiltersToList(sheetProspects, filters, effectiveSearch, isCalling);
+          } else {
+            allProspects = sheetProspects;
+          }
+        } else {
+          // Fallback: use already-filtered prospects (paginated view)
+          allProspects = filteredProspects;
+        }
+      } else if (hasActiveFilters) {
+        // "All" view with active filters — export only filtered prospects
         allProspects = filteredProspects;
       } else if (fetchAllForExport) {
-        allProspects = await fetchAllForExport(null); // null = all sheets
+        // "All" view, no filters — fetch everything
+        allProspects = await fetchAllForExport(null);
       } else {
         allProspects = filteredProspects;
       }
+
       if (allProspects.length === 0) {
         toast.error('No data to export. Apply filters or add prospects first.');
         setExporting(false);
@@ -589,7 +605,8 @@ export function ProspectTable({
       XLSX.utils.book_append_sheet(wb, ws, 'Prospects');
       const dateStr = format(new Date(), 'yyyy-MM-dd');
       const filterLabel = getFilterLabel();
-      const filename = `NevorAI_Prospects_${dateStr}_${filterLabel}.xlsx`;
+      const sheetName = selectedSheetId ? sheets.find(s => s.id === selectedSheetId)?.name?.replace(/\s+/g, '_') : null;
+      const filename = `NevorAI_Prospects_${dateStr}${sheetName ? `_${sheetName}` : ''}_${filterLabel}.xlsx`;
       XLSX.writeFile(wb, filename);
       toast.success(`Exported ${allProspects.length} prospects successfully!`);
     } catch (err) {
