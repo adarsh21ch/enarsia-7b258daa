@@ -526,8 +526,13 @@ export function ProspectTable({
           const sheetProspects = await fetchAllForExport(selectedSheetId);
           // Apply any active retargeting/search filters on top
           if (hasActiveFilters) {
-            allProspects = applyFiltersToList(sheetProspects, filters, effectiveSearch, isCalling);
-          } else {
+            allProspects = sheetProspects.filter(prospect => {
+              const searchLower = effectiveSearch.toLowerCase();
+              const matchesSearch = !effectiveSearch || prospect.name.toLowerCase().includes(searchLower) || prospect.phone.toLowerCase().includes(searchLower) || prospect.notes?.toLowerCase().includes(searchLower);
+              const matchesStage = filters.stages.length === 0 || (prospect.funnel_stage && filters.stages.includes(prospect.funnel_stage));
+              const matchesAction = filters.actions.length === 0 || filters.actions.includes(prospect.action_taken as ExtendedActionTaken) || (filters.actions.includes('Enrollment') && prospect.enrollment_status === 'Enrolled');
+              return matchesSearch && matchesStage && matchesAction;
+            });
             allProspects = sheetProspects;
           }
         } else {
