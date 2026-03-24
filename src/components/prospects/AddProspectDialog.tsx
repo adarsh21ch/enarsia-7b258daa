@@ -43,11 +43,7 @@ export function AddProspectDialog({ onAdd, existingProspects = [] }: AddProspect
     e.preventDefault();
     setErrors({});
 
-    // Check lead limit before submitting
-    if (!canAddLead) {
-      setShowLimitModal(true);
-      return;
-    }
+    // Show warning if near/at limit, but never block manual add
 
     const trimmedName = name.trim();
     const trimmedPhone = phone.trim();
@@ -83,12 +79,8 @@ export function AddProspectDialog({ onAdd, existingProspects = [] }: AddProspect
     setIsSubmitting(false);
   };
 
-  // Handle dialog open - check limit first
+  // Handle dialog open - always allow opening (never block manual add)
   const handleOpenChange = (isOpen: boolean) => {
-    if (isOpen && isAtLimit) {
-      setShowLimitModal(true);
-      return;
-    }
     setOpen(isOpen);
   };
 
