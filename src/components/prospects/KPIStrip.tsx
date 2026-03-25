@@ -84,10 +84,10 @@ export function KPIStrip({ prospects, isCalling, kpiTotal, kpiTagCounts }: KPISt
               style={{ backgroundColor: tagColor }}
             />
             {isFunnelTag && <Star className="h-2.5 w-2.5 text-yellow-500 fill-yellow-500 shrink-0" />}
-            <span className="text-xs font-medium truncate max-w-[72px] text-muted-foreground">
+            <span className="text-xs font-medium truncate max-w-[60px] text-muted-foreground">
               {tag}
             </span>
-            <span className="text-sm font-bold text-foreground">
+            <span className="text-xs font-bold text-foreground">
               {count}
             </span>
           </div>

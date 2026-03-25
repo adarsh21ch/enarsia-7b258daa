@@ -171,7 +171,7 @@ export const ProspectRow = memo(function ProspectRow({
 
   const renderCell = (columnId: string) => {
     const cellClass = cn(
-      "px-2 py-3 whitespace-nowrap",
+      "px-2 py-2.5 whitespace-nowrap",
       isLastContacted ? "bg-primary/10" : (isEven ? "bg-card" : "bg-muted"),
       isMobileTable && "text-xs px-1.5 py-2"
     );
@@ -209,8 +209,8 @@ export const ProspectRow = memo(function ProspectRow({
             onPointerDown={(e) => e.stopPropagation()}
           >
             <div className="flex items-center gap-1.5">
-              {/* Call icon - tinted with tag color */}
-              <CallIconButton onClick={openCall} className={isMobileTable ? "h-7 w-7" : "h-8 w-8"} color={accentColor} />
+              {/* Call icon only */}
+              <CallIconButton onClick={openCall} className={isMobileTable ? "p-0.5 h-6 w-6" : "h-7 w-7"} />
               <button
                 onClick={onToggleExpand}
                 className={cn(
@@ -219,9 +219,9 @@ export const ProspectRow = memo(function ProspectRow({
                 )}
               >
                 <div className="flex flex-col overflow-hidden min-w-0 flex-1">
-                   <span className={cn(
+                  <span className={cn(
                     "font-semibold text-foreground group-hover:text-primary truncate transition-colors",
-                    isMobileTable ? "text-sm" : "text-sm",
+                    isMobileTable && "text-xs",
                     isExpanded && "text-primary"
                   )} title={prospect.name}>
                     {prospect.name}
@@ -230,7 +230,7 @@ export const ProspectRow = memo(function ProspectRow({
                   {phoneDisplay && (
                     <span className={cn(
                       "text-muted-foreground truncate",
-                      isMobileTable ? "text-[10px]" : "text-xs"
+                      isMobileTable ? "text-[9px]" : "text-[10px]"
                     )} title={phoneDisplay}>
                       {phoneDisplay}
                     </span>
@@ -316,7 +316,7 @@ export const ProspectRow = memo(function ProspectRow({
         ref={rowRef}
         style={{
           ...rowStyle,
-          ...(accentColor ? { borderLeft: `2px solid ${accentColor}` } : { borderLeft: '2px solid transparent' }),
+          ...(accentColor ? { borderLeft: `3px solid ${accentColor}` } : { borderLeft: '3px solid transparent' }),
         }}
         {...(dragHandleProps?.attributes || {})}
         {...rowDragListeners}

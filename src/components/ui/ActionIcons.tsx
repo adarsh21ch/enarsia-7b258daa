@@ -103,24 +103,18 @@ export function WhatsAppButton({ phone, onClick, className, size = 'md' }: Whats
   );
 }
 
-// Compact inline versions for table cells — supports color tinting based on tag
-export function CallIconButton({ onClick, className, color }: { onClick: (e: React.MouseEvent) => void; className?: string; color?: string | null }) {
+// Compact inline versions for table cells
+export function CallIconButton({ onClick, className }: { onClick: (e: React.MouseEvent) => void; className?: string }) {
   return (
     <button
       onClick={onClick}
       className={cn(
-        "rounded-lg flex items-center justify-center transition-colors",
-        !color && "p-1 hover:bg-muted",
-        color && "p-1.5",
+        "p-1 rounded-md hover:bg-muted transition-colors",
         className
       )}
-      style={color ? {
-        backgroundColor: `${color}18`,
-        color: color,
-      } : undefined}
       aria-label="Call"
     >
-      <PhoneOutlineIcon className={cn("h-3.5 w-3.5", color && "h-4 w-4")} />
+      <PhoneOutlineIcon className="h-3.5 w-3.5" />
     </button>
   );
 }
