@@ -230,7 +230,7 @@ export const ProspectRow = memo(function ProspectRow({
                   {phoneDisplay && (
                     <span className={cn(
                       "text-muted-foreground truncate",
-                      isMobileTable ? "text-[9px]" : "text-[10px]"
+                      isMobileTable ? "text-[10px]" : "text-xs"
                     )} title={phoneDisplay}>
                       {phoneDisplay}
                     </span>
