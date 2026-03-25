@@ -331,7 +331,8 @@ export function ProspectTable({
   kpiTotal,
   kpiTagCounts,
   fetchAllForExport,
-  stickyHeaderTop = 0
+  stickyHeaderTop = 0,
+  onExternalSearchChange
 }: ProspectTableProps) {
   const {
     logBulkActivity
