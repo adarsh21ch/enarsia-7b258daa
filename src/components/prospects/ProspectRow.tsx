@@ -316,7 +316,7 @@ export const ProspectRow = memo(function ProspectRow({
         ref={rowRef}
         style={{
           ...rowStyle,
-          ...(accentColor ? { borderLeft: `3px solid ${accentColor}` } : { borderLeft: '3px solid transparent' }),
+          ...(accentColor ? { borderLeft: `2px solid ${accentColor}` } : { borderLeft: '2px solid transparent' }),
         }}
         {...(dragHandleProps?.attributes || {})}
         {...rowDragListeners}
