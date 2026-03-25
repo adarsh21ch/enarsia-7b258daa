@@ -1,4 +1,4 @@
-// Recent Activity View - Universal component with built-in calendar
+// Activity History View - Universal component with built-in calendar
 import { useMemo, useState } from 'react';
 import { useProspectsQuery } from '@/hooks/useProspectsQuery';
 import { useGlobalTodos } from '@/contexts/TodosContext';

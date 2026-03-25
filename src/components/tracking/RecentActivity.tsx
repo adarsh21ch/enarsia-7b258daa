@@ -21,9 +21,9 @@ export function RecentActivity({ prospects }: RecentActivityProps) {
   if (recentProspects.length === 0) {
     return (
       <div className="bg-card rounded-lg border border-border p-4 card-shadow">
-        <h3 className="text-sm font-medium mb-4">Recent Activity</h3>
+        <h3 className="text-sm font-medium mb-4">Activity History</h3>
         <p className="text-sm text-muted-foreground text-center py-4">
-          No recent activity
+          No activity history
         </p>
       </div>
     );
@@ -31,7 +31,7 @@ export function RecentActivity({ prospects }: RecentActivityProps) {
 
   return (
     <div className="bg-card rounded-lg border border-border p-4 card-shadow">
-      <h3 className="text-sm font-medium mb-4">Recent Activity</h3>
+      <h3 className="text-sm font-medium mb-4">Activity History</h3>
       <div className="space-y-3">
         {recentProspects.map((prospect) => (
           <div

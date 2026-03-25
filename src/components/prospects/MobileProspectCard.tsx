@@ -453,7 +453,7 @@ const [localData, setLocalData] = useState({
           {/* Recent Activity */}
           {prospectActivities.length > 0 && (
             <div className="space-y-2">
-              <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Recent Activity</h4>
+              <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Activity History</h4>
               <div className="space-y-1.5">
                 {prospectActivities.map((activity) => (
                   <div key={activity.id} className="text-xs bg-background rounded-lg p-2 border border-border/30">

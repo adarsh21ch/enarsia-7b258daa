@@ -247,7 +247,7 @@ export default function TodoUp() {
             <img src={nevoraLogo} alt="NevorAI Logo" className="h-10 w-10 rounded-xl object-cover shadow-md" />
             <div>
               <h1 className="text-xl font-bold tracking-tight">
-                {isRecentActivity ? 'Recent Activity' : 'To-Do List'}
+                {isRecentActivity ? 'Activity History' : 'To-Do List'}
               </h1>
               <p className="text-xs text-muted-foreground font-medium">
                 {isRecentActivity ? "Today's Updates" : 'Your Tasks & Reminders'}

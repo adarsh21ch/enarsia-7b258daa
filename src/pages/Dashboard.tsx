@@ -243,7 +243,7 @@ export default function Dashboard() {
             <div>
               <div className="flex items-center gap-2">
                 <h1 className="text-xl font-bold tracking-tight">
-                  {showRecentActivity ? 'Recent Activity' : 'Calling'}
+                  {showRecentActivity ? 'Activity History' : 'Calling'}
                 </h1>
                 {streakEnabled && !showRecentActivity && (
                   <div className="flex items-center gap-1 px-2 py-1 rounded-lg bg-orange-500/10">
