@@ -11,7 +11,7 @@ import { ProspectTable } from '@/components/prospects/ProspectTable';
 import { PullToRefreshIndicator } from '@/components/PullToRefreshIndicator';
 import { TopTabBar } from '@/components/ui/TopTabBar';
 import { FilterTagSetupDialog, useFilterTagSetup } from '@/components/prospects/FilterTagSetupDialog';
-import { SearchBar } from '@/components/ui/SearchBar';
+import { KPIStrip } from '@/components/prospects/KPIStrip';
 import { TrialBanner } from '@/components/subscription/TrialBanner';
 import { UpgradeButton } from '@/components/subscription/UpgradeButton';
 import { RecentActivityView } from '@/components/todo/RecentActivityView';
