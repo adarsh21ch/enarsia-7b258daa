@@ -283,18 +283,18 @@ export default function Dashboard() {
           </div>
         ) : (
           <>
-            {/* Search Bar - scrolls with content, tight below header */}
+            {/* KPI Strip - above search/action bar */}
             <div className="px-4 pt-2">
-              <SearchBar 
-                value={searchQuery} 
-                onChange={setSearchQuery} 
-                placeholder="Search name, phone..." 
-                className="h-8" 
+              <KPIStrip 
+                prospects={prospects} 
+                isCalling={mainTab === 'leads'} 
+                kpiTotal={kpiTotal} 
+                kpiTagCounts={kpiTagCounts} 
               />
             </div>
             
             {/* Trial Banner */}
-            <div className="px-4 pt-2">
+            <div className="px-4 pt-1">
               <TrialBanner tabId="dashboard" />
               <UpgradeButton tabId="dashboard" variant="prominent" />
             </div>
