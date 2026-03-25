@@ -91,12 +91,15 @@ export function AddProspectDialog({ onAdd, existingProspects = [], open: control
   return (
     <>
       <Dialog open={open} onOpenChange={handleOpenChange}>
-        <DialogTrigger asChild>
-          <Button size="sm" className="gap-1">
-            <Plus className="h-4 w-4" />
-            Add Prospect
-          </Button>
-        </DialogTrigger>
+        {/* Only show trigger button when not controlled externally */}
+        {controlledOpen === undefined && (
+          <DialogTrigger asChild>
+            <Button size="sm" className="gap-1">
+              <Plus className="h-4 w-4" />
+              Add Prospect
+            </Button>
+          </DialogTrigger>
+        )}
         <DialogContent className="sm:max-w-md bg-card border-border">
           <DialogHeader>
             <DialogTitle>Add New Lead</DialogTitle>
