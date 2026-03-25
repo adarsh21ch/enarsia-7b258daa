@@ -88,10 +88,10 @@ export function AddProspectDialog({ onAdd, existingProspects = [] }: AddProspect
     <>
       <Dialog open={open} onOpenChange={handleOpenChange}>
         <DialogTrigger asChild>
-          
-
-
-
+          <Button size="sm" className="gap-1">
+            <Plus className="h-4 w-4" />
+            Add Prospect
+          </Button>
         </DialogTrigger>
         <DialogContent className="sm:max-w-md bg-card border-border">
           <DialogHeader>
