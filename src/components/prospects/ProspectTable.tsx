@@ -344,6 +344,7 @@ export function ProspectTable({
   const [expandedRowId, setExpandedRowId] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<'card' | 'table'>('table');
   const [exporting, setExporting] = useState(false);
+  const [addProspectOpen, setAddProspectOpen] = useState(false);
   const isMobile = useIsMobile();
   const { checkFeature } = usePermissions();
   const canExport = checkFeature('export') || checkFeature('export_data');
@@ -1051,9 +1052,6 @@ export function ProspectTable({
               {/* Import button */}
               <ImportExcelDialog onImport={handleImportProspects} />
 
-              {/* + Add button */}
-              <AddProspectDialog onAdd={handleAddProspect} existingProspects={prospects} />
-
               {/* More menu (...) */}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
@@ -1062,10 +1060,7 @@ export function ProspectTable({
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-48 bg-popover border-border z-50">
-                  <DropdownMenuItem onClick={() => {
-                    const addBtn = document.querySelector('[data-add-trigger]') as HTMLButtonElement;
-                    if (addBtn) addBtn.click();
-                  }} className="gap-2">
+                  <DropdownMenuItem onClick={() => setAddProspectOpen(true)} className="gap-2">
                     <UserPlus className="h-4 w-4" />
                     Add Prospect
                   </DropdownMenuItem>
@@ -1089,6 +1084,9 @@ export function ProspectTable({
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
+
+              {/* Add Prospect Dialog (controlled, no visible trigger) */}
+              <AddProspectDialog onAdd={handleAddProspect} existingProspects={prospects} open={addProspectOpen} onOpenChange={setAddProspectOpen} />
             </>}
         </div>
       </div>

@@ -13,13 +13,17 @@ import { cn } from '@/lib/utils';
 interface AddProspectDialogProps {
   onAdd: (prospect: Partial<Prospect>) => Promise<Prospect | null>;
   existingProspects?: Prospect[];
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
 }
 
 // Normalize phone number for comparison (remove spaces, dashes, parentheses)
 const normalizePhone = (phone: string) => phone.replace(/[\s\-\(\)\.]/g, '');
 
-export function AddProspectDialog({ onAdd, existingProspects = [] }: AddProspectDialogProps) {
-  const [open, setOpen] = useState(false);
+export function AddProspectDialog({ onAdd, existingProspects = [], open: controlledOpen, onOpenChange }: AddProspectDialogProps) {
+  const [internalOpen, setInternalOpen] = useState(false);
+  const open = controlledOpen !== undefined ? controlledOpen : internalOpen;
+  const setOpen = onOpenChange || setInternalOpen;
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -87,12 +91,15 @@ export function AddProspectDialog({ onAdd, existingProspects = [] }: AddProspect
   return (
     <>
       <Dialog open={open} onOpenChange={handleOpenChange}>
-        <DialogTrigger asChild>
-          <Button size="sm" className="gap-1">
-            <Plus className="h-4 w-4" />
-            Add Prospect
-          </Button>
-        </DialogTrigger>
+        {/* Only show trigger button when not controlled externally */}
+        {controlledOpen === undefined && (
+          <DialogTrigger asChild>
+            <Button size="sm" className="gap-1">
+              <Plus className="h-4 w-4" />
+              Add Prospect
+            </Button>
+          </DialogTrigger>
+        )}
         <DialogContent className="sm:max-w-md bg-card border-border">
           <DialogHeader>
             <DialogTitle>Add New Lead</DialogTitle>
