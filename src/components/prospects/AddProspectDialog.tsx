@@ -37,9 +37,7 @@ export function AddProspectDialog({ onAdd, existingProspects = [], open: control
     if (!phone.trim() || phone.trim().length < 7) return null;
     const normalized = normalizePhone(phone.trim());
     return existingProspects.find((p) =>
-    normalizePhone(p.phone) === normalized ||
-    normalizePhone(p.phone).endsWith(normalized) ||
-    normalized.endsWith(normalizePhone(p.phone))
+      normalizePhone(p.phone) === normalized
     );
   }, [phone, existingProspects]);
 
