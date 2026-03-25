@@ -1014,12 +1014,10 @@ export function ProspectTable({
         </div>
       </div>;
   }
-  return <div className="flex flex-col h-full gap-2">
-      {/* KPI Strip - horizontal scrolling on mobile */}
-      <div className="flex-shrink-0">
-        <KPIStrip prospects={filteredProspects} isCalling={isCalling} className="my-0 py-[2px]" kpiTotal={kpiTotal} kpiTagCounts={kpiTagCounts} />
-      </div>
+  // Collapsible search state
+  const [searchCollapsed, setSearchCollapsed] = useState(true);
 
+  return <div className="flex flex-col h-full gap-2">
       {/* Progressive Upgrade Nudge Banner - non-spammy, stage-based */}
       <ProgressiveNudgeBanner context="calling" />
 
