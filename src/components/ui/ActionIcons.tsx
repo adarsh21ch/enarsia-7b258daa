@@ -120,7 +120,7 @@ export function CallIconButton({ onClick, className, color }: { onClick: (e: Rea
       } : undefined}
       aria-label="Call"
     >
-      <PhoneOutlineIcon className={cn("h-3.5 w-3.5", color && "h-4 w-4")} style={color ? { color } : undefined} />
+      <PhoneOutlineIcon className={cn("h-3.5 w-3.5", color && "h-4 w-4")} />
     </button>
   );
 }
