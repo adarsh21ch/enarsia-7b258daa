@@ -534,6 +534,7 @@ export function ProspectTable({
               const matchesAction = filters.actions.length === 0 || filters.actions.includes(prospect.action_taken as ExtendedActionTaken) || (filters.actions.includes('Enrollment') && prospect.enrollment_status === 'Enrolled');
               return matchesSearch && matchesStage && matchesAction;
             });
+          } else {
             allProspects = sheetProspects;
           }
         } else {

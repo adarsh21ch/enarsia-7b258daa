@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from '@/components/ui/dialog';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
-import { Plus, MoreVertical, Pencil, Trash2, FileSpreadsheet, CheckSquare, Trash } from 'lucide-react';
+import { Plus, MoreVertical, Pencil, Trash2, FileSpreadsheet, CheckSquare, Trash, Download } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 interface SheetTabsProps {
@@ -116,6 +116,10 @@ export function SheetTabs({
         </button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="bg-popover border-border z-50">
+        <DropdownMenuItem onClick={() => onExportSheet?.(null)}>
+          <Download className="h-3.5 w-3.5 mr-2" />
+          Download All
+        </DropdownMenuItem>
         <DropdownMenuItem onClick={() => handleSelectAndDelete(null)}>
           <CheckSquare className="h-3.5 w-3.5 mr-2" />
           Select & Delete
@@ -190,6 +194,10 @@ export function SheetTabs({
                       <DropdownMenuItem onClick={() => openEditDialog(sheet)}>
                         <Pencil className="h-3.5 w-3.5 mr-2" />
                         Rename
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => onExportSheet?.(sheet.id)}>
+                        <Download className="h-3.5 w-3.5 mr-2" />
+                        Download Sheet
                       </DropdownMenuItem>
                       <DropdownMenuItem onClick={() => handleSelectAndDelete(sheet.id)}>
                         <CheckSquare className="h-3.5 w-3.5 mr-2" />
