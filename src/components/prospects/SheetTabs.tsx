@@ -116,6 +116,10 @@ export function SheetTabs({
         </button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="bg-popover border-border z-50">
+        <DropdownMenuItem onClick={() => onExportSheet?.(null)}>
+          <Download className="h-3.5 w-3.5 mr-2" />
+          Download All
+        </DropdownMenuItem>
         <DropdownMenuItem onClick={() => handleSelectAndDelete(null)}>
           <CheckSquare className="h-3.5 w-3.5 mr-2" />
           Select & Delete
