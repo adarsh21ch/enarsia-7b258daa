@@ -235,38 +235,36 @@ export default function Dashboard() {
 
   return <div className="app-layout bg-gradient-to-b from-background via-background to-muted/20">
       {/* Compact Header - matching To-Do density */}
-      <header ref={headerRef} className="fixed-header z-40 bg-card/80 backdrop-blur-xl border-b border-border/50">
-        {/* Row A: Page title - compact */}
-        <div className="flex items-center justify-between px-4 py-3">
-          <div className="flex items-center gap-3">
-            <img src={nevoraLogo} alt="NevorAI Logo" className="h-10 w-10 rounded-xl object-cover shadow-md" />
+      <header ref={headerRef} className="fixed-header z-40 bg-card/80 backdrop-blur-xl border-b border-border/40">
+        {/* Row A: Page title - compact & premium */}
+        <div className="flex items-center justify-between px-4 py-2.5">
+          <div className="flex items-center gap-2.5">
+            <img src={nevoraLogo} alt="NevorAI Logo" className="h-9 w-9 rounded-xl object-cover shadow-sm" />
             <div>
-              <div className="flex items-center gap-2">
-                <h1 className="text-xl font-bold tracking-tight">
+              <div className="flex items-center gap-1.5">
+                <h1 className="text-lg font-bold tracking-tight">
                   {showRecentActivity ? 'Activity History' : 'Calling'}
                 </h1>
                 {streakEnabled && !showRecentActivity && (
-                  <div className="flex items-center gap-1 px-2 py-1 rounded-lg bg-orange-500/10">
-                    <Flame className="h-4 w-4 text-orange-500" />
-                    <span className="text-sm font-bold text-orange-600">{currentStreak}</span>
+                  <div className="flex items-center gap-0.5 px-1.5 py-0.5 rounded-md bg-orange-500/10">
+                    <Flame className="h-3.5 w-3.5 text-orange-500" />
+                    <span className="text-xs font-bold text-orange-600">{currentStreak}</span>
                   </div>
                 )}
               </div>
-              <p className="text-xs text-muted-foreground font-medium">
+              <p className="text-[11px] text-muted-foreground font-medium">
                 {showRecentActivity ? "Today's Updates" : 'Manage your prospects'}
               </p>
             </div>
           </div>
-          <div className="flex items-center gap-1">
-            <Button variant="ghost" size="icon" onClick={() => setShowRecentActivity(!showRecentActivity)} className={cn("h-10 w-10 rounded-full", showRecentActivity ? "bg-accent text-accent-foreground hover:bg-accent/90" : "text-muted-foreground")}>
-              <Clock className="h-[22px] w-[22px]" />
-            </Button>
-          </div>
+          <Button variant="ghost" size="icon" onClick={() => setShowRecentActivity(!showRecentActivity)} className={cn("h-9 w-9 rounded-full", showRecentActivity ? "bg-accent text-accent-foreground hover:bg-accent/90" : "text-muted-foreground")}>
+            <Clock className="h-5 w-5" />
+          </Button>
         </div>
         
-        {/* Row B: Segmented control - hidden when Recent Activity is active */}
+        {/* Row B: Segmented control */}
         {!showRecentActivity && (
-          <div className="px-4 pb-1.5">
+          <div className="px-4 pb-2">
             <TopTabBar options={toggleOptions} value={mainTab} onChange={handleTabChange} />
           </div>
         )}
