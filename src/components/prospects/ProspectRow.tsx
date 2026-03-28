@@ -171,9 +171,9 @@ export const ProspectRow = memo(function ProspectRow({
 
   const renderCell = (columnId: string) => {
     const cellClass = cn(
-      "px-2 py-2.5 whitespace-nowrap",
+      "px-2 py-3 whitespace-nowrap",
       isLastContacted ? "bg-primary/10" : (isEven ? "bg-card" : "bg-muted"),
-      isMobileTable && "text-xs px-1.5 py-2"
+      isMobileTable && "text-xs px-1.5 py-2.5"
     );
     
     switch (columnId) {
