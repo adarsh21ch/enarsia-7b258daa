@@ -314,10 +314,7 @@ export const ProspectRow = memo(function ProspectRow({
     <>
       <tr 
         ref={rowRef}
-        style={{
-          ...rowStyle,
-          ...(accentColor ? { borderLeft: `2.5px solid ${accentColor}` } : { borderLeft: '2.5px solid transparent' }),
-        }}
+        style={rowStyle}
         {...(dragHandleProps?.attributes || {})}
         {...rowDragListeners}
         className={cn(

@@ -119,7 +119,7 @@ export function BottomNav({
   // Proper safe area handling
   className)}>
       {/* Raised navigation with better thumb-friendly positioning */}
-      <div className="flex items-center justify-around h-[72px] max-w-lg mx-auto pt-2 pb-1">
+      <div className="flex items-center justify-around h-[76px] max-w-lg mx-auto pt-3 pb-2">
         {navItems.map(item => {
         const Icon = item.icon;
         const isActive = location.pathname === item.path;
