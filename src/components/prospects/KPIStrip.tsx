@@ -58,11 +58,12 @@ export function KPIStrip({ prospects, isCalling, kpiTotal, kpiTagCounts }: KPISt
   }, [prospects, isCalling, leadsTrackingTagNames, stageTagNames, leadsStageTag, kpiTotal, kpiTagCounts]);
 
   return (
-    <div className="flex items-center gap-1.5 overflow-x-auto pb-0.5 scrollbar-hide">
+    <div className="flex items-center gap-3 overflow-x-auto pb-0.5 scrollbar-hide">
       {/* Total Leads */}
-      <div className="flex items-center gap-1.5 shrink-0 rounded-lg px-2.5 py-1.5 bg-primary/10">
-        <Users className="h-3.5 w-3.5 text-primary" />
-        <span className="text-xs font-bold text-primary">{kpis.total}</span>
+      <div className="flex items-center gap-1.5 shrink-0">
+        <span className="h-2 w-2 rounded-full bg-primary shrink-0" />
+        <span className="text-xs font-bold text-foreground">{kpis.total}</span>
+        <span className="text-[11px] text-muted-foreground">Leads</span>
       </div>
 
       {/* Tracking Tag Counts */}
@@ -76,18 +77,19 @@ export function KPIStrip({ prospects, isCalling, kpiTotal, kpiTagCounts }: KPISt
         return (
           <div 
             key={tag}
-            className="flex items-center gap-1.5 shrink-0 rounded-lg px-2.5 py-1.5 bg-muted/60"
+            className="flex items-center gap-1.5 shrink-0"
           >
+            <span className="text-muted-foreground/40">|</span>
             <span 
-              className="h-2.5 w-2.5 rounded-full shrink-0"
+              className="h-2 w-2 rounded-full shrink-0"
               style={{ backgroundColor: tagColor }}
             />
             {isFunnelTag && <Star className="h-2.5 w-2.5 text-yellow-500 fill-yellow-500 shrink-0" />}
-            <span className="text-[11px] font-medium truncate max-w-[60px] text-muted-foreground">
-              {tag}
-            </span>
             <span className="text-xs font-bold text-foreground">
               {count}
+            </span>
+            <span className="text-[11px] text-muted-foreground truncate max-w-[70px]">
+              {tag}
             </span>
           </div>
         );

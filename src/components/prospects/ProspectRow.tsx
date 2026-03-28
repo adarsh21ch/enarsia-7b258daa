@@ -210,7 +210,7 @@ export const ProspectRow = memo(function ProspectRow({
           >
             <div className="flex items-center gap-2">
               {/* Call icon */}
-              <CallIconButton onClick={openCall} className={isMobileTable ? "p-1 h-8 w-8" : "h-8 w-8"} />
+              <CallIconButton onClick={openCall} color={accentColor || undefined} className={isMobileTable ? "h-8 w-8" : "h-8 w-8"} />
               <button
                 onClick={onToggleExpand}
                 className={cn(

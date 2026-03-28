@@ -103,18 +103,22 @@ export function WhatsAppButton({ phone, onClick, className, size = 'md' }: Whats
   );
 }
 
-// Compact inline versions for table cells
-export function CallIconButton({ onClick, className }: { onClick: (e: React.MouseEvent) => void; className?: string }) {
+// Compact inline versions for table cells - colored rounded square with phone icon
+export function CallIconButton({ onClick, className, color }: { onClick: (e: React.MouseEvent) => void; className?: string; color?: string }) {
   return (
     <button
       onClick={onClick}
       className={cn(
-        "p-1 rounded-md hover:bg-muted transition-colors",
+        "rounded-lg flex items-center justify-center shrink-0 transition-all active:scale-95",
+        "h-8 w-8",
         className
       )}
+      style={{
+        backgroundColor: color || 'hsl(var(--primary))',
+      }}
       aria-label="Call"
     >
-      <PhoneOutlineIcon className="h-3.5 w-3.5" />
+      <PhoneOutlineIcon className="h-4 w-4 text-white" />
     </button>
   );
 }

@@ -115,11 +115,11 @@ export function BottomNav({
   // Hide bottom nav when keyboard is visible
   if (keyboardVisible) return null;
 
-  return <nav className={cn("fixed bottom-0 left-0 right-0 z-50 bg-card/95 backdrop-blur-xl border-t border-border/50", "pb-[env(safe-area-inset-bottom,8px)]",
+  return <nav className={cn("fixed bottom-0 left-0 right-0 z-50 bg-card/95 backdrop-blur-xl border-t border-border/50", "pb-[env(safe-area-inset-bottom,10px)]",
   // Proper safe area handling
   className)}>
       {/* Raised navigation with better thumb-friendly positioning */}
-      <div className="flex items-center justify-around h-[62px] max-w-lg mx-auto pt-1 pb-1">
+      <div className="flex items-center justify-around h-[72px] max-w-lg mx-auto pt-2 pb-1">
         {navItems.map(item => {
         const Icon = item.icon;
         const isActive = location.pathname === item.path;
