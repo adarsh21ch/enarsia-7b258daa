@@ -4,6 +4,7 @@ import { SortableProspectRow } from './SortableProspectRow';
 import { MobileProspectCard } from './MobileProspectCard';
 import { ProspectFilters } from './ProspectFilters';
 import { KPIStrip } from './KPIStrip';
+import { CollapsibleSearchBar } from './CollapsibleSearchBar';
 import { AddProspectDialog } from './AddProspectDialog';
 import { ImportExcelDialog } from './ImportExcelDialog';
 import { SheetTabs } from './SheetTabs';
@@ -345,6 +346,7 @@ export function ProspectTable({
   const [viewMode, setViewMode] = useState<'card' | 'table'>('table');
   const [exporting, setExporting] = useState(false);
   const [addProspectOpen, setAddProspectOpen] = useState(false);
+  const [isSearchExpanded, setIsSearchExpanded] = useState(false);
   const isMobile = useIsMobile();
   const { checkFeature } = usePermissions();
   const canExport = checkFeature('export') || checkFeature('export_data');
@@ -1014,10 +1016,6 @@ export function ProspectTable({
       </div>;
   }
   return <div className="flex flex-col h-full gap-2">
-      {/* KPI Strip - horizontal scrolling on mobile */}
-      <div className="flex-shrink-0">
-        <KPIStrip prospects={filteredProspects} isCalling={isCalling} className="my-0 py-[2px]" kpiTotal={kpiTotal} kpiTagCounts={kpiTagCounts} />
-      </div>
 
       {/* Progressive Upgrade Nudge Banner - non-spammy, stage-based */}
       <ProgressiveNudgeBanner context="calling" />
@@ -1027,69 +1025,96 @@ export function ProspectTable({
 
       {/* Single Action Bar - Filters left, Actions right */}
       <div className="flex-shrink-0 flex items-center justify-between gap-2">
-        {/* Left side - Filters */}
+        {/* Left side - Filters with collapsible search */}
         <div className="flex items-center gap-2 flex-1 min-w-0">
-          <ProspectFilters filters={filters} onFiltersChange={setFilters} showStagesFilter={!isCalling} showResponsesFilter={isCalling} filterTagButton={!isCalling ? <ChangeFilterTagButton /> : undefined} hideSearch={!!externalSearch} />
+          {!isSearchExpanded ? (
+            <>
+              <CollapsibleSearchBar 
+                value={externalSearch || filters.search || ''} 
+                onChange={(val) => {
+                  if (externalSearch !== undefined) return;
+                  setFilters({ ...filters, search: val });
+                }}
+                isCollapsed={true}
+                onExpand={() => setIsSearchExpanded(true)}
+                placeholder="Search name, phone..."
+              />
+              <ProspectFilters filters={filters} onFiltersChange={setFilters} showStagesFilter={!isCalling} showResponsesFilter={isCalling} filterTagButton={!isCalling ? <ChangeFilterTagButton /> : undefined} hideSearch={true} />
+            </>
+          ) : (
+            <div className="flex items-center gap-2 flex-1">
+              <CollapsibleSearchBar 
+                value={externalSearch || filters.search || ''} 
+                onChange={(val) => {
+                  if (externalSearch !== undefined) return;
+                  setFilters({ ...filters, search: val });
+                }}
+                isCollapsed={false}
+                onExpand={() => {}}
+                placeholder="Search name, phone..."
+                className="flex-1"
+              />
+              <Button variant="ghost" size="sm" onClick={() => setIsSearchExpanded(false)} className="shrink-0 text-xs h-9 px-2">
+                Cancel
+              </Button>
+            </div>
+          )}
         </div>
 
-        {/* Right side - Actions */}
-        <div className="flex items-center gap-1.5 shrink-0">
-          {/* Selection mode controls */}
-          {selectionMode.active ? <div className="flex items-center gap-2 bg-muted/50 rounded-lg px-2 py-1">
-              <span className="text-xs font-medium">{selectedIds.size} Selected</span>
-              <Button variant="destructive" size="sm" onClick={() => setDeleteConfirmOpen(true)} disabled={selectedIds.size === 0} className="h-7 px-2">
-                <Trash2 className="h-3.5 w-3.5" />
-              </Button>
-              <Button variant="secondary" size="sm" onClick={() => {
-                if (selectedIds.size === 0) { toast.info('Select leads to share'); return; }
-                setShareDrawerOpen(true);
-              }} disabled={selectedIds.size === 0} className="h-7 px-2 gap-1">
-                <Share2 className="h-3.5 w-3.5" />
-              </Button>
-              <Button variant="ghost" size="sm" onClick={handleExitSelectMode} className="h-7 w-7 p-0">
-                <X className="h-3.5 w-3.5" />
-              </Button>
-            </div> : <>
-              {/* Import button */}
-              <ImportExcelDialog onImport={handleImportProspects} />
-
-              {/* More menu (...) */}
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="outline" size="icon" className="h-9 w-9">
-                    <MoreHorizontal className="h-4 w-4" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-48 bg-popover border-border z-50">
-                  <DropdownMenuItem onClick={() => setAddProspectOpen(true)} className="gap-2">
-                    <UserPlus className="h-4 w-4" />
-                    Add Prospect
-                  </DropdownMenuItem>
-                  <DropdownMenuItem 
-                    onClick={canExport ? exportToExcel : () => toast.error('Upgrade your plan to export data')}
-                    disabled={exporting}
-                    className="gap-2"
-                  >
-                    {!canExport && <Lock className="h-3.5 w-3.5" />}
-                    {exporting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
-                    {exporting ? 'Exporting...' : 'Export Leads'}
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem 
-                    onClick={canShareLeads ? () => handleEnterSelectMode(selectedSheetId) : () => toast.error('Upgrade your plan to share leads')}
-                    className="gap-2"
-                  >
-                    {!canShareLeads && <Lock className="h-3.5 w-3.5" />}
-                    <Share2 className="h-4 w-4" />
-                    Share Leads
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-
-              {/* Add Prospect Dialog (controlled, no visible trigger) */}
-              <AddProspectDialog onAdd={handleAddProspect} existingProspects={prospects} open={addProspectOpen} onOpenChange={setAddProspectOpen} />
-            </>}
-        </div>
+        {/* Right side - Actions (hidden when search expanded) */}
+        {!isSearchExpanded && (
+          <div className="flex items-center gap-1.5 shrink-0">
+            {selectionMode.active ? <div className="flex items-center gap-2 bg-muted/50 rounded-lg px-2 py-1">
+                <span className="text-xs font-medium">{selectedIds.size} Selected</span>
+                <Button variant="destructive" size="sm" onClick={() => setDeleteConfirmOpen(true)} disabled={selectedIds.size === 0} className="h-7 px-2">
+                  <Trash2 className="h-3.5 w-3.5" />
+                </Button>
+                <Button variant="secondary" size="sm" onClick={() => {
+                  if (selectedIds.size === 0) { toast.info('Select leads to share'); return; }
+                  setShareDrawerOpen(true);
+                }} disabled={selectedIds.size === 0} className="h-7 px-2 gap-1">
+                  <Share2 className="h-3.5 w-3.5" />
+                </Button>
+                <Button variant="ghost" size="sm" onClick={handleExitSelectMode} className="h-7 w-7 p-0">
+                  <X className="h-3.5 w-3.5" />
+                </Button>
+              </div> : <>
+                <ImportExcelDialog onImport={handleImportProspects} />
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="outline" size="icon" className="h-9 w-9 rounded-xl">
+                      <MoreHorizontal className="h-4 w-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-48 bg-popover border-border z-50">
+                    <DropdownMenuItem onClick={() => setAddProspectOpen(true)} className="gap-2">
+                      <UserPlus className="h-4 w-4" />
+                      Add Prospect
+                    </DropdownMenuItem>
+                    <DropdownMenuItem 
+                      onClick={canExport ? exportToExcel : () => toast.error('Upgrade your plan to export data')}
+                      disabled={exporting}
+                      className="gap-2"
+                    >
+                      {!canExport && <Lock className="h-3.5 w-3.5" />}
+                      {exporting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
+                      {exporting ? 'Exporting...' : 'Export Leads'}
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem 
+                      onClick={canShareLeads ? () => handleEnterSelectMode(selectedSheetId) : () => toast.error('Upgrade your plan to share leads')}
+                      className="gap-2"
+                    >
+                      {!canShareLeads && <Lock className="h-3.5 w-3.5" />}
+                      <Share2 className="h-4 w-4" />
+                      Share Leads
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+                <AddProspectDialog onAdd={handleAddProspect} existingProspects={prospects} open={addProspectOpen} onOpenChange={setAddProspectOpen} />
+              </>}
+          </div>
+        )}
       </div>
 
       {/* Table */}

@@ -20,16 +20,16 @@ export function TopTabBar({ options, value, onChange, className }: TopTabBarProp
   
   return (
     <Tabs value={value} onValueChange={onChange} className={cn("w-full", className)}>
-      <TabsList className={cn("grid w-full h-9", gridColsClass)}>
+      <TabsList className={cn("grid w-full h-10 rounded-xl bg-muted/60", gridColsClass)}>
         {options.map((option) => {
           const Icon = option.icon;
           return (
             <TabsTrigger
               key={option.value}
               value={option.value}
-              className="text-xs font-medium gap-1.5"
+              className="text-[13px] font-semibold gap-1.5 rounded-lg data-[state=active]:shadow-sm"
             >
-              <Icon className="h-3.5 w-3.5" />
+              <Icon className="h-4 w-4" />
               {option.label}
             </TabsTrigger>
           );

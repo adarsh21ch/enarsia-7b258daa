@@ -11,7 +11,7 @@ export function StatusBadge({ status }: StatusBadgeProps) {
   
   return (
     <span 
-      className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium border whitespace-nowrap"
+      className="inline-flex items-center px-2.5 py-0.5 rounded-lg text-[11px] font-medium border whitespace-nowrap"
       style={style}
     >
       {status}
@@ -49,7 +49,7 @@ export function StageBadge({ stage }: StageBadgeProps) {
   
   return (
     <span 
-      className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium border whitespace-nowrap"
+      className="inline-flex items-center px-2.5 py-0.5 rounded-lg text-[11px] font-medium border whitespace-nowrap"
       style={style}
     >
       {stage}
@@ -91,7 +91,7 @@ export function ActionBadge({ action }: ActionBadgeProps) {
 
   return (
     <span 
-      className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium border whitespace-nowrap"
+      className="inline-flex items-center px-2.5 py-0.5 rounded-lg text-[11px] font-medium border whitespace-nowrap"
       style={style}
     >
       {action}
@@ -111,7 +111,7 @@ export function GenericTagBadge({ value, type, customColor }: GenericTagBadgePro
   
   return (
     <span 
-      className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium border whitespace-nowrap"
+      className="inline-flex items-center px-2.5 py-0.5 rounded-lg text-[11px] font-medium border whitespace-nowrap"
       style={style}
     >
       {value}

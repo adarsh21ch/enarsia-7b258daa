@@ -171,9 +171,9 @@ export const ProspectRow = memo(function ProspectRow({
 
   const renderCell = (columnId: string) => {
     const cellClass = cn(
-      "px-2 py-2.5 whitespace-nowrap",
+      "px-2 py-3 whitespace-nowrap",
       isLastContacted ? "bg-primary/10" : (isEven ? "bg-card" : "bg-muted"),
-      isMobileTable && "text-xs px-1.5 py-2"
+      isMobileTable && "text-xs px-1.5 py-2.5"
     );
     
     switch (columnId) {
@@ -208,9 +208,9 @@ export const ProspectRow = memo(function ProspectRow({
             style={{ width: '55%', minWidth: '160px' }}
             onPointerDown={(e) => e.stopPropagation()}
           >
-            <div className="flex items-center gap-1.5">
-              {/* Call icon only */}
-              <CallIconButton onClick={openCall} className={isMobileTable ? "p-0.5 h-6 w-6" : "h-7 w-7"} />
+            <div className="flex items-center gap-2">
+              {/* Call icon */}
+              <CallIconButton onClick={openCall} className={isMobileTable ? "p-1 h-8 w-8" : "h-8 w-8"} />
               <button
                 onClick={onToggleExpand}
                 className={cn(
@@ -230,7 +230,7 @@ export const ProspectRow = memo(function ProspectRow({
                   {phoneDisplay && (
                     <span className={cn(
                       "text-muted-foreground truncate",
-                      isMobileTable ? "text-[9px]" : "text-[10px]"
+                      isMobileTable ? "text-[10px]" : "text-[11px]"
                     )} title={phoneDisplay}>
                       {phoneDisplay}
                     </span>
@@ -316,12 +316,12 @@ export const ProspectRow = memo(function ProspectRow({
         ref={rowRef}
         style={{
           ...rowStyle,
-          ...(accentColor ? { borderLeft: `3px solid ${accentColor}` } : { borderLeft: '3px solid transparent' }),
+          ...(accentColor ? { borderLeft: `2.5px solid ${accentColor}` } : { borderLeft: '2.5px solid transparent' }),
         }}
         {...(dragHandleProps?.attributes || {})}
         {...rowDragListeners}
         className={cn(
-          "group transition-colors duration-100 border-b border-border/30", 
+          "group transition-colors duration-100 border-b border-border/20", 
           bgColor,
           "hover:bg-muted/80", 
           isExpanded && "bg-primary/5 hover:bg-primary/5",
