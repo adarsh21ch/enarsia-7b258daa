@@ -346,6 +346,7 @@ export function ProspectTable({
   const [viewMode, setViewMode] = useState<'card' | 'table'>('table');
   const [exporting, setExporting] = useState(false);
   const [addProspectOpen, setAddProspectOpen] = useState(false);
+  const [isSearchExpanded, setIsSearchExpanded] = useState(false);
   const isMobile = useIsMobile();
   const { checkFeature } = usePermissions();
   const canExport = checkFeature('export') || checkFeature('export_data');
