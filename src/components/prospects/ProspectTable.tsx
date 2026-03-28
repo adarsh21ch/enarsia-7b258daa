@@ -1014,10 +1014,6 @@ export function ProspectTable({
       </div>;
   }
   return <div className="flex flex-col h-full gap-2">
-      {/* KPI Strip - horizontal scrolling on mobile */}
-      <div className="flex-shrink-0">
-        <KPIStrip prospects={filteredProspects} isCalling={isCalling} className="my-0 py-[2px]" kpiTotal={kpiTotal} kpiTagCounts={kpiTagCounts} />
-      </div>
 
       {/* Progressive Upgrade Nudge Banner - non-spammy, stage-based */}
       <ProgressiveNudgeBanner context="calling" />
