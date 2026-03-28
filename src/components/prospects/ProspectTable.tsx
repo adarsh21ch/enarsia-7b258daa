@@ -1127,7 +1127,7 @@ export function ProspectTable({
       </div>
 
       {/* Bottom fixed sheet tabs - always above bottom nav */}
-      <div className="fixed bottom-16 left-0 right-0 md:bottom-24 lg:bottom-16 z-20 bg-card border-t border-border/50 shadow-[0_-2px_8px_rgba(0,0,0,0.1)]">
+      <div className="fixed bottom-16 left-0 right-0 md:bottom-24 lg:bottom-16 z-20 bg-card border-t border-border/50 shadow-[0_-2px_8px_rgba(0,0,0,0.1)] pb-[10px]">
         <SheetTabs sheets={sheets} selectedSheetId={selectedSheetId} onSelectSheet={onSelectSheet} onAddSheet={onAddSheet} onUpdateSheet={handleUpdateSheetWithUndo} onDeleteSheet={onDeleteSheet} onEnterSelectMode={handleEnterSelectMode} onDeleteAllInSheet={handleDeleteAllInSheet} onExportSheet={exportSheet} onExportAll={exportToExcel} onShareLeads={handleShareLeads} />
       </div>
 
