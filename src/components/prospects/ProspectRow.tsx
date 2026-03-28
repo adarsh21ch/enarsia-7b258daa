@@ -321,7 +321,7 @@ export const ProspectRow = memo(function ProspectRow({
         {...(dragHandleProps?.attributes || {})}
         {...rowDragListeners}
         className={cn(
-          "group transition-colors duration-100 border-b border-border/30", 
+          "group transition-colors duration-100 border-b border-border/20", 
           bgColor,
           "hover:bg-muted/80", 
           isExpanded && "bg-primary/5 hover:bg-primary/5",
