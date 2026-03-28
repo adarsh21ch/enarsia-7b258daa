@@ -137,7 +137,7 @@ export function SheetTabs({
 
   return (
     <>
-      <div className="flex items-center bg-muted/30 border-b border-border/40">
+      <div className="flex items-center bg-muted/30 border-b border-border/40 pb-px">
         {/* Fixed "All" tab with dropdown */}
         <div className="flex items-center border-r border-border/30 shrink-0">
           <button
