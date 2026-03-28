@@ -137,16 +137,16 @@ export function SheetTabs({
 
   return (
     <>
-      <div className="flex items-center bg-muted/50 border-b border-border">
+      <div className="flex items-center bg-muted/30 border-b border-border/40">
         {/* Fixed "All" tab with dropdown */}
-        <div className="flex items-center border-r border-border/50 shrink-0 bg-muted/50">
+        <div className="flex items-center border-r border-border/30 shrink-0">
           <button
             onClick={() => onSelectSheet(null)}
             className={cn(
-              "px-3 py-2 text-xs font-medium transition-colors rounded-sm",
+              "px-3 min-h-[36px] text-xs font-medium transition-colors rounded-lg mx-0.5",
               selectedSheetId === null ?
-              "bg-accent text-accent-foreground" :
-              "text-muted-foreground hover:text-foreground hover:bg-muted/80"
+              "bg-primary text-primary-foreground shadow-sm" :
+              "text-muted-foreground hover:text-foreground hover:bg-muted/60"
             )}>
 
             <FileSpreadsheet className="h-3.5 w-3.5 inline mr-1.5" />
