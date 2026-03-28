@@ -208,9 +208,9 @@ export const ProspectRow = memo(function ProspectRow({
             style={{ width: '55%', minWidth: '160px' }}
             onPointerDown={(e) => e.stopPropagation()}
           >
-            <div className="flex items-center gap-1.5">
-              {/* Call icon only */}
-              <CallIconButton onClick={openCall} className={isMobileTable ? "p-0.5 h-6 w-6" : "h-7 w-7"} />
+            <div className="flex items-center gap-2">
+              {/* Call icon */}
+              <CallIconButton onClick={openCall} className={isMobileTable ? "p-1 h-8 w-8" : "h-8 w-8"} />
               <button
                 onClick={onToggleExpand}
                 className={cn(
