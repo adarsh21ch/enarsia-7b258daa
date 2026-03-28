@@ -123,7 +123,7 @@ export function BottomNav({
         {navItems.map(item => {
         const Icon = item.icon;
         const isActive = location.pathname === item.path;
-        return <NavLink key={item.path} to={item.path} className={cn("relative flex flex-col items-center justify-center flex-1 h-full min-h-[44px] min-w-[44px] transition-all duration-200 pb-2", isActive ? "text-primary" : "text-muted-foreground hover:text-foreground")}>
+        return <NavLink key={item.path} to={item.path} className={cn("relative flex flex-col items-center justify-center flex-1 h-full min-h-[44px] min-w-[44px] transition-all duration-200 pb-2 rounded-xl", isActive ? "text-primary bg-primary/10" : "text-muted-foreground hover:text-foreground")}>
               <div className="relative flex flex-col items-center gap-0.5 pb-[15px]">
                 {item.isProfile ?
             <Avatar className={cn("h-6 w-6 transition-all duration-200", isActive && "ring-2 ring-primary ring-offset-1 ring-offset-background")}>
