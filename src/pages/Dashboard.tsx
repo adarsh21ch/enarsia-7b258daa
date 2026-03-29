@@ -318,6 +318,7 @@ export default function Dashboard() {
               filterMode="calling" 
               subFilter="all" 
               externalSearch={searchQuery}
+              onSearchChange={setSearchQuery}
               hasNextPage={hasNextPage}
               onLoadMore={fetchNextPage}
               isLoadingMore={isFetchingNextPage}
