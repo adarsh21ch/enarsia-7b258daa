@@ -264,18 +264,20 @@ export const ProspectRow = memo(function ProspectRow({
             style={{ width: '35%', minWidth: '100px' }}
             onPointerDown={(e) => e.stopPropagation()}
           >
-            <InlineSelect 
-              value={getActionDisplayValue()} 
-              options={actionOptions} 
-              onChange={handleActionChange} 
-              placeholder="Select..." 
-              renderValue={(value) => <ActionBadge action={value} />} 
-              showTagSeparation={showLeadsTagSeparation}
-              trackingOptions={leadsTrackingTagNames}
-              nonTrackingOptions={leadsNonTrackingTags}
-              finalTargetTag={leadsFinalTargetTag}
-              stageTag={leadsStageTag}
-            />
+            <div className="flex justify-end">
+              <InlineSelect 
+                value={getActionDisplayValue()} 
+                options={actionOptions} 
+                onChange={handleActionChange} 
+                placeholder="Select..." 
+                renderValue={(value) => <ActionBadge action={value} />} 
+                showTagSeparation={showLeadsTagSeparation}
+                trackingOptions={leadsTrackingTagNames}
+                nonTrackingOptions={leadsNonTrackingTags}
+                finalTargetTag={leadsFinalTargetTag}
+                stageTag={leadsStageTag}
+              />
+            </div>
           </td>
         );
       
