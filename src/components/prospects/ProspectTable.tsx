@@ -324,6 +324,7 @@ export function ProspectTable({
   filterMode,
   subFilter,
   externalSearch = '',
+  onExternalSearchChange,
   hasNextPage,
   onLoadMore,
   isLoadingMore,
