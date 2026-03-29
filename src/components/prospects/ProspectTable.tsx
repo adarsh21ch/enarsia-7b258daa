@@ -1049,10 +1049,13 @@ export function ProspectTable({
           ) : (
             <div className="flex items-center gap-2 flex-1">
               <CollapsibleSearchBar 
-                value={externalSearch || filters.search || ''} 
+                value={onExternalSearchChange ? externalSearch || '' : filters.search || ''} 
                 onChange={(val) => {
-                  if (externalSearch !== undefined) return;
-                  setFilters({ ...filters, search: val });
+                  if (onExternalSearchChange) {
+                    onExternalSearchChange(val);
+                  } else {
+                    setFilters({ ...filters, search: val });
+                  }
                 }}
                 isCollapsed={false}
                 onExpand={() => {}}
