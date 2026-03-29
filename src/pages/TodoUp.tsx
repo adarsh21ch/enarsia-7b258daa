@@ -12,6 +12,7 @@ import { CalendarStrip } from '@/components/calendar/CalendarStrip';
 import { useCalendarStrip } from '@/hooks/useCalendarStrip';
 import { DailyTasksView } from '@/components/todo/DailyTasksView';
 import { RecentActivityView } from '@/components/todo/RecentActivityView';
+import { TopTabBar } from '@/components/ui/TopTabBar';
 import { TrialBanner } from '@/components/subscription/TrialBanner';
 import { UpgradeButton } from '@/components/subscription/UpgradeButton';
 import { Button } from '@/components/ui/button';
