@@ -1032,10 +1032,13 @@ export function ProspectTable({
           {!isSearchExpanded ? (
             <>
               <CollapsibleSearchBar 
-                value={externalSearch || filters.search || ''} 
+                value={onExternalSearchChange ? externalSearch || '' : filters.search || ''} 
                 onChange={(val) => {
-                  if (externalSearch !== undefined) return;
-                  setFilters({ ...filters, search: val });
+                  if (onExternalSearchChange) {
+                    onExternalSearchChange(val);
+                  } else {
+                    setFilters({ ...filters, search: val });
+                  }
                 }}
                 isCollapsed={true}
                 onExpand={() => setIsSearchExpanded(true)}
