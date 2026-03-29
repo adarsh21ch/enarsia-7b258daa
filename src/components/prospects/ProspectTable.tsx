@@ -70,6 +70,7 @@ interface ProspectTableProps {
   subFilter: 'all' | 'hot' | 'scheduled' | 'day1' | 'progress';
   // External search from parent (optional - if provided, will be used instead of internal search)
   externalSearch?: string;
+  onExternalSearchChange?: (value: string) => void;
   // Pagination props
   hasNextPage?: boolean;
   onLoadMore?: () => void;
