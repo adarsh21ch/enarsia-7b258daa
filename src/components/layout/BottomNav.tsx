@@ -123,20 +123,20 @@ export function BottomNav({
         {navItems.map(item => {
         const Icon = item.icon;
         const isActive = location.pathname === item.path;
-        return <NavLink key={item.path} to={item.path} className={cn("relative flex flex-col items-center justify-center flex-1 h-full min-h-[44px] min-w-[44px] transition-all duration-200 pb-2 rounded-xl", isActive ? "text-primary bg-primary/10" : "text-muted-foreground hover:text-foreground")}>
-              <div className="relative flex flex-col items-center gap-0.5 pb-[15px]">
+        return <NavLink key={item.path} to={item.path} className={cn("relative flex flex-col items-center justify-center flex-1 h-full min-h-[44px] min-w-[44px] transition-all duration-200 pb-2", isActive ? "text-primary" : "text-muted-foreground hover:text-foreground")}>
+              <div className="relative flex flex-col items-center gap-0.5 pb-2">
                 {item.isProfile ?
             <Avatar className={cn("h-6 w-6 transition-all duration-200", isActive && "ring-2 ring-primary ring-offset-1 ring-offset-background")}>
                     <AvatarImage src={profile?.avatar_url || undefined} alt={displayName} />
                     <AvatarFallback className="bg-gradient-to-br from-primary to-primary/80 text-primary-foreground text-[10px] font-bold">
                       {userInitials}
                     </AvatarFallback>
-                  </Avatar> : Icon && <Icon className={cn("h-5 w-5 transition-all duration-200", isActive && "scale-110")} />}
-                <span className={cn("text-[10px] font-medium transition-all duration-200", isActive ? "text-primary" : "text-muted-foreground")}>
+                  </Avatar> : Icon && <Icon className={cn("h-5 w-5 transition-all duration-200")} />}
+                <span className={cn("text-[10px] font-medium transition-all duration-200", isActive ? "text-primary font-semibold" : "text-muted-foreground")}>
                   {item.label}
                 </span>
                 {/* Active indicator pill */}
-                <div className={cn("absolute -bottom-0.5 left-1/2 -translate-x-1/2 h-1 w-4 rounded-full transition-all duration-200", isActive ? "bg-primary scale-100" : "bg-transparent scale-0")} />
+                <div className={cn("absolute -bottom-0 left-1/2 -translate-x-1/2 h-[2.5px] w-5 rounded-full transition-all duration-200", isActive ? "bg-primary scale-100" : "bg-transparent scale-0")} />
               </div>
             </NavLink>;
       })}

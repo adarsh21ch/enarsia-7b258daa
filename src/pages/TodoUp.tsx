@@ -12,13 +12,14 @@ import { CalendarStrip } from '@/components/calendar/CalendarStrip';
 import { useCalendarStrip } from '@/hooks/useCalendarStrip';
 import { DailyTasksView } from '@/components/todo/DailyTasksView';
 import { RecentActivityView } from '@/components/todo/RecentActivityView';
+import { TopTabBar } from '@/components/ui/TopTabBar';
 import { TrialBanner } from '@/components/subscription/TrialBanner';
 import { UpgradeButton } from '@/components/subscription/UpgradeButton';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Loader2, CheckCircle, Trash2, Edit2, Send, X, Check, Plus, StickyNote } from 'lucide-react';
+import { Loader2, CheckCircle, Trash2, Edit2, Send, X, Check, Plus, StickyNote, ListChecks, CalendarCheck } from 'lucide-react';
 import { format, parseISO, isSameDay } from 'date-fns';
 import { cn } from '@/lib/utils';
 import nevoraLogo from '@/assets/nevorai-logo.jpeg';
@@ -241,15 +242,15 @@ export default function TodoUp() {
   if (!user) return null;
   const isRecentActivity = viewMode === 'recent-activity';
   return <div className="app-layout bg-gradient-to-b from-background via-background to-muted/20">
-      <header className="fixed-header z-40 bg-card/80 backdrop-blur-xl border-b border-border/50">
-        <div className="flex items-center justify-between px-4 py-3">
-          <div className="flex items-center gap-3">
-            <img src={nevoraLogo} alt="NevorAI Logo" className="h-10 w-10 rounded-xl object-cover shadow-md" />
+      <header className="fixed-header z-40 bg-card/80 backdrop-blur-xl border-b border-border/40">
+        <div className="flex items-center justify-between px-4 py-2.5">
+          <div className="flex items-center gap-2.5">
+            <img src={nevoraLogo} alt="NevorAI Logo" className="h-9 w-9 rounded-xl object-cover shadow-sm" />
             <div>
-              <h1 className="text-xl font-bold tracking-tight">
+              <h1 className="text-lg font-bold tracking-tight">
                 {isRecentActivity ? 'Activity History' : 'To-Do List'}
               </h1>
-              <p className="text-xs text-muted-foreground font-medium">
+              <p className="text-[11px] text-muted-foreground font-medium">
                 {isRecentActivity ? "Today's Updates" : 'Your Tasks & Reminders'}
               </p>
             </div>
@@ -265,16 +266,14 @@ export default function TodoUp() {
 
         {/* Segmented Control - Hidden when Recent Activity is active */}
         {!isRecentActivity && <div className="px-4 pb-2">
-            <Tabs value={viewMode} onValueChange={handleTabChange} className="w-full">
-              <TabsList className="grid w-full grid-cols-2 h-9">
-                <TabsTrigger value="daily-tasks" className="text-xs font-medium">
-                  Daily Tasks
-                </TabsTrigger>
-                <TabsTrigger value="todo-list" className="text-xs font-medium">
-                  To-Do List
-                </TabsTrigger>
-              </TabsList>
-            </Tabs>
+            <TopTabBar 
+              options={[
+                { value: 'daily-tasks', label: 'Daily Tasks', icon: CalendarCheck },
+                { value: 'todo-list', label: 'To-Do List', icon: ListChecks },
+              ]} 
+              value={viewMode} 
+              onChange={handleTabChange} 
+            />
           </div>}
       </header>
 

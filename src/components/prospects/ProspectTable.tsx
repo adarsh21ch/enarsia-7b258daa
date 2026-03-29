@@ -70,6 +70,7 @@ interface ProspectTableProps {
   subFilter: 'all' | 'hot' | 'scheduled' | 'day1' | 'progress';
   // External search from parent (optional - if provided, will be used instead of internal search)
   externalSearch?: string;
+  onExternalSearchChange?: (value: string) => void;
   // Pagination props
   hasNextPage?: boolean;
   onLoadMore?: () => void;
@@ -323,6 +324,7 @@ export function ProspectTable({
   filterMode,
   subFilter,
   externalSearch = '',
+  onExternalSearchChange,
   hasNextPage,
   onLoadMore,
   isLoadingMore,
@@ -1030,10 +1032,13 @@ export function ProspectTable({
           {!isSearchExpanded ? (
             <>
               <CollapsibleSearchBar 
-                value={externalSearch || filters.search || ''} 
+                value={onExternalSearchChange ? externalSearch || '' : filters.search || ''} 
                 onChange={(val) => {
-                  if (externalSearch !== undefined) return;
-                  setFilters({ ...filters, search: val });
+                  if (onExternalSearchChange) {
+                    onExternalSearchChange(val);
+                  } else {
+                    setFilters({ ...filters, search: val });
+                  }
                 }}
                 isCollapsed={true}
                 onExpand={() => setIsSearchExpanded(true)}
@@ -1044,10 +1049,13 @@ export function ProspectTable({
           ) : (
             <div className="flex items-center gap-2 flex-1">
               <CollapsibleSearchBar 
-                value={externalSearch || filters.search || ''} 
+                value={onExternalSearchChange ? externalSearch || '' : filters.search || ''} 
                 onChange={(val) => {
-                  if (externalSearch !== undefined) return;
-                  setFilters({ ...filters, search: val });
+                  if (onExternalSearchChange) {
+                    onExternalSearchChange(val);
+                  } else {
+                    setFilters({ ...filters, search: val });
+                  }
                 }}
                 isCollapsed={false}
                 onExpand={() => {}}

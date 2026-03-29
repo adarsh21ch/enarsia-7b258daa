@@ -1,4 +1,4 @@
-import { ChevronDown } from 'lucide-react';
+import { ChevronDown, Phone, Layers, User, Users } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import {
   DropdownMenu,
@@ -6,6 +6,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { TopTabBar } from '@/components/ui/TopTabBar';
 import type { DataMode, ViewType } from '@/hooks/useTrackingModes';
 
 interface ModeSelectorProps {
@@ -22,66 +23,46 @@ export function ModeSelectors({
   onViewTypeChange,
 }: ModeSelectorProps) {
   return (
-    <div className="flex gap-2 w-full">
-      {/* Left pill: Personal / Total */}
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <button
-            className={cn(
-              'flex-1 flex items-center justify-center gap-1.5 rounded-full px-3 py-2',
-              'text-xs font-semibold transition-colors',
-              'bg-accent text-accent-foreground'
-            )}
-          >
-            {dataMode === 'personal' ? 'Personal' : 'Total'}
-            <ChevronDown className="h-3.5 w-3.5" />
-          </button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="center" className="min-w-[120px]">
-          <DropdownMenuItem
-            onClick={() => onDataModeChange('personal')}
-            className={cn(dataMode === 'personal' && 'font-bold')}
-          >
-            Personal
-          </DropdownMenuItem>
-          <DropdownMenuItem
-            onClick={() => onDataModeChange('total')}
-            className={cn(dataMode === 'total' && 'font-bold')}
-          >
-            Total
-          </DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
+    <div className="space-y-2 w-full">
+      {/* Personal / Total toggle */}
+      <div className="flex gap-2">
+        <button
+          onClick={() => onDataModeChange('personal')}
+          className={cn(
+            'flex-1 flex items-center justify-center gap-1.5 rounded-full px-3 py-1.5',
+            'text-xs font-semibold transition-colors border',
+            dataMode === 'personal'
+              ? 'bg-primary/10 text-primary border-primary/30'
+              : 'bg-muted/50 text-muted-foreground border-border/30 hover:bg-muted'
+          )}
+        >
+          <User className="h-3.5 w-3.5" />
+          Personal
+        </button>
+        <button
+          onClick={() => onDataModeChange('total')}
+          className={cn(
+            'flex-1 flex items-center justify-center gap-1.5 rounded-full px-3 py-1.5',
+            'text-xs font-semibold transition-colors border',
+            dataMode === 'total'
+              ? 'bg-primary/10 text-primary border-primary/30'
+              : 'bg-muted/50 text-muted-foreground border-border/30 hover:bg-muted'
+          )}
+        >
+          <Users className="h-3.5 w-3.5" />
+          Total
+        </button>
+      </div>
 
-      {/* Right pill: Leads / Funnels */}
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <button
-            className={cn(
-              'flex-1 flex items-center justify-center gap-1.5 rounded-full px-3 py-2',
-              'text-xs font-semibold transition-colors',
-              'bg-accent text-accent-foreground'
-            )}
-          >
-            {viewType === 'leads' ? 'Leads' : 'Funnels'}
-            <ChevronDown className="h-3.5 w-3.5" />
-          </button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="center" className="min-w-[120px]">
-          <DropdownMenuItem
-            onClick={() => onViewTypeChange('leads')}
-            className={cn(viewType === 'leads' && 'font-bold')}
-          >
-            Leads
-          </DropdownMenuItem>
-          <DropdownMenuItem
-            onClick={() => onViewTypeChange('funnel')}
-            className={cn(viewType === 'funnel' && 'font-bold')}
-          >
-            Funnels
-          </DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
+      {/* Leads / Funnels - TopTabBar style */}
+      <TopTabBar
+        options={[
+          { value: 'leads', label: 'Leads', icon: Phone },
+          { value: 'funnel', label: 'Funnel', icon: Layers },
+        ]}
+        value={viewType}
+        onChange={(v) => onViewTypeChange(v as ViewType)}
+      />
     </div>
   );
 }

@@ -260,22 +260,24 @@ export const ProspectRow = memo(function ProspectRow({
         return (
           <td 
             key={columnId} 
-            className={cellClass} 
+            className={cn(cellClass, "text-right")} 
             style={{ width: '35%', minWidth: '100px' }}
             onPointerDown={(e) => e.stopPropagation()}
           >
-            <InlineSelect 
-              value={getActionDisplayValue()} 
-              options={actionOptions} 
-              onChange={handleActionChange} 
-              placeholder="Select..." 
-              renderValue={(value) => <ActionBadge action={value} />} 
-              showTagSeparation={showLeadsTagSeparation}
-              trackingOptions={leadsTrackingTagNames}
-              nonTrackingOptions={leadsNonTrackingTags}
-              finalTargetTag={leadsFinalTargetTag}
-              stageTag={leadsStageTag}
-            />
+            <div className="flex justify-end">
+              <InlineSelect 
+                value={getActionDisplayValue()} 
+                options={actionOptions} 
+                onChange={handleActionChange} 
+                placeholder="Select..." 
+                renderValue={(value) => <ActionBadge action={value} />} 
+                showTagSeparation={showLeadsTagSeparation}
+                trackingOptions={leadsTrackingTagNames}
+                nonTrackingOptions={leadsNonTrackingTags}
+                finalTargetTag={leadsFinalTargetTag}
+                stageTag={leadsStageTag}
+              />
+            </div>
           </td>
         );
       
@@ -283,21 +285,23 @@ export const ProspectRow = memo(function ProspectRow({
         return (
           <td 
             key={columnId} 
-            className={cellClass} 
+            className={cn(cellClass, "text-right")} 
             style={{ width: '35%', minWidth: '100px' }}
             onPointerDown={(e) => e.stopPropagation()}
           >
-            <InlineSelect 
-              value={getStageDisplayValue()} 
-              options={stageOptions} 
-              onChange={handleStageChange} 
-              renderValue={(value) => <StageBadge stage={value} />} 
-              placeholder="Select..." 
-              showTagSeparation={showStageTagSeparation}
-              trackingOptions={stageTagNames}
-              nonTrackingOptions={stageNonTrackingTags}
-              finalTargetTag={stageFinalTargetTag}
-            />
+            <div className="flex justify-end">
+              <InlineSelect 
+                value={getStageDisplayValue()} 
+                options={stageOptions} 
+                onChange={handleStageChange} 
+                renderValue={(value) => <StageBadge stage={value} />} 
+                placeholder="Select..." 
+                showTagSeparation={showStageTagSeparation}
+                trackingOptions={stageTagNames}
+                nonTrackingOptions={stageNonTrackingTags}
+                finalTargetTag={stageFinalTargetTag}
+              />
+            </div>
           </td>
         );
       
