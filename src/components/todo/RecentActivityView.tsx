@@ -2,6 +2,7 @@
 import { useMemo, useState } from 'react';
 import { useProspectsQuery } from '@/hooks/useProspectsQuery';
 import { useGlobalTodos } from '@/contexts/TodosContext';
+import { useActivityLogs } from '@/hooks/useActivityLogs';
 import { useCalendarStrip } from '@/hooks/useCalendarStrip';
 import { CalendarStrip } from '@/components/calendar/CalendarStrip';
 import { SearchBar } from '@/components/ui/SearchBar';
