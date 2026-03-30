@@ -294,7 +294,7 @@ export default function ListUp() {
       // AND between categories
       return matchesResponse && matchesStage && matchesQuality;
     });
-  }, [modeFilteredProspects, selectedResponses, selectedStages, selectedQualities, hasActiveFilters, searchQuery]);
+  }, [modeFilteredProspects, selectedResponses, selectedStages, selectedQualities, hasActiveFilters, searchQuery, prospectsDateFilter, prospectsCalendar.selectedDate]);
 
   // Group prospects by their primary tag for display
   const prospectsByTag = useMemo(() => {
