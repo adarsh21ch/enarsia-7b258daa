@@ -1,4 +1,4 @@
-import { Component, ReactNode } from "react";
+import { Component, ReactNode, lazy, Suspense } from "react";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { AuthProvider } from "@/contexts/AuthContext";
@@ -11,35 +11,45 @@ import { Toaster } from "sonner";
 import { InstallPromptBanner } from "@/components/pwa/InstallPromptBanner";
 import { UpdateBanner } from "@/components/pwa/UpdateBanner";
 import { AppAccessTracker } from "@/components/AppAccessTracker";
+import { Loader2 } from "lucide-react";
 
-// Direct imports
+// Eagerly load the most used pages (bottom nav tabs)
+import Dashboard from "./pages/Dashboard";
+import ListUp from "./pages/ListUp";
+import TodoUp from "./pages/TodoUp";
+import Tracking from "./pages/Tracking";
+import Profile from "./pages/Profile";
 import Auth from "./pages/Auth";
 import Index from "./pages/Index";
-import Dashboard from "./pages/Dashboard";
-import Home from "./pages/Home";
-import Profile from "./pages/Profile";
-import Tracking from "./pages/Tracking";
-import TodoUp from "./pages/TodoUp";
-import ListUp from "./pages/ListUp";
-import Inbox from "./pages/Inbox";
-import ResetPassword from "./pages/ResetPassword";
-import NotFound from "./pages/NotFound";
-import Terms from "./pages/Terms";
-import Privacy from "./pages/Privacy";
-import Refund from "./pages/Refund";
-import Admin from "./pages/Admin";
-import PaymentSuccess from "./pages/PaymentSuccess";
-import Funnels from "./pages/Funnels";
-import FunnelEditor from "./pages/FunnelEditor";
-import FunnelAnalytics from "./pages/FunnelAnalytics";
-import FunnelView from "./pages/FunnelView";
-import FormsDashboard from "./features/forms/pages/FormsDashboard";
-import FormResponsesPage from "./features/forms/pages/FormResponsesPage";
-import PublicFormPage from "./features/forms/pages/PublicFormPage";
-import SharedLeads from "./pages/SharedLeads";
-import Notes from "./pages/Notes";
-import NoteEditor from "./pages/NoteEditor";
-import TrackingFormat from "./pages/TrackingFormat";
+
+// Lazy load less frequently accessed pages
+const Home = lazy(() => import("./pages/Home"));
+const Inbox = lazy(() => import("./pages/Inbox"));
+const ResetPassword = lazy(() => import("./pages/ResetPassword"));
+const NotFound = lazy(() => import("./pages/NotFound"));
+const Terms = lazy(() => import("./pages/Terms"));
+const Privacy = lazy(() => import("./pages/Privacy"));
+const Refund = lazy(() => import("./pages/Refund"));
+const Admin = lazy(() => import("./pages/Admin"));
+const PaymentSuccess = lazy(() => import("./pages/PaymentSuccess"));
+const Funnels = lazy(() => import("./pages/Funnels"));
+const FunnelEditor = lazy(() => import("./pages/FunnelEditor"));
+const FunnelAnalytics = lazy(() => import("./pages/FunnelAnalytics"));
+const FunnelView = lazy(() => import("./pages/FunnelView"));
+const FormsDashboard = lazy(() => import("./features/forms/pages/FormsDashboard"));
+const FormResponsesPage = lazy(() => import("./features/forms/pages/FormResponsesPage"));
+const PublicFormPage = lazy(() => import("./features/forms/pages/PublicFormPage"));
+const SharedLeads = lazy(() => import("./pages/SharedLeads"));
+const Notes = lazy(() => import("./pages/Notes"));
+const NoteEditor = lazy(() => import("./pages/NoteEditor"));
+const TrackingFormat = lazy(() => import("./pages/TrackingFormat"));
+
+// Minimal loading fallback
+const PageLoader = () => (
+  <div className="min-h-screen flex items-center justify-center bg-background">
+    <Loader2 className="h-6 w-6 animate-spin text-primary" />
+  </div>
+);
 
 // Error Boundary to catch rendering errors
 class ErrorBoundary extends Component<{ children: ReactNode }, { hasError: boolean; error: Error | null }> {
@@ -76,9 +86,10 @@ const queryClient = new QueryClient({
     queries: {
       retry: 1,
       refetchOnWindowFocus: false,
-      staleTime: 60000, // 1 minute - data considered fresh, prevents unnecessary refetches
-      gcTime: 300000, // 5 minutes - keep unused data in cache for faster navigation
+      staleTime: 120000, // 2 minutes - data stays fresh longer, fewer refetches on tab switch
+      gcTime: 600000, // 10 minutes - keep cache longer for snappy back-navigation
       refetchOnMount: false, // Don't refetch when components remount (tab switches)
+      refetchOnReconnect: false, // Don't auto-refetch on reconnect
     },
   },
 });
@@ -98,36 +109,38 @@ function App() {
                     <InstallPromptBanner />
                     <UpdateBanner />
                     <AppAccessTracker />
-                    <Routes>
-                      <Route path="/" element={<Index />} />
-                      <Route path="/auth" element={<Auth />} />
-                      <Route path="/reset-password" element={<ResetPassword />} />
-                      <Route path="/dashboard" element={<Dashboard />} />
-                      <Route path="/tracking" element={<Tracking />} />
-                      <Route path="/home" element={<Home />} />
-                      <Route path="/action" element={<TodoUp />} />
-                      <Route path="/listup" element={<ListUp />} />
-                      <Route path="/inbox" element={<Inbox />} />
-                      <Route path="/profile" element={<Profile />} />
-                      <Route path="/terms" element={<Terms />} />
-                      <Route path="/privacy" element={<Privacy />} />
-                      <Route path="/refund" element={<Refund />} />
-                      <Route path="/admin" element={<Admin />} />
-                      <Route path="/payment-success" element={<PaymentSuccess />} />
-                      <Route path="/funnels" element={<Funnels />} />
-                      <Route path="/funnels/new" element={<FunnelEditor />} />
-                      <Route path="/funnels/:id/edit" element={<FunnelEditor />} />
-                      <Route path="/funnels/:id/analytics" element={<FunnelAnalytics />} />
-                      <Route path="/f/:slug" element={<FunnelView />} />
-                      <Route path="/forms" element={<FormsDashboard />} />
-                      <Route path="/forms/:formId/responses" element={<FormResponsesPage />} />
-                      <Route path="/share/form/:token" element={<PublicFormPage />} />
-                      <Route path="/shared-leads" element={<SharedLeads />} />
-                      <Route path="/notes" element={<Notes />} />
-                      <Route path="/notes/:id" element={<NoteEditor />} />
-                      <Route path="/tracking-format" element={<TrackingFormat />} />
-                      <Route path="*" element={<NotFound />} />
-                    </Routes>
+                    <Suspense fallback={<PageLoader />}>
+                      <Routes>
+                        <Route path="/" element={<Index />} />
+                        <Route path="/auth" element={<Auth />} />
+                        <Route path="/reset-password" element={<ResetPassword />} />
+                        <Route path="/dashboard" element={<Dashboard />} />
+                        <Route path="/tracking" element={<Tracking />} />
+                        <Route path="/home" element={<Home />} />
+                        <Route path="/action" element={<TodoUp />} />
+                        <Route path="/listup" element={<ListUp />} />
+                        <Route path="/inbox" element={<Inbox />} />
+                        <Route path="/profile" element={<Profile />} />
+                        <Route path="/terms" element={<Terms />} />
+                        <Route path="/privacy" element={<Privacy />} />
+                        <Route path="/refund" element={<Refund />} />
+                        <Route path="/admin" element={<Admin />} />
+                        <Route path="/payment-success" element={<PaymentSuccess />} />
+                        <Route path="/funnels" element={<Funnels />} />
+                        <Route path="/funnels/new" element={<FunnelEditor />} />
+                        <Route path="/funnels/:id/edit" element={<FunnelEditor />} />
+                        <Route path="/funnels/:id/analytics" element={<FunnelAnalytics />} />
+                        <Route path="/f/:slug" element={<FunnelView />} />
+                        <Route path="/forms" element={<FormsDashboard />} />
+                        <Route path="/forms/:formId/responses" element={<FormResponsesPage />} />
+                        <Route path="/share/form/:token" element={<PublicFormPage />} />
+                        <Route path="/shared-leads" element={<SharedLeads />} />
+                        <Route path="/notes" element={<Notes />} />
+                        <Route path="/notes/:id" element={<NoteEditor />} />
+                        <Route path="/tracking-format" element={<TrackingFormat />} />
+                        <Route path="*" element={<NotFound />} />
+                      </Routes>
+                    </Suspense>
                     </TodosProvider>
                   </ProspectsProvider>
                 </TrackingFormatProvider>
