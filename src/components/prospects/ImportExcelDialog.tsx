@@ -50,10 +50,10 @@ function guessFieldFromValues(values: string[]): keyof ColumnMapping | null {
   const nonEmpty = values.filter(v => v && v.trim().length > 0);
   if (nonEmpty.length === 0) return null;
 
-  // Phone: 10+ digit numbers, may start with + or country code
+  // Phone: 7-15 digit numbers, may start with + or country code
   const phonePattern = /^[\+]?[\d\s\-\(\)]{7,15}$/;
   const phoneMatches = nonEmpty.filter(v => phonePattern.test(v.trim())).length;
-  if (phoneMatches >= nonEmpty.length * 0.6) return 'phone';
+  if (phoneMatches >= nonEmpty.length * 0.6) return 'phone'; // caller handles phone vs phone2
 
   // Email
   const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -83,6 +83,11 @@ function guessFieldFromValues(values: string[]): keyof ColumnMapping | null {
   const genderMatches = nonEmpty.filter(v => genderValues.includes(v.trim().toLowerCase())).length;
   if (genderMatches >= nonEmpty.length * 0.5) return 'gender';
 
+  // Address: look for city/state/location-like words across multiple rows
+  const addressKeywords = /\b(nagar|colony|road|street|st|city|town|village|district|sector|phase|block|apartment|apt|flat|floor|plot|lane|gali|mohalla|ward|taluka|mandal|delhi|mumbai|pune|bangalore|chennai|kolkata|hyderabad|ahmedabad|jaipur|lucknow|kanpur|nagpur|indore|thane|bhopal|visakhapatnam|patna|vadodara|ghaziabad|ludhiana|agra|nashik|faridabad|meerut|rajkot|varanasi|srinagar|aurangabad|dhanbad|amritsar|allahabad|ranchi|howrah|coimbatore|jabalpur|gwalior|vijayawada|jodhpur|madurai|raipur|kota|guwahati|chandigarh|solapur|hubli|tiruchirappalli|bareilly|moradabad|mysore|tiruppur|gurgaon|noida|india|maharashtra|karnataka|tamil\s*nadu|gujarat|rajasthan|uttar\s*pradesh|madhya\s*pradesh|west\s*bengal|andhra|telangana|kerala|bihar|punjab|haryana|odisha|assam|jharkhand|chattisgarh|uttarakhand|goa|east|west|north|south)\b/i;
+  const addressMatches = nonEmpty.filter(v => addressKeywords.test(v.trim())).length;
+  if (addressMatches >= Math.max(1, nonEmpty.length * 0.3)) return 'address';
+
   // Name: 2+ words with letters, not too long
   const namePattern = /^[a-zA-Z\u0900-\u097F\s\.]{2,50}$/;
   const nameMatches = nonEmpty.filter(v => namePattern.test(v.trim()) && v.trim().includes(' ')).length;
@@ -99,9 +104,9 @@ function autoDetectMapping(columns: string[], allData: Record<string, string>[])
   const headerPatterns: [keyof ColumnMapping, RegExp][] = [
     ['name', /\bname\b/i],
     ['phone', /phone\s*1|mobile|phone|contact/i],
-    ['phone2', /phone\s*2|alt.*phone/i],
+    ['phone2', /phone\s*2|alt.*phone|whatsapp/i],
     ['email', /email|gmail|mail/i],
-    ['address', /address|city|location|state/i],
+    ['address', /address|city|location|state|place/i],
     ['age_or_dob', /\bage\b|dob|birth/i],
     ['gender', /gender|sex/i],
     ['instagram', /insta|ig\b/i],
@@ -122,10 +127,25 @@ function autoDetectMapping(columns: string[], allData: Record<string, string>[])
   // Second pass: data-based detection for unmatched columns
   const sampleRows = allData.slice(0, 10);
   for (const col of columns) {
-    if (result[col]) continue; // already matched by header
+    if (result[col]) continue;
     const sampleValues = sampleRows.map(row => row[col] || '');
     const guess = guessFieldFromValues(sampleValues);
-    if (guess && !used.has(guess)) {
+    if (!guess) {
+      result[col] = null;
+      continue;
+    }
+    // If guess is 'phone' and phone already used, assign as phone2
+    if (guess === 'phone') {
+      if (!used.has('phone')) {
+        result[col] = 'phone';
+        used.add('phone');
+      } else if (!used.has('phone2')) {
+        result[col] = 'phone2';
+        used.add('phone2');
+      } else {
+        result[col] = null;
+      }
+    } else if (!used.has(guess)) {
       result[col] = guess;
       used.add(guess);
     } else {
