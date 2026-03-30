@@ -96,11 +96,11 @@ export function ProspectFilters({
         {/* Multi-select Stages Filter - only show if showStagesFilter is true */}
         {showStagesFilter && <Popover>
           <PopoverTrigger asChild>
-            <Button variant="outline" className={cn("h-9 min-w-[90px] w-auto text-xs shrink-0 justify-between gap-1", filters.stages.length > 0 && "border-primary/50 bg-primary/5", !canRetarget && "opacity-60")}
+            <Button variant="outline" className={cn("h-9 w-auto text-xs shrink-0 justify-between gap-1 rounded-xl", filters.stages.length > 0 && "border-primary/50 bg-primary/5", !canRetarget && "opacity-60")}
               onClick={!canRetarget ? (e: React.MouseEvent) => { e.preventDefault(); toast.error('Upgrade your plan to use retargeting filters'); } : undefined}
             >
               {!canRetarget && <Lock className="h-3 w-3 mr-0.5" />}
-              <span className="truncate text-sm">{getStagesLabel()}</span>
+              <span className="truncate">{getStagesLabel()}</span>
               <ChevronDown className="h-3.5 w-3.5 opacity-50" />
             </Button>
           </PopoverTrigger>
@@ -127,7 +127,7 @@ export function ProspectFilters({
         {/* Multi-select Responses Filter - only show if showResponsesFilter is true */}
         {showResponsesFilter && <Popover>
           <PopoverTrigger asChild>
-            <Button variant="outline" className={cn("h-9 min-w-[90px] w-auto shrink-0 justify-between gap-1 text-sm", filters.actions.length > 0 && "border-primary/50 bg-primary/5", !canRetarget && "opacity-60")}
+            <Button variant="outline" className={cn("h-9 w-auto text-xs shrink-0 justify-between gap-1 rounded-xl", filters.actions.length > 0 && "border-primary/50 bg-primary/5", !canRetarget && "opacity-60")}
               onClick={!canRetarget ? (e: React.MouseEvent) => { e.preventDefault(); toast.error('Upgrade your plan to use retargeting filters'); } : undefined}
             >
               {!canRetarget && <Lock className="h-3 w-3 mr-0.5" />}

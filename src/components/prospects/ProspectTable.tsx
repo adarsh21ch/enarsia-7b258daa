@@ -1028,27 +1028,25 @@ export function ProspectTable({
       <HardLimitModal />
 
       {/* Single Action Bar - Filters left, Actions right */}
-      <div className="flex-shrink-0 flex items-center justify-between gap-2">
-        {/* Left side - Filters with collapsible search */}
-        <div className="flex items-center gap-2 flex-1 min-w-0">
+      <div className="flex-shrink-0 flex items-center gap-1.5">
+        {/* Left side - Search */}
+        <div className="flex items-center min-w-0">
           {!isSearchExpanded ? (
-            <>
-              <CollapsibleSearchBar 
-                value={onExternalSearchChange ? externalSearch || '' : filters.search || ''} 
-                onChange={(val) => {
-                  if (onExternalSearchChange) {
-                    onExternalSearchChange(val);
-                  } else {
-                    setFilters({ ...filters, search: val });
-                  }
-                }}
-                isCollapsed={true}
-                onExpand={() => setIsSearchExpanded(true)}
-                placeholder="Search name, phone..."
-              />
-            </>
+            <CollapsibleSearchBar 
+              value={onExternalSearchChange ? externalSearch || '' : filters.search || ''} 
+              onChange={(val) => {
+                if (onExternalSearchChange) {
+                  onExternalSearchChange(val);
+                } else {
+                  setFilters({ ...filters, search: val });
+                }
+              }}
+              isCollapsed={true}
+              onExpand={() => setIsSearchExpanded(true)}
+              placeholder="Search name, phone..."
+            />
           ) : (
-            <div className="flex items-center gap-2 flex-1">
+            <div className="flex items-center gap-1.5 flex-1">
               <CollapsibleSearchBar 
                 value={onExternalSearchChange ? externalSearch || '' : filters.search || ''} 
                 onChange={(val) => {
@@ -1072,7 +1070,7 @@ export function ProspectTable({
 
         {/* Right side - Actions (hidden when search expanded) */}
         {!isSearchExpanded && (
-          <div className="flex items-center gap-1.5 shrink-0">
+          <div className="flex items-center gap-1 shrink-0 ml-auto">
             {selectionMode.active ? <div className="flex items-center gap-2 bg-muted/50 rounded-lg px-2 py-1">
                 <span className="text-xs font-medium">{selectedIds.size} Selected</span>
                 <Button variant="destructive" size="sm" onClick={() => setDeleteConfirmOpen(true)} disabled={selectedIds.size === 0} className="h-7 px-2">
