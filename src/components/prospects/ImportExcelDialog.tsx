@@ -534,7 +534,7 @@ export function ImportExcelDialog({ onImport }: ImportExcelDialogProps) {
         )}
 
         {step === 'mapping' && (
-          <div className="flex flex-col overflow-y-auto overflow-x-hidden" style={{ maxHeight: 'calc(90vh - 80px)' }}>
+          <div className="flex flex-col overflow-hidden" style={{ height: 'calc(90vh - 80px)', maxHeight: 'calc(90dvh - 80px)' }}>
             {/* Disclaimer */}
             <div className="bg-primary/5 border border-primary/20 rounded-lg p-2.5 mb-3 flex-shrink-0">
               <p className="text-[11px] text-muted-foreground leading-relaxed">
