@@ -41,6 +41,7 @@ export function useProspectsQuery(options: UseProspectsQueryOptions = {}) {
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const { decryptBatch, encryptFields, encryptBatch } = useEncryption();
+  const isQueryEnabled = !!user && enabled;
 
   // Query key includes sheetId, search, filterMode, funnelTag for PROPER cache separation
   // This ensures each sheet/filter has its own cached pages
