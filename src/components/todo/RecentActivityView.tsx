@@ -98,7 +98,7 @@ export function RecentActivityView({ selectedDate: externalDate, searchQuery: ex
         a => a.name.toLowerCase().includes(query) || (a.phone && a.phone.includes(query))
       );
     }
-    return activitiesList;
+    return { activities: activitiesList, importedCount: imported.length };
   }, [prospects, todos, selectedDate, searchQuery]);
 
   const cleanPhoneNumber = (phone: string) => phone.replace(/[^0-9+]/g, '');
