@@ -102,6 +102,7 @@ const [localData, setLocalData] = useState<Partial<Prospect>>({});
       prospect_status: prospect.prospect_status,
       instagram: prospect.instagram || '',
       profession: prospect.profession || '',
+      email: prospect.email || '',
     });
   }, [prospect.id]); // Only reset when lead ID changes
 
