@@ -58,7 +58,7 @@ export function KPIStrip({ prospects, isCalling, kpiTotal, kpiTagCounts }: KPISt
   }, [prospects, isCalling, leadsTrackingTagNames, stageTagNames, leadsStageTag, kpiTotal, kpiTagCounts]);
 
   return (
-    <div className="flex items-center gap-3 overflow-x-auto pb-0.5 scrollbar-hide">
+    <div className="flex items-center gap-3 overflow-x-auto scrollbar-hide h-5">
       {/* Total Leads */}
       <div className="flex items-center gap-1.5 shrink-0">
         <span className="h-2 w-2 rounded-full bg-primary shrink-0" />
