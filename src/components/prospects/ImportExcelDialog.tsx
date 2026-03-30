@@ -224,17 +224,7 @@ export function ImportExcelDialog({ onImport }: ImportExcelDialogProps) {
       setColumns(cols);
       setPreviewData(jsonData.slice(0, 5));
       setFullData(jsonData);
-      // Reset mapping since we now use generic column names
-      setMapping({
-        name: null,
-        phone: null,
-        phone2: null,
-        address: null,
-        age_or_dob: null,
-        gender: null,
-        instagram: null,
-        profession: null,
-      });
+      setReverseMapping(autoDetectMapping(cols));
       setStep('mapping');
     } catch (err) {
       setError('Failed to parse file. Please ensure it\'s a valid Excel or CSV file.');
