@@ -90,9 +90,8 @@ export function ProspectFilters({
     return `${filters.actions.length} Responses`;
   };
   return <>
-    <div className="flex flex-col gap-2 w-full">
-      {/* Filters row - compact on mobile */}
-      <div className="flex gap-2 overflow-x-auto pb-1 -mx-1 px-1 sm:flex-wrap sm:overflow-visible items-center">
+    <div className="flex items-center">
+      <div className="flex gap-1.5 items-center">
         {/* Multi-select Stages Filter - only show if showStagesFilter is true */}
         {showStagesFilter && <Popover>
           <PopoverTrigger asChild>
