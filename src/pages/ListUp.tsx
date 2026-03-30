@@ -22,6 +22,7 @@ import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
 import { getTagStyle } from '@/lib/tagColors';
 import { Prospect } from '@/types/prospect';
+import nevoraLogo from '@/assets/nevorai-logo.jpeg';
 
 type LeadMode = 'leads' | 'funnel';
 
