@@ -1091,7 +1091,7 @@ export function ProspectTable({
                 </Button>
               </div> : <>
                 <ProspectFilters filters={filters} onFiltersChange={setFilters} showStagesFilter={!isCalling} showResponsesFilter={isCalling} filterTagButton={!isCalling ? <ChangeFilterTagButton /> : undefined} hideSearch={true} />
-                <ImportExcelDialog onImport={handleImportProspects} />
+                <Suspense fallback={null}><ImportExcelDialog onImport={handleImportProspects} /></Suspense>
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button variant="outline" size="icon" className="h-9 w-9 rounded-xl">
