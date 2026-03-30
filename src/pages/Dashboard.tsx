@@ -14,12 +14,9 @@ import { FilterTagSetupDialog, useFilterTagSetup } from '@/components/prospects/
 import { KPIStrip } from '@/components/prospects/KPIStrip';
 import { TrialBanner } from '@/components/subscription/TrialBanner';
 import { UpgradeButton } from '@/components/subscription/UpgradeButton';
-import { RecentActivityView } from '@/components/todo/RecentActivityView';
-import { Loader2, Phone, Layers, Flame, Clock } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { Loader2, Phone, Layers, Flame } from 'lucide-react';
 import nevoraLogo from '@/assets/nevorai-logo.jpeg';
 import { useStreak } from '@/hooks/useStreak';
-import { cn } from '@/lib/utils';
 
 
 // Pull-to-refresh hook - fixed to not interfere with normal scrolling
@@ -108,8 +105,6 @@ export default function Dashboard() {
   const [searchQuery, setSearchQuery] = useState('');
   const [debouncedSearchQuery, setDebouncedSearchQuery] = useState('');
 
-  // Recent activity toggle
-  const [showRecentActivity, setShowRecentActivity] = useState(false);
 
   const headerRef = useRef<HTMLElement>(null);
 
@@ -246,37 +241,28 @@ export default function Dashboard() {
       {/* Compact Header - matching To-Do density */}
       <header ref={headerRef} className="fixed-header z-40 bg-card/80 backdrop-blur-xl border-b border-border/40">
         {/* Row A: Page title - compact & premium */}
-        <div className="flex items-center justify-between px-4 py-2.5">
+        <div className="flex items-center px-4 py-2.5">
           <div className="flex items-center gap-2.5">
             <img src={nevoraLogo} alt="NevorAI Logo" className="h-9 w-9 rounded-xl object-cover shadow-sm" />
             <div>
               <div className="flex items-center gap-1.5">
-                <h1 className="text-lg font-bold tracking-tight">
-                  {showRecentActivity ? 'Activity History' : 'Calling'}
-                </h1>
-                {streakEnabled && !showRecentActivity && (
+                <h1 className="text-lg font-bold tracking-tight">Calling</h1>
+                {streakEnabled && (
                   <div className="flex items-center gap-0.5 px-1.5 py-0.5 rounded-md bg-orange-500/10">
                     <Flame className="h-3.5 w-3.5 text-orange-500" />
                     <span className="text-xs font-bold text-orange-600">{currentStreak}</span>
                   </div>
                 )}
               </div>
-              <p className="text-[11px] text-muted-foreground font-medium">
-                {showRecentActivity ? "Today's Updates" : 'Manage your prospects'}
-              </p>
+              <p className="text-[11px] text-muted-foreground font-medium">Manage your prospects</p>
             </div>
           </div>
-          <Button variant="ghost" size="icon" onClick={() => setShowRecentActivity(!showRecentActivity)} className={cn("h-9 w-9 rounded-full", showRecentActivity ? "bg-accent text-accent-foreground hover:bg-accent/90" : "text-muted-foreground")}>
-            <Clock className="h-5 w-5" />
-          </Button>
         </div>
         
         {/* Row B: Segmented control */}
-        {!showRecentActivity && (
-          <div className="px-4 pb-2">
-            <TopTabBar options={toggleOptions} value={mainTab} onChange={handleTabChange} />
-          </div>
-        )}
+        <div className="px-4 pb-2">
+          <TopTabBar options={toggleOptions} value={mainTab} onChange={handleTabChange} />
+        </div>
       </header>
 
       <main ref={pullRef} className="flex-1 flex flex-col min-h-0 overflow-y-auto overflow-x-hidden" style={{
@@ -284,96 +270,88 @@ export default function Dashboard() {
     }}>
         <PullToRefreshIndicator isRefreshing={isRefreshing} pullDistance={pullDistance} showIndicator={showIndicator} />
 
-        {showRecentActivity ? (
-          <div className="px-4 pt-2 pb-40 md:pb-24 lg:pb-16">
-            <RecentActivityView />
-          </div>
-        ) : (
-          <>
-            {/* KPI Strip - between toggle and action row */}
-            <div className="px-4 pt-2">
-              <KPIStrip prospects={prospects} isCalling={mainTab === 'leads'} kpiTotal={kpiTotal} kpiTagCounts={kpiTagCounts} />
-            </div>
-            
-            {/* Trial Banner */}
-            <div className="px-4 pt-2">
-              <TrialBanner tabId="dashboard" />
-              <UpgradeButton tabId="dashboard" variant="prominent" />
-            </div>
-            
-            {/* Table area - flex-1 to fill remaining space, pb for bottom nav */}
-            <div className="flex-1 min-h-0 px-4 pb-48 md:pb-28 lg:pb-20">
-          {mainTab === 'leads' ? (
-            <ProspectTable 
-              key={`leads-${tableScrollKey.current}`}
-              prospects={prospects} 
-              loading={loading} 
-              onAdd={addProspect} 
-              onUpdate={updateProspect} 
-              onDelete={deleteProspect} 
-              onBulkDelete={bulkDeleteProspects} 
-              onBulkDeleteBySheet={bulkDeleteBySheet}
-              onRestoreProspect={restoreProspect} 
-              onRestoreProspects={restoreProspects} 
-              onImport={importProspects} 
-              onReorderProspects={reorderProspects}
-              sheets={sheets} 
-              selectedSheetId={selectedSheetId} 
-              onSelectSheet={setSelectedSheetId} 
-              onAddSheet={addSheet} 
-              onUpdateSheet={updateSheet} 
-              onDeleteSheet={deleteSheet} 
-              getOrCreateTodaySheet={getOrCreateTodaySheet} 
-              filterMode="calling" 
-              subFilter="all" 
-              externalSearch={searchQuery}
-              onExternalSearchChange={setSearchQuery}
-              hasNextPage={hasNextPage}
-              onLoadMore={fetchNextPage}
-              isLoadingMore={isFetchingNextPage}
-              kpiTotal={kpiTotal}
-              kpiTagCounts={kpiTagCounts}
-              loadedCount={loadedCount}
-              fetchAllForExport={fetchAllForExport}
-              stickyHeaderTop={0}
-            />
-          ) : (
-            <ProspectTable 
-              key={`funnel-${tableScrollKey.current}`}
-              prospects={prospects} 
-              loading={loading} 
-              onAdd={addProspect} 
-              onUpdate={updateProspect} 
-              onDelete={deleteProspect} 
-              onBulkDelete={bulkDeleteProspects} 
-              onBulkDeleteBySheet={bulkDeleteBySheet}
-              onRestoreProspect={restoreProspect} 
-              onRestoreProspects={restoreProspects} 
-              onImport={importProspects} 
-              onReorderProspects={reorderProspects}
-              sheets={sheets} 
-              selectedSheetId={selectedSheetId} 
-              onSelectSheet={setSelectedSheetId} 
-              onAddSheet={addSheet} 
-              onUpdateSheet={updateSheet} 
-              onDeleteSheet={deleteSheet} 
-              filterMode="funnel" 
-              subFilter="all" 
-              externalSearch={searchQuery}
-              onExternalSearchChange={setSearchQuery}
-              hasNextPage={hasNextPage}
-              onLoadMore={fetchNextPage}
-              isLoadingMore={isFetchingNextPage}
-              kpiTotal={kpiTotal}
-              kpiTagCounts={kpiTagCounts}
-              loadedCount={loadedCount}
-              fetchAllForExport={fetchAllForExport}
-              stickyHeaderTop={0}
-            />
-          )}
-            </div>
-          </>
-        )}
+        {/* KPI Strip - between toggle and action row */}
+        <div className="px-4 pt-2">
+          <KPIStrip prospects={prospects} isCalling={mainTab === 'leads'} kpiTotal={kpiTotal} kpiTagCounts={kpiTagCounts} />
+        </div>
+        
+        {/* Trial Banner */}
+        <div className="px-4 pt-2">
+          <TrialBanner tabId="dashboard" />
+          <UpgradeButton tabId="dashboard" variant="prominent" />
+        </div>
+        
+        {/* Table area - flex-1 to fill remaining space, pb for bottom nav */}
+        <div className="flex-1 min-h-0 px-4 pb-48 md:pb-28 lg:pb-20">
+      {mainTab === 'leads' ? (
+        <ProspectTable 
+          key={`leads-${tableScrollKey.current}`}
+          prospects={prospects} 
+          loading={loading} 
+          onAdd={addProspect} 
+          onUpdate={updateProspect} 
+          onDelete={deleteProspect} 
+          onBulkDelete={bulkDeleteProspects} 
+          onBulkDeleteBySheet={bulkDeleteBySheet}
+          onRestoreProspect={restoreProspect} 
+          onRestoreProspects={restoreProspects} 
+          onImport={importProspects} 
+          onReorderProspects={reorderProspects}
+          sheets={sheets} 
+          selectedSheetId={selectedSheetId} 
+          onSelectSheet={setSelectedSheetId} 
+          onAddSheet={addSheet} 
+          onUpdateSheet={updateSheet} 
+          onDeleteSheet={deleteSheet} 
+          getOrCreateTodaySheet={getOrCreateTodaySheet} 
+          filterMode="calling" 
+          subFilter="all" 
+          externalSearch={searchQuery}
+          onExternalSearchChange={setSearchQuery}
+          hasNextPage={hasNextPage}
+          onLoadMore={fetchNextPage}
+          isLoadingMore={isFetchingNextPage}
+          kpiTotal={kpiTotal}
+          kpiTagCounts={kpiTagCounts}
+          loadedCount={loadedCount}
+          fetchAllForExport={fetchAllForExport}
+          stickyHeaderTop={0}
+        />
+      ) : (
+        <ProspectTable 
+          key={`funnel-${tableScrollKey.current}`}
+          prospects={prospects} 
+          loading={loading} 
+          onAdd={addProspect} 
+          onUpdate={updateProspect} 
+          onDelete={deleteProspect} 
+          onBulkDelete={bulkDeleteProspects} 
+          onBulkDeleteBySheet={bulkDeleteBySheet}
+          onRestoreProspect={restoreProspect} 
+          onRestoreProspects={restoreProspects} 
+          onImport={importProspects} 
+          onReorderProspects={reorderProspects}
+          sheets={sheets} 
+          selectedSheetId={selectedSheetId} 
+          onSelectSheet={setSelectedSheetId} 
+          onAddSheet={addSheet} 
+          onUpdateSheet={updateSheet} 
+          onDeleteSheet={deleteSheet} 
+          filterMode="funnel" 
+          subFilter="all" 
+          externalSearch={searchQuery}
+          onExternalSearchChange={setSearchQuery}
+          hasNextPage={hasNextPage}
+          onLoadMore={fetchNextPage}
+          isLoadingMore={isFetchingNextPage}
+          kpiTotal={kpiTotal}
+          kpiTagCounts={kpiTagCounts}
+          loadedCount={loadedCount}
+          fetchAllForExport={fetchAllForExport}
+          stickyHeaderTop={0}
+        />
+      )}
+        </div>
       </main>
 
       <BottomNav />

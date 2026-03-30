@@ -11,7 +11,7 @@ import { TrialBanner } from '@/components/subscription/TrialBanner';
 import { UpgradeButton } from '@/components/subscription/UpgradeButton';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Loader2, Filter, ChevronDown, ChevronUp, Tags, X, Eye, Search, Phone, Layers, Clock, Calendar1 } from 'lucide-react';
+import { Loader2, Filter, ChevronDown, ChevronUp, Tags, X, Search, Phone, Layers, Clock, Calendar1 } from 'lucide-react';
 import { RecentActivityView } from '@/components/todo/RecentActivityView';
 import { CalendarStrip } from '@/components/calendar/CalendarStrip';
 import { useCalendarStrip } from '@/hooks/useCalendarStrip';
@@ -105,11 +105,6 @@ export default function ListUp() {
     user,
     loading: authLoading
   } = useAuth();
-  const {
-    prospects,
-    loading: prospectsLoading,
-    refetch
-  } = useProspectsQuery();
 
   // Lead mode toggle - default to leads
   const [leadMode, setLeadMode] = useState<LeadMode>(() => {
@@ -134,10 +129,15 @@ export default function ListUp() {
     { value: 'activity', label: 'Activity', icon: Clock },
     { value: 'prospects', label: 'Prospects', icon: Tags }
   ];
-  
-  // Show all tags toggle (including empty ones)
-  const [showAllTags, setShowAllTags] = useState(false);
-  
+
+  const prospectsEnabled = mainTab === 'prospects';
+  const {
+    prospects,
+    refetch
+  } = useProspectsQuery({
+    enabled: prospectsEnabled
+  });
+
   // Search query
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -241,26 +241,8 @@ export default function ListUp() {
     };
   }, [modeFilteredProspects]);
 
-  // Get all tags (including empty ones from all prospects) for "Show All" option
-  const allTags = useMemo(() => {
-    const responses = new Set<string>();
-    const stages = new Set<string>();
-    const qualities = new Set<string>();
-    prospects.forEach(p => {
-      if (p.action_taken) responses.add(p.action_taken);
-      if (p.funnel_stage) stages.add(p.funnel_stage);
-      if (p.prospect_status) qualities.add(p.prospect_status);
-    });
-    return {
-      responseTags: Array.from(responses).sort(),
-      stageTags: Array.from(stages).sort(),
-      qualityTags: Array.from(qualities).sort()
-    };
-  }, [prospects]);
-
-  // Choose which tags to display based on showAllTags toggle
-  const displayResponseTags = showAllTags ? allTags.responseTags : responseTags;
-  const displayStageTags = showAllTags ? allTags.stageTags : stageTags;
+  const displayResponseTags = responseTags;
+  const displayStageTags = stageTags;
 
   // Check if any filters are active
   const hasActiveFilters = selectedResponses.length > 0 || selectedStages.length > 0 || selectedQualities.length > 0;

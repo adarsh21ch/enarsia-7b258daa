@@ -33,13 +33,15 @@ interface UseProspectsQueryOptions {
   search?: string;
   filterMode?: 'calling' | 'funnel' | 'leads';
   funnelTag?: string | null; // The action_taken tag that marks prospects as "in funnel"
+  enabled?: boolean;
 }
 
 export function useProspectsQuery(options: UseProspectsQueryOptions = {}) {
-  const { sheetId = null, search = '', filterMode = 'calling', funnelTag = null } = options;
+  const { sheetId = null, search = '', filterMode = 'calling', funnelTag = null, enabled = true } = options;
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const { decryptBatch, encryptFields, encryptBatch } = useEncryption();
+  const isQueryEnabled = !!user && enabled;
 
   // Query key includes sheetId, search, filterMode, funnelTag for PROPER cache separation
   // This ensures each sheet/filter has its own cached pages
@@ -98,7 +100,7 @@ export function useProspectsQuery(options: UseProspectsQueryOptions = {}) {
 
       return { total, tagCounts };
     },
-    enabled: !!user,
+    enabled: isQueryEnabled,
     placeholderData: (previousData) => previousData,
     staleTime: 30000, // 30 seconds
     gcTime: 300000, // 5 minutes
@@ -204,7 +206,7 @@ export function useProspectsQuery(options: UseProspectsQueryOptions = {}) {
     },
     initialPageParam: 0,
     getNextPageParam: (lastPage) => lastPage.nextOffset,
-    enabled: !!user,
+    enabled: isQueryEnabled,
     placeholderData: (previousData) => previousData,
     staleTime: 60000, // 1 minute
     gcTime: 300000, // 5 minutes
@@ -870,7 +872,7 @@ export function useProspectsQuery(options: UseProspectsQueryOptions = {}) {
 
   // Realtime subscription for cross-tab/device sync
   useEffect(() => {
-    if (!user) return;
+    if (!isQueryEnabled || !user) return;
 
     const channel = supabase
       .channel('prospects-realtime')
@@ -893,7 +895,7 @@ export function useProspectsQuery(options: UseProspectsQueryOptions = {}) {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [user, queryClient]);
+  }, [isQueryEnabled, user, queryClient]);
 
   return {
     // Data

@@ -22,7 +22,7 @@ import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuIte
 import { useIsMobile } from '@/hooks/use-mobile';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
-import * as XLSX from 'xlsx';
+
 import { format } from 'date-fns';
 import { useUndoRedo, UndoAction } from '@/hooks/useUndoRedo';
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, DragEndEvent } from '@dnd-kit/core';
@@ -580,6 +580,7 @@ export function ProspectTable({
         'Instagram': p.instagram || '',
         'Date Added': p.date_added ? format(new Date(p.date_added), 'dd/MM/yyyy') : ''
       }));
+      const XLSX = await import('xlsx');
       const wb = XLSX.utils.book_new();
       const ws = XLSX.utils.json_to_sheet(exportData);
       ws['!cols'] = [{
@@ -666,6 +667,7 @@ export function ProspectTable({
         'Instagram': p.instagram || '',
         'Date Added': p.date_added ? format(new Date(p.date_added), 'dd/MM/yyyy') : ''
       }));
+      const XLSX = await import('xlsx');
       const wb = XLSX.utils.book_new();
       const ws = XLSX.utils.json_to_sheet(exportData);
       XLSX.utils.book_append_sheet(wb, ws, 'Prospects');
