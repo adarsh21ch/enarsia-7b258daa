@@ -241,37 +241,28 @@ export default function Dashboard() {
       {/* Compact Header - matching To-Do density */}
       <header ref={headerRef} className="fixed-header z-40 bg-card/80 backdrop-blur-xl border-b border-border/40">
         {/* Row A: Page title - compact & premium */}
-        <div className="flex items-center justify-between px-4 py-2.5">
+        <div className="flex items-center px-4 py-2.5">
           <div className="flex items-center gap-2.5">
             <img src={nevoraLogo} alt="NevorAI Logo" className="h-9 w-9 rounded-xl object-cover shadow-sm" />
             <div>
               <div className="flex items-center gap-1.5">
-                <h1 className="text-lg font-bold tracking-tight">
-                  {showRecentActivity ? 'Activity History' : 'Calling'}
-                </h1>
-                {streakEnabled && !showRecentActivity && (
+                <h1 className="text-lg font-bold tracking-tight">Calling</h1>
+                {streakEnabled && (
                   <div className="flex items-center gap-0.5 px-1.5 py-0.5 rounded-md bg-orange-500/10">
                     <Flame className="h-3.5 w-3.5 text-orange-500" />
                     <span className="text-xs font-bold text-orange-600">{currentStreak}</span>
                   </div>
                 )}
               </div>
-              <p className="text-[11px] text-muted-foreground font-medium">
-                {showRecentActivity ? "Today's Updates" : 'Manage your prospects'}
-              </p>
+              <p className="text-[11px] text-muted-foreground font-medium">Manage your prospects</p>
             </div>
           </div>
-          <Button variant="ghost" size="icon" onClick={() => setShowRecentActivity(!showRecentActivity)} className={cn("h-9 w-9 rounded-full", showRecentActivity ? "bg-accent text-accent-foreground hover:bg-accent/90" : "text-muted-foreground")}>
-            <Clock className="h-5 w-5" />
-          </Button>
         </div>
         
         {/* Row B: Segmented control */}
-        {!showRecentActivity && (
-          <div className="px-4 pb-2">
-            <TopTabBar options={toggleOptions} value={mainTab} onChange={handleTabChange} />
-          </div>
-        )}
+        <div className="px-4 pb-2">
+          <TopTabBar options={toggleOptions} value={mainTab} onChange={handleTabChange} />
+        </div>
       </header>
 
       <main ref={pullRef} className="flex-1 flex flex-col min-h-0 overflow-y-auto overflow-x-hidden" style={{
