@@ -422,6 +422,16 @@ const [localData, setLocalData] = useState({
                 className="h-8 text-sm"
               />
             </div>
+            <div>
+              <label className="text-[10px] text-muted-foreground mb-0.5 block">Email</label>
+              <Input
+                value={localData.email}
+                onChange={(e) => setLocalData(prev => ({ ...prev, email: e.target.value }))}
+                onBlur={() => handleFieldUpdate('email', localData.email)}
+                placeholder="email@example.com"
+                className="h-8 text-sm"
+              />
+            </div>
           </div>
 
           {/* Why/Need */}
