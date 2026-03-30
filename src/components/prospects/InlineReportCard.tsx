@@ -333,6 +333,17 @@ const [localData, setLocalData] = useState<Partial<Prospect>>({});
                 placeholder="@username"
               />
             </div>
+            {/* Email */}
+            <div>
+              <Label className="text-[10px] text-muted-foreground mb-0.5 block">Email</Label>
+              <Input
+                value={localData.email || ''}
+                onChange={(e) => handleFieldChange('email', e.target.value)}
+                onBlur={() => handleFieldBlur('email')}
+                className="h-7 text-xs"
+                placeholder="email@example.com"
+              />
+            </div>
           </div>
 
           {/* Row 3: Why/Need + Notes + Date Added */}
