@@ -306,7 +306,7 @@ export function ImportExcelDialog({ onImport }: ImportExcelDialogProps) {
   const handleImport = async () => {
     // Convert reverseMapping to ColumnMapping
     const mapping: ColumnMapping = {
-      name: null, phone: null, phone2: null, address: null,
+      name: null, phone: null, phone2: null, email: null, address: null,
       age_or_dob: null, gender: null, instagram: null, profession: null,
     };
     for (const [col, field] of Object.entries(reverseMapping)) {
