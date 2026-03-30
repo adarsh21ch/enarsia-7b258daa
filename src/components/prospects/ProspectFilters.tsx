@@ -97,6 +97,7 @@ export function ProspectFilters({
         {showStagesFilter && <Popover>
           <PopoverTrigger asChild>
             <Button variant="outline" className={cn("h-9 min-w-[90px] w-auto text-xs shrink-0 justify-between gap-1", filters.stages.length > 0 && "border-primary/50 bg-primary/5", !canRetarget && "opacity-60")}
+             <Button variant="outline" className={cn("h-9 min-w-0 w-auto text-xs shrink-0 justify-between gap-1 rounded-xl", filters.stages.length > 0 && "border-primary/50 bg-primary/5", !canRetarget && "opacity-60")}
             
               onClick={!canRetarget ? (e: React.MouseEvent) => { e.preventDefault(); toast.error('Upgrade your plan to use retargeting filters'); } : undefined}
             >
