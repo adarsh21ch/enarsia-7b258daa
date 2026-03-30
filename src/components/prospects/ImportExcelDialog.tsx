@@ -23,6 +23,7 @@ interface ColumnMapping {
   name: string | null;
   phone: string | null;
   phone2: string | null;
+  email: string | null;
   address: string | null;
   age_or_dob: string | null;
   gender: string | null;
@@ -34,6 +35,7 @@ const APP_FIELDS: { key: keyof ColumnMapping; label: string; required?: boolean 
   { key: 'name', label: 'Name', required: true },
   { key: 'phone', label: 'Phone 1', required: true },
   { key: 'phone2', label: 'Phone 2' },
+  { key: 'email', label: 'Email' },
   { key: 'address', label: 'Address' },
   { key: 'age_or_dob', label: 'Age / DOB' },
   { key: 'gender', label: 'Gender' },
@@ -43,32 +45,94 @@ const APP_FIELDS: { key: keyof ColumnMapping; label: string; required?: boolean 
 
 type ReverseMapping = Record<string, keyof ColumnMapping | 'skip' | null>;
 
-function autoDetectMapping(columns: string[]): ReverseMapping {
+// Smart detection: analyze SAMPLE DATA (not just headers) to guess field types
+function guessFieldFromValues(values: string[]): keyof ColumnMapping | null {
+  const nonEmpty = values.filter(v => v && v.trim().length > 0);
+  if (nonEmpty.length === 0) return null;
+
+  // Phone: 10+ digit numbers, may start with + or country code
+  const phonePattern = /^[\+]?[\d\s\-\(\)]{7,15}$/;
+  const phoneMatches = nonEmpty.filter(v => phonePattern.test(v.trim())).length;
+  if (phoneMatches >= nonEmpty.length * 0.6) return 'phone';
+
+  // Email
+  const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  const emailMatches = nonEmpty.filter(v => emailPattern.test(v.trim())).length;
+  if (emailMatches >= nonEmpty.length * 0.5) return 'email';
+
+  // Instagram: starts with @ or looks like username
+  const igPattern = /^@[\w.]{1,30}$/;
+  const igMatches = nonEmpty.filter(v => igPattern.test(v.trim())).length;
+  if (igMatches >= nonEmpty.length * 0.5) return 'instagram';
+
+  // Age: small numbers 1-120
+  const agePattern = /^\d{1,3}$/;
+  const ageMatches = nonEmpty.filter(v => {
+    const n = parseInt(v.trim());
+    return agePattern.test(v.trim()) && n >= 1 && n <= 120;
+  }).length;
+  if (ageMatches >= nonEmpty.length * 0.6) return 'age_or_dob';
+
+  // DOB: date-like patterns
+  const dobPattern = /^\d{1,4}[\-\/\.]\d{1,2}[\-\/\.]\d{1,4}$/;
+  const dobMatches = nonEmpty.filter(v => dobPattern.test(v.trim())).length;
+  if (dobMatches >= nonEmpty.length * 0.5) return 'age_or_dob';
+
+  // Gender
+  const genderValues = ['male', 'female', 'm', 'f', 'other', 'man', 'woman'];
+  const genderMatches = nonEmpty.filter(v => genderValues.includes(v.trim().toLowerCase())).length;
+  if (genderMatches >= nonEmpty.length * 0.5) return 'gender';
+
+  // Name: 2+ words with letters, not too long
+  const namePattern = /^[a-zA-Z\u0900-\u097F\s\.]{2,50}$/;
+  const nameMatches = nonEmpty.filter(v => namePattern.test(v.trim()) && v.trim().includes(' ')).length;
+  if (nameMatches >= nonEmpty.length * 0.4) return 'name';
+
+  return null;
+}
+
+function autoDetectMapping(columns: string[], allData: Record<string, string>[]): ReverseMapping {
   const result: ReverseMapping = {};
   const used = new Set<string>();
-  const patterns: [keyof ColumnMapping, RegExp][] = [
-    ['name', /name/i],
+
+  // First pass: header-based matching
+  const headerPatterns: [keyof ColumnMapping, RegExp][] = [
+    ['name', /\bname\b/i],
     ['phone', /phone\s*1|mobile|phone|contact/i],
     ['phone2', /phone\s*2|alt.*phone/i],
-    ['address', /address|city|location/i],
-    ['age_or_dob', /age|dob|birth/i],
+    ['email', /email|gmail|mail/i],
+    ['address', /address|city|location|state/i],
+    ['age_or_dob', /\bage\b|dob|birth/i],
     ['gender', /gender|sex/i],
-    ['instagram', /insta|ig/i],
+    ['instagram', /insta|ig\b/i],
     ['profession', /profession|occupation|job/i],
   ];
+
   for (const col of columns) {
     const lower = col.toLowerCase();
-    let matched = false;
-    for (const [field, regex] of patterns) {
+    for (const [field, regex] of headerPatterns) {
       if (!used.has(field) && regex.test(lower)) {
         result[col] = field;
         used.add(field);
-        matched = true;
         break;
       }
     }
-    if (!matched) result[col] = null;
   }
+
+  // Second pass: data-based detection for unmatched columns
+  const sampleRows = allData.slice(0, 10);
+  for (const col of columns) {
+    if (result[col]) continue; // already matched by header
+    const sampleValues = sampleRows.map(row => row[col] || '');
+    const guess = guessFieldFromValues(sampleValues);
+    if (guess && !used.has(guess)) {
+      result[col] = guess;
+      used.add(guess);
+    } else {
+      result[col] = null;
+    }
+  }
+
   return result;
 }
 
