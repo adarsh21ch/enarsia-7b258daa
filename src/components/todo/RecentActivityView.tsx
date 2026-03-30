@@ -42,9 +42,9 @@ export function RecentActivityView({ selectedDate: externalDate, searchQuery: ex
   const onSearchChange = externalOnSearchChange ?? setInternalSearch;
 
   const { prospects, loading: prospectsLoading } = useProspectsQuery();
-  const { todos, loading: todosLoading } = useGlobalTodos();
+  const { activities: activityLogs, loading: logsLoading } = useActivityLogs(200);
 
-  const loading = prospectsLoading || todosLoading;
+  const loading = prospectsLoading || todosLoading || logsLoading;
 
   // Get personal activities for the selected date
   const activities = useMemo(() => {
