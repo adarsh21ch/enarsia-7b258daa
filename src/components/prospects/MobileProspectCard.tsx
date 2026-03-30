@@ -94,6 +94,7 @@ const [localData, setLocalData] = useState({
       notes: prospect.notes || '',
       instagram: prospect.instagram || '',
       profession: prospect.profession || '',
+      email: prospect.email || '',
     });
     // Clear optimistic state when prospect updates
     setOptimisticAction(null);
