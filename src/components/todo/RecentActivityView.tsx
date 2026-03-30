@@ -46,19 +46,25 @@ export function RecentActivityView({ selectedDate: externalDate, searchQuery: ex
   const loading = prospectsLoading || todosLoading;
 
   // Get personal activities for the selected date
-  const { activities, importedCount } = useMemo(() => {
+  const activities = useMemo(() => {
     const dayProspects = prospects.filter(p => isSameDay(parseISO(p.updated_at), selectedDate));
     
     // Separate imported (never updated after creation) vs genuinely updated leads
-    const imported: typeof dayProspects = [];
+    const importBatches = new Map<string, { count: number; time: Date }>();
     const updated: typeof dayProspects = [];
     
     for (const p of dayProspects) {
       const addedTime = new Date(p.date_added).getTime();
       const updatedTime = new Date(p.updated_at).getTime();
-      // If updated_at is within 5 seconds of date_added, it's just an import/creation
       if (Math.abs(updatedTime - addedTime) < 5000) {
-        imported.push(p);
+        // Group imports by minute to batch them
+        const minuteKey = format(new Date(p.date_added), 'yyyy-MM-dd HH:mm');
+        const existing = importBatches.get(minuteKey);
+        if (existing) {
+          existing.count++;
+        } else {
+          importBatches.set(minuteKey, { count: 1, time: new Date(p.date_added) });
+        }
       } else {
         updated.push(p);
       }
@@ -73,6 +79,17 @@ export function RecentActivityView({ selectedDate: externalDate, searchQuery: ex
       action: p.action_taken,
       time: new Date(p.updated_at)
     }));
+
+    // Create import summary entries inline in timeline
+    const importActivities = Array.from(importBatches.entries()).map(([key, batch]) => ({
+      id: `import-${key}`,
+      type: 'import' as const,
+      name: `Imported ${batch.count} lead${batch.count > 1 ? 's' : ''}`,
+      phone: null as string | null,
+      stage: null as string | null,
+      action: null as string | null,
+      time: batch.time
+    }));
     
     const todoActivities = todos
       .filter(t => isSameDay(parseISO(t.updated_at), selectedDate))
@@ -86,19 +103,18 @@ export function RecentActivityView({ selectedDate: externalDate, searchQuery: ex
         time: new Date(t.updated_at)
       }));
 
-    // Combine and sort descending (most recent at top)
-    let activitiesList = [...prospectActivities, ...todoActivities].sort(
+    // Combine all and sort descending
+    let activitiesList = [...prospectActivities, ...importActivities, ...todoActivities].sort(
       (a, b) => b.time.getTime() - a.time.getTime()
     );
 
-    // Apply search filter
     if (searchQuery.trim()) {
       const query = searchQuery.toLowerCase();
       activitiesList = activitiesList.filter(
         a => a.name.toLowerCase().includes(query) || (a.phone && a.phone.includes(query))
       );
     }
-    return { activities: activitiesList, importedCount: imported.length };
+    return activitiesList;
   }, [prospects, todos, selectedDate, searchQuery]);
 
   const cleanPhoneNumber = (phone: string) => phone.replace(/[^0-9+]/g, '');
@@ -148,20 +164,11 @@ export function RecentActivityView({ selectedDate: externalDate, searchQuery: ex
           <Clock className="h-4 w-4 text-primary" />
           <div>
             <h3 className="font-medium text-sm">Activities</h3>
-            <p className="text-xs text-muted-foreground">{activities.length} activities{importedCount > 0 ? ` · ${importedCount} imported` : ''}</p>
+            <p className="text-xs text-muted-foreground">{activities.length} activities</p>
           </div>
         </div>
 
-        {/* Import summary banner */}
-        {importedCount > 0 && !searchQuery.trim() && (
-          <div className="flex items-center gap-2 p-2.5 rounded-lg bg-muted/40 mb-2">
-            <span className="text-xs text-muted-foreground">
-              📥 Imported {importedCount} lead{importedCount > 1 ? 's' : ''}
-            </span>
-          </div>
-        )}
-
-        {activities.length === 0 && importedCount === 0 ? (
+        {activities.length === 0 ? (
           <div className="text-center py-8">
             <Clock className="h-10 w-10 mx-auto text-muted-foreground/30 mb-2" />
             <p className="text-sm text-muted-foreground">
@@ -171,7 +178,7 @@ export function RecentActivityView({ selectedDate: externalDate, searchQuery: ex
               {searchQuery.trim() ? 'Try a different search term' : 'Activities will appear here'}
             </p>
           </div>
-        ) : activities.length > 0 ? (
+        ) : (
           <div className="space-y-0">
             {activities.map((activity, index) => (
               <div key={`${activity.type}-${activity.id}`} className="relative">
@@ -190,6 +197,11 @@ export function RecentActivityView({ selectedDate: externalDate, searchQuery: ex
                   
                   {/* Activity content */}
                   <div className="flex-1 min-w-0 pb-2">
+                    {activity.type === 'import' ? (
+                      <div className="flex items-center gap-2 p-2 rounded-lg bg-muted/30">
+                        <span className="text-xs text-muted-foreground">📥 {activity.name}</span>
+                      </div>
+                    ) : (
                     <div className="flex items-start justify-between gap-2 p-2 rounded-lg bg-muted/30 hover:bg-muted/40 transition-colors">
                       <div className="min-w-0 flex-1">
                         <p className="text-sm font-medium truncate">{activity.name}</p>
@@ -232,12 +244,13 @@ export function RecentActivityView({ selectedDate: externalDate, searchQuery: ex
                         </div>
                       )}
                     </div>
+                    )}
                   </div>
                 </div>
               </div>
             ))}
           </div>
-        ) : null}
+        )}
       </div>
     </div>
   );
