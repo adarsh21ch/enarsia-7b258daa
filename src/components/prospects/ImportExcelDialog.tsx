@@ -521,7 +521,7 @@ export function ImportExcelDialog({ onImport }: ImportExcelDialogProps) {
                       <SelectTrigger className="h-8 text-xs flex-1 bg-background">
                         <SelectValue placeholder={FIELD_PLACEHOLDERS[field]} />
                       </SelectTrigger>
-                      <SelectContent className="bg-popover border-border z-50 max-h-[200px]">
+                      <SelectContent className="bg-popover border-border z-50 max-h-[480px]">
                         <SelectItem value="__none__" className="text-muted-foreground">
                           {field === 'address' ? 'City and State' : 'None'}
                         </SelectItem>
