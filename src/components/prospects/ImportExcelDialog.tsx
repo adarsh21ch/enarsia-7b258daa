@@ -256,17 +256,28 @@ export function ImportExcelDialog({ onImport }: ImportExcelDialogProps) {
         return;
       }
 
-      // Generate column names using first row sample data for better readability
+      // Generate unique column names using first row sample data
       const maxCols = Math.max(...rawData.map(row => row.length));
       const firstRowData = rawData[0] || [];
+      const usedNames = new Set<string>();
       const cols = Array.from({ length: maxCols }, (_, i) => {
         const sampleValue = firstRowData[i];
         const sampleText = sampleValue !== null && sampleValue !== undefined ? String(sampleValue).trim() : '';
-        // Use truncated sample data as label, fallback to generic if empty
+        let baseName = '';
         if (sampleText.length > 0) {
-          return sampleText.length > 20 ? sampleText.substring(0, 20) + '...' : sampleText;
+          baseName = sampleText.length > 20 ? sampleText.substring(0, 20) + '...' : sampleText;
+        } else {
+          baseName = `Col ${i + 1}`;
         }
-        return `Col ${i + 1}`;
+        // Ensure uniqueness by appending suffix if needed
+        let finalName = baseName;
+        let counter = 2;
+        while (usedNames.has(finalName)) {
+          finalName = `${baseName} (${counter})`;
+          counter++;
+        }
+        usedNames.add(finalName);
+        return finalName;
       });
       
       // Convert raw array data to objects with column keys
