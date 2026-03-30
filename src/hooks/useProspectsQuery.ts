@@ -33,10 +33,11 @@ interface UseProspectsQueryOptions {
   search?: string;
   filterMode?: 'calling' | 'funnel' | 'leads';
   funnelTag?: string | null; // The action_taken tag that marks prospects as "in funnel"
+  enabled?: boolean;
 }
 
 export function useProspectsQuery(options: UseProspectsQueryOptions = {}) {
-  const { sheetId = null, search = '', filterMode = 'calling', funnelTag = null } = options;
+  const { sheetId = null, search = '', filterMode = 'calling', funnelTag = null, enabled = true } = options;
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const { decryptBatch, encryptFields, encryptBatch } = useEncryption();
