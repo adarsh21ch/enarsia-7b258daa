@@ -125,8 +125,11 @@ export default function ListUp() {
     { value: 'funnel', label: 'Funnel', icon: Layers }
   ];
 
-  // Main tab: Activity vs Prospects
-  const [mainTab, setMainTab] = useState<FollowUpMainTab>('prospects');
+  // Main tab: Activity vs Prospects - persist to sessionStorage, default activity
+  const [mainTab, setMainTab] = useState<FollowUpMainTab>(() => {
+    const saved = sessionStorage.getItem('listup-main-tab');
+    return (saved as FollowUpMainTab) || 'activity';
+  });
   const mainTabOptions: [{ value: string; label: string; icon: typeof Clock }, { value: string; label: string; icon: typeof Tags }] = [
     { value: 'activity', label: 'Activity', icon: Clock },
     { value: 'prospects', label: 'Prospects', icon: Tags }
@@ -157,10 +160,13 @@ export default function ListUp() {
   });
   const [expandedProspectId, setExpandedProspectId] = useState<string | null>(null);
 
-  // Persist lead mode to sessionStorage
+  // Persist lead mode and main tab to sessionStorage
   useEffect(() => {
     sessionStorage.setItem('listup-mode', leadMode);
   }, [leadMode]);
+  useEffect(() => {
+    sessionStorage.setItem('listup-main-tab', mainTab);
+  }, [mainTab]);
 
   // Persist filter selections to sessionStorage
   useEffect(() => {
@@ -460,98 +466,87 @@ export default function ListUp() {
                 )}
               </div>
 
-              {/* Search Bar */}
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  type="text"
-                  placeholder="Search by name, phone..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-9 h-10 bg-card border-border/50"
-                />
-                {searchQuery && (
-                  <button
-                    onClick={() => setSearchQuery('')}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                  >
-                    <X className="h-4 w-4" />
-                  </button>
-                )}
+              {/* Search + Filter on same line */}
+              <div className="flex items-center gap-2">
+                <div className="relative flex-1">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    type="text"
+                    placeholder="Search name, phone..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="pl-9 h-9 bg-card border-border/50 text-sm"
+                  />
+                  {searchQuery && (
+                    <button
+                      onClick={() => setSearchQuery('')}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                    >
+                      <X className="h-3.5 w-3.5" />
+                    </button>
+                  )}
+                </div>
+                <button
+                  onClick={() => setShowAllTags(!showAllTags)}
+                  className={cn(
+                    "p-2 rounded-lg border transition-colors shrink-0",
+                    showAllTags ? "bg-accent text-accent-foreground border-accent" : "bg-card text-muted-foreground border-border/50 hover:text-foreground"
+                  )}
+                >
+                  <Eye className="h-4 w-4" />
+                </button>
               </div>
 
-              {/* Tag Filters */}
-              <div className="bg-card rounded-xl p-3 border border-border/50 space-y-3">
-                {/* Header Row */}
-                <div className="flex items-center justify-between gap-2">
-                  <div className="flex items-center gap-2">
-                    <Filter className="h-4 w-4 text-muted-foreground" />
-                    <span className="text-sm font-medium">Filter by Tags</span>
-                  </div>
-                  {/* Show All Tags Toggle */}
-                  <button
-                    onClick={() => setShowAllTags(!showAllTags)}
-                    className={cn(
-                      "flex items-center gap-1 text-xs transition-colors",
-                      showAllTags ? "text-primary" : "text-muted-foreground hover:text-foreground"
-                    )}
-                  >
-                    <Eye className="h-3 w-3" />
-                  </button>
-                </div>
-
-                {/* Tags based on mode */}
+              {/* Tag pills - compact, no header */}
+              <div className="flex items-center gap-1.5 flex-wrap">
+                <Filter className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
                 {leadMode === 'funnel' ? (
                   displayStageTags.length === 0 ? (
-                    <p className="text-xs text-muted-foreground/70">No funnel stages</p>
+                    <span className="text-[11px] text-muted-foreground/70">No stages</span>
                   ) : (
-                    <div className="flex flex-wrap gap-1.5">
-                      {displayStageTags.map(tag => {
-                        const isSelected = selectedStages.includes(tag);
-                        const count = stageTagCounts.get(tag) || 0;
-                        const style = getTagStyle(tag, 'stage', null, isSelected, true);
-                        return (
-                          <Badge 
-                            key={`stage-${tag}`} 
-                            variant="outline" 
-                            className={cn(
-                              "cursor-pointer text-xs transition-all border",
-                              count === 0 && "opacity-50"
-                            )} 
-                            style={style} 
-                            onClick={() => toggleStage(tag)}
-                          >
-                            {tag} {count > 0 && <span className="ml-1 opacity-70">({count})</span>}
-                          </Badge>
-                        );
-                      })}
-                    </div>
+                    displayStageTags.map(tag => {
+                      const isSelected = selectedStages.includes(tag);
+                      const count = stageTagCounts.get(tag) || 0;
+                      const style = getTagStyle(tag, 'stage', null, isSelected, true);
+                      return (
+                        <Badge 
+                          key={`stage-${tag}`} 
+                          variant="outline" 
+                          className={cn(
+                            "cursor-pointer text-[10px] transition-all border py-0 px-1.5 h-5",
+                            count === 0 && "opacity-50"
+                          )} 
+                          style={style} 
+                          onClick={() => toggleStage(tag)}
+                        >
+                          {tag} {count > 0 && <span className="ml-0.5 opacity-70">({count})</span>}
+                        </Badge>
+                      );
+                    })
                   )
                 ) : (
                   displayResponseTags.length === 0 ? (
-                    <p className="text-xs text-muted-foreground/70">No response tags</p>
+                    <span className="text-[11px] text-muted-foreground/70">No tags</span>
                   ) : (
-                    <div className="flex flex-wrap gap-1.5">
-                      {displayResponseTags.map(tag => {
-                        const isSelected = selectedResponses.includes(tag);
-                        const count = responseTagCounts.get(tag) || 0;
-                        const style = getTagStyle(tag, 'response', null, isSelected, true);
-                        return (
-                          <Badge 
-                            key={`response-${tag}`} 
-                            variant="outline" 
-                            className={cn(
-                              "cursor-pointer text-xs transition-all border",
-                              count === 0 && "opacity-50"
-                            )}
-                            style={style} 
-                            onClick={() => toggleResponse(tag)}
-                          >
-                            {tag} {count > 0 && <span className="ml-1 opacity-70">({count})</span>}
-                          </Badge>
-                        );
-                      })}
-                    </div>
+                    displayResponseTags.map(tag => {
+                      const isSelected = selectedResponses.includes(tag);
+                      const count = responseTagCounts.get(tag) || 0;
+                      const style = getTagStyle(tag, 'response', null, isSelected, true);
+                      return (
+                        <Badge 
+                          key={`response-${tag}`} 
+                          variant="outline" 
+                          className={cn(
+                            "cursor-pointer text-[10px] transition-all border py-0 px-1.5 h-5",
+                            count === 0 && "opacity-50"
+                          )}
+                          style={style} 
+                          onClick={() => toggleResponse(tag)}
+                        >
+                          {tag} {count > 0 && <span className="ml-0.5 opacity-70">({count})</span>}
+                        </Badge>
+                      );
+                    })
                   )
                 )}
               </div>
@@ -571,11 +566,12 @@ export default function ListUp() {
                   {tagProspects.length === 0 ? <div className="py-8 text-center">
                       <p className="text-sm text-muted-foreground">No leads</p>
                     </div> : <div className="divide-y divide-border/30">
-                      {tagProspects.map(prospect => {
+                      {tagProspects.map((prospect, idx) => {
                   const isExpanded = expandedProspectId === prospect.id;
                   return <div key={prospect.id}>
                             <button onClick={() => toggleProspect(prospect.id)} className="w-full flex items-center justify-between px-4 py-3 hover:bg-muted/30 transition-colors text-left gap-2">
                               <div className="flex items-center gap-2 min-w-0 flex-1">
+                                <span className="text-[10px] font-semibold text-muted-foreground bg-muted/60 rounded px-1.5 py-0.5 shrink-0">{idx + 1}</span>
                                 <span className="text-sm font-medium truncate">{prospect.name}</span>
                                 {/* Inline tag badges */}
                                 <div className="flex items-center gap-1 shrink-0">
