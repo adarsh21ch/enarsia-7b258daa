@@ -1046,7 +1046,6 @@ export function ProspectTable({
                 onExpand={() => setIsSearchExpanded(true)}
                 placeholder="Search name, phone..."
               />
-              <ProspectFilters filters={filters} onFiltersChange={setFilters} showStagesFilter={!isCalling} showResponsesFilter={isCalling} filterTagButton={!isCalling ? <ChangeFilterTagButton /> : undefined} hideSearch={true} />
             </>
           ) : (
             <div className="flex items-center gap-2 flex-1">
@@ -1089,6 +1088,7 @@ export function ProspectTable({
                   <X className="h-3.5 w-3.5" />
                 </Button>
               </div> : <>
+                <ProspectFilters filters={filters} onFiltersChange={setFilters} showStagesFilter={!isCalling} showResponsesFilter={isCalling} filterTagButton={!isCalling ? <ChangeFilterTagButton /> : undefined} hideSearch={true} />
                 <ImportExcelDialog onImport={handleImportProspects} />
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
