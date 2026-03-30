@@ -1029,8 +1029,8 @@ export function ProspectTable({
 
       {/* Single Action Bar - Filters left, Actions right */}
       <div className="flex-shrink-0 flex items-center gap-1.5">
-        {/* Left side - Search */}
-        <div className="flex items-center min-w-0">
+        {/* Search area - takes full width when expanded */}
+        <div className={cn("flex items-center min-w-0", isSearchExpanded && "flex-1")}>
           {!isSearchExpanded ? (
             <CollapsibleSearchBar 
               value={onExternalSearchChange ? externalSearch || '' : filters.search || ''} 
@@ -1046,7 +1046,7 @@ export function ProspectTable({
               placeholder="Search name, phone..."
             />
           ) : (
-            <div className="flex items-center gap-1.5 flex-1">
+            <div className="flex items-center gap-2 w-full">
               <CollapsibleSearchBar 
                 value={onExternalSearchChange ? externalSearch || '' : filters.search || ''} 
                 onChange={(val) => {
@@ -1061,7 +1061,7 @@ export function ProspectTable({
                 placeholder="Search name, phone..."
                 className="flex-1"
               />
-              <Button variant="ghost" size="sm" onClick={() => setIsSearchExpanded(false)} className="shrink-0 text-xs h-9 px-2">
+              <Button variant="ghost" size="sm" onClick={() => setIsSearchExpanded(false)} className="shrink-0 text-xs h-9 px-1.5 text-muted-foreground">
                 Cancel
               </Button>
             </div>
