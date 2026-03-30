@@ -342,8 +342,9 @@ export function ProspectTable({
   // Use persisted filters hook for Retargeting filter state persistence
   const { filters, setFilters } = usePersistedFilters(filterMode);
 
-  // Use external search if provided, otherwise use internal filters.search
-  const effectiveSearch = externalSearch || filters.search;
+  // Use controlled search when provided so clearing the parent search never falls back to stale persisted state
+  const isControlledSearch = typeof onExternalSearchChange === 'function';
+  const effectiveSearch = isControlledSearch ? externalSearch : filters.search;
   const [expandedRowId, setExpandedRowId] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<'card' | 'table'>('table');
   const [exporting, setExporting] = useState(false);
@@ -495,9 +496,10 @@ export function ProspectTable({
 
   // Apply search and other filters
   const filteredProspects = useMemo(() => {
+    const normalizedSearch = effectiveSearch.trim().toLowerCase();
+
     return sheetFilteredProspects.filter(prospect => {
-      const searchLower = effectiveSearch.toLowerCase();
-      const matchesSearch = !effectiveSearch || prospect.name.toLowerCase().includes(searchLower) || prospect.phone.toLowerCase().includes(searchLower) || prospect.notes?.toLowerCase().includes(searchLower);
+      const matchesSearch = !normalizedSearch || prospect.name.toLowerCase().includes(normalizedSearch) || prospect.phone.toLowerCase().includes(normalizedSearch) || prospect.notes?.toLowerCase().includes(normalizedSearch);
       const matchesStage = filters.stages.length === 0 || prospect.funnel_stage && filters.stages.includes(prospect.funnel_stage);
       const matchesQuality = filters.qualities.length === 0 || prospect.prospect_status && filters.qualities.includes(prospect.prospect_status);
       const matchesAction = filters.actions.length === 0 || filters.actions.includes(prospect.action_taken as ExtendedActionTaken) || filters.actions.includes('Enrollment') && prospect.enrollment_status === 'Enrolled';

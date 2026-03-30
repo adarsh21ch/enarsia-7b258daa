@@ -106,6 +106,7 @@ export default function Dashboard() {
 
   // Search state
   const [searchQuery, setSearchQuery] = useState('');
+  const [debouncedSearchQuery, setDebouncedSearchQuery] = useState('');
 
   // Recent activity toggle
   const [showRecentActivity, setShowRecentActivity] = useState(false);
@@ -133,6 +134,14 @@ export default function Dashboard() {
   
   // Pass funnelTag for server-side filtering in funnel mode
   const funnelTag = mainTab === 'funnel' ? leadsStageTag : null;
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      setDebouncedSearchQuery(searchQuery.trim());
+    }, 300);
+
+    return () => window.clearTimeout(timer);
+  }, [searchQuery]);
   
   const {
     prospects,
@@ -156,7 +165,7 @@ export default function Dashboard() {
     loadedCount
   } = useProspectsQuery({
     sheetId: selectedSheetId,
-    search: searchQuery,
+    search: debouncedSearchQuery,
     filterMode: queryFilterMode,
     funnelTag
   });
