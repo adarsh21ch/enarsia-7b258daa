@@ -13,6 +13,8 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Loader2, Filter, ChevronDown, ChevronUp, Tags, X, Eye, Search, Phone, Layers, Clock } from 'lucide-react';
 import { RecentActivityView } from '@/components/todo/RecentActivityView';
+
+type FollowUpMainTab = 'activity' | 'prospects';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
 import { getTagStyle } from '@/lib/tagColors';
