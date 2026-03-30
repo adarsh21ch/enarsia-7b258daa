@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback, useEffect, useRef } from 'react';
+import { useState, useMemo, useCallback, useEffect, useRef, lazy, Suspense } from 'react';
 import { Prospect, FunnelStage, ProspectQuality, Sheet, ExtendedActionTaken, FUNNEL_STAGES, EXTENDED_ACTIONS } from '@/types/prospect';
 import { SortableProspectRow } from './SortableProspectRow';
 import { MobileProspectCard } from './MobileProspectCard';
@@ -6,10 +6,7 @@ import { ProspectFilters } from './ProspectFilters';
 import { KPIStrip } from './KPIStrip';
 import { CollapsibleSearchBar } from './CollapsibleSearchBar';
 import { AddProspectDialog } from './AddProspectDialog';
-import { ImportExcelDialog } from './ImportExcelDialog';
 import { SheetTabs } from './SheetTabs';
-import { ManageResponseTagsDialog } from './ManageResponseTagsDialog';
-import { ManageStageTagsDialog } from './ManageStageTagsDialog';
 import { ChangeFilterTagButton } from './ChangeFilterTagButton';
 import { ProgressiveNudgeBanner } from '@/components/subscription/ProgressiveNudgeBanner';
 import { HardLimitModal } from '@/components/subscription/HardLimitModal';
@@ -34,6 +31,11 @@ import { useActivityLog } from '@/hooks/useActivityLog';
 import { usePersistedFilters, Filters } from '@/hooks/usePersistedFilters';
 import { usePermissions } from '@/contexts/PermissionsContext';
 import { ShareLeadsDrawer } from './ShareLeadsDrawer';
+
+// Lazy load heavy dependencies that are not needed on initial render
+const ImportExcelDialog = lazy(() => import('./ImportExcelDialog').then(m => ({ default: m.ImportExcelDialog })));
+const ManageResponseTagsDialog = lazy(() => import('./ManageResponseTagsDialog').then(m => ({ default: m.ManageResponseTagsDialog })));
+const ManageStageTagsDialog = lazy(() => import('./ManageStageTagsDialog').then(m => ({ default: m.ManageStageTagsDialog })));
 interface ProspectTableProps {
   prospects: Prospect[];
   loading: boolean;
@@ -1089,7 +1091,7 @@ export function ProspectTable({
                 </Button>
               </div> : <>
                 <ProspectFilters filters={filters} onFiltersChange={setFilters} showStagesFilter={!isCalling} showResponsesFilter={isCalling} filterTagButton={!isCalling ? <ChangeFilterTagButton /> : undefined} hideSearch={true} />
-                <ImportExcelDialog onImport={handleImportProspects} />
+                <Suspense fallback={null}><ImportExcelDialog onImport={handleImportProspects} /></Suspense>
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button variant="outline" size="icon" className="h-9 w-9 rounded-xl">
@@ -1159,9 +1161,11 @@ export function ProspectTable({
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* Tag management dialogs */}
-      <ManageResponseTagsDialog open={responseTagsDialogOpen} onOpenChange={setResponseTagsDialogOpen} />
-      <ManageStageTagsDialog open={stageTagsDialogOpen} onOpenChange={setStageTagsDialogOpen} />
+      {/* Tag management dialogs - lazy loaded */}
+      <Suspense fallback={null}>
+        {responseTagsDialogOpen && <ManageResponseTagsDialog open={responseTagsDialogOpen} onOpenChange={setResponseTagsDialogOpen} />}
+        {stageTagsDialogOpen && <ManageStageTagsDialog open={stageTagsDialogOpen} onOpenChange={setStageTagsDialogOpen} />}
+      </Suspense>
 
       {/* Share Leads Drawer */}
       <ShareLeadsDrawer
