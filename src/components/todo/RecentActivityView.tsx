@@ -56,14 +56,18 @@ export function RecentActivityView({ selectedDate: externalDate, searchQuery: ex
     for (const p of dayProspects) {
       const addedTime = new Date(p.date_added).getTime();
       const updatedTime = new Date(p.updated_at).getTime();
-      if (Math.abs(updatedTime - addedTime) < 5000) {
-        // Group imports by minute to batch them
-        const minuteKey = format(new Date(p.date_added), 'yyyy-MM-dd HH:mm');
-        const existing = importBatches.get(minuteKey);
+      // If updated_at is within 2 minutes of date_added, it's just an import/creation
+      if (Math.abs(updatedTime - addedTime) < 120000) {
+        // Group imports by 10-minute windows
+        const d = new Date(p.date_added);
+        const slotKey = `${format(d, 'yyyy-MM-dd HH')}:${Math.floor(d.getMinutes() / 10)}`;
+        const existing = importBatches.get(slotKey);
         if (existing) {
           existing.count++;
+          // Use the latest time for display
+          if (d > existing.time) existing.time = d;
         } else {
-          importBatches.set(minuteKey, { count: 1, time: new Date(p.date_added) });
+          importBatches.set(slotKey, { count: 1, time: d });
         }
       } else {
         updated.push(p);
