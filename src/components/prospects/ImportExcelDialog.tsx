@@ -542,8 +542,10 @@ export function ImportExcelDialog({ onImport }: ImportExcelDialogProps) {
               </p>
             </div>
 
+            {/* Scrollable content area */}
+            <div className="flex-1 overflow-y-auto overflow-x-hidden min-h-0 space-y-3 pr-1">
             {/* Data Preview Section */}
-            <div className="flex flex-col space-y-2 mb-3">
+            <div className="flex flex-col space-y-2">
               <div className="flex items-center justify-between flex-shrink-0">
                 <Label className="text-xs font-medium">Data Preview (first 3 rows)</Label>
                 <span className="text-xs text-muted-foreground">{columns.length} columns • Drag column edges to resize</span>
