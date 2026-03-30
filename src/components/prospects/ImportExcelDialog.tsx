@@ -499,8 +499,15 @@ export function ImportExcelDialog({ onImport }: ImportExcelDialogProps) {
 
         {step === 'mapping' && (
           <div className="flex flex-col overflow-y-auto overflow-x-hidden" style={{ maxHeight: 'calc(90vh - 80px)' }}>
-            {/* Data Preview Section - Top, scrollable */}
-            <div className="flex-1 flex flex-col min-h-0 space-y-2 mb-3 overflow-hidden">
+            {/* Disclaimer */}
+            <div className="bg-primary/5 border border-primary/20 rounded-lg p-2.5 mb-3 flex-shrink-0">
+              <p className="text-[11px] text-muted-foreground leading-relaxed">
+                🤖 <span className="font-medium text-foreground/80">We auto-detected your columns.</span> Review the mappings below and change any that look wrong using the dropdown. <span className="font-medium">Name</span> and <span className="font-medium">Phone 1</span> are required.
+              </p>
+            </div>
+
+            {/* Data Preview Section */}
+            <div className="flex flex-col space-y-2 mb-3">
               <div className="flex items-center justify-between flex-shrink-0">
                 <Label className="text-xs font-medium">Data Preview (first 3 rows)</Label>
                 <span className="text-xs text-muted-foreground">{columns.length} columns • Drag column edges to resize</span>
