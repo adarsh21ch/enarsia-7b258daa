@@ -130,7 +130,7 @@ export function BottomNav({
               navigate(item.path);
             });
           }
-        }} className={cn("relative flex flex-col items-center justify-center flex-1 h-full min-h-[44px] min-w-[44px] transition-colors duration-150 pb-2", isActive ? "text-primary" : "text-muted-foreground active:text-foreground")}>
+        }} className={cn("relative flex flex-col items-center justify-center flex-1 h-full min-h-[44px] min-w-[44px] transition-colors duration-150 pb-[18px]", isActive ? "text-primary" : "text-muted-foreground active:text-foreground")}>
               <div className="relative flex flex-col items-center gap-0.5 pb-2">
                 {item.isProfile ?
             <Avatar className={cn("h-6 w-6 transition-colors duration-150", isActive && "ring-2 ring-primary ring-offset-1 ring-offset-background")}>
