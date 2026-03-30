@@ -358,6 +358,9 @@ export function ImportExcelDialog({ onImport }: ImportExcelDialogProps) {
       if (mapping.gender && row[mapping.gender]) {
         prospect.gender = sanitizeImportString(row[mapping.gender], 20);
       }
+      if (mapping.email && row[mapping.email]) {
+        prospect.email = sanitizeImportString(row[mapping.email], 200);
+      }
       if (mapping.instagram && row[mapping.instagram]) {
         prospect.instagram = sanitizeImportString(row[mapping.instagram], 100);
       }
