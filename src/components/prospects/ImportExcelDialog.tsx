@@ -80,16 +80,7 @@ export function ImportExcelDialog({ onImport }: ImportExcelDialogProps) {
   const [columns, setColumns] = useState<string[]>([]);
   const [previewData, setPreviewData] = useState<Record<string, string>[]>([]);
   const [fullData, setFullData] = useState<Record<string, string>[]>([]);
-  const [mapping, setMapping] = useState<ColumnMapping>({
-    name: null,
-    phone: null,
-    phone2: null,
-    address: null,
-    age_or_dob: null,
-    gender: null,
-    instagram: null,
-    profession: null,
-  });
+  const [reverseMapping, setReverseMapping] = useState<ReverseMapping>({});
   const [isImporting, setIsImporting] = useState(false);
   const [importProgress, setImportProgress] = useState<{ current: number; total: number } | null>(null);
   const [error, setError] = useState<string | null>(null);
