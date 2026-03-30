@@ -240,8 +240,19 @@ export function ImportExcelDialog({ onImport }: ImportExcelDialogProps) {
   const getColumnWidth = (idx: number) => previewColumnWidths[`col_${idx}`] ?? 120;
 
   const handleImport = async () => {
+    // Convert reverseMapping to ColumnMapping
+    const mapping: ColumnMapping = {
+      name: null, phone: null, phone2: null, address: null,
+      age_or_dob: null, gender: null, instagram: null, profession: null,
+    };
+    for (const [col, field] of Object.entries(reverseMapping)) {
+      if (field && field !== 'skip') {
+        mapping[field] = col;
+      }
+    }
+
     if (!mapping.name || !mapping.phone) {
-      setError('Name and Phone columns are required');
+      setError('Name and Phone 1 must be mapped');
       return;
     }
 
