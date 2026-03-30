@@ -14,12 +14,9 @@ import { FilterTagSetupDialog, useFilterTagSetup } from '@/components/prospects/
 import { KPIStrip } from '@/components/prospects/KPIStrip';
 import { TrialBanner } from '@/components/subscription/TrialBanner';
 import { UpgradeButton } from '@/components/subscription/UpgradeButton';
-import { RecentActivityView } from '@/components/todo/RecentActivityView';
-import { Loader2, Phone, Layers, Flame, Clock } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { Loader2, Phone, Layers, Flame } from 'lucide-react';
 import nevoraLogo from '@/assets/nevorai-logo.jpeg';
 import { useStreak } from '@/hooks/useStreak';
-import { cn } from '@/lib/utils';
 
 
 // Pull-to-refresh hook - fixed to not interfere with normal scrolling

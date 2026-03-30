@@ -11,7 +11,7 @@ import { TrialBanner } from '@/components/subscription/TrialBanner';
 import { UpgradeButton } from '@/components/subscription/UpgradeButton';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Loader2, Filter, ChevronDown, ChevronUp, Tags, X, Eye, Search, Phone, Layers, Clock, Calendar1 } from 'lucide-react';
+import { Loader2, Filter, ChevronDown, ChevronUp, Tags, X, Search, Phone, Layers, Clock, Calendar1 } from 'lucide-react';
 import { RecentActivityView } from '@/components/todo/RecentActivityView';
 import { CalendarStrip } from '@/components/calendar/CalendarStrip';
 import { useCalendarStrip } from '@/hooks/useCalendarStrip';
