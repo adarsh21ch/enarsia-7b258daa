@@ -434,39 +434,7 @@ export default function ListUp() {
                 })}
               </div>
 
-              {/* Calendar strip for date filtering */}
-              <div className="bg-card rounded-xl border border-border/50 overflow-hidden">
-                <div className="flex items-center justify-between px-3 py-1.5">
-                  <button
-                    onClick={() => setProspectsDateFilter(!prospectsDateFilter)}
-                    className={cn(
-                      "text-[11px] font-medium transition-colors",
-                      prospectsDateFilter ? "text-primary" : "text-muted-foreground"
-                    )}
-                  >
-                    {prospectsDateFilter ? '✓ Date filter ON' : 'Filter by date'}
-                  </button>
-                  {prospectsDateFilter && (
-                    <button onClick={() => setProspectsDateFilter(false)} className="text-muted-foreground hover:text-foreground">
-                      <X className="h-3 w-3" />
-                    </button>
-                  )}
-                </div>
-                {prospectsDateFilter && (
-                  <CalendarStrip
-                    selectedDate={prospectsCalendar.selectedDate}
-                    daysInMonth={prospectsCalendar.daysInMonth}
-                    monthYearLabel={prospectsCalendar.monthYearLabel}
-                    onSelectDate={prospectsCalendar.selectDate}
-                    onPreviousMonth={prospectsCalendar.goToPreviousMonth}
-                    onNextMonth={prospectsCalendar.goToNextMonth}
-                    onTodayClick={prospectsCalendar.goToToday}
-                    className="rounded-b-xl"
-                  />
-                )}
-              </div>
-
-              {/* Search + Filter on same line */}
+              {/* Search + Calendar filter on same line */}
               <div className="flex items-center gap-2">
                 <div className="relative flex-1">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -487,15 +455,29 @@ export default function ListUp() {
                   )}
                 </div>
                 <button
-                  onClick={() => setShowAllTags(!showAllTags)}
+                  onClick={() => setProspectsDateFilter(!prospectsDateFilter)}
                   className={cn(
                     "p-2 rounded-lg border transition-colors shrink-0",
-                    showAllTags ? "bg-accent text-accent-foreground border-accent" : "bg-card text-muted-foreground border-border/50 hover:text-foreground"
+                    prospectsDateFilter ? "bg-accent text-accent-foreground border-accent" : "bg-card text-muted-foreground border-border/50 hover:text-foreground"
                   )}
                 >
-                  <Eye className="h-4 w-4" />
+                  <Clock className="h-4 w-4" />
                 </button>
               </div>
+
+              {/* Calendar strip - shown when date filter active */}
+              {prospectsDateFilter && (
+                <CalendarStrip
+                  selectedDate={prospectsCalendar.selectedDate}
+                  daysInMonth={prospectsCalendar.daysInMonth}
+                  monthYearLabel={prospectsCalendar.monthYearLabel}
+                  onSelectDate={prospectsCalendar.selectDate}
+                  onPreviousMonth={prospectsCalendar.goToPreviousMonth}
+                  onNextMonth={prospectsCalendar.goToNextMonth}
+                  onTodayClick={prospectsCalendar.goToToday}
+                  className="rounded-xl border border-border/50"
+                />
+              )}
 
               {/* Tag pills - compact, no header */}
               <div className="flex items-center gap-1.5 flex-wrap">
