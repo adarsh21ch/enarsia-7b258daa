@@ -121,6 +121,13 @@ export default function ListUp() {
     { value: 'leads', label: 'Leads', icon: Phone },
     { value: 'funnel', label: 'Funnel', icon: Layers }
   ];
+
+  // Main tab: Activity vs Prospects
+  const [mainTab, setMainTab] = useState<FollowUpMainTab>('prospects');
+  const mainTabOptions: [{ value: string; label: string; icon: typeof Clock }, { value: string; label: string; icon: typeof Tags }] = [
+    { value: 'activity', label: 'Activity', icon: Clock },
+    { value: 'prospects', label: 'Prospects', icon: Tags }
+  ];
   
   // Show all tags toggle (including empty ones)
   const [showAllTags, setShowAllTags] = useState(false);
