@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback, useEffect, useRef } from 'react';
+import { useState, useMemo, useCallback, useEffect, useRef, lazy, Suspense } from 'react';
 import { Prospect, FunnelStage, ProspectQuality, Sheet, ExtendedActionTaken, FUNNEL_STAGES, EXTENDED_ACTIONS } from '@/types/prospect';
 import { SortableProspectRow } from './SortableProspectRow';
 import { MobileProspectCard } from './MobileProspectCard';
@@ -6,10 +6,7 @@ import { ProspectFilters } from './ProspectFilters';
 import { KPIStrip } from './KPIStrip';
 import { CollapsibleSearchBar } from './CollapsibleSearchBar';
 import { AddProspectDialog } from './AddProspectDialog';
-import { ImportExcelDialog } from './ImportExcelDialog';
 import { SheetTabs } from './SheetTabs';
-import { ManageResponseTagsDialog } from './ManageResponseTagsDialog';
-import { ManageStageTagsDialog } from './ManageStageTagsDialog';
 import { ChangeFilterTagButton } from './ChangeFilterTagButton';
 import { ProgressiveNudgeBanner } from '@/components/subscription/ProgressiveNudgeBanner';
 import { HardLimitModal } from '@/components/subscription/HardLimitModal';
@@ -25,8 +22,6 @@ import { toast } from 'sonner';
 
 import { format } from 'date-fns';
 import { useUndoRedo, UndoAction } from '@/hooks/useUndoRedo';
-import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, DragEndEvent } from '@dnd-kit/core';
-import { arrayMove, SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { useCustomOptionsContext } from '@/contexts/CustomOptionsContext';
 import { useTrackingTags } from '@/hooks/useTrackingTags';
 import { useTrackingFormatContext } from '@/contexts/TrackingFormatContext';
@@ -34,6 +29,11 @@ import { useActivityLog } from '@/hooks/useActivityLog';
 import { usePersistedFilters, Filters } from '@/hooks/usePersistedFilters';
 import { usePermissions } from '@/contexts/PermissionsContext';
 import { ShareLeadsDrawer } from './ShareLeadsDrawer';
+
+// Lazy load heavy dependencies that are not needed on initial render
+const ImportExcelDialog = lazy(() => import('./ImportExcelDialog').then(m => ({ default: m.ImportExcelDialog })));
+const ManageResponseTagsDialog = lazy(() => import('./ManageResponseTagsDialog').then(m => ({ default: m.ManageResponseTagsDialog })));
+const ManageStageTagsDialog = lazy(() => import('./ManageStageTagsDialog').then(m => ({ default: m.ManageStageTagsDialog })));
 interface ProspectTableProps {
   prospects: Prospect[];
   loading: boolean;
