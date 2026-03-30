@@ -46,18 +46,33 @@ export function RecentActivityView({ selectedDate: externalDate, searchQuery: ex
   const loading = prospectsLoading || todosLoading;
 
   // Get personal activities for the selected date
-  const activities = useMemo(() => {
-    const prospectActivities = prospects
-      .filter(p => isSameDay(parseISO(p.updated_at), selectedDate))
-      .map(p => ({
-        id: p.id,
-        type: 'lead' as const,
-        name: p.name,
-        phone: p.phone,
-        stage: p.funnel_stage,
-        action: p.action_taken,
-        time: new Date(p.updated_at)
-      }));
+  const { activities, importedCount } = useMemo(() => {
+    const dayProspects = prospects.filter(p => isSameDay(parseISO(p.updated_at), selectedDate));
+    
+    // Separate imported (never updated after creation) vs genuinely updated leads
+    const imported: typeof dayProspects = [];
+    const updated: typeof dayProspects = [];
+    
+    for (const p of dayProspects) {
+      const addedTime = new Date(p.date_added).getTime();
+      const updatedTime = new Date(p.updated_at).getTime();
+      // If updated_at is within 5 seconds of date_added, it's just an import/creation
+      if (Math.abs(updatedTime - addedTime) < 5000) {
+        imported.push(p);
+      } else {
+        updated.push(p);
+      }
+    }
+    
+    const prospectActivities = updated.map(p => ({
+      id: p.id,
+      type: 'lead' as const,
+      name: p.name,
+      phone: p.phone,
+      stage: p.funnel_stage,
+      action: p.action_taken,
+      time: new Date(p.updated_at)
+    }));
     
     const todoActivities = todos
       .filter(t => isSameDay(parseISO(t.updated_at), selectedDate))
