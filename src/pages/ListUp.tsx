@@ -461,7 +461,7 @@ export default function ListUp() {
                     prospectsDateFilter ? "bg-accent text-accent-foreground border-accent" : "bg-card text-muted-foreground border-border/50 hover:text-foreground"
                   )}
                 >
-                  <Clock className="h-4 w-4" />
+                  <Calendar1 className="h-4 w-4" />
                 </button>
               </div>
 
