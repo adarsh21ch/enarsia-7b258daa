@@ -88,6 +88,11 @@ function guessFieldFromValues(values: string[]): keyof ColumnMapping | null {
   const addressMatches = nonEmpty.filter(v => addressKeywords.test(v.trim())).length;
   if (addressMatches >= Math.max(1, nonEmpty.length * 0.3)) return 'address';
 
+  // Profession: common job/study keywords
+  const professionKeywords = /\b(student|engineer|doctor|teacher|professor|developer|designer|manager|analyst|consultant|accountant|lawyer|advocate|nurse|pharmacist|architect|pilot|chef|artist|musician|writer|journalist|photographer|freelancer|entrepreneur|businessman|business|retired|homemaker|housewife|farmer|driver|mechanic|electrician|plumber|carpenter|painter|tailor|shopkeeper|vendor|salesman|clerk|officer|executive|director|ceo|cto|cfo|intern|trainee|apprentice|fresher|working|job|employed|self[\-\s]?employed|unemployed|studying|btech|mtech|bsc|msc|bcom|mcom|mba|bba|mbbs|bds|llb|llm|phd|diploma|10th|12th|pass|preparing|jee|neet|upsc|ssc|bank|exam|class|school|college|university|graduate|post[\-\s]?graduate|iti|polytechnic)\b/i;
+  const professionMatches = nonEmpty.filter(v => professionKeywords.test(v.trim())).length;
+  if (professionMatches >= Math.max(1, nonEmpty.length * 0.3)) return 'profession';
+
   // Name: 2+ words with letters, not too long
   const namePattern = /^[a-zA-Z\u0900-\u097F\s\.]{2,50}$/;
   const nameMatches = nonEmpty.filter(v => namePattern.test(v.trim()) && v.trim().includes(' ')).length;
