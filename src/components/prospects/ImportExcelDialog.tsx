@@ -534,7 +534,7 @@ export function ImportExcelDialog({ onImport }: ImportExcelDialogProps) {
         )}
 
         {step === 'mapping' && (
-          <div className="flex flex-col overflow-y-auto overflow-x-hidden" style={{ maxHeight: 'calc(90vh - 80px)' }}>
+          <div className="flex flex-col overflow-hidden" style={{ height: 'calc(90vh - 80px)', maxHeight: 'calc(90dvh - 80px)' }}>
             {/* Disclaimer */}
             <div className="bg-primary/5 border border-primary/20 rounded-lg p-2.5 mb-3 flex-shrink-0">
               <p className="text-[11px] text-muted-foreground leading-relaxed">
@@ -542,8 +542,10 @@ export function ImportExcelDialog({ onImport }: ImportExcelDialogProps) {
               </p>
             </div>
 
+            {/* Scrollable content area */}
+            <div className="flex-1 overflow-y-auto overflow-x-hidden min-h-0 space-y-3 pr-1">
             {/* Data Preview Section */}
-            <div className="flex flex-col space-y-2 mb-3">
+            <div className="flex flex-col space-y-2">
               <div className="flex items-center justify-between flex-shrink-0">
                 <Label className="text-xs font-medium">Data Preview (first 3 rows)</Label>
                 <span className="text-xs text-muted-foreground">{columns.length} columns • Drag column edges to resize</span>
@@ -663,9 +665,10 @@ export function ImportExcelDialog({ onImport }: ImportExcelDialogProps) {
                 })}
               </div>
             </div>
+            </div> {/* end scrollable area */}
 
             {/* Fixed Action Buttons at bottom - always visible */}
-            <div className="flex-shrink-0 flex justify-between gap-2 pt-3 mt-auto border-t border-border bg-card">
+            <div className="flex-shrink-0 flex justify-between gap-2 pt-3 border-t border-border bg-card">
               <Button variant="outline" size="sm" onClick={resetState} className="min-w-[70px]">
                 Back
               </Button>
