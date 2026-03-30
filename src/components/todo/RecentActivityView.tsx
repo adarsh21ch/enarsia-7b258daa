@@ -49,34 +49,29 @@ export function RecentActivityView({ selectedDate: externalDate, searchQuery: ex
 
   // Get personal activities for the selected date
   const activities = useMemo(() => {
-    const dayProspects = prospects.filter(p => isSameDay(parseISO(p.updated_at), selectedDate));
-    
-    // Separate imported (never updated after creation) vs genuinely updated leads
-    const importBatches = new Map<string, { count: number; time: Date }>();
-    const updated: typeof dayProspects = [];
-    
-    for (const p of dayProspects) {
+    // Get bulk import entries from activity_logs for the selected date
+    const importEntries = activityLogs
+      .filter(log => log.activity_type === 'bulk_import' && isSameDay(parseISO(log.created_at), selectedDate))
+      .map(log => ({
+        id: log.id,
+        type: 'import' as const,
+        name: `Imported ${log.new_value || '?'} lead${Number(log.new_value) !== 1 ? 's' : ''}`,
+        phone: null as string | null,
+        stage: null as string | null,
+        action: null as string | null,
+        time: new Date(log.created_at)
+      }));
+
+    // For prospects, only show those that were genuinely updated (not just created)
+    const dayProspects = prospects.filter(p => {
+      if (!isSameDay(parseISO(p.updated_at), selectedDate)) return false;
+      // Exclude freshly imported/created leads (updated_at ≈ date_added)
       const addedTime = new Date(p.date_added).getTime();
       const updatedTime = new Date(p.updated_at).getTime();
-      // If updated_at is within 2 minutes of date_added, it's just an import/creation
-      if (Math.abs(updatedTime - addedTime) < 120000) {
-        // Group imports by 10-minute windows
-        const d = new Date(p.date_added);
-        const slotKey = `${format(d, 'yyyy-MM-dd HH')}:${Math.floor(d.getMinutes() / 10)}`;
-        const existing = importBatches.get(slotKey);
-        if (existing) {
-          existing.count++;
-          // Use the latest time for display
-          if (d > existing.time) existing.time = d;
-        } else {
-          importBatches.set(slotKey, { count: 1, time: d });
-        }
-      } else {
-        updated.push(p);
-      }
-    }
-    
-    const prospectActivities = updated.map(p => ({
+      return Math.abs(updatedTime - addedTime) > 5000;
+    });
+
+    const prospectActivities = dayProspects.map(p => ({
       id: p.id,
       type: 'lead' as const,
       name: p.name,
@@ -84,17 +79,6 @@ export function RecentActivityView({ selectedDate: externalDate, searchQuery: ex
       stage: p.funnel_stage,
       action: p.action_taken,
       time: new Date(p.updated_at)
-    }));
-
-    // Create import summary entries inline in timeline
-    const importActivities = Array.from(importBatches.entries()).map(([key, batch]) => ({
-      id: `import-${key}`,
-      type: 'import' as const,
-      name: `Imported ${batch.count} lead${batch.count > 1 ? 's' : ''}`,
-      phone: null as string | null,
-      stage: null as string | null,
-      action: null as string | null,
-      time: batch.time
     }));
     
     const todoActivities = todos
@@ -109,8 +93,7 @@ export function RecentActivityView({ selectedDate: externalDate, searchQuery: ex
         time: new Date(t.updated_at)
       }));
 
-    // Combine all and sort descending
-    let activitiesList = [...prospectActivities, ...importActivities, ...todoActivities].sort(
+    let activitiesList = [...prospectActivities, ...importEntries, ...todoActivities].sort(
       (a, b) => b.time.getTime() - a.time.getTime()
     );
 
@@ -121,7 +104,7 @@ export function RecentActivityView({ selectedDate: externalDate, searchQuery: ex
       );
     }
     return activitiesList;
-  }, [prospects, todos, selectedDate, searchQuery]);
+  }, [prospects, todos, activityLogs, selectedDate, searchQuery]);
 
   const cleanPhoneNumber = (phone: string) => phone.replace(/[^0-9+]/g, '');
   
