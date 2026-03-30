@@ -46,19 +46,25 @@ export function RecentActivityView({ selectedDate: externalDate, searchQuery: ex
   const loading = prospectsLoading || todosLoading;
 
   // Get personal activities for the selected date
-  const { activities, importedCount } = useMemo(() => {
+  const activities = useMemo(() => {
     const dayProspects = prospects.filter(p => isSameDay(parseISO(p.updated_at), selectedDate));
     
     // Separate imported (never updated after creation) vs genuinely updated leads
-    const imported: typeof dayProspects = [];
+    const importBatches = new Map<string, { count: number; time: Date }>();
     const updated: typeof dayProspects = [];
     
     for (const p of dayProspects) {
       const addedTime = new Date(p.date_added).getTime();
       const updatedTime = new Date(p.updated_at).getTime();
-      // If updated_at is within 5 seconds of date_added, it's just an import/creation
       if (Math.abs(updatedTime - addedTime) < 5000) {
-        imported.push(p);
+        // Group imports by minute to batch them
+        const minuteKey = format(new Date(p.date_added), 'yyyy-MM-dd HH:mm');
+        const existing = importBatches.get(minuteKey);
+        if (existing) {
+          existing.count++;
+        } else {
+          importBatches.set(minuteKey, { count: 1, time: new Date(p.date_added) });
+        }
       } else {
         updated.push(p);
       }
@@ -73,6 +79,17 @@ export function RecentActivityView({ selectedDate: externalDate, searchQuery: ex
       action: p.action_taken,
       time: new Date(p.updated_at)
     }));
+
+    // Create import summary entries inline in timeline
+    const importActivities = Array.from(importBatches.entries()).map(([key, batch]) => ({
+      id: `import-${key}`,
+      type: 'import' as const,
+      name: `Imported ${batch.count} lead${batch.count > 1 ? 's' : ''}`,
+      phone: null as string | null,
+      stage: null as string | null,
+      action: null as string | null,
+      time: batch.time
+    }));
     
     const todoActivities = todos
       .filter(t => isSameDay(parseISO(t.updated_at), selectedDate))
@@ -86,19 +103,18 @@ export function RecentActivityView({ selectedDate: externalDate, searchQuery: ex
         time: new Date(t.updated_at)
       }));
 
-    // Combine and sort descending (most recent at top)
-    let activitiesList = [...prospectActivities, ...todoActivities].sort(
+    // Combine all and sort descending
+    let activitiesList = [...prospectActivities, ...importActivities, ...todoActivities].sort(
       (a, b) => b.time.getTime() - a.time.getTime()
     );
 
-    // Apply search filter
     if (searchQuery.trim()) {
       const query = searchQuery.toLowerCase();
       activitiesList = activitiesList.filter(
         a => a.name.toLowerCase().includes(query) || (a.phone && a.phone.includes(query))
       );
     }
-    return { activities: activitiesList, importedCount: imported.length };
+    return activitiesList;
   }, [prospects, todos, selectedDate, searchQuery]);
 
   const cleanPhoneNumber = (phone: string) => phone.replace(/[^0-9+]/g, '');
