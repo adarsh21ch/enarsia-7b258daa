@@ -90,6 +90,7 @@ export function BottomNav({
   className?: string;
 }) {
   const location = useLocation();
+  const navigate = useNavigate();
   const { profile } = useProfile();
   const [keyboardVisible, setKeyboardVisible] = useState(false);
 
