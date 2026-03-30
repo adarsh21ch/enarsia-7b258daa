@@ -148,7 +148,7 @@ export function RecentActivityView({ selectedDate: externalDate, searchQuery: ex
           <Clock className="h-4 w-4 text-primary" />
           <div>
             <h3 className="font-medium text-sm">Activities</h3>
-            <p className="text-xs text-muted-foreground">{activities.length} activities</p>
+            <p className="text-xs text-muted-foreground">{activities.length} activities{importedCount > 0 ? ` · ${importedCount} imported` : ''}</p>
           </div>
         </div>
 
