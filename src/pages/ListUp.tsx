@@ -389,179 +389,201 @@ export default function ListUp() {
           <TrialBanner tabId="listup" />
           <UpgradeButton tabId="listup" variant="prominent" />
 
-          {/* Search Bar */}
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
-              type="text"
-              placeholder="Search by name, phone..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-9 h-10 bg-card border-border/50"
-            />
-            {searchQuery && (
-              <button
-                onClick={() => setSearchQuery('')}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-              >
-                <X className="h-4 w-4" />
-              </button>
-            )}
-          </div>
-
-          {/* Tag Filters */}
-          <div className="bg-card rounded-xl p-3 border border-border/50 space-y-3">
-            {/* Header Row */}
-            <div className="flex items-center justify-between gap-2">
-              <div className="flex items-center gap-2">
-                <Filter className="h-4 w-4 text-muted-foreground" />
-                <span className="text-sm font-medium">Filter by Tags</span>
-              </div>
-              {/* Show All Tags Toggle */}
-              <button
-                onClick={() => setShowAllTags(!showAllTags)}
-                className={cn(
-                  "flex items-center gap-1 text-xs transition-colors",
-                  showAllTags ? "text-primary" : "text-muted-foreground hover:text-foreground"
+          {showRecentActivity ? (
+            /* Activity History View */
+            <RecentActivityView />
+          ) : (
+            <>
+              {/* Search Bar */}
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  type="text"
+                  placeholder="Search by name, phone..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-9 h-10 bg-card border-border/50"
+                />
+                {searchQuery && (
+                  <button
+                    onClick={() => setSearchQuery('')}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
                 )}
-              >
-                <Eye className="h-3 w-3" />
-              </button>
-            </div>
-
-            {/* Tags based on mode */}
-            {leadMode === 'funnel' ? (
-              displayStageTags.length === 0 ? (
-                <p className="text-xs text-muted-foreground/70">No funnel stages</p>
-              ) : (
-                <div className="flex flex-wrap gap-1.5">
-                  {displayStageTags.map(tag => {
-                    const isSelected = selectedStages.includes(tag);
-                    const count = stageTagCounts.get(tag) || 0;
-                    const style = getTagStyle(tag, 'stage', null, isSelected, true);
-                    return (
-                      <Badge 
-                        key={`stage-${tag}`} 
-                        variant="outline" 
-                        className={cn(
-                          "cursor-pointer text-xs transition-all border",
-                          count === 0 && "opacity-50"
-                        )} 
-                        style={style} 
-                        onClick={() => toggleStage(tag)}
-                      >
-                        {tag} {count > 0 && <span className="ml-1 opacity-70">({count})</span>}
-                      </Badge>
-                    );
-                  })}
-                </div>
-              )
-            ) : (
-              displayResponseTags.length === 0 ? (
-                <p className="text-xs text-muted-foreground/70">No response tags</p>
-              ) : (
-                <div className="flex flex-wrap gap-1.5">
-                  {displayResponseTags.map(tag => {
-                    const isSelected = selectedResponses.includes(tag);
-                    const count = responseTagCounts.get(tag) || 0;
-                    const style = getTagStyle(tag, 'response', null, isSelected, true);
-                    return (
-                      <Badge 
-                        key={`response-${tag}`} 
-                        variant="outline" 
-                        className={cn(
-                          "cursor-pointer text-xs transition-all border",
-                          count === 0 && "opacity-50"
-                        )}
-                        style={style} 
-                        onClick={() => toggleResponse(tag)}
-                      >
-                        {tag} {count > 0 && <span className="ml-1 opacity-70">({count})</span>}
-                      </Badge>
-                    );
-                  })}
-                </div>
-              )
-            )}
-          </div>
-
-          {/* Prospects grouped by tags */}
-          {Object.entries(prospectsByTag).map(([tagName, tagProspects]) => <div key={tagName} className="bg-card rounded-xl border border-border/50 overflow-hidden">
-              <div className="flex items-center justify-between px-4 py-3 bg-muted/30 border-b border-border/30">
-                <div className="flex items-center gap-2">
-                  <Tags className="h-4 w-4 text-primary" />
-                  <h3 className="font-semibold text-sm">{tagName}</h3>
-                </div>
-                <Badge variant="secondary" className="text-xs">
-                  {tagProspects.length}
-                </Badge>
               </div>
 
-              {tagProspects.length === 0 ? <div className="py-8 text-center">
-                  <p className="text-sm text-muted-foreground">No leads</p>
-                </div> : <div className="divide-y divide-border/30">
-                  {tagProspects.map(prospect => {
-              const isExpanded = expandedProspectId === prospect.id;
-              return <div key={prospect.id}>
-                        <button onClick={() => toggleProspect(prospect.id)} className="w-full flex items-center justify-between px-4 py-3 hover:bg-muted/30 transition-colors text-left">
-                          <span className="text-sm font-medium">{prospect.name}</span>
-                          {isExpanded ? <ChevronUp className="h-4 w-4 text-muted-foreground" /> : <ChevronDown className="h-4 w-4 text-muted-foreground" />}
-                        </button>
+              {/* Tag Filters */}
+              <div className="bg-card rounded-xl p-3 border border-border/50 space-y-3">
+                {/* Header Row */}
+                <div className="flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-2">
+                    <Filter className="h-4 w-4 text-muted-foreground" />
+                    <span className="text-sm font-medium">Filter by Tags</span>
+                  </div>
+                  {/* Show All Tags Toggle */}
+                  <button
+                    onClick={() => setShowAllTags(!showAllTags)}
+                    className={cn(
+                      "flex items-center gap-1 text-xs transition-colors",
+                      showAllTags ? "text-primary" : "text-muted-foreground hover:text-foreground"
+                    )}
+                  >
+                    <Eye className="h-3 w-3" />
+                  </button>
+                </div>
 
-                        {isExpanded && <div className="px-4 pb-3 space-y-2 bg-muted/20">
-                            <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                              <span>{prospect.phone}</span>
-                              {prospect.address && <>
-                                  <span>•</span>
-                                  <span>{prospect.address}</span>
-                                </>}
-                            </div>
-                            
-                            {/* Tags */}
-                            <div className="flex flex-wrap gap-1">
-                              {prospect.funnel_stage && <Badge variant="outline" className="text-xs border" style={getTagStyle(prospect.funnel_stage, 'stage')}>
-                                  {prospect.funnel_stage}
-                                </Badge>}
-                              {prospect.action_taken && <Badge variant="outline" className="text-xs border" style={getTagStyle(prospect.action_taken, 'response')}>
-                                  {prospect.action_taken}
-                                </Badge>}
-                              {prospect.prospect_status && <Badge variant="outline" className="text-xs border" style={getTagStyle(prospect.prospect_status, 'quality')}>
-                                  {prospect.prospect_status}
-                                </Badge>}
-                            </div>
+                {/* Tags based on mode */}
+                {leadMode === 'funnel' ? (
+                  displayStageTags.length === 0 ? (
+                    <p className="text-xs text-muted-foreground/70">No funnel stages</p>
+                  ) : (
+                    <div className="flex flex-wrap gap-1.5">
+                      {displayStageTags.map(tag => {
+                        const isSelected = selectedStages.includes(tag);
+                        const count = stageTagCounts.get(tag) || 0;
+                        const style = getTagStyle(tag, 'stage', null, isSelected, true);
+                        return (
+                          <Badge 
+                            key={`stage-${tag}`} 
+                            variant="outline" 
+                            className={cn(
+                              "cursor-pointer text-xs transition-all border",
+                              count === 0 && "opacity-50"
+                            )} 
+                            style={style} 
+                            onClick={() => toggleStage(tag)}
+                          >
+                            {tag} {count > 0 && <span className="ml-1 opacity-70">({count})</span>}
+                          </Badge>
+                        );
+                      })}
+                    </div>
+                  )
+                ) : (
+                  displayResponseTags.length === 0 ? (
+                    <p className="text-xs text-muted-foreground/70">No response tags</p>
+                  ) : (
+                    <div className="flex flex-wrap gap-1.5">
+                      {displayResponseTags.map(tag => {
+                        const isSelected = selectedResponses.includes(tag);
+                        const count = responseTagCounts.get(tag) || 0;
+                        const style = getTagStyle(tag, 'response', null, isSelected, true);
+                        return (
+                          <Badge 
+                            key={`response-${tag}`} 
+                            variant="outline" 
+                            className={cn(
+                              "cursor-pointer text-xs transition-all border",
+                              count === 0 && "opacity-50"
+                            )}
+                            style={style} 
+                            onClick={() => toggleResponse(tag)}
+                          >
+                            {tag} {count > 0 && <span className="ml-1 opacity-70">({count})</span>}
+                          </Badge>
+                        );
+                      })}
+                    </div>
+                  )
+                )}
+              </div>
 
-                            {/* Action buttons */}
-                            <div className="flex items-center gap-2 pt-1">
-                              <Button size="sm" variant="outline" onClick={e => {
-                      e.stopPropagation();
-                      handleCall(prospect.phone);
-                    }} className="gap-1.5">
-                                <PhoneOutlineIcon className="h-3.5 w-3.5" />
-                                Call
-                              </Button>
-                              <Button size="sm" variant="outline" onClick={e => {
-                      e.stopPropagation();
-                      handleWhatsApp(prospect.phone);
-                    }} className="gap-1.5 border-green-500/50 text-green-600 hover:bg-green-50 dark:hover:bg-green-950/30">
-                                <WhatsAppIcon className="h-3.5 w-3.5" />
-                                WhatsApp
-                              </Button>
-                            </div>
-                          </div>}
-                      </div>;
-            })}
+              {/* Prospects grouped by tags */}
+              {Object.entries(prospectsByTag).map(([tagName, tagProspects]) => <div key={tagName} className="bg-card rounded-xl border border-border/50 overflow-hidden">
+                  <div className="flex items-center justify-between px-4 py-3 bg-muted/30 border-b border-border/30">
+                    <div className="flex items-center gap-2">
+                      <Tags className="h-4 w-4 text-primary" />
+                      <h3 className="font-semibold text-sm">{tagName}</h3>
+                    </div>
+                    <Badge variant="secondary" className="text-xs">
+                      {tagProspects.length}
+                    </Badge>
+                  </div>
+
+                  {tagProspects.length === 0 ? <div className="py-8 text-center">
+                      <p className="text-sm text-muted-foreground">No leads</p>
+                    </div> : <div className="divide-y divide-border/30">
+                      {tagProspects.map(prospect => {
+                  const isExpanded = expandedProspectId === prospect.id;
+                  return <div key={prospect.id}>
+                            <button onClick={() => toggleProspect(prospect.id)} className="w-full flex items-center justify-between px-4 py-3 hover:bg-muted/30 transition-colors text-left gap-2">
+                              <div className="flex items-center gap-2 min-w-0 flex-1">
+                                <span className="text-sm font-medium truncate">{prospect.name}</span>
+                                {/* Inline tag badges */}
+                                <div className="flex items-center gap-1 shrink-0">
+                                  {prospect.action_taken && leadMode === 'funnel' && (
+                                    <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-primary/10 text-primary leading-none">
+                                      {prospect.action_taken}
+                                    </span>
+                                  )}
+                                  {prospect.funnel_stage && leadMode === 'leads' && (
+                                    <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-accent text-accent-foreground leading-none">
+                                      {prospect.funnel_stage}
+                                    </span>
+                                  )}
+                                </div>
+                              </div>
+                              {isExpanded ? <ChevronUp className="h-4 w-4 text-muted-foreground shrink-0" /> : <ChevronDown className="h-4 w-4 text-muted-foreground shrink-0" />}
+                            </button>
+
+                            {isExpanded && <div className="px-4 pb-3 space-y-2 bg-muted/20">
+                                <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                                  <span>{prospect.phone}</span>
+                                  {prospect.address && <>
+                                      <span>•</span>
+                                      <span>{prospect.address}</span>
+                                    </>}
+                                </div>
+                                
+                                {/* Tags */}
+                                <div className="flex flex-wrap gap-1">
+                                  {prospect.funnel_stage && <Badge variant="outline" className="text-xs border" style={getTagStyle(prospect.funnel_stage, 'stage')}>
+                                      {prospect.funnel_stage}
+                                    </Badge>}
+                                  {prospect.action_taken && <Badge variant="outline" className="text-xs border" style={getTagStyle(prospect.action_taken, 'response')}>
+                                      {prospect.action_taken}
+                                    </Badge>}
+                                  {prospect.prospect_status && <Badge variant="outline" className="text-xs border" style={getTagStyle(prospect.prospect_status, 'quality')}>
+                                      {prospect.prospect_status}
+                                    </Badge>}
+                                </div>
+
+                                {/* Action buttons */}
+                                <div className="flex items-center gap-2 pt-1">
+                                  <Button size="sm" variant="outline" onClick={e => {
+                          e.stopPropagation();
+                          handleCall(prospect.phone);
+                        }} className="gap-1.5">
+                                    <PhoneOutlineIcon className="h-3.5 w-3.5" />
+                                    Call
+                                  </Button>
+                                  <Button size="sm" variant="outline" onClick={e => {
+                          e.stopPropagation();
+                          handleWhatsApp(prospect.phone);
+                        }} className="gap-1.5 border-green-500/50 text-green-600 hover:bg-green-50 dark:hover:bg-green-950/30">
+                                    <WhatsAppIcon className="h-3.5 w-3.5" />
+                                    WhatsApp
+                                  </Button>
+                                </div>
+                              </div>}
+                          </div>;
+                })}
+                    </div>}
+                </div>)}
+
+              {filteredProspects.length === 0 && hasActiveFilters && <div className="bg-card rounded-xl p-8 border border-border/50 text-center">
+                  <Tags className="h-12 w-12 mx-auto text-muted-foreground/30 mb-3" />
+                  <p className="text-sm text-muted-foreground mb-2">
+                    No leads match the selected tags
+                  </p>
+                  <Button variant="outline" size="sm" onClick={clearAllFilters}>
+                    Clear Filters
+                  </Button>
                 </div>}
-            </div>)}
-
-          {filteredProspects.length === 0 && hasActiveFilters && <div className="bg-card rounded-xl p-8 border border-border/50 text-center">
-              <Tags className="h-12 w-12 mx-auto text-muted-foreground/30 mb-3" />
-              <p className="text-sm text-muted-foreground mb-2">
-                No leads match the selected tags
-              </p>
-              <Button variant="outline" size="sm" onClick={clearAllFilters}>
-                Clear Filters
-              </Button>
-            </div>}
+            </>
+          )}
         </div>
       </main>
 
