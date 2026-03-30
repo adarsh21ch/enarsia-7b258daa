@@ -206,7 +206,7 @@ export function useProspectsQuery(options: UseProspectsQueryOptions = {}) {
     },
     initialPageParam: 0,
     getNextPageParam: (lastPage) => lastPage.nextOffset,
-    enabled: !!user,
+    enabled: isQueryEnabled,
     placeholderData: (previousData) => previousData,
     staleTime: 60000, // 1 minute
     gcTime: 300000, // 5 minutes
