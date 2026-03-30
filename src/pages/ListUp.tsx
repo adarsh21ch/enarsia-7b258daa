@@ -160,10 +160,13 @@ export default function ListUp() {
   });
   const [expandedProspectId, setExpandedProspectId] = useState<string | null>(null);
 
-  // Persist lead mode to sessionStorage
+  // Persist lead mode and main tab to sessionStorage
   useEffect(() => {
     sessionStorage.setItem('listup-mode', leadMode);
   }, [leadMode]);
+  useEffect(() => {
+    sessionStorage.setItem('listup-main-tab', mainTab);
+  }, [mainTab]);
 
   // Persist filter selections to sessionStorage
   useEffect(() => {
