@@ -22,7 +22,7 @@ html {
     --popover: 0 0% 100%;
     --popover-foreground: 230 45% 8%;
 
-    --primary: 225 100% 61%;
+    --primary: 217 91% 60%;
     --primary-foreground: 0 0% 100%;
 
     --secondary: 228 33% 95%;
@@ -31,7 +31,7 @@ html {
     --muted: 228 33% 95%;
     --muted-foreground: 230 14% 53%;
 
-    --accent: 225 100% 61%;
+    --accent: 217 91% 60%;
     --accent-foreground: 0 0% 100%;
 
     --destructive: 0 84% 60%;
@@ -40,7 +40,7 @@ html {
     --border: 226 30% 91%;
     --border-strong: 226 18% 80%;
     --input: 226 30% 91%;
-    --ring: 225 100% 61%;
+    --ring: 217 91% 60%;
 
     --radius: 0.75rem;
 
@@ -71,11 +71,11 @@ html {
     --accent-red-soft: 0 84% 96%;
     --accent-purple: 263 70% 66%;
     --accent-purple-soft: 263 70% 96%;
-    --accent-blue: 225 100% 61%;
-    --accent-blue-soft: 225 100% 95%;
+    --accent-blue: 217 91% 60%;
+    --accent-blue-soft: 217 91% 95%;
 
     /* Funnel stage colors */
-    --stage-enrollment: 225 100% 61%;
+    --stage-enrollment: 217 91% 60%;
     --stage-day1: 263 70% 66%;
     --stage-day2: 316 72% 52%;
     --stage-day3: 32 95% 53%;
@@ -101,12 +101,12 @@ html {
 
     --sidebar-background: 228 33% 97%;
     --sidebar-foreground: 240 5.3% 26.1%;
-    --sidebar-primary: 225 100% 61%;
+    --sidebar-primary: 217 91% 60%;
     --sidebar-primary-foreground: 0 0% 100%;
     --sidebar-accent: 228 33% 95%;
     --sidebar-accent-foreground: 230 45% 8%;
     --sidebar-border: 226 30% 91%;
-    --sidebar-ring: 225 100% 61%;
+    --sidebar-ring: 217 91% 60%;
   }
 
   .dark {
@@ -120,7 +120,7 @@ html {
     --popover: 233 35% 8%;
     --popover-foreground: 230 80% 97%;
 
-    --primary: 225 100% 65%;
+    --primary: 217 91% 64%;
     --primary-foreground: 0 0% 100%;
 
     --secondary: 233 25% 14%;
@@ -129,7 +129,7 @@ html {
     --muted: 233 25% 14%;
     --muted-foreground: 230 20% 60%;
 
-    --accent: 225 100% 65%;
+    --accent: 217 91% 64%;
     --accent-foreground: 0 0% 100%;
 
     --destructive: 0 63% 45%;
@@ -138,7 +138,7 @@ html {
     --border: 233 22% 16%;
     --border-strong: 233 18% 27%;
     --input: 233 22% 16%;
-    --ring: 225 100% 65%;
+    --ring: 217 91% 64%;
 
     --status-positive-bg: 142 76% 12%;
     --status-negative-bg: 0 84% 12%;
@@ -153,7 +153,7 @@ html {
     --accent-orange-soft: 25 80% 8%;
     --accent-red-soft: 0 60% 10%;
     --accent-purple-soft: 263 40% 12%;
-    --accent-blue-soft: 225 60% 15%;
+    --accent-blue-soft: 217 60% 15%;
 
     --personal-tag-header: 233 20% 14%;
     --personal-tag-header-text: 230 20% 70%;
