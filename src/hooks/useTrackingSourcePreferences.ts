@@ -90,12 +90,12 @@ export function useTrackingSourcePreferences() {
 
   // Get current personal source (with default fallback)
   const getPersonalSource = useCallback((): TrackingSource => {
-    return preferences?.personal_source || 'MANUAL';
+    return preferences?.personal_source || 'AUTO';
   }, [preferences]);
 
   // Get current team source (with default fallback)
   const getTeamSource = useCallback((): TrackingSource => {
-    return preferences?.team_source || 'MANUAL';
+    return preferences?.team_source || 'AUTO';
   }, [preferences]);
 
   return {
