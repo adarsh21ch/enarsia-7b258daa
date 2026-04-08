@@ -9,7 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Loader2, Shield, Users, Crown, ArrowLeft, BarChart3, MessageSquare, Tag, Sliders, Sparkles, History, Bell, IndianRupee, Filter } from 'lucide-react';
+import { Loader2, Shield, Users, Crown, ArrowLeft, BarChart3, MessageSquare, Tag, Sliders, Sparkles, History, Bell, IndianRupee, Filter, DatabaseBackup } from 'lucide-react';
 import nevoraLogo from '@/assets/nevorai-logo.jpeg';
 import { AdminAnalyticsDashboard } from '@/components/admin/AdminAnalyticsDashboard';
 import { AdminSupportPanel } from '@/components/admin/AdminSupportPanel';
@@ -20,6 +20,7 @@ import { FeatureFlagsManager } from '@/components/admin/FeatureFlagsManager';
 import { EnhancedUsersTab } from '@/components/admin/EnhancedUsersTab';
 import { AuditLogViewer } from '@/components/admin/AuditLogViewer';
 import { AdminNotificationsPanel } from '@/components/admin/AdminNotificationsPanel';
+import { AdminDataRecovery } from '@/components/admin/AdminDataRecovery';
 
 const HEADER_PLAN_OPTIONS = [
   { value: 'all', label: 'All' },
@@ -160,6 +161,9 @@ export default function Admin() {
                 <TabsTrigger value="notify" className="text-[11px] px-2.5 h-7">
                   <Bell className="h-3 w-3 mr-1" />Notify
                 </TabsTrigger>
+                <TabsTrigger value="recovery" className="text-[11px] px-2.5 h-7">
+                  <DatabaseBackup className="h-3 w-3 mr-1" />Recovery
+                </TabsTrigger>
               </TabsList>
               <ScrollBar orientation="horizontal" />
             </ScrollArea>
@@ -190,6 +194,9 @@ export default function Admin() {
             </TabsContent>
             <TabsContent value="notify" className="mt-3">
               <AdminNotificationsPanel />
+            </TabsContent>
+            <TabsContent value="recovery" className="mt-3">
+              <AdminDataRecovery />
             </TabsContent>
           </Tabs>
 
