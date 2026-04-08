@@ -237,7 +237,7 @@ export function UpgradeDrawer({ variant = 'default', triggerText }: UpgradeDrawe
       <button
         onClick={() => handleUpgrade(selectedPlanKey)}
         disabled={paymentLoading || plansLoading || !selectedPlan}
-        className="w-full h-12 rounded-xl text-base font-bold text-white bg-gradient-to-r from-[hsl(36,90%,55%)] via-[hsl(30,85%,50%)] to-[hsl(24,80%,45%)] shadow-lg shadow-[hsl(30,85%,52%,0.35)] hover:shadow-xl hover:shadow-[hsl(30,85%,52%,0.4)] active:scale-[0.98] transition-all duration-200 disabled:opacity-50 disabled:pointer-events-none flex items-center justify-center gap-2"
+        className="w-full h-12 rounded-xl text-base font-bold text-white bg-gradient-to-r from-[hsl(36,85%,58%)] to-[hsl(28,78%,52%)] shadow-md shadow-[hsl(36,80%,55%,0.2)] hover:shadow-lg hover:brightness-105 active:scale-[0.98] transition-all duration-200 disabled:opacity-50 disabled:pointer-events-none flex items-center justify-center gap-2"
       >
         {paymentLoading ? 'Opening payment...' : selectedPlan ? (
           <><Crown className="h-5 w-5" />Get Pro – ₹{getDisplayPrice(selectedPlan)}</>
