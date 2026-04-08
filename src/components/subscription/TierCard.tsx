@@ -52,8 +52,8 @@ export function TierCard({ tierName = 'Pro', plans, selectedPlanKey, onSelectPla
             <h4 className="font-bold text-sm text-white tracking-wide">{tierName}</h4>
           </div>
           <div className="flex items-center gap-1">
-            <span className="text-lg font-extrabold text-white">₹{lowestDailyPrice}</span>
-            <span className="text-xs text-white/80 font-medium">/day</span>
+            <span className="text-lg font-extrabold text-white">₹{sortedPlans[0]?.price ?? ''}</span>
+            <span className="text-xs text-white/80 font-medium">{getBillingLabel(sortedPlans[0])}</span>
           </div>
         </div>
       </div>
