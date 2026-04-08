@@ -304,6 +304,26 @@ function TableContent({
       
     </div>;
 }
+// Info chip shown when "All" sheet is active - dismissible per session
+function AllSheetInfoChip() {
+  const [dismissed, setDismissed] = useState(() => {
+    try { return sessionStorage.getItem('allSheetInfoDismissed') === '1'; } catch { return false; }
+  });
+  if (dismissed) return null;
+  return (
+    <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-muted/60 text-muted-foreground text-xs">
+      <span>ℹ️</span>
+      <span>"All" shows leads from all sheets. Switch to a specific sheet to delete leads.</span>
+      <button
+        onClick={() => { setDismissed(true); try { sessionStorage.setItem('allSheetInfoDismissed', '1'); } catch {} }}
+        className="ml-1 hover:text-foreground transition-colors"
+      >
+        <X className="h-3 w-3" />
+      </button>
+    </div>
+  );
+}
+
 export function ProspectTable({
   prospects,
   loading,
