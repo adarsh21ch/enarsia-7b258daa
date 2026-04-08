@@ -168,93 +168,75 @@ export function FeatureFlagsManager() {
                       <TableRow className="hover:bg-transparent">
                         <TableHead className="text-[11px] w-8">On</TableHead>
                         <TableHead className="text-[11px]">Feature</TableHead>
-                        <TableHead className="text-[11px] w-16">Free</TableHead>
-                        <TableHead className="text-[11px] w-16">Basic</TableHead>
-                        <TableHead className="text-[11px] w-16">Pro</TableHead>
-                        <TableHead className="text-[11px] w-20">Tier</TableHead>
+                        <TableHead className="text-[11px] w-28 text-center">
+                          <div className="flex items-center justify-between px-1">
+                            <span className="text-muted-foreground">Free</span>
+                            <span className="font-semibold">Pro</span>
+                          </div>
+                        </TableHead>
                         <TableHead className="text-[11px] w-10"><span className="sr-only">Actions</span></TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {categoriesInModule[category].map((flag: any) => (
-                        <TableRow key={flag.id} className={!flag.is_enabled ? 'opacity-50' : ''}>
-                          <TableCell className="py-1.5 px-2">
-                            <Switch checked={flag.is_enabled} onCheckedChange={v => handleToggle(flag.id, 'is_enabled', v, flag)} className="scale-75" />
-                          </TableCell>
-                          <TableCell className="py-1.5 px-2">
-                            <div>
-                              <span className="text-sm font-medium">{flag.feature_name}</span>
-                              <span className="text-[10px] text-muted-foreground font-mono ml-1.5">{flag.feature_key}</span>
-                            </div>
-                          </TableCell>
-                          <TableCell className="py-1.5 px-2">
-                            <Switch
-                              checked={flag.free_access}
-                              onCheckedChange={v => handleToggle(flag.id, 'free_access', v, flag)}
-                              disabled={!flag.is_enabled}
-                              className="scale-75"
-                            />
-                          </TableCell>
-                          <TableCell className="py-1.5 px-2">
-                            <Switch
-                              checked={flag.pro_access}
-                              onCheckedChange={v => handleToggle(flag.id, 'pro_access', v, flag)}
-                              disabled={!flag.is_enabled}
-                              className="scale-75"
-                            />
-                          </TableCell>
-                          <TableCell className="py-1.5 px-2">
-                            <Switch
-                              checked={flag.trial_access}
-                              onCheckedChange={v => handleToggle(flag.id, 'trial_access', v, flag)}
-                              disabled={!flag.is_enabled}
-                              className="scale-75"
-                            />
-                          </TableCell>
-                          <TableCell className="py-1.5 px-2">
-                            <select
-                              value={flag.required_tier || 'basic'}
-                              onChange={e => handleFieldChange(flag.id, 'required_tier', e.target.value, flag)}
-                              disabled={!flag.is_enabled}
-                              className="h-6 text-[11px] border rounded px-1 bg-background w-full"
-                            >
-                              <option value="basic">Free</option>
-                              <option value="pro">Basic</option>
-                              <option value="premium">Pro</option>
-                            </select>
-                          </TableCell>
-                          <TableCell className="py-1.5 px-1">
-                            <DropdownMenu>
-                              <DropdownMenuTrigger asChild>
-                                <Button variant="ghost" size="sm" className="h-6 w-6 p-0">
-                                  <MoreHorizontal className="h-3.5 w-3.5" />
-                                </Button>
-                              </DropdownMenuTrigger>
-                              <DropdownMenuContent align="end" className="w-56">
-                                <div className="px-3 py-2 space-y-2">
-                                  <p className="text-xs font-medium flex items-center gap-1"><Hash className="h-3 w-3" /> Limits</p>
-                                  {(['free_limit', 'pro_limit', 'trial_limit'] as const).map(field => (
-                                    <div key={field} className="flex items-center gap-2">
-                                      <span className="text-[10px] text-muted-foreground w-10 capitalize">{field.replace('_limit', '')}</span>
-                                      <Input
-                                        type="number"
-                                        className="h-6 w-20 text-xs px-1"
-                                        placeholder="∞"
-                                        defaultValue={flag[field] ?? ''}
-                                        onBlur={e => handleLimitChange(flag.id, field, e.target.value, flag)}
-                                        onKeyDown={e => e.key === 'Enter' && (e.target as HTMLInputElement).blur()}
-                                      />
-                                    </div>
-                                  ))}
-                                </div>
-                                <DropdownMenuItem className="text-xs" onClick={() => handleFieldChange(flag.id, 'module', flag.module === 'application' ? 'trackup' : 'application', flag)}>
-                                  Change Module
-                                </DropdownMenuItem>
-                              </DropdownMenuContent>
-                            </DropdownMenu>
-                          </TableCell>
-                        </TableRow>
-                      ))}
+                      {categoriesInModule[category].map((flag: any) => {
+                        // Single toggle: off = Free (required_tier=basic), on = Pro (required_tier=pro)
+                        const isPro = (flag.required_tier || 'basic') !== 'basic';
+                        const handleTierToggle = async (checked: boolean) => {
+                          const newTier = checked ? 'pro' : 'basic';
+                          await handleFieldChange(flag.id, 'required_tier', newTier, flag);
+                        };
+                        return (
+                          <TableRow key={flag.id} className={!flag.is_enabled ? 'opacity-50' : ''}>
+                            <TableCell className="py-1.5 px-2">
+                              <Switch checked={flag.is_enabled} onCheckedChange={v => handleToggle(flag.id, 'is_enabled', v, flag)} className="scale-75" />
+                            </TableCell>
+                            <TableCell className="py-1.5 px-2">
+                              <div>
+                                <span className="text-sm font-medium">{flag.feature_name}</span>
+                                <span className="text-[10px] text-muted-foreground font-mono ml-1.5">{flag.feature_key}</span>
+                              </div>
+                            </TableCell>
+                            <TableCell className="py-1.5 px-2 text-center">
+                              <Switch
+                                checked={isPro}
+                                onCheckedChange={handleTierToggle}
+                                disabled={!flag.is_enabled}
+                                className="scale-75"
+                              />
+                            </TableCell>
+                            <TableCell className="py-1.5 px-1">
+                              <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                  <Button variant="ghost" size="sm" className="h-6 w-6 p-0">
+                                    <MoreHorizontal className="h-3.5 w-3.5" />
+                                  </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end" className="w-56">
+                                  <div className="px-3 py-2 space-y-2">
+                                    <p className="text-xs font-medium flex items-center gap-1"><Hash className="h-3 w-3" /> Limits</p>
+                                    {(['free_limit', 'pro_limit'] as const).map(field => (
+                                      <div key={field} className="flex items-center gap-2">
+                                        <span className="text-[10px] text-muted-foreground w-10 capitalize">{field === 'free_limit' ? 'Free' : 'Pro'}</span>
+                                        <Input
+                                          type="number"
+                                          className="h-6 w-20 text-xs px-1"
+                                          placeholder="∞"
+                                          defaultValue={flag[field] ?? ''}
+                                          onBlur={e => handleLimitChange(flag.id, field, e.target.value, flag)}
+                                          onKeyDown={e => e.key === 'Enter' && (e.target as HTMLInputElement).blur()}
+                                        />
+                                      </div>
+                                    ))}
+                                  </div>
+                                  <DropdownMenuItem className="text-xs" onClick={() => handleFieldChange(flag.id, 'module', flag.module === 'application' ? 'trackup' : 'application', flag)}>
+                                    Change Module
+                                  </DropdownMenuItem>
+                                </DropdownMenuContent>
+                              </DropdownMenu>
+                            </TableCell>
+                          </TableRow>
+                        );
+                      })}
                     </TableBody>
                   </Table>
                 </div>
