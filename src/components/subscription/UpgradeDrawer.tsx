@@ -172,8 +172,8 @@ export function UpgradeDrawer({ variant = 'default', triggerText }: UpgradeDrawe
     <div className="space-y-5 p-1">
       {/* Premium header */}
       <div className="flex items-center gap-3">
-        <div className="h-11 w-11 rounded-2xl bg-gradient-to-br from-[hsl(36,90%,55%)] to-[hsl(24,80%,45%)] flex items-center justify-center shadow-lg shadow-[hsl(30,85%,52%,0.3)]">
-          <Zap className="h-5 w-5 text-white" />
+        <div className="h-11 w-11 rounded-2xl bg-gradient-to-br from-[hsl(36,85%,62%)] to-[hsl(28,80%,52%)] flex items-center justify-center shadow-md shadow-[hsl(36,80%,55%,0.2)]">
+          <Crown className="h-5 w-5 text-white" />
         </div>
         <div>
           <h3 className="font-bold text-lg text-foreground">Upgrade to Pro</h3>
