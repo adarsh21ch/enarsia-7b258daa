@@ -1100,27 +1100,29 @@ export function ProspectTable({
         {/* Right side - Actions (hidden when search expanded) */}
         {!isSearchExpanded && (
           <div className="flex items-center gap-1 shrink-0 ml-auto">
-            {/* Undo / Redo buttons */}
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-9 w-9 rounded-xl"
-              onClick={handleUndo}
-              disabled={!canUndo}
-              title="Undo"
-            >
-              <Undo2 className={cn("h-4 w-4", !canUndo && "opacity-35")} />
-            </Button>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-9 w-9 rounded-xl"
-              onClick={handleRedo}
-              disabled={!canRedo}
-              title="Redo"
-            >
-              <Redo2 className={cn("h-4 w-4", !canRedo && "opacity-35")} />
-            </Button>
+            {/* Undo / Redo buttons - compact pair */}
+            <div className="flex items-center gap-0">
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-7 rounded-lg px-0"
+                onClick={handleUndo}
+                disabled={!canUndo}
+                title="Undo"
+              >
+                <Undo2 className={cn("h-3.5 w-3.5", !canUndo && "opacity-35")} />
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-7 rounded-lg px-0"
+                onClick={handleRedo}
+                disabled={!canRedo}
+                title="Redo"
+              >
+                <Redo2 className={cn("h-3.5 w-3.5", !canRedo && "opacity-35")} />
+              </Button>
+            </div>
 
             {selectionMode.active ? <div className="flex items-center gap-2 bg-muted/50 rounded-lg px-2 py-1">
                 <span className="text-xs font-medium">{selectedIds.size} Selected</span>
