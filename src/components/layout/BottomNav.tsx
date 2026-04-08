@@ -84,7 +84,7 @@ export function BottomNav({ className }: { className?: string }) {
         "fixed bottom-0 left-0 right-0 z-50",
         "bg-card/85 backdrop-blur-2xl",
         "border-t border-border/50",
-        "pb-[env(safe-area-inset-bottom,10px)]",
+        "pb-[10px]",
         className
       )}
     >
@@ -101,7 +101,8 @@ export function BottomNav({ className }: { className?: string }) {
               className={cn(
                 "relative flex flex-col items-center justify-center flex-1 h-full min-h-[44px] min-w-[44px]",
                 "transition-colors duration-200",
-                isActive ? "text-primary" : "text-muted-foreground"
+                isActive ? "text-primary" : "text-muted-foreground",
+                "pb-[8px]"
               )}
             >
               <div
