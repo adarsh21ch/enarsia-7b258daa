@@ -297,15 +297,6 @@ export default function TodoUp() {
 
           {/* To-Do List View (existing UI) */}
           {viewMode === 'todo-list' && <>
-              {/* Selected date display */}
-              <div className="flex items-center justify-between">
-                <h3 className="text-sm font-medium text-muted-foreground">
-                  {format(calendar.selectedDate, 'EEEE, MMMM d, yyyy')}
-                </h3>
-                <span className="text-xs text-muted-foreground">
-                  {pendingTodos.length} pending
-                </span>
-              </div>
 
               {/* To-Do List */}
               <div className="bg-card rounded-xl border border-border/40 shadow-sm overflow-hidden">
