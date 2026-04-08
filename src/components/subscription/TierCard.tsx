@@ -17,17 +17,14 @@ export function TierCard({ tierName = 'Pro', plans, selectedPlanKey, onSelectPla
   const getDailyPrice = (plan: PlanConfig) => Math.round(plan.price / plan.durationDays);
   const lowestDailyPrice = Math.min(...sortedPlans.map(p => Math.round(p.price / p.durationDays)));
 
-  // Use features from the plan config if available, otherwise use defaults
   const defaultFeatures = [
-    'Full App Access',
-    'TrackUp Dashboard',
-    'Higher Limits',
-    'Nevorai Funnels',
-    'Advanced Analytics',
-    'Leader Tools',
+    'Full Application Access (Calling + Follow-up)',
+    'TrackUp Dashboard (Advanced Tracking)',
+    'Higher Limits & Productivity Tools',
+    'Faster Workflow & Automation',
+    'Best for individual network marketers.',
   ];
 
-  // Use first plan's features if available
   const features = sortedPlans[0]?.features?.length ? sortedPlans[0].features : defaultFeatures;
 
   const getDurationLabel = (plan: PlanConfig) => {
@@ -50,18 +47,18 @@ export function TierCard({ tierName = 'Pro', plans, selectedPlanKey, onSelectPla
     <div
       className={`rounded-2xl border-2 transition-all overflow-hidden flex flex-col h-full relative ${
         isThisTierSelected
-          ? 'border-primary ring-2 ring-primary/20 bg-primary/5 shadow-lg'
-          : 'border-border bg-card'
+          ? 'border-amber-500 ring-2 ring-amber-500/20 bg-amber-50 dark:bg-amber-950/20 shadow-lg'
+          : 'border-amber-300 dark:border-amber-700 bg-card'
       }`}
     >
       {/* Header + Features */}
       <div className={`px-3 ${compact ? 'pt-2 pb-1.5' : 'pt-3 pb-2'}`}>
         <div className="flex items-center gap-2 mb-1.5">
-          <div className="h-6 w-6 rounded-md bg-primary/10 flex items-center justify-center">
-            <Crown className="h-3 w-3 text-primary" />
+          <div className="h-6 w-6 rounded-md bg-amber-500/15 flex items-center justify-center">
+            <Crown className="h-3 w-3 text-amber-600 dark:text-amber-400" />
           </div>
           <h4 className="font-bold text-sm text-foreground flex-1">{tierName}</h4>
-          <span className="text-sm font-bold text-primary">
+          <span className="text-sm font-bold text-amber-600 dark:text-amber-400">
             ₹{lowestDailyPrice}/day
           </span>
         </div>
@@ -69,7 +66,7 @@ export function TierCard({ tierName = 'Pro', plans, selectedPlanKey, onSelectPla
         <div className={`${compact ? 'space-y-0.5' : 'space-y-1'}`}>
           {features.slice(0, compact ? 4 : 6).map((f, i) => (
             <div key={i} className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
-              <Check className="h-3 w-3 shrink-0 text-primary" />
+              <Check className="h-3 w-3 shrink-0 text-amber-600 dark:text-amber-400" />
               <span>{f}</span>
             </div>
           ))}
@@ -77,7 +74,7 @@ export function TierCard({ tierName = 'Pro', plans, selectedPlanKey, onSelectPla
       </div>
 
       {/* Divider */}
-      <div className="mx-3 border-t border-border/60" />
+      <div className="mx-3 border-t border-amber-200 dark:border-amber-800/50" />
 
       {/* Billing options as compact grid */}
       <div className={`px-2 ${compact ? 'py-1.5' : 'py-2'} flex-1`}>
@@ -93,21 +90,21 @@ export function TierCard({ tierName = 'Pro', plans, selectedPlanKey, onSelectPla
                 onClick={() => onSelectPlan(plan.plan_key)}
                 className={`flex flex-col items-center px-1.5 py-2.5 rounded-xl border transition-all text-center ${
                   isSelected
-                    ? 'border-primary bg-primary/10 shadow-sm'
-                    : 'border-border/50 bg-background hover:border-muted-foreground/30'
+                    ? 'border-amber-500 bg-amber-100 dark:bg-amber-900/30 shadow-sm'
+                    : 'border-border/50 bg-background hover:border-amber-400/50'
                 }`}
               >
                 <span className="text-[10px] font-medium text-muted-foreground leading-tight">
                   {getDurationLabel(plan)}
                 </span>
-                <span className="text-sm font-bold leading-tight mt-1 text-primary">
+                <span className="text-sm font-bold leading-tight mt-1 text-amber-600 dark:text-amber-400">
                   ₹{dailyPrice}/day
                 </span>
                 <span className="text-[9px] text-muted-foreground mt-0.5 leading-tight">
                   ₹{plan.price} {getBillingLabel(plan)}
                 </span>
                 {plan.badgeText && (
-                  <span className="text-[8px] font-semibold mt-1 px-1.5 py-0.5 rounded-full bg-primary/10 text-primary">
+                  <span className="text-[8px] font-semibold mt-1 px-1.5 py-0.5 rounded-full bg-amber-500/15 text-amber-700 dark:text-amber-300">
                     {plan.badgeText}
                   </span>
                 )}
