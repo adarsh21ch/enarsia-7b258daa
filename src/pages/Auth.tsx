@@ -258,7 +258,7 @@ export default function Auth() {
         />
       </div>
       <h1 className="text-[28px] font-extrabold text-foreground font-heading tracking-tight">
-        Nevor<span className="text-primary">AI</span>
+        Nevor<span className="text-primary">ai</span>
       </h1>
       <p className="text-muted-foreground text-[15px] mt-1 italic font-body">
         Never miss a followup Again
