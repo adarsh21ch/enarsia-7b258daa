@@ -74,12 +74,6 @@ export function DailyTasksView({
 
   return (
     <div className="space-y-4 pt-[5px]">
-      {/* Date display */}
-      <div className="flex items-center justify-between">
-        <h3 className="text-sm font-medium text-muted-foreground">
-          {format(selectedDate, 'EEEE, MMMM d, yyyy')}
-        </h3>
-      </div>
 
       {/* Leader Tasks Section */}
       {hasLeaderTasks && (
