@@ -1023,6 +1023,8 @@ export function ProspectTable({
         </div>
       </div>;
   }
+  const isAllSheet = selectedSheetId === null;
+
   return <div className="flex flex-col h-full gap-2">
 
       {/* Progressive Upgrade Nudge Banner - non-spammy, stage-based */}
@@ -1075,9 +1077,37 @@ export function ProspectTable({
         {/* Right side - Actions (hidden when search expanded) */}
         {!isSearchExpanded && (
           <div className="flex items-center gap-1 shrink-0 ml-auto">
+            {/* Undo / Redo buttons */}
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-9 w-9 rounded-xl"
+              onClick={handleUndo}
+              disabled={!canUndo}
+              title="Undo"
+            >
+              <Undo2 className={cn("h-4 w-4", !canUndo && "opacity-35")} />
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-9 w-9 rounded-xl"
+              onClick={handleRedo}
+              disabled={!canRedo}
+              title="Redo"
+            >
+              <Redo2 className={cn("h-4 w-4", !canRedo && "opacity-35")} />
+            </Button>
+
             {selectionMode.active ? <div className="flex items-center gap-2 bg-muted/50 rounded-lg px-2 py-1">
                 <span className="text-xs font-medium">{selectedIds.size} Selected</span>
-                <Button variant="destructive" size="sm" onClick={() => setDeleteConfirmOpen(true)} disabled={selectedIds.size === 0} className="h-7 px-2">
+                <Button variant="destructive" size="sm" onClick={() => {
+                  if (isAllSheet) {
+                    toast.info('To delete leads, go to a specific sheet first.');
+                    return;
+                  }
+                  setDeleteConfirmOpen(true);
+                }} disabled={selectedIds.size === 0} className="h-7 px-2">
                   <Trash2 className="h-3.5 w-3.5" />
                 </Button>
                 <Button variant="secondary" size="sm" onClick={() => {
@@ -1128,6 +1158,9 @@ export function ProspectTable({
           </div>
         )}
       </div>
+
+      {/* All sheet info chip */}
+      {isAllSheet && <AllSheetInfoChip />}
 
       {/* Table */}
       <div className="bg-card rounded-xl border border-border/50 shadow-sm pb-28">
