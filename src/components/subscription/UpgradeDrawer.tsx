@@ -236,7 +236,7 @@ export function UpgradeDrawer({ variant = 'default', triggerText }: UpgradeDrawe
 
       <Button
         onClick={() => handleUpgrade(selectedPlanKey)}
-        className="w-full h-12 text-base font-semibold shadow-lg shadow-primary/30"
+        className="w-full h-12 text-base font-semibold bg-amber-600 hover:bg-amber-700 text-white shadow-lg shadow-amber-600/30"
         disabled={paymentLoading || plansLoading || !selectedPlan}
       >
         {paymentLoading ? 'Opening payment...' : selectedPlan ? (
