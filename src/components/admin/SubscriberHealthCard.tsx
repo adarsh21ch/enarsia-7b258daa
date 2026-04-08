@@ -120,7 +120,7 @@ export function SubscriberHealthCard() {
                     </TableCell>
                     <TableCell className="py-1.5">
                       <Badge variant="outline" className="text-[9px] px-1 py-0">
-                        {u.tier === 'premium' ? 'Pro' : 'Basic'}
+                        Pro
                       </Badge>
                     </TableCell>
                     <TableCell className="py-1.5 text-[10px]">

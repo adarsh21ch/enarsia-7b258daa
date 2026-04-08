@@ -124,10 +124,10 @@ function PaidUsersDrawer({ open, onOpenChange, users, loading }: {
         <Tabs defaultValue="basic" className="mt-4">
           <TabsList className="w-full grid grid-cols-2">
             <TabsTrigger value="basic" className="text-xs gap-1">
-              <Crown className="h-3 w-3" /> Basic <Badge variant="secondary" className="ml-1 text-[10px] px-1">{basicUsers.length}</Badge>
+              <Crown className="h-3 w-3" /> Pro <Badge variant="secondary" className="ml-1 text-[10px] px-1">{basicUsers.length}</Badge>
             </TabsTrigger>
             <TabsTrigger value="pro" className="text-xs gap-1">
-              <Gem className="h-3 w-3" /> Pro <Badge variant="secondary" className="ml-1 text-[10px] px-1">{proUsers.length}</Badge>
+              <Gem className="h-3 w-3" /> Pro+ <Badge variant="secondary" className="ml-1 text-[10px] px-1">{proUsers.length}</Badge>
             </TabsTrigger>
           </TabsList>
           {['basic', 'pro'].map(tab => (

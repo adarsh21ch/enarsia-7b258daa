@@ -52,16 +52,21 @@ export function SubscriptionPieChart() {
     if (t.tier_value === 'free') {
       chartData.push({ name: 'Free', value: Number(t.active_count), color: COLORS.free });
     } else if (t.tier_value === 'basic' || t.tier_value === 'pro') {
-      // Both 'basic' and 'pro' tier values map to "Basic" display name
-      const existing = chartData.find(d => d.name === 'Active Basic');
+      // Both 'basic' and 'pro' tier values map to "Pro" display name
+      const existing = chartData.find(d => d.name === 'Active Pro');
       if (existing) {
         existing.value += Number(t.active_count);
       } else {
-        chartData.push({ name: 'Active Basic', value: Number(t.active_count), color: COLORS.pro });
+        chartData.push({ name: 'Active Pro', value: Number(t.active_count), color: COLORS.pro });
       }
       totalExpired += Number(t.expired_count);
     } else if (t.tier_value === 'premium') {
-      chartData.push({ name: 'Active Pro', value: Number(t.active_count), color: COLORS.premium });
+      const existing = chartData.find(d => d.name === 'Active Pro');
+      if (existing) {
+        existing.value += Number(t.active_count);
+      } else {
+        chartData.push({ name: 'Active Pro', value: Number(t.active_count), color: COLORS.premium });
+      }
       totalExpired += Number(t.expired_count);
     }
   });

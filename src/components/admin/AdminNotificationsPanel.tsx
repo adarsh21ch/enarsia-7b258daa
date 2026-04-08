@@ -14,7 +14,7 @@ import { format } from 'date-fns';
 const TARGET_OPTIONS = [
   { value: 'all', label: 'All Users' },
   { value: 'free', label: 'Free Users' },
-  { value: 'basic', label: 'Basic Users' },
+  { value: 'basic', label: 'Pro Users' },
   { value: 'pro', label: 'Pro Users' },
   { value: 'trial', label: 'Trial Users' },
   { value: 'expiring', label: 'Expiring Soon' },
