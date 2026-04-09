@@ -6,7 +6,7 @@ import { useProspectsQuery } from '@/hooks/useProspectsQuery';
 import { useSheets } from '@/hooks/useSheets';
 import { useTrackingFormatContext } from '@/contexts/TrackingFormatContext';
 import { BottomNav } from '@/components/layout/BottomNav';
-import { OnboardingOverlay } from '@/components/onboarding/OnboardingOverlay';
+
 import { LeadLimitCounter } from '@/components/subscription/LeadLimitCounter';
 
 import { ProspectTable } from '@/components/prospects/ProspectTable';
