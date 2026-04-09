@@ -1,9 +1,9 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState, useEffect, useRef, useCallback } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useOnboarding, OnboardingStep } from '@/hooks/useOnboarding';
 import { useProfile } from '@/hooks/useProfile';
 import { Button } from '@/components/ui/button';
-import { ArrowRight, Sparkles, Import } from 'lucide-react';
+import { ArrowRight, Sparkles, Import, CheckCircle2, Loader2 } from 'lucide-react';
 import {
   OnboardingBanner,
   FullScreenCard,
@@ -13,8 +13,92 @@ import {
 } from './OnboardingPrimitives';
 import nevoraLogo from '@/assets/nevorai-logo.jpeg';
 
+/** Step definition with auto-advance trigger */
+interface StepDef {
+  title: string;
+  body: string;
+  /** What triggers completion */
+  trigger:
+    | { type: 'click'; selector: string }   // advance when element is clicked
+    | { type: 'delay'; ms: number }          // advance after delay (informational)
+    | { type: 'interact'; selector: string } // advance when element receives focus/input
+  /** Navigate to this route when step activates */
+  navigateTo?: string;
+  /** Highlight target */
+  highlight?: { selector: string; label: string };
+}
+
+const STEP_DEFS: Record<number, StepDef> = {
+  1: {
+    title: '📋 Your Calling Sheet',
+    body: 'This is where you manage all your prospects. We\'ve added 20 demo leads so you can explore.',
+    trigger: { type: 'delay', ms: 4000 },
+    navigateTo: '/dashboard',
+    highlight: { selector: '[data-onboarding="lead-list"]', label: 'Your leads ↓' },
+  },
+  2: {
+    title: '👆 Tap on Rahul Sharma',
+    body: 'Open his profile to see all details. Tap the highlighted lead row below.',
+    trigger: { type: 'click', selector: '[data-onboarding="lead-row-1"]' },
+    highlight: { selector: '[data-onboarding="lead-row-1"]', label: 'Tap here ↓' },
+  },
+  3: {
+    title: '👤 Lead Profile',
+    body: 'Every prospect has their own profile — details, call status, tags, and activity history.',
+    trigger: { type: 'delay', ms: 4000 },
+    highlight: { selector: '[data-onboarding="lead-detail"]', label: 'Lead profile ↓' },
+  },
+  4: {
+    title: '🏷️ Assign a Tag',
+    body: 'Tags tell you where this prospect is in your process. Tap "Select..." on any lead to assign one.',
+    trigger: { type: 'click', selector: '[data-onboarding="response-select"]' },
+    highlight: { selector: '[data-onboarding="response-select"]', label: 'Tap to assign ↓' },
+  },
+  5: {
+    title: '🔍 Retargeting Filter',
+    body: 'Filter your leads by tag instantly. Tap the "Retargeting" button.',
+    trigger: { type: 'click', selector: '[data-onboarding="retargeting-btn"]' },
+    highlight: { selector: '[data-onboarding="retargeting-btn"]', label: 'Tap here ↓' },
+  },
+  6: {
+    title: '📊 Activity History',
+    body: 'Every action you take is automatically recorded here — tags, calls, it\'s all logged.',
+    trigger: { type: 'delay', ms: 4000 },
+    navigateTo: '/listup',
+    highlight: { selector: '[data-onboarding="activity-list"]', label: 'Activity log ↓' },
+  },
+  7: {
+    title: '🎯 Prospects by Tag',
+    body: 'Your follow-up dashboard. Tap the "Prospects" tab to see leads grouped by tag.',
+    trigger: { type: 'click', selector: '[data-onboarding="prospects-tab"]' },
+    highlight: { selector: '[data-onboarding="prospects-tab"]', label: 'Tap here ↓' },
+  },
+  8: {
+    title: '✅ To-Do List',
+    body: 'Plan your day with tasks. Tap the input bar at the bottom to add one.',
+    trigger: { type: 'interact', selector: '[data-onboarding="todo-input"] input' },
+    navigateTo: '/action',
+    highlight: { selector: '[data-onboarding="todo-input"]', label: 'Add task here ↓' },
+  },
+  9: {
+    title: '📈 Track Your Numbers',
+    body: 'TrackUp counts everything you do — leads, calls, responses, enrolments.',
+    trigger: { type: 'delay', ms: 4000 },
+    navigateTo: '/tracking',
+    highlight: { selector: '[data-onboarding="trackup-table"]', label: 'Your numbers ↓' },
+  },
+  10: {
+    title: '🛠️ Your Tools',
+    body: 'Nevorai Flow, Forms, Notes, Shared Leads — all built in.',
+    trigger: { type: 'delay', ms: 4000 },
+    navigateTo: '/profile',
+    highlight: { selector: '[data-onboarding="profile-tools"]', label: 'Your tools ↓' },
+  },
+};
+
 export function OnboardingOverlay() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { profile } = useProfile();
   const {
     isActive,
@@ -28,6 +112,95 @@ export function OnboardingOverlay() {
   } = useOnboarding();
 
   const [showCleanupPrompt, setShowCleanupPrompt] = useState(false);
+  const [stepCompleted, setStepCompleted] = useState(false);
+  const advanceTimerRef = useRef<ReturnType<typeof setTimeout>>();
+
+  // Reset stepCompleted when step changes
+  useEffect(() => {
+    setStepCompleted(false);
+    return () => {
+      if (advanceTimerRef.current) clearTimeout(advanceTimerRef.current);
+    };
+  }, [currentStep]);
+
+  // Navigate to the correct page when a step becomes active
+  useEffect(() => {
+    if (!isActive || currentStep < 1 || currentStep > 10) return;
+    const def = STEP_DEFS[currentStep];
+    if (def?.navigateTo && location.pathname !== def.navigateTo) {
+      navigate(def.navigateTo);
+    }
+  }, [currentStep, isActive, navigate, location.pathname]);
+
+  // Auto-advance logic
+  const advanceToNext = useCallback(() => {
+    if (advanceTimerRef.current) clearTimeout(advanceTimerRef.current);
+    setStepCompleted(true);
+    // Brief pause to show ✅ then advance
+    advanceTimerRef.current = setTimeout(() => {
+      const next = currentStep + 1;
+      if (next > 10) {
+        goToStep(11 as OnboardingStep);
+      } else {
+        goToStep(next as OnboardingStep);
+      }
+    }, 800);
+  }, [currentStep, goToStep]);
+
+  // Set up triggers for current step
+  useEffect(() => {
+    if (!isActive || currentStep < 1 || currentStep > 10) return;
+    const def = STEP_DEFS[currentStep];
+    if (!def || stepCompleted) return;
+
+    if (def.trigger.type === 'delay') {
+      const timer = setTimeout(advanceToNext, def.trigger.ms);
+      return () => clearTimeout(timer);
+    }
+
+    if (def.trigger.type === 'click') {
+      const selector = def.trigger.selector;
+      const handler = () => advanceToNext();
+
+      // Poll for element (may not be rendered yet)
+      const interval = setInterval(() => {
+        const el = document.querySelector(selector);
+        if (el) {
+          el.addEventListener('click', handler, { once: true, capture: true });
+          clearInterval(interval);
+        }
+      }, 300);
+
+      return () => {
+        clearInterval(interval);
+        const el = document.querySelector(selector);
+        if (el) el.removeEventListener('click', handler, true);
+      };
+    }
+
+    if (def.trigger.type === 'interact') {
+      const selector = def.trigger.selector;
+      const handler = () => advanceToNext();
+
+      const interval = setInterval(() => {
+        const el = document.querySelector(selector);
+        if (el) {
+          el.addEventListener('focus', handler, { once: true });
+          el.addEventListener('click', handler, { once: true });
+          clearInterval(interval);
+        }
+      }, 300);
+
+      return () => {
+        clearInterval(interval);
+        const el = document.querySelector(selector);
+        if (el) {
+          el.removeEventListener('focus', handler);
+          el.removeEventListener('click', handler);
+        }
+      };
+    }
+  }, [currentStep, isActive, stepCompleted, advanceToNext]);
 
   if (!isActive && !showCleanupPrompt) return null;
 
@@ -85,7 +258,7 @@ export function OnboardingOverlay() {
             Your smart CRM for network marketing.
           </p>
           <p className="text-sm text-muted-foreground">
-            We've set up a demo workspace so you can explore the app right now — no setup needed.
+            We've set up a demo workspace so you can explore — just follow the highlights and interact with the app!
           </p>
           <p className="text-xs text-muted-foreground">This quick tour takes about 2 minutes.</p>
         </div>
@@ -162,122 +335,43 @@ export function OnboardingOverlay() {
     );
   }
 
-  // Target element selectors + labels for each step
-  // These highlight the exact UI element the user should interact with
-  const stepHighlights: Record<number, { selector: string; label: string } | null> = {
-    1: { selector: '[data-onboarding="lead-list"]', label: 'Your leads ↓' },
-    2: { selector: '[data-onboarding="lead-row-1"]', label: 'Tap here ↓' },
-    3: { selector: '[data-onboarding="lead-detail"]', label: 'Lead profile ↓' },
-    4: { selector: '[data-onboarding="response-select"]', label: 'Tap to assign ↓' },
-    5: { selector: '[data-onboarding="retargeting-btn"]', label: 'Tap here ↓' },
-    6: { selector: '[data-onboarding="activity-list"]', label: 'Activity log ↓' },
-    7: { selector: '[data-onboarding="prospects-tab"]', label: 'Tap here ↓' },
-    8: { selector: '[data-onboarding="todo-input"]', label: 'Add task here ↓' },
-    9: { selector: '[data-onboarding="trackup-table"]', label: 'Your numbers ↓' },
-    10: { selector: '[data-onboarding="profile-tools"]', label: 'Your tools ↓' },
-  };
-
-  // STEPS 1-10: Non-blocking top banner with target highlighting
-  const stepContent: Record<number, { title: string; body: string; hint?: string; nextLabel: string; onNext: () => void }> = {
-    1: {
-      title: '📋 Your Calling Sheet',
-      body: 'This is where you manage all your prospects. We\'ve added 20 demo leads so you can practice.',
-      hint: '👆 In real life, you\'ll import your own contacts here.',
-      nextLabel: 'Got it',
-      onNext: () => goToStep(2),
-    },
-    2: {
-      title: '👆 Tap on Rahul Sharma',
-      body: 'Open his profile to see all details and take actions on this lead.',
-      hint: '💡 Tap the highlighted lead row below.',
-      nextLabel: 'Got it',
-      onNext: () => goToStep(3),
-    },
-    3: {
-      title: '👤 Lead Profile',
-      body: 'Every prospect has their own profile — details, call status, tags, and activity history.',
-      hint: '📱 Notice the phone number is fake — this is just a demo.',
-      nextLabel: 'Show me tags',
-      onNext: () => goToStep(4),
-    },
-    4: {
-      title: '🏷️ Assign a Tag',
-      body: 'Tags tell you where this prospect is in your process.',
-      hint: '👆 Tap the highlighted "Select..." dropdown on any lead row to assign a tag.',
-      nextLabel: 'Got it',
-      onNext: () => goToStep(5),
-    },
-    5: {
-      title: '🔍 Retargeting Filter',
-      body: 'Filter your leads by tag instantly.',
-      hint: '👆 Tap the highlighted "Retargeting" button at the top right.',
-      nextLabel: 'Next: Follow-Up',
-      onNext: () => { goToStep(6); navigate('/listup'); },
-    },
-    6: {
-      title: '📊 Activity History',
-      body: 'Every action you take is automatically recorded here — tags, calls, it\'s all logged.',
-      hint: '✅ Check the activity feed highlighted below.',
-      nextLabel: 'Got it',
-      onNext: () => goToStep(7),
-    },
-    7: {
-      title: '🎯 Prospects by Tag',
-      body: 'Your follow-up dashboard. Leads grouped by tag for easy follow-up.',
-      hint: '👆 Tap the highlighted "Prospects" tab to see grouped leads.',
-      nextLabel: 'Next: To-Do',
-      onNext: () => { goToStep(8); navigate('/action'); },
-    },
-    8: {
-      title: '✅ To-Do List',
-      body: 'Plan your day with reminders like "Call Rahul at 5 PM".',
-      hint: '👆 Tap the highlighted input bar at the bottom to add a task.',
-      nextLabel: 'Next: TrackUp',
-      onNext: () => { goToStep(9); navigate('/tracking'); },
-    },
-    9: {
-      title: '📈 Track Your Numbers',
-      body: 'TrackUp counts everything you do — leads, calls, responses, enrolments.',
-      hint: '📊 See the highlighted tracking table with today\'s numbers.',
-      nextLabel: 'Next: Profile',
-      onNext: () => { goToStep(10); navigate('/profile'); },
-    },
-    10: {
-      title: '🛠️ Your Tools',
-      body: 'Nevorai Flow, Forms, Notes, Shared Leads — all built in.',
-      hint: '⚙️ Explore the highlighted tools section below.',
-      nextLabel: 'Almost done!',
-      onNext: () => goToStep(11 as OnboardingStep),
-    },
-  };
-
-  const step = stepContent[currentStep];
-  if (!step) return null;
-
-  const highlight = stepHighlights[currentStep];
+  // STEPS 1-10: Non-blocking top banner with auto-advance
+  const def = STEP_DEFS[currentStep];
+  if (!def) return null;
 
   return (
     <>
       {/* Pulsing highlight on the target UI element */}
-      {highlight && (
-        <TargetHighlight selector={highlight.selector} label={highlight.label} />
+      {def.highlight && !stepCompleted && (
+        <TargetHighlight selector={def.highlight.selector} label={def.highlight.label} />
       )}
 
       {/* Top banner with instructions */}
       <OnboardingBanner>
         <OnboardingProgress current={currentStep} total={totalSteps} />
         <div className="space-y-1.5 pr-6">
-          <h2 className="text-sm font-bold text-foreground">{step.title}</h2>
-          <p className="text-xs text-muted-foreground leading-relaxed">{step.body}</p>
-          {step.hint && (
-            <div className="bg-amber-500/10 border border-amber-500/20 rounded-lg px-2.5 py-1.5">
-              <p className="text-xs text-foreground">{step.hint}</p>
-            </div>
+          <h2 className="text-sm font-bold text-foreground flex items-center gap-2">
+            {def.title}
+            {stepCompleted && <CheckCircle2 className="h-4 w-4 text-green-500" />}
+          </h2>
+          <p className="text-xs text-muted-foreground leading-relaxed">{def.body}</p>
+        </div>
+        {/* Status indicator instead of button */}
+        <div className="flex items-center gap-2 text-xs">
+          {stepCompleted ? (
+            <span className="flex items-center gap-1.5 text-green-600 font-medium">
+              <CheckCircle2 className="h-3.5 w-3.5" /> Done — moving next...
+            </span>
+          ) : def.trigger.type === 'delay' ? (
+            <span className="flex items-center gap-1.5 text-muted-foreground">
+              <Loader2 className="h-3.5 w-3.5 animate-spin" /> Looking around...
+            </span>
+          ) : (
+            <span className="flex items-center gap-1.5 text-primary font-medium animate-pulse">
+              👆 Do the action highlighted below
+            </span>
           )}
         </div>
-        <Button onClick={step.onNext} size="sm" className="w-full h-8 rounded-xl font-bold text-xs">
-          {step.nextLabel} <ArrowRight className="h-3.5 w-3.5 ml-1.5" />
-        </Button>
       </OnboardingBanner>
     </>
   );
