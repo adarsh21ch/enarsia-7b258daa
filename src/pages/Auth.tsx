@@ -497,6 +497,28 @@ export default function Auth() {
               </div>
             )}
 
+            {isSignUp && (
+              <div className="space-y-2">
+                <Label htmlFor="phone" className="text-sm font-medium">WhatsApp Number</Label>
+                <div className="relative">
+                  <Phone className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    id="phone"
+                    type="tel"
+                    inputMode="numeric"
+                    value={phoneNumber}
+                    onChange={(e) => setPhoneNumber(e.target.value)}
+                    placeholder="+91 98765 43210"
+                    className="pl-10 h-12 rounded-xl bg-secondary border-border focus:border-primary focus:ring-2 focus:ring-primary/15"
+                    required
+                  />
+                </div>
+                <p className="text-xs text-muted-foreground font-body">
+                  We'll use this only to help you get started with Nevorai.
+                </p>
+              </div>
+            )}
+
             <div className="space-y-2">
               <Label htmlFor="email" className="text-sm font-medium">Email</Label>
               <div className="relative">
