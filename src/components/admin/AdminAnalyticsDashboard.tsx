@@ -1,6 +1,8 @@
 import { useAdminAnalytics } from '@/hooks/useAdminAnalytics';
-import { EnhancedStatsGrid } from './EnhancedStatsGrid';
+import { HealthScoreCard } from './HealthScoreCard';
+import { GrowthMetricCards } from './GrowthMetricCards';
 import { SignupTrendChart } from './SignupTrendChart';
+import { SubscriberHealthSection } from './SubscriberHealthSection';
 import { SubscriptionPieChart } from './SubscriptionPieChart';
 import { RevenueAnalytics } from './RevenueAnalytics';
 import { UsageAnalytics } from './UsageAnalytics';
@@ -9,10 +11,9 @@ import { TrialAnalytics } from './TrialAnalytics';
 import { RetentionAnalytics } from './RetentionAnalytics';
 import { CohortAnalytics } from './CohortAnalytics';
 import { OfferPerformance } from './OfferPerformance';
-import { ChurnRiskAlert } from './ChurnRiskAlert';
-import { SubscriberHealthCard } from './SubscriberHealthCard';
 import { Loader2 } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 
 export function AdminAnalyticsDashboard() {
   const { data: analytics, isLoading, error } = useAdminAnalytics();
@@ -34,58 +35,59 @@ export function AdminAnalyticsDashboard() {
   }
 
   return (
-    <div className="space-y-3">
-      <EnhancedStatsGrid
-        totalSignups={analytics.totalSignups}
-        activeProUsers={analytics.activeProUsers}
-        freeUsersCount={analytics.freeUsersCount}
-        neveraiTodayActive={analytics.neveraiTodayActive}
-        neveraiWeekActive={analytics.neveraiWeekActive}
-        totalLeads={analytics.totalLeads}
-        todayLeads={analytics.todayLeads}
-        revenue={analytics.revenue}
-        activeUsage={analytics.activeUsage}
-        conversion={analytics.conversion}
-        newSignupsThisMonth={analytics.newSignupsThisMonth}
-      />
+    <div className="space-y-4">
+      {/* Section A: Health Score */}
+      <HealthScoreCard analytics={analytics} />
 
+      {/* Section B: Growth Metrics */}
+      <GrowthMetricCards analytics={analytics} />
+
+      {/* Section C: Signups Chart */}
+      <SignupTrendChart data={analytics.dailySignups} />
+
+      {/* Section D: Subscriber Health */}
+      <SubscriberHealthSection />
+
+      {/* Section E: Sub-analytics tabs */}
       <Tabs defaultValue="overview" className="w-full">
-        <TabsList className="w-full grid grid-cols-6 h-8">
-          <TabsTrigger value="overview" className="text-[10px] px-1 h-7">Overview</TabsTrigger>
-          <TabsTrigger value="subscribers" className="text-[10px] px-1 h-7">Subscribers</TabsTrigger>
-          <TabsTrigger value="trials" className="text-[10px] px-1 h-7">Trials</TabsTrigger>
-          <TabsTrigger value="retention" className="text-[10px] px-1 h-7">Retention</TabsTrigger>
-          <TabsTrigger value="revenue" className="text-[10px] px-1 h-7">Revenue</TabsTrigger>
-          <TabsTrigger value="growth" className="text-[10px] px-1 h-7">Growth</TabsTrigger>
-        </TabsList>
+        <ScrollArea className="w-full">
+          <TabsList className="inline-flex w-max gap-0.5 h-9">
+            <TabsTrigger value="overview" className="text-[11px] px-3 h-7">Overview</TabsTrigger>
+            <TabsTrigger value="subscribers" className="text-[11px] px-3 h-7">Subscribers</TabsTrigger>
+            <TabsTrigger value="trials" className="text-[11px] px-3 h-7">Trials</TabsTrigger>
+            <TabsTrigger value="retention" className="text-[11px] px-3 h-7">Retention</TabsTrigger>
+            <TabsTrigger value="revenue" className="text-[11px] px-3 h-7">Revenue</TabsTrigger>
+            <TabsTrigger value="growth" className="text-[11px] px-3 h-7">Growth</TabsTrigger>
+          </TabsList>
+          <ScrollBar orientation="horizontal" />
+        </ScrollArea>
 
-        <TabsContent value="overview" className="mt-2 space-y-3">
-          <ChurnRiskAlert />
-          <SignupTrendChart data={analytics.dailySignups} />
+        <TabsContent value="overview" className="mt-3 space-y-3">
           <SubscriptionPieChart />
         </TabsContent>
 
-        <TabsContent value="subscribers" className="mt-2 space-y-3">
-          <SubscriberHealthCard />
+        <TabsContent value="subscribers" className="mt-3 space-y-3">
+          {/* Already shown above, this tab can show deeper detail */}
+          <SubscriptionPieChart />
         </TabsContent>
 
-        <TabsContent value="trials" className="mt-2">
+        <TabsContent value="trials" className="mt-3">
           <TrialAnalytics />
         </TabsContent>
 
-        <TabsContent value="retention" className="mt-2 space-y-4">
+        <TabsContent value="retention" className="mt-3 space-y-4">
           <RetentionAnalytics />
           <CohortAnalytics />
         </TabsContent>
 
-        <TabsContent value="revenue" className="mt-2">
+        <TabsContent value="revenue" className="mt-3">
           <RevenueAnalytics 
             revenue={analytics.revenue} 
             recentPayments={analytics.recentPayments}
           />
         </TabsContent>
 
-        <TabsContent value="growth" className="mt-2 space-y-3">
+        <TabsContent value="growth" className="mt-3 space-y-3">
           <UsageAnalytics activeUsage={analytics.activeUsage} />
           <ProspectDistributionSection />
           <OfferPerformance />
