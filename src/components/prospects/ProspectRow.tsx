@@ -225,6 +225,11 @@ export const ProspectRow = memo(function ProspectRow({
                     isExpanded && "text-primary"
                   )} title={prospect.name}>
                     {prospect.name}
+                    {(prospect as any).is_demo && (
+                      <span className="ml-1.5 inline-flex items-center px-1.5 py-0 rounded text-[9px] font-semibold bg-orange-100 text-orange-600 dark:bg-orange-500/15 dark:text-orange-400 leading-tight">
+                        DEMO
+                      </span>
+                    )}
                   </span>
                   {/* Phone number below name */}
                   {phoneDisplay && (

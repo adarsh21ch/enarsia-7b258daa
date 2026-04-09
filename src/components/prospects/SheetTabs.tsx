@@ -167,6 +167,11 @@ export function SheetTabs({
                 )}>
 
                     {sheet.name}
+                    {(sheet as any).is_demo && (
+                      <span className="ml-1 inline-flex items-center px-1 py-0 rounded text-[8px] font-semibold bg-orange-100 text-orange-600 dark:bg-orange-500/15 dark:text-orange-400 leading-tight">
+                        DEMO
+                      </span>
+                    )}
                   </button>
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
