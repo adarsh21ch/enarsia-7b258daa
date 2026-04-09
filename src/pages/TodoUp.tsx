@@ -381,7 +381,7 @@ export default function TodoUp() {
       {/* Fixed bottom chat-style input - show for todo-list and daily-tasks only */}
       {!isRecentActivity && <div className="fixed bottom-14 left-0 right-0 z-30 px-4 pb-3 pt-2 pointer-events-none">
           <div className="pointer-events-auto max-w-lg mx-auto py-[10px]">
-            <div className="gap-2 bg-card/95 backdrop-blur-xl border border-border/50 rounded-full px-4 py-2 shadow-lg flex items-center justify-start">
+            <div data-onboarding="todo-input" className="gap-2 bg-card/95 backdrop-blur-xl border border-border/50 rounded-full px-4 py-2 shadow-lg flex items-center justify-start">
               <input id="todo-input" type="text" placeholder={viewMode === 'daily-tasks' ? 'Add recurring daily task...' : `Add task for ${format(calendar.selectedDate, 'MMM d')}...`} value={newTodoInput} onChange={e => setNewTodoInput(e.target.value)} onKeyDown={e => {
             if (e.key === 'Enter') handleAddTask();
           }} className="flex-1 bg-transparent border-0 outline-none text-sm placeholder:text-muted-foreground/60" />
