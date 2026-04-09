@@ -224,19 +224,20 @@ export function StepBanner({
       }}
     >
       {/* Progress bar */}
-      <div style={{ height: 3, background: 'hsl(var(--border))' }}>
+      <div style={{ height: 3, background: 'hsl(var(--border))', borderRadius: '12px 12px 0 0', overflow: 'hidden' }}>
         <div style={{
           height: '100%', background: 'hsl(var(--primary))',
           width: `${progress}%`, transition: 'width 0.4s ease',
-          borderRadius: '0 2px 2px 0',
         }} />
       </div>
 
       <div style={{
         background: 'hsl(var(--card))',
-        borderBottom: '1px solid hsl(var(--border))',
-        boxShadow: '0 2px 16px rgba(0,0,0,0.08)',
+        borderRadius: '0 0 12px 12px',
+        boxShadow: '0 -4px 24px rgba(0,0,0,0.12), 0 4px 16px rgba(0,0,0,0.08)',
         padding: '10px 16px 12px',
+        border: '1px solid hsl(var(--border))',
+        borderTop: 'none',
       }}>
         {/* Step counter + skip */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
