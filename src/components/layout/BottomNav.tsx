@@ -1,10 +1,9 @@
-import { useState, useEffect, useCallback, startTransition, useRef } from 'react';
+import { useState, useEffect, useCallback, startTransition } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { useProfile } from '@/hooks/useProfile';
 import { useOnboarding } from '@/hooks/useOnboarding';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { toast } from 'sonner';
 
 const CallingIcon = ({ className }: { className?: string }) => (
   <svg viewBox="0 0 24 24" className={className} fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
@@ -45,11 +44,17 @@ const navItems = [
   { path: '/profile', icon: null, label: 'Profile', isProfile: true, onboardingId: 'nav-profile' },
 ];
 
+// Map of onboarding step → the nav path that should be the ONLY tappable target
+const ACTION_STEP_TARGETS: Record<number, string> = {
+  5: '/listup',    // Step 5: tap Follow-Up
+  8: '/tracking',  // Step 8: tap TrackUp
+};
+
 export function BottomNav({ className }: { className?: string }) {
   const location = useLocation();
   const navigate = useNavigate();
   const { profile } = useProfile();
-  const { currentStep, isOnboarding, requiredTab } = useOnboarding();
+  const { currentStep, isOnboarding } = useOnboarding();
   const [keyboardVisible, setKeyboardVisible] = useState(false);
   const [bouncingTab, setBouncingTab] = useState<string | null>(null);
 
@@ -69,37 +74,23 @@ export function BottomNav({ className }: { className?: string }) {
 
   if (keyboardVisible) return null;
 
-  const activeRequiredPath = isOnboarding ? requiredTab(currentStep) : null;
-
-  // During nav steps (5, 8, 10), the TARGET is a different tab than navigateTo
-  const getNavStepTarget = (): string | null => {
-    if (currentStep === 5) return '/listup';
-    if (currentStep === 8) return '/tracking';
-    if (currentStep === 10) return '/dashboard';
-    return null;
-  };
-  const navStepTarget = isOnboarding ? getNavStepTarget() : null;
+  // During action steps, only the target tab is enabled
+  const actionTarget = isOnboarding ? ACTION_STEP_TARGETS[currentStep] || null : null;
 
   const isTabAllowed = (path: string): boolean => {
     if (!isOnboarding) return true;
-    // The tab required for current step content
-    if (activeRequiredPath && path === activeRequiredPath) return true;
-    // Nav step targets (the tab user needs to tap)
-    if (navStepTarget && path === navStepTarget) return true;
-    return false;
+    // If it's an action step with a nav target, only that target tab is allowed
+    if (actionTarget) return path === actionTarget;
+    // For other onboarding steps, keep current tab active (no nav changes)
+    return path === location.pathname;
   };
 
   const handleNavClick = (path: string, isActive: boolean) => {
-    if (isOnboarding && !isTabAllowed(path)) {
-      toast('Complete the current step first 👆', { duration: 2000 });
-      return;
-    }
+    if (isOnboarding && !isTabAllowed(path)) return;
     if (!isActive) {
       setBouncingTab(path);
       setTimeout(() => setBouncingTab(null), 300);
-      startTransition(() => {
-        navigate(path);
-      });
+      startTransition(() => { navigate(path); });
     }
   };
 
@@ -120,7 +111,7 @@ export function BottomNav({ className }: { className?: string }) {
           const isActive = location.pathname === item.path;
           const isBouncing = bouncingTab === item.path;
           const isLocked = isOnboarding && !isTabAllowed(item.path);
-          const isPulsingTarget = isOnboarding && navStepTarget === item.path && !isActive;
+          const isPulsingTarget = isOnboarding && actionTarget === item.path && !isActive;
 
           return (
             <button
@@ -134,7 +125,7 @@ export function BottomNav({ className }: { className?: string }) {
                 isLocked && "opacity-40 grayscale",
                 "pb-[8px]"
               )}
-              style={isLocked ? { pointerEvents: 'auto' } : undefined}
+              style={isLocked ? { pointerEvents: 'none' } : undefined}
             >
               <div
                 className={cn(
@@ -161,10 +152,10 @@ export function BottomNav({ className }: { className?: string }) {
                   {item.label}
                 </span>
               </div>
-              {/* Pulsing blue dot for nav step target */}
+              {/* Pulsing blue dot for action step target */}
               {isPulsingTarget && (
-                <div className="absolute top-1.5 right-1/2 translate-x-4 h-2.5 w-2.5 rounded-full bg-[#2563EB]"
-                  style={{ boxShadow: '0 0 0 3px rgba(37,99,235,0.3)', animation: 'onboarding-pulse-ring 1.5s ease-in-out infinite' }}
+                <div className="absolute top-1.5 right-1/2 translate-x-4 h-2.5 w-2.5 rounded-full bg-primary"
+                  style={{ boxShadow: '0 0 0 3px hsl(var(--primary) / 0.3)', animation: 'onboarding-pulse-ring 1.5s ease-in-out infinite' }}
                 />
               )}
               <div className={cn(
