@@ -27,7 +27,7 @@ export function LeadLimitCounter({ onUpgrade }: LeadLimitCounterProps) {
       "bg-muted/60 text-muted-foreground"
     )}>
       <span className="font-medium">
-        📊 {currentCount} / {maxLimit} free leads used
+        📊 {currentCount} / {limit} free leads used
       </span>
       {showUpgrade && onUpgrade && (
         <button
