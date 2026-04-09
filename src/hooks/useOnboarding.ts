@@ -5,18 +5,19 @@ import { useProfile } from '@/hooks/useProfile';
 
 export function useOnboarding() {
   const { user } = useAuth();
-  const { profile, refetch } = useProfile();
+  const { profile } = useProfile();
   const [currentStep, setCurrentStep] = useState<number>(0);
   const [loading, setLoading] = useState(false);
-  const [isCompleted, setIsCompleted] = useState(true); // default true = no overlay
+  const [isCompleted, setIsCompleted] = useState(true);
   const [isSkipped, setIsSkipped] = useState(false);
 
   // Load from profile
   useEffect(() => {
     if (!profile || !user) return;
     const dbStep = profile.onboarding_step ?? 0;
-    const completed = !!(profile as any).onboarding_completed;
-    const skipped = !!(profile as any).onboarding_skipped;
+    const completed = !!profile.onboarding_completed;
+    const skipped = !!profile.onboarding_skipped;
+    console.log('[Onboarding] loaded from DB:', { dbStep, completed, skipped });
     setCurrentStep(dbStep);
     setIsCompleted(completed);
     setIsSkipped(skipped);
@@ -25,23 +26,21 @@ export function useOnboarding() {
   const isOnboarding = !isCompleted && !isSkipped && currentStep >= 1 && currentStep <= 11;
   const showWelcome = !isCompleted && !isSkipped && currentStep === 0;
 
-  const saveStep = useCallback(async (step: number, extras?: Record<string, any>) => {
+  const saveStep = useCallback(async (step: number, extras?: Record<string, unknown>) => {
     if (!user) return;
-    await supabase
+    const updateData: Record<string, unknown> = { onboarding_step: step, ...extras };
+    console.log('[Onboarding] saving step:', updateData);
+    const { error } = await supabase
       .from('profiles')
-      .update({ onboarding_step: step, ...extras } as any)
+      .update(updateData as any)
       .eq('user_id', user.id);
+    if (error) console.error('[Onboarding] save error:', error);
   }, [user]);
-
-  const goToStep = useCallback(async (step: number) => {
-    setCurrentStep(step);
-    await saveStep(step);
-  }, [saveStep]);
 
   const advanceStep = useCallback(async () => {
     const next = currentStep + 1;
+    console.log('[Onboarding] advancing to step:', next);
     if (next > 11) {
-      // Complete
       setCurrentStep(12);
       setIsCompleted(true);
       await saveStep(12, { onboarding_completed: true });
@@ -70,13 +69,19 @@ export function useOnboarding() {
   const startTour = useCallback(async () => {
     setLoading(true);
     try {
+      // Try to run setup RPC but don't block on failure
       if (user) {
-        await supabase.rpc('setup_new_user_onboarding' as any, { p_user_id: user.id });
+        try {
+          await supabase.rpc('setup_new_user_onboarding' as any, { p_user_id: user.id });
+        } catch (e) {
+          console.warn('[Onboarding] RPC setup_new_user_onboarding failed (non-fatal):', e);
+        }
       }
       setCurrentStep(1);
       setIsCompleted(false);
       setIsSkipped(false);
       await saveStep(1, { onboarding_completed: false, onboarding_skipped: false });
+      console.log('[Onboarding] tour started, step=1');
     } finally {
       setLoading(false);
     }
@@ -89,13 +94,12 @@ export function useOnboarding() {
     await saveStep(1, { onboarding_completed: false, onboarding_skipped: false });
   }, [saveStep]);
 
-  // Which tab path is required for each step
   const requiredTab = useCallback((step: number): string | null => {
     switch (step) {
       case 1: case 2: case 3: case 4: return '/dashboard';
-      case 5: return '/listup'; // target is follow-up tab in nav
+      case 5: return '/dashboard'; // user is on dashboard, target is follow-up nav
       case 6: case 7: return '/listup';
-      case 8: return '/tracking'; // target is trackup tab in nav
+      case 8: return '/listup'; // user is on listup, target is trackup nav
       case 9: return '/tracking';
       case 10: case 11: return '/dashboard';
       default: return null;
@@ -111,7 +115,7 @@ export function useOnboarding() {
     loading,
     startTour,
     restartTour,
-    goToStep,
+    goToStep: async (step: number) => { setCurrentStep(step); await saveStep(step); },
     advanceStep,
     skipStep,
     completeOnboarding,
