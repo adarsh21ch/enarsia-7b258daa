@@ -351,5 +351,8 @@ export default function Home() {
       {showWaPopup && (
         <WhatsAppCommunityPopup onDismiss={() => setShowWaPopup(false)} />
       )}
+
+      {/* Interactive Onboarding Flow */}
+      <OnboardingOverlay />
     </div>;
 }
