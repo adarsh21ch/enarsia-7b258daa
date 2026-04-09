@@ -1,46 +1,53 @@
 
+# Nevorai — Onboarding, Retention & Growth Plan
 
-# Admin: Restore Deleted Leads by User Email
+## Phase 1: Signup Form — Add Phone Field
+- Add WhatsApp Number field to Auth signup form (tel input, Indian format validation)
+- Store as `+91XXXXXXXXXX` in profiles table
+- Add `phone_number`, `signup_source`, `onboarding_completed`, `onboarding_step`, `whatsapp_popup_shown`, `whatsapp_community_joined`, `whatsapp_joined_at` columns to profiles
+- Helper text: "We'll use this only to help you get started with Nevorai."
 
-## Context
+## Phase 2: Admin Users — Phone + New Signups View
+- Show phone number, lead count, WA community status, last active in Users list
+- Add call/WhatsApp/email action buttons per user
+- Add "New Signups" sub-tab showing last 7 days with quick-action buttons
+- Add filters: No Phone, Not in WA, Never Active
+- Pre-filled WhatsApp message from founder
 
-The app uses soft-delete (`deleted_at` timestamp) for prospects. Currently, 1,875 soft-deleted leads exist in the database. Users can only see their own deleted leads via the "Recently Deleted" drawer in Profile. There is no admin-level tool to find and restore a user's deleted data.
+## Phase 3: Post-Signup WhatsApp Community Popup
+- Full-screen bottom sheet after signup (once per user)
+- WhatsApp group invite link with tracking
+- "Maybe Later" skip option
+- Store `whatsapp_popup_shown` and `whatsapp_community_joined` in profiles
 
-**Important limitation**: Leads that were hard-deleted before the soft-delete system was implemented are permanently gone and cannot be recovered.
+## Phase 4: 100 Lead Limit + Enforcement UI
+- Replace trial days with simple 100-lead free limit
+- Warning banner at 80 leads, blocking sheet at 100 leads
+- Update existing `useLeadLimit` / `useLifetimeLeadLimit` hooks
+- Update admin panel to show "Free — 47/100 leads" instead of trial badges
+- Note: Will work with existing lead limit infrastructure, not create duplicate systems
 
-## What We Will Build
+## Phase 5: Default Tags + Demo Leads on Signup
+- Auto-create 5 default tags (Calling, Video Send, Hot Lead, Enrolled, Follow Up) for new users
+- Create demo sheet with 3 demo leads marked `is_demo = true`
+- Demo leads excluded from limits, auto-deleted after 7 days or onboarding completion
 
-A new **"Data Recovery"** section in the Admin Panel that allows admins to:
+## Phase 6: Interactive Onboarding Flow (5 steps)
+- Step 1: Welcome screen with user's first name
+- Step 2: Show demo sheet + coach mark overlay
+- Step 3: Guide user to tag a demo lead
+- Step 4: Show activity history
+- Step 5: Schedule a follow-up
+- Progress bar, skip option after Step 2, state persistence
 
-1. Search for a user by email
-2. View all their soft-deleted leads (with `deleted_at` set)
-3. Restore individual leads or bulk-restore all deleted leads for that user
-4. See metadata: lead name, phone, sheet, deletion date, days remaining before 30-day expiry
+## Phase 7: Push Notification Sequences
+- Sequence A: New user onboarding reminders (4h, Day 1, Day 3, Day 7)
+- Sequence B: Lead limit nudges (50, 80, 100 leads)
+- Sequence C: Re-engagement (3d, 7d, 14d dormant)
+- Edge function cron jobs checking profiles.last_active
 
-## Plan
-
-### Step 1: Create AdminDataRecovery component
-
-New file: `src/components/admin/AdminDataRecovery.tsx`
-
-- **Search bar**: Input field for user email, search button
-- On search: query `profiles` table to find user_id by email, then query `prospects` where `user_id = X AND deleted_at IS NOT NULL`
-- **Results table**: Shows lead name, phone (masked), sheet_id, deleted_at, days remaining
-- **Actions per row**: "Restore" button (sets `deleted_at = null`)
-- **Bulk action**: "Restore All" button to restore all deleted leads for that user
-- Confirmation dialog before bulk restore
-- Success/error toasts
-
-### Step 2: Add "Recovery" tab to Admin page
-
-In `src/pages/Admin.tsx`:
-- Add a new tab "Recovery" with a database/restore icon
-- Render `AdminDataRecovery` inside that tab
-
-### Technical Details
-
-- Uses existing Supabase client with admin RLS bypass (admin check already in place)
-- No database migration needed — queries existing `prospects` table
-- Decryption handled via `useEncryption` hook for displaying lead names/phones
-- All restore actions logged via `logAdminAction` for audit trail
-
+## Implementation Notes
+- Will reuse existing infrastructure where possible (useLeadLimit, useFreeTrial, push notification system)
+- Each phase will be implemented and verified before moving to next
+- Database migration first, then code changes
+- Phone number will be encrypted using existing encryption system
