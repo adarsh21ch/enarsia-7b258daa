@@ -16,6 +16,7 @@ export function BlockingOverlay() {
         zIndex: 9000,
         background: 'rgba(0,0,0,0.45)',
         pointerEvents: 'all',
+        touchAction: 'none',
       }}
     />
   );
@@ -63,27 +64,11 @@ function applyElevationStyles(el: HTMLElement) {
   el.style.position = 'relative';
   el.style.zIndex = '9999';
   el.style.pointerEvents = 'all';
-  el.style.boxShadow = '0 0 0 3px rgba(37,99,235,0.35), 0 0 16px 2px rgba(37,99,235,0.10)';
+  el.style.boxShadow = '0 0 0 4px rgba(37,99,235,0.4), 0 0 24px 4px rgba(37,99,235,0.12)';
   el.style.borderRadius = '8px';
-  el.style.outline = '2px solid #2563EB';
-  el.style.outlineOffset = '0px';
+  el.style.outline = '2.5px solid #2563EB';
+  el.style.outlineOffset = '2px';
   el.style.transition = 'box-shadow 0.3s ease, outline 0.3s ease';
-  // Also elevate scrollable parent so user can scroll the highlighted area
-  let parent = el.parentElement;
-  while (parent) {
-    const style = getComputedStyle(parent);
-    if (
-      (style.overflowY === 'auto' || style.overflowY === 'scroll') &&
-      parent.scrollHeight > parent.clientHeight
-    ) {
-      saveOriginalStyles(parent);
-      parent.style.zIndex = '9998';
-      parent.style.position = 'relative';
-      parent.style.pointerEvents = 'all';
-      break;
-    }
-    parent = parent.parentElement;
-  }
 }
 
 function scrollIntoViewSafely(el: HTMLElement): Promise<void> {
@@ -213,31 +198,30 @@ export function StepBanner({
 
   return (
     <div
-      className="animate-in slide-in-from-bottom-4 fade-in duration-300"
+      className="animate-in slide-in-from-top-2 fade-in duration-200"
       style={{
         position: 'fixed',
-        bottom: 80,
-        left: 12,
-        right: 12,
+        top: 0,
+        left: 0,
+        right: 0,
         zIndex: 10001,
         pointerEvents: 'all',
       }}
     >
       {/* Progress bar */}
-      <div style={{ height: 3, background: 'hsl(var(--border))', borderRadius: '12px 12px 0 0', overflow: 'hidden' }}>
+      <div style={{ height: 3, background: 'hsl(var(--border))' }}>
         <div style={{
           height: '100%', background: 'hsl(var(--primary))',
           width: `${progress}%`, transition: 'width 0.4s ease',
+          borderRadius: '0 2px 2px 0',
         }} />
       </div>
 
       <div style={{
         background: 'hsl(var(--card))',
-        borderRadius: '0 0 12px 12px',
-        boxShadow: '0 -4px 24px rgba(0,0,0,0.12), 0 4px 16px rgba(0,0,0,0.08)',
+        borderBottom: '1px solid hsl(var(--border))',
+        boxShadow: '0 2px 16px rgba(0,0,0,0.08)',
         padding: '10px 16px 12px',
-        border: '1px solid hsl(var(--border))',
-        borderTop: 'none',
       }}>
         {/* Step counter + skip */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
