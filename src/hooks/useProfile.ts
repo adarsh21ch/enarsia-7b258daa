@@ -132,6 +132,13 @@ export function useProfile() {
         response_labels: data.response_labels || [],
         total_leads_added: data.total_leads_added ?? 0,
         upline_email: data.upline_email || null,
+        phone_number: data.phone_number || null,
+        signup_source: data.signup_source || null,
+        onboarding_completed: data.onboarding_completed ?? false,
+        onboarding_step: data.onboarding_step ?? 0,
+        whatsapp_popup_shown: data.whatsapp_popup_shown ?? false,
+        whatsapp_community_joined: data.whatsapp_community_joined ?? false,
+        whatsapp_joined_at: data.whatsapp_joined_at || null,
       } as Profile;
     },
     enabled: !!user,
