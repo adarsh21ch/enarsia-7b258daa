@@ -217,7 +217,7 @@ export default function Tracking() {
           <p className="text-[11px] text-muted-foreground mb-3">All actions done so far</p>
 
           {/* Active table view */}
-          <div>
+          <div data-onboarding="trackup-table">
             {viewMode === 'summary' && (
               <SummaryTable
                 dailyMetrics={dailyMetrics}

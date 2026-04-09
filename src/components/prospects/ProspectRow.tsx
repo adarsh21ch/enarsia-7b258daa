@@ -268,6 +268,7 @@ export const ProspectRow = memo(function ProspectRow({
             className={cn(cellClass, "text-right")} 
             style={{ width: '35%', minWidth: '100px' }}
             onPointerDown={(e) => e.stopPropagation()}
+            {...(index === 1 ? { 'data-onboarding': 'response-select' } : {})}
           >
             <div className="flex justify-end">
               <InlineSelect 
@@ -326,6 +327,7 @@ export const ProspectRow = memo(function ProspectRow({
         style={rowStyle}
         {...(dragHandleProps?.attributes || {})}
         {...rowDragListeners}
+        {...(index === 1 ? { 'data-onboarding': 'lead-row-1' } : {})}
         className={cn(
           "group transition-colors duration-100 border-b border-border/20", 
           bgColor,

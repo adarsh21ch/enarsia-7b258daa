@@ -1,5 +1,5 @@
-import { ReactNode } from 'react';
-import { X } from 'lucide-react';
+import { ReactNode, useEffect, useState, useRef } from 'react';
+import { X, ChevronDown } from 'lucide-react';
 
 interface OnboardingBannerProps {
   children: ReactNode;
@@ -88,6 +88,87 @@ export function Confetti() {
           }}
         />
       ))}
+    </div>
+  );
+}
+
+/**
+ * Highlights a target element on the page with a pulsing ring + bouncing arrow.
+ * Uses a CSS selector to find the element and positions the highlight over it.
+ */
+export function TargetHighlight({ selector, label }: { selector: string; label?: string }) {
+  const [rect, setRect] = useState<DOMRect | null>(null);
+  const intervalRef = useRef<ReturnType<typeof setInterval>>();
+
+  useEffect(() => {
+    const findAndPosition = () => {
+      const el = document.querySelector(selector);
+      if (el) {
+        setRect(el.getBoundingClientRect());
+      } else {
+        setRect(null);
+      }
+    };
+
+    // Initial + poll for layout shifts / route changes
+    findAndPosition();
+    intervalRef.current = setInterval(findAndPosition, 600);
+
+    window.addEventListener('scroll', findAndPosition, true);
+    window.addEventListener('resize', findAndPosition);
+
+    return () => {
+      clearInterval(intervalRef.current);
+      window.removeEventListener('scroll', findAndPosition, true);
+      window.removeEventListener('resize', findAndPosition);
+    };
+  }, [selector]);
+
+  if (!rect) return null;
+
+  const pad = 6;
+
+  return (
+    <div className="fixed inset-0 z-[199] pointer-events-none">
+      {/* Pulsing ring around the target element */}
+      <div
+        className="absolute rounded-xl border-2 border-primary animate-pulse"
+        style={{
+          top: rect.top - pad,
+          left: rect.left - pad,
+          width: rect.width + pad * 2,
+          height: rect.height + pad * 2,
+        }}
+      />
+      <div
+        className="absolute rounded-xl border border-primary/40"
+        style={{
+          top: rect.top - pad - 3,
+          left: rect.left - pad - 3,
+          width: rect.width + pad * 2 + 6,
+          height: rect.height + pad * 2 + 6,
+          animation: 'ping 2s cubic-bezier(0, 0, 0.2, 1) infinite',
+          opacity: 0.4,
+        }}
+      />
+
+      {/* Bouncing arrow pointing down at the target */}
+      <div
+        className="absolute flex flex-col items-center"
+        style={{
+          top: rect.top - 44,
+          left: rect.left + rect.width / 2 - 16,
+        }}
+      >
+        <div className="animate-bounce flex flex-col items-center">
+          {label && (
+            <span className="bg-primary text-primary-foreground text-[10px] font-bold px-2 py-0.5 rounded-full mb-1 whitespace-nowrap shadow-md">
+              {label}
+            </span>
+          )}
+          <ChevronDown className="h-5 w-5 text-primary drop-shadow-md" />
+        </div>
+      </div>
     </div>
   );
 }

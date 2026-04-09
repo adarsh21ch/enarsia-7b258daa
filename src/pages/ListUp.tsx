@@ -125,9 +125,9 @@ export default function ListUp() {
     const saved = sessionStorage.getItem('listup-main-tab');
     return (saved as FollowUpMainTab) || 'activity';
   });
-  const mainTabOptions: [{ value: string; label: string; icon: typeof Clock }, { value: string; label: string; icon: typeof Tags }] = [
+  const mainTabOptions: [{ value: string; label: string; icon: typeof Clock }, { value: string; label: string; icon: typeof Tags; 'data-onboarding'?: string }] = [
     { value: 'activity', label: 'Activity', icon: Clock },
-    { value: 'prospects', label: 'Prospects', icon: Tags }
+    { value: 'prospects', label: 'Prospects', icon: Tags, 'data-onboarding': 'prospects-tab' }
   ];
 
   const prospectsEnabled = mainTab === 'prospects';
@@ -390,7 +390,7 @@ export default function ListUp() {
 
           {mainTab === 'activity' ? (
             /* Activity History View */
-            <RecentActivityView />
+            <div data-onboarding="activity-list"><RecentActivityView /></div>
           ) : (
             <>
               {/* Leads/Funnel sub-toggle - smaller, outline style to differentiate */}

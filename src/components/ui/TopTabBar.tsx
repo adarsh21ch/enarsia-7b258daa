@@ -6,6 +6,7 @@ interface TabOption {
   value: string;
   label: string;
   icon: LucideIcon;
+  'data-onboarding'?: string;
 }
 
 interface TopTabBarProps {
@@ -28,6 +29,7 @@ export function TopTabBar({ options, value, onChange, className }: TopTabBarProp
               key={option.value}
               value={option.value}
               className="text-[13px] font-semibold gap-1.5 rounded-lg data-[state=active]:shadow-sm"
+              {...(option['data-onboarding'] ? { 'data-onboarding': option['data-onboarding'] } : {})}
             >
               <Icon className="h-4 w-4" />
               {option.label}
