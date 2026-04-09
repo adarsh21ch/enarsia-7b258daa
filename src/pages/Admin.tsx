@@ -12,6 +12,7 @@ import { Loader2, Shield, Users, Crown, ArrowLeft, BarChart3, IndianRupee, Wrenc
 import nevoraLogo from '@/assets/nevorai-logo.jpeg';
 import { AdminAnalyticsDashboard } from '@/components/admin/AdminAnalyticsDashboard';
 import { EnhancedUsersTab } from '@/components/admin/EnhancedUsersTab';
+import { NewSignupsView } from '@/components/admin/NewSignupsView';
 import { RevenueTab } from '@/components/admin/RevenueTab';
 import { ManageTab } from '@/components/admin/ManageTab';
 import { BroadcastTab } from '@/components/admin/BroadcastTab';
@@ -131,7 +132,18 @@ export default function Admin() {
               <AdminAnalyticsDashboard />
             </TabsContent>
             <TabsContent value="users" className="mt-3">
-              <EnhancedUsersTab headerPlanFilter="all" />
+              <Tabs defaultValue="all-users" className="w-full">
+                <TabsList className="w-full grid grid-cols-2 h-9 mb-3">
+                  <TabsTrigger value="all-users" className="text-xs">All Users</TabsTrigger>
+                  <TabsTrigger value="new-signups" className="text-xs">New Signups</TabsTrigger>
+                </TabsList>
+                <TabsContent value="all-users">
+                  <EnhancedUsersTab headerPlanFilter="all" />
+                </TabsContent>
+                <TabsContent value="new-signups">
+                  <NewSignupsView />
+                </TabsContent>
+              </Tabs>
             </TabsContent>
             <TabsContent value="revenue" className="mt-3">
               <RevenueTab />
