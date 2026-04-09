@@ -1,198 +1,130 @@
-import { useEffect, useRef, useState, useCallback } from 'react';
-import { toast } from 'sonner';
+import { ReactNode, useEffect, useState, useRef } from 'react';
 
-/* ─── Blocking Overlay ─── */
-export function BlockingOverlay() {
+/* ─── Blue Highlight Box (no overlay, user can interact freely) ─── */
+export function HighlightBox({ targetRect }: { targetRect: DOMRect | null }) {
+  if (!targetRect) return null;
+
+  const pad = 6;
   return (
     <div
-      onClick={(e) => {
-        e.stopPropagation();
-        e.preventDefault();
-        toast('Complete the current step first 👆', { duration: 1500 });
+      style={{
+        position: 'fixed',
+        top: targetRect.top - pad,
+        left: targetRect.left - pad,
+        width: targetRect.width + pad * 2,
+        height: targetRect.height + pad * 2,
+        borderRadius: 12,
+        border: '2.5px solid #2563EB',
+        boxShadow: '0 0 0 4px rgba(37,99,235,0.18), 0 0 24px 4px rgba(37,99,235,0.10)',
+        zIndex: 9998,
+        pointerEvents: 'none',
+        transition: 'all 0.25s cubic-bezier(.4,0,.2,1)',
       }}
+    >
+      {/* Pulsing corners for attention */}
+      <div style={{
+        position: 'absolute', inset: -3, borderRadius: 14,
+        border: '2px solid rgba(37,99,235,0.35)',
+        animation: 'onb-pulse 1.8s ease-in-out infinite',
+      }} />
+    </div>
+  );
+}
+
+/* ─── Subtle dimming (very light, doesn't block interaction) ─── */
+export function LightDimOverlay({ targetRect }: { targetRect: DOMRect | null }) {
+  if (!targetRect) return null;
+
+  // Use a CSS clip-path to cut out the target area
+  const pad = 8;
+  const t = targetRect.top - pad;
+  const l = targetRect.left - pad;
+  const w = targetRect.width + pad * 2;
+  const h = targetRect.height + pad * 2;
+  const r = 12;
+
+  return (
+    <div
       style={{
         position: 'fixed',
         inset: 0,
+        background: 'rgba(0,0,0,0.25)',
         zIndex: 9000,
-        background: 'rgba(0,0,0,0.45)',
-        pointerEvents: 'all',
-        touchAction: 'none',
+        pointerEvents: 'none',
+        transition: 'all 0.25s ease',
+        clipPath: `polygon(
+          0% 0%, 100% 0%, 100% 100%, 0% 100%, 0% 0%,
+          ${l}px ${t + r}px,
+          ${l + r}px ${t}px,
+          ${l + w - r}px ${t}px,
+          ${l + w}px ${t + r}px,
+          ${l + w}px ${t + h - r}px,
+          ${l + w - r}px ${t + h}px,
+          ${l + r}px ${t + h}px,
+          ${l}px ${t + h - r}px,
+          ${l}px ${t + r}px
+        )`,
       }}
     />
   );
 }
 
-/* ─── useTargetElevation ─── */
-interface ElevationResult {
-  found: boolean;
-  ready: boolean;
-  rect: DOMRect | null;
-}
+/* ─── Target Highlighter Hook ─── */
+export function useTargetHighlight(selector: string | null, active: boolean) {
+  const [rect, setRect] = useState<DOMRect | null>(null);
 
-const ORIGINAL_STYLES_KEY = '__onb_original';
-
-function saveOriginalStyles(el: HTMLElement) {
-  if ((el as any)[ORIGINAL_STYLES_KEY]) return;
-  (el as any)[ORIGINAL_STYLES_KEY] = {
-    position: el.style.position,
-    zIndex: el.style.zIndex,
-    pointerEvents: el.style.pointerEvents,
-    boxShadow: el.style.boxShadow,
-    borderRadius: el.style.borderRadius,
-    outline: el.style.outline,
-    outlineOffset: el.style.outlineOffset,
-    transition: el.style.transition,
-  };
-}
-
-function restoreOriginalStyles(el: HTMLElement) {
-  const orig = (el as any)[ORIGINAL_STYLES_KEY];
-  if (!orig) return;
-  el.style.position = orig.position;
-  el.style.zIndex = orig.zIndex;
-  el.style.pointerEvents = orig.pointerEvents;
-  el.style.boxShadow = orig.boxShadow;
-  el.style.borderRadius = orig.borderRadius;
-  el.style.outline = orig.outline;
-  el.style.outlineOffset = orig.outlineOffset;
-  el.style.transition = orig.transition;
-  delete (el as any)[ORIGINAL_STYLES_KEY];
-}
-
-function applyElevationStyles(el: HTMLElement) {
-  saveOriginalStyles(el);
-  el.style.position = 'relative';
-  el.style.zIndex = '9999';
-  el.style.pointerEvents = 'all';
-  el.style.boxShadow = '0 0 0 4px rgba(37,99,235,0.4), 0 0 24px 4px rgba(37,99,235,0.12)';
-  el.style.borderRadius = '8px';
-  el.style.outline = '2.5px solid #2563EB';
-  el.style.outlineOffset = '2px';
-  el.style.transition = 'box-shadow 0.3s ease, outline 0.3s ease';
-}
-
-function scrollIntoViewSafely(el: HTMLElement): Promise<void> {
-  return new Promise((resolve) => {
-    // Check if inside a scrollable container
-    let parent = el.parentElement;
-    let scrollContainer: HTMLElement | null = null;
-    while (parent) {
-      const style = getComputedStyle(parent);
-      if (
-        (style.overflowY === 'auto' || style.overflowY === 'scroll') &&
-        parent.scrollHeight > parent.clientHeight
-      ) {
-        scrollContainer = parent;
-        break;
-      }
-      parent = parent.parentElement;
-    }
-
-    const rect = el.getBoundingClientRect();
-    const viewportH = window.innerHeight;
-    const isVisible = rect.top >= 60 && rect.bottom <= viewportH - 80;
-
-    if (isVisible) {
-      resolve();
+  useEffect(() => {
+    if (!selector || !active) {
+      setRect(null);
       return;
     }
 
-    if (scrollContainer) {
-      const containerRect = scrollContainer.getBoundingClientRect();
-      const targetOffset = rect.top - containerRect.top + scrollContainer.scrollTop;
-      const scrollTo = targetOffset - containerRect.height / 2 + rect.height / 2;
-      scrollContainer.scrollTo({ top: Math.max(0, scrollTo), behavior: 'smooth' });
-    } else {
-      el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    }
-
-    // Wait for scroll to settle
-    setTimeout(resolve, 350);
-  });
-}
-
-export function useTargetElevation(
-  selector: string | null,
-  active: boolean
-): ElevationResult {
-  const [result, setResult] = useState<ElevationResult>({ found: false, ready: false, rect: null });
-  const currentElRef = useRef<HTMLElement | null>(null);
-  const retryRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const retryCountRef = useRef(0);
-
-  const cleanup = useCallback(() => {
-    if (retryRef.current) {
-      clearTimeout(retryRef.current);
-      retryRef.current = null;
-    }
-    if (currentElRef.current) {
-      restoreOriginalStyles(currentElRef.current);
-      currentElRef.current = null;
-    }
-    retryCountRef.current = 0;
-  }, []);
-
-  useEffect(() => {
-    cleanup();
-
-    if (!selector || !active) {
-      setResult({ found: false, ready: false, rect: null });
-      return cleanup;
-    }
-
-    const tryFind = async () => {
+    const update = () => {
       const el = document.querySelector(selector) as HTMLElement | null;
       if (el) {
-        currentElRef.current = el;
-        retryCountRef.current = 0;
-
-        await scrollIntoViewSafely(el);
-        applyElevationStyles(el);
-
-        const rect = el.getBoundingClientRect();
-        setResult({ found: true, ready: true, rect });
-      } else if (retryCountRef.current < 10) {
-        retryCountRef.current++;
-        retryRef.current = setTimeout(tryFind, 300);
+        const r = el.getBoundingClientRect();
+        setRect(r);
+        // Scroll into view if needed
+        if (r.top < 80 || r.bottom > window.innerHeight - 20) {
+          el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
       } else {
-        // Max retries exhausted
-        setResult({ found: false, ready: true, rect: null });
+        setRect(null);
       }
     };
 
-    tryFind();
-    return cleanup;
-  }, [selector, active, cleanup]);
+    update();
+    const interval = setInterval(update, 500);
+    window.addEventListener('scroll', update, true);
+    window.addEventListener('resize', update);
 
-  return result;
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('scroll', update, true);
+      window.removeEventListener('resize', update);
+    };
+  }, [selector, active]);
+
+  return rect;
 }
 
-/* ─── Hard cleanup utility ─── */
-export function hardCleanupAllOnboarding() {
-  // Remove any lingering elevation styles from all onboarding targets
-  document.querySelectorAll('[data-onboarding]').forEach((el) => {
-    restoreOriginalStyles(el as HTMLElement);
-  });
-}
-
-/* ─── Step Banner ─── */
-interface StepBannerProps {
+/* ─── Top Tooltip Banner ─── */
+interface TopTooltipProps {
   step: number;
   totalSteps: number;
+  icon: ReactNode;
   title: string;
   description: string;
   actionHint?: string;
-  stepType: 'info' | 'action';
-  isReady: boolean;
-  isLastStep: boolean;
   onGotIt: () => void;
   onSkip: () => void;
+  isLastStep?: boolean;
 }
 
-export function StepBanner({
-  step, totalSteps, title, description, actionHint,
-  stepType, isReady, isLastStep, onGotIt, onSkip,
-}: StepBannerProps) {
+export function TopTooltipBanner({
+  step, totalSteps, icon, title, description, actionHint,
+  onGotIt, onSkip, isLastStep,
+}: TopTooltipProps) {
   const progress = (step / totalSteps) * 100;
   const buttonLabel = isLastStep ? '🎉 Finish Tour' : 'Got it →';
 
@@ -208,140 +140,82 @@ export function StepBanner({
         pointerEvents: 'all',
       }}
     >
-      {/* Progress bar */}
-      <div style={{ height: 3, background: 'hsl(var(--border))' }}>
+      {/* Progress bar at very top */}
+      <div style={{ height: 3, background: '#e5e7eb' }}>
         <div style={{
-          height: '100%', background: 'hsl(var(--primary))',
+          height: '100%', background: '#2563EB',
           width: `${progress}%`, transition: 'width 0.4s ease',
           borderRadius: '0 2px 2px 0',
         }} />
       </div>
 
       <div style={{
-        background: 'hsl(var(--card))',
-        borderBottom: '1px solid hsl(var(--border))',
+        background: 'white',
+        borderBottom: '1px solid rgba(0,0,0,0.08)',
         boxShadow: '0 2px 16px rgba(0,0,0,0.08)',
-        padding: '10px 16px 12px',
+        padding: '12px 16px 14px',
       }}>
         {/* Step counter + skip */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
           <span style={{
-            fontSize: 11, fontWeight: 600, color: 'hsl(var(--primary))',
-            background: 'hsl(var(--primary) / 0.1)', padding: '2px 10px', borderRadius: 20,
+            fontSize: 11, fontWeight: 600, color: '#2563EB',
+            background: '#EFF6FF', padding: '3px 10px', borderRadius: 20,
           }}>
             Step {step} of {totalSteps}
           </span>
           <button
             onClick={(e) => { e.stopPropagation(); onSkip(); }}
             style={{
-              fontSize: 12, color: 'hsl(var(--muted-foreground))', background: 'none',
+              fontSize: 12, color: '#999', background: 'none',
               border: 'none', cursor: 'pointer', padding: '2px 6px',
             }}
           >
-            Skip all →
+            Skip →
           </button>
         </div>
 
-        {/* Title */}
-        <p style={{ fontSize: 15, fontWeight: 600, color: 'hsl(var(--foreground))', margin: '0 0 3px' }}>
-          {title}
-        </p>
+        {/* Title row */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
+          <span style={{ fontSize: 18 }}>{icon}</span>
+          <span style={{ fontSize: 15, fontWeight: 600, color: '#111' }}>{title}</span>
+        </div>
 
         {/* Description */}
-        <p style={{ fontSize: 13, color: 'hsl(var(--muted-foreground))', lineHeight: 1.5, margin: 0 }}>
+        <p style={{ fontSize: 13, color: '#555', lineHeight: 1.55, margin: '0 0 4px 0' }}>
           {description}
         </p>
 
-        {/* Action hint for action steps */}
-        {stepType === 'action' && actionHint && (
+        {/* Action hint */}
+        {actionHint && (
           <p style={{
-            fontSize: 12, color: 'hsl(var(--primary))', fontWeight: 500,
-            margin: '4px 0 0', display: 'flex', alignItems: 'center', gap: 4,
+            fontSize: 12, color: '#2563EB', fontWeight: 500,
+            margin: '2px 0 0', display: 'flex', alignItems: 'center', gap: 4,
           }}>
             👆 {actionHint}
           </p>
         )}
 
-        {/* Got it button — only for info steps */}
-        {stepType === 'info' && (
-          <button
-            onClick={(e) => { e.stopPropagation(); onGotIt(); }}
-            disabled={!isReady}
-            style={{
-              marginTop: 8,
-              width: '100%',
-              height: 36,
-              borderRadius: 10,
-              background: isReady ? 'hsl(var(--primary))' : 'hsl(var(--muted))',
-              color: isReady ? 'hsl(var(--primary-foreground))' : 'hsl(var(--muted-foreground))',
-              fontWeight: 600,
-              fontSize: 14,
-              border: 'none',
-              cursor: isReady ? 'pointer' : 'not-allowed',
-              transition: 'all 0.2s ease',
-            }}
-          >
-            {!isReady ? 'Loading...' : buttonLabel}
-          </button>
-        )}
-      </div>
-    </div>
-  );
-}
-
-/* ─── Fallback Card ─── */
-interface FallbackCardProps {
-  title: string;
-  description: string;
-  onGotIt: () => void;
-  isLastStep: boolean;
-}
-
-export function FallbackCard({ title, description, onGotIt, isLastStep }: FallbackCardProps) {
-  return (
-    <div style={{
-      position: 'fixed',
-      inset: 0,
-      zIndex: 10000,
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      padding: 24,
-      pointerEvents: 'all',
-    }}>
-      <div
-        className="animate-in fade-in zoom-in-95 duration-200"
-        style={{
-          background: 'hsl(var(--card))',
-          borderRadius: 16,
-          padding: 24,
-          maxWidth: 340,
-          width: '100%',
-          boxShadow: '0 8px 32px rgba(0,0,0,0.15)',
-          textAlign: 'center',
-        }}
-      >
-        <p style={{ fontSize: 16, fontWeight: 600, color: 'hsl(var(--foreground))', marginBottom: 8 }}>
-          {title}
-        </p>
-        <p style={{ fontSize: 13, color: 'hsl(var(--muted-foreground))', lineHeight: 1.5, marginBottom: 16 }}>
-          {description}
-        </p>
+        {/* Got it button */}
         <button
-          onClick={onGotIt}
+          onClick={(e) => { e.stopPropagation(); onGotIt(); }}
           style={{
+            marginTop: 10,
             width: '100%',
-            height: 40,
+            height: 38,
             borderRadius: 10,
-            background: 'hsl(var(--primary))',
-            color: 'hsl(var(--primary-foreground))',
+            background: '#2563EB',
+            color: 'white',
             fontWeight: 600,
             fontSize: 14,
             border: 'none',
             cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: 6,
           }}
         >
-          {isLastStep ? '🎉 Finish Tour' : 'Got it →'}
+          {buttonLabel}
         </button>
       </div>
     </div>
