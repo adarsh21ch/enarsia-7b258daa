@@ -146,8 +146,6 @@ export function OnboardingOverlay() {
             </p>
           </div>
         </div>
-        <Button onClick={() => goToStep(3)} variant="outline" className="w-full h-10 rounded-xl text-sm">
-        </Button>
       </CoachMarkOverlay>
     );
   }
