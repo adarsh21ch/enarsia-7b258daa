@@ -507,4 +507,9 @@ html {
   .animate-confetti {
     animation: confetti-fall linear forwards;
   }
+
+  @keyframes onboarding-pulse-ring {
+    0%, 100% { box-shadow: 0 0 0 3px #2563EB; }
+    50% { box-shadow: 0 0 0 10px rgba(37,99,235,0.22); }
+  }
 }

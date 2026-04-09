@@ -461,7 +461,7 @@ export function ImportExcelDialog({ onImport }: ImportExcelDialogProps) {
     <>
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>
-        <Button data-import-trigger variant="outline" size="sm" className="h-9 gap-1.5 px-2.5 rounded-xl text-xs">
+        <Button data-import-trigger data-onboarding="import-btn" variant="outline" size="sm" className="h-9 gap-1.5 px-2.5 rounded-xl text-xs">
           <Upload className="h-4 w-4" />
           <span>Import</span>
         </Button>

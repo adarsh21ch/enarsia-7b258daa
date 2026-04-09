@@ -1,98 +1,112 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { useOnboarding, OnboardingStep } from '@/hooks/useOnboarding';
+import { useOnboarding } from '@/hooks/useOnboarding';
 import { useProfile } from '@/hooks/useProfile';
 import { Button } from '@/components/ui/button';
-import { ArrowRight, Sparkles, Import, CheckCircle2, Loader2 } from 'lucide-react';
+import { ArrowRight, CheckCircle2 } from 'lucide-react';
 import {
-  OnboardingBanner,
-  FullScreenCard,
-  OnboardingProgress,
+  SpotlightOverlay,
+  OnboardingTooltip,
+  StepPill,
   Confetti,
-  TargetHighlight,
+  useTargetRect,
 } from './OnboardingPrimitives';
 import nevoraLogo from '@/assets/nevorai-logo.jpeg';
 
-/** Step definition with auto-advance trigger */
 interface StepDef {
+  emoji: string;
   title: string;
-  body: string;
-  /** What triggers completion */
-  trigger:
-    | { type: 'click'; selector: string }   // advance when element is clicked
-    | { type: 'delay'; ms: number }          // advance after delay (informational)
-    | { type: 'interact'; selector: string } // advance when element receives focus/input
-  /** Navigate to this route when step activates */
-  navigateTo?: string;
-  /** Highlight target */
-  highlight?: { selector: string; label: string };
+  description: string;
+  selector: string;
+  navigateTo: string;
+  trigger: 'click' | 'delay' | 'interact';
+  delayMs?: number;
+  skipLabel?: string;
 }
 
-const STEP_DEFS: Record<number, StepDef> = {
+const STEPS: Record<number, StepDef> = {
   1: {
-    title: '📋 Your Calling Sheet',
-    body: 'This is where you manage all your prospects. We\'ve added 20 demo leads so you can explore.',
-    trigger: { type: 'delay', ms: 4000 },
+    emoji: '📋',
+    title: 'These are your leads',
+    description: "Tap any lead to open their details.",
+    selector: '[data-onboarding="lead-row-1"]',
     navigateTo: '/dashboard',
-    highlight: { selector: '[data-onboarding="lead-list"]', label: 'Your leads ↓' },
+    trigger: 'click',
   },
   2: {
-    title: '👆 Tap on Rahul Sharma',
-    body: 'Open his profile to see all details. Tap the highlighted lead row below.',
-    trigger: { type: 'click', selector: '[data-onboarding="lead-row-1"]' },
-    highlight: { selector: '[data-onboarding="lead-row-1"]', label: 'Tap here ↓' },
+    emoji: '🏷️',
+    title: 'Set a response for this lead',
+    description: 'Tap the response field and choose a status — Interested, Not Picked, etc.',
+    selector: '[data-onboarding="response-select"]',
+    navigateTo: '/dashboard',
+    trigger: 'click',
   },
   3: {
-    title: '👤 Lead Profile',
-    body: 'Every prospect has their own profile — details, call status, tags, and activity history.',
-    trigger: { type: 'delay', ms: 4000 },
-    highlight: { selector: '[data-onboarding="lead-detail"]', label: 'Lead profile ↓' },
+    emoji: '🎯',
+    title: 'Filter leads by response',
+    description: 'Tap Retargeting to see only leads with a specific status.',
+    selector: '[data-onboarding="retargeting-btn"]',
+    navigateTo: '/dashboard',
+    trigger: 'click',
   },
   4: {
-    title: '🏷️ Assign a Tag',
-    body: 'Tags tell you where this prospect is in your process. Tap "Select..." on any lead to assign one.',
-    trigger: { type: 'click', selector: '[data-onboarding="response-select"]' },
-    highlight: { selector: '[data-onboarding="response-select"]', label: 'Tap to assign ↓' },
+    emoji: '📅',
+    title: 'Open Follow-Up',
+    description: 'Tap Follow-Up to see your prospect pipeline.',
+    selector: '[data-onboarding="nav-followup"]',
+    navigateTo: '/dashboard',
+    trigger: 'click',
   },
   5: {
-    title: '🔍 Retargeting Filter',
-    body: 'Filter your leads by tag instantly. Tap the "Retargeting" button.',
-    trigger: { type: 'click', selector: '[data-onboarding="retargeting-btn"]' },
-    highlight: { selector: '[data-onboarding="retargeting-btn"]', label: 'Tap here ↓' },
+    emoji: '👥',
+    title: 'Switch to Prospects',
+    description: 'See your leads grouped by stage and tag.',
+    selector: '[data-onboarding="prospects-tab"]',
+    navigateTo: '/listup',
+    trigger: 'click',
   },
   6: {
-    title: '📊 Activity History',
-    body: 'Every action you take is automatically recorded here — tags, calls, it\'s all logged.',
-    trigger: { type: 'delay', ms: 4000 },
+    emoji: '🔖',
+    title: 'Filter by prospect stage',
+    description: 'Tap any tag to see only leads at that stage.',
+    selector: '[data-onboarding="tag-filter-row"]',
     navigateTo: '/listup',
-    highlight: { selector: '[data-onboarding="activity-list"]', label: 'Activity log ↓' },
+    trigger: 'click',
   },
   7: {
-    title: '🎯 Prospects by Tag',
-    body: 'Your follow-up dashboard. Tap the "Prospects" tab to see leads grouped by tag.',
-    trigger: { type: 'click', selector: '[data-onboarding="prospects-tab"]' },
-    highlight: { selector: '[data-onboarding="prospects-tab"]', label: 'Tap here ↓' },
+    emoji: '📊',
+    title: 'Open TrackUp',
+    description: 'See your daily activity numbers and team performance.',
+    selector: '[data-onboarding="nav-trackup"]',
+    navigateTo: '/listup',
+    trigger: 'click',
   },
   8: {
-    title: '✅ To-Do List',
-    body: 'Plan your day with tasks. Tap the input bar at the bottom to add one.',
-    trigger: { type: 'interact', selector: '[data-onboarding="todo-input"] input' },
-    navigateTo: '/action',
-    highlight: { selector: '[data-onboarding="todo-input"]', label: 'Add task here ↓' },
+    emoji: '📈',
+    title: 'Your activity calendar',
+    description: 'Every lead, response, and enrolment is tracked here by date.',
+    selector: '[data-onboarding="trackup-table"]',
+    navigateTo: '/tracking',
+    trigger: 'delay',
+    delayMs: 4000,
+    skipLabel: 'Got it →',
   },
   9: {
-    title: '📈 Track Your Numbers',
-    body: 'TrackUp counts everything you do — leads, calls, responses, enrolments.',
-    trigger: { type: 'delay', ms: 4000 },
-    navigateTo: '/tracking',
-    highlight: { selector: '[data-onboarding="trackup-table"]', label: 'Your numbers ↓' },
+    emoji: '📁',
+    title: 'Create your own sheet',
+    description: 'Add a new sheet to organize your real leads — separate from the demo.',
+    selector: '[data-onboarding="add-sheet-btn"]',
+    navigateTo: '/dashboard',
+    trigger: 'click',
   },
   10: {
-    title: '🛠️ Your Tools',
-    body: 'Nevorai Flow, Forms, Notes, Shared Leads — all built in.',
-    trigger: { type: 'delay', ms: 4000 },
-    navigateTo: '/profile',
-    highlight: { selector: '[data-onboarding="profile-tools"]', label: 'Your tools ↓' },
+    emoji: '➕',
+    title: 'Add your first real lead',
+    description: 'Import from a file or add a lead manually. This is your real CRM now.',
+    selector: '[data-onboarding="import-btn"]',
+    navigateTo: '/dashboard',
+    trigger: 'click',
+    skipLabel: 'Skip — You can add leads anytime from the Calling tab.',
   },
 };
 
@@ -101,278 +115,201 @@ export function OnboardingOverlay() {
   const location = useLocation();
   const { profile } = useProfile();
   const {
-    isActive,
-    currentStep,
-    loading,
-    setupDemoData,
-    goToStep,
-    completeOnboarding,
-    cleanupDemoData,
-    totalSteps,
+    currentStep, isOnboarding, isCompleted, loading,
+    startTour, advanceStep, skipStep, completeOnboarding,
+    cleanupDemoData, requiredTab,
   } = useOnboarding();
 
-  const [showCleanupPrompt, setShowCleanupPrompt] = useState(false);
-  const [stepCompleted, setStepCompleted] = useState(false);
-  const advanceTimerRef = useRef<ReturnType<typeof setTimeout>>();
+  const [showCleanup, setShowCleanup] = useState(false);
 
-  // Reset stepCompleted when step changes
+  // Get current step definition
+  const stepDef = STEPS[currentStep];
+  const targetRect = useTargetRect(isOnboarding && stepDef ? stepDef.selector : null);
+
+  // Navigate to correct tab when step changes
   useEffect(() => {
-    setStepCompleted(false);
-    return () => {
-      if (advanceTimerRef.current) clearTimeout(advanceTimerRef.current);
+    if (!isOnboarding || !stepDef) return;
+    if (location.pathname !== stepDef.navigateTo) {
+      navigate(stepDef.navigateTo);
+    }
+  }, [currentStep, isOnboarding]);
+
+  // Auto-advance for delay triggers
+  useEffect(() => {
+    if (!isOnboarding || !stepDef || stepDef.trigger !== 'delay') return;
+    const timer = setTimeout(() => advanceStep(), stepDef.delayMs || 4000);
+    return () => clearTimeout(timer);
+  }, [currentStep, isOnboarding, stepDef]);
+
+  // Click/interact triggers
+  useEffect(() => {
+    if (!isOnboarding || !stepDef) return;
+    if (stepDef.trigger !== 'click' && stepDef.trigger !== 'interact') return;
+
+    const handler = () => {
+      setTimeout(() => advanceStep(), 300);
     };
-  }, [currentStep]);
 
-  // Navigate to the correct page when a step becomes active
-  useEffect(() => {
-    if (!isActive || currentStep < 1 || currentStep > 10) return;
-    const def = STEP_DEFS[currentStep];
-    if (def?.navigateTo && location.pathname !== def.navigateTo) {
-      navigate(def.navigateTo);
-    }
-  }, [currentStep, isActive, navigate, location.pathname]);
-
-  // Auto-advance logic
-  const advanceToNext = useCallback(() => {
-    if (advanceTimerRef.current) clearTimeout(advanceTimerRef.current);
-    setStepCompleted(true);
-    // Brief pause to show ✅ then advance
-    advanceTimerRef.current = setTimeout(() => {
-      const next = currentStep + 1;
-      if (next > 10) {
-        goToStep(11 as OnboardingStep);
-      } else {
-        goToStep(next as OnboardingStep);
+    const poll = setInterval(() => {
+      const el = document.querySelector(stepDef.selector);
+      if (el) {
+        el.addEventListener('click', handler, { once: true, capture: true });
+        clearInterval(poll);
       }
-    }, 800);
-  }, [currentStep, goToStep]);
+    }, 300);
 
-  // Set up triggers for current step
-  useEffect(() => {
-    if (!isActive || currentStep < 1 || currentStep > 10) return;
-    const def = STEP_DEFS[currentStep];
-    if (!def || stepCompleted) return;
+    return () => {
+      clearInterval(poll);
+      const el = document.querySelector(stepDef.selector);
+      if (el) el.removeEventListener('click', handler, true);
+    };
+  }, [currentStep, isOnboarding, stepDef]);
 
-    if (def.trigger.type === 'delay') {
-      const timer = setTimeout(advanceToNext, def.trigger.ms);
-      return () => clearTimeout(timer);
-    }
-
-    if (def.trigger.type === 'click') {
-      const selector = def.trigger.selector;
-      const handler = () => advanceToNext();
-
-      // Poll for element (may not be rendered yet)
-      const interval = setInterval(() => {
-        const el = document.querySelector(selector);
-        if (el) {
-          el.addEventListener('click', handler, { once: true, capture: true });
-          clearInterval(interval);
-        }
-      }, 300);
-
-      return () => {
-        clearInterval(interval);
-        const el = document.querySelector(selector);
-        if (el) el.removeEventListener('click', handler, true);
-      };
-    }
-
-    if (def.trigger.type === 'interact') {
-      const selector = def.trigger.selector;
-      const handler = () => advanceToNext();
-
-      const interval = setInterval(() => {
-        const el = document.querySelector(selector);
-        if (el) {
-          el.addEventListener('focus', handler, { once: true });
-          el.addEventListener('click', handler, { once: true });
-          clearInterval(interval);
-        }
-      }, 300);
-
-      return () => {
-        clearInterval(interval);
-        const el = document.querySelector(selector);
-        if (el) {
-          el.removeEventListener('focus', handler);
-          el.removeEventListener('click', handler);
-        }
-      };
-    }
-  }, [currentStep, isActive, stepCompleted, advanceToNext]);
-
-  if (!isActive && !showCleanupPrompt) return null;
+  // Nothing to show if completed and no cleanup
+  if (isCompleted && !showCleanup) return null;
+  if (currentStep >= 12) return null;
 
   const firstName = profile?.display_name?.split(' ')[0] || 'there';
-
-  // Cleanup prompt after completion
-  if (showCleanupPrompt) {
-    return (
-      <OnboardingBanner>
-        <div className="space-y-3">
-          <h2 className="text-base font-bold text-foreground">🧹 Clean up demo data?</h2>
-          <p className="text-sm text-muted-foreground">
-            You've completed the tour. Want to remove the demo leads and start fresh?
-          </p>
-          <div className="flex gap-3">
-            <Button
-              variant="outline"
-              size="sm"
-              className="flex-1 rounded-xl text-xs"
-              onClick={() => setShowCleanupPrompt(false)}
-            >
-              Keep for Reference
-            </Button>
-            <Button
-              size="sm"
-              className="flex-1 rounded-xl text-xs"
-              onClick={async () => {
-                await cleanupDemoData();
-                setShowCleanupPrompt(false);
-              }}
-            >
-              Remove Demo Data
-            </Button>
-          </div>
-        </div>
-      </OnboardingBanner>
-    );
-  }
 
   // STEP 0: Welcome Screen
   if (currentStep === 0) {
     return (
-      <FullScreenCard>
-        <img
-          src={nevoraLogo}
-          alt="Nevorai"
-          className="w-20 h-20 rounded-2xl shadow-xl mx-auto animate-bounce"
-          style={{ animationDuration: '2s' }}
-        />
-        <div className="space-y-3">
-          <h1 className="text-2xl font-extrabold text-foreground">
-            🎉 Welcome to Nevorai, {firstName}!
+      <div className="fixed inset-0 z-[300] bg-black/50 flex items-center justify-center p-6">
+        <div
+          className="bg-white rounded-[14px] p-6 max-w-sm w-full space-y-5 animate-in fade-in zoom-in-95 duration-300 text-center"
+          style={{ boxShadow: '0 4px 24px rgba(0,0,0,0.18)' }}
+        >
+          <img
+            src={nevoraLogo}
+            alt="Nevora AI"
+            className="w-16 h-16 rounded-2xl shadow-lg mx-auto"
+          />
+          <h1 className="text-xl font-extrabold text-[#111]">
+            Welcome to Nevora AI! 👋
           </h1>
-          <p className="text-muted-foreground text-[15px] leading-relaxed">
-            Your smart CRM for network marketing.
+          <p className="text-sm text-gray-500 leading-relaxed">
+            Let's take a 2-minute tour so you understand every feature. You can skip any step.
           </p>
-          <p className="text-sm text-muted-foreground">
-            We've set up a demo workspace so you can explore — just follow the highlights and interact with the app!
-          </p>
-          <p className="text-xs text-muted-foreground">This quick tour takes about 2 minutes.</p>
-        </div>
-        <div className="space-y-3 pt-2">
           <Button
-            onClick={async () => {
-              await setupDemoData();
-              goToStep(1);
-              navigate('/dashboard');
-            }}
-            className="w-full h-12 rounded-xl font-bold text-base"
+            onClick={() => startTour()}
             disabled={loading}
+            className="w-full h-12 rounded-xl font-bold text-base bg-[#2563EB] hover:bg-[#1d4ed8]"
           >
-            {loading ? 'Setting up...' : "Let's Start the Tour"} <ArrowRight className="h-4 w-4 ml-2" />
+            {loading ? 'Setting up...' : 'Start Tour'} <ArrowRight className="h-4 w-4 ml-2" />
           </Button>
         </div>
-      </FullScreenCard>
+      </div>
     );
   }
 
-  // STEP 11: Completion Screen
+  // STEP 11+ : Completion Screen
   if (currentStep === 11) {
     return (
       <>
         <Confetti />
-        <FullScreenCard>
-          <div className="text-5xl">🎉</div>
-          <div className="space-y-3">
-            <h1 className="text-2xl font-extrabold text-foreground">You're Ready!</h1>
-            <p className="text-sm text-muted-foreground">You just explored all of Nevorai:</p>
-            <div className="space-y-2 text-left bg-card rounded-2xl border border-border p-4">
-              {[
-                '✅ Calling — Manage your prospects',
-                '🏷️ Tags — Organise by stage',
-                '🔍 Retargeting — Filter instantly',
-                '📊 Follow-Up — Track activity',
-                '✅ To-Do — Plan your day',
-                '📈 TrackUp — See your numbers',
-                '🛠️ Profile — Your tools',
-              ].map(item => (
-                <div key={item} className="flex items-center gap-2">
-                  <span className="text-sm text-foreground">{item}</span>
-                </div>
-              ))}
+        <div className="fixed inset-0 z-[300] bg-black/50 flex items-center justify-center p-6">
+          <div
+            className="bg-white rounded-[14px] p-6 max-w-sm w-full space-y-5 animate-in fade-in zoom-in-95 duration-300 text-center"
+            style={{ boxShadow: '0 4px 24px rgba(0,0,0,0.18)' }}
+          >
+            <div className="w-16 h-16 rounded-full bg-green-100 flex items-center justify-center mx-auto">
+              <CheckCircle2 className="h-8 w-8 text-green-600" />
             </div>
-            <p className="text-sm text-muted-foreground font-medium">
-              Now import your REAL leads and start building your business!
+            <h1 className="text-xl font-extrabold text-[#111]">You're all set! 🎉</h1>
+            <p className="text-sm text-gray-500">
+              You now know everything you need to grow your network. Let's get to work.
             </p>
-          </div>
-          <div className="space-y-3 pt-2">
             <Button
-              onClick={() => {
-                completeOnboarding();
-                setShowCleanupPrompt(true);
+              onClick={async () => {
+                await completeOnboarding();
+                setShowCleanup(true);
                 navigate('/dashboard');
               }}
-              className="w-full h-12 rounded-xl font-bold text-base"
+              className="w-full h-12 rounded-xl font-bold text-base bg-[#2563EB] hover:bg-[#1d4ed8]"
             >
-              <Import className="h-4 w-4 mr-2" /> Import My Leads
+              Start Using Nevora AI <ArrowRight className="h-4 w-4 ml-2" />
             </Button>
-            <button
-              onClick={() => {
-                completeOnboarding();
-                setShowCleanupPrompt(true);
-                navigate('/dashboard');
-              }}
-              className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-            >
-              Explore App on my own
-            </button>
           </div>
-        </FullScreenCard>
+        </div>
       </>
     );
   }
 
-  // STEPS 1-10: Non-blocking top banner with auto-advance
-  const def = STEP_DEFS[currentStep];
-  if (!def) return null;
+  // Cleanup prompt
+  if (showCleanup) {
+    return (
+      <div className="fixed inset-0 z-[300] bg-black/50 flex items-center justify-center p-6">
+        <div
+          className="bg-white rounded-[14px] p-6 max-w-sm w-full space-y-4 animate-in fade-in duration-300"
+          style={{ boxShadow: '0 4px 24px rgba(0,0,0,0.18)' }}
+        >
+          <h2 className="text-base font-bold text-[#111]">🧹 Clean up demo data?</h2>
+          <p className="text-sm text-gray-500">Remove the demo leads and start fresh?</p>
+          <div className="flex gap-3">
+            <Button variant="outline" size="sm" className="flex-1 rounded-xl" onClick={() => setShowCleanup(false)}>
+              Keep
+            </Button>
+            <Button size="sm" className="flex-1 rounded-xl bg-[#2563EB]" onClick={async () => {
+              await cleanupDemoData();
+              setShowCleanup(false);
+            }}>
+              Remove
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // STEPS 1-10: Spotlight + Tooltip
+  if (!stepDef) return null;
 
   return (
     <>
-      {/* Pulsing highlight on the target UI element */}
-      {def.highlight && !stepCompleted && (
-        <TargetHighlight selector={def.highlight.selector} label={def.highlight.label} />
+      <StepPill step={currentStep} total={10} />
+      <SpotlightOverlay targetRect={targetRect} />
+      {/* Make the target element clickable through the overlay */}
+      {targetRect && (
+        <div
+          className="fixed z-[301] pointer-events-none"
+          style={{
+            top: targetRect.top - 8,
+            left: targetRect.left - 8,
+            width: targetRect.width + 16,
+            height: targetRect.height + 16,
+            borderRadius: 14,
+          }}
+        >
+          {/* This invisible div with pointer-events-auto lets clicks through to the actual element */}
+        </div>
       )}
-
-      {/* Top banner with instructions */}
-      <OnboardingBanner>
-        <OnboardingProgress current={currentStep} total={totalSteps} />
-        <div className="space-y-1.5 pr-6">
-          <h2 className="text-sm font-bold text-foreground flex items-center gap-2">
-            {def.title}
-            {stepCompleted && <CheckCircle2 className="h-4 w-4 text-green-500" />}
-          </h2>
-          <p className="text-xs text-muted-foreground leading-relaxed">{def.body}</p>
-        </div>
-        {/* Status indicator instead of button */}
-        <div className="flex items-center gap-2 text-xs">
-          {stepCompleted ? (
-            <span className="flex items-center gap-1.5 text-green-600 font-medium">
-              <CheckCircle2 className="h-3.5 w-3.5" /> Done — moving next...
-            </span>
-          ) : def.trigger.type === 'delay' ? (
-            <span className="flex items-center gap-1.5 text-muted-foreground">
-              <Loader2 className="h-3.5 w-3.5 animate-spin" /> Looking around...
-            </span>
-          ) : (
-            <span className="flex items-center gap-1.5 text-primary font-medium animate-pulse">
-              👆 Do the action highlighted below
-            </span>
-          )}
-        </div>
-      </OnboardingBanner>
+      <OnboardingTooltip
+        targetRect={targetRect}
+        step={currentStep}
+        totalSteps={10}
+        emoji={stepDef.emoji}
+        title={stepDef.title}
+        description={stepDef.description}
+        onSkip={() => {
+          if (currentStep === 10) {
+            // Last step skip goes to completion
+            advanceStep();
+          } else if (currentStep === 4) {
+            // Skip on nav step: auto-navigate
+            navigate('/listup');
+            skipStep();
+          } else if (currentStep === 7) {
+            navigate('/tracking');
+            skipStep();
+          } else if (currentStep === 9) {
+            navigate('/dashboard');
+            skipStep();
+          } else {
+            skipStep();
+          }
+        }}
+        skipLabel={stepDef.skipLabel}
+      />
     </>
   );
 }

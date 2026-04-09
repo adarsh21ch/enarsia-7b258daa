@@ -13,6 +13,7 @@ import { InstallPromptBanner } from "@/components/pwa/InstallPromptBanner";
 import { UpdateBanner } from "@/components/pwa/UpdateBanner";
 import { AppAccessTracker } from "@/components/AppAccessTracker";
 import { PreviewModeBanner } from "@/components/admin/PreviewModeBanner";
+import { OnboardingOverlay } from "@/components/onboarding/OnboardingOverlay";
 import { PreviewStepJumpSheet } from "@/components/admin/PreviewStepJumpSheet";
 import { PreviewNoteInput } from "@/components/admin/PreviewNoteInput";
 import { PreviewSessionSummary } from "@/components/admin/PreviewSessionSummary";
@@ -119,6 +120,7 @@ function App() {
                     <PreviewStepJumpSheet />
                     <PreviewNoteInput />
                     <PreviewSessionSummary />
+                    <OnboardingOverlay />
                     <Suspense fallback={<PageLoader />}>
                       <Routes>
                         <Route path="/" element={<Index />} />

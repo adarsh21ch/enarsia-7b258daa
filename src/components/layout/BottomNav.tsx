@@ -2,9 +2,8 @@ import { useState, useEffect, useCallback, startTransition, useRef } from 'react
 import { useLocation, useNavigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { useProfile } from '@/hooks/useProfile';
+import { useOnboarding } from '@/hooks/useOnboarding';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-
-// Custom SVG icons — outline style
 
 const CallingIcon = ({ className }: { className?: string }) => (
   <svg viewBox="0 0 24 24" className={className} fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
@@ -38,17 +37,18 @@ const TrackUpIcon = ({ className }: { className?: string }) => (
 );
 
 const navItems = [
-  { path: '/dashboard', icon: CallingIcon, label: 'Calling' },
-  { path: '/listup', icon: FollowUpIcon, label: 'Follow-Up' },
-  { path: '/action', icon: TodoListIcon, label: 'To-Do' },
-  { path: '/tracking', icon: TrackUpIcon, label: 'TrackUp' },
-  { path: '/profile', icon: null, label: 'Profile', isProfile: true },
+  { path: '/dashboard', icon: CallingIcon, label: 'Calling', onboardingId: 'nav-calling' },
+  { path: '/listup', icon: FollowUpIcon, label: 'Follow-Up', onboardingId: 'nav-followup' },
+  { path: '/action', icon: TodoListIcon, label: 'To-Do', onboardingId: 'nav-todo' },
+  { path: '/tracking', icon: TrackUpIcon, label: 'TrackUp', onboardingId: 'nav-trackup' },
+  { path: '/profile', icon: null, label: 'Profile', isProfile: true, onboardingId: 'nav-profile' },
 ];
 
 export function BottomNav({ className }: { className?: string }) {
   const location = useLocation();
   const navigate = useNavigate();
   const { profile } = useProfile();
+  const { currentStep, isOnboarding, requiredTab } = useOnboarding();
   const [keyboardVisible, setKeyboardVisible] = useState(false);
   const [bouncingTab, setBouncingTab] = useState<string | null>(null);
 
@@ -68,7 +68,21 @@ export function BottomNav({ className }: { className?: string }) {
 
   if (keyboardVisible) return null;
 
+  const activeRequiredPath = isOnboarding ? requiredTab(currentStep) : null;
+
   const handleNavClick = (path: string, isActive: boolean) => {
+    // During onboarding, only allow the required tab (unless it's the nav step itself)
+    if (isOnboarding && activeRequiredPath && path !== activeRequiredPath) {
+      // Check if this nav item IS the target of the current step
+      const navItem = navItems.find(n => n.path === path);
+      const stepSelector = `[data-onboarding="${navItem?.onboardingId}"]`;
+      // Allow click if this tab IS the onboarding target
+      const isStepTarget = currentStep === 4 && path === '/listup'
+        || currentStep === 7 && path === '/tracking'
+        || currentStep === 9 && path === '/dashboard';
+      if (!isStepTarget) return;
+    }
+    
     if (!isActive) {
       setBouncingTab(path);
       setTimeout(() => setBouncingTab(null), 300);
@@ -87,21 +101,31 @@ export function BottomNav({ className }: { className?: string }) {
         "pb-[10px]",
         className
       )}
+      style={{ zIndex: isOnboarding ? 310 : undefined }}
     >
       <div className="flex items-center justify-around h-16 max-w-lg mx-auto">
         {navItems.map(item => {
           const Icon = item.icon;
           const isActive = location.pathname === item.path;
           const isBouncing = bouncingTab === item.path;
+          
+          // Tab locking during onboarding
+          const isLocked = isOnboarding && activeRequiredPath && item.path !== activeRequiredPath
+            // But don't lock if this tab IS the step target for navigation steps
+            && !(currentStep === 4 && item.path === '/listup')
+            && !(currentStep === 7 && item.path === '/tracking')
+            && !(currentStep === 9 && item.path === '/dashboard');
 
           return (
             <button
               key={item.path}
+              data-onboarding={item.onboardingId}
               onClick={() => handleNavClick(item.path, isActive)}
               className={cn(
                 "relative flex flex-col items-center justify-center flex-1 h-full min-h-[44px] min-w-[44px]",
-                "transition-colors duration-200",
+                "transition-all duration-200",
                 isActive ? "text-primary" : "text-muted-foreground",
+                isLocked && "opacity-[0.35] grayscale pointer-events-none",
                 "pb-[8px]"
               )}
             >
@@ -129,7 +153,10 @@ export function BottomNav({ className }: { className?: string }) {
                   {item.label}
                 </span>
               </div>
-              {/* Active dot indicator below label */}
+              {/* Active dot / pulsing blue dot for required tab */}
+              {isOnboarding && !isLocked && !isActive && (
+                <div className="absolute top-2 right-1/2 translate-x-3 h-2 w-2 rounded-full bg-[#2563EB] animate-pulse" />
+              )}
               <div className={cn(
                 "absolute bottom-1.5 left-1/2 -translate-x-1/2 h-[3px] w-1 rounded-full transition-all duration-200",
                 isActive ? "bg-primary scale-100" : "bg-transparent scale-0"

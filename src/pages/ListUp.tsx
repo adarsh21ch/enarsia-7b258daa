@@ -462,7 +462,7 @@ export default function ListUp() {
               )}
 
               {/* Tag pills - compact, no header */}
-              <div className="flex items-center gap-1.5 flex-wrap">
+              <div data-onboarding="tag-filter-row" className="flex items-center gap-1.5 flex-wrap">
                 <Filter className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
                 {leadMode === 'funnel' ? (
                   displayStageTags.length === 0 ? (
