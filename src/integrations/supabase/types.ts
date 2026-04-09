@@ -5777,6 +5777,7 @@ export type Database = {
         Args: { p_count?: number; p_user_id: string }
         Returns: Json
       }
+      cleanup_demo_data: { Args: { p_user_id: string }; Returns: undefined }
       clear_upline_relationship: { Args: { p_user_id: string }; Returns: Json }
       ensure_ac_profile_exists: { Args: never; Returns: Json }
       gen_random_bytes: { Args: { n: number }; Returns: string }
@@ -6032,6 +6033,7 @@ export type Database = {
           }
       normalize_leader_id: { Args: { id: string }; Returns: string }
       record_app_access: { Args: { p_app: string }; Returns: undefined }
+      setup_onboarding_demo_data: { Args: { p_user_id: string }; Returns: Json }
       update_leader_hierarchy: {
         Args: { p_leader_id: string; p_user_id: string }
         Returns: Json
