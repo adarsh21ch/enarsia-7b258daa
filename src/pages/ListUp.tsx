@@ -390,7 +390,7 @@ export default function ListUp() {
 
           {mainTab === 'activity' ? (
             /* Activity History View */
-            <RecentActivityView />
+            <div data-onboarding="activity-list"><RecentActivityView /></div>
           ) : (
             <>
               {/* Leads/Funnel sub-toggle - smaller, outline style to differentiate */}
