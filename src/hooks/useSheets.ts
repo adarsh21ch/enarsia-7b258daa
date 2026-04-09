@@ -175,15 +175,16 @@ export function useSheets() {
     },
   });
 
-  // Delete sheet mutation — also deletes all prospects in that sheet
+  // Delete sheet mutation — soft-deletes all prospects in that sheet, then deletes the sheet
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
-      // First delete all prospects belonging to this sheet
+      // Soft-delete all prospects belonging to this sheet (set deleted_at instead of hard delete)
       const { error: prospectsError } = await supabase
         .from('prospects')
-        .delete()
+        .update({ deleted_at: new Date().toISOString() })
         .eq('sheet_id', id)
-        .eq('user_id', user!.id);
+        .eq('user_id', user!.id)
+        .is('deleted_at', null);
 
       if (prospectsError) throw prospectsError;
 
@@ -206,7 +207,8 @@ export function useSheets() {
       // Also invalidate prospects cache so "All" view updates
       queryClient.invalidateQueries({ queryKey: ['prospects', user!.id] });
       queryClient.invalidateQueries({ queryKey: ['prospects-kpi', user!.id] });
-      toast.success('Sheet and its leads deleted');
+      queryClient.invalidateQueries({ queryKey: ['deleted-prospects'] });
+      toast.success('Sheet deleted — leads moved to Recently Deleted');
     },
     onError: () => {
       toast.error('Failed to delete sheet');
