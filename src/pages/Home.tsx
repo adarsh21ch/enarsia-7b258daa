@@ -104,6 +104,7 @@ export default function Home() {
     refetch: refetchTodos
   } = useGlobalTodos();
   const [searchQuery, setSearchQuery] = useState('');
+  const [showWaPopup, setShowWaPopup] = useState(false);
 
   // Calendar strip state management
   const calendar = useCalendarStrip();
