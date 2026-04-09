@@ -1,19 +1,27 @@
 import { ReactNode } from 'react';
+import { X } from 'lucide-react';
 
-interface CoachMarkProps {
+interface OnboardingBannerProps {
   children: ReactNode;
+  onDismiss?: () => void;
 }
 
-/** Semi-transparent dark backdrop with a content bubble */
-export function CoachMarkOverlay({ children }: CoachMarkProps) {
+/** Non-blocking top banner for onboarding steps — app remains fully interactive */
+export function OnboardingBanner({ children, onDismiss }: OnboardingBannerProps) {
   return (
-    <div className="fixed inset-0 z-[200] flex items-center justify-center p-6">
-      {/* Dark backdrop */}
-      <div className="absolute inset-0 bg-black/60" />
-
-      {/* Content bubble */}
-      <div className="relative bg-card rounded-2xl shadow-2xl border border-border p-5 max-w-sm w-full space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-300">
-        {children}
+    <div className="fixed top-0 left-0 right-0 z-[200] animate-in slide-in-from-top-4 duration-300">
+      <div className="bg-card border-b border-border shadow-lg px-4 py-3 max-w-lg mx-auto sm:rounded-b-2xl sm:border-x">
+        <div className="space-y-3">
+          {children}
+        </div>
+        {onDismiss && (
+          <button
+            onClick={onDismiss}
+            className="absolute top-2.5 right-3 text-muted-foreground hover:text-foreground transition-colors"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        )}
       </div>
     </div>
   );
