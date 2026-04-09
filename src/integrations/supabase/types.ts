@@ -3784,6 +3784,7 @@ export type Database = {
           level_id: string | null
           neverai_id: string | null
           onboarding_completed: boolean
+          onboarding_skipped: boolean | null
           onboarding_started_at: string | null
           onboarding_step: number
           phone: string | null
@@ -3824,6 +3825,7 @@ export type Database = {
           level_id?: string | null
           neverai_id?: string | null
           onboarding_completed?: boolean
+          onboarding_skipped?: boolean | null
           onboarding_started_at?: string | null
           onboarding_step?: number
           phone?: string | null
@@ -3864,6 +3866,7 @@ export type Database = {
           level_id?: string | null
           neverai_id?: string | null
           onboarding_completed?: boolean
+          onboarding_skipped?: boolean | null
           onboarding_started_at?: string | null
           onboarding_step?: number
           phone?: string | null

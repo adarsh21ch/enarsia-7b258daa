@@ -512,4 +512,13 @@ html {
     0%, 100% { box-shadow: 0 0 0 3px #2563EB; }
     50% { box-shadow: 0 0 0 10px rgba(37,99,235,0.22); }
   }
+
+  @keyframes draw-circle {
+    0% { stroke-dasharray: 0 151; }
+    100% { stroke-dasharray: 151 151; }
+  }
+
+  @keyframes draw-check {
+    100% { stroke-dashoffset: 0; }
+  }
 }
