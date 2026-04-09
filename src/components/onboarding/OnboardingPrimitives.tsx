@@ -2,12 +2,10 @@ import { ReactNode } from 'react';
 
 interface CoachMarkProps {
   children: ReactNode;
-  onSkipStep?: () => void;
-  showSkip?: boolean;
 }
 
 /** Semi-transparent dark backdrop with a content bubble */
-export function CoachMarkOverlay({ children, onSkipStep, showSkip = true }: CoachMarkProps) {
+export function CoachMarkOverlay({ children }: CoachMarkProps) {
   return (
     <div className="fixed inset-0 z-[200] flex items-center justify-center p-6">
       {/* Dark backdrop */}
@@ -16,14 +14,6 @@ export function CoachMarkOverlay({ children, onSkipStep, showSkip = true }: Coac
       {/* Content bubble */}
       <div className="relative bg-card rounded-2xl shadow-2xl border border-border p-5 max-w-sm w-full space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-300">
         {children}
-        {showSkip && onSkipStep && (
-          <button
-            onClick={onSkipStep}
-            className="text-xs text-muted-foreground hover:text-foreground transition-colors block mx-auto mt-2"
-          >
-            Skip this step
-          </button>
-        )}
       </div>
     </div>
   );

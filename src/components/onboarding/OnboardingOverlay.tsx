@@ -22,7 +22,7 @@ export function OnboardingOverlay() {
     setupDemoData,
     goToStep,
     completeOnboarding,
-    skipOnboarding,
+    // skipOnboarding removed
     cleanupDemoData,
     totalSteps,
     demoSheetId,
@@ -33,7 +33,7 @@ export function OnboardingOverlay() {
   if (!isActive && !showCleanupPrompt) return null;
 
   const firstName = profile?.display_name?.split(' ')[0] || 'there';
-  const skipStep = () => goToStep((currentStep + 1) as OnboardingStep);
+  // No skip functionality
 
   // Cleanup prompt after completion
   if (showCleanupPrompt) {
