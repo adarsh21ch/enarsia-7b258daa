@@ -37,9 +37,12 @@ function groupByDay(signups: NewSignup[]) {
 }
 
 function getOnboardingLabel(s: NewSignup) {
-  if (s.onboarding_completed) return <Badge className="bg-green-500/15 text-green-700 dark:text-green-400 border-0 text-[10px]">Completed ✅</Badge>;
-  if (s.onboarding_step > 0) return <Badge variant="outline" className="text-[10px]">Step {s.onboarding_step}/5</Badge>;
-  return <Badge variant="secondary" className="text-[10px]">Not Started</Badge>;
+  if (s.onboarding_completed) {
+    if (s.onboarding_step === -1) return <Badge variant="secondary" className="text-[10px]">⏭ Skipped</Badge>;
+    return <Badge className="bg-green-500/15 text-green-700 dark:text-green-400 border-0 text-[10px]">✅ Completed</Badge>;
+  }
+  if (s.onboarding_step > 0) return <Badge variant="outline" className="text-[10px] text-orange-600 border-orange-300">⏳ Step {s.onboarding_step}/11</Badge>;
+  return <Badge variant="secondary" className="text-[10px]">○ Not Started</Badge>;
 }
 
 export function NewSignupsView() {
