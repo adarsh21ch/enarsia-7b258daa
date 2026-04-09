@@ -22,7 +22,7 @@ export function OnboardingOverlay() {
     setupDemoData,
     goToStep,
     completeOnboarding,
-    skipOnboarding,
+    
     cleanupDemoData,
     totalSteps,
     demoSheetId,
@@ -33,12 +33,12 @@ export function OnboardingOverlay() {
   if (!isActive && !showCleanupPrompt) return null;
 
   const firstName = profile?.display_name?.split(' ')[0] || 'there';
-  const skipStep = () => goToStep((currentStep + 1) as OnboardingStep);
+  
 
   // Cleanup prompt after completion
   if (showCleanupPrompt) {
     return (
-      <CoachMarkOverlay showSkip={false}>
+      <CoachMarkOverlay>
         <div className="text-center space-y-3">
           <span className="text-3xl">🧹</span>
           <h2 className="text-lg font-bold text-foreground">Clean up demo data?</h2>
@@ -102,12 +102,6 @@ export function OnboardingOverlay() {
           >
             {loading ? 'Setting up...' : "Let's Start the Tour"} <ArrowRight className="h-4 w-4 ml-2" />
           </Button>
-          <button
-            onClick={skipOnboarding}
-            className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-          >
-            Skip Tour
-          </button>
         </div>
       </FullScreenCard>
     );
@@ -116,7 +110,7 @@ export function OnboardingOverlay() {
   // STEP 1: Calling Tab — Meet Your Demo Leads
   if (currentStep === 1) {
     return (
-      <CoachMarkOverlay onSkipStep={skipStep}>
+      <CoachMarkOverlay>
         <OnboardingProgress current={1} total={totalSteps} />
         <div className="space-y-3">
           <h2 className="text-lg font-bold text-foreground">📋 Your Calling Sheet</h2>
@@ -139,7 +133,7 @@ export function OnboardingOverlay() {
   // STEP 2: Open a Lead Profile
   if (currentStep === 2) {
     return (
-      <CoachMarkOverlay onSkipStep={skipStep}>
+      <CoachMarkOverlay>
         <OnboardingProgress current={2} total={totalSteps} />
         <div className="space-y-3">
           <h2 className="text-lg font-bold text-foreground">👆 Tap on Rahul Sharma</h2>
@@ -152,9 +146,6 @@ export function OnboardingOverlay() {
             </p>
           </div>
         </div>
-        <Button onClick={() => goToStep(3)} variant="outline" className="w-full h-10 rounded-xl text-sm">
-          Skip — show me next <ArrowRight className="h-4 w-4 ml-2" />
-        </Button>
       </CoachMarkOverlay>
     );
   }
@@ -162,7 +153,7 @@ export function OnboardingOverlay() {
   // STEP 3: Explore Lead Profile
   if (currentStep === 3) {
     return (
-      <CoachMarkOverlay onSkipStep={skipStep}>
+      <CoachMarkOverlay>
         <OnboardingProgress current={3} total={totalSteps} />
         <div className="space-y-3">
           <h2 className="text-lg font-bold text-foreground">👤 Lead Profile</h2>
@@ -185,7 +176,7 @@ export function OnboardingOverlay() {
   // STEP 4: Assign a Tag
   if (currentStep === 4) {
     return (
-      <CoachMarkOverlay onSkipStep={skipStep}>
+      <CoachMarkOverlay>
         <OnboardingProgress current={4} total={totalSteps} />
         <div className="space-y-3">
           <h2 className="text-lg font-bold text-foreground">🏷️ Assign a Tag</h2>
@@ -221,7 +212,7 @@ export function OnboardingOverlay() {
   // STEP 5: Retargeting Filter
   if (currentStep === 5) {
     return (
-      <CoachMarkOverlay onSkipStep={skipStep}>
+      <CoachMarkOverlay>
         <OnboardingProgress current={5} total={totalSteps} />
         <div className="space-y-3">
           <h2 className="text-lg font-bold text-foreground">🔍 Retargeting Filter</h2>
@@ -244,7 +235,7 @@ export function OnboardingOverlay() {
   // STEP 6: Follow-Up — Activity History
   if (currentStep === 6) {
     return (
-      <CoachMarkOverlay onSkipStep={skipStep}>
+      <CoachMarkOverlay>
         <OnboardingProgress current={6} total={totalSteps} />
         <div className="space-y-3">
           <h2 className="text-lg font-bold text-foreground">📊 Activity History</h2>
@@ -287,7 +278,7 @@ export function OnboardingOverlay() {
   // STEP 7: Prospects View
   if (currentStep === 7) {
     return (
-      <CoachMarkOverlay onSkipStep={skipStep}>
+      <CoachMarkOverlay>
         <OnboardingProgress current={7} total={totalSteps} />
         <div className="space-y-3">
           <h2 className="text-lg font-bold text-foreground">🎯 Prospects by Tag</h2>
@@ -310,7 +301,7 @@ export function OnboardingOverlay() {
   // STEP 8: To-Do Tab
   if (currentStep === 8) {
     return (
-      <CoachMarkOverlay onSkipStep={skipStep}>
+      <CoachMarkOverlay>
         <OnboardingProgress current={8} total={totalSteps} />
         <div className="space-y-3">
           <h2 className="text-lg font-bold text-foreground">✅ To-Do List</h2>
@@ -338,7 +329,7 @@ export function OnboardingOverlay() {
   // STEP 9: TrackUp Tab
   if (currentStep === 9) {
     return (
-      <CoachMarkOverlay onSkipStep={skipStep}>
+      <CoachMarkOverlay>
         <OnboardingProgress current={9} total={totalSteps} />
         <div className="space-y-3">
           <h2 className="text-lg font-bold text-foreground">📈 Track Your Numbers</h2>
@@ -366,7 +357,7 @@ export function OnboardingOverlay() {
   // STEP 10: Profile Tab
   if (currentStep === 10) {
     return (
-      <CoachMarkOverlay onSkipStep={() => goToStep(11 as OnboardingStep)}>
+      <CoachMarkOverlay>
         <OnboardingProgress current={10} total={totalSteps} />
         <div className="space-y-3">
           <h2 className="text-lg font-bold text-foreground">🛠️ Your Tools</h2>
