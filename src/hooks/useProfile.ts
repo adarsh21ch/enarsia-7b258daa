@@ -39,7 +39,9 @@ export interface Profile {
   signup_source: string | null;
   /** Whether onboarding flow is completed */
   onboarding_completed: boolean;
-  /** Current onboarding step (0-5) */
+  /** Whether onboarding was skipped */
+  onboarding_skipped: boolean;
+  /** Current onboarding step (0-12) */
   onboarding_step: number;
   /** Whether the WA community popup was shown */
   whatsapp_popup_shown: boolean;
