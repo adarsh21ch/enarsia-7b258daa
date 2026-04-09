@@ -3772,6 +3772,7 @@ export type Database = {
           city: string | null
           company_name: string | null
           created_at: string
+          demo_data_created: boolean | null
           display_name: string | null
           email: string | null
           id: string
@@ -3783,6 +3784,7 @@ export type Database = {
           level_id: string | null
           neverai_id: string | null
           onboarding_completed: boolean
+          onboarding_started_at: string | null
           onboarding_step: number
           phone: string | null
           phone_number: string | null
@@ -3810,6 +3812,7 @@ export type Database = {
           city?: string | null
           company_name?: string | null
           created_at?: string
+          demo_data_created?: boolean | null
           display_name?: string | null
           email?: string | null
           id?: string
@@ -3821,6 +3824,7 @@ export type Database = {
           level_id?: string | null
           neverai_id?: string | null
           onboarding_completed?: boolean
+          onboarding_started_at?: string | null
           onboarding_step?: number
           phone?: string | null
           phone_number?: string | null
@@ -3848,6 +3852,7 @@ export type Database = {
           city?: string | null
           company_name?: string | null
           created_at?: string
+          demo_data_created?: boolean | null
           display_name?: string | null
           email?: string | null
           id?: string
@@ -3859,6 +3864,7 @@ export type Database = {
           level_id?: string | null
           neverai_id?: string | null
           onboarding_completed?: boolean
+          onboarding_started_at?: string | null
           onboarding_step?: number
           phone?: string | null
           phone_number?: string | null
@@ -4157,18 +4163,21 @@ export type Database = {
         Row: {
           created_at: string
           id: string
+          is_demo: boolean | null
           name: string
           user_id: string
         }
         Insert: {
           created_at?: string
           id?: string
+          is_demo?: boolean | null
           name: string
           user_id: string
         }
         Update: {
           created_at?: string
           id?: string
+          is_demo?: boolean | null
           name?: string
           user_id?: string
         }
@@ -5777,7 +5786,10 @@ export type Database = {
         Args: { p_count?: number; p_user_id: string }
         Returns: Json
       }
-      cleanup_demo_data: { Args: { p_user_id: string }; Returns: undefined }
+      cleanup_onboarding_demo_data: {
+        Args: { p_user_id: string }
+        Returns: Json
+      }
       clear_upline_relationship: { Args: { p_user_id: string }; Returns: Json }
       ensure_ac_profile_exists: { Args: never; Returns: Json }
       gen_random_bytes: { Args: { n: number }; Returns: string }
@@ -6033,7 +6045,7 @@ export type Database = {
           }
       normalize_leader_id: { Args: { id: string }; Returns: string }
       record_app_access: { Args: { p_app: string }; Returns: undefined }
-      setup_onboarding_demo_data: { Args: { p_user_id: string }; Returns: Json }
+      setup_new_user_onboarding: { Args: { p_user_id: string }; Returns: Json }
       update_leader_hierarchy: {
         Args: { p_leader_id: string; p_user_id: string }
         Returns: Json
