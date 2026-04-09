@@ -8,13 +8,13 @@ interface LeadLimitCounterProps {
 }
 
 export function LeadLimitCounter({ onUpgrade }: LeadLimitCounterProps) {
-  const { currentCount, maxLimit, loading } = useLeadLimit();
-  const { tier } = useSubscription();
+  const { currentCount, limit, loading } = useLeadLimit();
+  const { userTier } = useSubscription();
 
   // Only show for free/basic users
-  if (loading || tier === 'pro' || tier === 'premium' || !maxLimit) return null;
+  if (loading || userTier === 'pro' || userTier === 'premium' || !limit) return null;
 
-  const pct = Math.round((currentCount / maxLimit) * 100);
+  const pct = Math.round((currentCount / limit) * 100);
   const isWarning = pct >= 80;
   const isMaxed = pct >= 100;
   const showUpgrade = pct >= 60;
