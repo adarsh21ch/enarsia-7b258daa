@@ -10,6 +10,7 @@ import { useLeaderSetup } from '@/hooks/useLeaderSetup';
 import { useLifetimeLeadLimit } from '@/hooks/useLifetimeLeadLimit';
 import { useTrackingFormatContext } from '@/contexts/TrackingFormatContext';
 import { useFreeTrial } from '@/hooks/useFreeTrial';
+import { useSubscription } from '@/hooks/useSubscription';
 import { BottomNav } from '@/components/layout/BottomNav';
 import { HeaderBellIcon } from '@/components/layout/HeaderBellIcon';
 import { EditProfileDialog } from '@/components/profile/EditProfileDialog';
