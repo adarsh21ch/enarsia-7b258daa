@@ -42,7 +42,6 @@ const PLAN_FILTER_OPTIONS = [
   { value: 'all', label: 'All Plans' },
   { value: 'free', label: '🆓 Free' },
   { value: 'pro', label: '⭐ Pro' },
-  { value: 'premium', label: '💎 Pro' },
 ];
 
 const GRANT_OPTIONS = [
@@ -50,10 +49,6 @@ const GRANT_OPTIONS = [
   { value: 'pro-90', label: 'Pro 90d', tier: 'pro', days: 90 },
   { value: 'pro-120', label: 'Pro 120d', tier: 'pro', days: 120 },
   { value: 'pro-365', label: 'Pro 1yr', tier: 'pro', days: 365 },
-  { value: 'premium-30', label: 'Pro 30d', tier: 'premium', days: 30 },
-  { value: 'premium-90', label: 'Pro 90d', tier: 'premium', days: 90 },
-  { value: 'premium-120', label: 'Pro 120d', tier: 'premium', days: 120 },
-  { value: 'premium-365', label: 'Pro 1yr', tier: 'premium', days: 365 },
 ];
 
 type SortField = 'display_name' | 'total_leads_count' | 'created_at' | 'expires_at';
@@ -61,7 +56,6 @@ type SortDir = 'asc' | 'desc';
 
 interface TierCounts {
   free: number;
-  basic: number;
   pro: number;
   total: number;
 }
@@ -77,12 +71,7 @@ function TierChips({ counts, loading }: { counts: TierCounts; loading: boolean }
       <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-primary/10 border border-primary/30">
         <Crown className="h-3 w-3 text-primary" />
         <span className="text-xs text-primary">Pro</span>
-        <span className="text-sm font-bold text-primary">{counts.basic}</span>
-      </div>
-      <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-amber-500/10 border border-amber-500/30">
-        <Gem className="h-3 w-3 text-amber-600" />
-        <span className="text-xs text-amber-600">Pro</span>
-        <span className="text-sm font-bold text-amber-600">{counts.pro}</span>
+        <span className="text-sm font-bold text-primary">{counts.pro}</span>
       </div>
     </div>
   );
