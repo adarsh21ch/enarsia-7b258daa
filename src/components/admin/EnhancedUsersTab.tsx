@@ -7,7 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/table';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger, DropdownMenuSub, DropdownMenuSubContent, DropdownMenuSubTrigger } from '@/components/ui/dropdown-menu';
-import { Loader2, Search, Crown, Gem, Settings, MoreHorizontal, Copy, ChevronUp, ChevronDown, ArrowUpDown, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Loader2, Search, Crown, Settings, MoreHorizontal, Copy, ChevronUp, ChevronDown, ArrowUpDown, ChevronLeft, ChevronRight } from 'lucide-react';
 import { toast } from 'sonner';
 import { differenceInDays, format } from 'date-fns';
 import { UserOverrideDrawer } from './UserOverrideDrawer';
@@ -42,7 +42,6 @@ const PLAN_FILTER_OPTIONS = [
   { value: 'all', label: 'All Plans' },
   { value: 'free', label: '🆓 Free' },
   { value: 'pro', label: '⭐ Pro' },
-  { value: 'premium', label: '💎 Pro' },
 ];
 
 const GRANT_OPTIONS = [
@@ -50,10 +49,6 @@ const GRANT_OPTIONS = [
   { value: 'pro-90', label: 'Pro 90d', tier: 'pro', days: 90 },
   { value: 'pro-120', label: 'Pro 120d', tier: 'pro', days: 120 },
   { value: 'pro-365', label: 'Pro 1yr', tier: 'pro', days: 365 },
-  { value: 'premium-30', label: 'Pro 30d', tier: 'premium', days: 30 },
-  { value: 'premium-90', label: 'Pro 90d', tier: 'premium', days: 90 },
-  { value: 'premium-120', label: 'Pro 120d', tier: 'premium', days: 120 },
-  { value: 'premium-365', label: 'Pro 1yr', tier: 'premium', days: 365 },
 ];
 
 type SortField = 'display_name' | 'total_leads_count' | 'created_at' | 'expires_at';
@@ -61,7 +56,6 @@ type SortDir = 'asc' | 'desc';
 
 interface TierCounts {
   free: number;
-  basic: number;
   pro: number;
   total: number;
 }
@@ -77,12 +71,7 @@ function TierChips({ counts, loading }: { counts: TierCounts; loading: boolean }
       <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-primary/10 border border-primary/30">
         <Crown className="h-3 w-3 text-primary" />
         <span className="text-xs text-primary">Pro</span>
-        <span className="text-sm font-bold text-primary">{counts.basic}</span>
-      </div>
-      <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-amber-500/10 border border-amber-500/30">
-        <Gem className="h-3 w-3 text-amber-600" />
-        <span className="text-xs text-amber-600">Pro</span>
-        <span className="text-sm font-bold text-amber-600">{counts.pro}</span>
+        <span className="text-sm font-bold text-primary">{counts.pro}</span>
       </div>
     </div>
   );
@@ -90,7 +79,6 @@ function TierChips({ counts, loading }: { counts: TierCounts; loading: boolean }
 
 function TierBadge({ tier, plan }: { tier: string; plan: string }) {
   if (plan !== 'pro') return <Badge variant="secondary" className="text-[10px] px-1.5 py-0">Free</Badge>;
-  if (tier === 'premium') return <Badge className="bg-amber-500/20 text-amber-700 dark:text-amber-400 border-0 text-[10px] px-1.5 py-0 gap-0.5"><Gem className="h-2.5 w-2.5" />Pro</Badge>;
   return <Badge className="bg-primary/20 text-primary border-0 text-[10px] px-1.5 py-0 gap-0.5"><Crown className="h-2.5 w-2.5" />Pro</Badge>;
 }
 
@@ -131,7 +119,7 @@ export function EnhancedUsersTab({ headerPlanFilter }: EnhancedUsersTabProps) {
   const [overrideUser, setOverrideUser] = useState<EnhancedUser | null>(null);
   const [sortField, setSortField] = useState<SortField>('created_at');
   const [sortDir, setSortDir] = useState<SortDir>('desc');
-  const [tierCounts, setTierCounts] = useState<TierCounts>({ free: 0, basic: 0, pro: 0, total: 0 });
+  const [tierCounts, setTierCounts] = useState<TierCounts>({ free: 0, pro: 0, total: 0 });
   const [tierLoading, setTierLoading] = useState(true);
 
   // Sync header plan filter
@@ -151,18 +139,14 @@ export function EnhancedUsersTab({ headerPlanFilter }: EnhancedUsersTabProps) {
           supabase.from('user_subscriptions').select('plan, tier, expires_at'),
         ]);
         const total = Number(totalRes.data) || 0;
-        let basic = 0, pro = 0;
+        let proCount = 0;
         (subsRes.data || []).forEach((s: any) => {
           if (s.plan === 'pro') {
-            // Active = no expiry (lifetime/admin) OR expiry in future
             const isActive = !s.expires_at || new Date(s.expires_at) > new Date();
-            if (isActive) {
-              if (s.tier === 'premium') pro++;
-              else basic++;
-            }
+            if (isActive) proCount++;
           }
         });
-        setTierCounts({ free: total - basic - pro, basic, pro, total });
+        setTierCounts({ free: total - proCount, pro: proCount, total });
       } catch { /* ignore */ }
       setTierLoading(false);
     }
