@@ -9,12 +9,26 @@ const DEMO_LEADS = [
   { name: 'Rahul Sharma', phone: '0000000001', address: 'Mumbai', action_taken: 'Enrolment' },
   { name: 'Priya Mehta', phone: '0000000002', address: 'Delhi', action_taken: 'Not Interested' },
   { name: 'Amit Gupta', phone: '0000000003', address: 'Bangalore', action_taken: 'Busy' },
-  { name: 'Sunita Yadav', phone: '0000000004', address: 'Pune', action_taken: 'Follow Up' },
-  { name: 'Vikram Singh', phone: '0000000005', address: 'Chennai', action_taken: 'Callback' },
+  { name: 'Sunita Yadav', phone: '0000000004', address: 'Pune', action_taken: 'Video Send' },
+  { name: 'Vikram Singh', phone: '0000000005', address: 'Chennai', action_taken: 'Call Back' },
 ];
 
-const DEMO_RESPONSE_LABELS = ['Enrolment', 'Not Interested', 'Busy', 'Follow Up', 'Callback'];
-const DEMO_STAGE_LABELS = ['New Lead', 'Interested', 'Demo Done', 'Enrolled'];
+// Matches the handle_new_user trigger defaults
+const DEMO_RESPONSE_LABELS = {
+  tracking: [
+    { name: 'Video Send', isStageTag: false, isFinalTarget: false },
+    { name: 'Enrolment', isStageTag: true, isFinalTarget: true },
+  ],
+  nonTracking: ['Not Picked', 'Busy', 'Call Back', 'Not Interested'],
+};
+const DEMO_STAGE_LABELS = {
+  stages: [
+    { name: 'Day1', isFinalTarget: false },
+    { name: 'Day2', isFinalTarget: false },
+    { name: 'Day3', isFinalTarget: true },
+  ],
+  nonTracking: [],
+};
 
 export function useAutoDemoTour() {
   const { user } = useAuth();
