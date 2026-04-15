@@ -531,42 +531,6 @@ export default function Profile() {
           {/* User Guide */}
           <UserGuideDrawer />
 
-          {/* How to Use Nevora AI — Restart Tour */}
-          <button
-            onClick={() => setShowRestartTour(true)}
-            className="w-full rounded-xl px-4 py-2 bg-card border border-border/50 flex items-center justify-between transition-colors hover:bg-muted/50"
-          >
-            <div className="flex items-center gap-2.5">
-              <PlayCircle className="h-4 w-4 text-primary" />
-              <div className="text-left">
-                <span className="font-medium text-sm block">How to Use Nevora AI</span>
-                <span className="text-[11px] text-muted-foreground">Watch the app tour again</span>
-              </div>
-            </div>
-            <ChevronRight className="h-3.5 w-3.5 text-muted-foreground" />
-          </button>
-
-          {/* Restart Tour Confirmation Modal */}
-          {showRestartTour && (
-            <div className="fixed inset-0 z-[9999] bg-black/50 flex items-center justify-center p-6" onClick={() => setShowRestartTour(false)}>
-              <div className="bg-card rounded-2xl p-6 max-w-sm w-full space-y-4 animate-in fade-in zoom-in-95 duration-200" onClick={e => e.stopPropagation()}>
-                <h2 className="text-base font-bold">Restart App Tour?</h2>
-                <p className="text-sm text-muted-foreground">This will walk you through all the key features of Nevora AI from the beginning.</p>
-                <div className="flex gap-3">
-                  <Button variant="outline" className="flex-1 rounded-xl" onClick={() => setShowRestartTour(false)}>
-                    Cancel
-                  </Button>
-                  <Button className="flex-1 rounded-xl bg-[#2563EB] hover:bg-[#1d4ed8]" onClick={async () => {
-                    setShowRestartTour(false);
-                    await restartTour();
-                    navigate('/dashboard');
-                  }}>
-                    Start Tour
-                  </Button>
-                </div>
-              </div>
-            </div>
-          )}
 
           {/* Help & Support */}
           <HelpSupportDrawer />
