@@ -11,7 +11,7 @@ import { Toaster } from "sonner";
 import { InstallPromptBanner } from "@/components/pwa/InstallPromptBanner";
 import { UpdateBanner } from "@/components/pwa/UpdateBanner";
 import { AppAccessTracker } from "@/components/AppAccessTracker";
-import { OnboardingOverlay } from "@/components/onboarding/OnboardingOverlay";
+import { AutoDemoTour } from "@/components/onboarding/AutoDemoTour";
 import { Loader2 } from "lucide-react";
 
 // Eagerly load the most used pages (bottom nav tabs)
@@ -110,7 +110,7 @@ function App() {
                     <InstallPromptBanner />
                     <UpdateBanner />
                     <AppAccessTracker />
-                    <OnboardingOverlay />
+                    <AutoDemoTour />
                     <Suspense fallback={<PageLoader />}>
                       <Routes>
                         <Route path="/" element={<Index />} />

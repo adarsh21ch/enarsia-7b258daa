@@ -230,6 +230,7 @@ export default function Dashboard() {
     value: string;
     label: string;
     icon: typeof Layers;
+    'data-onboarding'?: string;
   }] = [{
     value: 'leads',
     label: 'Leads',
@@ -237,7 +238,8 @@ export default function Dashboard() {
   }, {
     value: 'funnel',
     label: 'Funnel',
-    icon: Layers
+    icon: Layers,
+    'data-onboarding': 'funnel-tab'
   }];
 
   return <div className="app-layout bg-gradient-to-b from-background via-background to-muted/20">

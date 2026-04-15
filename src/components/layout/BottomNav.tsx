@@ -2,9 +2,7 @@ import { useState, useEffect, useCallback, startTransition, useRef } from 'react
 import { useLocation, useNavigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { useProfile } from '@/hooks/useProfile';
-import { useOnboarding } from '@/hooks/useOnboarding';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { toast } from 'sonner';
 
 const CallingIcon = ({ className }: { className?: string }) => (
   <svg viewBox="0 0 24 24" className={className} fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
@@ -49,7 +47,6 @@ export function BottomNav({ className }: { className?: string }) {
   const location = useLocation();
   const navigate = useNavigate();
   const { profile } = useProfile();
-  const { currentStep, isOnboarding, requiredTab } = useOnboarding();
   const [keyboardVisible, setKeyboardVisible] = useState(false);
   const [bouncingTab, setBouncingTab] = useState<string | null>(null);
 
@@ -69,31 +66,7 @@ export function BottomNav({ className }: { className?: string }) {
 
   if (keyboardVisible) return null;
 
-  const activeRequiredPath = isOnboarding ? requiredTab(currentStep) : null;
-
-  // During nav steps (5, 8, 10), the TARGET is a different tab than navigateTo
-  const getNavStepTarget = (): string | null => {
-    if (currentStep === 5) return '/listup';
-    if (currentStep === 8) return '/tracking';
-    if (currentStep === 10) return '/dashboard';
-    return null;
-  };
-  const navStepTarget = isOnboarding ? getNavStepTarget() : null;
-
-  const isTabAllowed = (path: string): boolean => {
-    if (!isOnboarding) return true;
-    // The tab required for current step content
-    if (activeRequiredPath && path === activeRequiredPath) return true;
-    // Nav step targets (the tab user needs to tap)
-    if (navStepTarget && path === navStepTarget) return true;
-    return false;
-  };
-
   const handleNavClick = (path: string, isActive: boolean) => {
-    if (isOnboarding && !isTabAllowed(path)) {
-      toast('Complete the current step first 👆', { duration: 2000 });
-      return;
-    }
     if (!isActive) {
       setBouncingTab(path);
       setTimeout(() => setBouncingTab(null), 300);
@@ -112,15 +85,12 @@ export function BottomNav({ className }: { className?: string }) {
         "pb-[10px]",
         className
       )}
-      style={{ zIndex: isOnboarding ? 9500 : undefined }}
     >
       <div className="flex items-center justify-around h-16 max-w-lg mx-auto">
         {navItems.map(item => {
           const Icon = item.icon;
           const isActive = location.pathname === item.path;
           const isBouncing = bouncingTab === item.path;
-          const isLocked = isOnboarding && !isTabAllowed(item.path);
-          const isPulsingTarget = isOnboarding && navStepTarget === item.path && !isActive;
 
           return (
             <button
@@ -131,16 +101,13 @@ export function BottomNav({ className }: { className?: string }) {
                 "relative flex flex-col items-center justify-center flex-1 h-full min-h-[44px] min-w-[44px]",
                 "transition-all duration-200",
                 isActive ? "text-primary" : "text-muted-foreground",
-                isLocked && "opacity-40 grayscale",
                 "pb-[8px]"
               )}
-              style={isLocked ? { pointerEvents: 'auto' } : undefined}
             >
               <div
                 className={cn(
                   "flex flex-col items-center gap-0.5",
                   isBouncing && "tab-bounce",
-                  isPulsingTarget && "animate-pulse"
                 )}
               >
                 {item.isProfile ? (
@@ -161,12 +128,6 @@ export function BottomNav({ className }: { className?: string }) {
                   {item.label}
                 </span>
               </div>
-              {/* Pulsing blue dot for nav step target */}
-              {isPulsingTarget && (
-                <div className="absolute top-1.5 right-1/2 translate-x-4 h-2.5 w-2.5 rounded-full bg-[#2563EB]"
-                  style={{ boxShadow: '0 0 0 3px rgba(37,99,235,0.3)', animation: 'onboarding-pulse-ring 1.5s ease-in-out infinite' }}
-                />
-              )}
               <div className={cn(
                 "absolute bottom-1.5 left-1/2 -translate-x-1/2 h-[3px] w-1 rounded-full transition-all duration-200",
                 isActive ? "bg-primary scale-100" : "bg-transparent scale-0"

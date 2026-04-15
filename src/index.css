@@ -526,4 +526,14 @@ html {
   @keyframes draw-check {
     100% { stroke-dashoffset: 0; }
   }
+
+  @keyframes auto-demo-pulse {
+    0%, 100% { opacity: 0.6; transform: scale(1); }
+    50% { opacity: 1; transform: scale(1.03); }
+  }
+
+  @keyframes auto-demo-progress {
+    0% { width: 0%; }
+    100% { width: 100%; }
+  }
 }
