@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
-import { useOnboarding } from '@/hooks/useOnboarding';
+
 import { useProfile } from '@/hooks/useProfile';
 import { useAdmin } from '@/hooks/useAdmin';
 import { usePermissions } from '@/contexts/PermissionsContext';
@@ -218,7 +218,6 @@ export default function Profile() {
   
   const { canAccess: canAccessAI } = useFeatureAccess('ai_assistant');
   const { pendingCount } = useSharedLeads();
-  const { restartTour } = useOnboarding();
   const [showRestartTour, setShowRestartTour] = useState(false);
 
   // Handle SSO redirect to nevorai.com pages
