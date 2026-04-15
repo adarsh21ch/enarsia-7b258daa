@@ -118,10 +118,40 @@ export default function Auth() {
     const { data, error } = await supabase.functions.invoke('send-otp', {
       body: { email: emailToSend }
     });
+
     if (error || !data?.success) {
-      toast.error(data?.error || 'Failed to send verification code');
+      let message = data?.error || 'Failed to send verification code';
+      const response = typeof error === 'object' && error && 'context' in error
+        ? (error as { context?: Response }).context
+        : undefined;
+
+      if (response instanceof Response) {
+        try {
+          const payload = await response.clone().json();
+          if (
+            payload &&
+            typeof payload === 'object' &&
+            'error' in payload &&
+            typeof payload.error === 'string'
+          ) {
+            message = payload.error;
+          }
+        } catch {
+          // Ignore parse errors and use the fallback message.
+        }
+      }
+
+      if (message.toLowerCase().includes('already have a nevorai account')) {
+        setIsSignUp(false);
+        setSignupStep('form');
+        setPendingSignupData(null);
+        setOtpCode('');
+      }
+
+      toast.error(message);
       return false;
     }
+
     toast.success('Verification code sent to your email!');
     return true;
   }, []);
