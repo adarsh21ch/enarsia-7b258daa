@@ -128,7 +128,7 @@ serve(async (req) => {
       plan: isPro ? plan : null,
       fullName: profile.full_name || profile.display_name || null,
       email: profile.email || null,
-      phone: (profile as any).phone || (profile as any).whatsapp_number || null,
+      phone: (profile as any).phone || null,
       registeredAt: profile.created_at,
       callingAppUserId: profile.user_id,
     });
