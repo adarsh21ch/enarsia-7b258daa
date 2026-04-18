@@ -80,3 +80,6 @@ verify_jwt = false
 
 [functions.ai-daily-insights]
 verify_jwt = false
+
+[functions.is-pro-user]
+verify_jwt = false
