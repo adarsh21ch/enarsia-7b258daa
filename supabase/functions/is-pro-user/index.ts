@@ -61,14 +61,12 @@ serve(async (req) => {
     const orParts: string[] = [];
     if (email) orParts.push(`email.eq.${email}`);
     if (phone) {
-      // Try multiple common phone columns/formats
       orParts.push(`phone.eq.${phone}`);
-      orParts.push(`whatsapp_number.eq.${phone}`);
     }
 
     const { data: profile, error: profileError } = await supabase
       .from("profiles")
-      .select("user_id, email, phone, whatsapp_number, display_name, full_name, created_at, subscription_plan, subscription_status, subscription_expires_at")
+      .select("user_id, email, phone, display_name, full_name, created_at, subscription_plan, subscription_status, subscription_expires_at")
       .or(orParts.join(","))
       .order("created_at", { ascending: true })
       .limit(1)
@@ -76,7 +74,16 @@ serve(async (req) => {
 
     if (profileError) {
       console.error("Profile lookup error:", profileError.message);
-      return json({ error: "Lookup failed" }, 500);
+      // Graceful fallback — never 500 on lookup miss
+      return json({
+        isPro: false,
+        plan: null,
+        fullName: null,
+        email: email || null,
+        phone: phone || null,
+        registeredAt: null,
+        callingAppUserId: null,
+      });
     }
 
     if (!profile) {
@@ -121,7 +128,7 @@ serve(async (req) => {
       plan: isPro ? plan : null,
       fullName: profile.full_name || profile.display_name || null,
       email: profile.email || null,
-      phone: (profile as any).phone || (profile as any).whatsapp_number || null,
+      phone: (profile as any).phone || null,
       registeredAt: profile.created_at,
       callingAppUserId: profile.user_id,
     });

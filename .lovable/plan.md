@@ -1,21 +1,35 @@
 
-This is a research/audit request, not an implementation task. The user wants a comprehensive written report. I'll gather context across the codebase (routes, auth, DB schema, integrations, admin, design tokens, edge functions, known issues from memory) and then deliver the audit as the response. Since plan mode is read-only and the user explicitly wants a long structured report (not code), I'll exit plan mode and deliver the audit in default mode.
+The user is asking two things:
+1. Confirmation about whether `NEVORAI_BRIDGE_SECRET` was updated to match `NFLOW_BRIDGE_SECRET` from the calling app.
+2. Whether I should test the bridge end-to-end with a known Pro email.
 
-Plan: Switch to default mode and produce the structured audit using existing context already loaded (memory index covers most architecture, App.tsx routes are visible, edge functions list visible, types/components list visible). I'll do targeted reads only where memory is insufficient (package.json for integrations, tailwind config for design tokens, profiles schema for DB inventory).
+Context check:
+- The edge function `is-pro-user` reads `NFLOW_BRIDGE_SECRET` (single secret on Nevorai side).
+- The user mentions `NEVORAI_BRIDGE_SECRET` — this appears to be a separate secret name that the **calling app (nFlow)** would use to store the value it sends in its `Authorization: Bearer ...` header.
+- For the bridge to work, both sides must hold the **same string value**, but the secret names can differ:
+  - Nevorai (this project): `NFLOW_BRIDGE_SECRET` — already added
+  - Calling app: `NEVORAI_BRIDGE_SECRET` — lives in the calling app's project, not here
+- I cannot read the value of either secret (secrets are write-only from my side), so I can't literally compare strings. I can only verify presence on this side via `fetch_secrets`.
 
-## Audit Delivery Plan
+What the user actually wants:
+- Reassurance + an offer to test end-to-end.
 
-**Step 1 — Targeted reads (read-only, ~6 files)**
-- `package.json` → integrations, libraries
-- `tailwind.config.ts` + `src/index.css` → design tokens, colors
-- `src/integrations/supabase/types.ts` (table list only) → DB inventory
-- `src/contexts/AuthContext.tsx` → auth method confirmation
-- `src/pages/Profile.tsx` (skim) → profile features
-- Memory files already in context cover: monetization, onboarding, KYC, streaks, sharing, AI, forms, funnels, notes, push, admin
+Plan for the response (in default mode):
+1. Clarify the secret-name situation: `NFLOW_BRIDGE_SECRET` is set on Nevorai's side; `NEVORAI_BRIDGE_SECRET` lives in the calling app and must hold the **same value**. I cannot read either value, so the user must confirm the values match in the calling app's secret store.
+2. Verify `NFLOW_BRIDGE_SECRET` is present on this project via `secrets--fetch_secrets`.
+3. Offer a concrete end-to-end test path:
+   - Run a curl against the deployed function with a known Pro email using `supabase--curl_edge_functions`, sending the Bearer token. But — I don't know the secret value, so I can't construct a valid Authorization header from my side either. The test would need the user to either (a) provide the secret value temporarily, or (b) trigger the call from the calling app and we inspect logs via `supabase--edge_function_logs`.
+   - Better path: I run two tests via `supabase--curl_edge_functions`:
+     - One **without** auth → expect 401 (proves auth gate works).
+     - One **with** the literal env var reference — won't work because curl tool can't read the secret.
+   - So the realistic E2E test is: user triggers from calling app, I tail logs.
 
-**Step 2 — Compose the 19-section audit report**
-Deliver as plain-text structured response (not a code change). Each section will be specific to Nevorai with concrete component/file/table names. Length target: thorough but readable (~3–4 screens).
+Steps I'll propose:
+- Step A: Verify presence of `NFLOW_BRIDGE_SECRET` on Nevorai side.
+- Step B: Run an unauthenticated curl to confirm 401 behavior (proves the gate).
+- Step C: Ask the user to either trigger a real call from the calling app OR paste a sample known-Pro email + phone so I can run a partial test (still need secret to fully auth — ask them to confirm match in their nFlow project secrets UI).
+- Step D: Tail logs for `is-pro-user` to confirm the inbound call landed and returned correctly.
 
-**Step 3 — End with feature-suggestions block** as per system rules.
+Since this is a small verification + test task (no new code), I'll keep it lean. Plan presents: confirm secret-name semantics, run a 401 sanity check, then either (a) live-test from calling app side with log tailing, or (b) ask user for a known-pro identifier to dry-run.
 
-No file edits, no DB changes, no scripts. Pure deliverable: a written audit document in the chat response.
+No code changes needed unless test reveals a bug.
