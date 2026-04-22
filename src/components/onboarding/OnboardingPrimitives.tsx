@@ -130,67 +130,44 @@ export function TopTooltipBanner({
 
   return (
     <div
-      className="animate-in slide-in-from-top-2 fade-in duration-200"
-      style={{
-        position: 'fixed',
-        top: 0,
-        left: 0,
-        right: 0,
-        zIndex: 10001,
-        pointerEvents: 'all',
-      }}
+      className="animate-in slide-in-from-top-2 fade-in duration-200 fixed top-0 left-0 right-0 z-[10001] pointer-events-auto"
     >
       {/* Progress bar at very top */}
-      <div style={{ height: 3, background: '#e5e7eb' }}>
-        <div style={{
-          height: '100%', background: '#2563EB',
-          width: `${progress}%`, transition: 'width 0.4s ease',
-          borderRadius: '0 2px 2px 0',
-        }} />
+      <div className="h-[3px] bg-border">
+        <div
+          className="h-full bg-primary rounded-r-sm transition-[width] duration-[400ms]"
+          style={{ width: `${progress}%` }}
+        />
       </div>
 
-      <div style={{
-        background: 'white',
-        borderBottom: '1px solid rgba(0,0,0,0.08)',
-        boxShadow: '0 2px 16px rgba(0,0,0,0.08)',
-        padding: '12px 16px 14px',
-      }}>
+      <div className="bg-card text-card-foreground border-b border-border/50 shadow-md px-4 pt-3 pb-3.5">
         {/* Step counter + skip */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-          <span style={{
-            fontSize: 11, fontWeight: 600, color: '#2563EB',
-            background: '#EFF6FF', padding: '3px 10px', borderRadius: 20,
-          }}>
+        <div className="flex justify-between items-center mb-2">
+          <span className="text-[11px] font-semibold text-primary bg-primary/10 px-2.5 py-[3px] rounded-full">
             Step {step} of {totalSteps}
           </span>
           <button
             onClick={(e) => { e.stopPropagation(); onSkip(); }}
-            style={{
-              fontSize: 12, color: '#999', background: 'none',
-              border: 'none', cursor: 'pointer', padding: '2px 6px',
-            }}
+            className="text-xs text-muted-foreground bg-transparent border-0 cursor-pointer px-1.5 py-0.5"
           >
             Skip →
           </button>
         </div>
 
         {/* Title row */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
-          <span style={{ fontSize: 18 }}>{icon}</span>
-          <span style={{ fontSize: 15, fontWeight: 600, color: '#111' }}>{title}</span>
+        <div className="flex items-center gap-2 mb-1">
+          <span className="text-lg">{icon}</span>
+          <span className="text-[15px] font-semibold text-foreground">{title}</span>
         </div>
 
         {/* Description */}
-        <p style={{ fontSize: 13, color: '#555', lineHeight: 1.55, margin: '0 0 4px 0' }}>
+        <p className="text-[13px] text-muted-foreground leading-snug m-0 mb-1">
           {description}
         </p>
 
         {/* Action hint */}
         {actionHint && (
-          <p style={{
-            fontSize: 12, color: '#2563EB', fontWeight: 500,
-            margin: '2px 0 0', display: 'flex', alignItems: 'center', gap: 4,
-          }}>
+          <p className="text-xs text-primary font-medium mt-0.5 flex items-center gap-1">
             👆 {actionHint}
           </p>
         )}
@@ -198,22 +175,7 @@ export function TopTooltipBanner({
         {/* Got it button */}
         <button
           onClick={(e) => { e.stopPropagation(); onGotIt(); }}
-          style={{
-            marginTop: 10,
-            width: '100%',
-            height: 38,
-            borderRadius: 10,
-            background: '#2563EB',
-            color: 'white',
-            fontWeight: 600,
-            fontSize: 14,
-            border: 'none',
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: 6,
-          }}
+          className="mt-2.5 w-full h-[38px] rounded-[10px] bg-primary text-primary-foreground font-semibold text-sm border-0 cursor-pointer flex items-center justify-center gap-1.5"
         >
           {buttonLabel}
         </button>

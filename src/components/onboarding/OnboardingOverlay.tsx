@@ -175,32 +175,29 @@ export function OnboardingOverlay() {
     return (
       <>
         <Confetti />
-        <div className="fixed inset-0 z-[10000] bg-white flex items-center justify-center p-6">
+        <div className="fixed inset-0 z-[10000] bg-background flex items-center justify-center p-6">
           <div className="max-w-sm w-full text-center space-y-5 animate-in fade-in zoom-in-95 duration-300">
-            <div className="mx-auto w-20 h-20 rounded-full bg-[#2563EB]/10 flex items-center justify-center">
+            <div className="mx-auto w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center">
               <svg viewBox="0 0 52 52" className="w-12 h-12">
-                <circle cx="26" cy="26" r="24" fill="none" stroke="#2563EB" strokeWidth="2" className="animate-[draw-circle_0.6s_ease_forwards]" />
-                <path fill="none" stroke="#2563EB" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" d="M14 27l8 8 16-16" className="animate-[draw-check_0.4s_0.4s_ease_forwards]" style={{ strokeDasharray: 48, strokeDashoffset: 48 }} />
+                <circle cx="26" cy="26" r="24" fill="none" stroke="hsl(var(--primary))" strokeWidth="2" className="animate-[draw-circle_0.6s_ease_forwards]" />
+                <path fill="none" stroke="hsl(var(--primary))" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" d="M14 27l8 8 16-16" className="animate-[draw-check_0.4s_0.4s_ease_forwards]" style={{ strokeDasharray: 48, strokeDashoffset: 48 }} />
               </svg>
             </div>
-            <h1 style={{ fontSize: 22, fontWeight: 500, color: '#111' }}>
+            <h1 className="text-[22px] font-medium text-foreground">
               You're all set, {firstName}! 🎉
             </h1>
-            <p style={{ fontSize: 14, color: '#666', maxWidth: 280, margin: '0 auto', lineHeight: 1.6 }}>
+            <p className="text-sm text-muted-foreground max-w-[280px] mx-auto leading-relaxed">
               You now know Nevora AI inside out. Your leads are ready. Time to start calling!
             </p>
             <button
               onClick={() => { setShowCompletion(false); navigate('/dashboard'); }}
-              style={{
-                width: '100%', height: 48, borderRadius: 12, background: '#2563EB',
-                color: 'white', fontWeight: 600, fontSize: 16, border: 'none', cursor: 'pointer',
-              }}
+              className="w-full h-12 rounded-xl bg-primary text-primary-foreground font-semibold text-base"
             >
               Start Calling →
             </button>
             <button
               onClick={() => { setShowCompletion(false); navigate('/dashboard'); }}
-              style={{ fontSize: 13, color: '#999', background: 'none', border: 'none', cursor: 'pointer' }}
+              className="text-[13px] text-muted-foreground bg-transparent"
             >
               Explore on my own
             </button>
@@ -219,22 +216,17 @@ export function OnboardingOverlay() {
     return (
       <div className="fixed inset-0 z-[10000] bg-black/50 flex items-center justify-center p-6">
         <div
-          className="bg-white rounded-[14px] p-6 max-w-sm w-full space-y-5 animate-in fade-in zoom-in-95 duration-300 text-center"
-          style={{ boxShadow: '0 4px 24px rgba(0,0,0,0.18)' }}
+          className="bg-card text-card-foreground rounded-[14px] p-6 max-w-sm w-full space-y-5 animate-in fade-in zoom-in-95 duration-300 text-center shadow-xl"
         >
           <img src={nevoraLogo} alt="Nevora AI" className="w-16 h-16 rounded-2xl shadow-lg mx-auto" />
-          <h1 style={{ fontSize: 20, fontWeight: 800, color: '#111' }}>Welcome to Nevora AI! 👋</h1>
-          <p style={{ fontSize: 14, color: '#666' }}>
+          <h1 className="text-xl font-extrabold text-foreground">Welcome to Nevora AI! 👋</h1>
+          <p className="text-sm text-muted-foreground">
             Let's take a quick tour so you understand every feature. You can skip any step.
           </p>
           <button
             onClick={() => startTour()}
             disabled={loading}
-            style={{
-              width: '100%', height: 48, borderRadius: 12, background: '#2563EB',
-              color: 'white', fontWeight: 700, fontSize: 16, border: 'none', cursor: 'pointer',
-              opacity: loading ? 0.7 : 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-            }}
+            className="w-full h-12 rounded-xl bg-primary text-primary-foreground font-bold text-base flex items-center justify-center gap-2 disabled:opacity-70"
           >
             {loading ? 'Setting up...' : 'Start Tour'} <ArrowRight className="h-4 w-4" />
           </button>

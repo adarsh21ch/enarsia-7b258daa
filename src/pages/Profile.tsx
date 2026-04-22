@@ -36,6 +36,7 @@ import { usePushNotifications } from '@/hooks/usePushNotifications';
 import { useSharedLeads } from '@/hooks/useSharedLeads';
 import { AIAssistantChat } from '@/components/ai/AIAssistantChat';
 import { AIInsightsSettings } from '@/components/ai/AIInsightsSettings';
+import { ThemeSettings } from '@/components/profile/ThemeSettings';
 import { useFeatureAccess } from '@/hooks/useFeatureAccess';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
@@ -548,7 +549,7 @@ export default function Profile() {
               <ChevronDown className="h-3.5 w-3.5 text-muted-foreground transition-transform [[data-state=open]>&]:rotate-180" />
             </CollapsibleTrigger>
             <CollapsibleContent>
-              <div className="px-4 pb-2 space-y-0.5">
+              <div className="px-4 pb-3 space-y-0.5">
                 <button onClick={() => setEditOpen(true)} className="w-full flex items-center justify-between p-2 rounded-lg hover:bg-muted/50 transition-colors">
                   <div className="flex items-center gap-2.5">
                     <User className="h-3.5 w-3.5 text-muted-foreground" />
@@ -557,6 +558,9 @@ export default function Profile() {
                   <ChevronRight className="h-3.5 w-3.5 text-muted-foreground" />
                 </button>
                 <ChangePasswordDialog />
+                <div className="pt-1 border-t border-border/50 mt-1">
+                  <ThemeSettings />
+                </div>
               </div>
             </CollapsibleContent>
           </Collapsible>

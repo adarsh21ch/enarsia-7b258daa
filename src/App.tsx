@@ -8,6 +8,7 @@ import { ProspectsProvider } from "@/contexts/ProspectsContext";
 import { TodosProvider } from "@/contexts/TodosContext";
 import { PermissionsProvider } from "@/contexts/PermissionsContext";
 import { Toaster } from "sonner";
+import { ThemeProvider } from "@/components/theme/ThemeProvider";
 import { InstallPromptBanner } from "@/components/pwa/InstallPromptBanner";
 import { UpdateBanner } from "@/components/pwa/UpdateBanner";
 import { AppAccessTracker } from "@/components/AppAccessTracker";
@@ -98,6 +99,7 @@ const queryClient = new QueryClient({
 function App() {
   return (
     <ErrorBoundary>
+      <ThemeProvider>
       <QueryClientProvider client={queryClient}>
         <BrowserRouter>
           <AuthProvider>
@@ -151,6 +153,7 @@ function App() {
           </AuthProvider>
         </BrowserRouter>
       </QueryClientProvider>
+      </ThemeProvider>
     </ErrorBoundary>
   );
 }
