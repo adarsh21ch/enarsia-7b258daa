@@ -346,6 +346,14 @@ export const ProspectRow = memo(function ProspectRow({
   const [isDragging, setIsDragging] = useState(false);
   const [tagSheetOpen, setTagSheetOpen] = useState(false);
 
+  // Safety: reset card position whenever this row's prospect id changes
+  // (prevents "stuck shifted" rows after data refetch / virtualization recycle)
+  useEffect(() => {
+    x.set(0);
+    cardScale.set(1);
+    setIsDragging(false);
+  }, [prospect.id, x, cardScale]);
+
   const triggerCall = useCallback(() => {
     onMarkLastContacted?.();
     window.open(`tel:${cleanPhoneNumber(prospect.phone)}`, '_self');
@@ -376,33 +384,28 @@ export const ProspectRow = memo(function ProspectRow({
     // Restore scale from drag depth
     animate(cardScale, 1, { type: 'spring', stiffness: 500, damping: 42 });
 
+    const snapBack = () => {
+      animate(x, 0, { type: 'spring', stiffness: 500, damping: 42 });
+    };
+
     // ===== RIGHT swipe → open Response Tag sheet =====
     if (offset > tagThreshold || (offset > SWIPE_REVEAL && velocity > 650)) {
-      animate(x, 0, { type: 'spring', stiffness: 500, damping: 42 });
+      snapBack();
       setTimeout(microBounce, 80);
       setTimeout(openTagSheet, 120);
     }
-    // ===== LEFT swipe → Call =====
+    // ===== LEFT swipe → Call (full swipe or fast flick) =====
     else if (offset < -SWIPE_TRIGGER || velocity < -650) {
       triggerCall();
-      animate(x, 0, { type: 'spring', stiffness: 500, damping: 42 });
+      snapBack();
       setTimeout(microBounce, 80);
-    } else if (offset < -SWIPE_REVEAL / 2) {
-      animate(x, -SWIPE_REVEAL, {
-        type: 'spring',
-        stiffness: 500,
-        damping: 42,
-        onComplete: () => {
-          setTimeout(() => {
-            animate(x, 0, { type: 'spring', stiffness: 500, damping: 42 });
-            setTimeout(microBounce, 60);
-          }, 1500);
-        },
-      });
-    } else {
-      animate(x, 0, { type: 'spring', stiffness: 500, damping: 42 });
-      setTimeout(microBounce, 40);
     }
+    // ===== Anything else → snap back immediately (no stuck reveal) =====
+    else {
+      snapBack();
+      if (Math.abs(offset) > 20) setTimeout(microBounce, 40);
+    }
+
     setTimeout(() => { isSwipingRef.current = false; }, 50);
   }, [x, cardScale, triggerCall, microBounce, openTagSheet]);
 
@@ -529,8 +532,9 @@ export const ProspectRow = memo(function ProspectRow({
           {/* Draggable foreground card (left + right) */}
           <motion.div
             drag="x"
-            dragConstraints={{ left: -SWIPE_REVEAL * 1.8, right: SWIPE_REVEAL * 1.8 }}
-            dragElastic={{ left: 0.08, right: 0.08 }}
+            dragConstraints={{ left: -SWIPE_REVEAL * 1.4, right: SWIPE_REVEAL * 1.4 }}
+            dragElastic={0.12}
+            dragMomentum={false}
             dragDirectionLock
             onDragStart={handleDragStart}
             onDragEnd={handleDragEnd}
