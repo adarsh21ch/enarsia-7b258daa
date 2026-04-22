@@ -519,6 +519,9 @@ export default function Profile() {
           </div>{/* end Leads & AI */}
 
 
+          {/* ── SECTION: Account ──────────────── */}
+          <SectionHeader>Account</SectionHeader>
+          <div className="space-y-2">
           {/* Tracking Format - Full page */}
           <button
             onClick={() => navigate('/tracking-format')}
@@ -531,6 +534,9 @@ export default function Profile() {
             <ChevronRight className="h-3.5 w-3.5 text-muted-foreground" />
           </button>
 
+          {/* Notifications Toggle */}
+          <NotificationToggle canSendTest={isAdmin} />
+
           {/* Recently Deleted */}
           <RecentlyDeletedDrawer
           trigger={
@@ -542,18 +548,12 @@ export default function Profile() {
                 <ChevronRight className="h-3.5 w-3.5 text-muted-foreground" />
               </button>
           } />
+          </div>{/* end Account */}
 
-          {/* User Guide */}
-          <UserGuideDrawer />
+          {/* ── SECTION: Settings & Support ───── */}
+          <SectionHeader>Settings & Support</SectionHeader>
+          <div className="space-y-2">
 
-
-          {/* Help & Support */}
-          <HelpSupportDrawer />
-
-          {/* Notifications Toggle */}
-          <NotificationToggle canSendTest={isAdmin} />
-
-          {/* Settings Section - Collapsible */}
           <Collapsible className="rounded-xl bg-card border border-border/50 overflow-hidden">
             <CollapsibleTrigger className="w-full px-4 py-2 flex items-center justify-between hover:bg-muted/50 transition-colors">
               <div className="flex items-center gap-2.5">
