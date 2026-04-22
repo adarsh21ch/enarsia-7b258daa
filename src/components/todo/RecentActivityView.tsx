@@ -192,49 +192,49 @@ export function RecentActivityView({ selectedDate: externalDate, searchQuery: ex
                         <span className="text-xs text-muted-foreground">📥 {activity.name}</span>
                       </div>
                     ) : (
-                    <div className="flex items-start justify-between gap-2 p-2 rounded-lg bg-muted/30 hover:bg-muted/40 transition-colors">
-                      <div className="min-w-0 flex-1">
-                        <p className="text-sm font-medium truncate">{activity.name}</p>
-                        
-                        {/* Tags */}
-                        <div className="flex items-center gap-1.5 flex-wrap mt-1">
-                          {activity.stage && (
-                            <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-primary/10 text-primary">
-                              {activity.stage}
-                            </span>
-                          )}
-                          {activity.action && (
-                            <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-muted text-muted-foreground">
-                              {activity.action}
-                            </span>
-                          )}
-                          {activity.type === 'todo' && (
-                            <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-blue-500/10 text-blue-600">
-                              To-Do
-                            </span>
-                          )}
+                    <SwipeableActivityRow
+                      phone={activity.phone}
+                      onCall={() => activity.phone && handleCall(activity.phone)}
+                    >
+                      <div className="flex items-start justify-between gap-2 p-2 rounded-lg bg-muted/30 hover:bg-muted/40 transition-colors">
+                        <div className="min-w-0 flex-1">
+                          <p className="text-sm font-medium truncate">{activity.name}</p>
+                          <div className="flex items-center gap-1.5 flex-wrap mt-1">
+                            {activity.stage && (
+                              <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-primary/10 text-primary">
+                                {activity.stage}
+                              </span>
+                            )}
+                            {activity.action && (
+                              <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-muted text-muted-foreground">
+                                {activity.action}
+                              </span>
+                            )}
+                            {activity.type === 'todo' && (
+                              <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-blue-500/10 text-blue-600">
+                                To-Do
+                              </span>
+                            )}
+                          </div>
                         </div>
+                        {activity.phone && (
+                          <div className="flex items-center gap-1 shrink-0">
+                            <button
+                              onClick={() => handleCall(activity.phone!)}
+                              className="p-1.5 rounded-full transition-colors bg-secondary"
+                            >
+                              <CallIcon className="h-3.5 w-3.5 text-primary" />
+                            </button>
+                            <button
+                              onClick={() => handleWhatsApp(activity.phone!)}
+                              className="p-1.5 rounded-full bg-green-500/10 hover:bg-green-500/20 transition-colors"
+                            >
+                              <WhatsAppIcon className="h-3.5 w-3.5 text-green-600" />
+                            </button>
+                          </div>
+                        )}
                       </div>
-                      
-                      {/* Call/WhatsApp buttons */}
-                      {activity.phone && (
-                        <div className="flex items-center gap-1 shrink-0">
-                          <button 
-                            onClick={() => handleCall(activity.phone!)} 
-                            className="p-1.5 rounded-full transition-colors bg-secondary"
-                          >
-                            <CallIcon className="h-3.5 w-3.5 text-primary" />
-                          </button>
-                          <button 
-                            onClick={() => handleWhatsApp(activity.phone!)} 
-                            className="p-1.5 rounded-full bg-green-500/10 hover:bg-green-500/20 transition-colors"
-                          >
-                            <WhatsAppIcon className="h-3.5 w-3.5 text-green-600" />
-                          </button>
-                        </div>
-                      )}
-                    </div>
-                    )}
+                    </SwipeableActivityRow>
                   </div>
                 </div>
               </div>
