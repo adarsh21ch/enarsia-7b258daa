@@ -177,6 +177,14 @@ function NotificationToggle({ canSendTest }: { canSendTest: boolean }) {
 }
 
 
+// Section header for grouping profile items
+function SectionHeader({ children }: { children: React.ReactNode }) {
+  return (
+    <p className="text-[11px] uppercase tracking-[1.2px] text-muted-foreground font-semibold pt-3 pb-1 px-1">
+      {children}
+    </p>
+  );
+}
 
 export default function Profile() {
   const navigate = useNavigate();
@@ -366,8 +374,9 @@ export default function Profile() {
             </div>
           )}
 
-          {/* Tools section */}
-          <div data-onboarding="profile-tools">
+          {/* ── SECTION: Tools ────────────────── */}
+          <SectionHeader>Tools</SectionHeader>
+          <div data-onboarding="profile-tools" className="space-y-2">
           {/* TrackUp Dashboard - External link with SSO */}
           <button onClick={() => window.open('https://nevorai.com/auth?redirect=/trackup', '_blank', 'noopener,noreferrer')} className={cn("w-full rounded-xl px-4 py-2.5", "bg-gradient-to-r backdrop-blur-sm", "border border-emerald-500/30", "flex items-center justify-between", "transition-all duration-200 hover:shadow-md", "from-emerald-500/20 to-emerald-500/5")}>
             <div className="flex items-center gap-3">
@@ -423,6 +432,11 @@ export default function Profile() {
             </div>
             <ChevronRight className="h-4 w-4 text-muted-foreground" />
           </button>
+          </div>{/* end data-onboarding="profile-tools" */}
+
+          {/* ── SECTION: Leads & AI ───────────── */}
+          <SectionHeader>Leads & AI</SectionHeader>
+          <div className="space-y-2">
           <button onClick={() => navigate('/shared-leads')} className={cn(
             "w-full rounded-xl px-4 py-2.5",
             "bg-gradient-to-r backdrop-blur-sm",
@@ -486,7 +500,7 @@ export default function Profile() {
             )}
           </button>
 
-          {/* AI Insights Settings - directly below AI Assistant */}
+          {/* AI Insights Settings */}
           <button
             onClick={() => setShowAIInsights(true)}
             className="w-full rounded-xl px-4 py-2.5 bg-gradient-to-r from-primary/15 to-primary/5 backdrop-blur-sm border border-primary/20 flex items-center justify-between transition-all duration-200 hover:shadow-md"
@@ -502,9 +516,12 @@ export default function Profile() {
             </div>
             <ChevronRight className="h-4 w-4 text-muted-foreground" />
           </button>
+          </div>{/* end Leads & AI */}
 
-          </div>{/* end data-onboarding="profile-tools" */}
 
+          {/* ── SECTION: Account ──────────────── */}
+          <SectionHeader>Account</SectionHeader>
+          <div className="space-y-2">
           {/* Tracking Format - Full page */}
           <button
             onClick={() => navigate('/tracking-format')}
@@ -517,6 +534,9 @@ export default function Profile() {
             <ChevronRight className="h-3.5 w-3.5 text-muted-foreground" />
           </button>
 
+          {/* Notifications Toggle */}
+          <NotificationToggle canSendTest={isAdmin} />
+
           {/* Recently Deleted */}
           <RecentlyDeletedDrawer
           trigger={
@@ -528,18 +548,12 @@ export default function Profile() {
                 <ChevronRight className="h-3.5 w-3.5 text-muted-foreground" />
               </button>
           } />
+          </div>{/* end Account */}
 
-          {/* User Guide */}
-          <UserGuideDrawer />
+          {/* ── SECTION: Settings & Support ───── */}
+          <SectionHeader>Settings & Support</SectionHeader>
+          <div className="space-y-2">
 
-
-          {/* Help & Support */}
-          <HelpSupportDrawer />
-
-          {/* Notifications Toggle */}
-          <NotificationToggle canSendTest={isAdmin} />
-
-          {/* Settings Section - Collapsible */}
           <Collapsible className="rounded-xl bg-card border border-border/50 overflow-hidden">
             <CollapsibleTrigger className="w-full px-4 py-2 flex items-center justify-between hover:bg-muted/50 transition-colors">
               <div className="flex items-center gap-2.5">
@@ -564,6 +578,12 @@ export default function Profile() {
               </div>
             </CollapsibleContent>
           </Collapsible>
+
+          {/* User Guide */}
+          <UserGuideDrawer />
+
+          {/* Help & Support */}
+          <HelpSupportDrawer />
 
           {/* Legal & Policies - Collapsible */}
           <Collapsible className="rounded-xl bg-card border border-border/50 overflow-hidden">
@@ -609,7 +629,10 @@ export default function Profile() {
               </div>
               <ChevronRight className="h-3.5 w-3.5 text-muted-foreground" />
             </Link>}
+          </div>{/* end Settings & Support */}
 
+          {/* ── SECTION: Community ────────────── */}
+          <SectionHeader>Community</SectionHeader>
           {/* Join WhatsApp Community */}
           <a
             href="https://chat.whatsapp.com/FvNbWgFVR2IFBq6ihWhTs2"
