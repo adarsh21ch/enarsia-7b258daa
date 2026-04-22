@@ -1,10 +1,10 @@
 import { memo, useCallback } from 'react';
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+} from '@/components/ui/sheet';
 import { Star, Check } from 'lucide-react';
 import { ActionBadge } from './StatusBadge';
 import { cn } from '@/lib/utils';
@@ -20,14 +20,21 @@ interface ResponseTagSheetProps {
   stageTag?: string | null;
   onSelect: (value: ExtendedActionTaken) => void;
   prospectName?: string;
-  /** Title shown at the top of the popup. Defaults to "Response Tag". */
+  /** Title shown at the top of the sheet. Defaults to "Response Tag". */
   title?: string;
 }
 
 /**
- * Centered modal popup variant of the Response tag selector.
- * Reuses the EXACT same data, sections, colors and badge component as the
- * existing InlineSelect dropdown — only the presentation surface changes.
+ * Right-side slide-in Sheet variant of the Response/Stage tag selector.
+ *
+ * Design intent (per product spec):
+ *  - Slides in from the RIGHT (where the Response/Stage column lives) so the
+ *    selector appears next to the very cell the user tapped — building muscle
+ *    memory and making selection extremely fast.
+ *  - Covers ~half the screen on tablet/desktop (max-w-md) and ~70% on mobile,
+ *    so the rest of the row stays visible for context.
+ *  - Premium glassy surface with backdrop blur; reuses ActionBadge so colours
+ *    stay 1:1 with the inline cells.
  */
 export const ResponseTagSheet = memo(function ResponseTagSheet({
   open,
@@ -81,27 +88,28 @@ export const ResponseTagSheet = memo(function ResponseTagSheet({
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent
+    <Sheet open={open} onOpenChange={onOpenChange}>
+      <SheetContent
+        side="right"
         className={cn(
-          "p-0 gap-0 overflow-hidden flex flex-col",
-          "max-w-[92vw] sm:max-w-md w-[92vw] sm:w-full",
-          "max-h-[80vh]",
-          "rounded-2xl border border-border/60",
-          "shadow-2xl shadow-black/20",
-          "bg-card/95 backdrop-blur-xl"
+          'p-0 gap-0 flex flex-col',
+          // Width: ~70% on mobile, half-screen on tablet/desktop
+          'w-[72vw] sm:w-[55vw] md:w-[45vw] lg:w-[38vw] sm:max-w-md',
+          'border-l border-border/60',
+          'bg-card/95 backdrop-blur-xl',
+          'shadow-2xl shadow-black/30'
         )}
       >
-        <DialogHeader className="px-5 pt-5 pb-3 border-b border-border/40 space-y-1">
-          <DialogTitle className="text-base font-semibold text-left tracking-tight">
+        <SheetHeader className="px-5 pt-5 pb-3 border-b border-border/40 space-y-1">
+          <SheetTitle className="text-base font-semibold text-left tracking-tight">
             {title}
-          </DialogTitle>
+          </SheetTitle>
           {prospectName && (
             <p className="text-xs text-muted-foreground text-left truncate font-medium">
               {prospectName}
             </p>
           )}
-        </DialogHeader>
+        </SheetHeader>
 
         <div className="flex-1 overflow-y-auto px-4 py-4 space-y-5">
           {/* Tracking tags section */}
@@ -140,7 +148,7 @@ export const ResponseTagSheet = memo(function ResponseTagSheet({
             </div>
           )}
         </div>
-      </DialogContent>
-    </Dialog>
+      </SheetContent>
+    </Sheet>
   );
 });
