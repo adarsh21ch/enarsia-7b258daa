@@ -128,7 +128,7 @@ export const ResponseTagSheet = memo(function ResponseTagSheet({
               'top-[170px] bottom-[112px]',
               // Wider panel — extends toward the middle/left so tags are
               // clearly visible and easily reachable by right-thumb users
-              'w-[88vw] max-w-[380px] sm:w-[60vw] sm:max-w-[400px]',
+              'w-[75vw] max-w-[340px] sm:w-[50vw] sm:max-w-[360px]',
               // Premium glassy surface
               'rounded-2xl border border-border/60',
               'bg-popover/95 backdrop-blur-xl',
