@@ -346,6 +346,14 @@ export const ProspectRow = memo(function ProspectRow({
   const [isDragging, setIsDragging] = useState(false);
   const [tagSheetOpen, setTagSheetOpen] = useState(false);
 
+  // Safety: reset card position whenever this row's prospect id changes
+  // (prevents "stuck shifted" rows after data refetch / virtualization recycle)
+  useEffect(() => {
+    x.set(0);
+    cardScale.set(1);
+    setIsDragging(false);
+  }, [prospect.id, x, cardScale]);
+
   const triggerCall = useCallback(() => {
     onMarkLastContacted?.();
     window.open(`tel:${cleanPhoneNumber(prospect.phone)}`, '_self');
