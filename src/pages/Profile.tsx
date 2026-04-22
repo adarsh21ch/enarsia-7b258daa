@@ -366,8 +366,9 @@ export default function Profile() {
             </div>
           )}
 
-          {/* Tools section */}
-          <div data-onboarding="profile-tools">
+          {/* ── SECTION: Tools ────────────────── */}
+          <SectionHeader>Tools</SectionHeader>
+          <div data-onboarding="profile-tools" className="space-y-2">
           {/* TrackUp Dashboard - External link with SSO */}
           <button onClick={() => window.open('https://nevorai.com/auth?redirect=/trackup', '_blank', 'noopener,noreferrer')} className={cn("w-full rounded-xl px-4 py-2.5", "bg-gradient-to-r backdrop-blur-sm", "border border-emerald-500/30", "flex items-center justify-between", "transition-all duration-200 hover:shadow-md", "from-emerald-500/20 to-emerald-500/5")}>
             <div className="flex items-center gap-3">
