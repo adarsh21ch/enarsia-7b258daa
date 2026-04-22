@@ -1,11 +1,6 @@
-import { memo, useCallback } from 'react';
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-} from '@/components/ui/sheet';
-import { Star, Check } from 'lucide-react';
+import { memo, useCallback, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Star, Check, X } from 'lucide-react';
 import { ActionBadge } from './StatusBadge';
 import { cn } from '@/lib/utils';
 import type { ExtendedActionTaken } from '@/types/prospect';
@@ -25,16 +20,22 @@ interface ResponseTagSheetProps {
 }
 
 /**
- * Right-side slide-in Sheet variant of the Response/Stage tag selector.
+ * Compact anchored tag-picker panel.
  *
- * Design intent (per product spec):
- *  - Slides in from the RIGHT (where the Response/Stage column lives) so the
- *    selector appears next to the very cell the user tapped — building muscle
- *    memory and making selection extremely fast.
- *  - Covers ~half the screen on tablet/desktop (max-w-md) and ~70% on mobile,
- *    so the rest of the row stays visible for context.
- *  - Premium glassy surface with backdrop blur; reuses ActionBadge so colours
- *    stay 1:1 with the inline cells.
+ * Design intent (per product spec, Apr 2026):
+ *  - Sits INSIDE the table area only — between the table header at the top
+ *    and the SheetTabs strip at the bottom — instead of covering the whole
+ *    screen like a full-height side sheet.
+ *  - Slides in from the right edge of the viewport with a soft scale, so the
+ *    user keeps spatial context (the row they tapped is still partly visible
+ *    on the left) and tag selection feels like a quick "popover" rather than
+ *    a modal.
+ *  - Mobile-first: occupies ~78vw on phones, ~360px on tablet+, capped so
+ *    the table row remains glanceable behind it.
+ *
+ * Layout offsets are tuned to the Dashboard chrome:
+ *    top    ≈ fixed header (logo+tabs) + KPI strip + banners
+ *    bottom ≈ SheetTabs strip + BottomNav
  */
 export const ResponseTagSheet = memo(function ResponseTagSheet({
   open,
@@ -48,6 +49,16 @@ export const ResponseTagSheet = memo(function ResponseTagSheet({
   prospectName,
   title = 'Response Tag',
 }: ResponseTagSheetProps) {
+  // Close on Escape
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onOpenChange(false);
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [open, onOpenChange]);
+
   const handlePick = useCallback(
     (value: string) => {
       // Toggle off if same value tapped (parity with InlineSelect)
@@ -69,86 +80,124 @@ export const ResponseTagSheet = memo(function ResponseTagSheet({
         type="button"
         onClick={() => handlePick(option)}
         className={cn(
-          'w-full flex items-center justify-between gap-3 px-3 py-2.5 rounded-xl border transition-all duration-150',
-          'min-h-[48px] text-left active:scale-[0.97]',
+          'w-full flex items-center justify-between gap-2 px-2.5 py-2 rounded-lg border transition-all duration-150',
+          'min-h-[40px] text-left active:scale-[0.97]',
           isSelected
             ? 'border-primary bg-primary/10 shadow-sm'
-            : 'border-border/60 bg-card hover:bg-muted/60 hover:border-border'
+            : 'border-border/60 bg-card/60 hover:bg-muted/60 hover:border-border'
         )}
       >
-        <div className="flex items-center gap-2 min-w-0">
+        <div className="flex items-center gap-1.5 min-w-0">
           <ActionBadge action={option} />
           {showStar && (
-            <Star className="h-3.5 w-3.5 text-yellow-500 fill-yellow-500 shrink-0" />
+            <Star className="h-3 w-3 text-yellow-500 fill-yellow-500 shrink-0" />
           )}
         </div>
-        {isSelected && <Check className="h-4 w-4 text-primary shrink-0" />}
+        {isSelected && <Check className="h-3.5 w-3.5 text-primary shrink-0" />}
       </button>
     );
   };
 
   return (
-    <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent
-        side="right"
-        className={cn(
-          'p-0 gap-0 flex flex-col',
-          // Width: ~70% on mobile, half-screen on tablet/desktop
-          'w-[72vw] sm:w-[55vw] md:w-[45vw] lg:w-[38vw] sm:max-w-md',
-          'border-l border-border/60',
-          'bg-card/95 backdrop-blur-xl',
-          'shadow-2xl shadow-black/30'
-        )}
-      >
-        <SheetHeader className="px-5 pt-5 pb-3 border-b border-border/40 space-y-1">
-          <SheetTitle className="text-base font-semibold text-left tracking-tight">
-            {title}
-          </SheetTitle>
-          {prospectName && (
-            <p className="text-sm text-foreground text-left truncate font-semibold tracking-tight">
-              {prospectName}
-            </p>
-          )}
-        </SheetHeader>
+    <AnimatePresence>
+      {open && (
+        <>
+          {/* Tap-outside catcher — transparent, no dimming */}
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.15 }}
+            onClick={() => onOpenChange(false)}
+            className="fixed inset-0 z-40 bg-transparent"
+            aria-hidden="true"
+          />
 
-        <div className="flex-1 overflow-y-auto px-4 py-4 space-y-5">
-          {/* Tracking tags section */}
-          {trackingOptions.length > 0 && (
-            <div className="space-y-2">
-              <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/70 px-1">
-                Tracking tags (for analytics)
-              </p>
-              <div className="space-y-1.5">
-                {trackingOptions.map((opt) => {
-                  const showStar =
-                    stageTag === opt ||
-                    (finalTargetTag === opt && finalTargetTag !== stageTag);
-                  return renderRow(opt, showStar);
-                })}
+          {/* Anchored panel — sits between table header and sheet-tabs strip */}
+          <motion.div
+            role="dialog"
+            aria-label={title}
+            initial={{ opacity: 0, x: 20, scale: 0.97 }}
+            animate={{ opacity: 1, x: 0, scale: 1 }}
+            exit={{ opacity: 0, x: 20, scale: 0.97 }}
+            transition={{ type: 'spring', stiffness: 380, damping: 32 }}
+            className={cn(
+              'fixed right-2 z-50 flex flex-col',
+              // Table-area window (Dashboard chrome aware)
+              'top-[180px] bottom-[150px]',
+              // Compact width — leaves the lead row visible on the left
+              'w-[78vw] max-w-[340px] sm:w-[55vw] sm:max-w-[360px]',
+              // Premium glassy surface
+              'rounded-2xl border border-border/60',
+              'bg-popover/95 backdrop-blur-xl',
+              'shadow-2xl shadow-black/40',
+              'overflow-hidden'
+            )}
+          >
+            {/* Header — compact, with prominent prospect name */}
+            <div className="px-3.5 pt-3 pb-2.5 border-b border-border/40 flex items-start justify-between gap-2">
+              <div className="min-w-0 flex-1 space-y-0.5">
+                <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                  {title}
+                </p>
+                {prospectName && (
+                  <p className="text-sm text-foreground truncate font-semibold tracking-tight leading-snug">
+                    {prospectName}
+                  </p>
+                )}
               </div>
+              <button
+                type="button"
+                onClick={() => onOpenChange(false)}
+                aria-label="Close"
+                className="shrink-0 -mr-1 -mt-0.5 p-1 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted/60 active:scale-90 transition-all"
+              >
+                <X className="h-4 w-4" />
+              </button>
             </div>
-          )}
 
-          {/* Personal tags section */}
-          {nonTrackingOptions.length > 0 && (
-            <div className="space-y-2">
-              <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/70 px-1">
-                Personal tags (not counted)
-              </p>
-              <div className="space-y-1.5">
-                {nonTrackingOptions.map((opt) => renderRow(opt, false))}
-              </div>
-            </div>
-          )}
+            {/* Scrollable body */}
+            <div className="flex-1 overflow-y-auto px-3 py-3 space-y-3">
+              {/* Tracking tags */}
+              {trackingOptions.length > 0 && (
+                <div className="space-y-1.5">
+                  <p className="text-[9px] font-semibold uppercase tracking-wider text-muted-foreground/70 px-1">
+                    Tracking (analytics)
+                  </p>
+                  <div className="space-y-1">
+                    {trackingOptions.map((opt) => {
+                      const showStar =
+                        stageTag === opt ||
+                        (finalTargetTag === opt && finalTargetTag !== stageTag);
+                      return renderRow(opt, showStar);
+                    })}
+                  </div>
+                </div>
+              )}
 
-          {/* Empty state */}
-          {trackingOptions.length === 0 && nonTrackingOptions.length === 0 && (
-            <div className="py-8 text-center text-sm text-muted-foreground">
-              No response tags configured yet.
+              {/* Personal tags */}
+              {nonTrackingOptions.length > 0 && (
+                <div className="space-y-1.5">
+                  <p className="text-[9px] font-semibold uppercase tracking-wider text-muted-foreground/70 px-1">
+                    Personal (not counted)
+                  </p>
+                  <div className="space-y-1">
+                    {nonTrackingOptions.map((opt) => renderRow(opt, false))}
+                  </div>
+                </div>
+              )}
+
+              {/* Empty state */}
+              {trackingOptions.length === 0 &&
+                nonTrackingOptions.length === 0 && (
+                  <div className="py-6 text-center text-xs text-muted-foreground">
+                    No response tags configured yet.
+                  </div>
+                )}
             </div>
-          )}
-        </div>
-      </SheetContent>
-    </Sheet>
+          </motion.div>
+        </>
+      )}
+    </AnimatePresence>
   );
 });
