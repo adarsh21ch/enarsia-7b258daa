@@ -1,5 +1,6 @@
 // Activity History View - Universal component with built-in calendar
 import { useMemo, useState } from 'react';
+import { motion, useMotionValue, useTransform, type PanInfo } from 'framer-motion';
 import { useProspectsQuery } from '@/hooks/useProspectsQuery';
 import { useGlobalTodos } from '@/contexts/TodosContext';
 import { useActivityLogs } from '@/hooks/useActivityLogs';
