@@ -1,4 +1,6 @@
-import { useState, useEffect, memo, useCallback } from 'react';
+import { useState, useEffect, memo, useCallback, useRef } from 'react';
+import { motion, useMotionValue, useTransform, animate, type PanInfo } from 'framer-motion';
+import { Phone } from 'lucide-react';
 import { Prospect, FunnelStage, ActionTaken, ProspectStatus, FUNNEL_STAGES, EXTENDED_ACTIONS, STATUSES, ExtendedActionTaken } from '@/types/prospect';
 import { InlineSelect } from './InlineSelect';
 import { StatusBadge, StageBadge, ActionBadge } from './StatusBadge';
@@ -320,18 +322,64 @@ export const ProspectRow = memo(function ProspectRow({
   const rowRef = dragHandleProps?.ref;
   const rowDragListeners = dragHandleProps?.listeners || {};
 
+  // ===== Swipe-to-call (iOS Mail style) =====
+  const SWIPE_REVEAL = 88; // width of revealed call button
+  const SWIPE_TRIGGER = 140; // distance to auto-trigger call
+  const x = useMotionValue(0);
+  const callBtnOpacity = useTransform(x, [-20, -SWIPE_REVEAL], [0, 1]);
+  const callBtnScale = useTransform(x, [-20, -SWIPE_REVEAL], [0.6, 1]);
+  const isSwipingRef = useRef(false);
+
+  const triggerCall = useCallback(() => {
+    onMarkLastContacted?.();
+    window.open(`tel:${cleanPhoneNumber(prospect.phone)}`, '_self');
+  }, [prospect.phone, onMarkLastContacted]);
+
+  const handleDragEnd = useCallback((_: any, info: PanInfo) => {
+    const offset = info.offset.x;
+    const velocity = info.velocity.x;
+
+    // Full swipe or fast flick → trigger call
+    if (offset < -SWIPE_TRIGGER || velocity < -500) {
+      triggerCall();
+      animate(x, 0, { type: 'spring', stiffness: 400, damping: 30, bounce: 0.4 });
+    } else if (offset < -SWIPE_REVEAL / 2) {
+      // Snap to revealed state briefly, then back
+      animate(x, -SWIPE_REVEAL, {
+        type: 'spring',
+        stiffness: 500,
+        damping: 35,
+        onComplete: () => {
+          setTimeout(() => {
+            animate(x, 0, { type: 'spring', stiffness: 400, damping: 30 });
+          }, 1200);
+        },
+      });
+    } else {
+      // Snap back
+      animate(x, 0, { type: 'spring', stiffness: 500, damping: 35, bounce: 0.3 });
+    }
+    setTimeout(() => { isSwipingRef.current = false; }, 50);
+  }, [x, triggerCall]);
+
+  const handleRevealedCallClick = useCallback((e: React.MouseEvent) => {
+    e.stopPropagation();
+    triggerCall();
+    animate(x, 0, { type: 'spring', stiffness: 400, damping: 30, bounce: 0.4 });
+  }, [x, triggerCall]);
+
   return (
     <>
-      <tr 
+      <tr
         ref={rowRef}
         style={rowStyle}
         {...(dragHandleProps?.attributes || {})}
         {...rowDragListeners}
         {...(index === 1 ? { 'data-onboarding': 'lead-row-1' } : {})}
         className={cn(
-          "group transition-colors duration-100 border-b border-border/20", 
+          "group transition-colors duration-100 border-b border-border/20",
           bgColor,
-          "hover:bg-muted/80", 
+          "hover:bg-muted/80",
           isExpanded && "bg-primary/5 hover:bg-primary/5",
           dragHandleProps?.isDragging && "shadow-lg cursor-grabbing touch-none",
           !dragHandleProps?.isDragging && "cursor-grab"
@@ -339,8 +387,8 @@ export const ProspectRow = memo(function ProspectRow({
       >
         {/* Selection checkbox cell */}
         {showSelection && (
-          <td 
-            className={cn("px-2 py-3.5", bgColor)} 
+          <td
+            className={cn("px-2 py-3.5", bgColor)}
             style={{ width: '40px' }}
             onPointerDown={(e) => e.stopPropagation()}
           >
@@ -350,15 +398,59 @@ export const ProspectRow = memo(function ProspectRow({
             />
           </td>
         )}
-        {columnOrder.map(renderCell)}
+        <td
+          colSpan={columnOrder.length}
+          className={cn("p-0 relative overflow-hidden", bgColor)}
+          onPointerDown={(e) => e.stopPropagation()}
+        >
+          {/* Revealed green call action (underlay) */}
+          <motion.div
+            aria-hidden={false}
+            style={{ opacity: callBtnOpacity }}
+            className="absolute inset-y-0 right-0 flex items-center justify-end pr-3 pointer-events-none"
+          >
+            <button
+              type="button"
+              onClick={handleRevealedCallClick}
+              aria-label={`Call ${prospect.name}`}
+              className="pointer-events-auto h-[calc(100%-12px)] my-1.5 px-4 rounded-xl flex items-center gap-2 text-white font-semibold shadow-lg active:scale-95 transition-transform"
+              style={{ backgroundColor: 'hsl(142 71% 45%)' }}
+            >
+              <motion.span style={{ scale: callBtnScale }} className="flex items-center gap-2">
+                <Phone className="h-5 w-5" fill="currentColor" />
+                <span className="text-sm">Call</span>
+              </motion.span>
+            </button>
+          </motion.div>
+
+          {/* Draggable foreground content rendered as a nested table row layout */}
+          <motion.div
+            drag="x"
+            dragConstraints={{ left: -SWIPE_REVEAL * 1.6, right: 0 }}
+            dragElastic={{ left: 0.15, right: 0 }}
+            dragDirectionLock
+            onDragStart={() => { isSwipingRef.current = true; }}
+            onDragEnd={handleDragEnd}
+            style={{ x }}
+            className={cn("relative w-full", bgColor)}
+          >
+            <table className="w-full" style={{ tableLayout: 'fixed' }}>
+              <tbody>
+                <tr className={cn(bgColor, isExpanded && "bg-primary/5")}>
+                  {columnOrder.map(renderCell)}
+                </tr>
+              </tbody>
+            </table>
+          </motion.div>
+        </td>
       </tr>
       {isExpanded && (
-        <InlineReportCard 
-          prospect={prospect} 
-          onUpdate={onUpdate} 
+        <InlineReportCard
+          prospect={prospect}
+          onUpdate={onUpdate}
           onDelete={onDelete}
-          onClose={onToggleExpand} 
-          colSpan={columnOrder.length + (showSelection ? 1 : 0)} 
+          onClose={onToggleExpand}
+          colSpan={columnOrder.length + (showSelection ? 1 : 0)}
         />
       )}
     </>

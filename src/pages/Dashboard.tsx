@@ -20,7 +20,6 @@ import { SubscriptionStatusBanner } from '@/components/subscription/Subscription
 import { Loader2, Phone, Layers, Flame } from 'lucide-react';
 import nevoraLogo from '@/assets/nevorai-logo.jpeg';
 import { useStreak } from '@/hooks/useStreak';
-import { useSwipeTabs } from '@/hooks/useSwipeTabs';
 
 
 // Pull-to-refresh hook - fixed to not interfere with normal scrolling
@@ -209,27 +208,7 @@ export default function Dashboard() {
     showIndicator
   } = usePullToRefresh(handleRefresh);
 
-  // Swipe gestures between Leads ↔ Funnel tabs
-  const handleSwipeLeft = useCallback(() => {
-    if (mainTab === 'leads') {
-      if (needsSetup) {
-        setShowFilterSetup(true);
-      }
-      setMainTab('funnel');
-    }
-  }, [mainTab, needsSetup]);
-
-  const handleSwipeRight = useCallback(() => {
-    if (mainTab === 'funnel') {
-      setMainTab('leads');
-    }
-  }, [mainTab]);
-
-  const { containerRef: swipeRef } = useSwipeTabs({
-    onSwipeLeft: handleSwipeLeft,
-    onSwipeRight: handleSwipeRight,
-    threshold: 60,
-  });
+  // Swipe gestures removed — tab switching is tap-only
 
   useEffect(() => {
     if (!user && !authLoading) {
@@ -314,8 +293,7 @@ export default function Dashboard() {
         <LeadLimitCounter />
         
         {/* Table area - flex-1 to fill remaining space, pb for bottom nav */}
-        {/* Swipe ref enables left/right swipe between Leads ↔ Funnel tabs */}
-        <div ref={swipeRef} className="flex-1 min-h-0 px-4 pb-48 lg:pb-20 transition-opacity duration-200">
+        <div className="flex-1 min-h-0 px-4 pb-48 lg:pb-20 transition-opacity duration-200">
       {mainTab === 'leads' ? (
         <ProspectTable 
           key={`leads-${tableScrollKey.current}`}
