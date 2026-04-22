@@ -322,51 +322,76 @@ export const ProspectRow = memo(function ProspectRow({
   const rowRef = dragHandleProps?.ref;
   const rowDragListeners = dragHandleProps?.listeners || {};
 
-  // ===== Swipe-to-call (iOS Mail style) =====
-  const SWIPE_REVEAL = 88; // width of revealed call button
-  const SWIPE_TRIGGER = 140; // distance to auto-trigger call
+  // ===== Premium swipe-to-call (iOS-style) =====
+  const SWIPE_REVEAL = 96; // width threshold to fully reveal button
+  const SWIPE_TRIGGER = 150; // distance to auto-trigger call
   const x = useMotionValue(0);
-  const callBtnOpacity = useTransform(x, [-20, -SWIPE_REVEAL], [0, 1]);
-  const callBtnScale = useTransform(x, [-20, -SWIPE_REVEAL], [0.6, 1]);
+  // Progressive green background fade
+  const bgOpacity = useTransform(x, [0, -SWIPE_TRIGGER], [0, 1]);
+  // Pill button reveal
+  const callBtnOpacity = useTransform(x, [-10, -SWIPE_REVEAL * 0.6], [0, 1]);
+  const callBtnTranslate = useTransform(x, [0, -SWIPE_REVEAL], [40, 0]);
+  // Card depth while dragging
+  const cardScale = useMotionValue(1);
   const isSwipingRef = useRef(false);
+  const [isDragging, setIsDragging] = useState(false);
 
   const triggerCall = useCallback(() => {
     onMarkLastContacted?.();
     window.open(`tel:${cleanPhoneNumber(prospect.phone)}`, '_self');
   }, [prospect.phone, onMarkLastContacted]);
 
+  const pulseSnap = useCallback(() => {
+    // Subtle haptic-style visual pulse: 1 → 1.01 → 1
+    animate(cardScale, [1, 1.01, 1], { duration: 0.28, ease: 'easeOut' });
+  }, [cardScale]);
+
+  const handleDragStart = useCallback(() => {
+    isSwipingRef.current = true;
+    setIsDragging(true);
+    animate(cardScale, 0.98, { type: 'spring', stiffness: 400, damping: 30 });
+  }, [cardScale]);
+
   const handleDragEnd = useCallback((_: any, info: PanInfo) => {
     const offset = info.offset.x;
     const velocity = info.velocity.x;
+    setIsDragging(false);
+
+    // Restore scale from drag depth
+    animate(cardScale, 1, { type: 'spring', stiffness: 400, damping: 30 });
 
     // Full swipe or fast flick → trigger call
-    if (offset < -SWIPE_TRIGGER || velocity < -500) {
+    if (offset < -SWIPE_TRIGGER || velocity < -600) {
       triggerCall();
-      animate(x, 0, { type: 'spring', stiffness: 400, damping: 30, bounce: 0.4 });
+      animate(x, 0, { type: 'spring', stiffness: 500, damping: 40 });
+      setTimeout(pulseSnap, 80);
     } else if (offset < -SWIPE_REVEAL / 2) {
       // Snap to revealed state briefly, then back
       animate(x, -SWIPE_REVEAL, {
         type: 'spring',
         stiffness: 500,
-        damping: 35,
+        damping: 40,
         onComplete: () => {
           setTimeout(() => {
-            animate(x, 0, { type: 'spring', stiffness: 400, damping: 30 });
-          }, 1200);
+            animate(x, 0, { type: 'spring', stiffness: 500, damping: 40 });
+            setTimeout(pulseSnap, 80);
+          }, 1400);
         },
       });
     } else {
-      // Snap back
-      animate(x, 0, { type: 'spring', stiffness: 500, damping: 35, bounce: 0.3 });
+      // Firm elastic snap back
+      animate(x, 0, { type: 'spring', stiffness: 500, damping: 40 });
+      setTimeout(pulseSnap, 60);
     }
     setTimeout(() => { isSwipingRef.current = false; }, 50);
-  }, [x, triggerCall]);
+  }, [x, cardScale, triggerCall, pulseSnap]);
 
   const handleRevealedCallClick = useCallback((e: React.MouseEvent) => {
     e.stopPropagation();
     triggerCall();
-    animate(x, 0, { type: 'spring', stiffness: 400, damping: 30, bounce: 0.4 });
-  }, [x, triggerCall]);
+    animate(x, 0, { type: 'spring', stiffness: 500, damping: 40 });
+    setTimeout(pulseSnap, 80);
+  }, [x, triggerCall, pulseSnap]);
 
   return (
     <>
