@@ -1,10 +1,11 @@
 import { useState, useEffect, memo, useCallback, useRef } from 'react';
 import { motion, useMotionValue, useTransform, animate, type PanInfo } from 'framer-motion';
-import { Phone } from 'lucide-react';
+import { Phone, Tag } from 'lucide-react';
 import { Prospect, FunnelStage, ActionTaken, ProspectStatus, FUNNEL_STAGES, EXTENDED_ACTIONS, STATUSES, ExtendedActionTaken } from '@/types/prospect';
 import { InlineSelect } from './InlineSelect';
 import { StatusBadge, StageBadge, ActionBadge } from './StatusBadge';
 import { InlineReportCard } from './InlineReportCard';
+import { ResponseTagSheet } from './ResponseTagSheet';
 import { Checkbox } from '@/components/ui/checkbox';
 import { CallIconButton } from '@/components/ui/ActionIcons';
 import { ChevronRight } from 'lucide-react';
@@ -322,19 +323,28 @@ export const ProspectRow = memo(function ProspectRow({
   const rowRef = dragHandleProps?.ref;
   const rowDragListeners = dragHandleProps?.listeners || {};
 
-  // ===== Premium swipe-to-call (iOS-style, left-only) =====
-  const SWIPE_REVEAL = 110; // width threshold to fully reveal button
-  const SWIPE_TRIGGER = 160; // distance to auto-trigger call
+  // ===== Premium swipe gestures (iOS-style) =====
+  // LEFT swipe → Call (green)   |   RIGHT swipe → Open Response Tag sheet (amber)
+  const SWIPE_REVEAL = 110; // width threshold to fully reveal action
+  const SWIPE_TRIGGER = 160; // distance to auto-trigger
+  const TAG_TRIGGER_RATIO = 0.4; // 40% of viewport width threshold for tag sheet
   const x = useMotionValue(0);
-  // Progressive green surface fade-in as user drags left
+
+  // LEFT (call) — progressive green surface fade-in as user drags left
   const surfaceOpacity = useTransform(x, [0, -40, -SWIPE_REVEAL], [0, 0.5, 1]);
-  // Pill button reveal
   const callBtnOpacity = useTransform(x, [-20, -SWIPE_REVEAL * 0.7], [0, 1]);
   const callBtnTranslate = useTransform(x, [0, -SWIPE_REVEAL], [40, 0]);
+
+  // RIGHT (tag) — amber/orange surface fade-in as user drags right
+  const tagSurfaceOpacity = useTransform(x, [0, 40, SWIPE_REVEAL], [0, 0.5, 1]);
+  const tagBtnOpacity = useTransform(x, [20, SWIPE_REVEAL * 0.7], [0, 1]);
+  const tagBtnTranslate = useTransform(x, [0, SWIPE_REVEAL], [-40, 0]);
+
   // Card depth while dragging
   const cardScale = useMotionValue(1);
   const isSwipingRef = useRef(false);
   const [isDragging, setIsDragging] = useState(false);
+  const [tagSheetOpen, setTagSheetOpen] = useState(false);
 
   const triggerCall = useCallback(() => {
     onMarkLastContacted?.();
@@ -346,22 +356,34 @@ export const ProspectRow = memo(function ProspectRow({
     animate(cardScale, [1, 1.02, 1], { duration: 0.18, ease: 'easeOut' });
   }, [cardScale]);
 
+  const openTagSheet = useCallback(() => {
+    setTagSheetOpen(true);
+  }, []);
+
   const handleDragStart = useCallback(() => {
     isSwipingRef.current = true;
     setIsDragging(true);
-    animate(cardScale, 0.97, { type: 'spring', stiffness: 400, damping: 30 });
+    animate(cardScale, 0.97, { type: 'spring', stiffness: 400, damping: 35 });
   }, [cardScale]);
 
   const handleDragEnd = useCallback((_: any, info: PanInfo) => {
     const offset = info.offset.x;
     const velocity = info.velocity.x;
+    const viewportWidth = typeof window !== 'undefined' ? window.innerWidth : 390;
+    const tagThreshold = viewportWidth * TAG_TRIGGER_RATIO;
     setIsDragging(false);
 
     // Restore scale from drag depth
     animate(cardScale, 1, { type: 'spring', stiffness: 500, damping: 42 });
 
-    // Full swipe or fast left flick → trigger call
-    if (offset < -SWIPE_TRIGGER || velocity < -650) {
+    // ===== RIGHT swipe → open Response Tag sheet =====
+    if (offset > tagThreshold || (offset > SWIPE_REVEAL && velocity > 650)) {
+      animate(x, 0, { type: 'spring', stiffness: 500, damping: 42 });
+      setTimeout(microBounce, 80);
+      setTimeout(openTagSheet, 120);
+    }
+    // ===== LEFT swipe → Call =====
+    else if (offset < -SWIPE_TRIGGER || velocity < -650) {
       triggerCall();
       animate(x, 0, { type: 'spring', stiffness: 500, damping: 42 });
       setTimeout(microBounce, 80);
@@ -382,7 +404,7 @@ export const ProspectRow = memo(function ProspectRow({
       setTimeout(microBounce, 40);
     }
     setTimeout(() => { isSwipingRef.current = false; }, 50);
-  }, [x, cardScale, triggerCall, microBounce]);
+  }, [x, cardScale, triggerCall, microBounce, openTagSheet]);
 
   const handleRevealedCallClick = useCallback((e: React.MouseEvent) => {
     e.stopPropagation();
@@ -427,7 +449,7 @@ export const ProspectRow = memo(function ProspectRow({
           style={{ padding: '6px 8px' }}
           onPointerDown={(e) => e.stopPropagation()}
         >
-          {/* Green rounded surface underneath the card */}
+          {/* Green rounded surface underneath the card (LEFT swipe → call) */}
           <motion.div
             aria-hidden="true"
             style={{
@@ -438,7 +460,18 @@ export const ProspectRow = memo(function ProspectRow({
             className="absolute inset-y-1.5 inset-x-2 pointer-events-none"
           />
 
-          {/* Revealed circular Call button */}
+          {/* Amber rounded surface underneath the card (RIGHT swipe → tag sheet) */}
+          <motion.div
+            aria-hidden="true"
+            style={{
+              opacity: tagSurfaceOpacity,
+              borderRadius: '16px',
+              background: 'linear-gradient(135deg, #f59e0b 0%, #fbbf24 100%)',
+            }}
+            className="absolute inset-y-1.5 inset-x-2 pointer-events-none"
+          />
+
+          {/* Revealed circular Call button (right side, on left-swipe) */}
           <motion.div
             style={{ opacity: callBtnOpacity, x: callBtnTranslate }}
             className="absolute inset-y-0 right-0 flex items-center justify-end pr-5 pointer-events-none"
@@ -469,11 +502,35 @@ export const ProspectRow = memo(function ProspectRow({
             </button>
           </motion.div>
 
-          {/* Draggable foreground card (left-only) */}
+          {/* Revealed Tag icon (left side, on right-swipe) */}
+          <motion.div
+            aria-hidden="true"
+            style={{ opacity: tagBtnOpacity, x: tagBtnTranslate }}
+            className="absolute inset-y-0 left-0 flex items-center justify-start pl-5 pointer-events-none"
+          >
+            <motion.span
+              animate={{ scale: [1, 1.12, 1] }}
+              transition={{ duration: 1.5, repeat: Infinity, ease: 'easeInOut' }}
+              className="flex items-center justify-center text-white"
+              style={{
+                height: '48px',
+                width: '48px',
+                borderRadius: '9999px',
+                background: 'rgba(255,255,255,0.18)',
+                backdropFilter: 'blur(6px)',
+                border: '1.5px solid rgba(255,255,255,0.35)',
+                boxShadow: '0 6px 18px rgba(0,0,0,0.18)',
+              }}
+            >
+              <Tag className="h-7 w-7" strokeWidth={2.25} />
+            </motion.span>
+          </motion.div>
+
+          {/* Draggable foreground card (left + right) */}
           <motion.div
             drag="x"
-            dragConstraints={{ left: -SWIPE_REVEAL * 1.8, right: 0 }}
-            dragElastic={{ left: 0.08, right: 0 }}
+            dragConstraints={{ left: -SWIPE_REVEAL * 1.8, right: SWIPE_REVEAL * 1.8 }}
+            dragElastic={{ left: 0.08, right: 0.08 }}
             dragDirectionLock
             onDragStart={handleDragStart}
             onDragEnd={handleDragEnd}
@@ -482,7 +539,7 @@ export const ProspectRow = memo(function ProspectRow({
               scale: cardScale,
               borderRadius: '16px',
               boxShadow: isDragging
-                ? '0 12px 40px rgba(0,0,0,0.15), -4px 0 20px rgba(34,197,94,0.3)'
+                ? '0 12px 40px rgba(0,0,0,0.15)'
                 : 'none',
             }}
             className={cn("relative w-full overflow-hidden", bgColor)}
@@ -504,6 +561,21 @@ export const ProspectRow = memo(function ProspectRow({
           onDelete={onDelete}
           onClose={onToggleExpand}
           colSpan={columnOrder.length + (showSelection ? 1 : 0)}
+        />
+      )}
+
+      {/* Response Tag bottom sheet — opens on right-swipe (Leads/calling tab) */}
+      {isCalling && (
+        <ResponseTagSheet
+          open={tagSheetOpen}
+          onOpenChange={setTagSheetOpen}
+          currentValue={getActionDisplayValue()}
+          trackingOptions={leadsTrackingTagNames}
+          nonTrackingOptions={leadsNonTrackingTags}
+          finalTargetTag={leadsFinalTargetTag}
+          stageTag={leadsStageTag}
+          onSelect={handleActionChange}
+          prospectName={prospect.name}
         />
       )}
     </>
