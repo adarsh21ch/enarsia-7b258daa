@@ -18,6 +18,9 @@ import { MonthlyTotalsTable } from '@/components/trackup-v2/MonthlyTotalsTable';
 import { ManualUpdateDrawer } from '@/components/trackup-v2/ManualUpdateDrawer';
 import { FloatingUpdateButton } from '@/components/trackup-v2/FloatingUpdateButton';
 import { TrackingSettingsDialog } from '@/components/trackup-v2/TrackingSettingsDialog';
+import { LayoutToggle, type LayoutMode } from '@/components/trackup-v2/LayoutToggle';
+import { MetricCardView } from '@/components/trackup-v2/MetricCardView';
+import { MetricChartView } from '@/components/trackup-v2/MetricChartView';
 import { TrackingGuideSheet } from '@/components/tracking/TrackingGuideSheet';
 import { usePersonalTagMetrics } from '@/hooks/usePersonalTagMetrics';
 import {
@@ -45,7 +48,22 @@ export default function Tracking() {
   const [showUpdateDrawer, setShowUpdateDrawer] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [showGuide, setShowGuide] = useState(false);
-  
+
+  // Layout mode (Table / Card / Chart) — persisted per data mode (personal vs total)
+  const [layoutMode, setLayoutModeState] = useState<LayoutMode>(() => {
+    if (typeof window === 'undefined') return 'table';
+    const stored = window.localStorage.getItem('nevorai-trackup-layout');
+    return stored === 'card' || stored === 'chart' || stored === 'table' ? stored : 'table';
+  });
+  const setLayoutMode = useCallback((m: LayoutMode) => {
+    setLayoutModeState(m);
+    try {
+      window.localStorage.setItem('nevorai-trackup-layout', m);
+    } catch {
+      /* ignore storage errors */
+    }
+  }, []);
+
 
   const monthYear = format(currentMonth, 'yyyy-MM');
   const personalTagData = usePersonalTagMetrics(monthYear);
@@ -201,27 +219,71 @@ export default function Tracking() {
             <CollapsibleKPI kpi={kpiData} responseTagNames={responseTagNames} stageTagNames={computedStageNames} viewType={viewType} />
           </div>
 
-          {/* Total Activity Section Header */}
-          <div className="flex items-center gap-2 mb-2">
-            <BarChart3 className="h-4 w-4 text-primary" />
-            <h3 className="text-sm font-semibold text-foreground">Total Activity</h3>
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Info className="h-3.5 w-3.5 text-muted-foreground/60 cursor-help" />
-                </TooltipTrigger>
-                <TooltipContent side="top" className="max-w-[220px] text-xs">
-                  Shows total actions done in selected period.
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
+          {/* Total Activity Section Header + Layout Toggle */}
+          <div className="flex items-center justify-between gap-2 mb-2">
+            <div className="flex items-center gap-2">
+              <BarChart3 className="h-4 w-4 text-primary" />
+              <h3 className="text-sm font-semibold text-foreground">
+                {dataMode === 'personal' ? 'Personal Activity' : 'Total Activity'}
+              </h3>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Info className="h-3.5 w-3.5 text-muted-foreground/60 cursor-help" />
+                  </TooltipTrigger>
+                  <TooltipContent side="top" className="max-w-[220px] text-xs">
+                    Shows total actions done in selected period.
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            </div>
+            <LayoutToggle value={layoutMode} onChange={setLayoutMode} />
           </div>
           <p className="text-[11px] text-muted-foreground mb-3">All actions done so far</p>
 
-          {/* Active table view */}
-          <div data-onboarding="trackup-table">
-            {viewMode === 'summary' && (
-              <SummaryTable
+          {/* Active view — table sub-views, or card/chart layouts */}
+          <div data-onboarding="trackup-table" key={layoutMode} className="animate-in fade-in slide-in-from-bottom-1 duration-150">
+            {layoutMode === 'table' && (
+              <>
+                {viewMode === 'summary' && (
+                  <SummaryTable
+                    dailyMetrics={dailyMetrics}
+                    responseTagNames={responseTagNames}
+                    stageTagNames={computedStageNames}
+                    finalTagName={finalTagName}
+                    personalTagData={personalTagData}
+                  />
+                )}
+                {viewMode === 'date-wise' && (
+                  <DateWiseTable
+                    dailyMetrics={dailyMetrics}
+                    responseTagNames={responseTagNames}
+                    finalTagName={finalTagName}
+                    personalTagData={personalTagData}
+                  />
+                )}
+                {viewMode === 'funnel-wise' && (
+                  <FunnelWiseTable
+                    funnelPeriods={funnelPeriods}
+                    stageTagNames={computedStageNames}
+                    finalTagName={finalTagName}
+                    personalTagData={personalTagData}
+                  />
+                )}
+                {viewMode === 'monthly-totals' && (
+                  <MonthlyTotalsTable
+                    totals={monthlyTotals}
+                    responseTagNames={responseTagNames}
+                    stageTagNames={computedStageNames}
+                    finalTagName={finalTagName}
+                    monthLabel={monthLabel}
+                    personalTagData={personalTagData}
+                  />
+                )}
+              </>
+            )}
+            {layoutMode === 'card' && (
+              <MetricCardView
                 dailyMetrics={dailyMetrics}
                 responseTagNames={responseTagNames}
                 stageTagNames={computedStageNames}
@@ -229,29 +291,12 @@ export default function Tracking() {
                 personalTagData={personalTagData}
               />
             )}
-            {viewMode === 'date-wise' && (
-              <DateWiseTable
+            {layoutMode === 'chart' && (
+              <MetricChartView
                 dailyMetrics={dailyMetrics}
                 responseTagNames={responseTagNames}
-                finalTagName={finalTagName}
-                personalTagData={personalTagData}
-              />
-            )}
-            {viewMode === 'funnel-wise' && (
-              <FunnelWiseTable
-                funnelPeriods={funnelPeriods}
                 stageTagNames={computedStageNames}
                 finalTagName={finalTagName}
-                personalTagData={personalTagData}
-              />
-            )}
-            {viewMode === 'monthly-totals' && (
-              <MonthlyTotalsTable
-                totals={monthlyTotals}
-                responseTagNames={responseTagNames}
-                stageTagNames={computedStageNames}
-                finalTagName={finalTagName}
-                monthLabel={monthLabel}
                 personalTagData={personalTagData}
               />
             )}
