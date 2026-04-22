@@ -20,7 +20,6 @@ import { SubscriptionStatusBanner } from '@/components/subscription/Subscription
 import { Loader2, Phone, Layers, Flame } from 'lucide-react';
 import nevoraLogo from '@/assets/nevorai-logo.jpeg';
 import { useStreak } from '@/hooks/useStreak';
-import { useSwipeTabs } from '@/hooks/useSwipeTabs';
 
 
 // Pull-to-refresh hook - fixed to not interfere with normal scrolling
