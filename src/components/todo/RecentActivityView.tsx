@@ -1,6 +1,6 @@
 // Activity History View - Universal component with built-in calendar
 import { useMemo, useState } from 'react';
-import { motion, useMotionValue, useTransform, type PanInfo } from 'framer-motion';
+import { motion, useMotionValue, useTransform, animate, type PanInfo } from 'framer-motion';
 import { useProspectsQuery } from '@/hooks/useProspectsQuery';
 import { useGlobalTodos } from '@/contexts/TodosContext';
 import { useActivityLogs } from '@/hooks/useActivityLogs';
@@ -266,6 +266,10 @@ function SwipeableActivityRow({ phone, onCall, children }: SwipeableActivityRowP
   // No phone → render children plainly (no swipe affordance)
   if (!phone) return <>{children}</>;
 
+  const snapBack = () => {
+    animate(x, 0, { type: 'spring', stiffness: 500, damping: 42 });
+  };
+
   const handleDragEnd = (_: unknown, info: PanInfo) => {
     const offset = info.offset.x;
     const velocity = info.velocity.x;
@@ -277,7 +281,8 @@ function SwipeableActivityRow({ phone, onCall, children }: SwipeableActivityRowP
         }
       } catch { /* noop */ }
     }
-    x.set(0);
+    // Always snap back to neutral so the row is never stuck off-screen
+    snapBack();
   };
 
   return (
@@ -288,15 +293,17 @@ function SwipeableActivityRow({ phone, onCall, children }: SwipeableActivityRowP
         style={{ opacity: surfaceOpacity }}
         className="absolute inset-0 rounded-lg bg-green-500/15"
       />
-      {/* Revealed Call icon on the right edge */}
+      {/* Revealed Call icon — vertically centered on the right edge */}
       <motion.div
         aria-hidden="true"
         style={{ opacity: callBtnOpacity, x: callBtnTranslate }}
-        className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center justify-center h-8 w-8 rounded-full bg-green-500 shadow-md"
+        className="absolute inset-y-0 right-3 flex items-center pointer-events-none"
       >
-        <svg viewBox="0 0 24 24" className="h-4 w-4 text-white" fill="none" stroke="currentColor" strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round">
-          <path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07 19.5 19.5 0 01-6-6 19.79 19.79 0 01-3.07-8.67A2 2 0 014.11 2h3a2 2 0 012 1.72c.127.96.362 1.903.7 2.81a2 2 0 01-.45 2.11L8.09 9.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.338 1.85.573 2.81.7A2 2 0 0122 16.92z" />
-        </svg>
+        <span className="flex items-center justify-center h-9 w-9 rounded-full bg-green-500 shadow-md">
+          <svg viewBox="0 0 24 24" className="h-4 w-4 text-white" fill="none" stroke="currentColor" strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round">
+            <path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07 19.5 19.5 0 01-6-6 19.79 19.79 0 01-3.07-8.67A2 2 0 014.11 2h3a2 2 0 012 1.72c.127.96.362 1.903.7 2.81a2 2 0 01-.45 2.11L8.09 9.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.338 1.85.573 2.81.7A2 2 0 0122 16.92z" />
+          </svg>
+        </span>
       </motion.div>
       {/* Draggable foreground */}
       <motion.div
@@ -304,6 +311,7 @@ function SwipeableActivityRow({ phone, onCall, children }: SwipeableActivityRowP
         dragConstraints={{ left: -SWIPE_REVEAL * 1.4, right: 0 }}
         dragElastic={0.12}
         dragMomentum={false}
+        dragDirectionLock
         style={{ x }}
         onDragEnd={handleDragEnd}
         className="relative touch-pan-y"
