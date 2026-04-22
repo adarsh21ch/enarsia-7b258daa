@@ -135,9 +135,9 @@ export const ResponseTagSheet = memo(function ResponseTagSheet({
               'overflow-hidden'
             )}
           >
-            {/* Header — compact, with prominent prospect name */}
-            <div className="px-3.5 pt-3 pb-2.5 border-b border-border/40 flex items-start justify-between gap-2">
-              <div className="min-w-0 flex-1 space-y-0.5">
+            {/* Header — compact, with prominent prospect name (Cancel button moved to bottom for thumb reach) */}
+            <div className="px-3.5 pt-3 pb-2.5 border-b border-border/40">
+              <div className="min-w-0 space-y-0.5">
                 <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
                   {title}
                 </p>
@@ -147,14 +147,6 @@ export const ResponseTagSheet = memo(function ResponseTagSheet({
                   </p>
                 )}
               </div>
-              <button
-                type="button"
-                onClick={() => onOpenChange(false)}
-                aria-label="Close"
-                className="shrink-0 -mr-1 -mt-0.5 p-1 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted/60 active:scale-90 transition-all"
-              >
-                <X className="h-4 w-4" />
-              </button>
             </div>
 
             {/* Scrollable body */}
@@ -195,6 +187,25 @@ export const ResponseTagSheet = memo(function ResponseTagSheet({
                     No response tags configured yet.
                   </div>
                 )}
+            </div>
+
+            {/* Sticky Cancel footer — large tap target for easy thumb access */}
+            <div className="border-t border-border/40 p-2.5 bg-popover/95 backdrop-blur-xl">
+              <button
+                type="button"
+                onClick={() => onOpenChange(false)}
+                className={cn(
+                  'w-full flex items-center justify-center gap-1.5',
+                  'min-h-[44px] rounded-xl',
+                  'bg-muted/60 hover:bg-muted active:scale-[0.98]',
+                  'text-sm font-semibold text-foreground',
+                  'border border-border/60',
+                  'transition-all duration-150'
+                )}
+              >
+                <X className="h-4 w-4" />
+                <span>Cancel</span>
+              </button>
             </div>
           </motion.div>
         </>
