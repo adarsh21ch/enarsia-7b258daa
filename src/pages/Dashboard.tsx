@@ -208,27 +208,7 @@ export default function Dashboard() {
     showIndicator
   } = usePullToRefresh(handleRefresh);
 
-  // Swipe gestures between Leads ↔ Funnel tabs
-  const handleSwipeLeft = useCallback(() => {
-    if (mainTab === 'leads') {
-      if (needsSetup) {
-        setShowFilterSetup(true);
-      }
-      setMainTab('funnel');
-    }
-  }, [mainTab, needsSetup]);
-
-  const handleSwipeRight = useCallback(() => {
-    if (mainTab === 'funnel') {
-      setMainTab('leads');
-    }
-  }, [mainTab]);
-
-  const { containerRef: swipeRef } = useSwipeTabs({
-    onSwipeLeft: handleSwipeLeft,
-    onSwipeRight: handleSwipeRight,
-    threshold: 60,
-  });
+  // Swipe gestures removed — tab switching is tap-only
 
   useEffect(() => {
     if (!user && !authLoading) {
