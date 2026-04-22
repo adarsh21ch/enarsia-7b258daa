@@ -126,8 +126,8 @@ export const ResponseTagSheet = memo(function ResponseTagSheet({
               // Window: starts just below the table header row, ends just
               // above the SheetTabs strip — uses all available table space
               'top-[170px] bottom-[112px]',
-              // Compact width — leaves the lead row visible on the left
-              'w-[62vw] max-w-[280px] sm:w-[42vw] sm:max-w-[300px]',
+              // Slightly wider — still leaves the lead row visible on the left
+              'w-[70vw] max-w-[320px] sm:w-[46vw] sm:max-w-[340px]',
               // Premium glassy surface
               'rounded-2xl border border-border/60',
               'bg-popover/95 backdrop-blur-xl',
