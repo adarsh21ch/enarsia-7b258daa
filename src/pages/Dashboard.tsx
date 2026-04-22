@@ -314,7 +314,8 @@ export default function Dashboard() {
         <LeadLimitCounter />
         
         {/* Table area - flex-1 to fill remaining space, pb for bottom nav */}
-        <div className="flex-1 min-h-0 px-4 pb-48 lg:pb-20">
+        {/* Swipe ref enables left/right swipe between Leads ↔ Funnel tabs */}
+        <div ref={swipeRef} className="flex-1 min-h-0 px-4 pb-48 lg:pb-20 transition-opacity duration-200">
       {mainTab === 'leads' ? (
         <ProspectTable 
           key={`leads-${tableScrollKey.current}`}
