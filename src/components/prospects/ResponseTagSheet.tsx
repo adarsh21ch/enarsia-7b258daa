@@ -117,17 +117,18 @@ export const ResponseTagSheet = memo(function ResponseTagSheet({
           <motion.div
             role="dialog"
             aria-label={title}
-            initial={{ opacity: 0, x: -20, scale: 0.97 }}
+            initial={{ opacity: 0, x: 20, scale: 0.97 }}
             animate={{ opacity: 1, x: 0, scale: 1 }}
-            exit={{ opacity: 0, x: -20, scale: 0.97 }}
+            exit={{ opacity: 0, x: 20, scale: 0.97 }}
             transition={{ type: 'spring', stiffness: 380, damping: 32 }}
             className={cn(
-              'fixed left-2 z-50 flex flex-col',
+              'fixed right-2 z-50 flex flex-col',
               // Window: starts just below the table header row, ends just
               // above the SheetTabs strip — uses all available table space
               'top-[170px] bottom-[112px]',
-              // Slightly wider — still leaves the lead row visible on the right
-              'w-[70vw] max-w-[320px] sm:w-[46vw] sm:max-w-[340px]',
+              // Wider panel — extends toward the middle/left so tags are
+              // clearly visible and easily reachable by right-thumb users
+              'w-[88vw] max-w-[380px] sm:w-[60vw] sm:max-w-[400px]',
               // Premium glassy surface
               'rounded-2xl border border-border/60',
               'bg-popover/95 backdrop-blur-xl',
