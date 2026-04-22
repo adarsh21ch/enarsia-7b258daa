@@ -340,7 +340,7 @@ export const ProspectRow = memo(function ProspectRow({
         {/* Selection checkbox cell */}
         {showSelection && (
           <td 
-            className={cn("px-2 py-2", bgColor)} 
+            className={cn("px-2 py-3.5", bgColor)} 
             style={{ width: '40px' }}
             onPointerDown={(e) => e.stopPropagation()}
           >
