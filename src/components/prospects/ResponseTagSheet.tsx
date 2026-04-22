@@ -123,9 +123,9 @@ export const ResponseTagSheet = memo(function ResponseTagSheet({
             transition={{ type: 'spring', stiffness: 380, damping: 32 }}
             className={cn(
               'fixed right-2 z-50 flex flex-col',
-              // Window: from just below the action toolbar down to just above
-              // the SheetTabs strip + BottomNav — covers the table area only
-              'top-[230px] bottom-[112px]',
+              // Window: starts just below the table header row, ends just
+              // above the SheetTabs strip — uses all available table space
+              'top-[170px] bottom-[112px]',
               // Compact width — leaves the lead row visible on the left
               'w-[62vw] max-w-[280px] sm:w-[42vw] sm:max-w-[300px]',
               // Premium glassy surface
