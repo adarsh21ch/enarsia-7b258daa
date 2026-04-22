@@ -177,6 +177,14 @@ function NotificationToggle({ canSendTest }: { canSendTest: boolean }) {
 }
 
 
+// Section header for grouping profile items
+function SectionHeader({ children }: { children: React.ReactNode }) {
+  return (
+    <p className="text-[11px] uppercase tracking-[1.2px] text-muted-foreground font-semibold pt-3 pb-1 px-1">
+      {children}
+    </p>
+  );
+}
 
 export default function Profile() {
   const navigate = useNavigate();
