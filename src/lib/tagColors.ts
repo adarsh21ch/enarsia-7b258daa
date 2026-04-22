@@ -35,17 +35,18 @@ export const DEFAULT_TAG_COLORS: Record<string, string> = {
   'Pending': '#4f46e5',          // indigo-600
   'Scheduled': '#0284c7',        // sky-600
   
-  // Negative responses (red/gray - bold and clear)
-  'Not Picked': '#4b5563',       // gray-600
+  // Negative responses (red/gray - bold and clear; brightened so badge text
+  // stays readable on dark mode where the badge uses color as foreground)
+  'Not Picked': '#94a3b8',       // slate-400 (visible in dark mode)
   'Call Cut': '#dc2626',         // red-600
-  'Not Interested': '#6b7280',   // gray-500
-  'Not Intrested': '#6b7280',    // gray-500 (typo alias)
-  'Busy': '#ea580c',             // orange-600 (darker, visible)
+  'Not Interested': '#a1a1aa',   // zinc-400 (visible in dark mode)
+  'Not Intrested': '#a1a1aa',    // zinc-400 (typo alias)
+  'Busy': '#f97316',             // orange-500 (brighter, visible in dark mode)
   'No': '#dc2626',               // red-600
   '-VE': '#dc2626',              // red-600
   'Rejected': '#b91c1c',         // red-700
-  'Wrong Number': '#52525b',     // zinc-600
-  'DND': '#475569',              // slate-600
+  'Wrong Number': '#a1a1aa',     // zinc-400
+  'DND': '#94a3b8',              // slate-400
   '30-70': '#c2410c',            // orange-700
   'FLP': '#e11d48',              // rose-600
   
