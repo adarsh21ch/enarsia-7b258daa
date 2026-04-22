@@ -323,19 +323,28 @@ export const ProspectRow = memo(function ProspectRow({
   const rowRef = dragHandleProps?.ref;
   const rowDragListeners = dragHandleProps?.listeners || {};
 
-  // ===== Premium swipe-to-call (iOS-style, left-only) =====
-  const SWIPE_REVEAL = 110; // width threshold to fully reveal button
-  const SWIPE_TRIGGER = 160; // distance to auto-trigger call
+  // ===== Premium swipe gestures (iOS-style) =====
+  // LEFT swipe → Call (green)   |   RIGHT swipe → Open Response Tag sheet (amber)
+  const SWIPE_REVEAL = 110; // width threshold to fully reveal action
+  const SWIPE_TRIGGER = 160; // distance to auto-trigger
+  const TAG_TRIGGER_RATIO = 0.4; // 40% of viewport width threshold for tag sheet
   const x = useMotionValue(0);
-  // Progressive green surface fade-in as user drags left
+
+  // LEFT (call) — progressive green surface fade-in as user drags left
   const surfaceOpacity = useTransform(x, [0, -40, -SWIPE_REVEAL], [0, 0.5, 1]);
-  // Pill button reveal
   const callBtnOpacity = useTransform(x, [-20, -SWIPE_REVEAL * 0.7], [0, 1]);
   const callBtnTranslate = useTransform(x, [0, -SWIPE_REVEAL], [40, 0]);
+
+  // RIGHT (tag) — amber/orange surface fade-in as user drags right
+  const tagSurfaceOpacity = useTransform(x, [0, 40, SWIPE_REVEAL], [0, 0.5, 1]);
+  const tagBtnOpacity = useTransform(x, [20, SWIPE_REVEAL * 0.7], [0, 1]);
+  const tagBtnTranslate = useTransform(x, [0, SWIPE_REVEAL], [-40, 0]);
+
   // Card depth while dragging
   const cardScale = useMotionValue(1);
   const isSwipingRef = useRef(false);
   const [isDragging, setIsDragging] = useState(false);
+  const [tagSheetOpen, setTagSheetOpen] = useState(false);
 
   const triggerCall = useCallback(() => {
     onMarkLastContacted?.();
@@ -347,22 +356,34 @@ export const ProspectRow = memo(function ProspectRow({
     animate(cardScale, [1, 1.02, 1], { duration: 0.18, ease: 'easeOut' });
   }, [cardScale]);
 
+  const openTagSheet = useCallback(() => {
+    setTagSheetOpen(true);
+  }, []);
+
   const handleDragStart = useCallback(() => {
     isSwipingRef.current = true;
     setIsDragging(true);
-    animate(cardScale, 0.97, { type: 'spring', stiffness: 400, damping: 30 });
+    animate(cardScale, 0.97, { type: 'spring', stiffness: 400, damping: 35 });
   }, [cardScale]);
 
   const handleDragEnd = useCallback((_: any, info: PanInfo) => {
     const offset = info.offset.x;
     const velocity = info.velocity.x;
+    const viewportWidth = typeof window !== 'undefined' ? window.innerWidth : 390;
+    const tagThreshold = viewportWidth * TAG_TRIGGER_RATIO;
     setIsDragging(false);
 
     // Restore scale from drag depth
     animate(cardScale, 1, { type: 'spring', stiffness: 500, damping: 42 });
 
-    // Full swipe or fast left flick → trigger call
-    if (offset < -SWIPE_TRIGGER || velocity < -650) {
+    // ===== RIGHT swipe → open Response Tag sheet =====
+    if (offset > tagThreshold || (offset > SWIPE_REVEAL && velocity > 650)) {
+      animate(x, 0, { type: 'spring', stiffness: 500, damping: 42 });
+      setTimeout(microBounce, 80);
+      setTimeout(openTagSheet, 120);
+    }
+    // ===== LEFT swipe → Call =====
+    else if (offset < -SWIPE_TRIGGER || velocity < -650) {
       triggerCall();
       animate(x, 0, { type: 'spring', stiffness: 500, damping: 42 });
       setTimeout(microBounce, 80);
@@ -383,7 +404,7 @@ export const ProspectRow = memo(function ProspectRow({
       setTimeout(microBounce, 40);
     }
     setTimeout(() => { isSwipingRef.current = false; }, 50);
-  }, [x, cardScale, triggerCall, microBounce]);
+  }, [x, cardScale, triggerCall, microBounce, openTagSheet]);
 
   const handleRevealedCallClick = useCallback((e: React.MouseEvent) => {
     e.stopPropagation();
