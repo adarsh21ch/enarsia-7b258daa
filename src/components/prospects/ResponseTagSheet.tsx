@@ -20,6 +20,8 @@ interface ResponseTagSheetProps {
   stageTag?: string | null;
   onSelect: (value: ExtendedActionTaken) => void;
   prospectName?: string;
+  /** Title shown at the top of the popup. Defaults to "Response Tag". */
+  title?: string;
 }
 
 /**
@@ -37,6 +39,7 @@ export const ResponseTagSheet = memo(function ResponseTagSheet({
   stageTag = null,
   onSelect,
   prospectName,
+  title = 'Response Tag',
 }: ResponseTagSheetProps) {
   const handlePick = useCallback(
     (value: string) => {
@@ -91,7 +94,7 @@ export const ResponseTagSheet = memo(function ResponseTagSheet({
       >
         <DialogHeader className="px-5 pt-5 pb-3 border-b border-border/40 space-y-1">
           <DialogTitle className="text-base font-semibold text-left tracking-tight">
-            Response Tag
+            {title}
           </DialogTitle>
           {prospectName && (
             <p className="text-xs text-muted-foreground text-left truncate font-medium">
