@@ -3,9 +3,10 @@
  * to ensure consistent branding everywhere.
  */
 
-export const BRAND_NAME = 'NevorAI';
-export const BRAND_NAME_UPPER = 'NEVORAI';
-export const BRAND_NAME_LOWER = 'nevorai';
+export const BRAND_NAME = 'nCall';
+export const BRAND_NAME_UPPER = 'NCALL';
+export const BRAND_NAME_LOWER = 'ncall';
+export const PARENT_COMPANY_NAME = 'Nevorai';
 
 // Plan names – display-facing (Basic = internal "pro", Pro = internal "premium")
 export const PLAN_NAME_BASIC = `${BRAND_NAME} Basic`;

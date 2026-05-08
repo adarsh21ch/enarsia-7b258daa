@@ -66,7 +66,7 @@ export default function Admin() {
           <div className="flex items-center gap-3">
             <img 
               src={nevoraLogo} 
-              alt="NevorAI Logo" 
+              alt="nCall Logo" 
               className="h-9 w-9 rounded-xl object-cover shadow-md"
             />
             <div>

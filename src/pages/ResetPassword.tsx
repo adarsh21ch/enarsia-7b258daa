@@ -146,7 +146,7 @@ export default function ResetPassword() {
         <header className="text-center mb-8">
           <img
             src={nevoraLogo}
-            alt="NevorAI logo"
+            alt="nCall logo"
             className="h-16 w-16 rounded-xl mx-auto mb-4 object-cover shadow-lg"
           />
           <h1 className="text-2xl font-bold">Reset password</h1>

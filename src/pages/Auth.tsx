@@ -293,7 +293,7 @@ export default function Auth() {
     return (
       <div className="auth-page-layout bg-background">
         <div className="auth-page-content flex flex-col items-center gap-4">
-          <img src={nevoraLogo} alt="NevorAI Logo" className="w-16 h-16 rounded-2xl shadow-lg" />
+          <img src={nevoraLogo} alt="nCall Logo" className="w-16 h-16 rounded-2xl shadow-lg" />
           <Loader2 className="h-8 w-8 animate-spin text-primary" />
           <p className="text-sm text-muted-foreground font-body">Loading...</p>
         </div>
@@ -307,13 +307,16 @@ export default function Auth() {
       <div className="relative inline-block mb-4">
         <img
           src={nevoraLogo}
-          alt="NevorAI Logo"
+          alt="nCall Logo"
           className="w-[72px] h-[72px] rounded-2xl shadow-lg dark:shadow-[0_0_30px_rgba(59,111,255,0.25)]"
         />
       </div>
       <h1 className="text-[28px] font-extrabold text-foreground font-heading tracking-tight">
-        Nevorai
+        nCall
       </h1>
+      <p className="text-muted-foreground text-[13px] mt-0.5 font-body">
+        by Nevorai
+      </p>
       <p className="text-muted-foreground text-[15px] mt-1 italic font-body">
         Never miss a followup Again
       </p>
@@ -544,7 +547,7 @@ export default function Auth() {
                   />
                 </div>
                 <p className="text-xs text-muted-foreground font-body">
-                  We'll use this only to help you get started with Nevorai.
+                  We'll use this only to help you get started with nCall.
                 </p>
               </div>
             )}

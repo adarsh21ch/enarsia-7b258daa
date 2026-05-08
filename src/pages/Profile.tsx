@@ -485,7 +485,7 @@ export default function Profile() {
               </div>
               <div className="text-left">
                 <span className="font-medium text-sm block flex items-center gap-1.5">
-                  Nevorai AI Assistant
+                  nCall AI Assistant
                   {!canAccessAI && <Lock className="h-3 w-3 text-muted-foreground" />}
                 </span>
                 <span className="text-[11px] text-muted-foreground">

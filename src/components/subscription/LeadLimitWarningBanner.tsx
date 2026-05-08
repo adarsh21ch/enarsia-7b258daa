@@ -40,7 +40,7 @@ export function LeadLimitWarningBanner({ compact = false, context = 'calling' }:
   const getSubText = () => {
     if (context === 'profile') {
       return isAtLimit
-        ? 'Upgrade to Pro to continue using NevorAI.'
+        ? 'Upgrade to Pro to continue using nCall.'
         : 'Upgrade to Pro for unlimited access.';
     }
     return 'Upgrade to Pro for unlimited prospects.';

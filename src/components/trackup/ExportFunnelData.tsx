@@ -128,7 +128,7 @@ export function ExportFunnelData({ prospects }: ExportFunnelDataProps) {
       // Generate filename
       const dateStr = format(new Date(), 'yyyy-MM-dd');
       const filterLabel = getFilterLabel();
-      const filename = `NevorAI_Contacts_${dateStr}_${filterLabel}.xlsx`;
+      const filename = `nCall_Contacts_${dateStr}_${filterLabel}.xlsx`;
 
       // Trigger download
       XLSX.writeFile(wb, filename);

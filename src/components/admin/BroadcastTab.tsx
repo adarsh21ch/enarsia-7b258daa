@@ -25,7 +25,7 @@ const MESSAGE_TEMPLATES = [
   { key: 'announcement', label: '📢 Announcement', title: 'New Feature Available!', body: 'We just launched something exciting. Open the app to check it out!' },
   { key: 'offer', label: '🎁 Offer', title: 'Special Offer for You!', body: 'Upgrade to Pro today and get an exclusive discount. Limited time only!' },
   { key: 'reminder', label: '⚠️ Reminder', title: 'Don\'t Miss Out!', body: 'Your trial is ending soon. Upgrade now to keep all your data and features.' },
-  { key: 'reengage', label: '🔥 Re-engage', title: 'We Miss You!', body: 'It\'s been a while since you last used NevorAI. Come back and see what\'s new!' },
+  { key: 'reengage', label: '🔥 Re-engage', title: 'We Miss You!', body: 'It\'s been a while since you last used nCall. Come back and see what\'s new!' },
 ];
 
 export function BroadcastTab() {

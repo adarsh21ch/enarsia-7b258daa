@@ -93,7 +93,7 @@ export function InstallPromptBanner() {
         </div>
         
         <div className="flex-1 min-w-0">
-          <h3 className="font-semibold text-sm">Install NevorAI</h3>
+          <h3 className="font-semibold text-sm">Install nCall</h3>
           <p className="text-xs opacity-90 mt-0.5">
             {isIOS 
               ? "Tap Share, then 'Add to Home Screen'" 

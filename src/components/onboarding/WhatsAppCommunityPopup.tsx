@@ -47,7 +47,7 @@ export function WhatsAppCommunityPopup({ onDismiss }: WhatsAppCommunityPopupProp
 
   const benefits = [
     'Daily tips from top users',
-    'Exclusive Nevorai updates first',
+    'Exclusive nCall updates first',
     'Direct support from the founder',
   ];
 
@@ -67,7 +67,7 @@ export function WhatsAppCommunityPopup({ onDismiss }: WhatsAppCommunityPopupProp
               Join Nevorai Leaders Community
             </h2>
             <p className="text-[15px] text-muted-foreground mt-2 font-body leading-relaxed">
-              Connect with 4,000+ network marketers using Nevorai. Get tips, share wins, and grow together.
+              Connect with 4,000+ network marketers using nCall. Get tips, share wins, and grow together.
             </p>
           </div>
 

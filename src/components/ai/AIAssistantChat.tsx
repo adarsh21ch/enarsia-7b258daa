@@ -280,7 +280,7 @@ export function AIAssistantChat({ open, onOpenChange }: AIAssistantChatProps) {
           <div className="flex items-center justify-between">
             <SheetTitle className="flex items-center gap-2 text-base">
               <Sparkles className="h-4 w-4 text-primary" />
-              NevorAI Assistant
+              nCall Assistant
             </SheetTitle>
             {messages.length > 0 && (
               <Button variant="ghost" size="icon" className="h-7 w-7" onClick={clearChat} title="Clear chat">

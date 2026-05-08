@@ -1,7 +1,7 @@
 {
-  "name": "NevorAI",
-  "short_name": "NevorAI",
-  "description": "Never miss a followup Again. Manage your sales prospects, track conversions, and close more deals.",
+  "name": "nCall by Nevorai",
+  "short_name": "nCall",
+  "description": "Smart calling for network marketers. Manage your sales prospects, track conversions, and close more deals.",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#ffffff",

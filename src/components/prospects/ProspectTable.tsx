@@ -642,7 +642,7 @@ export function ProspectTable({
       const dateStr = format(new Date(), 'yyyy-MM-dd');
       const filterLabel = getFilterLabel();
       const sheetName = selectedSheetId ? sheets.find(s => s.id === selectedSheetId)?.name?.replace(/\s+/g, '_') : null;
-      const filename = `NevorAI_Prospects_${dateStr}${sheetName ? `_${sheetName}` : ''}_${filterLabel}.xlsx`;
+      const filename = `nCall_Prospects_${dateStr}${sheetName ? `_${sheetName}` : ''}_${filterLabel}.xlsx`;
       XLSX.writeFile(wb, filename);
       toast.success(`Exported ${allProspects.length} prospects successfully!`);
     } catch (err) {
@@ -695,7 +695,7 @@ export function ProspectTable({
       XLSX.utils.book_append_sheet(wb, ws, 'Prospects');
       const dateStr = format(new Date(), 'yyyy-MM-dd');
       const sheetName = sheetId ? sheets.find(s => s.id === sheetId)?.name || 'Sheet' : 'All';
-      const filename = `NevorAI_${sheetName}_${dateStr}.xlsx`;
+      const filename = `nCall_${sheetName}_${dateStr}.xlsx`;
       XLSX.writeFile(wb, filename);
       toast.success(`Exported ${sheetProspects.length} prospects successfully!`);
     } catch (err) {
