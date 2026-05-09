@@ -99,10 +99,10 @@ export function TierCard({ tierName = 'Pro', plans, selectedPlanKey, onSelectPla
                 <span className={`text-base font-extrabold leading-tight mt-1 ${
                   isSelected ? 'text-[hsl(36,75%,40%)] dark:text-[hsl(36,80%,65%)]' : 'text-foreground'
                 }`}>
-                  ₹{dailyPrice}/day
+                  ₹{plan.price}{getBillingLabel(plan)}
                 </span>
                 <span className="text-[9px] text-muted-foreground mt-0.5 leading-tight">
-                  ₹{plan.price}{getBillingLabel(plan)}
+                  ₹{dailyPrice}/day
                 </span>
               </button>
             );
