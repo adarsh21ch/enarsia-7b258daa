@@ -7,7 +7,7 @@ export function Footer() {
         <p className="text-xs text-muted-foreground">© 2026 Nevorai · nCall · All rights reserved</p>
         <div className="flex flex-wrap items-center gap-4 text-xs text-muted-foreground">
           <Link to="/terms" className="hover:text-foreground transition-colors">
-            Terms & Conditions
+            Terms of Service
           </Link>
           <Link to="/privacy" className="hover:text-foreground transition-colors">
             Privacy Policy
