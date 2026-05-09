@@ -174,7 +174,21 @@ export function EnhancedUsersTab({ headerPlanFilter }: EnhancedUsersTabProps) {
   }, [searchQuery, planFilter]);
 
   const sortedUsers = useMemo(() => {
-    return [...users].sort((a, b) => {
+    const filtered = users.filter((u) => {
+      if (planFilter === 'all') return true;
+      if (planFilter === 'active_pro') return u.plan === 'pro' && !isExpiredPro(u) && !u.is_suspended;
+      if (planFilter === 'expired_pro') return isExpiredPro(u);
+      if (planFilter === 'suspended') return u.is_suspended;
+      if (planFilter === 'trial') {
+        const trialStart = u.trial_start_date || u.created_at;
+        if (!trialStart || u.plan === 'pro') return false;
+        const daysSince = Math.floor((Date.now() - new Date(trialStart).getTime()) / (1000 * 60 * 60 * 24));
+        return daysSince < TRIAL_DURATION_DAYS;
+      }
+      if (planFilter === 'free') return u.plan !== 'pro';
+      return true;
+    });
+    return [...filtered].sort((a, b) => {
       let cmp = 0;
       if (sortField === 'display_name') cmp = (a.display_name || '').localeCompare(b.display_name || '');
       else if (sortField === 'total_leads_count') cmp = a.total_leads_count - b.total_leads_count;
@@ -182,16 +196,24 @@ export function EnhancedUsersTab({ headerPlanFilter }: EnhancedUsersTabProps) {
       else if (sortField === 'expires_at') cmp = new Date(a.expires_at || 0).getTime() - new Date(b.expires_at || 0).getTime();
       return sortDir === 'asc' ? cmp : -cmp;
     });
-  }, [users, sortField, sortDir]);
+  }, [users, sortField, sortDir, planFilter]);
 
   const fetchUsers = useCallback(async () => {
     if (users.length === 0 && page === 0) setLoading(true);
     else setSearching(true);
 
+    // Map composite UI filters back to the plan column the RPC understands
+    const planForRpc =
+      planFilter === 'active_pro' || planFilter === 'expired_pro'
+        ? 'pro'
+        : planFilter === 'free'
+          ? 'free'
+          : null; // all / trial / suspended → fetch unfiltered, refine client-side
+
     try {
       const { data, error } = await supabase.rpc('admin_search_users_enhanced' as any, {
         search_query: searchQuery,
-        plan_filter: planFilter === 'all' ? null : planFilter,
+        plan_filter: planForRpc,
         page_size: pageSize,
         page_offset: page * pageSize,
       });
