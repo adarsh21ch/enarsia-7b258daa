@@ -466,7 +466,7 @@ export function EnhancedUsersTab({ headerPlanFilter }: EnhancedUsersTabProps) {
                           Override Settings
                         </DropdownMenuItem>
 
-                        {user.plan === 'pro' && (
+                        {user.plan === 'pro' && !isExpiredPro(user) && (
                           <DropdownMenuItem className="text-xs text-destructive" onClick={() => handleRevokePlan(user)}>
                             Revoke Access
                           </DropdownMenuItem>
