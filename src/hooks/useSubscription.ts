@@ -144,6 +144,15 @@ export function useSubscription() {
     }
   }, [upgradeMutation]);
 
+  // Refetch when window regains focus (e.g. user returns from Razorpay checkout
+  // in another tab/app). Ensures expired/at-limit gates clear immediately on pay.
+  useEffect(() => {
+    if (!user) return;
+    const onFocus = () => queryClient.invalidateQueries({ queryKey });
+    window.addEventListener('focus', onFocus);
+    return () => window.removeEventListener('focus', onFocus);
+  }, [user, queryClient, queryKey]);
+
   // Realtime subscription listener for cross-platform sync
   useEffect(() => {
     if (!user) return;
