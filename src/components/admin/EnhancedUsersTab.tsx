@@ -398,7 +398,7 @@ export function EnhancedUsersTab({ headerPlanFilter }: EnhancedUsersTabProps) {
 
                   {/* Plan */}
                   <TableCell className="py-2 px-3">
-                    <TierBadge tier={user.tier} plan={user.plan} />
+                    <TierBadge user={user} />
                   </TableCell>
 
                   {/* Status */}
