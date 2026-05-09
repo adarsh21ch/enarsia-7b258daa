@@ -39,10 +39,18 @@ interface EnhancedUser {
 const TRIAL_DURATION_DAYS = 7;
 
 const PLAN_FILTER_OPTIONS = [
-  { value: 'all', label: 'All Plans' },
+  { value: 'all', label: 'All' },
+  { value: 'active_pro', label: '✅ Active Pro' },
+  { value: 'expired_pro', label: '⚠ Expired Pro' },
+  { value: 'trial', label: '⏳ Trial' },
   { value: 'free', label: '🆓 Free' },
-  { value: 'pro', label: '⭐ Pro' },
+  { value: 'suspended', label: '⛔ Suspended' },
 ];
+
+// True if a Pro subscription has elapsed its expires_at
+function isExpiredPro(user: { plan: string; expires_at: string | null }) {
+  return user.plan === 'pro' && !!user.expires_at && new Date(user.expires_at) < new Date();
+}
 
 const GRANT_OPTIONS = [
   { value: 'pro-30', label: 'Pro 30d', tier: 'pro', days: 30 },
@@ -77,14 +85,17 @@ function TierChips({ counts, loading }: { counts: TierCounts; loading: boolean }
   );
 }
 
-function TierBadge({ tier, plan }: { tier: string; plan: string }) {
-  if (plan !== 'pro') return <Badge variant="secondary" className="text-[10px] px-1.5 py-0">Free</Badge>;
+function TierBadge({ user }: { user: EnhancedUser }) {
+  if (user.plan !== 'pro') return <Badge variant="secondary" className="text-[10px] px-1.5 py-0">Free</Badge>;
+  if (isExpiredPro(user)) {
+    return <Badge variant="outline" className="text-[10px] px-1.5 py-0 gap-0.5 bg-destructive/10 text-destructive border-destructive/40">⚠ Expired</Badge>;
+  }
   return <Badge className="bg-primary/20 text-primary border-0 text-[10px] px-1.5 py-0 gap-0.5"><Crown className="h-2.5 w-2.5" />Pro</Badge>;
 }
 
 function StatusBadge({ user }: { user: EnhancedUser }) {
   if (user.is_suspended) return <Badge variant="destructive" className="text-[10px] px-1.5 py-0">Suspended</Badge>;
-  if (user.plan === 'pro' && user.expires_at && new Date(user.expires_at) < new Date()) return <Badge variant="outline" className="text-[10px] text-destructive border-destructive/40 px-1.5 py-0">Expired</Badge>;
+  if (isExpiredPro(user)) return <Badge variant="outline" className="text-[10px] text-destructive border-destructive/40 px-1.5 py-0">Expired</Badge>;
   if (user.plan === 'pro') return <Badge variant="outline" className="text-[10px] text-green-600 border-green-500/40 px-1.5 py-0">Active</Badge>;
   const trialStart = user.trial_start_date || user.created_at;
   if (trialStart) {
@@ -163,7 +174,21 @@ export function EnhancedUsersTab({ headerPlanFilter }: EnhancedUsersTabProps) {
   }, [searchQuery, planFilter]);
 
   const sortedUsers = useMemo(() => {
-    return [...users].sort((a, b) => {
+    const filtered = users.filter((u) => {
+      if (planFilter === 'all') return true;
+      if (planFilter === 'active_pro') return u.plan === 'pro' && !isExpiredPro(u) && !u.is_suspended;
+      if (planFilter === 'expired_pro') return isExpiredPro(u);
+      if (planFilter === 'suspended') return u.is_suspended;
+      if (planFilter === 'trial') {
+        const trialStart = u.trial_start_date || u.created_at;
+        if (!trialStart || u.plan === 'pro') return false;
+        const daysSince = Math.floor((Date.now() - new Date(trialStart).getTime()) / (1000 * 60 * 60 * 24));
+        return daysSince < TRIAL_DURATION_DAYS;
+      }
+      if (planFilter === 'free') return u.plan !== 'pro';
+      return true;
+    });
+    return [...filtered].sort((a, b) => {
       let cmp = 0;
       if (sortField === 'display_name') cmp = (a.display_name || '').localeCompare(b.display_name || '');
       else if (sortField === 'total_leads_count') cmp = a.total_leads_count - b.total_leads_count;
@@ -171,16 +196,24 @@ export function EnhancedUsersTab({ headerPlanFilter }: EnhancedUsersTabProps) {
       else if (sortField === 'expires_at') cmp = new Date(a.expires_at || 0).getTime() - new Date(b.expires_at || 0).getTime();
       return sortDir === 'asc' ? cmp : -cmp;
     });
-  }, [users, sortField, sortDir]);
+  }, [users, sortField, sortDir, planFilter]);
 
   const fetchUsers = useCallback(async () => {
     if (users.length === 0 && page === 0) setLoading(true);
     else setSearching(true);
 
+    // Map composite UI filters back to the plan column the RPC understands
+    const planForRpc =
+      planFilter === 'active_pro' || planFilter === 'expired_pro'
+        ? 'pro'
+        : planFilter === 'free'
+          ? 'free'
+          : null; // all / trial / suspended → fetch unfiltered, refine client-side
+
     try {
       const { data, error } = await supabase.rpc('admin_search_users_enhanced' as any, {
         search_query: searchQuery,
-        plan_filter: planFilter === 'all' ? null : planFilter,
+        plan_filter: planForRpc,
         page_size: pageSize,
         page_offset: page * pageSize,
       });
@@ -283,7 +316,7 @@ export function EnhancedUsersTab({ headerPlanFilter }: EnhancedUsersTabProps) {
     <div className="space-y-3">
       <TierChips counts={tierCounts} loading={tierLoading} />
 
-      {/* Search and Filters */}
+      {/* Search */}
       <div className="flex gap-2">
         <div className="relative flex-1 min-w-0">
           <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
@@ -294,16 +327,26 @@ export function EnhancedUsersTab({ headerPlanFilter }: EnhancedUsersTabProps) {
             className="pl-8 h-9 text-sm"
           />
         </div>
-        <Select value={planFilter} onValueChange={setPlanFilter}>
-          <SelectTrigger className="w-[120px] h-9 text-xs">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {PLAN_FILTER_OPTIONS.map((opt) => (
-              <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+      </div>
+
+      {/* Filter pills — Active Pro vs Expired Pro split */}
+      <div className="flex gap-1.5 overflow-x-auto pb-1 -mx-1 px-1 scrollbar-none">
+        {PLAN_FILTER_OPTIONS.map((opt) => {
+          const active = planFilter === opt.value;
+          return (
+            <button
+              key={opt.value}
+              onClick={() => setPlanFilter(opt.value)}
+              className={`shrink-0 px-3 py-1.5 rounded-full text-[11px] font-medium border transition-colors whitespace-nowrap ${
+                active
+                  ? 'bg-primary/15 text-primary border-primary/30'
+                  : 'bg-muted/40 text-muted-foreground border-border/50 hover:bg-muted/70'
+              }`}
+            >
+              {opt.label}
+            </button>
+          );
+        })}
       </div>
 
       <p className="text-xs text-muted-foreground">
@@ -355,7 +398,7 @@ export function EnhancedUsersTab({ headerPlanFilter }: EnhancedUsersTabProps) {
 
                   {/* Plan */}
                   <TableCell className="py-2 px-3">
-                    <TierBadge tier={user.tier} plan={user.plan} />
+                    <TierBadge user={user} />
                   </TableCell>
 
                   {/* Status */}
@@ -423,7 +466,7 @@ export function EnhancedUsersTab({ headerPlanFilter }: EnhancedUsersTabProps) {
                           Override Settings
                         </DropdownMenuItem>
 
-                        {user.plan === 'pro' && (
+                        {user.plan === 'pro' && !isExpiredPro(user) && (
                           <DropdownMenuItem className="text-xs text-destructive" onClick={() => handleRevokePlan(user)}>
                             Revoke Access
                           </DropdownMenuItem>
