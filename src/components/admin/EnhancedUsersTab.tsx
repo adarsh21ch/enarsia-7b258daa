@@ -39,10 +39,18 @@ interface EnhancedUser {
 const TRIAL_DURATION_DAYS = 7;
 
 const PLAN_FILTER_OPTIONS = [
-  { value: 'all', label: 'All Plans' },
+  { value: 'all', label: 'All' },
+  { value: 'active_pro', label: '✅ Active Pro' },
+  { value: 'expired_pro', label: '⚠ Expired Pro' },
+  { value: 'trial', label: '⏳ Trial' },
   { value: 'free', label: '🆓 Free' },
-  { value: 'pro', label: '⭐ Pro' },
+  { value: 'suspended', label: '⛔ Suspended' },
 ];
+
+// True if a Pro subscription has elapsed its expires_at
+function isExpiredPro(user: { plan: string; expires_at: string | null }) {
+  return user.plan === 'pro' && !!user.expires_at && new Date(user.expires_at) < new Date();
+}
 
 const GRANT_OPTIONS = [
   { value: 'pro-30', label: 'Pro 30d', tier: 'pro', days: 30 },
