@@ -50,6 +50,7 @@ export function BottomNav({ className }: { className?: string }) {
   const location = useLocation();
   const navigate = useNavigate();
   const { profile } = useProfile();
+  const { isUrgent, isExpired, isAtLeadLimit } = useUpgradeUrgency();
   const [keyboardVisible, setKeyboardVisible] = useState(false);
   const [bouncingTab, setBouncingTab] = useState<string | null>(null);
 
