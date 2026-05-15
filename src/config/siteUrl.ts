@@ -2,7 +2,7 @@
  * Single source of truth for the published app URL used in auth email redirects.
  * IMPORTANT: keep this value in sync with your published domain.
  */
-export const PUBLISHED_APP_URL = "https://app.nevorai.com";
+export const PUBLISHED_APP_URL = "https://ncall.nevorai.com";
 
 /**
  * Main Nevorai website URL for TrackUp Dashboard and form share links.
