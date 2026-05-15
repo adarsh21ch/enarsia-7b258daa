@@ -9,7 +9,7 @@ const corsHeaders = {
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SUPABASE_ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY")!;
 
-const APP_URL = "https://app.nevorai.com";
+const APP_URL = "https://ncall.nevorai.com";
 const DEFAULT_TITLE = "NevorAI - Never Miss a Followup Again";
 const DEFAULT_DESC =
   "Manage your sales prospects, track conversions, and close more deals with NevorAI.";
