@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
-import { Copy, MessageCircle, Check, Link, Users, Send, Loader2, ChevronDown, ChevronUp } from 'lucide-react';
+import { Copy, MessageCircle, Check, Link, Users, Send, Loader2, ChevronDown, ChevronUp, ExternalLink } from 'lucide-react';
 import { toast } from 'sonner';
 import { useDirectTeam } from '@/hooks/useDirectTeam';
 import { useSharedLeads } from '@/hooks/useSharedLeads';
