@@ -21,7 +21,6 @@ Deno.serve(async (req) => {
       );
     }
 
-    const token = authHeader.replace("Bearer ", "");
     const supabaseAuth = createClient(supabaseUrl, supabaseAnonKey, {
       global: { headers: { Authorization: authHeader } },
     });
