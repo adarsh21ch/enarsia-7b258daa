@@ -47,9 +47,9 @@
     <script>
       // Immediate OAuth redirect - runs before React loads
       (function() {
-        var liveUrl = 'https://wpczgwxsriezaubncuom.lovable.app';
+        var liveUrl = 'https://app.nevorai.com';
         var currentUrl = window.location.href;
-        var isPreviewUrl = currentUrl.includes('.lovable.app') && !currentUrl.includes('wpczgwxsriezaubncuom');
+        var isPreviewUrl = currentUrl.includes('.lovable.app');
         var hasAuthToken = window.location.hash.includes('access_token');
         
         if (isPreviewUrl && hasAuthToken) {

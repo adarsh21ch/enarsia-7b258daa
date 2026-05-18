@@ -5,7 +5,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { Check } from 'lucide-react';
 
-const WA_COMMUNITY_LINK = 'https://chat.whatsapp.com/YOUR_GROUP_INVITE_LINK'; // TODO: Replace with actual link
+const WA_COMMUNITY_LINK = 'https://chat.whatsapp.com/FvNbWgFVR2IFBq6ihWhTs2';
 
 interface WhatsAppCommunityPopupProps {
   onDismiss: () => void;

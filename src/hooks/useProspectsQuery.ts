@@ -669,27 +669,52 @@ export function useProspectsQuery(options: UseProspectsQueryOptions = {}) {
     [reorderMutation]
   );
 
-  // Bulk delete - delete multiple prospects in a SINGLE database operation
+  // Bulk delete - SOFT delete with recovery batch (recoverable from Recently Deleted)
   const bulkDeleteProspects = useCallback(
     async (ids: string[]): Promise<{ deleted: number; prospects: Prospect[] }> => {
       if (!user || ids.length === 0) return { deleted: 0, prospects: [] };
-      
+
       const deletedProspects = prospects.filter(p => ids.includes(p.id));
-      
+
       // Cancel any in-flight queries
       await queryClient.cancelQueries({ queryKey: ['prospects', user?.id] });
-      
-      // Single bulk delete operation - NO LOOPING
-      const { error } = await supabase
-        .from('prospects')
-        .delete()
-        .in('id', ids);
-      
-      if (error) {
+
+      // Create a deletion batch record for recovery
+      const dominantSheetId = deletedProspects[0]?.sheet_id ?? null;
+      const { data: batch, error: batchErr } = await supabase
+        .from('deletion_batches')
+        .insert({
+          user_id: user.id,
+          deletion_type: 'bulk',
+          sheet_id: dominantSheetId,
+          lead_count: ids.length,
+          preview_name: deletedProspects[0]?.name ?? null,
+          preview_phone: deletedProspects[0]?.phone ?? null,
+        })
+        .select('id')
+        .single();
+
+      if (batchErr || !batch) {
         toast.error('Failed to delete prospects');
         return { deleted: 0, prospects: [] };
       }
-      
+
+      // Soft delete with batch reference
+      const { error } = await supabase
+        .from('prospects')
+        .update({
+          deleted_at: new Date().toISOString(),
+          deletion_batch_id: batch.id,
+          deletion_type: 'bulk',
+        })
+        .in('id', ids);
+
+      if (error) {
+        await supabase.from('deletion_batches').delete().eq('id', batch.id);
+        toast.error('Failed to delete prospects');
+        return { deleted: 0, prospects: [] };
+      }
+
       // Optimistically update cache
       queryClient.setQueryData(queryKey, (old: any) => {
         if (!old) return old;
@@ -702,58 +727,83 @@ export function useProspectsQuery(options: UseProspectsQueryOptions = {}) {
           })),
         };
       });
-      
+
       // Invalidate queries to refresh data
       queryClient.invalidateQueries({ queryKey: ['prospects-kpi', user?.id] });
       queryClient.invalidateQueries({ queryKey: ['tracking-leads', user?.id] });
       queryClient.invalidateQueries({ queryKey: ['tracking-funnel', user?.id] });
-      
+      queryClient.invalidateQueries({ queryKey: ['deleted-prospects', user?.id] });
+
       return { deleted: deletedProspects.length, prospects: deletedProspects };
     },
     [user, prospects, queryClient, queryKey]
   );
 
-  // Bulk delete by sheet - deletes ALL prospects in a sheet directly on server (bypasses pagination)
+  // Bulk delete by sheet - SOFT delete all prospects in a sheet (recoverable)
   const bulkDeleteBySheet = useCallback(
     async (sheetId: string | null): Promise<{ deleted: number }> => {
       if (!user) return { deleted: 0 };
-      
-      // First, get the count of prospects to delete
+
+      // First, get the count of prospects to delete (active only)
       let countQuery = supabase
         .from('prospects')
         .select('id', { count: 'exact', head: true })
-        .eq('user_id', user.id);
-      
+        .eq('user_id', user.id)
+        .is('deleted_at', null);
+
       if (sheetId !== null) {
         countQuery = countQuery.eq('sheet_id', sheetId);
       }
-      
+
       const { count: totalToDelete } = await countQuery;
-      
+
       if (!totalToDelete || totalToDelete === 0) {
         return { deleted: 0 };
       }
-      
+
       // Cancel any in-flight queries
       await queryClient.cancelQueries({ queryKey: ['prospects', user?.id] });
-      
-      // Delete directly by sheet_id on server - no ID list needed
-      let deleteQuery = supabase
-        .from('prospects')
-        .delete()
-        .eq('user_id', user.id);
-      
-      if (sheetId !== null) {
-        deleteQuery = deleteQuery.eq('sheet_id', sheetId);
-      }
-      
-      const { error } = await deleteQuery;
-      
-      if (error) {
+
+      // Create deletion batch for recovery
+      const { data: batch, error: batchErr } = await supabase
+        .from('deletion_batches')
+        .insert({
+          user_id: user.id,
+          deletion_type: 'bulk',
+          sheet_id: sheetId,
+          lead_count: totalToDelete,
+        })
+        .select('id')
+        .single();
+
+      if (batchErr || !batch) {
         toast.error('Failed to delete prospects');
         return { deleted: 0 };
       }
-      
+
+      // Soft delete by sheet_id on server
+      let updateQuery = supabase
+        .from('prospects')
+        .update({
+          deleted_at: new Date().toISOString(),
+          deletion_batch_id: batch.id,
+          deletion_type: 'bulk',
+        })
+        .eq('user_id', user.id)
+        .is('deleted_at', null);
+
+      if (sheetId !== null) {
+        updateQuery = updateQuery.eq('sheet_id', sheetId);
+      }
+
+      const { error } = await updateQuery;
+
+      if (error) {
+        await supabase.from('deletion_batches').delete().eq('id', batch.id);
+        toast.error('Failed to delete prospects');
+        return { deleted: 0 };
+      }
+
       // Clear cache and refetch
       queryClient.setQueryData(queryKey, (old: any) => {
         if (!old) return old;
@@ -761,20 +811,21 @@ export function useProspectsQuery(options: UseProspectsQueryOptions = {}) {
           ...old,
           pages: old.pages.map((page: ProspectPage) => ({
             ...page,
-            prospects: sheetId === null 
-              ? [] 
+            prospects: sheetId === null
+              ? []
               : page.prospects.filter((p: Prospect) => p.sheet_id !== sheetId),
             totalCount: 0,
           })),
         };
       });
-      
+
       // Invalidate queries to refresh data
       queryClient.invalidateQueries({ queryKey: ['prospects', user?.id] });
       queryClient.invalidateQueries({ queryKey: ['prospects-kpi', user?.id] });
       queryClient.invalidateQueries({ queryKey: ['tracking-leads', user?.id] });
       queryClient.invalidateQueries({ queryKey: ['tracking-funnel', user?.id] });
-      
+      queryClient.invalidateQueries({ queryKey: ['deleted-prospects', user?.id] });
+
       return { deleted: totalToDelete };
     },
     [user, queryClient, queryKey]
@@ -833,7 +884,8 @@ export function useProspectsQuery(options: UseProspectsQueryOptions = {}) {
 
         // Apply search filter
         if (search) {
-          query = query.or(`name.ilike.%${search}%,phone.ilike.%${search}%,notes.ilike.%${search}%`);
+          // Phone is encrypted in DB - search only name and notes server-side
+          query = query.or(`name.ilike.%${search}%,notes.ilike.%${search}%`);
         }
 
         // Stable ordering
