@@ -151,6 +151,15 @@ export function ShareFormDialog({ open, onOpenChange, shareUrl, formTitle, formL
             </Button>
           </div>
 
+          {/* Open in browser */}
+          <Button
+            onClick={openInBrowser}
+            variant="outline"
+            className="w-full rounded-xl gap-2 border-blue-200/50 dark:border-blue-800/50 hover:bg-blue-50 dark:hover:bg-blue-950/30"
+          >
+            <ExternalLink className="h-4 w-4" /> Open Form in Browser
+          </Button>
+
           {/* Separator */}
           <div className="relative">
             <div className="absolute inset-0 flex items-center"><span className="w-full border-t border-border/60" /></div>
