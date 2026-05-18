@@ -377,34 +377,6 @@ export default function Profile() {
           {/* ── SECTION: Tools ────────────────── */}
           <SectionHeader>Tools</SectionHeader>
           <div data-onboarding="profile-tools" className="space-y-2">
-          {/* TrackUp Dashboard - External link with SSO */}
-          <button onClick={() => window.open('https://nevorai.com/auth?redirect=/trackup', '_blank', 'noopener,noreferrer')} className={cn("w-full rounded-xl px-4 py-2.5", "bg-gradient-to-r backdrop-blur-sm", "border border-emerald-500/30", "flex items-center justify-between", "transition-all duration-200 hover:shadow-md", "from-emerald-500/20 to-emerald-500/5")}>
-            <div className="flex items-center gap-3">
-              <div className="p-1.5 rounded-lg bg-emerald-500/10">
-                <BarChart3 className="h-4 w-4 text-emerald-500" />
-              </div>
-              <div className="text-left">
-                <span className="font-medium text-sm block">TrackUp Dashboard</span>
-                <span className="text-[11px] text-muted-foreground">Team tracking on nevorai.com</span>
-              </div>
-            </div>
-            <ExternalLink className="h-4 w-4 text-muted-foreground" />
-          </button>
-
-          {/* Nevorai Funnels - External link with SSO */}
-          <button onClick={() => window.open('https://nevorai.com/auth?redirect=/funnels', '_blank', 'noopener,noreferrer')} className={cn("w-full rounded-xl px-4 py-2.5", "bg-gradient-to-r backdrop-blur-sm", "border border-purple-500/30", "flex items-center justify-between", "transition-all duration-200 hover:shadow-md", "from-purple-500/20 to-purple-500/5")}>
-            <div className="flex items-center gap-3">
-              <div className="p-1.5 rounded-lg bg-purple-500/10">
-                <Video className="h-4 w-4 text-purple-500" />
-              </div>
-              <div className="text-left">
-                <span className="font-medium text-sm block">Nevorai Funnels</span>
-                <span className="text-[11px] text-muted-foreground">Video funnels on nevorai.com</span>
-              </div>
-            </div>
-            <ExternalLink className="h-4 w-4 text-muted-foreground" />
-          </button>
-
           {/* Nevorai Forms */}
           <button onClick={() => navigate('/forms')} className={cn("w-full rounded-xl px-4 py-2.5", "bg-gradient-to-r backdrop-blur-sm", "border border-blue-500/30", "flex items-center justify-between", "transition-all duration-200 hover:shadow-md", "from-blue-500/20 to-blue-500/5")}>
             <div className="flex items-center gap-3">
