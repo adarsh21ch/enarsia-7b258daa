@@ -884,7 +884,8 @@ export function useProspectsQuery(options: UseProspectsQueryOptions = {}) {
 
         // Apply search filter
         if (search) {
-          query = query.or(`name.ilike.%${search}%,phone.ilike.%${search}%,notes.ilike.%${search}%`);
+          // Phone is encrypted in DB - search only name and notes server-side
+          query = query.or(`name.ilike.%${search}%,notes.ilike.%${search}%`);
         }
 
         // Stable ordering
