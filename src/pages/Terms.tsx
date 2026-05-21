@@ -111,7 +111,7 @@ export default function Terms() {
             <section>
               <h2 className="text-xl font-semibold mb-3">10. Limitation of Liability</h2>
               <p className="text-muted-foreground leading-relaxed">
-                Direcall is provided "as is". Nevorai is not liable for indirect, incidental or consequential damages — including lost profits, lost leads or missed business opportunities. Our total liability is limited to the amount you paid us in the 3 months preceding the claim.
+                Direcall is provided "as is". Nevorai Technologies is not liable for indirect, incidental or consequential damages — including lost profits, lost leads or missed business opportunities. Our total liability is limited to the amount you paid us in the 3 months preceding the claim.
               </p>
             </section>
 
