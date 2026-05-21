@@ -100,7 +100,7 @@ export function ProspectReportCard({ prospect, open, onOpenChange, onUpdate }: P
     window.location.href = `whatsapp://send?phone=${cleanPhoneNumber(prospect.phone)}`;
   };
 
-  const openCall = () => {
+  const opeDirecall = () => {
     window.location.href = `tel:${cleanPhoneNumber(prospect.phone)}`;
   };
 
@@ -118,7 +118,7 @@ export function ProspectReportCard({ prospect, open, onOpenChange, onUpdate }: P
         <div className="py-6 space-y-6 flex-1 overflow-y-auto">
           {/* Quick Actions */}
           <div className="flex gap-2">
-            <Button onClick={openCall} variant="outline" className="flex-1 gap-2">
+            <Button onClick={opeDirecall} variant="outline" className="flex-1 gap-2">
               <Phone className="h-4 w-4" />
               Call
             </Button>

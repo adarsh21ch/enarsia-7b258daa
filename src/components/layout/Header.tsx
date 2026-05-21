@@ -25,10 +25,10 @@ export function Header() {
           <Link to="/dashboard" className="flex items-center gap-2">
             <img 
               src={nevoraLogo} 
-              alt="nCall Logo" 
+              alt="Direcall Logo" 
               className="h-8 w-8 rounded-lg object-cover"
             />
-            <span className="font-semibold text-lg hidden sm:inline">nCall</span>
+            <span className="font-semibold text-lg hidden sm:inline">Direcall</span>
           </Link>
 
           <nav className="hidden md:flex items-center gap-1">

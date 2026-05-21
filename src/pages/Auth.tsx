@@ -293,7 +293,7 @@ export default function Auth() {
     return (
       <div className="auth-page-layout bg-background">
         <div className="auth-page-content flex flex-col items-center gap-4">
-          <img src={nevoraLogo} alt="nCall Logo" className="w-16 h-16 rounded-2xl shadow-lg" />
+          <img src={nevoraLogo} alt="Direcall Logo" className="w-16 h-16 rounded-2xl shadow-lg" />
           <Loader2 className="h-8 w-8 animate-spin text-primary" />
           <p className="text-sm text-muted-foreground font-body">Loading...</p>
         </div>
@@ -307,12 +307,12 @@ export default function Auth() {
       <div className="relative inline-block mb-4">
         <img
           src={nevoraLogo}
-          alt="nCall Logo"
+          alt="Direcall Logo"
           className="w-[72px] h-[72px] rounded-2xl shadow-lg dark:shadow-[0_0_30px_rgba(59,111,255,0.25)]"
         />
       </div>
       <h1 className="text-[28px] font-extrabold text-foreground font-heading tracking-tight">
-        nCall
+        Direcall
       </h1>
       <p className="text-muted-foreground text-[13px] mt-0.5 font-body">
         by Nevorai
@@ -547,7 +547,7 @@ export default function Auth() {
                   />
                 </div>
                 <p className="text-xs text-muted-foreground font-body">
-                  We'll use this only to help you get started with nCall.
+                  We'll use this only to help you get started with Direcall.
                 </p>
               </div>
             )}

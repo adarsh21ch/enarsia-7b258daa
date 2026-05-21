@@ -16,7 +16,7 @@ export default function Refund() {
         </Link>
 
         <div className="flex items-baseline gap-2 mb-2">
-          <span className="text-xl font-extrabold text-primary">nCall</span>
+          <span className="text-xl font-extrabold text-primary">Direcall</span>
           <span className="text-xs text-muted-foreground">by Nevorai</span>
         </div>
         <h1 className="text-3xl font-bold text-foreground mb-2">Refund Policy</h1>
@@ -28,14 +28,14 @@ export default function Refund() {
           <div className="prose prose-sm max-w-none space-y-6 text-foreground">
             <section className="bg-primary/5 border border-primary/15 rounded-xl p-4">
               <p className="text-muted-foreground leading-relaxed m-0">
-                nCall is a digital subscription service. Refund eligibility depends on the plan you purchased. Read this policy carefully before subscribing.
+                Direcall is a digital subscription service. Refund eligibility depends on the plan you purchased. Read this policy carefully before subscribing.
               </p>
             </section>
 
             <section>
               <h2 className="text-xl font-semibold mb-3">1. Nature of Product</h2>
               <p className="text-muted-foreground leading-relaxed">
-                nCall is a digital, subscription-based SaaS product delivered entirely online. No physical products are shipped. Once you subscribe, you get immediate access for the duration of your billing period.
+                Direcall is a digital, subscription-based SaaS product delivered entirely online. No physical products are shipped. Once you subscribe, you get immediate access for the duration of your billing period.
               </p>
             </section>
 
@@ -45,14 +45,14 @@ export default function Refund() {
                 <div className="p-3 rounded-lg bg-card border border-border">
                   <h3 className="font-semibold text-foreground mb-1">Monthly Plan</h3>
                   <p className="text-muted-foreground text-sm m-0">
-                    Payments for the nCall monthly plan are <strong className="text-destructive">NON-REFUNDABLE</strong>. You retain access for the full month after subscribing, but no refunds are issued regardless of cancellation timing.
+                    Payments for the Direcall monthly plan are <strong className="text-destructive">NON-REFUNDABLE</strong>. You retain access for the full month after subscribing, but no refunds are issued regardless of cancellation timing.
                   </p>
                 </div>
 
                 <div className="p-3 rounded-lg bg-card border border-border">
                   <h3 className="font-semibold text-foreground mb-1">Yearly Plan</h3>
                   <p className="text-muted-foreground text-sm m-0">
-                    Payments for nCall yearly plans (including discounted offers) are eligible for a <strong className="text-emerald-600">full refund within 7 days</strong> of the purchase date. After 7 days, yearly payments become <strong className="text-destructive">NON-REFUNDABLE</strong>.
+                    Payments for Direcall yearly plans (including discounted offers) are eligible for a <strong className="text-emerald-600">full refund within 7 days</strong> of the purchase date. After 7 days, yearly payments become <strong className="text-destructive">NON-REFUNDABLE</strong>.
                   </p>
                 </div>
               </div>
@@ -109,7 +109,7 @@ export default function Refund() {
             <section>
               <h2 className="text-xl font-semibold mb-3">8. Changes to This Policy</h2>
               <p className="text-muted-foreground leading-relaxed">
-                We may update this Refund Policy from time to time. The latest version will always be available on this page. Continued use of nCall after changes constitutes acceptance.
+                We may update this Refund Policy from time to time. The latest version will always be available on this page. Continued use of Direcall after changes constitutes acceptance.
               </p>
             </section>
 
@@ -129,7 +129,7 @@ export default function Refund() {
               <Link to="/privacy" className="hover:text-foreground">Privacy Policy</Link>
               <Link to="/refund" className="hover:text-foreground">Refund Policy</Link>
             </div>
-            <p className="text-xs text-muted-foreground mt-4">© 2026 Nevorai · nCall · All rights reserved</p>
+            <p className="text-xs text-muted-foreground mt-4">© 2026 Nevorai · Direcall · All rights reserved</p>
           </div>
         </div>
       </ScrollArea>

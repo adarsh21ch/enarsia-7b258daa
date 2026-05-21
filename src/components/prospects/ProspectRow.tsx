@@ -147,7 +147,7 @@ export const ProspectRow = memo(function ProspectRow({
 
   const cleanPhoneNumber = (phone: string) => phone.replace(/[^0-9+]/g, '');
 
-  const openCall = useCallback((e: React.MouseEvent) => {
+  const opeDirecall = useCallback((e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
     onMarkLastContacted?.();
@@ -213,7 +213,7 @@ export const ProspectRow = memo(function ProspectRow({
           >
             <div className="flex items-center gap-2">
               {/* Call icon */}
-              <CallIconButton onClick={openCall} color={accentColor || undefined} className={isMobileTable ? "h-8 w-8" : "h-8 w-8"} />
+              <CallIconButton onClick={opeDirecall} color={accentColor || undefined} className={isMobileTable ? "h-8 w-8" : "h-8 w-8"} />
               <button
                 onClick={onToggleExpand}
                 className={cn(

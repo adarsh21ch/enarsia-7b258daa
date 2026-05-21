@@ -286,7 +286,7 @@ export default function Profile() {
       <header className="fixed-header z-40 bg-card/80 backdrop-blur-xl border-b border-border/50">
         <div className="flex items-center justify-between px-4 py-3">
           <div className="flex items-center gap-3">
-            <img src={nevoraLogo} alt="nCall Logo" className="h-10 w-10 rounded-xl object-cover shadow-md" />
+            <img src={nevoraLogo} alt="Direcall Logo" className="h-10 w-10 rounded-xl object-cover shadow-md" />
             <div>
               <h1 className="text-xl font-bold tracking-tight">Profile</h1>
               <p className="text-xs text-muted-foreground font-medium">Your Account & Settings</p>
@@ -457,7 +457,7 @@ export default function Profile() {
               </div>
               <div className="text-left">
                 <span className="font-medium text-sm block flex items-center gap-1.5">
-                  nCall AI Assistant
+                  Direcall AI Assistant
                   {!canAccessAI && <Lock className="h-3 w-3 text-muted-foreground" />}
                 </span>
                 <span className="text-[11px] text-muted-foreground">

@@ -365,8 +365,8 @@ export function AutoDemoTour() {
           className="bg-card rounded-2xl p-6 max-w-sm w-full space-y-5 animate-in fade-in zoom-in-95 duration-300 text-center"
           style={{ boxShadow: '0 8px 40px rgba(0,0,0,0.25)' }}
         >
-          <img src={nevoraLogo} alt="nCall" className="w-16 h-16 rounded-2xl shadow-lg mx-auto" />
-          <h1 className="text-xl font-bold text-foreground">Welcome to nCall! 👋</h1>
+          <img src={nevoraLogo} alt="Direcall" className="w-16 h-16 rounded-2xl shadow-lg mx-auto" />
+          <h1 className="text-xl font-bold text-foreground">Welcome to Direcall! 👋</h1>
           <p className="text-sm text-muted-foreground leading-relaxed">
             You're new here! Would you like a quick 60-second demo to see how the app works?
           </p>
@@ -420,7 +420,7 @@ export function AutoDemoTour() {
             </div>
             <h1 className="text-xl font-bold text-foreground">You're all set, {firstName}! 🚀</h1>
             <p className="text-sm text-muted-foreground leading-relaxed max-w-[280px] mx-auto">
-              Now you know how nCall works. Let's clear the demo data and get you started for real!
+              Now you know how Direcall works. Let's clear the demo data and get you started for real!
             </p>
             <button
               onClick={async () => {
@@ -429,7 +429,7 @@ export function AutoDemoTour() {
               }}
               className="w-full h-12 rounded-xl bg-primary text-primary-foreground font-bold text-base border-none cursor-pointer hover:opacity-90 transition-opacity"
             >
-              Start Using nCall →
+              Start Using Direcall →
             </button>
           </div>
         </div>
