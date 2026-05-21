@@ -35,7 +35,7 @@ export default function Privacy() {
             <section>
               <h2 className="text-xl font-semibold mb-3">1. Who We Are</h2>
               <p className="text-muted-foreground leading-relaxed">
-                Direcall is a product of Nevorai, built for network marketers and sales professionals to manage calls, leads and follow-ups. References to "Direcall", "we", "us" or "our" mean Nevorai and the Direcall application.
+                Direcall is a product of Nevorai Technologies, built for network marketers and sales professionals to manage calls, leads and follow-ups. References to "Direcall", "we", "us" or "our" mean Nevorai Technologies and the Direcall application.
               </p>
               <p className="text-muted-foreground leading-relaxed mt-2">
                 For privacy-related concerns, contact us at <a href={`mailto:${SUPPORT_EMAIL}`} className="text-primary hover:underline">{SUPPORT_EMAIL}</a>.
