@@ -1,35 +1,41 @@
+# New Direcall Logo
 
-The user is asking two things:
-1. Confirmation about whether `NEVORAI_BRIDGE_SECRET` was updated to match `NFLOW_BRIDGE_SECRET` from the calling app.
-2. Whether I should test the bridge end-to-end with a known Pro email.
+Replace the existing Nevorai logo with a unique, brandable Direcall logo built for a calling app aimed at network marketers and direct sellers.
 
-Context check:
-- The edge function `is-pro-user` reads `NFLOW_BRIDGE_SECRET` (single secret on Nevorai side).
-- The user mentions `NEVORAI_BRIDGE_SECRET` — this appears to be a separate secret name that the **calling app (nFlow)** would use to store the value it sends in its `Authorization: Bearer ...` header.
-- For the bridge to work, both sides must hold the **same string value**, but the secret names can differ:
-  - Nevorai (this project): `NFLOW_BRIDGE_SECRET` — already added
-  - Calling app: `NEVORAI_BRIDGE_SECRET` — lives in the calling app's project, not here
-- I cannot read the value of either secret (secrets are write-only from my side), so I can't literally compare strings. I can only verify presence on this side via `fetch_secrets`.
+## Concept
 
-What the user actually wants:
-- Reassurance + an offer to test end-to-end.
+A monogram **"D"** formed from a phone-call wave/arrow — the curve of the "D" doubles as an outbound sound wave, with a subtle arrow tip suggesting "direct". Reads as both a letter and a call signal. Works flat, in a circle (favicon/app icon), and in pure black or white.
 
-Plan for the response (in default mode):
-1. Clarify the secret-name situation: `NFLOW_BRIDGE_SECRET` is set on Nevorai's side; `NEVORAI_BRIDGE_SECRET` lives in the calling app and must hold the **same value**. I cannot read either value, so the user must confirm the values match in the calling app's secret store.
-2. Verify `NFLOW_BRIDGE_SECRET` is present on this project via `secrets--fetch_secrets`.
-3. Offer a concrete end-to-end test path:
-   - Run a curl against the deployed function with a known Pro email using `supabase--curl_edge_functions`, sending the Bearer token. But — I don't know the secret value, so I can't construct a valid Authorization header from my side either. The test would need the user to either (a) provide the secret value temporarily, or (b) trigger the call from the calling app and we inspect logs via `supabase--edge_function_logs`.
-   - Better path: I run two tests via `supabase--curl_edge_functions`:
-     - One **without** auth → expect 401 (proves auth gate works).
-     - One **with** the literal env var reference — won't work because curl tool can't read the secret.
-   - So the realistic E2E test is: user triggers from calling app, I tail logs.
+- Color: brand blue (#3B82F6) → deeper indigo gradient on the primary mark
+- Mono versions: solid black and solid white (1-color) for print, dark mode, embossing
+- Geometric, rounded, modern — feels closer to Linear/Superhuman than a generic CRM
 
-Steps I'll propose:
-- Step A: Verify presence of `NFLOW_BRIDGE_SECRET` on Nevorai side.
-- Step B: Run an unauthenticated curl to confirm 401 behavior (proves the gate).
-- Step C: Ask the user to either trigger a real call from the calling app OR paste a sample known-Pro email + phone so I can run a partial test (still need secret to fully auth — ask them to confirm match in their nFlow project secrets UI).
-- Step D: Tail logs for `is-pro-user` to confirm the inbound call landed and returned correctly.
+## Deliverables
 
-Since this is a small verification + test task (no new code), I'll keep it lean. Plan presents: confirm secret-name semantics, run a 401 sanity check, then either (a) live-test from calling app side with log tailing, or (b) ask user for a known-pro identifier to dry-run.
+1. **Primary logo (color)** — `src/assets/direcall-logo.png` (transparent, square, 1024×1024)
+2. **Wordmark lockup** — `src/assets/direcall-wordmark.png` (icon + "Direcall" text, transparent)
+3. **Mono black** — `src/assets/direcall-logo-black.png`
+4. **Mono white** — `src/assets/direcall-logo-white.png`
+5. **Favicon + PWA icons** — overwrite `public/favicon.png`, `public/icons/icon-192.png`, `public/icons/icon-512.png` (derived from the primary mark on solid brand background for maskable safety)
 
-No code changes needed unless test reveals a bug.
+## Code changes
+
+- Replace `src/assets/nevorai-logo.jpeg` imports across the app with the new `direcall-logo.png` (Header, Auth, ResetPassword, PaymentSuccess, InstallPromptBanner, onboarding popups, etc.)
+- Keep `alt="Direcall"` (already done in rebrand)
+- Update `index.html` `<meta name="theme-color">` if logo gradient shifts the brand color (likely stays #3B82F6)
+- Leave the old `nevorai-logo.jpeg` file in place for now (unreferenced) so nothing breaks during rollout; delete in a follow-up
+
+## Out of scope
+
+- No marketing site / OG image regeneration (separate task)
+- No animated splash screen
+- No change to brand color tokens in `index.css`
+
+## Process
+
+1. Generate primary color mark (premium model, transparent PNG)
+2. Generate mono black + mono white variants
+3. Generate wordmark lockup
+4. Generate favicon + 192/512 app icons (solid bg, maskable safe area)
+5. Swap imports across the codebase in one pass
+6. QA: view each generated PNG, confirm legibility at 32×32 and 16×16, confirm light/dark backgrounds
