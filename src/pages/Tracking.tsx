@@ -39,7 +39,7 @@ import { useApplicationTotalSnapshots } from '@/hooks/useApplicationTotalSnapsho
 import { useApplicationSnapshots } from '@/hooks/useApplicationSnapshots';
 import { useFunnelConfig } from '@/hooks/useFunnelConfig';
 import { NEVORAI_WEBSITE_URL } from '@/config/siteUrl';
-import nevoraLogo from '@/assets/nevorai-logo.jpeg';
+import nevoraLogo from '@/assets/direcall-logo.png';
 
 export default function Tracking() {
   const navigate = useNavigate();

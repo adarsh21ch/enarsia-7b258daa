@@ -9,7 +9,7 @@ import { Label } from '@/components/ui/label';
 import { InputOTP, InputOTPGroup, InputOTPSlot } from '@/components/ui/input-otp';
 import { toast } from 'sonner';
 import { Loader2, Mail, Lock, Eye, EyeOff, ArrowLeft, User, Phone } from 'lucide-react';
-import nevoraLogo from '@/assets/nevorai-logo.jpeg';
+import nevoraLogo from '@/assets/direcall-logo.png';
 import { getPasswordRecoveryRedirectUrl, PUBLISHED_APP_URL } from '@/config/siteUrl';
 
 export default function Auth() {

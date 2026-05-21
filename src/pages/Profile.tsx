@@ -40,7 +40,7 @@ import { ThemeSettings } from '@/components/profile/ThemeSettings';
 import { useFeatureAccess } from '@/hooks/useFeatureAccess';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
-import nevoraLogo from '@/assets/nevorai-logo.jpeg';
+import nevoraLogo from '@/assets/direcall-logo.png';
 
 // Pull-to-refresh hook
 function usePullToRefresh(onRefresh: () => Promise<void>, threshold = 80) {

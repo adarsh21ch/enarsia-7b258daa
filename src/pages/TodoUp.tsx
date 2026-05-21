@@ -23,7 +23,7 @@ import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Loader2, CheckCircle, Trash2, Edit2, Send, X, Check, Plus, StickyNote, ListChecks, CalendarCheck } from 'lucide-react';
 import { format, parseISO, isSameDay } from 'date-fns';
 import { cn } from '@/lib/utils';
-import nevoraLogo from '@/assets/nevorai-logo.jpeg';
+import nevoraLogo from '@/assets/direcall-logo.png';
 import { toast } from 'sonner';
 type ViewMode = 'daily-tasks' | 'todo-list' | 'recent-activity';
 

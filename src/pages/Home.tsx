@@ -19,7 +19,7 @@ import { TrialExpiredModal } from '@/components/subscription/TrialExpiredModal';
 import { Loader2, Clock } from 'lucide-react';
 import { SearchBar } from '@/components/ui/SearchBar';
 import { parseISO, format, isSameDay } from 'date-fns';
-import nevoraLogo from '@/assets/nevorai-logo.jpeg';
+import nevoraLogo from '@/assets/direcall-logo.png';
 
 // Consistent Call icon
 const CallIcon = ({

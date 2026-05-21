@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { LogOut, Menu, X, List, BarChart3 } from 'lucide-react';
 import { useState } from 'react';
 import { cn } from '@/lib/utils';
-import nevoraLogo from '@/assets/nevorai-logo.jpeg';
+import nevoraLogo from '@/assets/direcall-logo.png';
 
 export function Header() {
   const { user, signOut } = useAuth();

@@ -7,7 +7,7 @@ import { Loader2, CheckCircle, XCircle, Crown, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { useQueryClient } from '@tanstack/react-query';
-import nevoraLogo from '@/assets/nevorai-logo.jpeg';
+import nevoraLogo from '@/assets/direcall-logo.png';
 
 // Format duration dynamically based on days
 const formatDuration = (days: number): string => {

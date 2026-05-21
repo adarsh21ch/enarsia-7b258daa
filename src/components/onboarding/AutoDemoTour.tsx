@@ -4,7 +4,7 @@ import { useAutoDemoTour, DemoTourState } from '@/hooks/useAutoDemoTour';
 import { useProfile } from '@/hooks/useProfile';
 import { Confetti } from './OnboardingPrimitives';
 import { Loader2, X } from 'lucide-react';
-import nevoraLogo from '@/assets/nevorai-logo.jpeg';
+import nevoraLogo from '@/assets/direcall-logo.png';
 
 /* ─── Step Definitions ─── */
 interface TourStep {

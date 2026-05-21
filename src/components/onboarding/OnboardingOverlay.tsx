@@ -10,7 +10,7 @@ import {
   Confetti,
   useTargetHighlight,
 } from './OnboardingPrimitives';
-import nevoraLogo from '@/assets/nevorai-logo.jpeg';
+import nevoraLogo from '@/assets/direcall-logo.png';
 
 interface StepDef {
   icon: React.ReactNode;
