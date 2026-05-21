@@ -83,7 +83,7 @@ export default function Terms() {
             <section>
               <h2 className="text-xl font-semibold mb-3">6. Your Data</h2>
               <p className="text-muted-foreground leading-relaxed">
-                You own your data — leads, contacts, call notes and any content you create inside Direcall. By using Direcall, you grant Nevorai a limited licence to store and process this data solely to provide the service to you. We do not use your data for any other purpose.
+                You own your data — leads, contacts, call notes and any content you create inside Direcall. By using Direcall, you grant Nevorai Technologies a limited licence to store and process this data solely to provide the service to you. We do not use your data for any other purpose.
               </p>
             </section>
 
