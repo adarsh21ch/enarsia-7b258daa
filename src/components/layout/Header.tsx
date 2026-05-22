@@ -26,7 +26,7 @@ export function Header() {
             <img 
               src={nevoraLogo} 
               alt="Direcall Logo" 
-              className="h-8 w-8 rounded-lg object-cover"
+              className="h-8 w-8 object-contain dark:invert"
             />
             <span className="font-semibold text-lg hidden sm:inline">Direcall</span>
           </Link>

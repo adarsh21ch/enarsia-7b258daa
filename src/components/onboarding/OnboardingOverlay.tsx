@@ -218,7 +218,7 @@ export function OnboardingOverlay() {
         <div
           className="bg-card text-card-foreground rounded-[14px] p-6 max-w-sm w-full space-y-5 animate-in fade-in zoom-in-95 duration-300 text-center shadow-xl"
         >
-          <img src={nevoraLogo} alt="Nevora AI" className="w-16 h-16 rounded-2xl shadow-lg mx-auto" />
+          <img src={nevoraLogo} alt="Direcall" className="w-16 h-16 object-contain dark:invert mx-auto" />
           <h1 className="text-xl font-extrabold text-foreground">Welcome to Nevora AI! 👋</h1>
           <p className="text-sm text-muted-foreground">
             Let's take a quick tour so you understand every feature. You can skip any step.

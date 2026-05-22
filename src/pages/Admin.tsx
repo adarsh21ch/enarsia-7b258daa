@@ -67,7 +67,7 @@ export default function Admin() {
             <img 
               src={nevoraLogo} 
               alt="Direcall Logo" 
-              className="h-9 w-9 rounded-xl object-cover shadow-md"
+              className="h-9 w-9 object-contain dark:invert"
             />
             <div>
               <h1 className="text-base font-bold tracking-tight font-heading">Admin Panel</h1>
