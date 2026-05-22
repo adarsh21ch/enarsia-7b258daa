@@ -293,7 +293,7 @@ export default function Auth() {
     return (
       <div className="auth-page-layout bg-background">
         <div className="auth-page-content flex flex-col items-center gap-4">
-          <img src={nevoraLogo} alt="Direcall Logo" className="dark:invert w-16 h-16 rounded-2xl shadow-lg" />
+          <img src={nevoraLogo} alt="Direcall Logo" className="w-16 h-16 rounded-2xl shadow-lg" />
           <Loader2 className="h-8 w-8 animate-spin text-primary" />
           <p className="text-sm text-muted-foreground font-body">Loading...</p>
         </div>
@@ -308,7 +308,7 @@ export default function Auth() {
         <img
           src={nevoraLogo}
           alt="Direcall Logo"
-          className="w-[72px] h-[72px] object-contain dark:invert"
+          className="w-[72px] h-[72px] object-contain"
         />
       </div>
       <h1 className="text-[28px] font-extrabold text-foreground font-heading tracking-tight">

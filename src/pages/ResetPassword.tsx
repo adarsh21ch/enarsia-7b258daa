@@ -147,7 +147,7 @@ export default function ResetPassword() {
           <img
             src={nevoraLogo}
             alt="Direcall logo"
-            className="h-16 w-16 mx-auto mb-4 object-contain dark:invert"
+            className="h-16 w-16 mx-auto mb-4 object-contain"
           />
           <h1 className="text-2xl font-bold">Reset password</h1>
           <p className="text-sm text-muted-foreground mt-1">Set your new password</p>

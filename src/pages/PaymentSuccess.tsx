@@ -143,7 +143,7 @@ export default function PaymentSuccess() {
           <img 
             src={nevoraLogo} 
             alt="Direcall Logo" 
-            className="h-16 w-16 object-contain dark:invert"
+            className="h-16 w-16 object-contain"
           />
         </div>
 
