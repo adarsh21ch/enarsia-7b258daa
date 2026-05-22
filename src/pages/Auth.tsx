@@ -308,7 +308,7 @@ export default function Auth() {
         <img
           src={nevoraLogo}
           alt="Direcall Logo"
-          className="w-[72px] h-[72px] rounded-2xl shadow-lg dark:shadow-[0_0_30px_rgba(59,111,255,0.25)]"
+          className="w-[72px] h-[72px] object-contain dark:invert"
         />
       </div>
       <h1 className="text-[28px] font-extrabold text-foreground font-heading tracking-tight">
