@@ -25,7 +25,20 @@ export interface SubscriptionPlan {
   is_default: boolean;
   sort_order: number;
   badge_text: string | null;
+  // ---- Admin-controlled pricing (new) ----
+  monthly_price_inr?: number | null;
+  yearly_price_inr?: number | null;
+  first_month_price_inr?: number | null;
+  renewal_price_inr?: number | null;
+  trial_days?: number | null;
+  billing_cycle?: 'monthly' | 'yearly' | 'one_time' | null;
+  offer_badge_text?: string | null;
+  is_popular?: boolean | null;
+  is_free?: boolean | null;
+  cancel_anytime?: boolean | null;
+  highlight_savings_text?: string | null;
 }
+
 
 export interface Offer {
   id: string;

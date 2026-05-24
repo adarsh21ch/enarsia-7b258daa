@@ -8,14 +8,16 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
-import { Loader2, Shield, Users, Crown, ArrowLeft, BarChart3, IndianRupee, Wrench, Megaphone } from 'lucide-react';
+import { Loader2, Shield, Users, Crown, ArrowLeft, BarChart3, IndianRupee, Wrench, Megaphone, Tag } from 'lucide-react';
 import nevoraLogo from '@/assets/nevorai-call-logo.png';
 import { AdminAnalyticsDashboard } from '@/components/admin/AdminAnalyticsDashboard';
 import { EnhancedUsersTab } from '@/components/admin/EnhancedUsersTab';
 import { NewSignupsView } from '@/components/admin/NewSignupsView';
 import { RevenueTab } from '@/components/admin/RevenueTab';
+import { PlansTab } from '@/components/admin/PlansTab';
 import { ManageTab } from '@/components/admin/ManageTab';
 import { BroadcastTab } from '@/components/admin/BroadcastTab';
+
 
 
 export default function Admin() {
@@ -106,24 +108,28 @@ export default function Admin() {
       <main className="scrollable-content">
         <div className="container py-3 px-3 pb-24 space-y-4">
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-            <TabsList className="w-full grid grid-cols-5 h-10">
-              <TabsTrigger value="overview" className="text-[11px] px-1 h-8 gap-1">
+            <TabsList className="w-full grid grid-cols-6 h-10">
+              <TabsTrigger value="overview" className="text-[10px] px-1 h-8 gap-1">
                 <BarChart3 className="h-3.5 w-3.5" />
                 <span className="hidden sm:inline">Overview</span>
               </TabsTrigger>
-              <TabsTrigger value="users" className="text-[11px] px-1 h-8 gap-1">
+              <TabsTrigger value="users" className="text-[10px] px-1 h-8 gap-1">
                 <Users className="h-3.5 w-3.5" />
                 <span className="hidden sm:inline">Users</span>
               </TabsTrigger>
-              <TabsTrigger value="revenue" className="text-[11px] px-1 h-8 gap-1">
+              <TabsTrigger value="plans" className="text-[10px] px-1 h-8 gap-1">
+                <Tag className="h-3.5 w-3.5" />
+                <span className="hidden sm:inline">Plans</span>
+              </TabsTrigger>
+              <TabsTrigger value="revenue" className="text-[10px] px-1 h-8 gap-1">
                 <IndianRupee className="h-3.5 w-3.5" />
                 <span className="hidden sm:inline">Revenue</span>
               </TabsTrigger>
-              <TabsTrigger value="manage" className="text-[11px] px-1 h-8 gap-1">
+              <TabsTrigger value="manage" className="text-[10px] px-1 h-8 gap-1">
                 <Wrench className="h-3.5 w-3.5" />
                 <span className="hidden sm:inline">Manage</span>
               </TabsTrigger>
-              <TabsTrigger value="broadcast" className="text-[11px] px-1 h-8 gap-1">
+              <TabsTrigger value="broadcast" className="text-[10px] px-1 h-8 gap-1">
                 <Megaphone className="h-3.5 w-3.5" />
                 <span className="hidden sm:inline">Broadcast</span>
               </TabsTrigger>
@@ -146,9 +152,13 @@ export default function Admin() {
                 </TabsContent>
               </Tabs>
             </TabsContent>
+            <TabsContent value="plans" className="mt-3">
+              <PlansTab />
+            </TabsContent>
             <TabsContent value="revenue" className="mt-3">
               <RevenueTab />
             </TabsContent>
+
             <TabsContent value="manage" className="mt-3">
               <ManageTab />
             </TabsContent>

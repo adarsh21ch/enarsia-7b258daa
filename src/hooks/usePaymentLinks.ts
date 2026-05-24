@@ -22,7 +22,20 @@ export interface PlanConfig {
   isDefault?: boolean;
   sortOrder: number;
   tier: 'basic' | 'pro' | 'premium';
+  // ---- admin-controlled pricing passthrough ----
+  monthlyPrice?: number | null;
+  yearlyPrice?: number | null;
+  firstMonthPrice?: number | null;
+  renewalPrice?: number | null;
+  trialDays?: number | null;
+  billingCycle?: 'monthly' | 'yearly' | 'one_time' | null;
+  offerBadgeText?: string | null;
+  isPopular?: boolean;
+  isFree?: boolean;
+  cancelAnytime?: boolean;
+  savingsText?: string | null;
 }
+
 
 // Legacy constants for backward compatibility (will be overridden by dynamic config)
 export const PAYMENT_LINKS = {
@@ -95,7 +108,19 @@ export function usePaymentLinks() {
     isDefault: plan.is_default,
     sortOrder: plan.sort_order || 0,
     tier: plan.tier || 'pro',
+    monthlyPrice: plan.monthly_price_inr ?? null,
+    yearlyPrice: plan.yearly_price_inr ?? null,
+    firstMonthPrice: plan.first_month_price_inr ?? null,
+    renewalPrice: plan.renewal_price_inr ?? null,
+    trialDays: plan.trial_days ?? 0,
+    billingCycle: (plan.billing_cycle as any) ?? null,
+    offerBadgeText: plan.offer_badge_text ?? null,
+    isPopular: !!plan.is_popular,
+    isFree: !!plan.is_free,
+    cancelAnytime: plan.cancel_anytime !== false,
+    savingsText: plan.highlight_savings_text ?? null,
   }));
+
 
   // Get dynamic free lead limit from config
   const freeLeadLimit = config.limits.free_total_leads ?? FREE_LEAD_LIMIT;
