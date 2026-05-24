@@ -533,8 +533,8 @@ html {
   }
 
   @keyframes onboarding-pulse-ring {
-    0%, 100% { box-shadow: 0 0 0 3px #2563EB; }
-    50% { box-shadow: 0 0 0 10px rgba(37,99,235,0.22); }
+    0%, 100% { box-shadow: 0 0 0 3px #1FA37A; }
+    50% { box-shadow: 0 0 0 10px rgba(31,163,122,0.22); }
   }
 
   @keyframes draw-circle {

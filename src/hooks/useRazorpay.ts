@@ -142,7 +142,7 @@ export function useRazorpay() {
           email: user.email,
         },
         theme: {
-          color: '#3b82f6',
+          color: '#1FA37A',
         },
         // Handler callback when payment succeeds
         handler: function(response: any) {
@@ -240,7 +240,7 @@ export function useRazorpay() {
           email: user.email,
         },
         theme: {
-          color: '#3b82f6',
+          color: '#1FA37A',
         },
         handler: function(response: any) {
           console.log('Subscription payment successful', response);
