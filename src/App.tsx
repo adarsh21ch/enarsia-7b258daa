@@ -11,6 +11,7 @@ import { Toaster } from "sonner";
 import { ThemeProvider } from "@/components/theme/ThemeProvider";
 import { InstallPromptBanner } from "@/components/pwa/InstallPromptBanner";
 import { UpdateBanner } from "@/components/pwa/UpdateBanner";
+import { ReinstallForNewLogoNotice } from "@/components/pwa/ReinstallForNewLogoNotice";
 import { AppAccessTracker } from "@/components/AppAccessTracker";
 import { AutoDemoTour } from "@/components/onboarding/AutoDemoTour";
 import { Loader2 } from "lucide-react";
@@ -112,6 +113,7 @@ function App() {
                     <Toaster position="top-center" />
                     <InstallPromptBanner />
                     <UpdateBanner />
+                    <ReinstallForNewLogoNotice />
                     <AppAccessTracker />
                     <AutoDemoTour />
                     <Suspense fallback={<PageLoader />}>
