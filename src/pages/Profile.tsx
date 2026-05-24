@@ -225,6 +225,7 @@ export default function Profile() {
   const [editOpen, setEditOpen] = useState(false);
   const [showAIChat, setShowAIChat] = useState(false);
   const [showAIInsights, setShowAIInsights] = useState(false);
+  const [showInstallSheet, setShowInstallSheet] = useState(false);
   
   const { canAccess: canAccessAI } = useFeatureAccess('ai_assistant');
   const { pendingCount } = useSharedLeads();
