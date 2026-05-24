@@ -1,6 +1,8 @@
 import { Crown, Check } from 'lucide-react';
 import { PlanConfig } from '@/hooks/usePaymentLinks';
 
+
+
 interface TierCardProps {
   tierName?: string;
   plans: PlanConfig[];
@@ -76,6 +78,10 @@ export function TierCard({ tierName = 'Pro', plans, selectedPlanKey, onSelectPla
           {sortedPlans.map((plan) => {
             const isSelected = selectedPlanKey === plan.plan_key;
             const dailyPrice = getDailyPrice(plan);
+            const renewal = plan.renewalPrice ?? plan.price;
+            const first = plan.firstMonthPrice ?? null;
+            const hasIntro = typeof first === 'number' && first > 0 && first < renewal;
+            const introBadge = plan.offerBadgeText || plan.badgeText;
 
             return (
               <button
@@ -88,9 +94,9 @@ export function TierCard({ tierName = 'Pro', plans, selectedPlanKey, onSelectPla
                     : 'border-border/50 bg-muted/20 hover:border-[hsl(36,70%,70%)] hover:bg-muted/30'
                 }`}
               >
-                {plan.badgeText && (
+                {introBadge && (
                   <span className="absolute -top-2 left-1/2 -translate-x-1/2 text-[8px] font-bold px-2 py-0.5 rounded-full bg-[hsl(36,80%,55%)] text-white uppercase tracking-wider whitespace-nowrap">
-                    {plan.badgeText}
+                    {introBadge}
                   </span>
                 )}
                 <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider leading-tight">
@@ -99,14 +105,21 @@ export function TierCard({ tierName = 'Pro', plans, selectedPlanKey, onSelectPla
                 <span className={`text-base font-extrabold leading-tight mt-1 ${
                   isSelected ? 'text-[hsl(36,75%,40%)] dark:text-[hsl(36,80%,65%)]' : 'text-foreground'
                 }`}>
-                  ₹{plan.price}{getBillingLabel(plan)}
+                  ₹{hasIntro ? first : plan.price}{getBillingLabel(plan)}
                 </span>
-                <span className="text-[9px] text-muted-foreground mt-0.5 leading-tight">
-                  ₹{dailyPrice}/day
-                </span>
+                {hasIntro ? (
+                  <span className="text-[9px] text-muted-foreground mt-0.5 leading-tight">
+                    then ₹{renewal}{getBillingLabel(plan)}
+                  </span>
+                ) : (
+                  <span className="text-[9px] text-muted-foreground mt-0.5 leading-tight">
+                    ₹{dailyPrice}/day
+                  </span>
+                )}
               </button>
             );
           })}
+
         </div>
       </div>
     </div>

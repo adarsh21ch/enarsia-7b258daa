@@ -189,6 +189,34 @@ Deno.serve(async (req) => {
     const event = payload.event;
     console.log('Received Razorpay event:', event);
 
+    // ---- Idempotency guard: dedupe by Razorpay event id ----
+    const eventId =
+      req.headers.get('x-razorpay-event-id') ||
+      payload.id ||
+      `${event}:${payload.payload?.payment?.entity?.id || payload.payload?.subscription?.entity?.id || ''}:${payload.created_at || ''}`;
+
+    if (eventId) {
+      const { error: dedupErr } = await supabase
+        .from('subscription_events')
+        .insert({
+          razorpay_event_id: eventId,
+          event_type: event,
+          raw_payload: payload,
+        });
+      if (dedupErr) {
+        // Duplicate (unique violation) → already processed; ack 200
+        if ((dedupErr as any).code === '23505') {
+          console.log(`Duplicate event ${eventId} — already processed, acking.`);
+          return new Response(JSON.stringify({ success: true, duplicate: true }), {
+            status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+          });
+        }
+        console.error('subscription_events insert error (non-fatal):', dedupErr);
+      }
+    }
+
+
+
     // =========================================
     // ONE-TIME: payment.captured (existing flow)
     // =========================================

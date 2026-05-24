@@ -84,7 +84,7 @@ Deno.serve(async (req) => {
     const razorpayKeySecret = Deno.env.get('RAZORPAY_KEY_SECRET')!;
     const auth = btoa(`${razorpayKeyId}:${razorpayKeySecret}`);
 
-    const subscriptionPayload = {
+    const subscriptionPayload: Record<string, any> = {
       plan_id: plan.razorpay_plan_id,
       total_count: 12, // Max 12 billing cycles
       quantity: 1,
@@ -95,8 +95,17 @@ Deno.serve(async (req) => {
         tier: tier,
         plan_key: plan.plan_key,
         duration_days: String(plan.duration_days),
+        first_month_price_inr: String(plan.first_month_price_inr ?? ''),
+        renewal_price_inr: String(plan.renewal_price_inr ?? plan.price_inr ?? ''),
       },
     };
+
+    // Apply Razorpay Offer (intro pricing) when admin has attached one to this plan.
+    // The offer is configured Razorpay-side to discount only the first invoice.
+    if (plan.razorpay_offer_id) {
+      subscriptionPayload.offer_id = plan.razorpay_offer_id;
+    }
+
 
     const rzpResponse = await fetch('https://api.razorpay.com/v1/subscriptions', {
       method: 'POST',

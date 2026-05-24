@@ -357,6 +357,8 @@ function PlanEditForm({
     duration_days: plan?.duration_days || 30,
     billing_type: (plan?.billing_type || 'one_time') as 'one_time' | 'recurring',
     razorpay_plan_id: plan?.razorpay_plan_id || '',
+    razorpay_offer_id: (plan as any)?.razorpay_offer_id || '',
+
     badge_text: plan?.badge_text || '',
     features: (plan?.features || []).join('\n'),
     sort_order: plan?.sort_order || (existingPlansCount + 1),
@@ -495,6 +497,18 @@ function PlanEditForm({
             required
           />
           <p className="text-xs text-muted-foreground">Required for recurring billing. Create in Razorpay Dashboard → Subscriptions → Plans.</p>
+
+          <div className="space-y-2 pt-2">
+            <Label htmlFor="razorpay_offer_id">Razorpay Offer ID (optional)</Label>
+            <Input
+              id="razorpay_offer_id"
+              placeholder="offer_XXXXX"
+              value={formData.razorpay_offer_id}
+              onChange={(e) => setFormData(prev => ({ ...prev, razorpay_offer_id: e.target.value }))}
+            />
+            <p className="text-xs text-muted-foreground">Discounts the first invoice only (e.g. ₹59 first month, then renews at the plan price). Create in Razorpay Dashboard → Offers.</p>
+          </div>
+
         </div>
       )}
 

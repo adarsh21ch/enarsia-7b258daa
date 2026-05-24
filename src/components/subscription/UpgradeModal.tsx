@@ -109,6 +109,24 @@ export function UpgradeModal({
     />
   ) : null;
 
+  const ctaPrice = (() => {
+    if (!selectedPlan) return '';
+    const first = selectedPlan.firstMonthPrice ?? null;
+    const renewal = selectedPlan.renewalPrice ?? selectedPlan.price;
+    return typeof first === 'number' && first > 0 && first < renewal ? first : selectedPlan.price;
+  })();
+  const ctaSubLine = (() => {
+    if (!selectedPlan) return null;
+    const first = selectedPlan.firstMonthPrice ?? null;
+    const renewal = selectedPlan.renewalPrice ?? selectedPlan.price;
+    const hasIntro = typeof first === 'number' && first > 0 && first < renewal;
+    const parts: string[] = [];
+    if (hasIntro) parts.push(`Then ₹${renewal} on renewal`);
+    if (selectedPlan.cancelAnytime !== false) parts.push('Cancel anytime');
+    parts.push('Secure payment via Razorpay');
+    return parts.join(' · ');
+  })();
+
   const CTAButton = (
     <div className="space-y-1">
       <Button
@@ -117,13 +135,14 @@ export function UpgradeModal({
         disabled={paymentLoading || plansLoading}
       >
         <Crown className="h-4 w-4 mr-2" />
-        {paymentLoading ? 'Opening payment...' : `Get ${selectedPlan?.name ?? 'Pro'} – ₹${selectedPlan?.price ?? ''}`}
+        {paymentLoading ? 'Opening payment...' : `Get ${selectedPlan?.name ?? 'Pro'} – ₹${ctaPrice}`}
       </Button>
       <p className="text-[10px] text-muted-foreground text-center">
-        Secure payment via Razorpay · Cancel anytime
+        {ctaSubLine}
       </p>
     </div>
   );
+
 
   if (isMobile) {
     return (

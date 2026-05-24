@@ -1106,6 +1106,7 @@ export type Database = {
           plan_key: string
           plan_name: string
           price_inr: number
+          razorpay_offer_id: string | null
           razorpay_plan_id: string | null
           renewal_price_inr: number | null
           sort_order: number | null
@@ -1137,6 +1138,7 @@ export type Database = {
           plan_key: string
           plan_name: string
           price_inr: number
+          razorpay_offer_id?: string | null
           razorpay_plan_id?: string | null
           renewal_price_inr?: number | null
           sort_order?: number | null
@@ -1168,6 +1170,7 @@ export type Database = {
           plan_key?: string
           plan_name?: string
           price_inr?: number
+          razorpay_offer_id?: string | null
           razorpay_plan_id?: string | null
           renewal_price_inr?: number | null
           sort_order?: number | null

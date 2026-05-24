@@ -19,6 +19,8 @@ export interface SubscriptionPlan {
   payment_link: string | null;
   billing_type: 'one_time' | 'recurring';
   razorpay_plan_id: string | null;
+  razorpay_offer_id?: string | null;
+
   tier: SubscriptionTier;
   features: string[];
   is_active: boolean;
