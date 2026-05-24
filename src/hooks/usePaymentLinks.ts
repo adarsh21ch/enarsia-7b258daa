@@ -22,7 +22,20 @@ export interface PlanConfig {
   isDefault?: boolean;
   sortOrder: number;
   tier: 'basic' | 'pro' | 'premium';
+  // ---- admin-controlled pricing passthrough ----
+  monthlyPrice?: number | null;
+  yearlyPrice?: number | null;
+  firstMonthPrice?: number | null;
+  renewalPrice?: number | null;
+  trialDays?: number | null;
+  billingCycle?: 'monthly' | 'yearly' | 'one_time' | null;
+  offerBadgeText?: string | null;
+  isPopular?: boolean;
+  isFree?: boolean;
+  cancelAnytime?: boolean;
+  savingsText?: string | null;
 }
+
 
 // Legacy constants for backward compatibility (will be overridden by dynamic config)
 export const PAYMENT_LINKS = {
