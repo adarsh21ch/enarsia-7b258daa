@@ -162,8 +162,7 @@ export function InstallInstructionsSheet({
     </>
   );
 }
-  );
-}
+
 
 function InstallSteps({
   platform,
