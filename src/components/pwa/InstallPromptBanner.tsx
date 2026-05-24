@@ -109,10 +109,10 @@ export function InstallPromptBanner() {
           </div>
           <div className="flex-1 min-w-0">
             <h3 id="install-title" className="text-base font-semibold text-foreground">
-              Install Nevorai Call
+              Add Nevorai Call to your Home Screen
             </h3>
             <p className="text-xs text-muted-foreground mt-0.5">
-              Get the full app on your home screen — fast, offline-ready, no app store.
+              Open it like a real app — no app store, no download. Just add it to your home screen.
             </p>
           </div>
         </div>
@@ -147,21 +147,26 @@ function InstallSteps({
 }) {
   if (canNativeInstall) {
     return (
-      <Button onClick={onNativeInstall} className="w-full h-11 rounded-xl font-medium">
-        <Download className="h-4 w-4 mr-2" />
-        Install app
-      </Button>
+      <>
+        <Button onClick={onNativeInstall} className="w-full h-11 rounded-xl font-medium">
+          <Download className="h-4 w-4 mr-2" />
+          Add to Home Screen
+        </Button>
+        <p className="mt-2 text-[11px] text-muted-foreground text-center">
+          Your browser will ask to add Nevorai Call to your home screen.
+        </p>
+      </>
     );
   }
 
   if (platform === 'ios-safari') {
     return (
       <Steps
-        title="On iPhone Safari"
+        title="On iPhone — Safari"
         steps={[
           { icon: <Share className="h-4 w-4" />, text: 'Tap the Share button at the bottom of Safari' },
           { icon: <Plus className="h-4 w-4" />, text: 'Scroll down and tap "Add to Home Screen"' },
-          { icon: <Smartphone className="h-4 w-4" />, text: 'Tap "Add" — Nevorai Call appears on your home screen' },
+          { icon: <Smartphone className="h-4 w-4" />, text: 'Tap "Add" — the Nevorai Call icon appears on your home screen' },
         ]}
       />
     );
@@ -170,11 +175,11 @@ function InstallSteps({
   if (platform === 'ios-chrome') {
     return (
       <Steps
-        title="On iPhone Chrome"
+        title="On iPhone — Chrome"
         steps={[
           { icon: <Share className="h-4 w-4" />, text: 'Tap the Share icon in the address bar' },
           { icon: <Plus className="h-4 w-4" />, text: 'Tap "Add to Home Screen"' },
-          { icon: <Smartphone className="h-4 w-4" />, text: 'For best results, open this site in Safari and install from there' },
+          { icon: <Smartphone className="h-4 w-4" />, text: 'Tip: for best results, open this page in Safari and add it from there' },
         ]}
       />
     );
@@ -183,11 +188,11 @@ function InstallSteps({
   if (platform === 'android-chrome') {
     return (
       <Steps
-        title="On Android Chrome"
+        title="On Android — Chrome"
         steps={[
           { icon: <MoreVertical className="h-4 w-4" />, text: 'Tap the three-dot menu (⋮) at the top right' },
-          { icon: <Plus className="h-4 w-4" />, text: 'Tap "Add to Home screen" or "Install app"' },
-          { icon: <Smartphone className="h-4 w-4" />, text: 'Confirm — Nevorai Call installs like a native app' },
+          { icon: <Plus className="h-4 w-4" />, text: 'Tap "Add to Home screen"' },
+          { icon: <Smartphone className="h-4 w-4" />, text: 'Confirm — the Nevorai Call icon appears on your home screen' },
         ]}
       />
     );
@@ -198,8 +203,8 @@ function InstallSteps({
       <Steps
         title="On desktop"
         steps={[
-          { icon: <Download className="h-4 w-4" />, text: 'Click the install icon in your browser address bar' },
-          { icon: <Plus className="h-4 w-4" />, text: 'Or open the browser menu and choose "Install Nevorai Call"' },
+          { icon: <Download className="h-4 w-4" />, text: 'Click the "Add to Home Screen" icon in your browser address bar' },
+          { icon: <Plus className="h-4 w-4" />, text: 'Or open the browser menu and choose "Add Nevorai Call to Home Screen"' },
         ]}
       />
     );
@@ -209,8 +214,9 @@ function InstallSteps({
     <Steps
       title="On your phone"
       steps={[
-        { icon: <Share className="h-4 w-4" />, text: 'Open your browser menu (Share or ⋮)' },
-        { icon: <Plus className="h-4 w-4" />, text: 'Choose "Add to Home Screen" or "Install app"' },
+        { icon: <Share className="h-4 w-4" />, text: 'Open your browser menu — Share button on iPhone, three-dot menu (⋮) on Android' },
+        { icon: <Plus className="h-4 w-4" />, text: 'Tap "Add to Home Screen"' },
+        { icon: <Smartphone className="h-4 w-4" />, text: 'The Nevorai Call icon will appear on your home screen' },
       ]}
     />
   );
