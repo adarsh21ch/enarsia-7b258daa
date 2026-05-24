@@ -1,8 +1,5 @@
 import { useAdminAnalytics } from '@/hooks/useAdminAnalytics';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { PlansManager } from './PlansManager';
-import { OffersManager } from './OffersManager';
-import { IndianRupee, ArrowDown, ArrowUp, Minus, CreditCard, TrendingUp, Calendar } from 'lucide-react';
+import { IndianRupee, ArrowDown, ArrowUp } from 'lucide-react';
 
 export function RevenueTab() {
   const { data: analytics } = useAdminAnalytics();
@@ -16,7 +13,6 @@ export function RevenueTab() {
 
   return (
     <div className="space-y-4">
-      {/* Revenue Summary Card */}
       {revenue && (
         <div className="rounded-2xl border border-border/50 bg-card p-4 space-y-3">
           <div className="flex items-center gap-2">
@@ -53,19 +49,9 @@ export function RevenueTab() {
         </div>
       )}
 
-      {/* Plans + Offers sub-tabs */}
-      <Tabs defaultValue="plans" className="w-full">
-        <TabsList className="w-full grid grid-cols-2 h-9">
-          <TabsTrigger value="plans" className="text-xs h-7">💎 Plans</TabsTrigger>
-          <TabsTrigger value="offers" className="text-xs h-7">🏷️ Offers</TabsTrigger>
-        </TabsList>
-        <TabsContent value="plans" className="mt-3">
-          <PlansManager />
-        </TabsContent>
-        <TabsContent value="offers" className="mt-3">
-          <OffersManager />
-        </TabsContent>
-      </Tabs>
+      <div className="rounded-2xl border border-border/40 bg-muted/30 p-4 text-xs text-muted-foreground">
+        Plans &amp; Offers have moved to their own <strong>Plans</strong> tab above.
+      </div>
     </div>
   );
 }
@@ -86,3 +72,4 @@ function SummaryItem({ label, value, badge, warning }: {
     </div>
   );
 }
+
