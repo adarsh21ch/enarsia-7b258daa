@@ -641,6 +641,7 @@ export default function Profile() {
 
       <AIAssistantChat open={showAIChat} onOpenChange={setShowAIChat} />
       <AIInsightsSettings open={showAIInsights} onOpenChange={setShowAIInsights} />
+      <InstallInstructionsSheet open={showInstallSheet} onClose={() => setShowInstallSheet(false)} />
 
       
 
