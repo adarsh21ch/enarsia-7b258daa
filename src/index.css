@@ -12,103 +12,95 @@ html {
 
 @layer base {
   :root {
-    /* Nevorai Paper UI — soft warm paper-gray surfaces */
-    --background: 60 9% 96%;          /* #F5F5F3 paper */
-    --foreground: 0 0% 9%;             /* #161616 text */
+    /* WhatsApp-inspired light — clean paper with signature green */
+    --background: 60 9% 96%;
+    --foreground: 200 15% 12%;
 
-    --card: 60 14% 98%;                /* #FAFAF8 card */
-    --card-foreground: 0 0% 9%;
+    --card: 0 0% 100%;
+    --card-foreground: 200 15% 12%;
     --card-hover: 60 9% 94%;
 
-    --popover: 60 14% 98%;
-    --popover-foreground: 0 0% 9%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 200 15% 12%;
 
-    /* Deep Teal Emerald primary */
-    --primary: 162 67% 38%;            /* #1FA37A */
+    /* WhatsApp primary green #00A884 */
+    --primary: 168 100% 33%;
     --primary-foreground: 0 0% 100%;
 
     --secondary: 60 9% 93%;
-    --secondary-foreground: 0 0% 9%;
+    --secondary-foreground: 200 15% 12%;
 
     --muted: 60 8% 94%;
-    --muted-foreground: 220 9% 46%;    /* #6B7280 */
+    --muted-foreground: 200 8% 42%;
 
-    --accent: 162 67% 38%;
+    --accent: 142 70% 45%;             /* bright WA green #25D366 */
     --accent-foreground: 0 0% 100%;
 
     --destructive: 0 72% 51%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 0 0% 92%;                /* rgba(0,0,0,0.06) feel */
+    --border: 0 0% 92%;
     --border-strong: 0 0% 85%;
     --input: 0 0% 92%;
-    --ring: 162 67% 38%;
+    --ring: 168 100% 33%;
 
     --radius: 0.875rem;
 
-    /* Status colors — calm, not flashy */
-    --status-positive: 162 67% 38%;
-    --status-positive-bg: 160 50% 93%;
+    --status-positive: 168 100% 33%;
+    --status-positive-bg: 160 60% 93%;
     --status-negative: 0 72% 51%;
     --status-negative-bg: 0 72% 96%;
     --status-neutral: 32 85% 48%;
     --status-neutral-bg: 38 80% 94%;
-    --status-uncertain: 220 9% 46%;
+    --status-uncertain: 200 8% 46%;
     --status-uncertain-bg: 60 8% 94%;
 
-    /* Priority colors */
     --priority-high: 0 72% 51%;
     --priority-high-bg: 0 72% 96%;
     --priority-medium: 32 85% 48%;
     --priority-medium-bg: 38 80% 94%;
-    --priority-low: 162 67% 38%;
-    --priority-low-bg: 160 50% 93%;
+    --priority-low: 168 100% 33%;
+    --priority-low-bg: 160 60% 93%;
 
-    /* Accent palette */
-    --accent-green: 162 67% 38%;
-    --accent-green-soft: 160 50% 93%;
+    --accent-green: 168 100% 33%;
+    --accent-green-soft: 160 60% 93%;
     --accent-orange: 25 85% 50%;
     --accent-orange-soft: 28 80% 94%;
     --accent-red: 0 72% 51%;
     --accent-red-soft: 0 72% 96%;
     --accent-purple: 252 50% 56%;
     --accent-purple-soft: 252 50% 96%;
-    --accent-blue: 162 67% 38%;        /* mapped to teal for brand cohesion */
-    --accent-blue-soft: 160 50% 94%;
+    --accent-blue: 168 100% 33%;
+    --accent-blue-soft: 160 60% 94%;
 
-    /* Funnel stage colors — teal-led with calm secondary hues */
-    --stage-enrollment: 162 67% 38%;
-    --stage-day1: 168 75% 27%;         /* deep emerald #117A65 */
-    --stage-day2: 200 65% 45%;
+    --stage-enrollment: 168 100% 33%;
+    --stage-day1: 174 86% 22%;         /* deep WA teal #075E54 */
+    --stage-day2: 173 78% 31%;         /* #128C7E */
     --stage-day3: 32 85% 48%;
-    --stage-minimum: 160 56% 50%;
-    --stage-levelup: 168 75% 27%;
+    --stage-minimum: 142 70% 45%;
+    --stage-levelup: 174 86% 22%;
 
-    /* Personal tags section */
     --personal-tag-header: 60 9% 92%;
-    --personal-tag-header-text: 0 0% 25%;
+    --personal-tag-header-text: 200 15% 25%;
     --personal-tag-border: 0 0% 88%;
 
-    /* Soft diffused shadows — paper depth */
     --shadow-sm: 0 1px 2px rgba(17,17,17,0.04), 0 1px 1px rgba(17,17,17,0.03);
     --shadow-md: 0 4px 14px rgba(17,17,17,0.06), 0 2px 4px rgba(17,17,17,0.04);
     --shadow-lg: 0 16px 48px rgba(17,17,17,0.10);
 
-    /* Nav — soft paper glass */
-    --nav-bg: 60 14% 98% / 0.85;
+    --nav-bg: 0 0% 100% / 0.85;
     --nav-border: 0 0% 92% / 0.8;
 
-    /* Upgrade */
     --upgrade-border: 38 70% 70%;
 
     --sidebar-background: 60 9% 96%;
-    --sidebar-foreground: 0 0% 25%;
-    --sidebar-primary: 162 67% 38%;
+    --sidebar-foreground: 200 15% 25%;
+    --sidebar-primary: 168 100% 33%;
     --sidebar-primary-foreground: 0 0% 100%;
     --sidebar-accent: 60 9% 93%;
-    --sidebar-accent-foreground: 0 0% 9%;
+    --sidebar-accent-foreground: 200 15% 12%;
     --sidebar-border: 0 0% 92%;
-    --sidebar-ring: 162 67% 38%;
+    --sidebar-ring: 168 100% 33%;
   }
 
   .dark {
