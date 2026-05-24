@@ -544,6 +544,21 @@ export default function Profile() {
             </CollapsibleContent>
           </Collapsible>
 
+          {/* Install App */}
+          <button
+            onClick={() => setShowInstallSheet(true)}
+            className="w-full rounded-xl bg-card border border-border/50 px-4 py-2.5 flex items-center justify-between hover:bg-muted/50 transition-colors"
+          >
+            <div className="flex items-center gap-2.5">
+              <Smartphone className="h-4 w-4 text-primary" />
+              <div className="flex flex-col items-start">
+                <span className="font-medium text-sm">Install App</span>
+                <span className="text-[11px] text-muted-foreground">Add Nevorai Call to your Home Screen</span>
+              </div>
+            </div>
+            <ChevronRight className="h-3.5 w-3.5 text-muted-foreground" />
+          </button>
+
           {/* User Guide */}
           <UserGuideDrawer />
 
