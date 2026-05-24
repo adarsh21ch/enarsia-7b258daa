@@ -29,12 +29,13 @@ import { PullToRefreshIndicator } from '@/components/PullToRefreshIndicator';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import { User, LogOut, ChevronRight, ChevronDown, Loader2, FileText, Shield, Receipt, Settings, ExternalLink, BarChart3, Crown, Gift, Trash2, Sparkles, Lock, Share2, Video, Sliders, NotebookPen, Bell, BrainCircuit, PlayCircle, Clock } from 'lucide-react';
+import { User, LogOut, ChevronRight, ChevronDown, Loader2, FileText, Shield, Receipt, Settings, ExternalLink, BarChart3, Crown, Gift, Trash2, Sparkles, Lock, Share2, Video, Sliders, NotebookPen, Bell, BrainCircuit, PlayCircle, Clock, Smartphone } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
 import { usePushNotifications } from '@/hooks/usePushNotifications';
 
 import { useSharedLeads } from '@/hooks/useSharedLeads';
 import { AIAssistantChat } from '@/components/ai/AIAssistantChat';
+import { InstallInstructionsSheet } from '@/components/pwa/InstallPromptBanner';
 import { AIInsightsSettings } from '@/components/ai/AIInsightsSettings';
 import { ThemeSettings } from '@/components/profile/ThemeSettings';
 import { useFeatureAccess } from '@/hooks/useFeatureAccess';
@@ -224,6 +225,7 @@ export default function Profile() {
   const [editOpen, setEditOpen] = useState(false);
   const [showAIChat, setShowAIChat] = useState(false);
   const [showAIInsights, setShowAIInsights] = useState(false);
+  const [showInstallSheet, setShowInstallSheet] = useState(false);
   
   const { canAccess: canAccessAI } = useFeatureAccess('ai_assistant');
   const { pendingCount } = useSharedLeads();
@@ -542,6 +544,21 @@ export default function Profile() {
             </CollapsibleContent>
           </Collapsible>
 
+          {/* Install App */}
+          <button
+            onClick={() => setShowInstallSheet(true)}
+            className="w-full rounded-xl bg-card border border-border/50 px-4 py-2.5 flex items-center justify-between hover:bg-muted/50 transition-colors"
+          >
+            <div className="flex items-center gap-2.5">
+              <Smartphone className="h-4 w-4 text-primary" />
+              <div className="flex flex-col items-start">
+                <span className="font-medium text-sm">Install App</span>
+                <span className="text-[11px] text-muted-foreground">Add Nevorai Call to your Home Screen</span>
+              </div>
+            </div>
+            <ChevronRight className="h-3.5 w-3.5 text-muted-foreground" />
+          </button>
+
           {/* User Guide */}
           <UserGuideDrawer />
 
@@ -624,6 +641,7 @@ export default function Profile() {
 
       <AIAssistantChat open={showAIChat} onOpenChange={setShowAIChat} />
       <AIInsightsSettings open={showAIInsights} onOpenChange={setShowAIInsights} />
+      <InstallInstructionsSheet open={showInstallSheet} onClose={() => setShowInstallSheet(false)} />
 
       
 

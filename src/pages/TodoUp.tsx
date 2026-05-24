@@ -280,7 +280,9 @@ export default function TodoUp() {
 
       {/* Calendar Strip - Fixed below header */}
       <div className={cn("fixed left-0 right-0 z-30", isRecentActivity ? "top-[72px]" : "top-[108px]")}>
-        <CalendarStrip selectedDate={calendar.selectedDate} daysInMonth={calendar.daysInMonth} monthYearLabel={calendar.monthYearLabel} onSelectDate={calendar.selectDate} onPreviousMonth={calendar.goToPreviousMonth} onNextMonth={calendar.goToNextMonth} onTodayClick={calendar.goToToday} datesWithTasks={datesWithTasks} />
+        <div className="container px-4">
+          <CalendarStrip selectedDate={calendar.selectedDate} daysInMonth={calendar.daysInMonth} monthYearLabel={calendar.monthYearLabel} onSelectDate={calendar.selectDate} onPreviousMonth={calendar.goToPreviousMonth} onNextMonth={calendar.goToNextMonth} onTodayClick={calendar.goToToday} datesWithTasks={datesWithTasks} />
+        </div>
       </div>
 
       <main ref={mainRef} className={cn("scrollable-content relative pb-24", isRecentActivity ? "pt-[90px]" : "pt-[90px]")}>

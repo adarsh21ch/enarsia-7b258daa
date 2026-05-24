@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
-import { X, Share, Plus, MoreVertical, Download, Smartphone } from 'lucide-react';
+import { X, Share, Plus, MoreVertical, Download, Smartphone, Monitor } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import nevoraLogo from '@/assets/nevorai-call-logo.png';
 
@@ -83,21 +83,48 @@ export function InstallPromptBanner() {
   if (!isPublicRoute || !open) return null;
 
   return (
+    <InstallInstructionsSheet
+      open={open}
+      onClose={dismiss}
+      platform={platform}
+      canNativeInstall={!!deferredPrompt}
+      onNativeInstall={handleNativeInstall}
+      dismissLabel="Maybe later"
+    />
+  );
+}
+
+export function InstallInstructionsSheet({
+  open,
+  onClose,
+  platform: platformProp,
+  canNativeInstall = false,
+  onNativeInstall,
+  dismissLabel = 'Close',
+}: {
+  open: boolean;
+  onClose: () => void;
+  platform?: Platform;
+  canNativeInstall?: boolean;
+  onNativeInstall?: () => void;
+  dismissLabel?: string;
+}) {
+  const platform = platformProp ?? detectPlatform();
+  if (!open) return null;
+  return (
     <>
-      {/* Backdrop */}
       <div
-        onClick={dismiss}
+        onClick={onClose}
         className="fixed inset-0 z-[60] bg-foreground/30 backdrop-blur-sm animate-in fade-in duration-200"
       />
-      {/* Sheet */}
       <div
         role="dialog"
         aria-labelledby="install-title"
         className="fixed bottom-0 left-0 right-0 z-[61] mx-auto max-w-md rounded-t-3xl border border-border bg-card p-5 pb-7 shadow-2xl animate-in slide-in-from-bottom duration-300 safe-area-pb sm:bottom-4 sm:left-4 sm:right-4 sm:rounded-3xl"
       >
         <button
-          onClick={dismiss}
-          aria-label="Dismiss"
+          onClick={onClose}
+          aria-label="Close"
           className="absolute right-3 top-3 rounded-full p-1.5 text-muted-foreground hover:bg-muted transition-colors"
         >
           <X className="h-4 w-4" />
@@ -109,10 +136,10 @@ export function InstallPromptBanner() {
           </div>
           <div className="flex-1 min-w-0">
             <h3 id="install-title" className="text-base font-semibold text-foreground">
-              Add Nevorai Call to your Home Screen
+              Install Nevorai Call <span className="text-muted-foreground font-normal">(Add to Home Screen)</span>
             </h3>
             <p className="text-xs text-muted-foreground mt-0.5">
-              Open it like a real app — no app store, no download. Just add it to your home screen.
+              No app store, no download. Just add it to your home screen to open it like a real app.
             </p>
           </div>
         </div>
@@ -120,21 +147,22 @@ export function InstallPromptBanner() {
         <div className="mt-4">
           <InstallSteps
             platform={platform}
-            canNativeInstall={!!deferredPrompt}
-            onNativeInstall={handleNativeInstall}
+            canNativeInstall={canNativeInstall}
+            onNativeInstall={onNativeInstall ?? (() => {})}
           />
         </div>
 
         <button
-          onClick={dismiss}
+          onClick={onClose}
           className="mt-3 w-full text-center text-xs text-muted-foreground hover:text-foreground transition-colors"
         >
-          Maybe later
+          {dismissLabel}
         </button>
       </div>
     </>
   );
 }
+
 
 function InstallSteps({
   platform,
