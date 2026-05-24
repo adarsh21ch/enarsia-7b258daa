@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
-import { X, Share, Plus, MoreVertical, Download, Smartphone } from 'lucide-react';
+import { X, Share, Plus, MoreVertical, Download, Smartphone, Monitor } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import nevoraLogo from '@/assets/nevorai-call-logo.png';
 
