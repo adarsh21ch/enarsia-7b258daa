@@ -22,7 +22,7 @@ html {
     --popover: 0 0% 100%;
     --popover-foreground: 230 45% 8%;
 
-    --primary: 217 89% 52%;
+    --primary: 158 60% 42%;
     --primary-foreground: 0 0% 100%;
 
     --secondary: 228 33% 95%;
@@ -31,7 +31,7 @@ html {
     --muted: 228 33% 95%;
     --muted-foreground: 230 14% 53%;
 
-    --accent: 217 89% 52%;
+    --accent: 158 60% 42%;
     --accent-foreground: 0 0% 100%;
 
     --destructive: 0 84% 60%;
@@ -40,7 +40,7 @@ html {
     --border: 226 30% 91%;
     --border-strong: 226 18% 80%;
     --input: 226 30% 91%;
-    --ring: 217 89% 52%;
+    --ring: 158 60% 42%;
 
     --radius: 0.75rem;
 
@@ -71,11 +71,11 @@ html {
     --accent-red-soft: 0 84% 96%;
     --accent-purple: 263 70% 66%;
     --accent-purple-soft: 263 70% 96%;
-    --accent-blue: 217 89% 52%;
-    --accent-blue-soft: 217 89% 95%;
+    --accent-blue: 158 60% 42%;
+    --accent-blue-soft: 158 60% 95%;
 
     /* Funnel stage colors */
-    --stage-enrollment: 217 89% 52%;
+    --stage-enrollment: 158 60% 42%;
     --stage-day1: 263 70% 66%;
     --stage-day2: 316 72% 52%;
     --stage-day3: 32 95% 53%;
@@ -101,12 +101,12 @@ html {
 
     --sidebar-background: 228 33% 97%;
     --sidebar-foreground: 240 5.3% 26.1%;
-    --sidebar-primary: 217 89% 52%;
+    --sidebar-primary: 158 60% 42%;
     --sidebar-primary-foreground: 0 0% 100%;
     --sidebar-accent: 228 33% 95%;
     --sidebar-accent-foreground: 230 45% 8%;
     --sidebar-border: 226 30% 91%;
-    --sidebar-ring: 217 89% 52%;
+    --sidebar-ring: 158 60% 42%;
   }
 
   .dark {
@@ -125,7 +125,7 @@ html {
     --popover-foreground: 0 0% 94%;
 
     /* Brand blue #3B82F6 — only used for active/CTA */
-    --primary: 217 91% 60%;
+    --primary: 158 55% 50%;
     --primary-foreground: 0 0% 100%;
 
     /* Level 4 input #2C2C2C */
@@ -135,7 +135,7 @@ html {
     --muted: 0 0% 17%;
     --muted-foreground: 0 0% 56%;
 
-    --accent: 217 91% 60%;
+    --accent: 158 55% 50%;
     --accent-foreground: 0 0% 100%;
 
     /* Muted dark red, not bright — premium feel */
@@ -146,7 +146,7 @@ html {
     --border: 0 0% 16%;
     --border-strong: 0 0% 24%;
     --input: 0 0% 17%;
-    --ring: 217 91% 60%;
+    --ring: 158 55% 50%;
 
     /* Status pill backgrounds — colored tinted darks for visible POP */
     --status-positive: 152 76% 67%;       /* #6EE7B7 */
@@ -174,7 +174,7 @@ html {
     --accent-red-soft: 0 50% 12%;
     --accent-purple: 252 95% 85%;
     --accent-purple-soft: 258 75% 16%;
-    --accent-blue: 217 91% 70%;
+    --accent-blue: 158 55% 60%;
     --accent-blue-soft: 219 65% 14%;
 
     --personal-tag-header: 0 0% 11%;
@@ -194,12 +194,12 @@ html {
 
     --sidebar-background: 0 0% 4%;
     --sidebar-foreground: 0 0% 94%;
-    --sidebar-primary: 217 91% 60%;
+    --sidebar-primary: 158 55% 50%;
     --sidebar-primary-foreground: 0 0% 100%;
     --sidebar-accent: 0 0% 11%;
     --sidebar-accent-foreground: 0 0% 94%;
     --sidebar-border: 0 0% 16%;
-    --sidebar-ring: 217 91% 60%;
+    --sidebar-ring: 158 55% 50%;
   }
 }
 
