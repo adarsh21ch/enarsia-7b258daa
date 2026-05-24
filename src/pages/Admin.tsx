@@ -8,14 +8,16 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
-import { Loader2, Shield, Users, Crown, ArrowLeft, BarChart3, IndianRupee, Wrench, Megaphone } from 'lucide-react';
+import { Loader2, Shield, Users, Crown, ArrowLeft, BarChart3, IndianRupee, Wrench, Megaphone, Tag } from 'lucide-react';
 import nevoraLogo from '@/assets/nevorai-call-logo.png';
 import { AdminAnalyticsDashboard } from '@/components/admin/AdminAnalyticsDashboard';
 import { EnhancedUsersTab } from '@/components/admin/EnhancedUsersTab';
 import { NewSignupsView } from '@/components/admin/NewSignupsView';
 import { RevenueTab } from '@/components/admin/RevenueTab';
+import { PlansTab } from '@/components/admin/PlansTab';
 import { ManageTab } from '@/components/admin/ManageTab';
 import { BroadcastTab } from '@/components/admin/BroadcastTab';
+
 
 
 export default function Admin() {
