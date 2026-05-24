@@ -5434,6 +5434,21 @@ export type Database = {
         }
         Relationships: []
       }
+      user_kyc_verified: {
+        Row: {
+          status: Database["public"]["Enums"]["kyc_status"] | null
+          user_id: string | null
+        }
+        Insert: {
+          status?: Database["public"]["Enums"]["kyc_status"] | null
+          user_id?: string | null
+        }
+        Update: {
+          status?: Database["public"]["Enums"]["kyc_status"] | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       admin_get_active_usage_stats: {
