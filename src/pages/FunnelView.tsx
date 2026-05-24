@@ -58,12 +58,11 @@ export default function FunnelView() {
         return;
       }
 
-      const { data, error } = await supabase
-        .from('funnels')
+      const { data, error } = await (supabase as any)
+        .from('funnels_public')
         .select('*')
         .eq('slug', slug)
-        .eq('is_published', true)
-        .single();
+        .maybeSingle();
 
       if (error || !data) {
         setError('Funnel not found or not published');
@@ -73,14 +72,14 @@ export default function FunnelView() {
 
       setFunnel(data as PublicFunnel);
 
-      // Load price options for UPI manual payment
+      // Load price options (UPI/QR are stripped — fetched on demand via secure RPC)
       if (data.payment_type === 'upi_manual') {
-        const { data: options } = await supabase
-          .from('funnel_price_options')
+        const { data: options } = await (supabase as any)
+          .from('funnel_price_options_public')
           .select('*')
           .eq('funnel_id', data.id)
           .order('sort_order', { ascending: true });
-        
+
         if (options) {
           setPriceOptions(options as FunnelPriceOption[]);
         }
