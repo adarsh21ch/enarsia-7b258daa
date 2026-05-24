@@ -12,194 +12,189 @@ html {
 
 @layer base {
   :root {
-    --background: 228 33% 97%;
-    --foreground: 230 45% 8%;
+    /* Nevorai Paper UI — soft warm paper-gray surfaces */
+    --background: 60 9% 96%;          /* #F5F5F3 paper */
+    --foreground: 0 0% 9%;             /* #161616 text */
 
-    --card: 0 0% 100%;
-    --card-foreground: 230 45% 8%;
-    --card-hover: 232 40% 96%;
+    --card: 60 14% 98%;                /* #FAFAF8 card */
+    --card-foreground: 0 0% 9%;
+    --card-hover: 60 9% 94%;
 
-    --popover: 0 0% 100%;
-    --popover-foreground: 230 45% 8%;
+    --popover: 60 14% 98%;
+    --popover-foreground: 0 0% 9%;
 
-    --primary: 158 60% 42%;
+    /* Deep Teal Emerald primary */
+    --primary: 162 67% 38%;            /* #1FA37A */
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 228 33% 95%;
-    --secondary-foreground: 230 45% 8%;
+    --secondary: 60 9% 93%;
+    --secondary-foreground: 0 0% 9%;
 
-    --muted: 228 33% 95%;
-    --muted-foreground: 230 14% 53%;
+    --muted: 60 8% 94%;
+    --muted-foreground: 220 9% 46%;    /* #6B7280 */
 
-    --accent: 158 60% 42%;
+    --accent: 162 67% 38%;
     --accent-foreground: 0 0% 100%;
 
-    --destructive: 0 84% 60%;
+    --destructive: 0 72% 51%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 226 30% 91%;
-    --border-strong: 226 18% 80%;
-    --input: 226 30% 91%;
-    --ring: 158 60% 42%;
+    --border: 0 0% 92%;                /* rgba(0,0,0,0.06) feel */
+    --border-strong: 0 0% 85%;
+    --input: 0 0% 92%;
+    --ring: 162 67% 38%;
 
-    --radius: 0.75rem;
+    --radius: 0.875rem;
 
-    /* Status colors */
-    --status-positive: 142 71% 45%;
-    --status-positive-bg: 142 76% 95%;
-    --status-negative: 0 84% 60%;
-    --status-negative-bg: 0 84% 97%;
-    --status-neutral: 32 95% 53%;
-    --status-neutral-bg: 32 100% 94%;
-    --status-uncertain: 230 14% 53%;
-    --status-uncertain-bg: 230 14% 95%;
+    /* Status colors — calm, not flashy */
+    --status-positive: 162 67% 38%;
+    --status-positive-bg: 160 50% 93%;
+    --status-negative: 0 72% 51%;
+    --status-negative-bg: 0 72% 96%;
+    --status-neutral: 32 85% 48%;
+    --status-neutral-bg: 38 80% 94%;
+    --status-uncertain: 220 9% 46%;
+    --status-uncertain-bg: 60 8% 94%;
 
     /* Priority colors */
-    --priority-high: 0 84% 60%;
-    --priority-high-bg: 0 84% 97%;
-    --priority-medium: 32 95% 53%;
-    --priority-medium-bg: 32 100% 94%;
-    --priority-low: 142 71% 45%;
-    --priority-low-bg: 142 76% 95%;
+    --priority-high: 0 72% 51%;
+    --priority-high-bg: 0 72% 96%;
+    --priority-medium: 32 85% 48%;
+    --priority-medium-bg: 38 80% 94%;
+    --priority-low: 162 67% 38%;
+    --priority-low-bg: 160 50% 93%;
 
     /* Accent palette */
-    --accent-green: 142 71% 45%;
-    --accent-green-soft: 142 76% 95%;
-    --accent-orange: 25 95% 53%;
-    --accent-orange-soft: 25 100% 94%;
-    --accent-red: 0 84% 60%;
-    --accent-red-soft: 0 84% 96%;
-    --accent-purple: 263 70% 66%;
-    --accent-purple-soft: 263 70% 96%;
-    --accent-blue: 158 60% 42%;
-    --accent-blue-soft: 158 60% 95%;
+    --accent-green: 162 67% 38%;
+    --accent-green-soft: 160 50% 93%;
+    --accent-orange: 25 85% 50%;
+    --accent-orange-soft: 28 80% 94%;
+    --accent-red: 0 72% 51%;
+    --accent-red-soft: 0 72% 96%;
+    --accent-purple: 252 50% 56%;
+    --accent-purple-soft: 252 50% 96%;
+    --accent-blue: 162 67% 38%;        /* mapped to teal for brand cohesion */
+    --accent-blue-soft: 160 50% 94%;
 
-    /* Funnel stage colors */
-    --stage-enrollment: 158 60% 42%;
-    --stage-day1: 263 70% 66%;
-    --stage-day2: 316 72% 52%;
-    --stage-day3: 32 95% 53%;
-    --stage-minimum: 142 71% 45%;
-    --stage-levelup: 168 84% 39%;
+    /* Funnel stage colors — teal-led with calm secondary hues */
+    --stage-enrollment: 162 67% 38%;
+    --stage-day1: 168 75% 27%;         /* deep emerald #117A65 */
+    --stage-day2: 200 65% 45%;
+    --stage-day3: 32 85% 48%;
+    --stage-minimum: 160 56% 50%;
+    --stage-levelup: 168 75% 27%;
 
     /* Personal tags section */
-    --personal-tag-header: 228 33% 93%;
-    --personal-tag-header-text: 230 14% 35%;
-    --personal-tag-border: 226 20% 85%;
+    --personal-tag-header: 60 9% 92%;
+    --personal-tag-header-text: 0 0% 25%;
+    --personal-tag-border: 0 0% 88%;
 
-    /* Shadows */
-    --shadow-sm: 0 1px 3px rgba(13,15,26,0.06), 0 1px 2px rgba(13,15,26,0.04);
-    --shadow-md: 0 4px 16px rgba(13,15,26,0.08), 0 2px 6px rgba(13,15,26,0.05);
-    --shadow-lg: 0 12px 40px rgba(13,15,26,0.12);
+    /* Soft diffused shadows — paper depth */
+    --shadow-sm: 0 1px 2px rgba(17,17,17,0.04), 0 1px 1px rgba(17,17,17,0.03);
+    --shadow-md: 0 4px 14px rgba(17,17,17,0.06), 0 2px 4px rgba(17,17,17,0.04);
+    --shadow-lg: 0 16px 48px rgba(17,17,17,0.10);
 
-    /* Nav */
-    --nav-bg: 0 0% 100% / 0.85;
-    --nav-border: 226 30% 91% / 0.8;
+    /* Nav — soft paper glass */
+    --nav-bg: 60 14% 98% / 0.85;
+    --nav-border: 0 0% 92% / 0.8;
 
     /* Upgrade */
-    --upgrade-border: 30 90% 76%;
+    --upgrade-border: 38 70% 70%;
 
-    --sidebar-background: 228 33% 97%;
-    --sidebar-foreground: 240 5.3% 26.1%;
-    --sidebar-primary: 158 60% 42%;
+    --sidebar-background: 60 9% 96%;
+    --sidebar-foreground: 0 0% 25%;
+    --sidebar-primary: 162 67% 38%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 228 33% 95%;
-    --sidebar-accent-foreground: 230 45% 8%;
-    --sidebar-border: 226 30% 91%;
-    --sidebar-ring: 158 60% 42%;
+    --sidebar-accent: 60 9% 93%;
+    --sidebar-accent-foreground: 0 0% 9%;
+    --sidebar-border: 0 0% 92%;
+    --sidebar-ring: 162 67% 38%;
   }
 
   .dark {
-    /* Premium layered black system — Apple/Notion/Linear inspired */
-    /* Level 0 app bg #0A0A0A · Level 1 screen bg #111111 */
-    --background: 0 0% 7%;
-    --foreground: 0 0% 94%;
+    /* Nevorai charcoal — soft premium dark, never pure black */
+    /* Level 0 #0E1311 · Level 1 screen #121815 */
+    --background: 165 13% 7%;
+    --foreground: 60 6% 92%;
 
-    /* Level 2 card #1C1C1C · Level 5 hover #333333 */
-    --card: 0 0% 11%;
-    --card-foreground: 0 0% 94%;
-    --card-hover: 0 0% 14%;
+    /* Level 2 card #181F1C · hover #1F2724 */
+    --card: 165 12% 11%;
+    --card-foreground: 60 6% 92%;
+    --card-hover: 165 11% 14%;
 
-    /* Level 3 elevated #242424 */
-    --popover: 0 0% 14%;
-    --popover-foreground: 0 0% 94%;
+    --popover: 165 12% 13%;
+    --popover-foreground: 60 6% 92%;
 
-    /* Brand blue #2BAE85 — only used for active/CTA */
-    --primary: 158 55% 50%;
-    --primary-foreground: 0 0% 100%;
+    /* Soft mint highlight teal — readable on charcoal */
+    --primary: 160 56% 55%;            /* lifted #5FD6B3 feel */
+    --primary-foreground: 165 30% 8%;
 
-    /* Level 4 input #2C2C2C */
-    --secondary: 0 0% 17%;
-    --secondary-foreground: 0 0% 94%;
+    --secondary: 165 10% 16%;
+    --secondary-foreground: 60 6% 92%;
 
-    --muted: 0 0% 17%;
-    --muted-foreground: 0 0% 56%;
+    --muted: 165 10% 16%;
+    --muted-foreground: 165 6% 60%;
 
-    --accent: 158 55% 50%;
-    --accent-foreground: 0 0% 100%;
+    --accent: 160 56% 55%;
+    --accent-foreground: 165 30% 8%;
 
-    /* Muted dark red, not bright — premium feel */
-    --destructive: 0 63% 50%;
+    --destructive: 0 60% 50%;
     --destructive-foreground: 0 0% 100%;
 
-    /* Border #2A2A2A — separates layers without harshness */
-    --border: 0 0% 16%;
-    --border-strong: 0 0% 24%;
-    --input: 0 0% 17%;
-    --ring: 158 55% 50%;
+    --border: 165 10% 17%;
+    --border-strong: 165 10% 24%;
+    --input: 165 10% 16%;
+    --ring: 160 56% 55%;
 
-    /* Status pill backgrounds — colored tinted darks for visible POP */
-    --status-positive: 152 76% 67%;       /* #6EE7B7 */
-    --status-positive-bg: 153 75% 9%;     /* #052D1E */
-    --status-negative: 0 91% 71%;         /* #F87171 */
-    --status-negative-bg: 0 50% 12%;      /* #2D0F0F */
-    --status-neutral: 45 96% 64%;         /* #FCD34D */
-    --status-neutral-bg: 38 100% 9%;      /* #2D1F00 */
-    --status-uncertain: 220 14% 83%;      /* #D1D5DB */
-    --status-uncertain-bg: 0 0% 16%;
+    /* Status pills — teal-led, calm */
+    --status-positive: 160 56% 65%;
+    --status-positive-bg: 165 40% 11%;
+    --status-negative: 0 72% 68%;
+    --status-negative-bg: 0 40% 13%;
+    --status-neutral: 38 85% 60%;
+    --status-neutral-bg: 38 50% 11%;
+    --status-uncertain: 60 6% 80%;
+    --status-uncertain-bg: 165 10% 16%;
 
-    --priority-high: 0 91% 71%;
-    --priority-high-bg: 0 50% 12%;
-    --priority-medium: 45 96% 64%;
-    --priority-medium-bg: 38 100% 9%;
-    --priority-low: 152 76% 67%;
-    --priority-low-bg: 153 75% 9%;
+    --priority-high: 0 72% 68%;
+    --priority-high-bg: 0 40% 13%;
+    --priority-medium: 38 85% 60%;
+    --priority-medium-bg: 38 50% 11%;
+    --priority-low: 160 56% 65%;
+    --priority-low-bg: 165 40% 11%;
 
-    /* Soft accent backgrounds — colored tinted dark surfaces */
-    --accent-green: 152 76% 67%;
-    --accent-green-soft: 153 75% 9%;
-    --accent-orange: 38 92% 50%;
-    --accent-orange-soft: 38 100% 9%;
-    --accent-red: 0 91% 71%;
-    --accent-red-soft: 0 50% 12%;
-    --accent-purple: 252 95% 85%;
-    --accent-purple-soft: 258 75% 16%;
-    --accent-blue: 158 55% 60%;
-    --accent-blue-soft: 219 65% 14%;
+    --accent-green: 160 56% 65%;
+    --accent-green-soft: 165 40% 11%;
+    --accent-orange: 32 85% 55%;
+    --accent-orange-soft: 32 50% 11%;
+    --accent-red: 0 72% 68%;
+    --accent-red-soft: 0 40% 13%;
+    --accent-purple: 252 60% 75%;
+    --accent-purple-soft: 252 40% 16%;
+    --accent-blue: 160 56% 60%;
+    --accent-blue-soft: 165 40% 12%;
 
-    --personal-tag-header: 0 0% 11%;
-    --personal-tag-header-text: 0 0% 56%;
-    --personal-tag-border: 0 0% 16%;
+    --personal-tag-header: 165 12% 11%;
+    --personal-tag-header-text: 165 6% 60%;
+    --personal-tag-border: 165 10% 17%;
 
-    /* Layered shadows — deeper for premium depth */
     --shadow-sm: 0 1px 3px rgba(0,0,0,0.5), 0 1px 2px rgba(0,0,0,0.3);
     --shadow-md: 0 2px 8px rgba(0,0,0,0.4), 0 4px 16px rgba(0,0,0,0.5);
     --shadow-lg: 0 12px 40px rgba(0,0,0,0.7);
 
-    /* Nav matches screen bg — seamless */
-    --nav-bg: 0 0% 7% / 0.92;
-    --nav-border: 0 0% 16% / 0.8;
+    --nav-bg: 165 13% 7% / 0.92;
+    --nav-border: 165 10% 17% / 0.8;
 
-    --upgrade-border: 30 80% 28%;
+    --upgrade-border: 38 60% 28%;
 
-    --sidebar-background: 0 0% 4%;
-    --sidebar-foreground: 0 0% 94%;
-    --sidebar-primary: 158 55% 50%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 0 0% 11%;
-    --sidebar-accent-foreground: 0 0% 94%;
-    --sidebar-border: 0 0% 16%;
-    --sidebar-ring: 158 55% 50%;
+    --sidebar-background: 165 14% 5%;
+    --sidebar-foreground: 60 6% 92%;
+    --sidebar-primary: 160 56% 55%;
+    --sidebar-primary-foreground: 165 30% 8%;
+    --sidebar-accent: 165 12% 11%;
+    --sidebar-accent-foreground: 60 6% 92%;
+    --sidebar-border: 165 10% 17%;
+    --sidebar-ring: 160 56% 55%;
   }
 }
 
@@ -538,8 +533,8 @@ html {
   }
 
   @keyframes onboarding-pulse-ring {
-    0%, 100% { box-shadow: 0 0 0 3px #2563EB; }
-    50% { box-shadow: 0 0 0 10px rgba(37,99,235,0.22); }
+    0%, 100% { box-shadow: 0 0 0 3px #1FA37A; }
+    50% { box-shadow: 0 0 0 10px rgba(31,163,122,0.22); }
   }
 
   @keyframes draw-circle {

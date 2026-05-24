@@ -14,7 +14,7 @@ export function HighlightBox({ targetRect }: { targetRect: DOMRect | null }) {
         width: targetRect.width + pad * 2,
         height: targetRect.height + pad * 2,
         borderRadius: 12,
-        border: '2.5px solid #2563EB',
+        border: '2.5px solid #1FA37A',
         boxShadow: '0 0 0 4px rgba(37,99,235,0.18), 0 0 24px 4px rgba(37,99,235,0.10)',
         zIndex: 9998,
         pointerEvents: 'none',
@@ -186,7 +186,7 @@ export function TopTooltipBanner({
 
 /* ─── Confetti ─── */
 export function Confetti() {
-  const colors = ['#2563EB', '#22C55E', '#F59E0B', '#EF4444', '#8B5CF6', '#0EA5E9'];
+  const colors = ['#1FA37A', '#22C55E', '#F59E0B', '#EF4444', '#8B5CF6', '#0EA5E9'];
   return (
     <div className="fixed inset-0 pointer-events-none z-[10002] overflow-hidden">
       {Array.from({ length: 40 }, (_, i) => (

@@ -23,7 +23,7 @@ interface StepDef {
 
 const STEPS: Record<number, StepDef> = {
   1: {
-    icon: <Phone className="h-5 w-5 text-[#2563EB]" />,
+    icon: <Phone className="h-5 w-5 text-[#1FA37A]" />,
     title: 'Your Calling Workspace',
     description: 'This is where you manage all your prospects. Every row is one person you can call and track.',
     actionHint: 'Try scrolling through your lead list below',
@@ -31,7 +31,7 @@ const STEPS: Record<number, StepDef> = {
     navigateTo: '/dashboard',
   },
   2: {
-    icon: <User className="h-5 w-5 text-[#2563EB]" />,
+    icon: <User className="h-5 w-5 text-[#1FA37A]" />,
     title: 'Open a Prospect',
     description: 'Tap any prospect row to see their full profile, call history, and notes.',
     actionHint: 'Try tapping a prospect — then press Got it',
@@ -39,7 +39,7 @@ const STEPS: Record<number, StepDef> = {
     navigateTo: '/dashboard',
   },
   3: {
-    icon: <Tag className="h-5 w-5 text-[#2563EB]" />,
+    icon: <Tag className="h-5 w-5 text-[#1FA37A]" />,
     title: 'Update Their Status',
     description: 'After each call, update the response — Interested, Follow-up, Not Interested, etc.',
     actionHint: 'Try selecting a response tag, then press Got it',
@@ -47,7 +47,7 @@ const STEPS: Record<number, StepDef> = {
     navigateTo: '/dashboard',
   },
   4: {
-    icon: <Filter className="h-5 w-5 text-[#2563EB]" />,
+    icon: <Filter className="h-5 w-5 text-[#1FA37A]" />,
     title: 'Filter Your Prospects',
     description: 'Use Retargeting to filter prospects by their stage or status.',
     actionHint: 'Try tapping Retargeting to explore filters',
@@ -55,7 +55,7 @@ const STEPS: Record<number, StepDef> = {
     navigateTo: '/dashboard',
   },
   5: {
-    icon: <RefreshCw className="h-5 w-5 text-[#2563EB]" />,
+    icon: <RefreshCw className="h-5 w-5 text-[#1FA37A]" />,
     title: 'Go to Follow-Up',
     description: 'The Follow-Up tab shows your daily activity feed and prospect overview.',
     actionHint: 'Tap Follow-Up in the bottom menu',
@@ -63,7 +63,7 @@ const STEPS: Record<number, StepDef> = {
     navigateTo: '/dashboard',
   },
   6: {
-    icon: <Users className="h-5 w-5 text-[#2563EB]" />,
+    icon: <Users className="h-5 w-5 text-[#1FA37A]" />,
     title: 'See Prospects by Stage',
     description: 'Tap "Prospects" tab to see all your leads organized by their current stage.',
     actionHint: 'Tap the Prospects tab above',
@@ -71,7 +71,7 @@ const STEPS: Record<number, StepDef> = {
     navigateTo: '/listup',
   },
   7: {
-    icon: <Tag className="h-5 w-5 text-[#2563EB]" />,
+    icon: <Tag className="h-5 w-5 text-[#1FA37A]" />,
     title: 'Filter by Tag',
     description: 'Tap any tag to instantly see prospects at that stage. Try Enrolment or Interested.',
     actionHint: 'Try tapping a tag to filter',
@@ -79,7 +79,7 @@ const STEPS: Record<number, StepDef> = {
     navigateTo: '/listup',
   },
   8: {
-    icon: <BarChart2 className="h-5 w-5 text-[#2563EB]" />,
+    icon: <BarChart2 className="h-5 w-5 text-[#1FA37A]" />,
     title: 'Open TrackUp',
     description: 'TrackUp shows your daily performance numbers and tracking history.',
     actionHint: 'Tap TrackUp in the bottom menu',
@@ -87,7 +87,7 @@ const STEPS: Record<number, StepDef> = {
     navigateTo: '/listup',
   },
   9: {
-    icon: <Calendar className="h-5 w-5 text-[#2563EB]" />,
+    icon: <Calendar className="h-5 w-5 text-[#1FA37A]" />,
     title: 'Your Daily Tracker',
     description: 'This grid tracks Leads, Responses, Video Sends, and Enrolments — updated automatically every day.',
     actionHint: 'Explore the tracking table below',
@@ -95,7 +95,7 @@ const STEPS: Record<number, StepDef> = {
     navigateTo: '/tracking',
   },
   10: {
-    icon: <PlusCircle className="h-5 w-5 text-[#2563EB]" />,
+    icon: <PlusCircle className="h-5 w-5 text-[#1FA37A]" />,
     title: 'Create Your Own Sheet',
     description: "You've been using demo data. Create YOUR sheet — tap + Add Sheet, name it, and start adding real leads.",
     actionHint: 'Tap the + Add Sheet button',
@@ -103,7 +103,7 @@ const STEPS: Record<number, StepDef> = {
     navigateTo: '/dashboard',
   },
   11: {
-    icon: <Upload className="h-5 w-5 text-[#2563EB]" />,
+    icon: <Upload className="h-5 w-5 text-[#1FA37A]" />,
     title: 'Add Your First Lead',
     description: "Import contacts from a file, or add your first lead manually. This is your real CRM!",
     actionHint: 'Tap Import to add leads from a file',
