@@ -392,14 +392,25 @@ function PlanEditForm({
     }
     setSaving(true);
     try {
+      const toIntOrNull = (v: any) => {
+        if (v === '' || v === null || v === undefined) return null;
+        const n = parseInt(String(v));
+        return Number.isFinite(n) ? n : null;
+      };
       await onSave({
         ...formData,
+        monthly_price_inr: toIntOrNull(formData.monthly_price_inr),
+        yearly_price_inr: toIntOrNull(formData.yearly_price_inr),
+        first_month_price_inr: toIntOrNull(formData.first_month_price_inr),
+        renewal_price_inr: toIntOrNull(formData.renewal_price_inr) ?? formData.price_inr,
+        trial_days: Number(formData.trial_days) || 0,
         features: formData.features.split('\n').filter(f => f.trim()),
-      });
+      } as any);
     } finally {
       setSaving(false);
     }
   };
+
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4 mt-4">
