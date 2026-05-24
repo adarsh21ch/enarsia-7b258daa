@@ -12,179 +12,187 @@ html {
 
 @layer base {
   :root {
-    /* WhatsApp-inspired light — clean paper with signature green */
-    --background: 60 9% 96%;
-    --foreground: 200 15% 12%;
+    /* Light — premium white/black base, green only as accent */
+    --background: 0 0% 100%;
+    --foreground: 220 13% 10%;
 
     --card: 0 0% 100%;
-    --card-foreground: 200 15% 12%;
-    --card-hover: 60 9% 94%;
+    --card-foreground: 220 13% 10%;
+    --card-hover: 220 14% 97%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 200 15% 12%;
+    --popover-foreground: 220 13% 10%;
 
-    /* WhatsApp primary green #00A884 */
-    --primary: 168 100% 33%;
+    /* Primary stays near-black for premium feel */
+    --primary: 220 13% 12%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 60 9% 93%;
-    --secondary-foreground: 200 15% 12%;
+    --secondary: 220 14% 96%;
+    --secondary-foreground: 220 13% 12%;
 
-    --muted: 60 8% 94%;
-    --muted-foreground: 200 8% 42%;
+    --muted: 220 14% 96%;
+    --muted-foreground: 220 9% 42%;
 
-    --accent: 142 70% 45%;             /* bright WA green #25D366 */
+    /* Accent = the WhatsApp bright green, used only for highlights/CTAs */
+    --accent: 142 70% 45%;
     --accent-foreground: 0 0% 100%;
 
     --destructive: 0 72% 51%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 0 0% 92%;
-    --border-strong: 0 0% 85%;
-    --input: 0 0% 92%;
-    --ring: 168 100% 33%;
+    --border: 220 13% 91%;
+    --border-strong: 220 13% 83%;
+    --input: 220 13% 91%;
+    --ring: 142 70% 45%;
 
     --radius: 0.875rem;
 
-    --status-positive: 168 100% 33%;
-    --status-positive-bg: 160 60% 93%;
+    --status-positive: 142 65% 38%;
+    --status-positive-bg: 142 55% 94%;
     --status-negative: 0 72% 51%;
     --status-negative-bg: 0 72% 96%;
     --status-neutral: 32 85% 48%;
     --status-neutral-bg: 38 80% 94%;
-    --status-uncertain: 200 8% 46%;
-    --status-uncertain-bg: 60 8% 94%;
+    --status-uncertain: 220 9% 46%;
+    --status-uncertain-bg: 220 14% 95%;
 
     --priority-high: 0 72% 51%;
     --priority-high-bg: 0 72% 96%;
     --priority-medium: 32 85% 48%;
     --priority-medium-bg: 38 80% 94%;
-    --priority-low: 168 100% 33%;
-    --priority-low-bg: 160 60% 93%;
+    --priority-low: 142 65% 38%;
+    --priority-low-bg: 142 55% 94%;
 
-    --accent-green: 168 100% 33%;
-    --accent-green-soft: 160 60% 93%;
+    --accent-green: 142 70% 45%;
+    --accent-green-soft: 142 55% 94%;
     --accent-orange: 25 85% 50%;
     --accent-orange-soft: 28 80% 94%;
     --accent-red: 0 72% 51%;
     --accent-red-soft: 0 72% 96%;
     --accent-purple: 252 50% 56%;
     --accent-purple-soft: 252 50% 96%;
-    --accent-blue: 168 100% 33%;
-    --accent-blue-soft: 160 60% 94%;
+    --accent-blue: 142 70% 45%;
+    --accent-blue-soft: 142 55% 94%;
 
-    --stage-enrollment: 168 100% 33%;
-    --stage-day1: 174 86% 22%;         /* deep WA teal #075E54 */
-    --stage-day2: 173 78% 31%;         /* #128C7E */
+    --stage-enrollment: 142 70% 45%;
+    --stage-day1: 220 13% 20%;
+    --stage-day2: 220 9% 38%;
     --stage-day3: 32 85% 48%;
     --stage-minimum: 142 70% 45%;
-    --stage-levelup: 174 86% 22%;
+    --stage-levelup: 220 13% 12%;
 
-    --personal-tag-header: 60 9% 92%;
-    --personal-tag-header-text: 200 15% 25%;
-    --personal-tag-border: 0 0% 88%;
+    --personal-tag-header: 220 14% 95%;
+    --personal-tag-header-text: 220 13% 25%;
+    --personal-tag-border: 220 13% 89%;
 
     --shadow-sm: 0 1px 2px rgba(17,17,17,0.04), 0 1px 1px rgba(17,17,17,0.03);
     --shadow-md: 0 4px 14px rgba(17,17,17,0.06), 0 2px 4px rgba(17,17,17,0.04);
     --shadow-lg: 0 16px 48px rgba(17,17,17,0.10);
 
-    --nav-bg: 0 0% 100% / 0.85;
-    --nav-border: 0 0% 92% / 0.8;
+    --nav-bg: 0 0% 100% / 0.9;
+    --nav-border: 220 13% 91% / 0.8;
 
     --upgrade-border: 38 70% 70%;
 
-    --sidebar-background: 60 9% 96%;
-    --sidebar-foreground: 200 15% 25%;
-    --sidebar-primary: 168 100% 33%;
+    --sidebar-background: 0 0% 100%;
+    --sidebar-foreground: 220 13% 25%;
+    --sidebar-primary: 220 13% 12%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 60 9% 93%;
-    --sidebar-accent-foreground: 200 15% 12%;
-    --sidebar-border: 0 0% 92%;
-    --sidebar-ring: 168 100% 33%;
+    --sidebar-accent: 220 14% 96%;
+    --sidebar-accent-foreground: 220 13% 12%;
+    --sidebar-border: 220 13% 91%;
+    --sidebar-ring: 142 70% 45%;
   }
 
   .dark {
-    /* WhatsApp dark — deep slate-teal surfaces */
-    /* bg #0B141A · surface #111B21 · elevated #202C33 */
-    --background: 206 39% 7%;
-    --foreground: 200 20% 92%;
+    /* Dark — premium near-black base (WhatsApp-like), green only as accent */
+    --background: 220 13% 7%;
+    --foreground: 220 14% 94%;
 
-    --card: 202 33% 10%;
-    --card-foreground: 200 20% 92%;
-    --card-hover: 204 24% 17%;
+    --card: 220 13% 10%;
+    --card-foreground: 220 14% 94%;
+    --card-hover: 220 12% 14%;
 
-    --popover: 202 33% 12%;
-    --popover-foreground: 200 20% 92%;
+    --popover: 220 13% 11%;
+    --popover-foreground: 220 14% 94%;
 
-    /* WhatsApp primary in dark — bright teal-green */
-    --primary: 168 76% 42%;            /* #1DAA8B premium feel */
-    --primary-foreground: 206 39% 7%;
+    /* Primary inverts to soft white for premium dark */
+    --primary: 0 0% 98%;
+    --primary-foreground: 220 13% 10%;
 
-    --secondary: 204 24% 17%;
-    --secondary-foreground: 200 20% 92%;
+    --secondary: 220 12% 15%;
+    --secondary-foreground: 220 14% 94%;
 
-    --muted: 204 24% 17%;
-    --muted-foreground: 200 12% 65%;
+    --muted: 220 12% 15%;
+    --muted-foreground: 220 10% 65%;
 
-    --accent: 142 60% 50%;             /* WA bright green tint */
-    --accent-foreground: 206 39% 7%;
+    /* Bright green stays as the highlight accent */
+    --accent: 142 65% 50%;
+    --accent-foreground: 220 13% 8%;
 
     --destructive: 0 60% 50%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 204 20% 18%;
-    --border-strong: 204 18% 26%;
-    --input: 204 24% 17%;
-    --ring: 168 76% 42%;
+    --border: 220 10% 18%;
+    --border-strong: 220 9% 26%;
+    --input: 220 12% 15%;
+    --ring: 142 65% 50%;
 
-    --status-positive: 168 70% 55%;
-    --status-positive-bg: 168 50% 12%;
+    --status-positive: 142 60% 55%;
+    --status-positive-bg: 142 40% 12%;
     --status-negative: 0 72% 68%;
     --status-negative-bg: 0 40% 13%;
     --status-neutral: 38 85% 60%;
     --status-neutral-bg: 38 50% 11%;
-    --status-uncertain: 200 12% 80%;
-    --status-uncertain-bg: 204 24% 17%;
+    --status-uncertain: 220 10% 80%;
+    --status-uncertain-bg: 220 12% 15%;
 
     --priority-high: 0 72% 68%;
     --priority-high-bg: 0 40% 13%;
     --priority-medium: 38 85% 60%;
     --priority-medium-bg: 38 50% 11%;
-    --priority-low: 168 70% 55%;
-    --priority-low-bg: 168 50% 12%;
+    --priority-low: 142 60% 55%;
+    --priority-low-bg: 142 40% 12%;
 
-    --accent-green: 168 70% 55%;
-    --accent-green-soft: 168 50% 12%;
+    --accent-green: 142 60% 55%;
+    --accent-green-soft: 142 40% 12%;
     --accent-orange: 32 85% 55%;
     --accent-orange-soft: 32 50% 11%;
     --accent-red: 0 72% 68%;
     --accent-red-soft: 0 40% 13%;
     --accent-purple: 252 60% 75%;
     --accent-purple-soft: 252 40% 16%;
-    --accent-blue: 168 70% 55%;
-    --accent-blue-soft: 168 50% 12%;
+    --accent-blue: 142 60% 55%;
+    --accent-blue-soft: 142 40% 12%;
 
-    --personal-tag-header: 202 33% 10%;
-    --personal-tag-header-text: 200 12% 65%;
-    --personal-tag-border: 204 20% 18%;
+    --stage-enrollment: 142 60% 55%;
+    --stage-day1: 220 10% 30%;
+    --stage-day2: 220 10% 45%;
+    --stage-day3: 38 85% 60%;
+    --stage-minimum: 142 60% 55%;
+    --stage-levelup: 0 0% 98%;
+
+    --personal-tag-header: 220 13% 10%;
+    --personal-tag-header-text: 220 10% 65%;
+    --personal-tag-border: 220 10% 18%;
 
     --shadow-sm: 0 1px 3px rgba(0,0,0,0.5), 0 1px 2px rgba(0,0,0,0.3);
     --shadow-md: 0 2px 8px rgba(0,0,0,0.4), 0 4px 16px rgba(0,0,0,0.5);
     --shadow-lg: 0 12px 40px rgba(0,0,0,0.7);
 
-    --nav-bg: 202 33% 10% / 0.92;
-    --nav-border: 204 20% 18% / 0.8;
+    --nav-bg: 220 13% 10% / 0.92;
+    --nav-border: 220 10% 18% / 0.8;
 
     --upgrade-border: 38 60% 28%;
 
-    --sidebar-background: 206 39% 6%;
-    --sidebar-foreground: 200 20% 92%;
-    --sidebar-primary: 168 76% 42%;
-    --sidebar-primary-foreground: 206 39% 7%;
-    --sidebar-accent: 202 33% 10%;
-    --sidebar-accent-foreground: 200 20% 92%;
-    --sidebar-border: 204 20% 18%;
-    --sidebar-ring: 168 76% 42%;
+    --sidebar-background: 220 13% 6%;
+    --sidebar-foreground: 220 14% 94%;
+    --sidebar-primary: 0 0% 98%;
+    --sidebar-primary-foreground: 220 13% 10%;
+    --sidebar-accent: 220 13% 10%;
+    --sidebar-accent-foreground: 220 14% 94%;
+    --sidebar-border: 220 10% 18%;
+    --sidebar-ring: 142 65% 50%;
   }
 }
 
