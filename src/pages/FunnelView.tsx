@@ -58,12 +58,11 @@ export default function FunnelView() {
         return;
       }
 
-      const { data, error } = await supabase
-        .from('funnels')
+      const { data, error } = await (supabase as any)
+        .from('funnels_public')
         .select('*')
         .eq('slug', slug)
-        .eq('is_published', true)
-        .single();
+        .maybeSingle();
 
       if (error || !data) {
         setError('Funnel not found or not published');
@@ -73,14 +72,14 @@ export default function FunnelView() {
 
       setFunnel(data as PublicFunnel);
 
-      // Load price options for UPI manual payment
+      // Load price options (UPI/QR are stripped — fetched on demand via secure RPC)
       if (data.payment_type === 'upi_manual') {
-        const { data: options } = await supabase
-          .from('funnel_price_options')
+        const { data: options } = await (supabase as any)
+          .from('funnel_price_options_public')
           .select('*')
           .eq('funnel_id', data.id)
           .order('sort_order', { ascending: true });
-        
+
         if (options) {
           setPriceOptions(options as FunnelPriceOption[]);
         }
@@ -212,11 +211,35 @@ export default function FunnelView() {
   const handleCtaClick = async () => {
     if (!funnel) return;
 
-    // For UPI manual payments, show the payment modal
+    // For UPI manual payments, fetch UPI/QR via secure RPC then show modal
     if (funnel.payment_type === 'upi_manual' && funnel.price > 0) {
+      if (leadSession) {
+        try {
+          const { data, error } = await (supabase as any).rpc('get_funnel_payment_details', {
+            p_lead_id: leadSession.leadId,
+            p_access_token: leadSession.accessToken,
+          });
+          if (!error && data && data[0]) {
+            const row = data[0];
+            // Patch funnel UPI for display
+            setFunnel((prev) => prev ? { ...prev, upi_id: row.funnel_upi_id ?? prev.upi_id } : prev);
+            // Merge sensitive fields back into price options
+            const opts = (row.options as any[]) || [];
+            if (opts.length > 0) {
+              setPriceOptions((prev) => prev.map((p) => {
+                const match = opts.find((o) => o.id === p.id);
+                return match ? { ...p, upi_id: match.upi_id, qr_image_url: match.qr_image_url } : p;
+              }));
+            }
+          }
+        } catch (err) {
+          console.error('Failed to load payment details:', err);
+        }
+      }
       setShowPaymentModal(true);
       return;
     }
+
 
     if (funnel.price > 0 && funnel.payment_type === 'razorpay') {
       // TODO: Implement Razorpay payment flow

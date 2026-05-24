@@ -54,6 +54,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "abuse_logs_funnel_id_fkey"
+            columns: ["funnel_id"]
+            isOneToOne: false
+            referencedRelation: "funnels_public"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "abuse_logs_lead_id_fkey"
             columns: ["lead_id"]
             isOneToOne: false
@@ -2340,6 +2347,13 @@ export type Database = {
             referencedRelation: "funnels"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "funnel_access_funnel_id_fkey"
+            columns: ["funnel_id"]
+            isOneToOne: false
+            referencedRelation: "funnels_public"
+            referencedColumns: ["id"]
+          },
         ]
       }
       funnel_configs: {
@@ -2477,6 +2491,13 @@ export type Database = {
             referencedRelation: "funnels"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "funnel_leads_funnel_id_fkey"
+            columns: ["funnel_id"]
+            isOneToOne: false
+            referencedRelation: "funnels_public"
+            referencedColumns: ["id"]
+          },
         ]
       }
       funnel_notifications: {
@@ -2519,6 +2540,13 @@ export type Database = {
             columns: ["funnel_id"]
             isOneToOne: false
             referencedRelation: "funnels"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "funnel_notifications_funnel_id_fkey"
+            columns: ["funnel_id"]
+            isOneToOne: false
+            referencedRelation: "funnels_public"
             referencedColumns: ["id"]
           },
           {
@@ -2594,6 +2622,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "funnel_payments_funnel_id_fkey"
+            columns: ["funnel_id"]
+            isOneToOne: false
+            referencedRelation: "funnels_public"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "funnel_payments_lead_id_fkey"
             columns: ["lead_id"]
             isOneToOne: false
@@ -2642,6 +2677,13 @@ export type Database = {
             columns: ["funnel_id"]
             isOneToOne: false
             referencedRelation: "funnels"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "funnel_price_options_funnel_id_fkey"
+            columns: ["funnel_id"]
+            isOneToOne: false
+            referencedRelation: "funnels_public"
             referencedColumns: ["id"]
           },
         ]
@@ -2722,6 +2764,13 @@ export type Database = {
             columns: ["funnel_id"]
             isOneToOne: false
             referencedRelation: "funnels"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "funnel_video_analytics_funnel_id_fkey"
+            columns: ["funnel_id"]
+            isOneToOne: false
+            referencedRelation: "funnels_public"
             referencedColumns: ["id"]
           },
           {
@@ -2851,6 +2900,13 @@ export type Database = {
             columns: ["funnel_id"]
             isOneToOne: false
             referencedRelation: "funnels"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "funnel_view_analytics_funnel_id_fkey"
+            columns: ["funnel_id"]
+            isOneToOne: false
+            referencedRelation: "funnels_public"
             referencedColumns: ["id"]
           },
         ]
@@ -5549,6 +5605,206 @@ export type Database = {
           },
         ]
       }
+      funnel_price_options_public: {
+        Row: {
+          amount: number | null
+          created_at: string | null
+          funnel_id: string | null
+          id: string | null
+          is_default: boolean | null
+          label: string | null
+          sort_order: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "funnel_price_options_funnel_id_fkey"
+            columns: ["funnel_id"]
+            isOneToOne: false
+            referencedRelation: "funnels"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "funnel_price_options_funnel_id_fkey"
+            columns: ["funnel_id"]
+            isOneToOne: false
+            referencedRelation: "funnels_public"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      funnels_public: {
+        Row: {
+          allow_forward_seek: boolean | null
+          allow_speed_control: boolean | null
+          audio_autoplay: boolean | null
+          audio_enabled: boolean | null
+          audio_lock_video: boolean | null
+          audio_play_position: string | null
+          audio_play_timing: string | null
+          audio_show_player: boolean | null
+          audio_skip_allowed: boolean | null
+          audio_url: string | null
+          contact_follows_cta: boolean | null
+          created_at: string | null
+          cta_button_text: string | null
+          cta_redirect_url: string | null
+          cta_trigger_type: string | null
+          cta_trigger_value: number | null
+          description: string | null
+          id: string | null
+          intent_type: string | null
+          is_live_mode: boolean | null
+          is_published: boolean | null
+          lead_form_config: Json | null
+          live_access_type: string | null
+          live_disable_pause: boolean | null
+          live_end_time: string | null
+          live_start_time: string | null
+          live_status: string | null
+          live_sync_enabled: boolean | null
+          live_viewer_count: number | null
+          lock_cta_until_complete: boolean | null
+          owner_user_id: string | null
+          payment_confirmation_method: string | null
+          payment_type: string | null
+          price: number | null
+          replay_enabled: boolean | null
+          show_contact: boolean | null
+          show_contact_instagram: boolean | null
+          show_contact_phone: boolean | null
+          show_contact_whatsapp: boolean | null
+          show_cta: boolean | null
+          slug: string | null
+          success_message: string | null
+          thumbnail_object_key: string | null
+          thumbnail_url: string | null
+          title: string | null
+          updated_at: string | null
+          video_access_limit_minutes: number | null
+          video_asset_id: string | null
+          video_url: string | null
+          visibility_type: string | null
+          whatsapp_auto_message: string | null
+          whatsapp_auto_message_enabled: boolean | null
+        }
+        Insert: {
+          allow_forward_seek?: boolean | null
+          allow_speed_control?: boolean | null
+          audio_autoplay?: boolean | null
+          audio_enabled?: boolean | null
+          audio_lock_video?: boolean | null
+          audio_play_position?: string | null
+          audio_play_timing?: string | null
+          audio_show_player?: boolean | null
+          audio_skip_allowed?: boolean | null
+          audio_url?: string | null
+          contact_follows_cta?: boolean | null
+          created_at?: string | null
+          cta_button_text?: string | null
+          cta_redirect_url?: string | null
+          cta_trigger_type?: string | null
+          cta_trigger_value?: number | null
+          description?: string | null
+          id?: string | null
+          intent_type?: string | null
+          is_live_mode?: boolean | null
+          is_published?: boolean | null
+          lead_form_config?: Json | null
+          live_access_type?: string | null
+          live_disable_pause?: boolean | null
+          live_end_time?: string | null
+          live_start_time?: string | null
+          live_status?: string | null
+          live_sync_enabled?: boolean | null
+          live_viewer_count?: number | null
+          lock_cta_until_complete?: boolean | null
+          owner_user_id?: string | null
+          payment_confirmation_method?: string | null
+          payment_type?: string | null
+          price?: number | null
+          replay_enabled?: boolean | null
+          show_contact?: boolean | null
+          show_contact_instagram?: boolean | null
+          show_contact_phone?: boolean | null
+          show_contact_whatsapp?: boolean | null
+          show_cta?: boolean | null
+          slug?: string | null
+          success_message?: string | null
+          thumbnail_object_key?: string | null
+          thumbnail_url?: string | null
+          title?: string | null
+          updated_at?: string | null
+          video_access_limit_minutes?: number | null
+          video_asset_id?: string | null
+          video_url?: string | null
+          visibility_type?: string | null
+          whatsapp_auto_message?: string | null
+          whatsapp_auto_message_enabled?: boolean | null
+        }
+        Update: {
+          allow_forward_seek?: boolean | null
+          allow_speed_control?: boolean | null
+          audio_autoplay?: boolean | null
+          audio_enabled?: boolean | null
+          audio_lock_video?: boolean | null
+          audio_play_position?: string | null
+          audio_play_timing?: string | null
+          audio_show_player?: boolean | null
+          audio_skip_allowed?: boolean | null
+          audio_url?: string | null
+          contact_follows_cta?: boolean | null
+          created_at?: string | null
+          cta_button_text?: string | null
+          cta_redirect_url?: string | null
+          cta_trigger_type?: string | null
+          cta_trigger_value?: number | null
+          description?: string | null
+          id?: string | null
+          intent_type?: string | null
+          is_live_mode?: boolean | null
+          is_published?: boolean | null
+          lead_form_config?: Json | null
+          live_access_type?: string | null
+          live_disable_pause?: boolean | null
+          live_end_time?: string | null
+          live_start_time?: string | null
+          live_status?: string | null
+          live_sync_enabled?: boolean | null
+          live_viewer_count?: number | null
+          lock_cta_until_complete?: boolean | null
+          owner_user_id?: string | null
+          payment_confirmation_method?: string | null
+          payment_type?: string | null
+          price?: number | null
+          replay_enabled?: boolean | null
+          show_contact?: boolean | null
+          show_contact_instagram?: boolean | null
+          show_contact_phone?: boolean | null
+          show_contact_whatsapp?: boolean | null
+          show_cta?: boolean | null
+          slug?: string | null
+          success_message?: string | null
+          thumbnail_object_key?: string | null
+          thumbnail_url?: string | null
+          title?: string | null
+          updated_at?: string | null
+          video_access_limit_minutes?: number | null
+          video_asset_id?: string | null
+          video_url?: string | null
+          visibility_type?: string | null
+          whatsapp_auto_message?: string | null
+          whatsapp_auto_message_enabled?: boolean | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "funnels_video_asset_id_fkey"
+            columns: ["video_asset_id"]
+            isOneToOne: false
+            referencedRelation: "video_assets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       public_verified_users: {
         Row: {
           city: string | null
@@ -6011,6 +6267,13 @@ export type Database = {
         Returns: string
       }
       get_form_share_url: { Args: { p_form_id: string }; Returns: string }
+      get_funnel_payment_details: {
+        Args: { p_access_token: string; p_lead_id: string }
+        Returns: {
+          funnel_upi_id: string
+          options: Json
+        }[]
+      }
       get_funnel_view_stats: {
         Args: { p_funnel_id: string }
         Returns: {

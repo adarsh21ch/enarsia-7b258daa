@@ -136,19 +136,10 @@ export function useForms() {
       } as NevoraFormWithFields;
     } catch (err) {
       console.error('fetchFormByToken RPC error:', err);
-      try {
-        const { data: share } = await supabase
-          .from('nevorai_form_shares')
-          .select('form_id')
-          .eq('token', token)
-          .single();
-        if (!share) return null;
-        return await fetchFormWithFields(share.form_id);
-      } catch {
-        return null;
-      }
+      return null;
     }
   }, [fetchFormWithFields]);
+
 
   const createForm = useCallback(async (input: CreateFormInput): Promise<NevoraFormWithFields | null> => {
     if (!user) return null;

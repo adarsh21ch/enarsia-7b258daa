@@ -7,7 +7,7 @@ const corsHeaders = {
 };
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
-const SUPABASE_ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY")!;
+const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 
 const APP_URL = "https://ncall.nevorai.com";
 const DEFAULT_TITLE = "NevorAI - Never Miss a Followup Again";
@@ -61,7 +61,7 @@ Deno.serve(async (req: Request) => {
     const slug = url.searchParams.get("slug");
     const token = url.searchParams.get("token");
 
-    const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
     let title = DEFAULT_TITLE;
     let description = DEFAULT_DESC;
