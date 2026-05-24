@@ -153,7 +153,7 @@ const [localData, setLocalData] = useState<Partial<Prospect>>({});
     window.location.href = `whatsapp://send?phone=${cleanPhoneNumber(prospect.phone)}`;
   };
 
-  const opeNevorai Call = (e: React.MouseEvent) => {
+  const openCall = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
     const cleanPhone = cleanPhoneNumber(prospect.phone);
@@ -222,7 +222,7 @@ const [localData, setLocalData] = useState<Partial<Prospect>>({});
             <Button
               variant="outline"
               className="flex-1 h-8 gap-1.5 text-xs font-medium border-accent/30 text-accent hover:bg-accent/10"
-              onClick={opeNevorai Call}
+              onClick={openCall}
             >
               <Phone className="h-3.5 w-3.5" />
               Call

@@ -194,7 +194,7 @@ export function RecentActivityView({ selectedDate: externalDate, searchQuery: ex
                     ) : (
                     <SwipeableActivityRow
                       phone={activity.phone}
-                      oNevorai Call={() => activity.phone && handleCall(activity.phone)}
+                      onCall={() => activity.phone && handleCall(activity.phone)}
                     >
                       <div className="flex items-start justify-between gap-2 p-2 rounded-lg bg-muted/30 hover:bg-muted/40 transition-colors">
                         <div className="min-w-0 flex-1">
@@ -250,11 +250,11 @@ export function RecentActivityView({ selectedDate: externalDate, searchQuery: ex
 // ===== Swipeable activity row — LEFT swipe → call (parity with Calling tab) =====
 interface SwipeableActivityRowProps {
   phone: string | null;
-  oNevorai Call: () => void;
+  onCall: () => void;
   children: React.ReactNode;
 }
 
-function SwipeableActivityRow({ phone, oNevorai Call, children }: SwipeableActivityRowProps) {
+function SwipeableActivityRow({ phone, onCall, children }: SwipeableActivityRowProps) {
   const SWIPE_REVEAL = 96;
   const SWIPE_TRIGGER = 140;
   const x = useMotionValue(0);
@@ -274,7 +274,7 @@ function SwipeableActivityRow({ phone, oNevorai Call, children }: SwipeableActiv
     const offset = info.offset.x;
     const velocity = info.velocity.x;
     if (offset < -SWIPE_TRIGGER || velocity < -650) {
-      oNevorai Call();
+      onCall();
       try {
         if (typeof navigator !== 'undefined' && 'vibrate' in navigator) {
           (navigator as Navigator & { vibrate: (p: number) => void }).vibrate(15);

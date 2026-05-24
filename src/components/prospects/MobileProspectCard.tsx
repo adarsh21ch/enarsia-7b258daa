@@ -119,7 +119,7 @@ const [localData, setLocalData] = useState({
     window.location.href = `whatsapp://send?phone=${cleanPhoneNumber(prospect.phone)}`;
   }, [prospect.phone, onMarkLastContacted]);
 
-  const opeNevorai Call = useCallback((e: React.MouseEvent) => {
+  const openCall = useCallback((e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
     onMarkLastContacted?.();
@@ -233,14 +233,14 @@ const [localData, setLocalData] = useState({
             </div>
             {/* Phone number only - no age/gender */}
             <button 
-              onClick={opeNevorai Call}
+              onClick={openCall}
               className="text-sm text-muted-foreground font-medium hover:text-accent transition-colors text-left"
             >
               {localData.phone}
             </button>
           </div>
           <div className="flex items-center gap-1">
-            <Button variant="outline" size="icon" className="h-10 w-10" onClick={opeNevorai Call}>
+            <Button variant="outline" size="icon" className="h-10 w-10" onClick={openCall}>
               <Phone className="h-4 w-4 text-accent" />
             </Button>
             <Button 

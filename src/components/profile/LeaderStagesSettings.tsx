@@ -33,7 +33,7 @@ export function LeaderStagesSettings({
   const [tagMode, setTagMode] = useState<'leader' | 'own'>('leader');
   
   // Own tags state
-  const [owNevorai CallingTags, setOwNevorai CallingTags] = useState<string[]>(['']);
+  const [ownCallingTags, setOwnCallingTags] = useState<string[]>(['']);
   const [ownStageTags, setOwnStageTags] = useState<string[]>(['']);
   
   // Leader tags display
@@ -47,7 +47,7 @@ export function LeaderStagesSettings({
   useEffect(() => {
     if (profile) {
       setTagMode(profile.use_leader_stages ? 'leader' : 'own');
-      setOwNevorai CallingTags(profile.response_labels.length > 0 ? profile.response_labels : ['']);
+      setOwnCallingTags(profile.response_labels.length > 0 ? profile.response_labels : ['']);
       setOwnStageTags(profile.stage_labels.length > 0 ? profile.stage_labels : ['']);
       
       // Fetch leader's tag config if using leader tags
@@ -105,7 +105,7 @@ export function LeaderStagesSettings({
 
   const handleTagModeChange = (mode: 'leader' | 'own') => {
     // If switching from own to leader and user has own tags, show confirmation
-    const hasOwnTags = owNevorai CallingTags.some(s => s.trim()) || ownStageTags.some(s => s.trim());
+    const hasOwnTags = ownCallingTags.some(s => s.trim()) || ownStageTags.some(s => s.trim());
     if (mode === 'leader' && tagMode === 'own' && hasOwnTags) {
       setShowSwitchConfirm(true);
       return;
@@ -124,21 +124,21 @@ export function LeaderStagesSettings({
 
   // Calling tags handlers
   const handleAddCallingTag = () => {
-    if (owNevorai CallingTags.length < 10) {
-      setOwNevorai CallingTags([...owNevorai CallingTags, '']);
+    if (ownCallingTags.length < 10) {
+      setOwnCallingTags([...ownCallingTags, '']);
     }
   };
 
   const handleRemoveCallingTag = (index: number) => {
-    if (owNevorai CallingTags.length > 1) {
-      setOwNevorai CallingTags(owNevorai CallingTags.filter((_, i) => i !== index));
+    if (ownCallingTags.length > 1) {
+      setOwnCallingTags(ownCallingTags.filter((_, i) => i !== index));
     }
   };
 
   const handleCallingTagChange = (index: number, value: string) => {
-    const updated = [...owNevorai CallingTags];
+    const updated = [...ownCallingTags];
     updated[index] = value;
-    setOwNevorai CallingTags(updated);
+    setOwnCallingTags(updated);
   };
 
   // Stage tags handlers
@@ -161,7 +161,7 @@ export function LeaderStagesSettings({
   };
 
   const handleSaveOwnTags = async () => {
-    const validCallingTags = owNevorai CallingTags.filter(s => s.trim());
+    const validCallingTags = ownCallingTags.filter(s => s.trim());
     const validStageTags = ownStageTags.filter(s => s.trim());
     
     if (validCallingTags.length < 3) {
@@ -378,7 +378,7 @@ export function LeaderStagesSettings({
                 Define response options for lead calls (3-10 tags recommended):
               </p>
               <div className="space-y-2">
-                {owNevorai CallingTags.map((tag, index) => (
+                {ownCallingTags.map((tag, index) => (
                   <div key={index} className="flex items-center gap-2">
                     <span className="text-xs text-muted-foreground w-12">Tag {index + 1}</span>
                     <Input
@@ -387,7 +387,7 @@ export function LeaderStagesSettings({
                       placeholder={`e.g., ${index === 0 ? 'Called' : index === 1 ? 'No answer' : index === 2 ? 'Interested' : `Tag ${index + 1}`}`}
                       className="flex-1"
                     />
-                    {owNevorai CallingTags.length > 1 && (
+                    {ownCallingTags.length > 1 && (
                       <Button
                         variant="ghost"
                         size="icon"
@@ -400,7 +400,7 @@ export function LeaderStagesSettings({
                   </div>
                 ))}
               </div>
-              {owNevorai CallingTags.length < 10 && (
+              {ownCallingTags.length < 10 && (
                 <Button variant="outline" size="sm" onClick={handleAddCallingTag}>
                   <Plus className="h-4 w-4 mr-1" />
                   Add Tag
