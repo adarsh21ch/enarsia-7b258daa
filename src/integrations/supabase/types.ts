@@ -1085,63 +1085,96 @@ export type Database = {
       admin_subscription_plans: {
         Row: {
           badge_text: string | null
+          billing_cycle: string
           billing_type: string
+          cancel_anytime: boolean
           created_at: string | null
           description: string | null
           display_name: string | null
           duration_days: number
           features: Json | null
+          first_month_price_inr: number | null
+          highlight_savings_text: string | null
           id: string
           is_active: boolean | null
           is_default: boolean | null
+          is_free: boolean
+          is_popular: boolean
+          monthly_price_inr: number | null
+          offer_badge_text: string | null
           payment_link: string | null
           plan_key: string
           plan_name: string
           price_inr: number
           razorpay_plan_id: string | null
+          renewal_price_inr: number | null
           sort_order: number | null
           tier: string
+          trial_days: number
           updated_at: string | null
+          yearly_price_inr: number | null
         }
         Insert: {
           badge_text?: string | null
+          billing_cycle?: string
           billing_type?: string
+          cancel_anytime?: boolean
           created_at?: string | null
           description?: string | null
           display_name?: string | null
           duration_days: number
           features?: Json | null
+          first_month_price_inr?: number | null
+          highlight_savings_text?: string | null
           id?: string
           is_active?: boolean | null
           is_default?: boolean | null
+          is_free?: boolean
+          is_popular?: boolean
+          monthly_price_inr?: number | null
+          offer_badge_text?: string | null
           payment_link?: string | null
           plan_key: string
           plan_name: string
           price_inr: number
           razorpay_plan_id?: string | null
+          renewal_price_inr?: number | null
           sort_order?: number | null
           tier?: string
+          trial_days?: number
           updated_at?: string | null
+          yearly_price_inr?: number | null
         }
         Update: {
           badge_text?: string | null
+          billing_cycle?: string
           billing_type?: string
+          cancel_anytime?: boolean
           created_at?: string | null
           description?: string | null
           display_name?: string | null
           duration_days?: number
           features?: Json | null
+          first_month_price_inr?: number | null
+          highlight_savings_text?: string | null
           id?: string
           is_active?: boolean | null
           is_default?: boolean | null
+          is_free?: boolean
+          is_popular?: boolean
+          monthly_price_inr?: number | null
+          offer_badge_text?: string | null
           payment_link?: string | null
           plan_key?: string
           plan_name?: string
           price_inr?: number
           razorpay_plan_id?: string | null
+          renewal_price_inr?: number | null
           sort_order?: number | null
           tier?: string
+          trial_days?: number
           updated_at?: string | null
+          yearly_price_inr?: number | null
         }
         Relationships: []
       }
@@ -4240,6 +4273,48 @@ export type Database = {
         }
         Relationships: []
       }
+      subscription_events: {
+        Row: {
+          amount: number | null
+          created_at: string
+          event_type: string
+          id: string
+          payload: Json
+          processed_at: string
+          razorpay_event_id: string
+          razorpay_payment_id: string | null
+          razorpay_subscription_id: string | null
+          status: string | null
+          user_id: string | null
+        }
+        Insert: {
+          amount?: number | null
+          created_at?: string
+          event_type: string
+          id?: string
+          payload?: Json
+          processed_at?: string
+          razorpay_event_id: string
+          razorpay_payment_id?: string | null
+          razorpay_subscription_id?: string | null
+          status?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          amount?: number | null
+          created_at?: string
+          event_type?: string
+          id?: string
+          payload?: Json
+          processed_at?: string
+          razorpay_event_id?: string
+          razorpay_payment_id?: string | null
+          razorpay_subscription_id?: string | null
+          status?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       support_ticket_replies: {
         Row: {
           created_at: string
@@ -4823,51 +4898,80 @@ export type Database = {
       }
       user_funnel_subscriptions: {
         Row: {
+          billing_cycle: string | null
           created_at: string | null
           expires_at: string | null
+          first_payment_amount: number | null
           id: string
           is_admin_override: boolean | null
+          next_billing_date: string | null
+          payment_history: Json
           payment_id: string | null
           plan: string
+          plan_id: string | null
           razorpay_subscription_id: string | null
+          renewal_amount: number | null
           status: string
           subscribed_at: string | null
           subscription_source: string | null
+          subscription_status: string
           tier: string | null
           updated_at: string | null
           user_id: string
         }
         Insert: {
+          billing_cycle?: string | null
           created_at?: string | null
           expires_at?: string | null
+          first_payment_amount?: number | null
           id?: string
           is_admin_override?: boolean | null
+          next_billing_date?: string | null
+          payment_history?: Json
           payment_id?: string | null
           plan?: string
+          plan_id?: string | null
           razorpay_subscription_id?: string | null
+          renewal_amount?: number | null
           status?: string
           subscribed_at?: string | null
           subscription_source?: string | null
+          subscription_status?: string
           tier?: string | null
           updated_at?: string | null
           user_id: string
         }
         Update: {
+          billing_cycle?: string | null
           created_at?: string | null
           expires_at?: string | null
+          first_payment_amount?: number | null
           id?: string
           is_admin_override?: boolean | null
+          next_billing_date?: string | null
+          payment_history?: Json
           payment_id?: string | null
           plan?: string
+          plan_id?: string | null
           razorpay_subscription_id?: string | null
+          renewal_amount?: number | null
           status?: string
           subscribed_at?: string | null
           subscription_source?: string | null
+          subscription_status?: string
           tier?: string | null
           updated_at?: string | null
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "user_funnel_subscriptions_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "admin_subscription_plans"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_kyc_submissions: {
         Row: {
@@ -4991,51 +5095,80 @@ export type Database = {
       }
       user_subscriptions: {
         Row: {
+          billing_cycle: string | null
           created_at: string
           expires_at: string | null
+          first_payment_amount: number | null
           id: string
           is_admin_override: boolean
+          next_billing_date: string | null
+          payment_history: Json
           payment_id: string | null
           plan: Database["public"]["Enums"]["user_plan"]
+          plan_id: string | null
           razorpay_subscription_id: string | null
+          renewal_amount: number | null
           status: string
           subscribed_at: string | null
           subscription_source: string | null
+          subscription_status: string
           tier: string | null
           updated_at: string
           user_id: string
         }
         Insert: {
+          billing_cycle?: string | null
           created_at?: string
           expires_at?: string | null
+          first_payment_amount?: number | null
           id?: string
           is_admin_override?: boolean
+          next_billing_date?: string | null
+          payment_history?: Json
           payment_id?: string | null
           plan?: Database["public"]["Enums"]["user_plan"]
+          plan_id?: string | null
           razorpay_subscription_id?: string | null
+          renewal_amount?: number | null
           status?: string
           subscribed_at?: string | null
           subscription_source?: string | null
+          subscription_status?: string
           tier?: string | null
           updated_at?: string
           user_id: string
         }
         Update: {
+          billing_cycle?: string | null
           created_at?: string
           expires_at?: string | null
+          first_payment_amount?: number | null
           id?: string
           is_admin_override?: boolean
+          next_billing_date?: string | null
+          payment_history?: Json
           payment_id?: string | null
           plan?: Database["public"]["Enums"]["user_plan"]
+          plan_id?: string | null
           razorpay_subscription_id?: string | null
+          renewal_amount?: number | null
           status?: string
           subscribed_at?: string | null
           subscription_source?: string | null
+          subscription_status?: string
           tier?: string | null
           updated_at?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "user_subscriptions_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "admin_subscription_plans"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_targets: {
         Row: {
