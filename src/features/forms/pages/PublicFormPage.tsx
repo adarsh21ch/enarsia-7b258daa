@@ -56,8 +56,8 @@ export default function PublicFormPage() {
   };
 
   const PageShell = ({ children }: { children: React.ReactNode }) => (
-    <div className="min-h-screen bg-gradient-to-b from-slate-50 via-white to-slate-100 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950">
-      <div className="max-w-xl mx-auto px-4 py-8 sm:py-12">{children}</div>
+    <div className="fixed inset-0 overflow-y-auto overflow-x-hidden bg-gradient-to-b from-slate-50 via-white to-slate-100 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950 [-webkit-overflow-scrolling:touch]">
+      <div className="max-w-xl mx-auto px-4 py-6 sm:py-10 pb-16">{children}</div>
     </div>
   );
 
