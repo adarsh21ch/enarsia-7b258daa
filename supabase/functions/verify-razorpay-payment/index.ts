@@ -127,14 +127,15 @@ serve(async (req) => {
     console.log('Signature verified successfully');
 
     // Fetch order details to get duration_days from notes
-    const authHeader = btoa(`${RAZORPAY_KEY_ID}:${RAZORPAY_KEY_SECRET}`);
+    const rzpAuthHeader = btoa(`${RAZORPAY_KEY_ID}:${RAZORPAY_KEY_SECRET}`);
     let durationDays: number | null = null;
     let amount: number | null = null;
+    let orderUserIdInNotes: string | null = null;
 
     try {
       const orderResponse = await fetch(`https://api.razorpay.com/v1/orders/${razorpay_order_id}`, {
         headers: {
-          'Authorization': `Basic ${authHeader}`,
+          'Authorization': `Basic ${rzpAuthHeader}`,
         },
       });
       
@@ -142,6 +143,7 @@ serve(async (req) => {
         const orderDetails = await orderResponse.json();
         const orderDurationDays = orderDetails.notes?.duration_days;
         const orderAmount = orderDetails.notes?.final_amount || orderDetails.amount;
+        orderUserIdInNotes = orderDetails.notes?.user_id || null;
         
         // CRITICAL: Get duration from order notes - this was set from database
         if (orderDurationDays) {
@@ -156,6 +158,15 @@ serve(async (req) => {
       }
     } catch (orderError) {
       console.error('Error fetching order details:', orderError);
+    }
+
+    // Cross-check: the user paying must match the user in the order notes.
+    if (orderUserIdInNotes && orderUserIdInNotes !== user_id) {
+      console.error(`User mismatch: authenticated=${user_id}, order_notes=${orderUserIdInNotes}`);
+      return new Response(
+        JSON.stringify({ error: 'Payment does not belong to the authenticated user.' }),
+        { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
     }
 
     // CRITICAL: Fail if duration not found - no fallback to hardcoded values
