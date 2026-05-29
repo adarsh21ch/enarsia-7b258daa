@@ -76,7 +76,6 @@ export function FormFieldCard({ field, index, allFields, onChange, onDelete, onD
           onChange={e => {
             updateField({
               label: e.target.value,
-              field_key: generateFieldKey(e.target.value, index),
             });
           }}
           placeholder="Question"
