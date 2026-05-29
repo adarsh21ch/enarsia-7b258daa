@@ -10,9 +10,9 @@ const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 
 const APP_URL = "https://ncall.nevorai.com";
-const DEFAULT_TITLE = "NevorAI - Never Miss a Followup Again";
+const DEFAULT_TITLE = "Nevorai CRM — Your personal CRM for network marketers.";
 const DEFAULT_DESC =
-  "Manage your sales prospects, track conversions, and close more deals with NevorAI.";
+  "Manage leads, forms, follow-ups, tasks, and tracking with Nevorai CRM.";
 const DEFAULT_IMAGE = `${APP_URL}/icons/icon-512.png`;
 
 function buildHtml(
@@ -36,7 +36,7 @@ function buildHtml(
 <meta property="og:image" content="${esc(image)}"/>
 <meta property="og:url" content="${esc(canonicalUrl)}"/>
 <meta property="og:type" content="website"/>
-<meta property="og:site_name" content="NevorAI"/>
+<meta property="og:site_name" content="Nevorai CRM"/>
 <meta name="twitter:card" content="summary_large_image"/>
 <meta name="twitter:title" content="${esc(title)}"/>
 <meta name="twitter:description" content="${esc(description)}"/>
@@ -79,7 +79,7 @@ Deno.serve(async (req: Request) => {
 
       if (data) {
         title = data.title || DEFAULT_TITLE;
-        description = data.description || `Watch this video on NevorAI`;
+        description = data.description || `Watch this video on Nevorai CRM`;
         image = data.thumbnail_url || DEFAULT_IMAGE;
       }
       redirectUrl = `${APP_URL}/f/${slug}`;
@@ -100,7 +100,7 @@ Deno.serve(async (req: Request) => {
 
         if (form) {
           title = form.title || DEFAULT_TITLE;
-          description = form.description || `Fill out this form on NevorAI`;
+          description = form.description || `Fill out this form on Nevorai CRM`;
         }
       }
       redirectUrl = `${APP_URL}/share/form/${token}`;

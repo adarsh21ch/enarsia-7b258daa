@@ -132,11 +132,11 @@ export function InstallInstructionsSheet({
 
         <div className="flex items-center gap-3">
           <div className="flex h-14 w-14 flex-shrink-0 items-center justify-center rounded-2xl bg-primary/5 shadow-sm">
-            <img src={nevoraLogo} alt="Nevorai Call" className="h-12 w-12 rounded-xl" />
+            <img src={nevoraLogo} alt="Nevorai CRM" className="h-12 w-12 rounded-xl" />
           </div>
           <div className="flex-1 min-w-0">
             <h3 id="install-title" className="text-base font-semibold text-foreground">
-              Install Nevorai Call <span className="text-muted-foreground font-normal">(Add to Home Screen)</span>
+              Install Nevorai CRM <span className="text-muted-foreground font-normal">(Add to Home Screen)</span>
             </h3>
             <p className="text-xs text-muted-foreground mt-0.5">
               No app store, no download. Just add it to your home screen to open it like a real app.
@@ -181,7 +181,7 @@ function InstallSteps({
           Add to Home Screen
         </Button>
         <p className="mt-2 text-[11px] text-muted-foreground text-center">
-          Your browser will ask to add Nevorai Call to your home screen.
+          Your browser will ask to add Nevorai CRM to your home screen.
         </p>
       </>
     );
@@ -194,7 +194,7 @@ function InstallSteps({
         steps={[
           { icon: <Share className="h-4 w-4" />, text: 'Tap the Share button at the bottom of Safari' },
           { icon: <Plus className="h-4 w-4" />, text: 'Scroll down and tap "Add to Home Screen"' },
-          { icon: <Smartphone className="h-4 w-4" />, text: 'Tap "Add" — the Nevorai Call icon appears on your home screen' },
+          { icon: <Smartphone className="h-4 w-4" />, text: 'Tap "Add" — the Nevorai CRM icon appears on your home screen' },
         ]}
       />
     );
@@ -220,7 +220,7 @@ function InstallSteps({
         steps={[
           { icon: <MoreVertical className="h-4 w-4" />, text: 'Tap the three-dot menu (⋮) at the top right' },
           { icon: <Plus className="h-4 w-4" />, text: 'Tap "Add to Home screen"' },
-          { icon: <Smartphone className="h-4 w-4" />, text: 'Confirm — the Nevorai Call icon appears on your home screen' },
+          { icon: <Smartphone className="h-4 w-4" />, text: 'Confirm — the Nevorai CRM icon appears on your home screen' },
         ]}
       />
     );
@@ -232,7 +232,7 @@ function InstallSteps({
         title="On desktop"
         steps={[
           { icon: <Download className="h-4 w-4" />, text: 'Click the "Add to Home Screen" icon in your browser address bar' },
-          { icon: <Plus className="h-4 w-4" />, text: 'Or open the browser menu and choose "Add Nevorai Call to Home Screen"' },
+          { icon: <Plus className="h-4 w-4" />, text: 'Or open the browser menu and choose "Add Nevorai CRM to Home Screen"' },
         ]}
       />
     );
@@ -244,7 +244,7 @@ function InstallSteps({
       steps={[
         { icon: <Share className="h-4 w-4" />, text: 'Open your browser menu — Share button on iPhone, three-dot menu (⋮) on Android' },
         { icon: <Plus className="h-4 w-4" />, text: 'Tap "Add to Home Screen"' },
-        { icon: <Smartphone className="h-4 w-4" />, text: 'The Nevorai Call icon will appear on your home screen' },
+        { icon: <Smartphone className="h-4 w-4" />, text: 'The Nevorai CRM icon will appear on your home screen' },
       ]}
     />
   );

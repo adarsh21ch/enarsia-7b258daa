@@ -246,7 +246,7 @@ export default function TodoUp() {
       <header className="fixed-header z-40 bg-card/80 backdrop-blur-xl border-b border-border/40">
         <div className="flex items-center justify-between px-4 py-2.5">
           <div className="flex items-center gap-2.5">
-            <img src={nevoraLogo} alt="Nevorai Call Logo" className="h-9 w-9 rounded-xl object-cover shadow-sm" />
+            <img src={nevoraLogo} alt="Nevorai CRM Logo" className="h-9 w-9 rounded-xl object-cover shadow-sm" />
             <div>
               <h1 className="text-lg font-bold tracking-tight">
                 {isRecentActivity ? 'Activity History' : 'To-Do List'}

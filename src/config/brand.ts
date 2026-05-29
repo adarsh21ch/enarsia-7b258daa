@@ -3,10 +3,12 @@
  * to ensure consistent branding everywhere.
  */
 
-export const BRAND_NAME = 'Nevorai Call';
-export const BRAND_NAME_UPPER = 'NEVORAI CALL';
-export const BRAND_NAME_LOWER = 'nevorai-call';
+export const BRAND_NAME = 'Nevorai CRM';
+export const BRAND_NAME_UPPER = 'NEVORAI CRM';
+export const BRAND_NAME_LOWER = 'nevorai-crm';
 export const PARENT_COMPANY_NAME = 'Nevorai';
+export const BRAND_SHORT_NAME = 'nCRM';
+export const BRAND_TAGLINE = 'Your personal CRM for network marketers.';
 
 // Plan names – display-facing (Basic = internal "pro", Pro = internal "premium")
 export const PLAN_NAME_BASIC = `${BRAND_NAME} Basic`;
