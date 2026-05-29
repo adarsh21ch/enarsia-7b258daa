@@ -8,7 +8,7 @@ const ACK_KEY = 'nvc-new-logo-notice-ack-v1';
 /**
  * One-time notice for users who already installed the previous PWA.
  * iOS/Android cache the home-screen icon at install time — the only way
- * to refresh the icon to the new Nevorai Call teal logo is to remove
+ * to refresh the icon to the new Nevorai CRM teal logo is to remove
  * the old icon and re-add the app to the home screen.
  */
 export function ReinstallForNewLogoNotice() {
@@ -51,7 +51,7 @@ export function ReinstallForNewLogoNotice() {
             New logo &amp; theme available
           </h3>
           <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
-            We refreshed Nevorai Call. To get the new home-screen icon, please remove the old app
+            We refreshed Nevorai CRM. To get the new home-screen icon, please remove the old app
             from your home screen and add it back via your browser&apos;s &ldquo;Add to Home Screen&rdquo;.
           </p>
           <div className="mt-3 flex gap-2">

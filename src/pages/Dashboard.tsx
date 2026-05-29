@@ -250,7 +250,7 @@ export default function Dashboard() {
         {/* Row A: Page title - compact & premium */}
         <div className="flex items-center px-4 py-2.5">
           <div className="flex items-center gap-2.5">
-            <img src={nevoraLogo} alt="Nevorai Call Logo" className="h-9 w-9 rounded-xl object-cover shadow-sm" />
+            <img src={nevoraLogo} alt="Nevorai CRM Logo" className="h-9 w-9 rounded-xl object-cover shadow-sm" />
             <div>
               <div className="flex items-center gap-1.5">
                 <h1 className="text-lg font-bold tracking-tight">Calling</h1>

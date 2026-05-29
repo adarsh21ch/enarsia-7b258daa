@@ -1,8 +1,8 @@
 {
-  "name": "Nevorai Call by Nevorai",
-  "short_name": "Nevorai Call",
+  "name": "Nevorai CRM by Nevorai",
+  "short_name": "nCRM",
   "id": "/?source=pwa-v2",
-  "description": "Smart calling for network marketers. Manage your sales prospects, track conversions, and close more deals.",
+  "description": "Your personal CRM for network marketers. Manage leads, forms, follow-ups, tasks, and tracking in one place.",
   "start_url": "/?source=pwa-v2",
   "display": "standalone",
   "background_color": "#F5F5F3",

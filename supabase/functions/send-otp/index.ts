@@ -122,7 +122,7 @@ serve(async (req) => {
     const { error: emailError } = await resend.emails.send({
       from: 'NevorAI <noreply@nevorai.com>',
       to: [normalizedEmail],
-      subject: 'Your NevorAI Verification Code',
+      subject: 'Your Nevorai CRM Verification Code',
       html: `
         <!DOCTYPE html>
         <html>
@@ -137,7 +137,7 @@ serve(async (req) => {
                 <table width="100%" style="max-width: 400px; background-color: #ffffff; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.05);">
                   <tr>
                     <td style="padding: 40px 32px; text-align: center;">
-                      <h1 style="color: #18181b; font-size: 24px; font-weight: 700; margin: 0 0 8px 0;">NevorAI</h1>
+                      <h1 style="color: #18181b; font-size: 24px; font-weight: 700; margin: 0 0 8px 0;">Nevorai CRM</h1>
                       <p style="color: #71717a; font-size: 14px; margin: 0 0 32px 0;">Verify your email address</p>
                       
                       <p style="color: #3f3f46; font-size: 15px; margin: 0 0 24px 0;">Enter this code to complete your signup:</p>

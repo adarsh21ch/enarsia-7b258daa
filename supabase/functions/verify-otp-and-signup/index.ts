@@ -125,7 +125,7 @@ serve(async (req) => {
         // Already has Nevorai - tell them to sign in
         return jsonResponse({ 
           success: false, 
-          error: 'You already have a Nevorai account. Please sign in instead.' 
+          error: 'You already have a Nevorai CRM account. Please sign in instead.' 
         }, 400);
       }
 
@@ -286,7 +286,7 @@ serve(async (req) => {
       .eq('email', normalizedEmail);
 
     const message = isExistingUser 
-      ? 'Nevorai account activated!' 
+      ? 'Nevorai CRM account activated!' 
       : 'Account created successfully!';
 
     return jsonResponse({ 

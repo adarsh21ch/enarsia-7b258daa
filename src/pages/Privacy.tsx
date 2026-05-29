@@ -16,7 +16,7 @@ export default function Privacy() {
         </Link>
 
         <div className="flex items-baseline gap-2 mb-2">
-          <span className="text-xl font-extrabold text-primary">Nevorai Call</span>
+          <span className="text-xl font-extrabold text-primary">Nevorai CRM</span>
           <span className="text-xs text-muted-foreground">by Nevorai</span>
         </div>
         <h1 className="text-3xl font-bold text-foreground mb-2">Privacy Policy</h1>
@@ -28,14 +28,14 @@ export default function Privacy() {
           <div className="prose prose-sm max-w-none space-y-6 text-foreground">
             <section className="bg-primary/5 border border-primary/15 rounded-xl p-4">
               <p className="text-muted-foreground leading-relaxed m-0">
-                Nevorai Call by Nevorai respects your privacy. This policy explains what data we collect, how we use it, and how we protect it. We comply with the Information Technology Act, 2000 and its amendments applicable in India.
+                Nevorai CRM by Nevorai respects your privacy. This policy explains what data we collect, how we use it, and how we protect it. We comply with the Information Technology Act, 2000 and its amendments applicable in India.
               </p>
             </section>
 
             <section>
               <h2 className="text-xl font-semibold mb-3">1. Who We Are</h2>
               <p className="text-muted-foreground leading-relaxed">
-                Nevorai Call is a product of Nevorai Technologies, built for network marketers and sales professionals to manage calls, leads and follow-ups. References to "Nevorai Call", "we", "us" or "our" mean Nevorai Technologies and the Nevorai Call application.
+                Nevorai CRM is a product of Nevorai Technologies, built for network marketers and sales professionals to manage calls, leads and follow-ups. References to "Nevorai CRM", "we", "us" or "our" mean Nevorai Technologies and the Nevorai CRM application.
               </p>
               <p className="text-muted-foreground leading-relaxed mt-2">
                 For privacy-related concerns, contact us at <a href={`mailto:${SUPPORT_EMAIL}`} className="text-primary hover:underline">{SUPPORT_EMAIL}</a>.
@@ -57,7 +57,7 @@ export default function Privacy() {
             <section>
               <h2 className="text-xl font-semibold mb-3">3. How We Use Your Data</h2>
               <ul className="list-disc pl-5 space-y-2 text-muted-foreground">
-                <li>Provide and improve the Nevorai Call service.</li>
+                <li>Provide and improve the Nevorai CRM service.</li>
                 <li>Send account-related emails (verification, receipts, plan updates).</li>
                 <li>Show your call history, leads and analytics inside the app.</li>
                 <li>Enforce plan limits and manage your subscription.</li>
@@ -82,7 +82,7 @@ export default function Privacy() {
             <section>
               <h2 className="text-xl font-semibold mb-3">5. Your Lead Data</h2>
               <p className="text-muted-foreground leading-relaxed">
-                The contacts and leads you import into Nevorai Call belong to you. We store them securely solely to power the app for you. We do not access, use, or share your lead data for any other purpose. If you delete your account, all lead data is permanently deleted within 30 days.
+                The contacts and leads you import into Nevorai CRM belong to you. We store them securely solely to power the app for you. We do not access, use, or share your lead data for any other purpose. If you delete your account, all lead data is permanently deleted within 30 days.
               </p>
             </section>
 
@@ -123,7 +123,7 @@ export default function Privacy() {
             <section>
               <h2 className="text-xl font-semibold mb-3">10. Children's Privacy</h2>
               <p className="text-muted-foreground leading-relaxed">
-                Nevorai Call is not intended for users under 18. We do not knowingly collect data from minors. Contact us if you believe a minor has created an account, and we will delete it.
+                Nevorai CRM is not intended for users under 18. We do not knowingly collect data from minors. Contact us if you believe a minor has created an account, and we will delete it.
               </p>
             </section>
 
@@ -150,7 +150,7 @@ export default function Privacy() {
               <Link to="/privacy" className="hover:text-foreground">Privacy Policy</Link>
               <Link to="/refund" className="hover:text-foreground">Refund Policy</Link>
             </div>
-            <p className="text-xs text-muted-foreground mt-4">© 2026 Nevorai · Nevorai Call · All rights reserved</p>
+            <p className="text-xs text-muted-foreground mt-4">© 2026 Nevorai · Nevorai CRM · All rights reserved</p>
           </div>
         </div>
       </ScrollArea>
