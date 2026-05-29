@@ -6477,43 +6477,24 @@ export type Database = {
         Args: { p_form_id: string; p_limit?: number; p_offset?: number }
         Returns: Json
       }
-      nevorai_submit_form:
-        | {
-            Args: {
-              p_answers?: Json
-              p_answers_json?: Json
-              p_attachments_json?: Json
-              p_form_id?: string
-              p_share_token?: string
-              p_source?: string
-              p_submitter_email?: string
-              p_submitter_name?: string
-              p_token?: string
-              p_utm_campaign?: string
-              p_utm_content?: string
-              p_utm_medium?: string
-              p_utm_source?: string
-            }
-            Returns: Json
-          }
-        | {
-            Args: {
-              p_answers?: Json
-              p_answers_json?: Json
-              p_attachments_json?: Json
-              p_form_id?: string
-              p_share_token?: string
-              p_source?: string
-              p_submitter_email?: string
-              p_submitter_name?: string
-              p_token?: string
-              p_utm_campaign?: string
-              p_utm_content?: string
-              p_utm_medium?: string
-              p_utm_source?: string
-            }
-            Returns: Json
-          }
+      nevorai_submit_form: {
+        Args: {
+          p_answers?: Json
+          p_answers_json?: Json
+          p_attachments_json?: Json
+          p_form_id?: string
+          p_share_token?: string
+          p_source?: string
+          p_submitter_email?: string
+          p_submitter_name?: string
+          p_token?: string
+          p_utm_campaign?: string
+          p_utm_content?: string
+          p_utm_medium?: string
+          p_utm_source?: string
+        }
+        Returns: Json
+      }
       normalize_leader_id: { Args: { id: string }; Returns: string }
       purge_deletion_batch: { Args: { p_batch_id: string }; Returns: Json }
       purge_expired_deleted_items: { Args: never; Returns: undefined }
