@@ -69,9 +69,29 @@ serve(async (req) => {
       );
     }
 
-    const { razorpay_order_id, razorpay_payment_id, razorpay_signature, user_id } = await req.json();
+    // Require authenticated caller — derive user identity from JWT.
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader?.startsWith('Bearer ')) {
+      return new Response(
+        JSON.stringify({ error: 'Unauthorized' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+    const authClient = createClient(SUPABASE_URL!, Deno.env.get('SUPABASE_ANON_KEY') || '', {
+      global: { headers: { Authorization: authHeader } },
+    });
+    const { data: authData, error: authError } = await authClient.auth.getUser();
+    if (authError || !authData?.user) {
+      return new Response(
+        JSON.stringify({ error: 'Unauthorized' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+    const user_id = authData.user.id;
 
-    if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature || !user_id) {
+    const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = await req.json();
+
+    if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature) {
       console.error('Missing required parameters');
       return new Response(
         JSON.stringify({ error: 'Missing payment verification parameters' }),
@@ -79,7 +99,7 @@ serve(async (req) => {
       );
     }
 
-    // Rate limiting check
+    // Rate limiting keyed off the authenticated user id
     if (!checkRateLimit(user_id)) {
       return new Response(
         JSON.stringify({ error: 'Too many requests. Please wait a moment before trying again.' }),
