@@ -114,12 +114,13 @@ export default function PublicFormPage() {
 
   return (
     <PageShell>
-      {/* Header */}
-      <div className="flex items-center gap-2 mb-4 text-xs text-muted-foreground">
-        <div className="w-7 h-7 rounded-lg bg-emerald-100 dark:bg-emerald-900/40 flex items-center justify-center">
-          <FileText className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" />
+      {/* Branded header */}
+      <div className="flex items-center justify-center gap-2 mb-5">
+        <img src={nevoraiLogo} alt={`${PARENT_COMPANY_NAME} logo`} className="h-8 w-8 rounded-lg object-contain" />
+        <div className="flex flex-col leading-tight">
+          <span className="text-sm font-semibold tracking-tight">{BRAND_NAME}</span>
+          <span className="text-[10px] text-muted-foreground uppercase tracking-wider">by {PARENT_COMPANY_NAME}</span>
         </div>
-        <span>Nevorai Form</span>
       </div>
 
       {/* Title card */}
