@@ -424,7 +424,7 @@ export function useForms() {
         value_json: Array.isArray(value) ? value : null,
       }));
 
-      const { error } = await supabase.rpc('nevorai_submit_form', {
+      const { data, error } = await supabase.rpc('nevorai_submit_form', {
         p_token: token,
         p_answers_json: answersJson as unknown as Json,
         p_attachments_json: [] as unknown as Json,
@@ -435,10 +435,16 @@ export function useForms() {
         p_utm_content: utmData?.utm_content || null,
       });
       if (error) throw error;
+      const result = data as { success?: boolean; error?: string } | null;
+      if (result && result.success === false) {
+        toast.error(result.error || 'Submission failed');
+        return false;
+      }
       return true;
     } catch (err) {
+      const msg = err instanceof Error ? err.message : 'Submission failed';
       console.error('submitForm error:', err);
-      toast.error('Submission failed');
+      toast.error(msg);
       return false;
     }
   }, []);

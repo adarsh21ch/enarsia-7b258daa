@@ -78,7 +78,11 @@ export function FormsListTab({ onEdit }: Props) {
       toast.success('Form link copied!');
       setTimeout(() => setCopiedId(prev => (prev === form.id ? null : prev)), 2000);
     } else {
-      toast.error('Could not copy. Try the Share menu.');
+      // Auto-fallback: open share dialog so the user always has a working path
+      setShareUrl(url);
+      setShareTitle(form.title);
+      setShareOpen(true);
+      toast.message('Tap "Copy Link" in the share menu');
     }
   };
 
