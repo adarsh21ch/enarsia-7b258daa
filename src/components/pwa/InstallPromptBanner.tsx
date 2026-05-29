@@ -33,8 +33,8 @@ export function InstallPromptBanner() {
   const [open, setOpen] = useState(false);
   const platform = detectPlatform();
 
-  // Only auto-show on public/auth routes — never inside the authed app
-  const isPublicRoute = ['/', '/auth', '/reset-password'].includes(location.pathname);
+  // Only auto-show on the marketing entry route — never during auth or form completion flows
+  const isPublicRoute = location.pathname === '/';
 
   useEffect(() => {
     if (!isPublicRoute) return;

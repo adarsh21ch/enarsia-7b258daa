@@ -12,6 +12,29 @@ import { Loader2, Mail, Lock, Eye, EyeOff, ArrowLeft, User, Phone } from 'lucide
 import nevoraLogo from '@/assets/nevorai-call-logo.png';
 import { getPasswordRecoveryRedirectUrl, PUBLISHED_APP_URL } from '@/config/siteUrl';
 
+function AuthHeader() {
+  return (
+    <div className="text-center mb-8">
+      <div className="relative inline-block mb-4">
+        <img
+          src={nevoraLogo}
+          alt="Nevorai Call Logo"
+          className="w-[72px] h-[72px] object-contain"
+        />
+      </div>
+      <h1 className="text-[28px] font-extrabold text-foreground font-heading tracking-tight">
+        Nevorai Call
+      </h1>
+      <p className="text-muted-foreground text-[13px] mt-0.5 font-body">
+        by Nevorai
+      </p>
+      <p className="text-muted-foreground text-[15px] mt-1 italic font-body">
+        Never miss a followup Again
+      </p>
+    </div>
+  );
+}
+
 export default function Auth() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -300,28 +323,6 @@ export default function Auth() {
       </div>
     );
   }
-
-  // --- Shared header ---
-  const AuthHeader = () => (
-    <div className="text-center mb-8">
-      <div className="relative inline-block mb-4">
-        <img
-          src={nevoraLogo}
-          alt="Nevorai Call Logo"
-          className="w-[72px] h-[72px] object-contain"
-        />
-      </div>
-      <h1 className="text-[28px] font-extrabold text-foreground font-heading tracking-tight">
-        Nevorai Call
-      </h1>
-      <p className="text-muted-foreground text-[13px] mt-0.5 font-body">
-        by Nevorai
-      </p>
-      <p className="text-muted-foreground text-[15px] mt-1 italic font-body">
-        Never miss a followup Again
-      </p>
-    </div>
-  );
 
   // --- Forgot Password ---
   if (isForgotPassword) {

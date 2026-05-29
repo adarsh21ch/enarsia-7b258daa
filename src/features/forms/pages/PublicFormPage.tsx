@@ -150,8 +150,8 @@ export default function PublicFormPage() {
           <div className="space-y-6">
             {form.fields
               .filter(f => isFieldVisible(f, answers))
-              .map(field => (
-                <div key={field.field_key} data-field-key={field.field_key}>
+              .map((field, index) => (
+                <div key={field.id || `${field.field_key}-${index}`} data-field-key={field.field_key}>
                   <FormFieldRenderer
                     field={field}
                     value={answers[field.field_key] || ''}

@@ -6,7 +6,6 @@ import { Switch } from '@/components/ui/switch';
 import { Button } from '@/components/ui/button';
 import { GripVertical, Trash2, Plus, ChevronDown, ChevronUp, Copy } from 'lucide-react';
 import { ConditionalLogicEditor } from './ConditionalLogicEditor';
-import { generateFieldKey } from '../utils/formUtils';
 import type { NevoraFormField, FormFieldType, FieldOptions, FieldValidation } from '../types';
 
 const FIELD_TYPES: { value: FormFieldType; label: string }[] = [
@@ -76,7 +75,6 @@ export function FormFieldCard({ field, index, allFields, onChange, onDelete, onD
           onChange={e => {
             updateField({
               label: e.target.value,
-              field_key: generateFieldKey(e.target.value, index),
             });
           }}
           placeholder="Question"
