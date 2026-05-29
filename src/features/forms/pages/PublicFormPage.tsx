@@ -2,10 +2,12 @@ import { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { Loader2, CheckCircle2, XCircle, FileText, ShieldCheck } from 'lucide-react';
+import { Loader2, CheckCircle2, XCircle, ShieldCheck } from 'lucide-react';
 import { FormFieldRenderer } from '../components/FormFieldRenderer';
 import { useForms } from '../hooks/useForms';
 import { validateAllFields, isFieldVisible, extractUTMParams } from '../utils/formUtils';
+import { BRAND_NAME, PARENT_COMPANY_NAME } from '@/config/brand';
+import nevoraiLogo from '@/assets/nevorai-call-logo.png';
 import type { NevoraFormWithFields } from '../types';
 
 export default function PublicFormPage() {
