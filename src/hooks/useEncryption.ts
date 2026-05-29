@@ -13,102 +13,17 @@ import {
 
 export function useEncryption() {
   const { user } = useAuth();
-  const [isReady, setIsReady] = useState(hasEncryptionKey());
+  // SECURITY: the raw encryption key is no longer exposed to clients.
+  // All encrypt/decrypt operations round-trip through the `encrypt-data`
+  // edge function. `isReady` stays false so callers always use the server path.
+  const [isReady] = useState(false);
 
-  // Fetch encryption key once when user logs in
   useEffect(() => {
-    // No user - clear key and don't fetch
     if (!user) {
       clearEncryptionKey();
-      setIsReady(false);
-      return;
     }
-
-    // Already have the key
-    if (hasEncryptionKey()) {
-      setIsReady(true);
-      return;
-    }
-
-    let isCancelled = false;
-
-    const fetchKey = async (retryCount = 0) => {
-      try {
-        // Get current session to ensure we have a valid token
-        const { data: sessionData } = await supabase.auth.getSession();
-        
-        // No valid session - don't attempt fetch (prevents 401 on auth pages)
-        if (!sessionData?.session?.access_token) {
-          console.log('No session token available, skipping encryption key fetch');
-          return;
-        }
-
-        // Check if session is about to expire (within 60 seconds)
-        const expiresAt = sessionData.session.expires_at;
-        const now = Date.now();
-        if (expiresAt && (expiresAt * 1000) - now < 60000) {
-          console.log('Session expiring soon, attempting refresh...');
-          // Try to refresh first
-          const { data: refreshData, error: refreshError } = await supabase.auth.refreshSession();
-          if (refreshError || !refreshData?.session) {
-            console.log('Session refresh failed, skipping encryption key fetch');
-            return;
-          }
-          console.log('Session refreshed successfully');
-        }
-
-        if (isCancelled) return;
-
-        const { data, error } = await supabase.functions.invoke('get-encryption-key');
-        
-        if (isCancelled) return;
-
-        if (error) {
-          const errorMessage = error.message || '';
-          const is401 = errorMessage.includes('401') || errorMessage.includes('non-2xx');
-          
-          // Handle token expired - try to refresh session once
-          if (is401 && retryCount === 0) {
-            console.log('Encryption key fetch failed with 401, attempting session refresh...');
-            const { data: refreshData, error: refreshError } = await supabase.auth.refreshSession();
-            if (!refreshError && refreshData?.session && !isCancelled) {
-              console.log('Session refreshed, retrying encryption key fetch...');
-              // Small delay after refresh to ensure new token is used
-              await new Promise(resolve => setTimeout(resolve, 100));
-              return fetchKey(1);
-            }
-            console.log('Session refresh failed or cancelled, proceeding without encryption key');
-            return;
-          }
-          
-          // After retry or other errors, proceed without encryption key
-          console.warn('Failed to fetch encryption key:', errorMessage);
-          return;
-        }
-
-        if (data?.key && !isCancelled) {
-          setEncryptionKey(data.key);
-          setIsReady(true);
-          console.log('Encryption key loaded successfully');
-        }
-      } catch (err) {
-        // Silently handle errors to prevent blank screens
-        if (!isCancelled) {
-          console.warn('Error fetching encryption key (caught):', err);
-        }
-      }
-    };
-
-    // Small delay to ensure auth state is fully settled
-    const timeoutId = setTimeout(() => {
-      fetchKey();
-    }, 200); // Increased delay for better auth state settling
-
-    return () => {
-      isCancelled = true;
-      clearTimeout(timeoutId);
-    };
   }, [user]);
+
 
   // Helper to ensure valid session before edge function calls
   const ensureValidSession = useCallback(async (): Promise<boolean> => {
