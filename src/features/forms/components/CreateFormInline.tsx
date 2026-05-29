@@ -17,9 +17,12 @@ interface Props {
 
 export function CreateFormInline({ editingForm, onSuccess }: Props) {
   const { createForm, updateForm } = useForms();
+  const getClientFieldId = () => `client-${crypto.randomUUID()}`;
   const [title, setTitle] = useState(editingForm?.title || '');
   const [description, setDescription] = useState(editingForm?.description || '');
-  const [fields, setFields] = useState<NevoraFormField[]>(editingForm?.fields || []);
+  const [fields, setFields] = useState<NevoraFormField[]>(
+    () => (editingForm?.fields || []).map((field) => ({ ...field, id: field.id || getClientFieldId() }))
+  );
   const [settings, setSettings] = useState<UpdateFormInput>({
     confirmation_message: editingForm?.confirmation_message || 'Thank you for your submission!',
     is_accepting: editingForm?.is_accepting ?? true,
@@ -36,7 +39,7 @@ export function CreateFormInline({ editingForm, onSuccess }: Props) {
   const addField = () => {
     const idx = fields.length;
     const newField: NevoraFormField = {
-      id: '',
+      id: getClientFieldId(),
       form_id: editingForm?.id || '',
       field_key: generateFieldKey(`Question ${idx + 1}`, idx),
       field_type: 'short_text' as FormFieldType,
@@ -57,7 +60,7 @@ export function CreateFormInline({ editingForm, onSuccess }: Props) {
     const original = fields[index];
     const newField: NevoraFormField = {
       ...original,
-      id: '',
+      id: getClientFieldId(),
       field_key: generateFieldKey(original.label + ' copy', fields.length),
       label: original.label + ' (Copy)',
       position: fields.length,
@@ -168,7 +171,7 @@ export function CreateFormInline({ editingForm, onSuccess }: Props) {
             <>
               {fields.map((field, index) => (
                 <FormFieldCard
-                  key={field.id || index}
+                  key={field.id}
                   field={field}
                   index={index}
                   allFields={fields}
