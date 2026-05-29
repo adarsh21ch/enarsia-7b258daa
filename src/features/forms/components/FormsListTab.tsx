@@ -42,12 +42,43 @@ export function FormsListTab({ onEdit }: Props) {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [forms.length]);
 
+  const copyToClipboard = async (url: string): Promise<boolean> => {
+    try {
+      if (navigator.clipboard?.writeText && window.isSecureContext) {
+        await navigator.clipboard.writeText(url);
+        return true;
+      }
+    } catch { /* fall through */ }
+    try {
+      const ta = document.createElement('textarea');
+      ta.value = url;
+      ta.style.position = 'fixed';
+      ta.style.opacity = '0';
+      document.body.appendChild(ta);
+      ta.focus();
+      ta.select();
+      const ok = document.execCommand('copy');
+      document.body.removeChild(ta);
+      return ok;
+    } catch {
+      return false;
+    }
+  };
+
   const handleShareCopy = async (form: NevoraFormWithFields) => {
     const token = await getShareToken(form.id);
-    if (token) {
-      const url = getShareUrl(token);
-      navigator.clipboard.writeText(url);
+    if (!token) {
+      toast.error('Could not generate share link');
+      return;
+    }
+    const url = getShareUrl(token);
+    const ok = await copyToClipboard(url);
+    if (ok) {
+      setCopiedId(form.id);
       toast.success('Form link copied!');
+      setTimeout(() => setCopiedId(prev => (prev === form.id ? null : prev)), 2000);
+    } else {
+      toast.error('Could not copy. Try the Share menu.');
     }
   };
 
