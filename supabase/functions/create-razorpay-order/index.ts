@@ -61,16 +61,29 @@ serve(async (req) => {
 
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
-    const { user_id, user_email, plan_type = 'quarterly', offer } = await req.json();
-
-    if (!user_id || !user_email) {
+    // Require authenticated caller — derive user identity from JWT, never trust body.
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader?.startsWith('Bearer ')) {
       return new Response(
-        JSON.stringify({ error: 'Missing user information' }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        JSON.stringify({ error: 'Unauthorized' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
+    const { data: authData, error: authError } = await supabase.auth.getUser(
+      authHeader.replace('Bearer ', '')
+    );
+    if (authError || !authData?.user) {
+      return new Response(
+        JSON.stringify({ error: 'Unauthorized' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+    const user_id = authData.user.id;
+    const user_email = authData.user.email ?? '';
 
-    // Rate limiting check
+    const { plan_type = 'quarterly', offer } = await req.json();
+
+    // Rate limiting check (keyed off authenticated user id)
     if (!checkRateLimit(user_id)) {
       return new Response(
         JSON.stringify({ error: 'Too many requests. Please wait a moment before trying again.' }),
