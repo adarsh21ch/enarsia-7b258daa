@@ -2,10 +2,12 @@ import { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { Loader2, CheckCircle2, XCircle, FileText, ShieldCheck } from 'lucide-react';
+import { Loader2, CheckCircle2, XCircle, ShieldCheck } from 'lucide-react';
 import { FormFieldRenderer } from '../components/FormFieldRenderer';
 import { useForms } from '../hooks/useForms';
 import { validateAllFields, isFieldVisible, extractUTMParams } from '../utils/formUtils';
+import { BRAND_NAME, PARENT_COMPANY_NAME } from '@/config/brand';
+import nevoraiLogo from '@/assets/nevorai-call-logo.png';
 import type { NevoraFormWithFields } from '../types';
 
 export default function PublicFormPage() {
@@ -54,8 +56,8 @@ export default function PublicFormPage() {
   };
 
   const PageShell = ({ children }: { children: React.ReactNode }) => (
-    <div className="min-h-screen bg-gradient-to-b from-slate-50 via-white to-slate-100 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950">
-      <div className="max-w-xl mx-auto px-4 py-8 sm:py-12">{children}</div>
+    <div className="fixed inset-0 overflow-y-auto overflow-x-hidden bg-gradient-to-b from-slate-50 via-white to-slate-100 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950 [-webkit-overflow-scrolling:touch]">
+      <div className="max-w-xl mx-auto px-4 py-6 sm:py-10 pb-16">{children}</div>
     </div>
   );
 
@@ -112,12 +114,13 @@ export default function PublicFormPage() {
 
   return (
     <PageShell>
-      {/* Header */}
-      <div className="flex items-center gap-2 mb-4 text-xs text-muted-foreground">
-        <div className="w-7 h-7 rounded-lg bg-emerald-100 dark:bg-emerald-900/40 flex items-center justify-center">
-          <FileText className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" />
+      {/* Branded header */}
+      <div className="flex items-center justify-center gap-2 mb-5">
+        <img src={nevoraiLogo} alt={`${PARENT_COMPANY_NAME} logo`} className="h-8 w-8 rounded-lg object-contain" />
+        <div className="flex flex-col leading-tight">
+          <span className="text-sm font-semibold tracking-tight">{BRAND_NAME}</span>
+          <span className="text-[10px] text-muted-foreground uppercase tracking-wider">by {PARENT_COMPANY_NAME}</span>
         </div>
-        <span>Nevorai Form</span>
       </div>
 
       {/* Title card */}
