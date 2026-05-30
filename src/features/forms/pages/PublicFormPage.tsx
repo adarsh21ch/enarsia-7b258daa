@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, type ReactNode } from 'react';
 import { useParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -9,6 +9,14 @@ import { validateAllFields, isFieldVisible, extractUTMParams } from '../utils/fo
 import { BRAND_NAME, PARENT_COMPANY_NAME } from '@/config/brand';
 import nevoraiLogo from '@/assets/nevorai-call-logo.png';
 import type { NevoraFormWithFields } from '../types';
+
+function PublicFormShell({ children }: { children: ReactNode }) {
+  return (
+    <div className="public-page-layout bg-gradient-to-b from-slate-50 via-white to-slate-100 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950">
+      <div className="max-w-xl mx-auto px-4 py-6 sm:py-10 pb-16">{children}</div>
+    </div>
+  );
+}
 
 export default function PublicFormPage() {
   const { token } = useParams<{ token: string }>();
@@ -55,50 +63,44 @@ export default function PublicFormPage() {
     if (success) setSubmitted(true);
   };
 
-  const PageShell = ({ children }: { children: React.ReactNode }) => (
-    <div className="fixed inset-0 overflow-y-auto overflow-x-hidden bg-gradient-to-b from-slate-50 via-white to-slate-100 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950 [-webkit-overflow-scrolling:touch]">
-      <div className="max-w-xl mx-auto px-4 py-6 sm:py-10 pb-16">{children}</div>
-    </div>
-  );
-
   if (loading) {
     return (
-      <PageShell>
+      <PublicFormShell>
         <div className="flex flex-col items-center justify-center py-24 gap-3">
           <Loader2 className="h-8 w-8 animate-spin text-emerald-600" />
           <p className="text-sm text-muted-foreground">Loading form…</p>
         </div>
-      </PageShell>
+      </PublicFormShell>
     );
   }
 
   if (!form) {
     return (
-      <PageShell>
+      <PublicFormShell>
         <Card className="p-8 text-center rounded-2xl border-slate-200/70 dark:border-slate-800 shadow-sm">
           <XCircle className="h-12 w-12 text-destructive mx-auto mb-4" />
           <h1 className="text-xl font-bold mb-2">Form Not Found</h1>
           <p className="text-muted-foreground text-sm">This form may have been deleted or the link is invalid.</p>
         </Card>
-      </PageShell>
+      </PublicFormShell>
     );
   }
 
   if (closed) {
     return (
-      <PageShell>
+      <PublicFormShell>
         <Card className="p-8 text-center rounded-2xl border-slate-200/70 dark:border-slate-800 shadow-sm">
           <XCircle className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
           <h1 className="text-xl font-bold mb-2">Form Closed</h1>
           <p className="text-muted-foreground text-sm">This form is no longer accepting responses.</p>
         </Card>
-      </PageShell>
+      </PublicFormShell>
     );
   }
 
   if (submitted) {
     return (
-      <PageShell>
+      <PublicFormShell>
         <Card className="p-10 text-center rounded-2xl border-emerald-200/70 dark:border-emerald-900/40 shadow-sm bg-gradient-to-b from-emerald-50/60 to-white dark:from-emerald-950/30 dark:to-slate-900">
           <div className="mx-auto w-16 h-16 rounded-full bg-emerald-100 dark:bg-emerald-900/40 flex items-center justify-center mb-5">
             <CheckCircle2 className="h-9 w-9 text-emerald-600 dark:text-emerald-400" />
@@ -108,12 +110,12 @@ export default function PublicFormPage() {
             {form.confirmation_message || 'Your response has been recorded successfully.'}
           </p>
         </Card>
-      </PageShell>
+      </PublicFormShell>
     );
   }
 
   return (
-    <PageShell>
+    <PublicFormShell>
       {/* Branded header */}
       <div className="flex items-center justify-center gap-2 mb-5">
         <img src={nevoraiLogo} alt={`${PARENT_COMPANY_NAME} logo`} className="h-8 w-8 rounded-lg object-contain" />
@@ -193,6 +195,6 @@ export default function PublicFormPage() {
         <ShieldCheck className="h-3.5 w-3.5" />
         <span>Secured by Nevorai · Never submit passwords</span>
       </div>
-    </PageShell>
+    </PublicFormShell>
   );
 }
