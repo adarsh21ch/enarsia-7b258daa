@@ -29,6 +29,8 @@ export default function FormResponsesPage() {
   const navigate = useNavigate();
   const isMobile = useIsMobile();
   const { fetchFormWithFields, fetchSubmissions } = useForms();
+  const { importProspects } = useGlobalProspects();
+  const { addSheet } = useSheets();
   const [form, setForm] = useState<NevoraFormWithFields | null>(null);
   const [submissions, setSubmissions] = useState<SubmissionWithAnswers[]>([]);
   const [loading, setLoading] = useState(true);
@@ -36,6 +38,9 @@ export default function FormResponsesPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [detailSub, setDetailSub] = useState<SubmissionWithAnswers | null>(null);
   const [detailOpen, setDetailOpen] = useState(false);
+  const [sendOpen, setSendOpen] = useState(false);
+  const [sendName, setSendName] = useState('');
+  const [sending, setSending] = useState(false);
 
   useEffect(() => {
     if (!user && !authLoading) navigate('/auth');
