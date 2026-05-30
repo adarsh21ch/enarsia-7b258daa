@@ -17,7 +17,12 @@ interface Props {
 
 export function FormsListTab({ onEdit }: Props) {
   const navigate = useNavigate();
-  const { forms, loading, fetchForms, duplicateForm, deleteForm, getShareToken, getShareUrl } = useForms();
+  const { forms, loading, fetchForms, fetchFormWithFields, duplicateForm, deleteForm, getShareToken, getShareUrl } = useForms();
+
+  const handleEditClick = async (form: NevoraFormWithFields) => {
+    const full = await fetchFormWithFields(form.id);
+    onEdit(full || form);
+  };
   const [shareOpen, setShareOpen] = useState(false);
   const [shareUrl, setShareUrl] = useState('');
   const [shareTitle, setShareTitle] = useState('');
@@ -170,7 +175,7 @@ export function FormsListTab({ onEdit }: Props) {
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
-                    <DropdownMenuItem onClick={() => onEdit(form)}>
+                    <DropdownMenuItem onClick={() => handleEditClick(form)}>
                       <Edit className="h-4 w-4 mr-2" /> Edit Form
                     </DropdownMenuItem>
                     <DropdownMenuItem onClick={() => navigate(`/forms/${form.id}/responses`)}>
