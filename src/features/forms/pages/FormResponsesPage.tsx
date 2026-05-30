@@ -146,6 +146,64 @@ export default function FormResponsesPage() {
     }
   }, []);
 
+  const openSendToCalling = () => {
+    if (!form) return;
+    const today = format(new Date(), 'MMM d, yyyy');
+    setSendName(`${form.title} – ${today}`);
+    setSendOpen(true);
+  };
+
+  const handleSendToCalling = async () => {
+    if (!form || !sendName.trim()) return;
+    setSending(true);
+    try {
+      // Detect name + phone fields
+      const mapping = form.lead_mapping || {};
+      const nameKey = (mapping as any).name_field_key || form.fields.find(f => f.field_type === 'short_text' && /name/i.test(f.label))?.field_key || form.fields.find(f => f.field_type === 'short_text')?.field_key;
+      const phoneKey = (mapping as any).phone_field_key || form.fields.find(f => f.field_type === 'phone')?.field_key || form.fields.find(f => /phone|mobile|contact/i.test(f.label))?.field_key;
+
+      if (!phoneKey) {
+        toast.error('No phone field detected in this form');
+        setSending(false);
+        return;
+      }
+
+      const rows = filtered
+        .map(s => {
+          const name = nameKey ? s.answers.find(a => a.field_key === nameKey)?.value : null;
+          const phone = s.answers.find(a => a.field_key === phoneKey)?.value;
+          if (!phone) return null;
+          return {
+            name: (name || s.submitter_name || 'Unknown').toString().trim() || 'Unknown',
+            phone: phone.toString().trim(),
+          };
+        })
+        .filter(Boolean) as { name: string; phone: string }[];
+
+      if (rows.length === 0) {
+        toast.error('No valid leads to send');
+        setSending(false);
+        return;
+      }
+
+      const sheet = await addSheet(sendName.trim());
+      if (!sheet) {
+        toast.error('Could not create calling sheet');
+        setSending(false);
+        return;
+      }
+
+      const result = await importProspects(rows.map(r => ({ ...r, sheet_id: sheet.id })));
+      toast.success(`Sent ${result.imported} lead${result.imported === 1 ? '' : 's'} to Calling`);
+      setSendOpen(false);
+    } catch (err) {
+      console.error('send to calling error', err);
+      toast.error('Failed to send to Calling');
+    } finally {
+      setSending(false);
+    }
+  };
+
   if (!user) return null;
 
   return (
