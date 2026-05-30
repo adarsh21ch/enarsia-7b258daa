@@ -7,6 +7,7 @@ import { ArrowLeft } from 'lucide-react';
 import { BottomNav } from '@/components/layout/BottomNav';
 import { FormsListTab } from '../components/FormsListTab';
 import { CreateFormInline } from '../components/CreateFormInline';
+import formsLogo from '@/assets/nevorai-forms-logo.png';
 import type { NevoraFormWithFields } from '../types';
 
 export default function FormsDashboard() {
