@@ -38,6 +38,7 @@ import { AIAssistantChat } from '@/components/ai/AIAssistantChat';
 import { InstallInstructionsSheet } from '@/components/pwa/InstallPromptBanner';
 import { AIInsightsSettings } from '@/components/ai/AIInsightsSettings';
 import { ThemeSettings } from '@/components/profile/ThemeSettings';
+import { ModeSwitcher } from '@/components/profile/ModeSwitcher';
 import { useFeatureAccess } from '@/hooks/useFeatureAccess';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
@@ -375,6 +376,10 @@ export default function Profile() {
               <p className="text-sm">{profile.bio}</p>
             </div>
           )}
+
+          {/* ── SECTION: App Mode ─────────────── */}
+          <SectionHeader>App Mode</SectionHeader>
+          <ModeSwitcher />
 
           {/* ── SECTION: Tools ────────────────── */}
           <SectionHeader>Tools</SectionHeader>

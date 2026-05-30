@@ -49,6 +49,8 @@ export interface Profile {
   whatsapp_community_joined: boolean;
   /** When user joined WA community */
   whatsapp_joined_at: string | null;
+  /** Active app Mode (multi-profession): network_marketing | content_creator | founder */
+  mode: string;
 }
 
 export interface ProfileUpdate {
@@ -67,6 +69,7 @@ export interface ProfileUpdate {
   stage_labels?: string[];
   response_labels?: string[];
   upline_email?: string | null;
+  mode?: string;
 }
 
 export function useProfile() {
@@ -115,6 +118,7 @@ export function useProfile() {
           stage_labels: retryData.stage_labels || [],
           response_labels: retryData.response_labels || [],
           total_leads_added: retryData.total_leads_added ?? 0,
+          mode: (retryData as { mode?: string }).mode || 'network_marketing',
         } as Profile;
       }
 
@@ -142,6 +146,7 @@ export function useProfile() {
         whatsapp_popup_shown: data.whatsapp_popup_shown ?? false,
         whatsapp_community_joined: data.whatsapp_community_joined ?? false,
         whatsapp_joined_at: data.whatsapp_joined_at || null,
+        mode: (data as { mode?: string }).mode || 'network_marketing',
       } as Profile;
     },
     enabled: !!user,
