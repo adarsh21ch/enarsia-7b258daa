@@ -38,7 +38,21 @@ export function PermissionsProvider({ children }: { children: React.ReactNode })
   const { userTier, isPaid, isPro, isPremium, loading: subLoading } = useSubscription();
   const { isTrialActive, loading: trialLoading } = useFreeTrial();
 
-  const isLoading = configLoading || subLoading || trialLoading;
+  const rawLoading = configLoading || subLoading || trialLoading;
+
+  // Safety valve: never let a slow/failed Supabase query freeze the app.
+  // After 5s, stop reporting loading so consumers render with optimistic
+  // permissions (helpers already default canAccess: true).
+  const [loadingTimedOut, setLoadingTimedOut] = useState(false);
+  useEffect(() => {
+    if (!rawLoading) {
+      setLoadingTimedOut(false);
+      return;
+    }
+    const t = setTimeout(() => setLoadingTimedOut(true), 5000);
+    return () => clearTimeout(t);
+  }, [rawLoading]);
+  const isLoading = rawLoading && !loadingTimedOut;
 
   // Effective tier: trial users get pro-level access
   const effectiveTier: SubscriptionTier = isTrialActive && userTier === 'basic' ? 'pro' : userTier;
