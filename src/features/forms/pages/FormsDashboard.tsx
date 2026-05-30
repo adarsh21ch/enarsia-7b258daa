@@ -7,6 +7,7 @@ import { ArrowLeft } from 'lucide-react';
 import { BottomNav } from '@/components/layout/BottomNav';
 import { FormsListTab } from '../components/FormsListTab';
 import { CreateFormInline } from '../components/CreateFormInline';
+import formsLogo from '@/assets/nevorai-forms-logo.png';
 import type { NevoraFormWithFields } from '../types';
 
 export default function FormsDashboard() {
@@ -32,13 +33,14 @@ export default function FormsDashboard() {
   if (!user) return null;
 
   return (
-    <div className="app-layout bg-gradient-to-b from-blue-50/60 to-background dark:from-blue-950/20 dark:to-background">
-      <header className="fixed-header z-40 bg-white/80 dark:bg-card/80 backdrop-blur-xl border-b border-blue-100/50 dark:border-border/50">
+    <div className="app-layout bg-background">
+      <header className="fixed-header z-40 bg-background/80 backdrop-blur-xl border-b border-border">
         <div className="flex items-center gap-3 px-4 py-3">
           <Button variant="ghost" size="icon" onClick={() => navigate('/profile')} className="shrink-0">
             <ArrowLeft className="h-5 w-5" />
           </Button>
-          <h1 className="text-lg font-bold bg-gradient-to-r from-blue-600 to-blue-400 bg-clip-text text-transparent">Nevorai Forms</h1>
+          <img src={formsLogo} alt="Nevorai Forms" width={28} height={28} className="rounded-md shrink-0" loading="lazy" />
+          <h1 className="text-base font-semibold tracking-tight">Nevorai Forms</h1>
         </div>
       </header>
 

@@ -4,14 +4,21 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { ArrowLeft, Loader2, FileSpreadsheet, Download, LayoutGrid, Table2, Search, X, MoreVertical } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import {
+  Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle,
+} from '@/components/ui/dialog';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
+import { ArrowLeft, Loader2, FileSpreadsheet, Download, LayoutGrid, Table2, Search, X, MoreVertical, PhoneCall } from 'lucide-react';
 import { toast } from 'sonner';
 import { BottomNav } from '@/components/layout/BottomNav';
 import { SubmissionsSpreadsheetView } from '../components/SubmissionsSpreadsheetView';
 import { SubmissionCardView } from '../components/SubmissionCardView';
 import { SubmissionDetailDrawer } from '../components/SubmissionDetailDrawer';
 import { useForms } from '../hooks/useForms';
+import { useGlobalProspects } from '@/contexts/ProspectsContext';
+import { useSheets } from '@/hooks/useSheets';
 import { format, isToday, isThisWeek } from 'date-fns';
 import * as XLSX from 'xlsx';
 import type { NevoraFormWithFields, SubmissionWithAnswers } from '../types';
@@ -22,6 +29,8 @@ export default function FormResponsesPage() {
   const navigate = useNavigate();
   const isMobile = useIsMobile();
   const { fetchFormWithFields, fetchSubmissions } = useForms();
+  const { importProspects } = useGlobalProspects();
+  const { addSheet } = useSheets();
   const [form, setForm] = useState<NevoraFormWithFields | null>(null);
   const [submissions, setSubmissions] = useState<SubmissionWithAnswers[]>([]);
   const [loading, setLoading] = useState(true);
@@ -29,6 +38,9 @@ export default function FormResponsesPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [detailSub, setDetailSub] = useState<SubmissionWithAnswers | null>(null);
   const [detailOpen, setDetailOpen] = useState(false);
+  const [sendOpen, setSendOpen] = useState(false);
+  const [sendName, setSendName] = useState('');
+  const [sending, setSending] = useState(false);
 
   useEffect(() => {
     if (!user && !authLoading) navigate('/auth');
@@ -134,6 +146,64 @@ export default function FormResponsesPage() {
     }
   }, []);
 
+  const openSendToCalling = () => {
+    if (!form) return;
+    const today = format(new Date(), 'MMM d, yyyy');
+    setSendName(`${form.title} – ${today}`);
+    setSendOpen(true);
+  };
+
+  const handleSendToCalling = async () => {
+    if (!form || !sendName.trim()) return;
+    setSending(true);
+    try {
+      // Detect name + phone fields
+      const mapping = form.lead_mapping || {};
+      const nameKey = (mapping as any).name_field_key || form.fields.find(f => f.field_type === 'short_text' && /name/i.test(f.label))?.field_key || form.fields.find(f => f.field_type === 'short_text')?.field_key;
+      const phoneKey = (mapping as any).phone_field_key || form.fields.find(f => f.field_type === 'phone')?.field_key || form.fields.find(f => /phone|mobile|contact/i.test(f.label))?.field_key;
+
+      if (!phoneKey) {
+        toast.error('No phone field detected in this form');
+        setSending(false);
+        return;
+      }
+
+      const rows = filtered
+        .map(s => {
+          const name = nameKey ? s.answers.find(a => a.field_key === nameKey)?.value : null;
+          const phone = s.answers.find(a => a.field_key === phoneKey)?.value;
+          if (!phone) return null;
+          return {
+            name: (name || s.submitter_name || 'Unknown').toString().trim() || 'Unknown',
+            phone: phone.toString().trim(),
+          };
+        })
+        .filter(Boolean) as { name: string; phone: string }[];
+
+      if (rows.length === 0) {
+        toast.error('No valid leads to send');
+        setSending(false);
+        return;
+      }
+
+      const sheet = await addSheet(sendName.trim());
+      if (!sheet) {
+        toast.error('Could not create calling sheet');
+        setSending(false);
+        return;
+      }
+
+      const result = await importProspects(rows.map(r => ({ ...r, sheet_id: sheet.id })));
+      toast.success(`Sent ${result.imported} lead${result.imported === 1 ? '' : 's'} to Calling`);
+      setSendOpen(false);
+    } catch (err) {
+      console.error('send to calling error', err);
+      toast.error('Failed to send to Calling');
+    } finally {
+      setSending(false);
+    }
+  };
+
   if (!user) return null;
 
   return (
@@ -187,6 +257,10 @@ export default function FormResponsesPage() {
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
+                      <DropdownMenuItem onClick={openSendToCalling}>
+                        <PhoneCall className="h-4 w-4 mr-2" /> Send to Calling
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator />
                       <DropdownMenuItem onClick={exportCSV}>
                         <FileSpreadsheet className="h-4 w-4 mr-2" /> Export CSV
                       </DropdownMenuItem>
@@ -262,6 +336,33 @@ export default function FormResponsesPage() {
       </main>
 
       <BottomNav />
+
+      <Dialog open={sendOpen} onOpenChange={setSendOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Send leads to Calling</DialogTitle>
+            <DialogDescription>
+              Creates a new calling sheet and adds {filtered.length} lead{filtered.length === 1 ? '' : 's'} from this form. Name & phone are detected automatically.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-2 py-2">
+            <Label htmlFor="sheet-name" className="text-xs">Sheet name</Label>
+            <Input
+              id="sheet-name"
+              value={sendName}
+              onChange={(e) => setSendName(e.target.value)}
+              placeholder="e.g. Webinar leads - May 30"
+              autoFocus
+            />
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setSendOpen(false)} disabled={sending}>Cancel</Button>
+            <Button onClick={handleSendToCalling} disabled={sending || !sendName.trim()}>
+              {sending ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Sending…</> : 'Send to Calling'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>);
 
 }
