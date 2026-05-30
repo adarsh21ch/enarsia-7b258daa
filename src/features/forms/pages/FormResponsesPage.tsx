@@ -257,6 +257,10 @@ export default function FormResponsesPage() {
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
+                      <DropdownMenuItem onClick={openSendToCalling}>
+                        <PhoneCall className="h-4 w-4 mr-2" /> Send to Calling
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator />
                       <DropdownMenuItem onClick={exportCSV}>
                         <FileSpreadsheet className="h-4 w-4 mr-2" /> Export CSV
                       </DropdownMenuItem>
