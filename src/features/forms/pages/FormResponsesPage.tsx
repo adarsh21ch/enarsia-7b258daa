@@ -17,7 +17,7 @@ import { SubmissionsSpreadsheetView } from '../components/SubmissionsSpreadsheet
 import { SubmissionCardView } from '../components/SubmissionCardView';
 import { SubmissionDetailDrawer } from '../components/SubmissionDetailDrawer';
 import { useForms } from '../hooks/useForms';
-import { useProspects } from '@/contexts/ProspectsContext';
+import { useGlobalProspects } from '@/contexts/ProspectsContext';
 import { useSheets } from '@/hooks/useSheets';
 import { format, isToday, isThisWeek } from 'date-fns';
 import * as XLSX from 'xlsx';
