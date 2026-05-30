@@ -377,13 +377,8 @@ export default function Profile() {
             </div>
           )}
 
-          {/* ── SECTION: App Mode (admin-only until the profession system ships) ── */}
-          {isAdmin && (
-            <>
-              <SectionHeader>App Mode</SectionHeader>
-              <ModeSwitcher />
-            </>
-          )}
+          {/* ── SECTION: Profession (renders its own header, or nothing) ── */}
+          <ModeSwitcher />
 
           {/* ── SECTION: Tools ────────────────── */}
           <SectionHeader>Tools</SectionHeader>

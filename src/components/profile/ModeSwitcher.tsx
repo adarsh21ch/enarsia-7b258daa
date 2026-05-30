@@ -2,12 +2,12 @@ import { useState, type ComponentType } from 'react';
 import { useProfile } from '@/hooks/useProfile';
 import { useMode } from '@/hooks/useMode';
 import { useAdmin } from '@/hooks/useAdmin';
-import { MODES, type ModeId } from '@/config/modes';
+import { MODES, getAddonModes, normalizeEnabledModes, type ModeId } from '@/config/modes';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
-import { Users, Clapperboard, Rocket, Check, Loader2, Lock, Eye } from 'lucide-react';
+import { Users, Clapperboard, Rocket, Check, Loader2, Plus } from 'lucide-react';
 
-/** Icon per mode, used only in the switcher list. */
+/** Icon per profession. */
 const MODE_ICONS: Record<ModeId, ComponentType<{ className?: string }>> = {
   network_marketing: Users,
   content_creator: Clapperboard,
@@ -15,15 +15,14 @@ const MODE_ICONS: Record<ModeId, ComponentType<{ className?: string }>> = {
 };
 
 /**
- * App Mode switcher.
+ * Profession picker for the Profile page.
  *
- * Lets the user pick which profession Mode the whole app runs as. Selecting a
- * mode writes `profiles.mode`; `useMode()` reads it, so the bottom nav and
- * terminology re-skin live (optimistic cache update in useProfile).
- *
- * Enabled modes are selectable by everyone. Modes still under construction
- * (`enabled: false`) show "Coming soon" to regular users, but admins can flip
- * into them as a "Preview" to build/dogfood (pages may 404 until built).
+ * Everyone starts on their base profession (Network Marketing). This shows the
+ * professions the user has chosen (`profiles.enabled_modes`) as switchable
+ * rows, plus an "Add a profession" list of available add-ons (e.g. Content
+ * Creator). Switching writes `profiles.mode`; adding appends to
+ * `enabled_modes` and switches to it. `useMode()` reads `mode`, so the bottom
+ * nav + terminology re-skin live.
  */
 export function ModeSwitcher() {
   const { profile, updateProfile, updating } = useProfile();
@@ -31,78 +30,109 @@ export function ModeSwitcher() {
   const { isAdmin } = useAdmin();
   const [pendingId, setPendingId] = useState<ModeId | null>(null);
 
-  const modes = Object.values(MODES);
+  const enabled = normalizeEnabledModes(profile?.enabled_modes);
+  // Add-on professions stay admin-only until they're finished (Content Creator
+  // still has scaffold tabs). Flip this to show them to everyone when ready.
+  const addable = isAdmin ? getAddonModes().filter((m) => !enabled.includes(m.id)) : [];
 
-  const handleSelect = async (id: ModeId) => {
+  // Nothing actionable for a single-profession user → render nothing (keeps
+  // normal users' Profile clean; no lone "Network Marketing" row).
+  if (enabled.length <= 1 && addable.length === 0) return null;
+
+  const handleSwitch = async (id: ModeId) => {
     if (id === activeModeId || updating) return;
     setPendingId(id);
     const { error } = await updateProfile({ mode: id });
     setPendingId(null);
-    if (error) {
-      toast.error('Could not switch mode. Make sure the profiles.mode column exists.');
-      return;
-    }
+    if (error) return toast.error('Could not switch profession.');
     toast.success(`Switched to ${MODES[id].label}`);
   };
 
-  return (
-    <div className="rounded-2xl bg-card border border-border/50 overflow-hidden divide-y divide-border/50">
-      {modes.map((m) => {
-        const Icon = MODE_ICONS[m.id];
-        const isActive = m.id === activeModeId;
-        const isLocked = !m.enabled && !isAdmin;
-        const isPreview = !m.enabled && isAdmin;
-        const isPending = pendingId === m.id;
+  const handleAdd = async (id: ModeId) => {
+    if (updating) return;
+    setPendingId(id);
+    const { error } = await updateProfile({ mode: id, enabled_modes: [...enabled, id] });
+    setPendingId(null);
+    if (error) return toast.error('Could not add profession.');
+    toast.success(`Added ${MODES[id].label}`);
+  };
 
-        return (
-          <button
-            key={m.id}
-            type="button"
-            disabled={isLocked || updating}
-            onClick={() => handleSelect(m.id)}
-            className={cn(
-              'w-full px-4 py-3 flex items-center gap-3 text-left transition-colors',
-              isActive ? 'bg-primary/5' : 'hover:bg-muted/50',
-              isLocked && 'opacity-60 cursor-not-allowed',
-            )}
-          >
-            <div
+  return (
+    <div className="space-y-3">
+      <p className="text-[11px] uppercase tracking-[1.2px] text-muted-foreground font-semibold pt-3 pb-1 px-1">
+        Profession
+      </p>
+
+      {/* Chosen professions — switch between them */}
+      <div className="rounded-2xl bg-card border border-border/50 overflow-hidden divide-y divide-border/50">
+        {enabled.map((id) => {
+          const m = MODES[id];
+          const Icon = MODE_ICONS[id];
+          const isActive = id === activeModeId;
+          const isPending = pendingId === id;
+          return (
+            <button
+              key={id}
+              type="button"
+              disabled={updating}
+              onClick={() => handleSwitch(id)}
               className={cn(
-                'p-2 rounded-xl shrink-0',
-                isActive ? 'bg-primary/15' : 'bg-muted',
+                'w-full px-4 py-3 flex items-center gap-3 text-left transition-colors',
+                isActive ? 'bg-primary/5' : 'hover:bg-muted/50',
               )}
             >
-              <Icon className={cn('h-4 w-4', isActive ? 'text-primary' : 'text-muted-foreground')} />
-            </div>
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2 flex-wrap">
+              <div className={cn('p-2 rounded-xl shrink-0', isActive ? 'bg-primary/15' : 'bg-muted')}>
+                <Icon className={cn('h-4 w-4', isActive ? 'text-primary' : 'text-muted-foreground')} />
+              </div>
+              <div className="flex-1 min-w-0">
                 <span className={cn('font-medium text-sm', isActive && 'text-primary')}>{m.label}</span>
-                {isPreview && (
-                  <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] font-semibold bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/30">
-                    <Eye className="h-2.5 w-2.5" />
-                    Preview
+                <span className="text-[11px] text-muted-foreground truncate block">{m.terms.tagline}</span>
+              </div>
+              <div className="shrink-0">
+                {isPending ? (
+                  <Loader2 className="h-4 w-4 animate-spin text-primary" />
+                ) : isActive ? (
+                  <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-primary">
+                    <Check className="h-3.5 w-3.5" /> Active
                   </span>
-                )}
-                {isLocked && (
-                  <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] font-semibold bg-muted text-muted-foreground border border-border/50">
-                    Coming soon
-                  </span>
+                ) : (
+                  <span className="text-[11px] text-muted-foreground">Switch</span>
                 )}
               </div>
-              <span className="text-[11px] text-muted-foreground truncate block">{m.terms.tagline}</span>
-            </div>
-            <div className="shrink-0">
-              {isPending ? (
-                <Loader2 className="h-4 w-4 animate-spin text-primary" />
-              ) : isActive ? (
-                <Check className="h-4 w-4 text-primary" />
-              ) : isLocked ? (
-                <Lock className="h-3.5 w-3.5 text-muted-foreground" />
-              ) : null}
-            </div>
-          </button>
-        );
-      })}
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Add another profession */}
+      {addable.length > 0 && (
+        <div className="rounded-2xl bg-card border border-dashed border-border/60 overflow-hidden divide-y divide-border/50">
+          {addable.map((m) => {
+            const Icon = MODE_ICONS[m.id];
+            const isPending = pendingId === m.id;
+            return (
+              <button
+                key={m.id}
+                type="button"
+                disabled={updating}
+                onClick={() => handleAdd(m.id)}
+                className="w-full px-4 py-3 flex items-center gap-3 text-left hover:bg-muted/50 transition-colors"
+              >
+                <div className="p-2 rounded-xl bg-muted shrink-0">
+                  <Icon className="h-4 w-4 text-muted-foreground" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <span className="font-medium text-sm">Add {m.label}</span>
+                  <span className="text-[11px] text-muted-foreground truncate block">{m.terms.tagline}</span>
+                </div>
+                <div className="shrink-0">
+                  {isPending ? <Loader2 className="h-4 w-4 animate-spin text-primary" /> : <Plus className="h-4 w-4 text-primary" />}
+                </div>
+              </button>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }

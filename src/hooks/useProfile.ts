@@ -51,6 +51,8 @@ export interface Profile {
   whatsapp_joined_at: string | null;
   /** Active app Mode (multi-profession): network_marketing | content_creator | founder */
   mode: string;
+  /** Professions the user has chosen/added. Always includes the base (network_marketing). */
+  enabled_modes: string[];
 }
 
 export interface ProfileUpdate {
@@ -70,6 +72,7 @@ export interface ProfileUpdate {
   response_labels?: string[];
   upline_email?: string | null;
   mode?: string;
+  enabled_modes?: string[];
 }
 
 export function useProfile() {
@@ -119,6 +122,7 @@ export function useProfile() {
           response_labels: retryData.response_labels || [],
           total_leads_added: retryData.total_leads_added ?? 0,
           mode: (retryData as { mode?: string }).mode || 'network_marketing',
+          enabled_modes: (retryData as { enabled_modes?: string[] }).enabled_modes || ['network_marketing'],
         } as Profile;
       }
 
@@ -147,6 +151,7 @@ export function useProfile() {
         whatsapp_community_joined: data.whatsapp_community_joined ?? false,
         whatsapp_joined_at: data.whatsapp_joined_at || null,
         mode: (data as { mode?: string }).mode || 'network_marketing',
+        enabled_modes: (data as { enabled_modes?: string[] }).enabled_modes || ['network_marketing'],
       } as Profile;
     },
     enabled: !!user,

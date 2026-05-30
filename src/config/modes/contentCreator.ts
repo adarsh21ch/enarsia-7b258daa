@@ -29,5 +29,5 @@ export const contentCreatorMode: AppMode = {
     tagline: 'Your content command center.',
   },
   aiPersona: 'content_creator',
-  enabled: false,
+  enabled: true,
 };
