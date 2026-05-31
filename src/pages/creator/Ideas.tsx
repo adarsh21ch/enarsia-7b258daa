@@ -395,10 +395,18 @@ export default function Ideas() {
       {/* Spacer so the composer + nav don't overlap last item */}
       <div className="h-36" />
 
-      {/* WhatsApp-style composer — sits just above the bottom nav */}
+      {/* WhatsApp-style composer — pinned above the bottom nav, and lifted
+          above the mobile keyboard via visualViewport tracking so text is
+          always visible while typing. */}
       <div
-        className="fixed left-0 right-0 z-30 px-3 pt-2 bg-background/95 backdrop-blur-md border-t border-border/50"
-        style={{ bottom: 'calc(64px + env(safe-area-inset-bottom, 0px) + 8px)', paddingBottom: '8px' }}
+        className="fixed left-0 right-0 z-30 px-3 pt-2 bg-background backdrop-blur-md border-t border-border/50"
+        style={{
+          bottom: keyboardOpen
+            ? `${kbOffset}px`
+            : 'calc(64px + env(safe-area-inset-bottom, 0px) + 8px)',
+          paddingBottom: keyboardOpen ? '8px' : '8px',
+          transition: 'bottom 0.15s ease-out',
+        }}
       >
         <div className="max-w-lg mx-auto">
           {attach && (
