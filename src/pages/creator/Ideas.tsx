@@ -85,6 +85,8 @@ export default function Ideas() {
     setCategoryId(i.category_id || '');
     setIgUrl(i.instagram_url || '');
     setYtUrl(i.youtube_url || '');
+    setShowIg(!!i.instagram_url);
+    setShowYt(!!i.youtube_url);
     setContextNote(i.context_note || '');
     setAudioUrl(i.audio_url || null);
     setEditOpen(true);
