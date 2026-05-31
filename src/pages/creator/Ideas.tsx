@@ -112,8 +112,58 @@ export default function Ideas() {
     setNewCatOpen(false);
   };
 
+  // --- audio: tap-to-start, tap-send-to-finish ---
+  const startMic = async () => {
+    if (!user) { toast.error('Please sign in to record'); return; }
+    if (!audio.supported) { toast.error('Audio not supported — try Chrome or Safari iOS 14.3+'); return; }
+    await audio.start();
+  };
+
+  const uploadAudioBlob = async (blob: Blob): Promise<string | null> => {
+    if (!user) return null;
+    try {
+      const id = (crypto as any).randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+      const path = `${user.id}/${id}.webm`;
+      const { error: upErr } = await supabase.storage.from(AUDIO_BUCKET).upload(path, blob, {
+        contentType: blob.type || 'audio/webm', upsert: false,
+      });
+      if (upErr) throw upErr;
+      const { data: signed, error: signErr } = await supabase.storage
+        .from(AUDIO_BUCKET)
+        .createSignedUrl(path, 60 * 60 * 24 * 365 * 10);
+      if (signErr) throw signErr;
+      return signed.signedUrl;
+    } catch (e: any) {
+      toast.error(e?.message || 'Could not upload audio');
+      return null;
+    }
+  };
+
   // --- composer send ---
   const handleSend = async () => {
+    // If currently recording → stop, upload, then create topic with audio
+    if (isRecording) {
+      setUploading(true);
+      try {
+        const blob = await audio.stop();
+        if (!blob) { setUploading(false); return; }
+        const url = await uploadAudioBlob(blob);
+        if (!url) { setUploading(false); return; }
+        const text = draft.trim();
+        await createIdea({
+          title: text || 'Voice note',
+          audio_url: url,
+          account_id: activeAccountId || null,
+        });
+        setDraft('');
+        setAttach(null);
+      } finally {
+        setUploading(false);
+        inputRef.current?.focus();
+      }
+      return;
+    }
+
     const text = draft.trim();
     if (!text && !attach) return;
 
@@ -141,6 +191,10 @@ export default function Ideas() {
     } catch {
       // hook surfaces error toast
     }
+  };
+
+  const cancelRecording = () => {
+    audio.cancel();
   };
 
   const onPaste = (e: React.ClipboardEvent<HTMLInputElement>) => {
