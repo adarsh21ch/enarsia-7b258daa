@@ -26,56 +26,13 @@ interface Props {
  */
 export function AudioRecorderField({ value, onChange, compact, label, disabled }: Props) {
   const { user } = useAuth();
-  const { state, durationSec, supported, start, stop, cancel } = useAudioRecorder();
-  const [uploading, setUploading] = useState(false);
   const [playing, setPlaying] = useState(false);
   const [playbackPos, setPlaybackPos] = useState(0);
   const [playbackDur, setPlaybackDur] = useState(0);
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
-  const isRecording = state === 'recording';
-
-  const handleRecordClick = async () => {
-    if (disabled) return;
-    if (!supported) {
-      toast.error('Audio not supported — try Chrome or Safari iOS 14.3+');
-      return;
-    }
-    if (!user) { toast.error('Please sign in to record'); return; }
-
-    if (isRecording) {
-      const blob = await stop();
-      if (!blob) return;
-      try {
-        setUploading(true);
-        const id = (crypto as any).randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
-        const path = `${user.id}/${id}.webm`;
-        const { error: upErr } = await supabase.storage.from(BUCKET).upload(path, blob, {
-          contentType: blob.type || 'audio/webm',
-          upsert: false,
-        });
-        if (upErr) throw upErr;
-        // Bucket is private — use a long-lived signed URL.
-        const { data: signed, error: signErr } = await supabase.storage
-          .from(BUCKET)
-          .createSignedUrl(path, 60 * 60 * 24 * 365 * 10); // 10 years
-        if (signErr) throw signErr;
-        // Store the path so we can re-sign / delete later (and the signed URL works immediately).
-        await onChange(signed.signedUrl);
-        toast.success('Audio saved');
-      } catch (e: any) {
-        toast.error(e?.message || 'Could not upload audio');
-      } finally {
-        setUploading(false);
-      }
-    } else {
-      await start();
-    }
-  };
-
   const handleDelete = async () => {
     if (!value) return;
-    // Try to remove from storage if we can parse the path.
     try {
       const match = value.match(/creator-audio\/([^?]+)/);
       if (match?.[1] && user) {
@@ -97,6 +54,7 @@ export function AudioRecorderField({ value, onChange, compact, label, disabled }
     if (playing) { a.pause(); setPlaying(false); }
     else { a.play().then(() => setPlaying(true)).catch(() => toast.error('Could not play audio')); }
   };
+
 
   // ---- Render ----
 
