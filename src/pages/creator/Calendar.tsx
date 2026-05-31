@@ -1,11 +1,13 @@
-import { useMemo } from 'react';
-import { Loader2, Flame, Check, X } from 'lucide-react';
+import { useMemo, useState } from 'react';
+import { Loader2, Flame, Check, X, Plus, Trash2 } from 'lucide-react';
 import { CreatorTabLayout, CreatorEmptyState } from '@/components/creator/CreatorTabLayout';
 import { useContentPieces } from '@/hooks/useContentPieces';
 import { useContentAccounts, type ContentAccount } from '@/hooks/useContentAccounts';
+import { usePostingTasks } from '@/hooks/usePostingTasks';
 import { CalendarDays } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
+import { Input } from '@/components/ui/input';
 
 function toLocalISO(d: Date): string {
   const y = d.getFullYear();
@@ -16,14 +18,13 @@ function toLocalISO(d: Date): string {
 
 const DAYS = 90;
 
-export default function Activity() {
+export default function Posting() {
   const { accounts, isLoading: accountsLoading } = useContentAccounts();
-  // Pull ALL pieces for the user (across accounts) for the consistency chart.
   const { pieces, isLoading, savePiece, deletePiece } = useContentPieces();
-
   const today = useMemo(() => toLocalISO(new Date()), []);
+  const { tasks, doneMap, loading: tasksLoading, addTask, deleteTask, toggle } = usePostingTasks(today);
+  const [newTask, setNewTask] = useState('');
 
-  // Build set of dates with posted pieces.
   const postedDates = useMemo(() => {
     const set = new Set<string>();
     for (const p of pieces) {
@@ -34,7 +35,6 @@ export default function Activity() {
     return set;
   }, [pieces]);
 
-  // Generate last 90 days (oldest first)
   const days = useMemo(() => {
     const arr: { iso: string; date: Date }[] = [];
     const start = new Date();
@@ -47,15 +47,12 @@ export default function Activity() {
     return arr;
   }, []);
 
-  // Streaks
   const { current, longest } = useMemo(() => {
     let cur = 0, lng = 0, run = 0;
-    // longest scan across the 90-day window
     for (const d of days) {
       if (postedDates.has(d.iso)) { run++; if (run > lng) lng = run; }
       else { run = 0; }
     }
-    // current streak: count back from today
     const start = new Date();
     start.setHours(0, 0, 0, 0);
     for (let i = 0; i < DAYS; i++) {
@@ -67,9 +64,8 @@ export default function Activity() {
     return { current: cur, longest: lng };
   }, [days, postedDates]);
 
-  // Per-account: did this account post today? (matches account_id + posted_date=today + stage=posted)
   const postedTodayByAccount = useMemo(() => {
-    const map = new Map<string, string>(); // account_id -> piece id
+    const map = new Map<string, string>();
     for (const p of pieces) {
       if (p.stage !== 'posted') continue;
       const d = p.posted_date || (p.posted_at ? toLocalISO(new Date(p.posted_at)) : null);
@@ -104,9 +100,16 @@ export default function Activity() {
     else toast.success(`${count} post${count === 1 ? '' : 's'} on ${iso}`);
   };
 
+  const submitTask = async () => {
+    if (!newTask.trim()) return;
+    const v = newTask.trim();
+    setNewTask('');
+    await addTask(v);
+  };
+
   if (accountsLoading || isLoading) {
     return (
-      <CreatorTabLayout title="Activity" subtitle="Stay consistent">
+      <CreatorTabLayout title="Posting" subtitle="Stay consistent">
         <div className="flex justify-center py-10"><Loader2 className="h-6 w-6 animate-spin text-primary" /></div>
       </CreatorTabLayout>
     );
@@ -114,7 +117,7 @@ export default function Activity() {
 
   if (accounts.length === 0) {
     return (
-      <CreatorTabLayout title="Activity" subtitle="Stay consistent">
+      <CreatorTabLayout title="Posting" subtitle="Stay consistent">
         <CreatorEmptyState
           icon={CalendarDays}
           headline="Add an account first"
@@ -124,8 +127,10 @@ export default function Activity() {
     );
   }
 
+  const doneCount = tasks.filter((t) => doneMap.has(t.id)).length;
+
   return (
-    <CreatorTabLayout title="Activity" subtitle="Stay consistent">
+    <CreatorTabLayout title="Posting" subtitle="Stay consistent">
       {/* Streak header */}
       <div className="rounded-2xl border border-border/50 bg-card p-4">
         <div className="flex items-center justify-between mb-3">
@@ -145,7 +150,6 @@ export default function Activity() {
           </div>
         </div>
 
-        {/* 90-day heatmap: fixed-size cells so it never stretches on desktop */}
         <div className="grid w-fit grid-cols-[repeat(15,1rem)] sm:grid-cols-[repeat(18,1rem)] md:grid-cols-[repeat(30,1rem)] gap-1">
           {days.map((d) => {
             const posted = postedDates.has(d.iso);
@@ -166,12 +170,80 @@ export default function Activity() {
         </div>
       </div>
 
-      {/* Daily planner */}
+      {/* Daily Output checklist (NM To-Do equivalent) */}
       <div className="rounded-2xl border border-border/50 bg-card p-4">
         <div className="flex items-center justify-between mb-3">
           <div>
             <p className="text-[11px] uppercase tracking-wide text-muted-foreground font-semibold">Today</p>
-            <p className="text-sm font-semibold mt-0.5">Daily planner</p>
+            <p className="text-sm font-semibold mt-0.5">Daily output</p>
+          </div>
+          <p className="text-[11px] text-muted-foreground tabular-nums">{doneCount}/{tasks.length}</p>
+        </div>
+
+        {tasksLoading ? (
+          <div className="flex justify-center py-4"><Loader2 className="h-4 w-4 animate-spin text-muted-foreground" /></div>
+        ) : (
+          <div className="space-y-1.5">
+            {tasks.map((t) => {
+              const done = doneMap.has(t.id);
+              return (
+                <div key={t.id} className="flex items-center gap-2 p-2.5 rounded-xl border border-border/50">
+                  <button
+                    onClick={() => toggle(t.id)}
+                    className={cn(
+                      'h-7 w-7 shrink-0 rounded-full flex items-center justify-center border transition-all active:scale-95',
+                      done ? 'bg-emerald-500 border-emerald-600 text-white' : 'bg-muted border-border/50 text-muted-foreground',
+                    )}
+                    aria-label={done ? 'Mark not done' : 'Mark done'}
+                  >
+                    {done ? <Check className="h-3.5 w-3.5" /> : <X className="h-3.5 w-3.5" />}
+                  </button>
+                  <span className={cn('text-sm flex-1 truncate', done && 'line-through text-muted-foreground')}>{t.label}</span>
+                  <button
+                    onClick={() => deleteTask(t.id)}
+                    className="h-7 w-7 rounded-full flex items-center justify-center text-muted-foreground hover:text-destructive active:scale-95"
+                    aria-label="Delete task"
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </button>
+                </div>
+              );
+            })}
+
+            {/* Inline composer */}
+            <div className="flex items-center gap-2 pt-1">
+              <Input
+                value={newTask}
+                onChange={(e) => setNewTask(e.target.value)}
+                onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); submitTask(); } }}
+                placeholder="+ Add daily task (e.g. 1 Reel)"
+                className="h-9 rounded-full bg-card text-sm"
+              />
+              <button
+                onClick={submitTask}
+                disabled={!newTask.trim()}
+                className="h-9 w-9 shrink-0 rounded-full flex items-center justify-center bg-primary text-primary-foreground disabled:opacity-50 active:scale-95"
+                aria-label="Add task"
+              >
+                <Plus className="h-4 w-4" />
+              </button>
+            </div>
+
+            {tasks.length === 0 && (
+              <p className="text-[11px] text-muted-foreground pt-2">
+                Define your daily outputs once. e.g. "1 Instagram Post", "1 Reel", "1 Story".
+              </p>
+            )}
+          </div>
+        )}
+      </div>
+
+      {/* Per-account posted today (kept) */}
+      <div className="rounded-2xl border border-border/50 bg-card p-4">
+        <div className="flex items-center justify-between mb-3">
+          <div>
+            <p className="text-[11px] uppercase tracking-wide text-muted-foreground font-semibold">Accounts</p>
+            <p className="text-sm font-semibold mt-0.5">Posted today</p>
           </div>
           <p className="text-[10px] text-muted-foreground">{today}</p>
         </div>
