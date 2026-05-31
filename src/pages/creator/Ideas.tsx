@@ -14,6 +14,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { cn } from '@/lib/utils';
+import { LinkPreviewCard } from '@/components/creator/LinkPreviewCard';
 
 const ALL = '__all__';
 
@@ -150,15 +151,16 @@ export default function Ideas() {
                   {idea.context_note && (
                     <p className="text-[12px] text-muted-foreground mt-0.5 line-clamp-2">{idea.context_note}</p>
                   )}
+                  {(idea.youtube_url || idea.instagram_url) && (
+                    <div className="mt-2 space-y-1.5">
+                      {idea.youtube_url && <LinkPreviewCard url={idea.youtube_url} />}
+                      {idea.instagram_url && <LinkPreviewCard url={idea.instagram_url} />}
+                    </div>
+                  )}
                   <div className="flex flex-wrap items-center gap-1.5 mt-2">
                     {cat && (
                       <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-primary/10 text-primary border border-primary/20">
                         {cat.name}
-                      </span>
-                    )}
-                    {(idea.instagram_url || idea.youtube_url) && (
-                      <span className="inline-flex items-center gap-0.5 text-[10px] text-muted-foreground">
-                        <Link2 className="h-2.5 w-2.5" /> link
                       </span>
                     )}
                     {idea.audio_url && (
@@ -210,10 +212,12 @@ export default function Ideas() {
             <div className="space-y-1">
               <Label className="text-xs">Instagram URL (optional)</Label>
               <Input value={igUrl} onChange={(e) => setIgUrl(e.target.value)} placeholder="https://instagram.com/reel/..." />
+              {igUrl.trim() && /^https?:\/\//i.test(igUrl.trim()) && <LinkPreviewCard url={igUrl.trim()} />}
             </div>
             <div className="space-y-1">
               <Label className="text-xs">YouTube URL (optional)</Label>
               <Input value={ytUrl} onChange={(e) => setYtUrl(e.target.value)} placeholder="https://youtube.com/..." />
+              {ytUrl.trim() && /^https?:\/\//i.test(ytUrl.trim()) && <LinkPreviewCard url={ytUrl.trim()} />}
             </div>
             <div className="space-y-1">
               <Label className="text-xs">Context note (optional)</Label>
