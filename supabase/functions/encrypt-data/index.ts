@@ -8,46 +8,81 @@ const corsHeaders = {
 
 const ENCRYPTION_KEY = Deno.env.get('ENCRYPTION_KEY') || '';
 
-// Simple XOR-based encryption with Base64 encoding for demonstration
-// In production, consider using Web Crypto API for stronger encryption
-function encrypt(text: string): string {
-  if (!text || !ENCRYPTION_KEY) return text;
-  
-  const textBytes = new TextEncoder().encode(text);
-  const keyBytes = new TextEncoder().encode(ENCRYPTION_KEY);
-  const encrypted = new Uint8Array(textBytes.length);
-  
-  for (let i = 0; i < textBytes.length; i++) {
-    encrypted[i] = textBytes[i] ^ keyBytes[i % keyBytes.length];
-  }
-  
-  // Add prefix to identify encrypted data
-  return 'ENC:' + btoa(String.fromCharCode(...encrypted));
+// AES-256-GCM via Web Crypto. Backward compatible with legacy XOR ('ENC:') records:
+// new writes use 'ENC2:' (random IV per call, authenticated), reads transparently
+// fall back to the old XOR routine so existing rows still decrypt.
+const NEW_PREFIX = 'ENC2:';
+const LEGACY_PREFIX = 'ENC:';
+
+let cachedKey: CryptoKey | null = null;
+async function getAesKey(): Promise<CryptoKey | null> {
+  if (!ENCRYPTION_KEY) return null;
+  if (cachedKey) return cachedKey;
+  // Derive a stable 256-bit key from ENCRYPTION_KEY via SHA-256
+  const raw = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(ENCRYPTION_KEY));
+  cachedKey = await crypto.subtle.importKey('raw', raw, { name: 'AES-GCM' }, false, ['encrypt', 'decrypt']);
+  return cachedKey;
 }
 
-function decrypt(encryptedText: string): string {
-  if (!encryptedText || !ENCRYPTION_KEY) return encryptedText;
-  
-  // Check if data is encrypted (has our prefix)
-  if (!encryptedText.startsWith('ENC:')) {
-    return encryptedText; // Return as-is if not encrypted
-  }
-  
+function b64encode(bytes: Uint8Array): string {
+  let s = '';
+  for (const b of bytes) s += String.fromCharCode(b);
+  return btoa(s);
+}
+function b64decode(s: string): Uint8Array {
+  return Uint8Array.from(atob(s), (c) => c.charCodeAt(0));
+}
+
+async function encrypt(text: string): Promise<string> {
+  if (!text) return text;
+  const key = await getAesKey();
+  if (!key) return text;
+  const iv = crypto.getRandomValues(new Uint8Array(12));
+  const ct = new Uint8Array(
+    await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, key, new TextEncoder().encode(text)),
+  );
+  const combined = new Uint8Array(iv.length + ct.length);
+  combined.set(iv, 0);
+  combined.set(ct, iv.length);
+  return NEW_PREFIX + b64encode(combined);
+}
+
+function decryptLegacyXor(encryptedText: string): string {
   try {
-    const base64Data = encryptedText.slice(4); // Remove 'ENC:' prefix
-    const encryptedBytes = Uint8Array.from(atob(base64Data), c => c.charCodeAt(0));
+    const base64Data = encryptedText.slice(LEGACY_PREFIX.length);
+    const encryptedBytes = b64decode(base64Data);
     const keyBytes = new TextEncoder().encode(ENCRYPTION_KEY);
     const decrypted = new Uint8Array(encryptedBytes.length);
-    
     for (let i = 0; i < encryptedBytes.length; i++) {
       decrypted[i] = encryptedBytes[i] ^ keyBytes[i % keyBytes.length];
     }
-    
     return new TextDecoder().decode(decrypted);
   } catch (error) {
-    console.error('Decryption error:', error);
-    return encryptedText; // Return original if decryption fails
+    console.error('Legacy decryption error:', error);
+    return encryptedText;
   }
+}
+
+async function decrypt(encryptedText: string): Promise<string> {
+  if (!encryptedText || !ENCRYPTION_KEY) return encryptedText;
+  if (encryptedText.startsWith(NEW_PREFIX)) {
+    try {
+      const key = await getAesKey();
+      if (!key) return encryptedText;
+      const combined = b64decode(encryptedText.slice(NEW_PREFIX.length));
+      const iv = combined.slice(0, 12);
+      const ct = combined.slice(12);
+      const pt = await crypto.subtle.decrypt({ name: 'AES-GCM', iv }, key, ct);
+      return new TextDecoder().decode(pt);
+    } catch (error) {
+      console.error('AES decryption error:', error);
+      return encryptedText;
+    }
+  }
+  if (encryptedText.startsWith(LEGACY_PREFIX)) {
+    return decryptLegacyXor(encryptedText);
+  }
+  return encryptedText;
 }
 
 serve(async (req) => {
@@ -74,51 +109,34 @@ serve(async (req) => {
     console.log(`Processing ${action} request`);
 
     if (action === 'encrypt') {
-      // Encrypt phone and email fields
       const result: Record<string, string> = {};
-      
-      if (data.phone) {
-        result.phone = encrypt(data.phone);
-        console.log('Phone encrypted');
-      }
-      if (data.email) {
-        result.email = encrypt(data.email);
-        console.log('Email encrypted');
-      }
-      
+      if (data.phone) result.phone = await encrypt(data.phone);
+      if (data.email) result.email = await encrypt(data.email);
       return new Response(
         JSON.stringify({ encrypted: result }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
-    } 
-    
+    }
+
     if (action === 'decrypt') {
-      // Decrypt phone and email fields
       const result: Record<string, string> = {};
-      
-      if (data.phone) {
-        result.phone = decrypt(data.phone);
-      }
-      if (data.email) {
-        result.email = decrypt(data.email);
-      }
-      
+      if (data.phone) result.phone = await decrypt(data.phone);
+      if (data.email) result.email = await decrypt(data.email);
       return new Response(
         JSON.stringify({ decrypted: result }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
-    
+
     if (action === 'decrypt-batch') {
-      // Decrypt multiple records at once
-      const decryptedRecords = data.records.map((record: any) => ({
-        ...record,
-        phone: record.phone ? decrypt(record.phone) : record.phone,
-        email: record.email ? decrypt(record.email) : record.email,
-      }));
-      
+      const decryptedRecords = await Promise.all(
+        (data.records as any[]).map(async (record: any) => ({
+          ...record,
+          phone: record.phone ? await decrypt(record.phone) : record.phone,
+          email: record.email ? await decrypt(record.email) : record.email,
+        })),
+      );
       console.log(`Decrypted ${decryptedRecords.length} records`);
-      
       return new Response(
         JSON.stringify({ decrypted: decryptedRecords }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -126,15 +144,14 @@ serve(async (req) => {
     }
 
     if (action === 'encrypt-batch') {
-      // Encrypt multiple records at once (for bulk imports)
-      const encryptedRecords = data.records.map((record: any) => ({
-        ...record,
-        phone: record.phone ? encrypt(record.phone) : record.phone,
-        email: record.email ? encrypt(record.email) : record.email,
-      }));
-      
+      const encryptedRecords = await Promise.all(
+        (data.records as any[]).map(async (record: any) => ({
+          ...record,
+          phone: record.phone ? await encrypt(record.phone) : record.phone,
+          email: record.email ? await encrypt(record.email) : record.email,
+        })),
+      );
       console.log(`Encrypted ${encryptedRecords.length} records`);
-      
       return new Response(
         JSON.stringify({ encrypted: encryptedRecords }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
