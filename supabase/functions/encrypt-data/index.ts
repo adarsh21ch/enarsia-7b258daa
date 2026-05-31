@@ -109,51 +109,34 @@ serve(async (req) => {
     console.log(`Processing ${action} request`);
 
     if (action === 'encrypt') {
-      // Encrypt phone and email fields
       const result: Record<string, string> = {};
-      
-      if (data.phone) {
-        result.phone = encrypt(data.phone);
-        console.log('Phone encrypted');
-      }
-      if (data.email) {
-        result.email = encrypt(data.email);
-        console.log('Email encrypted');
-      }
-      
+      if (data.phone) result.phone = await encrypt(data.phone);
+      if (data.email) result.email = await encrypt(data.email);
       return new Response(
         JSON.stringify({ encrypted: result }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
-    } 
-    
+    }
+
     if (action === 'decrypt') {
-      // Decrypt phone and email fields
       const result: Record<string, string> = {};
-      
-      if (data.phone) {
-        result.phone = decrypt(data.phone);
-      }
-      if (data.email) {
-        result.email = decrypt(data.email);
-      }
-      
+      if (data.phone) result.phone = await decrypt(data.phone);
+      if (data.email) result.email = await decrypt(data.email);
       return new Response(
         JSON.stringify({ decrypted: result }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
-    
+
     if (action === 'decrypt-batch') {
-      // Decrypt multiple records at once
-      const decryptedRecords = data.records.map((record: any) => ({
-        ...record,
-        phone: record.phone ? decrypt(record.phone) : record.phone,
-        email: record.email ? decrypt(record.email) : record.email,
-      }));
-      
+      const decryptedRecords = await Promise.all(
+        (data.records as any[]).map(async (record: any) => ({
+          ...record,
+          phone: record.phone ? await decrypt(record.phone) : record.phone,
+          email: record.email ? await decrypt(record.email) : record.email,
+        })),
+      );
       console.log(`Decrypted ${decryptedRecords.length} records`);
-      
       return new Response(
         JSON.stringify({ decrypted: decryptedRecords }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -161,15 +144,14 @@ serve(async (req) => {
     }
 
     if (action === 'encrypt-batch') {
-      // Encrypt multiple records at once (for bulk imports)
-      const encryptedRecords = data.records.map((record: any) => ({
-        ...record,
-        phone: record.phone ? encrypt(record.phone) : record.phone,
-        email: record.email ? encrypt(record.email) : record.email,
-      }));
-      
+      const encryptedRecords = await Promise.all(
+        (data.records as any[]).map(async (record: any) => ({
+          ...record,
+          phone: record.phone ? await encrypt(record.phone) : record.phone,
+          email: record.email ? await encrypt(record.email) : record.email,
+        })),
+      );
       console.log(`Encrypted ${encryptedRecords.length} records`);
-      
       return new Response(
         JSON.stringify({ encrypted: encryptedRecords }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
