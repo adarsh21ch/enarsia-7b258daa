@@ -258,10 +258,11 @@ export default function Ideas() {
           {categories.length > 1 && (
             <button
               onClick={() => setReorderOpen(true)}
-              className="shrink-0 inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-medium border border-border/70 text-muted-foreground hover:text-foreground"
+              className="shrink-0 ml-auto inline-flex items-center justify-center h-7 w-7 rounded-full border border-border/70 text-muted-foreground hover:text-foreground"
               aria-label="Reorder categories"
+              title="Reorder"
             >
-              <ArrowUpDown className="h-3 w-3" /> Reorder
+              <ArrowUpDown className="h-3.5 w-3.5" />
             </button>
           )}
         </div>
