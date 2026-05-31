@@ -310,11 +310,10 @@ export default function Ideas() {
       {/* Attach sheet */}
       <Sheet open={attachOpen} onOpenChange={setAttachOpen}>
         <SheetContent side="bottom" className="rounded-t-2xl">
-          <SheetHeader><SheetTitle>Attach</SheetTitle></SheetHeader>
+          <SheetHeader><SheetTitle>Attach link</SheetTitle></SheetHeader>
           <div className="grid grid-cols-2 gap-2 pt-3 pb-2">
             <AttachOption icon={Instagram} label="Instagram link" onClick={() => { setAttachOpen(false); setLinkInput(''); setLinkSheet('instagram'); }} />
             <AttachOption icon={Youtube} label="YouTube link" onClick={() => { setAttachOpen(false); setLinkInput(''); setLinkSheet('youtube'); }} />
-            <AttachOption icon={Mic} label="Audio note" onClick={() => { setAttachOpen(false); setAudioDraft(null); setAudioSheetOpen(true); }} />
             <AttachOption icon={ImageIcon} label="Photo" disabled subtitle="coming soon" />
           </div>
         </SheetContent>
