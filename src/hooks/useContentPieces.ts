@@ -3,38 +3,41 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
 
-/** A scripted content piece moving through the pipeline. Mirrors content_pieces. */
 export interface ContentPiece {
   id: string;
   user_id: string;
   idea_id: string | null;
+  account_id: string | null;
+  title: string | null;
   script: string | null;
+  hook_text: string | null;
+  body_text: string | null;
+  cta_text: string | null;
   caption: string | null;
   hashtags: string[];
   platform: string;
   stage: 'idea' | 'scripting' | 'filming' | 'editing' | 'scheduled' | 'posted';
   scheduled_at: string | null;
   posted_at: string | null;
+  posted_date: string | null;
   created_at: string;
   updated_at: string;
 }
 
 const db = supabase as unknown as { from: (t: string) => any };
 
-export function useContentPieces() {
+export function useContentPieces(accountId?: string | null) {
   const { user } = useAuth();
   const queryClient = useQueryClient();
-  const queryKey = ['content_pieces', user?.id];
+  const queryKey = ['content_pieces', user?.id, accountId ?? 'all'];
 
   const { data: pieces = [], isLoading } = useQuery({
     queryKey,
     queryFn: async (): Promise<ContentPiece[]> => {
       if (!user) return [];
-      const { data, error } = await db
-        .from('content_pieces')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('updated_at', { ascending: false });
+      let q = db.from('content_pieces').select('*').eq('user_id', user.id);
+      if (accountId) q = q.eq('account_id', accountId);
+      const { data, error } = await q.order('updated_at', { ascending: false });
       if (error) throw error;
       return (data || []) as ContentPiece[];
     },
@@ -45,20 +48,32 @@ export function useContentPieces() {
     mutationFn: async (input: {
       id?: string;
       idea_id?: string | null;
+      account_id?: string | null;
+      title?: string | null;
       script?: string;
+      hook_text?: string | null;
+      body_text?: string | null;
+      cta_text?: string | null;
       caption?: string;
       hashtags?: string[];
       platform?: string;
       stage?: ContentPiece['stage'];
+      posted_date?: string | null;
     }) => {
       if (!user) throw new Error('Not authenticated');
       const payload: Record<string, unknown> = {
         idea_id: input.idea_id ?? null,
+        account_id: input.account_id ?? null,
+        title: input.title ?? null,
         script: input.script ?? null,
+        hook_text: input.hook_text ?? null,
+        body_text: input.body_text ?? null,
+        cta_text: input.cta_text ?? null,
         caption: input.caption ?? null,
         hashtags: input.hashtags ?? [],
         platform: input.platform ?? 'reels',
         stage: input.stage ?? 'scripting',
+        posted_date: input.posted_date ?? null,
       };
       if (input.id) {
         const { data, error } = await db
@@ -80,10 +95,18 @@ export function useContentPieces() {
       return data as ContentPiece;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey });
-      toast.success('Saved to Calendar');
+      queryClient.invalidateQueries({ queryKey: ['content_pieces', user?.id] });
     },
-    onError: () => toast.error('Could not save piece'),
+    onError: (e: any) => toast.error(e?.message || 'Could not save piece'),
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: async (id: string) => {
+      if (!user) throw new Error('Not authenticated');
+      const { error } = await db.from('content_pieces').delete().eq('id', id).eq('user_id', user.id);
+      if (error) throw error;
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['content_pieces', user?.id] }),
   });
 
   return {
@@ -91,5 +114,6 @@ export function useContentPieces() {
     isLoading,
     savePiece: upsertMutation.mutateAsync,
     saving: upsertMutation.isPending,
+    deletePiece: deleteMutation.mutateAsync,
   };
 }

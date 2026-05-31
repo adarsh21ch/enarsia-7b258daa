@@ -7,6 +7,7 @@ import { CustomOptionsProvider } from "@/contexts/CustomOptionsContext";
 import { ProspectsProvider } from "@/contexts/ProspectsContext";
 import { TodosProvider } from "@/contexts/TodosContext";
 import { PermissionsProvider } from "@/contexts/PermissionsContext";
+import { CreatorAccountProvider } from "@/contexts/CreatorAccountContext";
 import { Toaster } from "sonner";
 import { ThemeProvider } from "@/components/theme/ThemeProvider";
 import { InstallPromptBanner } from "@/components/pwa/InstallPromptBanner";
@@ -117,6 +118,7 @@ function App() {
                 <TrackingFormatProvider>
                   <ProspectsProvider>
                     <TodosProvider>
+                    <CreatorAccountProvider>
                     <Toaster position="top-center" />
                     <InstallPromptBanner />
                     <UpdateBanner />
@@ -160,6 +162,7 @@ function App() {
                         <Route path="*" element={<NotFound />} />
                       </Routes>
                     </Suspense>
+                    </CreatorAccountProvider>
                     </TodosProvider>
                   </ProspectsProvider>
                 </TrackingFormatProvider>

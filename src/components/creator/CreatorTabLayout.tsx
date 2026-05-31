@@ -1,13 +1,12 @@
 import { type ReactNode, type ComponentType } from 'react';
-import { HeaderBellIcon } from '@/components/layout/HeaderBellIcon';
 import { BottomNav } from '@/components/layout/BottomNav';
+import { CreatorAccountSwitcher } from '@/components/creator/CreatorAccountSwitcher';
 import { cn } from '@/lib/utils';
 import nevoraLogo from '@/assets/nevorai-call-logo.png';
 
 /**
- * Shared shell for the Content Creator mode tabs (Ideas / Studio / Calendar /
- * Insights). Mirrors the app layout used by Profile etc. (fixed header +
- * scrollable content + BottomNav) so the mode re-skin feels native.
+ * Shared shell for the Content Creator mode tabs. Header has logo + title on
+ * the left and an account switcher chip on the right.
  */
 export function CreatorTabLayout({
   title,
@@ -21,15 +20,15 @@ export function CreatorTabLayout({
   return (
     <div className="app-layout bg-gradient-to-b from-background via-background to-muted/20">
       <header className="fixed-header z-40 bg-card/80 backdrop-blur-xl border-b border-border/50">
-        <div className="flex items-center justify-between px-4 py-3">
-          <div className="flex items-center gap-3">
-            <img src={nevoraLogo} alt="Nevorai CRM Logo" className="h-10 w-10 rounded-xl object-cover shadow-md" />
-            <div>
-              <h1 className="text-xl font-bold tracking-tight">{title}</h1>
-              <p className="text-xs text-muted-foreground font-medium">{subtitle}</p>
+        <div className="flex items-center justify-between px-4 py-3 gap-2">
+          <div className="flex items-center gap-3 min-w-0">
+            <img src={nevoraLogo} alt="Nevorai CRM Logo" className="h-10 w-10 rounded-xl object-cover shadow-md shrink-0" />
+            <div className="min-w-0">
+              <h1 className="text-xl font-bold tracking-tight truncate">{title}</h1>
+              <p className="text-xs text-muted-foreground font-medium truncate">{subtitle}</p>
             </div>
           </div>
-          <HeaderBellIcon />
+          <CreatorAccountSwitcher />
         </div>
       </header>
 
@@ -42,10 +41,6 @@ export function CreatorTabLayout({
   );
 }
 
-/**
- * Empty-state block for a not-yet-wired creator feature. Describes the tab's
- * job-to-be-done (from the design spec) with an icon and a "coming soon" CTA.
- */
 export function CreatorEmptyState({
   icon: Icon,
   headline,
@@ -79,12 +74,7 @@ export function CreatorEmptyState({
       )}
 
       {cta && (
-        <div
-          className={cn(
-            'mt-5 w-full max-w-sm rounded-xl px-4 py-2.5 text-sm font-semibold',
-            'bg-muted text-muted-foreground border border-border/50 cursor-default select-none',
-          )}
-        >
+        <div className={cn('mt-5 w-full max-w-sm rounded-xl px-4 py-2.5 text-sm font-semibold bg-muted text-muted-foreground border border-border/50 cursor-default select-none')}>
           {cta} · coming soon
         </div>
       )}

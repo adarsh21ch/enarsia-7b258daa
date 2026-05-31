@@ -1636,44 +1636,131 @@ export type Database = {
         }
         Relationships: []
       }
+      content_accounts: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          platform: string
+          updated_at: string
+          url: string | null
+          user_id: string
+          username: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+          platform?: string
+          updated_at?: string
+          url?: string | null
+          user_id: string
+          username?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          platform?: string
+          updated_at?: string
+          url?: string | null
+          user_id?: string
+          username?: string | null
+        }
+        Relationships: []
+      }
+      content_categories: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       content_ideas: {
         Row: {
+          account_id: string | null
+          audio_url: string | null
+          category_id: string | null
+          context_note: string | null
           created_at: string
           hook: string | null
           hook_type: string | null
           id: string
+          instagram_url: string | null
           niche_tag: string | null
           source: string
           status: string
           title: string
           updated_at: string
           user_id: string
+          youtube_url: string | null
         }
         Insert: {
+          account_id?: string | null
+          audio_url?: string | null
+          category_id?: string | null
+          context_note?: string | null
           created_at?: string
           hook?: string | null
           hook_type?: string | null
           id?: string
+          instagram_url?: string | null
           niche_tag?: string | null
           source?: string
           status?: string
           title: string
           updated_at?: string
           user_id: string
+          youtube_url?: string | null
         }
         Update: {
+          account_id?: string | null
+          audio_url?: string | null
+          category_id?: string | null
+          context_note?: string | null
           created_at?: string
           hook?: string | null
           hook_type?: string | null
           id?: string
+          instagram_url?: string | null
           niche_tag?: string | null
           source?: string
           status?: string
           title?: string
           updated_at?: string
           user_id?: string
+          youtube_url?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "content_ideas_account_id_fkey"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "content_accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "content_ideas_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "content_categories"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       content_metrics: {
         Row: {
@@ -1739,48 +1826,73 @@ export type Database = {
       }
       content_pieces: {
         Row: {
+          account_id: string | null
+          body_text: string | null
           caption: string | null
           created_at: string
+          cta_text: string | null
           hashtags: string[]
+          hook_text: string | null
           id: string
           idea_id: string | null
           platform: string
           posted_at: string | null
+          posted_date: string | null
           scheduled_at: string | null
           script: string | null
           stage: string
+          title: string | null
           updated_at: string
           user_id: string
         }
         Insert: {
+          account_id?: string | null
+          body_text?: string | null
           caption?: string | null
           created_at?: string
+          cta_text?: string | null
           hashtags?: string[]
+          hook_text?: string | null
           id?: string
           idea_id?: string | null
           platform?: string
           posted_at?: string | null
+          posted_date?: string | null
           scheduled_at?: string | null
           script?: string | null
           stage?: string
+          title?: string | null
           updated_at?: string
           user_id: string
         }
         Update: {
+          account_id?: string | null
+          body_text?: string | null
           caption?: string | null
           created_at?: string
+          cta_text?: string | null
           hashtags?: string[]
+          hook_text?: string | null
           id?: string
           idea_id?: string | null
           platform?: string
           posted_at?: string | null
+          posted_date?: string | null
           scheduled_at?: string | null
           script?: string | null
           stage?: string
+          title?: string | null
           updated_at?: string
           user_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "content_pieces_account_id_fkey"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "content_accounts"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "content_pieces_idea_id_fkey"
             columns: ["idea_id"]

@@ -1,83 +1,72 @@
 import { useMemo, useState, useEffect } from 'react';
-import { PenLine, Loader2, Sparkles, ArrowRight } from 'lucide-react';
+import { PenLine, Loader2, ArrowRight, Mic } from 'lucide-react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
+import { toast } from 'sonner';
 import { CreatorTabLayout, CreatorEmptyState } from '@/components/creator/CreatorTabLayout';
 import { useContentIdeas } from '@/hooks/useContentIdeas';
 import { useContentPieces } from '@/hooks/useContentPieces';
+import { useCreatorAccount } from '@/contexts/CreatorAccountContext';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
-import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 
-/**
- * Tab 2 — STUDIO. Turns an idea into a content piece: write hook/body/CTA +
- * caption + hashtags, save it into the pipeline (content_pieces) and mark the
- * idea "scripted". AI Scriptwriter (Nev AI persona) gets wired in the next step.
- */
 export default function Studio() {
   const navigate = useNavigate();
   const [params] = useSearchParams();
   const ideaId = params.get('idea');
+  const { activeAccountId } = useCreatorAccount();
 
   const { ideas, isLoading, updateIdea } = useContentIdeas();
   const { savePiece, saving } = useContentPieces();
 
   const idea = useMemo(() => ideas.find((i) => i.id === ideaId) || null, [ideas, ideaId]);
 
-  const [script, setScript] = useState('');
-  const [caption, setCaption] = useState('');
-  const [hashtags, setHashtags] = useState('');
+  const [hook, setHook] = useState('');
+  const [body, setBody] = useState('');
+  const [cta, setCta] = useState('');
 
-  // Seed the script with the idea's hook when an idea is opened.
   useEffect(() => {
-    if (idea && !script) {
-      setScript(idea.hook ? `Hook: ${idea.hook}\n\nBody:\n\nCTA:` : 'Hook (0-3s):\n\nBody:\n\nCTA:');
+    if (idea && !hook && !body && !cta) {
+      if (idea.hook) setHook(idea.hook);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [idea?.id]);
 
   const handleSave = async () => {
-    if (!script.trim() || saving) return;
+    if ((!hook.trim() && !body.trim() && !cta.trim()) || saving) return;
     await savePiece({
       idea_id: ideaId,
-      script,
-      caption,
-      hashtags: hashtags
-        .split(/[\s,]+/)
-        .map((h) => h.replace(/^#/, '').trim())
-        .filter(Boolean),
+      account_id: activeAccountId || idea?.account_id || null,
+      title: idea?.title || null,
+      hook_text: hook || null,
+      body_text: body || null,
+      cta_text: cta || null,
+      script: [hook && `Hook: ${hook}`, body && `Body:\n${body}`, cta && `CTA: ${cta}`].filter(Boolean).join('\n\n'),
       stage: 'scripting',
     });
     if (ideaId) await updateIdea({ id: ideaId, updates: { status: 'scripted' } });
+    toast.success('Saved to pipeline');
     navigate('/calendar');
   };
 
   if (isLoading) {
     return (
       <CreatorTabLayout title="Studio" subtitle="Idea → ready to film">
-        <div className="flex justify-center py-10">
-          <Loader2 className="h-6 w-6 animate-spin text-primary" />
-        </div>
+        <div className="flex justify-center py-10"><Loader2 className="h-6 w-6 animate-spin text-primary" /></div>
       </CreatorTabLayout>
     );
   }
 
-  // No idea selected → guide the user back to Ideas.
   if (!idea) {
     return (
       <CreatorTabLayout title="Studio" subtitle="Idea → ready to film">
         <CreatorEmptyState
           icon={PenLine}
-          headline="Pick an idea to script"
-          body="Open an idea from the Ideas tab and tap “Script” to draft a hook, body and CTA here, then save it into your Calendar pipeline."
-          bullets={[
-            'AI Scriptwriter in your voice — coming next',
-            'Caption + hashtag generator',
-            'Repurpose one video into Reel + carousel + thread',
-          ]}
+          headline="Pick a topic to script"
+          body="Open a topic from the Topics tab and tap “Script” to draft your hook, body and CTA here."
         />
         <Button variant="outline" className="w-full" onClick={() => navigate('/ideas')}>
-          Go to Ideas
-          <ArrowRight className="h-4 w-4 ml-1.5" />
+          Go to Topics<ArrowRight className="h-4 w-4 ml-1.5" />
         </Button>
       </CreatorTabLayout>
     );
@@ -90,30 +79,34 @@ export default function Studio() {
         <p className="font-semibold text-sm mt-1">{idea.title}</p>
       </div>
 
-      <div className="rounded-2xl border border-dashed border-primary/30 bg-card p-3 flex items-center gap-2 text-xs text-muted-foreground">
-        <Sparkles className="h-4 w-4 text-primary shrink-0" />
-        <span>Nev AI Scriptwriter (your-voice drafts) plugs in here next step.</span>
-      </div>
+      <ScriptSection label="Hook (0–3s)" value={hook} onChange={setHook} placeholder="Grab attention in the first 3 seconds…" rows={3} />
+      <ScriptSection label="Body" value={body} onChange={setBody} placeholder="The main content…" rows={7} />
+      <ScriptSection label="Call to Action" value={cta} onChange={setCta} placeholder="What should viewers do next?" rows={3} />
 
-      <div className="space-y-1.5">
-        <label className="text-xs font-semibold text-muted-foreground px-1">Script (Hook → Body → CTA)</label>
-        <Textarea value={script} onChange={(e) => setScript(e.target.value)} rows={9} className="resize-y" />
-      </div>
-
-      <div className="space-y-1.5">
-        <label className="text-xs font-semibold text-muted-foreground px-1">Caption</label>
-        <Textarea value={caption} onChange={(e) => setCaption(e.target.value)} rows={3} className="resize-y" placeholder="Caption for the post…" />
-      </div>
-
-      <div className="space-y-1.5">
-        <label className="text-xs font-semibold text-muted-foreground px-1">Hashtags</label>
-        <Input value={hashtags} onChange={(e) => setHashtags(e.target.value)} placeholder="#reels #howto #niche" />
-      </div>
-
-      <Button onClick={handleSave} disabled={!script.trim() || saving} className="w-full">
+      <Button onClick={handleSave} disabled={(!hook.trim() && !body.trim() && !cta.trim()) || saving} className="w-full">
         {saving ? <Loader2 className="h-4 w-4 animate-spin mr-1.5" /> : null}
-        Add to Calendar
+        Save to pipeline
       </Button>
     </CreatorTabLayout>
+  );
+}
+
+function ScriptSection({
+  label, value, onChange, placeholder, rows,
+}: { label: string; value: string; onChange: (v: string) => void; placeholder: string; rows: number }) {
+  return (
+    <div className="space-y-1.5">
+      <div className="flex items-center justify-between px-1">
+        <Label className="text-xs font-semibold text-muted-foreground">{label}</Label>
+        <button
+          type="button"
+          onClick={() => toast('Voice-to-text coming soon')}
+          className="inline-flex items-center gap-1 text-[10px] text-muted-foreground hover:text-foreground"
+        >
+          <Mic className="h-3 w-3" /> Mic
+        </button>
+      </div>
+      <Textarea value={value} onChange={(e) => onChange(e.target.value)} rows={rows} placeholder={placeholder} className="resize-y" />
+    </div>
   );
 }

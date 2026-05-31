@@ -12,9 +12,9 @@ export const contentCreatorMode: AppMode = {
   label: 'Content Creator',
   shortLabel: 'Creator',
   nav: [
-    { path: '/ideas', label: 'Ideas', iconKey: 'ideas', onboardingId: 'nav-ideas' },
+    { path: '/ideas', label: 'Topics', iconKey: 'ideas', onboardingId: 'nav-ideas' },
     { path: '/studio', label: 'Studio', iconKey: 'studio', onboardingId: 'nav-studio' },
-    { path: '/calendar', label: 'Calendar', iconKey: 'calendar', onboardingId: 'nav-calendar' },
+    { path: '/calendar', label: 'Activity', iconKey: 'calendar', onboardingId: 'nav-calendar' },
     { path: '/insights', label: 'Insights', iconKey: 'insights', onboardingId: 'nav-insights' },
     { path: '/profile', label: 'Profile', iconKey: 'profile', isProfile: true, onboardingId: 'nav-profile' },
   ],
