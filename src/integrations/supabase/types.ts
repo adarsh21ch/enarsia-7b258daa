@@ -1827,11 +1827,14 @@ export type Database = {
       content_pieces: {
         Row: {
           account_id: string | null
+          body_audio_url: string | null
           body_text: string | null
           caption: string | null
           created_at: string
+          cta_audio_url: string | null
           cta_text: string | null
           hashtags: string[]
+          hook_audio_url: string | null
           hook_text: string | null
           id: string
           idea_id: string | null
@@ -1847,11 +1850,14 @@ export type Database = {
         }
         Insert: {
           account_id?: string | null
+          body_audio_url?: string | null
           body_text?: string | null
           caption?: string | null
           created_at?: string
+          cta_audio_url?: string | null
           cta_text?: string | null
           hashtags?: string[]
+          hook_audio_url?: string | null
           hook_text?: string | null
           id?: string
           idea_id?: string | null
@@ -1867,11 +1873,14 @@ export type Database = {
         }
         Update: {
           account_id?: string | null
+          body_audio_url?: string | null
           body_text?: string | null
           caption?: string | null
           created_at?: string
+          cta_audio_url?: string | null
           cta_text?: string | null
           hashtags?: string[]
+          hook_audio_url?: string | null
           hook_text?: string | null
           id?: string
           idea_id?: string | null
