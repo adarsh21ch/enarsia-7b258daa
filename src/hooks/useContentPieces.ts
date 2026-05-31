@@ -13,6 +13,9 @@ export interface ContentPiece {
   hook_text: string | null;
   body_text: string | null;
   cta_text: string | null;
+  hook_audio_url: string | null;
+  body_audio_url: string | null;
+  cta_audio_url: string | null;
   caption: string | null;
   hashtags: string[];
   platform: string;
