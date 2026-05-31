@@ -370,13 +370,13 @@ export default function Ideas() {
       )}
 
 
-      {/* Spacer so the composer + nav don't overlap last item (composer ~64 + nav ~80 + gap) */}
-      <div className="h-44" />
+      {/* Spacer so the composer + nav don't overlap last item */}
+      <div className="h-36" />
 
-      {/* WhatsApp-style composer — lifted off the bottom nav for thumb comfort */}
+      {/* WhatsApp-style composer — sits just above the bottom nav */}
       <div
-        className="fixed left-0 right-0 z-30 px-3 pt-2 pb-2 bg-background/95 backdrop-blur-md border-t border-border/50"
-        style={{ bottom: 'calc(80px + env(safe-area-inset-bottom, 0px) + 12px)' }}
+        className="fixed left-0 right-0 z-30 px-3 pt-2 bg-background/95 backdrop-blur-md border-t border-border/50"
+        style={{ bottom: 'calc(64px + env(safe-area-inset-bottom, 0px) + 8px)', paddingBottom: '8px' }}
       >
         <div className="max-w-lg mx-auto">
           {attach && (
