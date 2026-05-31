@@ -55,6 +55,8 @@ export default function Ideas() {
   const [categoryId, setCategoryId] = useState<string>('');
   const [igUrl, setIgUrl] = useState('');
   const [ytUrl, setYtUrl] = useState('');
+  const [showIg, setShowIg] = useState(false);
+  const [showYt, setShowYt] = useState(false);
   const [contextNote, setContextNote] = useState('');
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
 
