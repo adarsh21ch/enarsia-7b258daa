@@ -572,6 +572,41 @@ export default function Ideas() {
         </DialogContent>
       </Dialog>
 
+      {/* Reorder categories sheet */}
+      <Sheet open={reorderOpen} onOpenChange={setReorderOpen}>
+        <SheetContent side="bottom" className="rounded-t-2xl max-h-[70vh]">
+          <SheetHeader>
+            <SheetTitle>Reorder categories</SheetTitle>
+          </SheetHeader>
+          <div className="mt-3 space-y-1.5">
+            {categories.map((c, idx) => (
+              <div key={c.id} className="flex items-center gap-2 px-3 py-2 rounded-lg border border-border/50 bg-card">
+                <span className="flex-1 text-sm font-medium truncate">{c.name}</span>
+                <button
+                  onClick={() => moveCategory(c.id, -1)}
+                  disabled={idx === 0}
+                  className="p-1.5 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted disabled:opacity-30"
+                  aria-label="Move up"
+                >
+                  <ArrowUp className="h-4 w-4" />
+                </button>
+                <button
+                  onClick={() => moveCategory(c.id, 1)}
+                  disabled={idx === categories.length - 1}
+                  className="p-1.5 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted disabled:opacity-30"
+                  aria-label="Move down"
+                >
+                  <ArrowDown className="h-4 w-4" />
+                </button>
+              </div>
+            ))}
+            {categories.length === 0 && (
+              <p className="text-xs text-muted-foreground py-4 text-center">No categories yet.</p>
+            )}
+          </div>
+        </SheetContent>
+      </Sheet>
+
       {/* New category dialog */}
       <Dialog open={newCatOpen} onOpenChange={setNewCatOpen}>
         <DialogContent className="max-w-sm">
