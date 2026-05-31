@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Lightbulb, Plus, Loader2, Trash2, ChevronRight, Mic, Send, Link as LinkIcon, Youtube, Instagram, Image as ImageIcon, X, ArrowUpDown, ArrowUp, ArrowDown, Square } from 'lucide-react';
 import { AudioRecorderField } from '@/components/creator/AudioRecorderField';
 import { useNavigate } from 'react-router-dom';
@@ -76,6 +76,27 @@ export default function Ideas() {
   const audio = useAudioRecorder();
   const [uploading, setUploading] = useState(false);
   const isRecording = audio.state === 'recording';
+
+  // Track mobile keyboard via visualViewport so the composer always sits
+  // directly above the keyboard (fixes "input floats to middle / background
+  // looks blank while typing" on iOS/Android).
+  const [kbOffset, setKbOffset] = useState(0);
+  useEffect(() => {
+    const vv = typeof window !== 'undefined' ? window.visualViewport : null;
+    if (!vv) return;
+    const update = () => {
+      const offset = Math.max(0, window.innerHeight - vv.height - vv.offsetTop);
+      setKbOffset(offset);
+    };
+    update();
+    vv.addEventListener('resize', update);
+    vv.addEventListener('scroll', update);
+    return () => {
+      vv.removeEventListener('resize', update);
+      vv.removeEventListener('scroll', update);
+    };
+  }, []);
+  const keyboardOpen = kbOffset > 80;
 
   const filtered = useMemo(() => {
     if (activeCategory === ALL) return ideas;
@@ -179,7 +200,7 @@ export default function Ideas() {
         setAttach(null);
       } finally {
         setUploading(false);
-        inputRef.current?.focus();
+        inputRef.current?.blur();
       }
       return;
     }
@@ -201,10 +222,11 @@ export default function Ideas() {
       account_id: activeAccountId || null,
     };
 
-    // Reset immediately for snappy feel
+    // Reset immediately for snappy feel; blur so keyboard closes and the
+    // topic list re-appears (user explicitly asked for this UX).
     setDraft('');
     setAttach(null);
-    inputRef.current?.focus();
+    inputRef.current?.blur();
 
     try {
       await createIdea(payload);
@@ -373,10 +395,18 @@ export default function Ideas() {
       {/* Spacer so the composer + nav don't overlap last item */}
       <div className="h-36" />
 
-      {/* WhatsApp-style composer — sits just above the bottom nav */}
+      {/* WhatsApp-style composer — pinned above the bottom nav, and lifted
+          above the mobile keyboard via visualViewport tracking so text is
+          always visible while typing. */}
       <div
-        className="fixed left-0 right-0 z-30 px-3 pt-2 bg-background/95 backdrop-blur-md border-t border-border/50"
-        style={{ bottom: 'calc(64px + env(safe-area-inset-bottom, 0px) + 8px)', paddingBottom: '8px' }}
+        className="fixed left-0 right-0 z-30 px-3 pt-2 bg-background backdrop-blur-md border-t border-border/50"
+        style={{
+          bottom: keyboardOpen
+            ? `${kbOffset}px`
+            : 'calc(64px + env(safe-area-inset-bottom, 0px) + 8px)',
+          paddingBottom: keyboardOpen ? '8px' : '8px',
+          transition: 'bottom 0.15s ease-out',
+        }}
       >
         <div className="max-w-lg mx-auto">
           {attach && (
@@ -435,7 +465,11 @@ export default function Ideas() {
                 onPaste={onPaste}
                 onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleSend(); } }}
                 placeholder="Quick capture a topic…"
-                className="flex-1 h-10 rounded-full bg-card"
+                enterKeyHint="send"
+                autoComplete="off"
+                autoCorrect="on"
+                spellCheck
+                className="flex-1 h-10 rounded-full bg-card text-foreground placeholder:text-muted-foreground text-base"
               />
               {(draft.trim() || attach) ? (
                 <button
