@@ -13,8 +13,8 @@ export const contentCreatorMode: AppMode = {
   shortLabel: 'Creator',
   nav: [
     { path: '/ideas', label: 'Topics', iconKey: 'ideas', onboardingId: 'nav-ideas' },
-    { path: '/studio', label: 'Studio', iconKey: 'studio', onboardingId: 'nav-studio' },
-    { path: '/calendar', label: 'Posting', iconKey: 'calendar', onboardingId: 'nav-calendar' },
+    { path: '/studio', label: 'Scripting', iconKey: 'scripting', onboardingId: 'nav-studio' },
+    { path: '/calendar', label: 'Posting', iconKey: 'posting', onboardingId: 'nav-calendar' },
     { path: '/insights', label: 'Insights', iconKey: 'insights', onboardingId: 'nav-insights' },
     { path: '/profile', label: 'Profile', iconKey: 'profile', isProfile: true, onboardingId: 'nav-profile' },
   ],
