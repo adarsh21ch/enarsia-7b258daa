@@ -77,6 +77,27 @@ export default function Ideas() {
   const [uploading, setUploading] = useState(false);
   const isRecording = audio.state === 'recording';
 
+  // Track mobile keyboard via visualViewport so the composer always sits
+  // directly above the keyboard (fixes "input floats to middle / background
+  // looks blank while typing" on iOS/Android).
+  const [kbOffset, setKbOffset] = useState(0);
+  useEffect(() => {
+    const vv = typeof window !== 'undefined' ? window.visualViewport : null;
+    if (!vv) return;
+    const update = () => {
+      const offset = Math.max(0, window.innerHeight - vv.height - vv.offsetTop);
+      setKbOffset(offset);
+    };
+    update();
+    vv.addEventListener('resize', update);
+    vv.addEventListener('scroll', update);
+    return () => {
+      vv.removeEventListener('resize', update);
+      vv.removeEventListener('scroll', update);
+    };
+  }, []);
+  const keyboardOpen = kbOffset > 80;
+
   const filtered = useMemo(() => {
     if (activeCategory === ALL) return ideas;
     return ideas.filter((i) => i.category_id === activeCategory);
