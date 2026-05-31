@@ -1,5 +1,5 @@
 import { useMemo, useRef, useState } from 'react';
-import { Lightbulb, Plus, Loader2, Trash2, ChevronRight, Mic, Send, Link as LinkIcon, Youtube, Instagram, Image as ImageIcon, X } from 'lucide-react';
+import { Lightbulb, Plus, Loader2, Trash2, ChevronRight, Mic, Send, Link as LinkIcon, Youtube, Instagram, Image as ImageIcon, X, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
 import { AudioRecorderField } from '@/components/creator/AudioRecorderField';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
