@@ -64,9 +64,13 @@ export default function Ideas() {
   const [attachOpen, setAttachOpen] = useState(false);
   const [linkSheet, setLinkSheet] = useState<'instagram' | 'youtube' | null>(null);
   const [linkInput, setLinkInput] = useState('');
-  const [audioSheetOpen, setAudioSheetOpen] = useState(false);
-  const [audioDraft, setAudioDraft] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  // Inline audio recording (no popup — tap mic to start, tap send to stop+send)
+  const { user } = useAuth();
+  const audio = useAudioRecorder();
+  const [uploading, setUploading] = useState(false);
+  const isRecording = audio.state === 'recording';
 
   const filtered = useMemo(() => {
     if (activeCategory === ALL) return ideas;
