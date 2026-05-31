@@ -373,13 +373,13 @@ export default function Ideas() {
       )}
 
 
-      {/* Spacer so the composer doesn't overlap last item */}
-      <div className="h-24" />
+      {/* Spacer so the composer + nav don't overlap last item (composer ~64 + nav ~80 + gap) */}
+      <div className="h-44" />
 
-      {/* WhatsApp-style composer */}
+      {/* WhatsApp-style composer — lifted off the bottom nav for thumb comfort */}
       <div
-        className="fixed left-0 right-0 z-30 px-3 pt-2 pb-[max(env(safe-area-inset-bottom),8px)] bg-background/95 backdrop-blur-md border-t border-border/50"
-        style={{ bottom: '72px' }}
+        className="fixed left-0 right-0 z-30 px-3 pt-2 pb-2 bg-background/95 backdrop-blur-md border-t border-border/50"
+        style={{ bottom: 'calc(80px + env(safe-area-inset-bottom, 0px) + 12px)' }}
       >
         <div className="max-w-lg mx-auto">
           {attach && (
@@ -397,22 +397,13 @@ export default function Ideas() {
           )}
           {isRecording || uploading ? (
             <div className="flex items-center gap-2">
-              <button
-                type="button"
-                onClick={cancelRecording}
-                disabled={uploading}
-                className="h-10 w-10 shrink-0 rounded-full flex items-center justify-center bg-muted text-muted-foreground hover:text-destructive active:scale-95 transition-all disabled:opacity-50"
-                aria-label="Cancel recording"
-              >
-                <X className="h-5 w-5" />
-              </button>
-              <div className="flex-1 h-10 rounded-full bg-card border border-red-500/30 flex items-center px-3 gap-2">
+              <div className="flex-1 h-10 rounded-full bg-card border border-red-500/40 flex items-center px-3 gap-2">
                 <span className="relative flex h-2.5 w-2.5">
                   <span className="absolute inline-flex h-full w-full rounded-full bg-red-500 opacity-70 animate-ping" />
                   <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-red-500" />
                 </span>
                 <span className="text-xs font-medium text-foreground/80">
-                  {uploading ? 'Sending…' : 'Recording'}
+                  {uploading ? 'Sending…' : 'Recording — release to send, slide away to cancel'}
                 </span>
                 <span className="ml-auto text-xs tabular-nums text-muted-foreground">
                   {formatDuration(audio.durationSec)}
@@ -420,12 +411,14 @@ export default function Ideas() {
               </div>
               <button
                 type="button"
-                onClick={handleSend}
+                onPointerUp={releaseMic}
+                onPointerLeave={abortMic}
+                onPointerCancel={abortMic}
                 disabled={uploading}
-                className="h-10 w-10 shrink-0 rounded-full flex items-center justify-center bg-primary text-primary-foreground active:scale-95 transition-all disabled:opacity-60"
-                aria-label="Send recording"
+                className="h-10 w-10 shrink-0 rounded-full flex items-center justify-center bg-red-500 text-white shadow-lg shadow-red-500/30 scale-110 transition-all disabled:opacity-60"
+                aria-label="Release to send"
               >
-                {uploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+                {uploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Square className="h-3.5 w-3.5 fill-current animate-pulse" />}
               </button>
             </div>
           ) : (
@@ -459,9 +452,14 @@ export default function Ideas() {
               ) : (
                 <button
                   type="button"
-                  onClick={startMic}
-                  className="h-10 w-10 shrink-0 rounded-full flex items-center justify-center bg-primary text-primary-foreground active:scale-95 transition-all"
-                  aria-label="Record audio note"
+                  onPointerDown={(e) => { (e.currentTarget as HTMLElement).setPointerCapture?.(e.pointerId); startMic(); }}
+                  onPointerUp={releaseMic}
+                  onPointerLeave={abortMic}
+                  onPointerCancel={abortMic}
+                  onContextMenu={(e) => e.preventDefault()}
+                  className="h-10 w-10 shrink-0 rounded-full flex items-center justify-center bg-primary text-primary-foreground active:scale-95 transition-all touch-none select-none"
+                  aria-label="Hold to record audio note"
+                  title="Hold to record"
                 >
                   <Mic className="h-4 w-4" />
                 </button>
