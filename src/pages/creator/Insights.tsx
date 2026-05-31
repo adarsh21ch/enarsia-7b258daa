@@ -127,6 +127,18 @@ export default function Insights() {
         <StatCard icon={CalendarDays} label="Posts this week" value={stats.postsThisWeek} />
         <StatCard icon={Flame} label="Current streak" value={`${stats.currentStreak}d`} tint="emerald" />
         <StatCard icon={FileText} label="Categories" value={categories.length} />
+        <StatCard
+          icon={CheckCircle2}
+          label="Daily tasks done (7d)"
+          value={posting.loading ? '…' : `${posting.done}${posting.expected ? `/${posting.expected}` : ''}`}
+          tint="emerald"
+        />
+        <StatCard
+          icon={Target}
+          label="Completion rate"
+          value={posting.loading ? '…' : posting.expected ? `${posting.rate}%` : '—'}
+          tint="violet"
+        />
       </div>
 
       {/* Topics by category */}
