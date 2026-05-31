@@ -4,7 +4,7 @@ import { cn } from '@/lib/utils';
 import { useProfile } from '@/hooks/useProfile';
 import { useMode } from '@/hooks/useMode';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Crown, Lightbulb, PenLine, Calendar, BarChart3, LayoutDashboard } from 'lucide-react';
+import { Crown, Lightbulb, ScrollText, Send, BarChart3, LayoutDashboard } from 'lucide-react';
 import { useUpgradeUrgency } from '@/lib/planUtils';
 import { UpgradeDrawer } from '@/components/subscription/UpgradeDrawer';
 
