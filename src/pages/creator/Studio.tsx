@@ -1,5 +1,5 @@
 import { useMemo, useState, useEffect } from 'react';
-import { PenLine, Loader2, ArrowRight } from 'lucide-react';
+import { PenLine, Loader2, ArrowRight, Lightbulb } from 'lucide-react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { toast } from 'sonner';
 import { CreatorTabLayout, CreatorEmptyState } from '@/components/creator/CreatorTabLayout';
@@ -10,17 +10,20 @@ import { AudioRecorderField } from '@/components/creator/AudioRecorderField';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
+import { cn } from '@/lib/utils';
 
 export default function Studio() {
   const navigate = useNavigate();
-  const [params] = useSearchParams();
+  const [params, setParams] = useSearchParams();
   const ideaId = params.get('idea');
   const { activeAccountId } = useCreatorAccount();
 
+  // Intentionally fetch ALL ideas (no account filter) so the picker always works.
   const { ideas, isLoading, updateIdea } = useContentIdeas();
   const { savePiece, saving } = useContentPieces();
 
   const idea = useMemo(() => ideas.find((i) => i.id === ideaId) || null, [ideas, ideaId]);
+  const pickable = useMemo(() => ideas.filter((i) => i.status !== 'done'), [ideas]);
 
   const [hook, setHook] = useState('');
   const [body, setBody] = useState('');
