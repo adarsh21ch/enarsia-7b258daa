@@ -242,19 +242,16 @@ Deno.serve(async (req) => {
     queryParams.set('X-Amz-Signature', signature);
     const presignedUrl = `https://${host}${canonicalUri}?${queryParams.toString()}`;
 
-    // Build public URL using r2.dev public endpoint
-    const R2_PUBLIC_BASE = 'https://pub-d0cae7c30eea4f949d9c33c730813937.r2.dev';
-    const publicUrl = `${R2_PUBLIC_BASE}/${objectKey}`;
-
     console.log(`Created upload URL for ${isLeadAuth ? 'lead' : 'user'} - object: ${objectKey}`);
 
+    // NOTE: public_url has been removed. R2 bucket should be private — all reads
+    // must go through the presigned-URL flow in `r2-get-playback-url`.
     return new Response(
       JSON.stringify({
         upload_url: presignedUrl,
         object_key: objectKey,
         asset_id: assetId,
         content_type: content_type,
-        public_url: publicUrl,
         auth_type: isLeadAuth ? 'lead' : 'jwt',
       }),
       { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
