@@ -198,12 +198,12 @@ serve(async (req) => {
       }
     };
 
-    const authHeader = btoa(`${RAZORPAY_KEY_ID}:${RAZORPAY_KEY_SECRET}`);
+    const razorpayAuth = btoa(`${RAZORPAY_KEY_ID}:${RAZORPAY_KEY_SECRET}`);
 
     const razorpayResponse = await fetch('https://api.razorpay.com/v1/orders', {
       method: 'POST',
       headers: {
-        'Authorization': `Basic ${authHeader}`,
+        'Authorization': `Basic ${razorpayAuth}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify(orderPayload),
