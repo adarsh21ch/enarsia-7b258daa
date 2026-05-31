@@ -222,10 +222,11 @@ export default function Ideas() {
       account_id: activeAccountId || null,
     };
 
-    // Reset immediately for snappy feel
+    // Reset immediately for snappy feel; blur so keyboard closes and the
+    // topic list re-appears (user explicitly asked for this UX).
     setDraft('');
     setAttach(null);
-    inputRef.current?.focus();
+    inputRef.current?.blur();
 
     try {
       await createIdea(payload);
