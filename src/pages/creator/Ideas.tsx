@@ -19,6 +19,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { cn } from '@/lib/utils';
 import { LinkPreviewCard } from '@/components/creator/LinkPreviewCard';
+import { useCategoryOrder } from '@/hooks/useCategoryOrder';
 
 const AUDIO_BUCKET = 'creator-audio';
 
