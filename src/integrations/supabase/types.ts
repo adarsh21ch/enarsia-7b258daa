@@ -930,6 +930,33 @@ export type Database = {
         }
         Relationships: []
       }
+      admin_branding: {
+        Row: {
+          app_name: string
+          id: number
+          logo_url: string | null
+          short_name: string
+          tagline: string
+          updated_at: string
+        }
+        Insert: {
+          app_name?: string
+          id?: number
+          logo_url?: string | null
+          short_name?: string
+          tagline?: string
+          updated_at?: string
+        }
+        Update: {
+          app_name?: string
+          id?: number
+          logo_url?: string | null
+          short_name?: string
+          tagline?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       admin_config_text: {
         Row: {
           config_key: string
