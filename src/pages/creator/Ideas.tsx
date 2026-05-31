@@ -264,8 +264,8 @@ export default function Ideas() {
           body="Type a topic below and hit send. Paste an Instagram or YouTube link to attach it instantly."
         />
       ) : (
-        <div className="space-y-2 pb-4">
-          {filtered.map((idea) => {
+        (() => {
+          const renderCard = (idea: ContentIdea) => {
             const cat = categories.find((c) => c.id === idea.category_id);
             return (
               <div key={idea.id} className="rounded-xl border border-border/50 bg-card overflow-hidden">
@@ -319,9 +319,45 @@ export default function Ideas() {
                 </div>
               </div>
             );
-          })}
-        </div>
+          };
+
+          if (activeCategory !== ALL) {
+            return <div className="space-y-2 pb-4">{filtered.map(renderCard)}</div>;
+          }
+
+          // Grouped view in All
+          const groups = categories
+            .map((c) => ({ cat: c, items: filtered.filter((i) => i.category_id === c.id) }))
+            .filter((g) => g.items.length > 0);
+          const uncategorized = filtered.filter((i) => !i.category_id);
+
+          return (
+            <div className="space-y-5 pb-4">
+              {groups.map(({ cat, items }) => (
+                <section key={cat.id} className="space-y-2">
+                  <div className="flex items-center gap-2 px-1">
+                    <h3 className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">{cat.name}</h3>
+                    <span className="text-[10px] text-muted-foreground/70">{items.length}</span>
+                    <div className="flex-1 h-px bg-border/40" />
+                  </div>
+                  <div className="space-y-2">{items.map(renderCard)}</div>
+                </section>
+              ))}
+              {uncategorized.length > 0 && (
+                <section className="space-y-2">
+                  <div className="flex items-center gap-2 px-1">
+                    <h3 className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Uncategorized</h3>
+                    <span className="text-[10px] text-muted-foreground/70">{uncategorized.length}</span>
+                    <div className="flex-1 h-px bg-border/40" />
+                  </div>
+                  <div className="space-y-2">{uncategorized.map(renderCard)}</div>
+                </section>
+              )}
+            </div>
+          );
+        })()
       )}
+
 
       {/* Spacer so the composer doesn't overlap last item */}
       <div className="h-24" />
