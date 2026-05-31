@@ -23,6 +23,7 @@ export default function Insights() {
   const { ideas } = useContentIdeas(activeAccountId);
   const { pieces } = useContentPieces(activeAccountId);
   const { categories } = useContentCategories();
+  const posting = usePostingWeeklyStats();
 
   const stats = useMemo(() => {
     const totalTopics = ideas.length;
