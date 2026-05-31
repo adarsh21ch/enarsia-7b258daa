@@ -5,9 +5,11 @@ import { LogOut, Menu, X, List, BarChart3 } from 'lucide-react';
 import { useState } from 'react';
 import { cn } from '@/lib/utils';
 import nevoraLogo from '@/assets/nevorai-call-logo.png';
+import { useBranding } from '@/hooks/useBranding';
 
 export function Header() {
   const { user, signOut } = useAuth();
+  const { logoUrl, appName } = useBranding();
   const location = useLocation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
@@ -24,11 +26,11 @@ export function Header() {
         <div className="flex items-center gap-6">
           <Link to="/dashboard" className="flex items-center gap-2">
             <img 
-              src={nevoraLogo} 
-              alt="Nevorai CRM Logo" 
+              src={logoUrl || nevoraLogo} 
+              alt={`${appName} Logo`}
               className="h-8 w-8 object-contain"
             />
-            <span className="font-semibold text-lg hidden sm:inline">Nevorai CRM</span>
+            <span className="font-semibold text-lg hidden sm:inline">{appName}</span>
           </Link>
 
           <nav className="hidden md:flex items-center gap-1">
