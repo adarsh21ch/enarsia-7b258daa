@@ -8,6 +8,9 @@ import { useContentIdeas, type ContentIdea } from '@/hooks/useContentIdeas';
 import { useContentCategories } from '@/hooks/useContentCategories';
 import { useCreatorAccount } from '@/contexts/CreatorAccountContext';
 import { useContentAccounts } from '@/hooks/useContentAccounts';
+import { useAudioRecorder, formatDuration } from '@/hooks/useAudioRecorder';
+import { useAuth } from '@/contexts/AuthContext';
+import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -16,6 +19,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { cn } from '@/lib/utils';
 import { LinkPreviewCard } from '@/components/creator/LinkPreviewCard';
+
+const AUDIO_BUCKET = 'creator-audio';
 
 const ALL = '__all__';
 
