@@ -23,8 +23,11 @@ export default function Posting() {
   const { accounts, isLoading: accountsLoading } = useContentAccounts();
   const { pieces, isLoading, savePiece, deletePiece } = useContentPieces();
   const today = useMemo(() => toLocalISO(new Date()), []);
-  const { tasks, doneMap, loading: tasksLoading, addTask, deleteTask, toggle } = usePostingTasks(today);
+  const { tasks, doneMap, loading: tasksLoading, addTask, deleteTask, renameTask, toggle } = usePostingTasks(today);
   const [newTask, setNewTask] = useState('');
+  const [manageOpen, setManageOpen] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editLabel, setEditLabel] = useState('');
 
   const postedDates = useMemo(() => {
     const set = new Set<string>();
