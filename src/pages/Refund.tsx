@@ -2,11 +2,13 @@ import { Link } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { buildWhatsAppLink } from '@/lib/whatsapp';
+import { useBranding } from '@/hooks/useBranding';
 
 const SUPPORT_EMAIL = 'teamnevorai@gmail.com';
 const SUPPORT_WHATSAPP = '+919329040508';
 
 export default function Refund() {
+  const { appName } = useBranding();
   return (
     <div className="h-screen flex flex-col bg-background">
       <div className="max-w-3xl mx-auto px-4 py-4 flex-shrink-0 w-full">
@@ -16,7 +18,7 @@ export default function Refund() {
         </Link>
 
         <div className="flex items-baseline gap-2 mb-2">
-          <span className="text-xl font-extrabold text-primary">Nevorai CRM</span>
+          <span className="text-xl font-extrabold text-primary">{appName}</span>
           <span className="text-xs text-muted-foreground">by Nevorai</span>
         </div>
         <h1 className="text-3xl font-bold text-foreground mb-2">Refund Policy</h1>
