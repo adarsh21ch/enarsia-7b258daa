@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Instagram, Youtube, Plus, ChevronDown, Check, Loader2, AtSign } from 'lucide-react';
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -10,7 +10,8 @@ import { cn } from '@/lib/utils';
 
 /**
  * Top-right account switcher for Content Creator tabs.
- * Mode switching lives in Profile — this is account-only.
+ * Top-anchored popover — opens directly under the trigger.
+ * Mode switching lives in Profile.
  */
 function PlatformIcon({ platform, className }: { platform: string; className?: string }) {
   if (platform === 'youtube') return <Youtube className={className} />;
@@ -42,8 +43,8 @@ export function CreatorAccountSwitcher() {
   const triggerLabel = active?.username || active?.name || (accounts.length === 0 ? 'Add Account' : 'Select');
 
   return (
-    <Sheet open={open} onOpenChange={setOpen}>
-      <SheetTrigger asChild>
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
         <button
           type="button"
           className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-full bg-muted/60 hover:bg-muted border border-border/50 transition-colors max-w-[180px]"
@@ -56,17 +57,17 @@ export function CreatorAccountSwitcher() {
           </span>
           <ChevronDown className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
         </button>
-      </SheetTrigger>
-      <SheetContent side="bottom" className="rounded-t-2xl">
-        <SheetHeader>
-          <SheetTitle>Switch account</SheetTitle>
-        </SheetHeader>
+      </PopoverTrigger>
+      <PopoverContent align="end" sideOffset={8} className="w-72 p-3 rounded-xl">
+        <p className="text-[10px] uppercase tracking-[1.2px] text-muted-foreground font-semibold px-1 pb-2">
+          Switch account
+        </p>
 
-        <div className="mt-4 space-y-1.5 max-h-[50vh] overflow-y-auto">
+        <div className="space-y-1.5 max-h-[50vh] overflow-y-auto">
           {isLoading ? (
-            <div className="flex justify-center py-8"><Loader2 className="h-5 w-5 animate-spin text-primary" /></div>
+            <div className="flex justify-center py-6"><Loader2 className="h-5 w-5 animate-spin text-primary" /></div>
           ) : accounts.length === 0 ? (
-            <p className="text-sm text-muted-foreground text-center py-6">No accounts yet. Add your first one below.</p>
+            <p className="text-xs text-muted-foreground text-center py-4">No accounts yet. Add your first one below.</p>
           ) : (
             accounts.map((a: ContentAccount) => {
               const isActive = a.id === activeAccountId;
@@ -75,17 +76,17 @@ export function CreatorAccountSwitcher() {
                   key={a.id}
                   onClick={() => { setActiveAccountId(a.id); setOpen(false); }}
                   className={cn(
-                    'w-full flex items-center gap-3 p-3 rounded-xl border transition-colors text-left',
-                    isActive ? 'border-primary bg-primary/5' : 'border-border/50 hover:bg-muted/50',
+                    'w-full flex items-center gap-2.5 p-2 rounded-lg border transition-colors text-left',
+                    isActive ? 'border-primary bg-primary/5' : 'border-transparent hover:bg-muted/60',
                   )}
                 >
-                  <div className="h-9 w-9 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                  <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
                     <PlatformIcon platform={a.platform} className="h-4 w-4 text-primary" />
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-semibold truncate">{a.name}</p>
                     {a.username && (
-                      <p className="text-[11px] text-muted-foreground truncate flex items-center gap-0.5">
+                      <p className="text-[10px] text-muted-foreground truncate flex items-center gap-0.5">
                         <AtSign className="h-2.5 w-2.5" />{a.username.replace(/^@/, '')}
                       </p>
                     )}
@@ -98,47 +99,47 @@ export function CreatorAccountSwitcher() {
         </div>
 
         {!addOpen ? (
-          <Button onClick={() => setAddOpen(true)} variant="outline" className="w-full mt-4">
-            <Plus className="h-4 w-4 mr-1.5" /> Add account
+          <Button onClick={() => setAddOpen(true)} variant="outline" size="sm" className="w-full mt-3 h-8 text-xs">
+            <Plus className="h-3.5 w-3.5 mr-1" /> Add account
           </Button>
         ) : (
-          <div className="mt-4 space-y-3 rounded-xl border border-border/50 p-3">
-            <div className="flex gap-2">
+          <div className="mt-3 space-y-2 rounded-lg border border-border/50 p-2.5">
+            <div className="flex gap-1.5">
               {(['instagram', 'youtube'] as const).map((p) => (
                 <button
                   key={p}
                   onClick={() => setPlatform(p)}
                   className={cn(
-                    'flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg border text-xs font-semibold capitalize',
+                    'flex-1 flex items-center justify-center gap-1 py-1.5 rounded-md border text-[11px] font-semibold capitalize',
                     platform === p ? 'border-primary bg-primary/10 text-primary' : 'border-border/50',
                   )}
                 >
-                  <PlatformIcon platform={p} className="h-3.5 w-3.5" />
+                  <PlatformIcon platform={p} className="h-3 w-3" />
                   {p}
                 </button>
               ))}
             </div>
             <div className="space-y-1">
-              <Label className="text-xs">Account name</Label>
-              <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="My main account" />
+              <Label className="text-[10px]">Account name</Label>
+              <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="My main account" className="h-8 text-xs" />
             </div>
             <div className="space-y-1">
-              <Label className="text-xs">Username (optional)</Label>
-              <Input value={username} onChange={(e) => setUsername(e.target.value)} placeholder="yourhandle" />
+              <Label className="text-[10px]">Username (optional)</Label>
+              <Input value={username} onChange={(e) => setUsername(e.target.value)} placeholder="yourhandle" className="h-8 text-xs" />
             </div>
             <div className="space-y-1">
-              <Label className="text-xs">Profile URL (optional)</Label>
-              <Input value={url} onChange={(e) => setUrl(e.target.value)} placeholder="https://instagram.com/yourhandle" />
+              <Label className="text-[10px]">Profile URL (optional)</Label>
+              <Input value={url} onChange={(e) => setUrl(e.target.value)} placeholder="https://instagram.com/yourhandle" className="h-8 text-xs" />
             </div>
-            <div className="flex gap-2">
-              <Button variant="ghost" className="flex-1" onClick={() => setAddOpen(false)}>Cancel</Button>
-              <Button className="flex-1" onClick={handleAdd} disabled={!name.trim() || creating}>
-                {creating ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Save'}
+            <div className="flex gap-1.5">
+              <Button variant="ghost" size="sm" className="flex-1 h-8 text-xs" onClick={() => setAddOpen(false)}>Cancel</Button>
+              <Button size="sm" className="flex-1 h-8 text-xs" onClick={handleAdd} disabled={!name.trim() || creating}>
+                {creating ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : 'Save'}
               </Button>
             </div>
           </div>
         )}
-      </SheetContent>
-    </Sheet>
+      </PopoverContent>
+    </Popover>
   );
 }
