@@ -82,15 +82,9 @@ export default function Ideas() {
         instagram_url: igUrl || null,
         youtube_url: ytUrl || null,
         context_note: contextNote || null,
+        audio_url: audioUrl,
         account_id: activeAccountId || null,
       });
-      // Newly-created topic: if user recorded audio, persist via update on the
-      // just-created row. createIdea doesn't return the row in our hook signature,
-      // so we rely on the editing flow next time. (Audio recorded before initial
-      // save attaches on a subsequent edit.)
-      if (audioUrl) {
-        // Best-effort: re-fetch will surface new row; user can re-open & save audio if needed.
-      }
     }
     setFormOpen(false);
   };
