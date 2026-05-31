@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
 import { Lightbulb, Plus, Loader2, Trash2, ChevronRight, Link2, Mic, Pencil } from 'lucide-react';
+import { AudioRecorderField } from '@/components/creator/AudioRecorderField';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { CreatorTabLayout, CreatorEmptyState } from '@/components/creator/CreatorTabLayout';
@@ -35,6 +36,7 @@ export default function Ideas() {
   const [igUrl, setIgUrl] = useState('');
   const [ytUrl, setYtUrl] = useState('');
   const [contextNote, setContextNote] = useState('');
+  const [audioUrl, setAudioUrl] = useState<string | null>(null);
 
   const filtered = useMemo(() => {
     if (activeCategory === ALL) return ideas;
@@ -43,7 +45,7 @@ export default function Ideas() {
 
   const openCreate = () => {
     setEditing(null);
-    setTitle(''); setCategoryId(''); setIgUrl(''); setYtUrl(''); setContextNote('');
+    setTitle(''); setCategoryId(''); setIgUrl(''); setYtUrl(''); setContextNote(''); setAudioUrl(null);
     setFormOpen(true);
   };
 
@@ -54,6 +56,7 @@ export default function Ideas() {
     setIgUrl(i.instagram_url || '');
     setYtUrl(i.youtube_url || '');
     setContextNote(i.context_note || '');
+    setAudioUrl(i.audio_url || null);
     setFormOpen(true);
   };
 
@@ -68,6 +71,7 @@ export default function Ideas() {
           instagram_url: igUrl.trim() || null,
           youtube_url: ytUrl.trim() || null,
           context_note: contextNote.trim() || null,
+          audio_url: audioUrl,
         },
       });
       toast.success('Topic updated');
@@ -78,6 +82,7 @@ export default function Ideas() {
         instagram_url: igUrl || null,
         youtube_url: ytUrl || null,
         context_note: contextNote || null,
+        audio_url: audioUrl,
         account_id: activeAccountId || null,
       });
     }
@@ -214,13 +219,10 @@ export default function Ideas() {
               <Label className="text-xs">Context note (optional)</Label>
               <Textarea value={contextNote} onChange={(e) => setContextNote(e.target.value)} rows={3} placeholder="Any context or angle for this topic…" />
             </div>
-            <button
-              type="button"
-              onClick={() => toast('Audio notes coming soon')}
-              className="w-full flex items-center justify-center gap-1.5 py-2 rounded-lg border border-dashed border-border/70 text-xs text-muted-foreground"
-            >
-              <Mic className="h-3.5 w-3.5" /> Record audio note (coming soon)
-            </button>
+            <div className="space-y-1">
+              <Label className="text-xs">Audio note (optional)</Label>
+              <AudioRecorderField value={audioUrl} onChange={(url) => setAudioUrl(url)} label="Record" />
+            </div>
           </div>
           <DialogFooter>
             <Button variant="ghost" onClick={() => setFormOpen(false)}>Cancel</Button>

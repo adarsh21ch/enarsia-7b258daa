@@ -13,6 +13,9 @@ export interface ContentPiece {
   hook_text: string | null;
   body_text: string | null;
   cta_text: string | null;
+  hook_audio_url: string | null;
+  body_audio_url: string | null;
+  cta_audio_url: string | null;
   caption: string | null;
   hashtags: string[];
   platform: string;
@@ -54,6 +57,9 @@ export function useContentPieces(accountId?: string | null) {
       hook_text?: string | null;
       body_text?: string | null;
       cta_text?: string | null;
+      hook_audio_url?: string | null;
+      body_audio_url?: string | null;
+      cta_audio_url?: string | null;
       caption?: string;
       hashtags?: string[];
       platform?: string;
@@ -69,6 +75,9 @@ export function useContentPieces(accountId?: string | null) {
         hook_text: input.hook_text ?? null,
         body_text: input.body_text ?? null,
         cta_text: input.cta_text ?? null,
+        hook_audio_url: input.hook_audio_url ?? null,
+        body_audio_url: input.body_audio_url ?? null,
+        cta_audio_url: input.cta_audio_url ?? null,
         caption: input.caption ?? null,
         hashtags: input.hashtags ?? [],
         platform: input.platform ?? 'reels',

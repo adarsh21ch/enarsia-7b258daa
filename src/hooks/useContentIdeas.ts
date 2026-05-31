@@ -56,6 +56,7 @@ export function useContentIdeas(accountId?: string | null) {
       instagram_url?: string | null;
       youtube_url?: string | null;
       context_note?: string | null;
+      audio_url?: string | null;
       account_id?: string | null;
     }) => {
       if (!user) throw new Error('Not authenticated');
@@ -72,6 +73,7 @@ export function useContentIdeas(accountId?: string | null) {
           instagram_url: input.instagram_url?.trim() || null,
           youtube_url: input.youtube_url?.trim() || null,
           context_note: input.context_note?.trim() || null,
+          audio_url: input.audio_url || null,
           account_id: input.account_id || null,
         })
         .select()
