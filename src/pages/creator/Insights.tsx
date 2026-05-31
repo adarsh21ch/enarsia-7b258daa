@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { BarChart3, Sparkles, Lightbulb, Flame, RefreshCw, Loader2, FileText, PenLine, Send, CalendarDays } from 'lucide-react';
+import { BarChart3, Sparkles, Lightbulb, Flame, RefreshCw, Loader2, FileText, PenLine, Send, CalendarDays, CheckCircle2, Target } from 'lucide-react';
 import { CreatorTabLayout } from '@/components/creator/CreatorTabLayout';
 import { Button } from '@/components/ui/button';
 import { useNevInsights } from '@/hooks/useNevInsights';
@@ -7,6 +7,7 @@ import { useCreatorAccount } from '@/contexts/CreatorAccountContext';
 import { useContentIdeas } from '@/hooks/useContentIdeas';
 import { useContentPieces } from '@/hooks/useContentPieces';
 import { useContentCategories } from '@/hooks/useContentCategories';
+import { usePostingWeeklyStats } from '@/hooks/usePostingTasks';
 import { cn } from '@/lib/utils';
 
 function toLocalISO(d: Date): string {
@@ -22,6 +23,7 @@ export default function Insights() {
   const { ideas } = useContentIdeas(activeAccountId);
   const { pieces } = useContentPieces(activeAccountId);
   const { categories } = useContentCategories();
+  const posting = usePostingWeeklyStats();
 
   const stats = useMemo(() => {
     const totalTopics = ideas.length;
@@ -125,6 +127,18 @@ export default function Insights() {
         <StatCard icon={CalendarDays} label="Posts this week" value={stats.postsThisWeek} />
         <StatCard icon={Flame} label="Current streak" value={`${stats.currentStreak}d`} tint="emerald" />
         <StatCard icon={FileText} label="Categories" value={categories.length} />
+        <StatCard
+          icon={CheckCircle2}
+          label="Daily tasks done (7d)"
+          value={posting.loading ? '…' : `${posting.done}${posting.expected ? `/${posting.expected}` : ''}`}
+          tint="emerald"
+        />
+        <StatCard
+          icon={Target}
+          label="Completion rate"
+          value={posting.loading ? '…' : posting.expected ? `${posting.rate}%` : '—'}
+          tint="violet"
+        />
       </div>
 
       {/* Topics by category */}

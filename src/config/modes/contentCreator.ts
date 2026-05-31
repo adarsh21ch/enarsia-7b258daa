@@ -14,7 +14,7 @@ export const contentCreatorMode: AppMode = {
   nav: [
     { path: '/ideas', label: 'Topics', iconKey: 'ideas', onboardingId: 'nav-ideas' },
     { path: '/studio', label: 'Studio', iconKey: 'studio', onboardingId: 'nav-studio' },
-    { path: '/calendar', label: 'Activity', iconKey: 'calendar', onboardingId: 'nav-calendar' },
+    { path: '/calendar', label: 'Posting', iconKey: 'calendar', onboardingId: 'nav-calendar' },
     { path: '/insights', label: 'Insights', iconKey: 'insights', onboardingId: 'nav-insights' },
     { path: '/profile', label: 'Profile', iconKey: 'profile', isProfile: true, onboardingId: 'nav-profile' },
   ],

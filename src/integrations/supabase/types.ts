@@ -4303,6 +4303,74 @@ export type Database = {
           },
         ]
       }
+      posting_logs: {
+        Row: {
+          account_id: string | null
+          created_at: string
+          done_date: string
+          id: string
+          task_id: string
+          user_id: string
+        }
+        Insert: {
+          account_id?: string | null
+          created_at?: string
+          done_date: string
+          id?: string
+          task_id: string
+          user_id: string
+        }
+        Update: {
+          account_id?: string | null
+          created_at?: string
+          done_date?: string
+          id?: string
+          task_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "posting_logs_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "posting_tasks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      posting_tasks: {
+        Row: {
+          account_id: string | null
+          created_at: string
+          id: string
+          is_active: boolean
+          label: string
+          sort_order: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          account_id?: string | null
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          label: string
+          sort_order?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          account_id?: string | null
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          label?: string
+          sort_order?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           allow_leader_to_view: boolean
