@@ -1,5 +1,5 @@
 import { useMemo, useRef, useState } from 'react';
-import { Lightbulb, Plus, Loader2, Trash2, ChevronRight, Mic, Send, Link as LinkIcon, Youtube, Instagram, Image as ImageIcon, X } from 'lucide-react';
+import { Lightbulb, Plus, Loader2, Trash2, ChevronRight, Mic, Send, Link as LinkIcon, Youtube, Instagram, Image as ImageIcon, X, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
 import { AudioRecorderField } from '@/components/creator/AudioRecorderField';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
@@ -19,6 +19,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { cn } from '@/lib/utils';
 import { LinkPreviewCard } from '@/components/creator/LinkPreviewCard';
+import { useCategoryOrder } from '@/hooks/useCategoryOrder';
 
 const AUDIO_BUCKET = 'creator-audio';
 
@@ -42,7 +43,9 @@ export default function Ideas() {
   const { activeAccountId } = useCreatorAccount();
   const { accounts } = useContentAccounts();
   const { ideas, isLoading, createIdea, updateIdea, deleteIdea } = useContentIdeas(activeAccountId);
-  const { categories, createCategory } = useContentCategories();
+  const { categories: rawCategories, createCategory } = useContentCategories();
+  const { ordered: categories, move: moveCategory } = useCategoryOrder(rawCategories);
+  const [reorderOpen, setReorderOpen] = useState(false);
 
   const [activeCategory, setActiveCategory] = useState<string>(ALL);
   const [newCatOpen, setNewCatOpen] = useState(false);
@@ -239,6 +242,15 @@ export default function Ideas() {
           >
             <Plus className="h-3 w-3" /> New
           </button>
+          {categories.length > 1 && (
+            <button
+              onClick={() => setReorderOpen(true)}
+              className="shrink-0 inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-medium border border-border/70 text-muted-foreground hover:text-foreground"
+              aria-label="Reorder categories"
+            >
+              <ArrowUpDown className="h-3 w-3" /> Reorder
+            </button>
+          )}
         </div>
       </div>
 
@@ -252,8 +264,8 @@ export default function Ideas() {
           body="Type a topic below and hit send. Paste an Instagram or YouTube link to attach it instantly."
         />
       ) : (
-        <div className="space-y-2 pb-4">
-          {filtered.map((idea) => {
+        (() => {
+          const renderCard = (idea: ContentIdea) => {
             const cat = categories.find((c) => c.id === idea.category_id);
             return (
               <div key={idea.id} className="rounded-xl border border-border/50 bg-card overflow-hidden">
@@ -307,9 +319,45 @@ export default function Ideas() {
                 </div>
               </div>
             );
-          })}
-        </div>
+          };
+
+          if (activeCategory !== ALL) {
+            return <div className="space-y-2 pb-4">{filtered.map(renderCard)}</div>;
+          }
+
+          // Grouped view in All
+          const groups = categories
+            .map((c) => ({ cat: c, items: filtered.filter((i) => i.category_id === c.id) }))
+            .filter((g) => g.items.length > 0);
+          const uncategorized = filtered.filter((i) => !i.category_id);
+
+          return (
+            <div className="space-y-5 pb-4">
+              {groups.map(({ cat, items }) => (
+                <section key={cat.id} className="space-y-2">
+                  <div className="flex items-center gap-2 px-1">
+                    <h3 className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">{cat.name}</h3>
+                    <span className="text-[10px] text-muted-foreground/70">{items.length}</span>
+                    <div className="flex-1 h-px bg-border/40" />
+                  </div>
+                  <div className="space-y-2">{items.map(renderCard)}</div>
+                </section>
+              ))}
+              {uncategorized.length > 0 && (
+                <section className="space-y-2">
+                  <div className="flex items-center gap-2 px-1">
+                    <h3 className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Uncategorized</h3>
+                    <span className="text-[10px] text-muted-foreground/70">{uncategorized.length}</span>
+                    <div className="flex-1 h-px bg-border/40" />
+                  </div>
+                  <div className="space-y-2">{uncategorized.map(renderCard)}</div>
+                </section>
+              )}
+            </div>
+          );
+        })()
       )}
+
 
       {/* Spacer so the composer doesn't overlap last item */}
       <div className="h-24" />
@@ -523,6 +571,41 @@ export default function Ideas() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Reorder categories sheet */}
+      <Sheet open={reorderOpen} onOpenChange={setReorderOpen}>
+        <SheetContent side="bottom" className="rounded-t-2xl max-h-[70vh]">
+          <SheetHeader>
+            <SheetTitle>Reorder categories</SheetTitle>
+          </SheetHeader>
+          <div className="mt-3 space-y-1.5">
+            {categories.map((c, idx) => (
+              <div key={c.id} className="flex items-center gap-2 px-3 py-2 rounded-lg border border-border/50 bg-card">
+                <span className="flex-1 text-sm font-medium truncate">{c.name}</span>
+                <button
+                  onClick={() => moveCategory(c.id, -1)}
+                  disabled={idx === 0}
+                  className="p-1.5 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted disabled:opacity-30"
+                  aria-label="Move up"
+                >
+                  <ArrowUp className="h-4 w-4" />
+                </button>
+                <button
+                  onClick={() => moveCategory(c.id, 1)}
+                  disabled={idx === categories.length - 1}
+                  className="p-1.5 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted disabled:opacity-30"
+                  aria-label="Move down"
+                >
+                  <ArrowDown className="h-4 w-4" />
+                </button>
+              </div>
+            ))}
+            {categories.length === 0 && (
+              <p className="text-xs text-muted-foreground py-4 text-center">No categories yet.</p>
+            )}
+          </div>
+        </SheetContent>
+      </Sheet>
 
       {/* New category dialog */}
       <Dialog open={newCatOpen} onOpenChange={setNewCatOpen}>
