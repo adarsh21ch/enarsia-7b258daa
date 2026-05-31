@@ -43,7 +43,9 @@ export default function Ideas() {
   const { activeAccountId } = useCreatorAccount();
   const { accounts } = useContentAccounts();
   const { ideas, isLoading, createIdea, updateIdea, deleteIdea } = useContentIdeas(activeAccountId);
-  const { categories, createCategory } = useContentCategories();
+  const { categories: rawCategories, createCategory } = useContentCategories();
+  const { ordered: categories, move: moveCategory } = useCategoryOrder(rawCategories);
+  const [reorderOpen, setReorderOpen] = useState(false);
 
   const [activeCategory, setActiveCategory] = useState<string>(ALL);
   const [newCatOpen, setNewCatOpen] = useState(false);
