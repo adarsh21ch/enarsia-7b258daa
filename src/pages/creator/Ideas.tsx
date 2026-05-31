@@ -200,7 +200,7 @@ export default function Ideas() {
         setAttach(null);
       } finally {
         setUploading(false);
-        inputRef.current?.focus();
+        inputRef.current?.blur();
       }
       return;
     }
