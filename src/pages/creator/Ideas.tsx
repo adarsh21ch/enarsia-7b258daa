@@ -442,25 +442,6 @@ export default function Ideas() {
         </SheetContent>
       </Sheet>
 
-      {/* Audio sheet */}
-      <Sheet open={audioSheetOpen} onOpenChange={setAudioSheetOpen}>
-        <SheetContent side="bottom" className="rounded-t-2xl">
-          <SheetHeader><SheetTitle>Audio note</SheetTitle></SheetHeader>
-          <div className="space-y-3 pt-3">
-            <AudioRecorderField value={audioDraft} onChange={setAudioDraft} label="Record" />
-            <Button
-              className="w-full"
-              disabled={!audioDraft}
-              onClick={() => {
-                if (audioDraft) setAttach({ kind: 'audio', url: audioDraft });
-                setAudioSheetOpen(false);
-              }}
-            >
-              Attach audio
-            </Button>
-          </div>
-        </SheetContent>
-      </Sheet>
 
       {/* Edit dialog */}
       <Dialog open={editOpen} onOpenChange={setEditOpen}>
