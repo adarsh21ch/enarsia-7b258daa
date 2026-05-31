@@ -4,7 +4,7 @@ import { cn } from '@/lib/utils';
 import { useProfile } from '@/hooks/useProfile';
 import { useMode } from '@/hooks/useMode';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Crown, Lightbulb, ScrollText, Send, BarChart3, LayoutDashboard } from 'lucide-react';
+import { Crown, Lightbulb, FilePen, Send, BarChart3, LayoutDashboard } from 'lucide-react';
 import { useUpgradeUrgency } from '@/lib/planUtils';
 import { UpgradeDrawer } from '@/components/subscription/UpgradeDrawer';
 
@@ -52,8 +52,8 @@ const ICONS: Record<string, ComponentType<{ className?: string }>> = {
   growth: TrackUpIcon,
   overview: LayoutDashboard,
   ideas: Lightbulb,
-  studio: ScrollText,
-  scripting: ScrollText,
+  studio: FilePen,
+  scripting: FilePen,
   calendar: Send,
   posting: Send,
   insights: BarChart3,
