@@ -329,44 +329,79 @@ export default function Ideas() {
               </button>
             </div>
           )}
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={() => setAttachOpen(true)}
-              className="h-10 w-10 shrink-0 rounded-full flex items-center justify-center bg-muted hover:bg-muted/80 active:scale-95 transition-all"
-              aria-label="Attach link"
-            >
-              <Plus className="h-5 w-5" />
-            </button>
-            <Input
-              ref={inputRef}
-              value={draft}
-              onChange={(e) => setDraft(e.target.value)}
-              onPaste={onPaste}
-              onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleSend(); } }}
-              placeholder="Quick capture a topic…"
-              className="flex-1 h-10 rounded-full bg-card"
-            />
-            {(draft.trim() || attach) ? (
+          {isRecording || uploading ? (
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={cancelRecording}
+                disabled={uploading}
+                className="h-10 w-10 shrink-0 rounded-full flex items-center justify-center bg-muted text-muted-foreground hover:text-destructive active:scale-95 transition-all disabled:opacity-50"
+                aria-label="Cancel recording"
+              >
+                <X className="h-5 w-5" />
+              </button>
+              <div className="flex-1 h-10 rounded-full bg-card border border-red-500/30 flex items-center px-3 gap-2">
+                <span className="relative flex h-2.5 w-2.5">
+                  <span className="absolute inline-flex h-full w-full rounded-full bg-red-500 opacity-70 animate-ping" />
+                  <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-red-500" />
+                </span>
+                <span className="text-xs font-medium text-foreground/80">
+                  {uploading ? 'Sending…' : 'Recording'}
+                </span>
+                <span className="ml-auto text-xs tabular-nums text-muted-foreground">
+                  {formatDuration(audio.durationSec)}
+                </span>
+              </div>
               <button
                 type="button"
                 onClick={handleSend}
-                className="h-10 w-10 shrink-0 rounded-full flex items-center justify-center bg-primary text-primary-foreground active:scale-95 transition-all"
-                aria-label="Send"
+                disabled={uploading}
+                className="h-10 w-10 shrink-0 rounded-full flex items-center justify-center bg-primary text-primary-foreground active:scale-95 transition-all disabled:opacity-60"
+                aria-label="Send recording"
               >
-                <Send className="h-4 w-4" />
+                {uploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
               </button>
-            ) : (
+            </div>
+          ) : (
+            <div className="flex items-center gap-2">
               <button
                 type="button"
-                onClick={() => { setAudioDraft(null); setAudioSheetOpen(true); }}
-                className="h-10 w-10 shrink-0 rounded-full flex items-center justify-center bg-primary text-primary-foreground active:scale-95 transition-all"
-                aria-label="Record audio note"
+                onClick={() => setAttachOpen(true)}
+                className="h-10 w-10 shrink-0 rounded-full flex items-center justify-center bg-muted hover:bg-muted/80 active:scale-95 transition-all"
+                aria-label="Attach link"
               >
-                <Mic className="h-4 w-4" />
+                <Plus className="h-5 w-5" />
               </button>
-            )}
-          </div>
+              <Input
+                ref={inputRef}
+                value={draft}
+                onChange={(e) => setDraft(e.target.value)}
+                onPaste={onPaste}
+                onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleSend(); } }}
+                placeholder="Quick capture a topic…"
+                className="flex-1 h-10 rounded-full bg-card"
+              />
+              {(draft.trim() || attach) ? (
+                <button
+                  type="button"
+                  onClick={handleSend}
+                  className="h-10 w-10 shrink-0 rounded-full flex items-center justify-center bg-primary text-primary-foreground active:scale-95 transition-all"
+                  aria-label="Send"
+                >
+                  <Send className="h-4 w-4" />
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={startMic}
+                  className="h-10 w-10 shrink-0 rounded-full flex items-center justify-center bg-primary text-primary-foreground active:scale-95 transition-all"
+                  aria-label="Record audio note"
+                >
+                  <Mic className="h-4 w-4" />
+                </button>
+              )}
+            </div>
+          )}
         </div>
       </div>
 
