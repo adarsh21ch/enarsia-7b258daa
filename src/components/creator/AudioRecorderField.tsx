@@ -103,43 +103,14 @@ export function AudioRecorderField({ value, onChange, compact, label, disabled }
     );
   }
 
-  // No audio yet (or actively recording): show mic button (+ cancel during recording)
+  // No audio yet: press-and-hold mic
   return (
-    <div className="flex items-center gap-2">
-      <button
-        type="button"
-        onClick={handleRecordClick}
-        disabled={disabled || uploading || state === 'stopping'}
-        className={cn(
-          'inline-flex items-center gap-1.5 rounded-full font-semibold transition-all active:scale-95',
-          compact ? 'px-2.5 py-1 text-[11px]' : 'px-3 py-1.5 text-xs',
-          isRecording
-            ? 'bg-red-500 text-white border border-red-600 animate-pulse'
-            : 'bg-muted border border-border/50 text-muted-foreground hover:text-foreground',
-          (uploading || state === 'stopping') && 'opacity-60',
-        )}
-        aria-label={isRecording ? 'Stop recording' : 'Start recording'}
-      >
-        {uploading || state === 'stopping' ? (
-          <Loader2 className={cn(compact ? 'h-3 w-3' : 'h-3.5 w-3.5', 'animate-spin')} />
-        ) : isRecording ? (
-          <Square className={cn(compact ? 'h-3 w-3' : 'h-3.5 w-3.5', 'fill-current')} />
-        ) : (
-          <Mic className={cn(compact ? 'h-3 w-3' : 'h-3.5 w-3.5')} />
-        )}
-        <span className="tabular-nums">
-          {isRecording ? formatDuration(durationSec) : uploading ? 'Uploading…' : (label || 'Record')}
-        </span>
-      </button>
-      {isRecording && (
-        <button
-          type="button"
-          onClick={cancel}
-          className="text-[11px] text-muted-foreground hover:text-foreground"
-        >
-          Cancel
-        </button>
-      )}
-    </div>
+    <HoldToRecordMic
+      compact={compact}
+      disabled={disabled}
+      label={label || 'Hold'}
+      onComplete={async (url) => { await onChange(url); toast.success('Audio saved'); }}
+    />
   );
 }
+
