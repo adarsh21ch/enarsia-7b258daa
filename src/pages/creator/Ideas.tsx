@@ -244,6 +244,9 @@ export default function Ideas() {
         </div>
       )}
 
+      {/* Spacer so the composer doesn't overlap last item */}
+      <div className="h-24" />
+
       {/* WhatsApp-style composer */}
       <div
         className="fixed left-0 right-0 z-30 px-3 pt-2 pb-[max(env(safe-area-inset-bottom),8px)] bg-background/95 backdrop-blur-md border-t border-border/50"
