@@ -63,7 +63,7 @@ export default function Studio() {
 
   if (isLoading) {
     return (
-      <CreatorTabLayout title="Studio" subtitle="Idea → ready to film">
+      <CreatorTabLayout title="Scripting" subtitle="Idea → ready to film">
         <div className="flex justify-center py-10"><Loader2 className="h-6 w-6 animate-spin text-primary" /></div>
       </CreatorTabLayout>
     );
@@ -71,7 +71,7 @@ export default function Studio() {
 
   if (!idea) {
     return (
-      <CreatorTabLayout title="Studio" subtitle="Idea → ready to film">
+      <CreatorTabLayout title="Scripting" subtitle="Idea → ready to film">
         {pickable.length > 0 ? (
           <>
             <div>
@@ -112,7 +112,7 @@ export default function Studio() {
   const canSave = (hook.trim() || body.trim() || cta.trim() || hookAudio || bodyAudio || ctaAudio) && !saving;
 
   return (
-    <CreatorTabLayout title="Studio" subtitle="Idea → ready to film">
+    <CreatorTabLayout title="Scripting" subtitle="Idea → ready to film">
       {/* Topic picker — horizontal chips */}
       {pickable.length > 1 && (
         <div className="-mx-4 px-4 overflow-x-auto scrollbar-none">
