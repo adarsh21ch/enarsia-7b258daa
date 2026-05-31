@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { Loader2, Flame, Check, X, Plus, Trash2 } from 'lucide-react';
+import { Loader2, Flame, Check, X, Plus, Trash2, Pencil } from 'lucide-react';
 import { CreatorTabLayout, CreatorEmptyState } from '@/components/creator/CreatorTabLayout';
 import { useContentPieces } from '@/hooks/useContentPieces';
 import { useContentAccounts, type ContentAccount } from '@/hooks/useContentAccounts';
@@ -8,6 +8,7 @@ import { CalendarDays } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { Input } from '@/components/ui/input';
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 
 function toLocalISO(d: Date): string {
   const y = d.getFullYear();
