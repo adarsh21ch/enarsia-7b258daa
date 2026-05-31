@@ -467,15 +467,46 @@ export default function Ideas() {
                 ))}
               </div>
             </div>
-            <div className="space-y-1">
-              <Label className="text-xs">Instagram URL</Label>
-              <Input value={igUrl} onChange={(e) => setIgUrl(e.target.value)} placeholder="https://instagram.com/reel/..." />
-              {igUrl.trim() && /^https?:\/\//i.test(igUrl.trim()) && <LinkPreviewCard url={igUrl.trim()} />}
-            </div>
-            <div className="space-y-1">
-              <Label className="text-xs">YouTube URL</Label>
-              <Input value={ytUrl} onChange={(e) => setYtUrl(e.target.value)} placeholder="https://youtube.com/..." />
-              {ytUrl.trim() && /^https?:\/\//i.test(ytUrl.trim()) && <LinkPreviewCard url={ytUrl.trim()} />}
+            <div className="space-y-1.5">
+              <Label className="text-xs">Attach link</Label>
+              <div className="flex flex-wrap gap-1.5">
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (showIg) { setShowIg(false); setIgUrl(''); } else { setShowIg(true); }
+                  }}
+                  className={cn(
+                    'inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs transition',
+                    showIg ? 'border-primary bg-primary/10 text-primary' : 'border-border text-muted-foreground hover:text-foreground'
+                  )}
+                >
+                  <Instagram className="h-3.5 w-3.5" /> Instagram
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (showYt) { setShowYt(false); setYtUrl(''); } else { setShowYt(true); }
+                  }}
+                  className={cn(
+                    'inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs transition',
+                    showYt ? 'border-primary bg-primary/10 text-primary' : 'border-border text-muted-foreground hover:text-foreground'
+                  )}
+                >
+                  <Youtube className="h-3.5 w-3.5" /> YouTube
+                </button>
+              </div>
+              {showIg && (
+                <div className="space-y-1 pt-1">
+                  <Input autoFocus value={igUrl} onChange={(e) => setIgUrl(e.target.value)} placeholder="https://instagram.com/reel/..." />
+                  {igUrl.trim() && /^https?:\/\//i.test(igUrl.trim()) && <LinkPreviewCard url={igUrl.trim()} />}
+                </div>
+              )}
+              {showYt && (
+                <div className="space-y-1 pt-1">
+                  <Input autoFocus value={ytUrl} onChange={(e) => setYtUrl(e.target.value)} placeholder="https://youtube.com/..." />
+                  {ytUrl.trim() && /^https?:\/\//i.test(ytUrl.trim()) && <LinkPreviewCard url={ytUrl.trim()} />}
+                </div>
+              )}
             </div>
             <div className="space-y-1">
               <Label className="text-xs">Context note</Label>
