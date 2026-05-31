@@ -8,6 +8,9 @@ import { useContentIdeas, type ContentIdea } from '@/hooks/useContentIdeas';
 import { useContentCategories } from '@/hooks/useContentCategories';
 import { useCreatorAccount } from '@/contexts/CreatorAccountContext';
 import { useContentAccounts } from '@/hooks/useContentAccounts';
+import { useAudioRecorder, formatDuration } from '@/hooks/useAudioRecorder';
+import { useAuth } from '@/contexts/AuthContext';
+import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -16,6 +19,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { cn } from '@/lib/utils';
 import { LinkPreviewCard } from '@/components/creator/LinkPreviewCard';
+
+const AUDIO_BUCKET = 'creator-audio';
 
 const ALL = '__all__';
 
@@ -59,9 +64,13 @@ export default function Ideas() {
   const [attachOpen, setAttachOpen] = useState(false);
   const [linkSheet, setLinkSheet] = useState<'instagram' | 'youtube' | null>(null);
   const [linkInput, setLinkInput] = useState('');
-  const [audioSheetOpen, setAudioSheetOpen] = useState(false);
-  const [audioDraft, setAudioDraft] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  // Inline audio recording (no popup — tap mic to start, tap send to stop+send)
+  const { user } = useAuth();
+  const audio = useAudioRecorder();
+  const [uploading, setUploading] = useState(false);
+  const isRecording = audio.state === 'recording';
 
   const filtered = useMemo(() => {
     if (activeCategory === ALL) return ideas;
@@ -103,8 +112,58 @@ export default function Ideas() {
     setNewCatOpen(false);
   };
 
+  // --- audio: tap-to-start, tap-send-to-finish ---
+  const startMic = async () => {
+    if (!user) { toast.error('Please sign in to record'); return; }
+    if (!audio.supported) { toast.error('Audio not supported — try Chrome or Safari iOS 14.3+'); return; }
+    await audio.start();
+  };
+
+  const uploadAudioBlob = async (blob: Blob): Promise<string | null> => {
+    if (!user) return null;
+    try {
+      const id = (crypto as any).randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+      const path = `${user.id}/${id}.webm`;
+      const { error: upErr } = await supabase.storage.from(AUDIO_BUCKET).upload(path, blob, {
+        contentType: blob.type || 'audio/webm', upsert: false,
+      });
+      if (upErr) throw upErr;
+      const { data: signed, error: signErr } = await supabase.storage
+        .from(AUDIO_BUCKET)
+        .createSignedUrl(path, 60 * 60 * 24 * 365 * 10);
+      if (signErr) throw signErr;
+      return signed.signedUrl;
+    } catch (e: any) {
+      toast.error(e?.message || 'Could not upload audio');
+      return null;
+    }
+  };
+
   // --- composer send ---
   const handleSend = async () => {
+    // If currently recording → stop, upload, then create topic with audio
+    if (isRecording) {
+      setUploading(true);
+      try {
+        const blob = await audio.stop();
+        if (!blob) { setUploading(false); return; }
+        const url = await uploadAudioBlob(blob);
+        if (!url) { setUploading(false); return; }
+        const text = draft.trim();
+        await createIdea({
+          title: text || 'Voice note',
+          audio_url: url,
+          account_id: activeAccountId || null,
+        });
+        setDraft('');
+        setAttach(null);
+      } finally {
+        setUploading(false);
+        inputRef.current?.focus();
+      }
+      return;
+    }
+
     const text = draft.trim();
     if (!text && !attach) return;
 
@@ -132,6 +191,10 @@ export default function Ideas() {
     } catch {
       // hook surfaces error toast
     }
+  };
+
+  const cancelRecording = () => {
+    audio.cancel();
   };
 
   const onPaste = (e: React.ClipboardEvent<HTMLInputElement>) => {
@@ -266,44 +329,79 @@ export default function Ideas() {
               </button>
             </div>
           )}
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={() => setAttachOpen(true)}
-              className="h-10 w-10 shrink-0 rounded-full flex items-center justify-center bg-muted hover:bg-muted/80 active:scale-95 transition-all"
-              aria-label="Attach link"
-            >
-              <Plus className="h-5 w-5" />
-            </button>
-            <Input
-              ref={inputRef}
-              value={draft}
-              onChange={(e) => setDraft(e.target.value)}
-              onPaste={onPaste}
-              onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleSend(); } }}
-              placeholder="Quick capture a topic…"
-              className="flex-1 h-10 rounded-full bg-card"
-            />
-            {(draft.trim() || attach) ? (
+          {isRecording || uploading ? (
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={cancelRecording}
+                disabled={uploading}
+                className="h-10 w-10 shrink-0 rounded-full flex items-center justify-center bg-muted text-muted-foreground hover:text-destructive active:scale-95 transition-all disabled:opacity-50"
+                aria-label="Cancel recording"
+              >
+                <X className="h-5 w-5" />
+              </button>
+              <div className="flex-1 h-10 rounded-full bg-card border border-red-500/30 flex items-center px-3 gap-2">
+                <span className="relative flex h-2.5 w-2.5">
+                  <span className="absolute inline-flex h-full w-full rounded-full bg-red-500 opacity-70 animate-ping" />
+                  <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-red-500" />
+                </span>
+                <span className="text-xs font-medium text-foreground/80">
+                  {uploading ? 'Sending…' : 'Recording'}
+                </span>
+                <span className="ml-auto text-xs tabular-nums text-muted-foreground">
+                  {formatDuration(audio.durationSec)}
+                </span>
+              </div>
               <button
                 type="button"
                 onClick={handleSend}
-                className="h-10 w-10 shrink-0 rounded-full flex items-center justify-center bg-primary text-primary-foreground active:scale-95 transition-all"
-                aria-label="Send"
+                disabled={uploading}
+                className="h-10 w-10 shrink-0 rounded-full flex items-center justify-center bg-primary text-primary-foreground active:scale-95 transition-all disabled:opacity-60"
+                aria-label="Send recording"
               >
-                <Send className="h-4 w-4" />
+                {uploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
               </button>
-            ) : (
+            </div>
+          ) : (
+            <div className="flex items-center gap-2">
               <button
                 type="button"
-                onClick={() => { setAudioDraft(null); setAudioSheetOpen(true); }}
-                className="h-10 w-10 shrink-0 rounded-full flex items-center justify-center bg-primary text-primary-foreground active:scale-95 transition-all"
-                aria-label="Record audio note"
+                onClick={() => setAttachOpen(true)}
+                className="h-10 w-10 shrink-0 rounded-full flex items-center justify-center bg-muted hover:bg-muted/80 active:scale-95 transition-all"
+                aria-label="Attach link"
               >
-                <Mic className="h-4 w-4" />
+                <Plus className="h-5 w-5" />
               </button>
-            )}
-          </div>
+              <Input
+                ref={inputRef}
+                value={draft}
+                onChange={(e) => setDraft(e.target.value)}
+                onPaste={onPaste}
+                onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleSend(); } }}
+                placeholder="Quick capture a topic…"
+                className="flex-1 h-10 rounded-full bg-card"
+              />
+              {(draft.trim() || attach) ? (
+                <button
+                  type="button"
+                  onClick={handleSend}
+                  className="h-10 w-10 shrink-0 rounded-full flex items-center justify-center bg-primary text-primary-foreground active:scale-95 transition-all"
+                  aria-label="Send"
+                >
+                  <Send className="h-4 w-4" />
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={startMic}
+                  className="h-10 w-10 shrink-0 rounded-full flex items-center justify-center bg-primary text-primary-foreground active:scale-95 transition-all"
+                  aria-label="Record audio note"
+                >
+                  <Mic className="h-4 w-4" />
+                </button>
+              )}
+            </div>
+          )}
         </div>
       </div>
 
@@ -344,25 +442,6 @@ export default function Ideas() {
         </SheetContent>
       </Sheet>
 
-      {/* Audio sheet */}
-      <Sheet open={audioSheetOpen} onOpenChange={setAudioSheetOpen}>
-        <SheetContent side="bottom" className="rounded-t-2xl">
-          <SheetHeader><SheetTitle>Audio note</SheetTitle></SheetHeader>
-          <div className="space-y-3 pt-3">
-            <AudioRecorderField value={audioDraft} onChange={setAudioDraft} label="Record" />
-            <Button
-              className="w-full"
-              disabled={!audioDraft}
-              onClick={() => {
-                if (audioDraft) setAttach({ kind: 'audio', url: audioDraft });
-                setAudioSheetOpen(false);
-              }}
-            >
-              Attach audio
-            </Button>
-          </div>
-        </SheetContent>
-      </Sheet>
 
       {/* Edit dialog */}
       <Dialog open={editOpen} onOpenChange={setEditOpen}>
