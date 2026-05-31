@@ -219,13 +219,10 @@ export default function Ideas() {
               <Label className="text-xs">Context note (optional)</Label>
               <Textarea value={contextNote} onChange={(e) => setContextNote(e.target.value)} rows={3} placeholder="Any context or angle for this topic…" />
             </div>
-            <button
-              type="button"
-              onClick={() => toast('Audio notes coming soon')}
-              className="w-full flex items-center justify-center gap-1.5 py-2 rounded-lg border border-dashed border-border/70 text-xs text-muted-foreground"
-            >
-              <Mic className="h-3.5 w-3.5" /> Record audio note (coming soon)
-            </button>
+            <div className="space-y-1">
+              <Label className="text-xs">Audio note (optional)</Label>
+              <AudioRecorderField value={audioUrl} onChange={(url) => setAudioUrl(url)} label="Record" />
+            </div>
           </div>
           <DialogFooter>
             <Button variant="ghost" onClick={() => setFormOpen(false)}>Cancel</Button>
