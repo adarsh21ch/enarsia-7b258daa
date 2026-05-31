@@ -52,8 +52,10 @@ const ICONS: Record<string, ComponentType<{ className?: string }>> = {
   growth: TrackUpIcon,
   overview: LayoutDashboard,
   ideas: Lightbulb,
-  studio: PenLine,
-  calendar: Calendar,
+  studio: ScrollText,
+  scripting: ScrollText,
+  calendar: Send,
+  posting: Send,
   insights: BarChart3,
 };
 
