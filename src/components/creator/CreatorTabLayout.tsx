@@ -3,6 +3,7 @@ import { BottomNav } from '@/components/layout/BottomNav';
 import { CreatorAccountSwitcher } from '@/components/creator/CreatorAccountSwitcher';
 import { cn } from '@/lib/utils';
 import nevoraLogo from '@/assets/nevorai-call-logo.png';
+import { useBranding } from '@/hooks/useBranding';
 
 /**
  * Shared shell for the Content Creator mode tabs. Header has logo + title on
@@ -17,12 +18,13 @@ export function CreatorTabLayout({
   subtitle: string;
   children: ReactNode;
 }) {
+  const { logoUrl, appName } = useBranding();
   return (
     <div className="app-layout bg-gradient-to-b from-background via-background to-muted/20">
       <header className="fixed-header z-40 bg-card/80 backdrop-blur-xl border-b border-border/50">
         <div className="flex items-center justify-between px-4 py-3 gap-2">
           <div className="flex items-center gap-3 min-w-0">
-            <img src={nevoraLogo} alt="Nevorai CRM Logo" className="h-10 w-10 rounded-xl object-cover shadow-md shrink-0" />
+            <img src={logoUrl || nevoraLogo} alt={`${appName} Logo`} className="h-10 w-10 rounded-xl object-cover shadow-md shrink-0" />
             <div className="min-w-0">
               <h1 className="text-xl font-bold tracking-tight truncate">{title}</h1>
               <p className="text-xs text-muted-foreground font-medium truncate">{subtitle}</p>

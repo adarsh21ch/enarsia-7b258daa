@@ -4,6 +4,7 @@ import { UsageLimitsManager } from './UsageLimitsManager';
 import { FeatureFlagsManager } from './FeatureFlagsManager';
 import { AuditLogViewer } from './AuditLogViewer';
 import { AdminDataRecovery } from './AdminDataRecovery';
+import { BrandingManager } from './BrandingManager';
 
 export function ManageTab() {
   return (
@@ -12,6 +13,7 @@ export function ManageTab() {
         <TabsList className="inline-flex w-max gap-0.5 h-9">
           <TabsTrigger value="limits" className="text-[11px] px-3 h-7">⚙️ Limits</TabsTrigger>
           <TabsTrigger value="features" className="text-[11px] px-3 h-7">✨ Features</TabsTrigger>
+          <TabsTrigger value="branding" className="text-[11px] px-3 h-7">🎨 Branding</TabsTrigger>
           <TabsTrigger value="audit" className="text-[11px] px-3 h-7">📋 Audit</TabsTrigger>
           <TabsTrigger value="recovery" className="text-[11px] px-3 h-7">💾 Recovery</TabsTrigger>
         </TabsList>
@@ -23,6 +25,9 @@ export function ManageTab() {
       </TabsContent>
       <TabsContent value="features" className="mt-3">
         <FeatureFlagsManager />
+      </TabsContent>
+      <TabsContent value="branding" className="mt-3">
+        <BrandingManager />
       </TabsContent>
       <TabsContent value="audit" className="mt-3">
         <AuditLogViewer />

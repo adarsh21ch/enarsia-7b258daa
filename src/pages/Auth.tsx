@@ -10,26 +10,28 @@ import { InputOTP, InputOTPGroup, InputOTPSlot } from '@/components/ui/input-otp
 import { toast } from 'sonner';
 import { Loader2, Mail, Lock, Eye, EyeOff, ArrowLeft, User, Phone } from 'lucide-react';
 import nevoraLogo from '@/assets/nevorai-call-logo.png';
+import { useBranding } from '@/hooks/useBranding';
 import { getPasswordRecoveryRedirectUrl, PUBLISHED_APP_URL } from '@/config/siteUrl';
 
 function AuthHeader() {
+  const { logoUrl, appName, tagline } = useBranding();
   return (
     <div className="text-center mb-8">
       <div className="relative inline-block mb-4">
         <img
-          src={nevoraLogo}
-          alt="Nevorai CRM Logo"
+          src={logoUrl}
+          alt={`${appName} Logo`}
           className="w-[72px] h-[72px] object-contain"
         />
       </div>
       <h1 className="text-[28px] font-extrabold text-foreground font-heading tracking-tight">
-        Nevorai CRM
+        {appName}
       </h1>
       <p className="text-muted-foreground text-[13px] mt-0.5 font-body">
         by Nevorai
       </p>
       <p className="text-muted-foreground text-[15px] mt-1 italic font-body">
-        Your personal CRM for network marketers.
+        {tagline}
       </p>
     </div>
   );
