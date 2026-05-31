@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { BarChart3, Sparkles, Lightbulb, Flame, RefreshCw, Loader2, FileText, PenLine, Send, CalendarDays } from 'lucide-react';
+import { BarChart3, Sparkles, Lightbulb, Flame, RefreshCw, Loader2, FileText, PenLine, Send, CalendarDays, CheckCircle2, Target } from 'lucide-react';
 import { CreatorTabLayout } from '@/components/creator/CreatorTabLayout';
 import { Button } from '@/components/ui/button';
 import { useNevInsights } from '@/hooks/useNevInsights';
@@ -7,6 +7,7 @@ import { useCreatorAccount } from '@/contexts/CreatorAccountContext';
 import { useContentIdeas } from '@/hooks/useContentIdeas';
 import { useContentPieces } from '@/hooks/useContentPieces';
 import { useContentCategories } from '@/hooks/useContentCategories';
+import { usePostingWeeklyStats } from '@/hooks/usePostingTasks';
 import { cn } from '@/lib/utils';
 
 function toLocalISO(d: Date): string {
