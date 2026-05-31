@@ -1,10 +1,12 @@
 import { useRef, useState } from 'react';
-import { Mic, Square, Play, Pause, X, Loader2 } from 'lucide-react';
+import { Play, Pause, X } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
-import { useAudioRecorder, formatDuration } from '@/hooks/useAudioRecorder';
+import { formatDuration } from '@/hooks/useAudioRecorder';
+import { HoldToRecordMic } from '@/components/creator/HoldToRecordMic';
 import { cn } from '@/lib/utils';
+
 
 const BUCKET = 'creator-audio';
 
