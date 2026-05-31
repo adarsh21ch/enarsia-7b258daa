@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
 import { Lightbulb, Plus, Loader2, Trash2, ChevronRight, Link2, Mic, Pencil } from 'lucide-react';
+import { AudioRecorderField } from '@/components/creator/AudioRecorderField';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { CreatorTabLayout, CreatorEmptyState } from '@/components/creator/CreatorTabLayout';
@@ -35,6 +36,7 @@ export default function Ideas() {
   const [igUrl, setIgUrl] = useState('');
   const [ytUrl, setYtUrl] = useState('');
   const [contextNote, setContextNote] = useState('');
+  const [audioUrl, setAudioUrl] = useState<string | null>(null);
 
   const filtered = useMemo(() => {
     if (activeCategory === ALL) return ideas;
