@@ -213,9 +213,6 @@ export default function Ideas() {
     }
   };
 
-  const cancelRecording = () => {
-    audio.cancel();
-  };
 
   const onPaste = (e: React.ClipboardEvent<HTMLInputElement>) => {
     const pasted = e.clipboardData.getData('text');
