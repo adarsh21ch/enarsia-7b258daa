@@ -59,7 +59,7 @@ export function AudioRecorderField({ value, onChange, compact, label, disabled }
   // ---- Render ----
 
   // Existing audio: show player + delete
-  if (value && !isRecording) {
+  if (value) {
     const pct = playbackDur > 0 ? Math.min(100, (playbackPos / playbackDur) * 100) : 0;
     return (
       <div className={cn('flex items-center gap-2 rounded-xl border border-border/50 bg-card px-2.5 py-1.5', compact && 'py-1')}>
