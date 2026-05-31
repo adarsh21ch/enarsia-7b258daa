@@ -271,7 +271,7 @@ export default function Ideas() {
               type="button"
               onClick={() => setAttachOpen(true)}
               className="h-10 w-10 shrink-0 rounded-full flex items-center justify-center bg-muted hover:bg-muted/80 active:scale-95 transition-all"
-              aria-label="Attach"
+              aria-label="Attach link"
             >
               <Plus className="h-5 w-5" />
             </button>
@@ -284,15 +284,25 @@ export default function Ideas() {
               placeholder="Quick capture a topic…"
               className="flex-1 h-10 rounded-full bg-card"
             />
-            <button
-              type="button"
-              onClick={handleSend}
-              disabled={!draft.trim() && !attach}
-              className="h-10 w-10 shrink-0 rounded-full flex items-center justify-center bg-primary text-primary-foreground active:scale-95 transition-all disabled:opacity-40 disabled:active:scale-100"
-              aria-label="Send"
-            >
-              <Send className="h-4 w-4" />
-            </button>
+            {(draft.trim() || attach) ? (
+              <button
+                type="button"
+                onClick={handleSend}
+                className="h-10 w-10 shrink-0 rounded-full flex items-center justify-center bg-primary text-primary-foreground active:scale-95 transition-all"
+                aria-label="Send"
+              >
+                <Send className="h-4 w-4" />
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={() => { setAudioDraft(null); setAudioSheetOpen(true); }}
+                className="h-10 w-10 shrink-0 rounded-full flex items-center justify-center bg-primary text-primary-foreground active:scale-95 transition-all"
+                aria-label="Record audio note"
+              >
+                <Mic className="h-4 w-4" />
+              </button>
+            )}
           </div>
         </div>
       </div>
