@@ -93,13 +93,14 @@ export function BottomNav({ className }: { className?: string }) {
     }
   };
 
+  const isCreator = mode.id === 'content_creator';
   return (
     <nav
       className={cn(
         "fixed bottom-0 left-0 right-0 z-50",
         "bg-card/85 backdrop-blur-2xl",
         "border-t border-border/50",
-        "pb-[10px]",
+        isCreator ? "pb-[max(env(safe-area-inset-bottom),12px)]" : "pb-[10px]",
         className
       )}
     >
