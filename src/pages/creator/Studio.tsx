@@ -1,5 +1,5 @@
 import { useMemo, useState, useEffect } from 'react';
-import { PenLine, Loader2, ArrowRight } from 'lucide-react';
+import { PenLine, Loader2, ArrowRight, Lightbulb } from 'lucide-react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { toast } from 'sonner';
 import { CreatorTabLayout, CreatorEmptyState } from '@/components/creator/CreatorTabLayout';
@@ -10,17 +10,20 @@ import { AudioRecorderField } from '@/components/creator/AudioRecorderField';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
+import { cn } from '@/lib/utils';
 
 export default function Studio() {
   const navigate = useNavigate();
-  const [params] = useSearchParams();
+  const [params, setParams] = useSearchParams();
   const ideaId = params.get('idea');
   const { activeAccountId } = useCreatorAccount();
 
+  // Intentionally fetch ALL ideas (no account filter) so the picker always works.
   const { ideas, isLoading, updateIdea } = useContentIdeas();
   const { savePiece, saving } = useContentPieces();
 
   const idea = useMemo(() => ideas.find((i) => i.id === ideaId) || null, [ideas, ideaId]);
+  const pickable = useMemo(() => ideas.filter((i) => i.status !== 'done'), [ideas]);
 
   const [hook, setHook] = useState('');
   const [body, setBody] = useState('');
@@ -69,14 +72,39 @@ export default function Studio() {
   if (!idea) {
     return (
       <CreatorTabLayout title="Studio" subtitle="Idea → ready to film">
-        <CreatorEmptyState
-          icon={PenLine}
-          headline="Pick a topic to script"
-          body="Open a topic from the Topics tab and tap “Script” to draft your hook, body and CTA here."
-        />
-        <Button variant="outline" className="w-full" onClick={() => navigate('/ideas')}>
-          Go to Topics<ArrowRight className="h-4 w-4 ml-1.5" />
-        </Button>
+        {pickable.length > 0 ? (
+          <>
+            <div>
+              <p className="text-[11px] uppercase tracking-wide text-muted-foreground font-semibold mb-2 px-1">
+                Pick a topic to script
+              </p>
+              <div className="space-y-2">
+                {pickable.map((i) => (
+                  <button
+                    key={i.id}
+                    onClick={() => setParams({ idea: i.id })}
+                    className="w-full text-left p-3 rounded-xl border border-border/50 bg-card flex items-center gap-3 active:bg-muted/40 hover:border-primary/40 transition-colors"
+                  >
+                    <Lightbulb className="h-4 w-4 text-primary shrink-0" />
+                    <span className="text-sm font-medium flex-1 truncate">{i.title}</span>
+                    <ArrowRight className="h-4 w-4 text-muted-foreground shrink-0" />
+                  </button>
+                ))}
+              </div>
+            </div>
+          </>
+        ) : (
+          <>
+            <CreatorEmptyState
+              icon={PenLine}
+              headline="Capture a topic first"
+              body="Add a topic in the Topics tab, then come back here to draft your hook, body and CTA."
+            />
+            <Button variant="outline" className="w-full" onClick={() => navigate('/ideas')}>
+              Go to Topics<ArrowRight className="h-4 w-4 ml-1.5" />
+            </Button>
+          </>
+        )}
       </CreatorTabLayout>
     );
   }
@@ -85,6 +113,28 @@ export default function Studio() {
 
   return (
     <CreatorTabLayout title="Studio" subtitle="Idea → ready to film">
+      {/* Topic picker — horizontal chips */}
+      {pickable.length > 1 && (
+        <div className="-mx-4 px-4 overflow-x-auto scrollbar-none">
+          <div className="flex items-center gap-1.5 pb-1">
+            {pickable.map((i) => (
+              <button
+                key={i.id}
+                onClick={() => setParams({ idea: i.id })}
+                className={cn(
+                  'shrink-0 px-3 py-1.5 rounded-full text-xs font-semibold border whitespace-nowrap max-w-[180px] truncate transition-colors',
+                  i.id === idea.id
+                    ? 'bg-primary text-primary-foreground border-primary'
+                    : 'bg-card border-border/50 text-muted-foreground hover:text-foreground',
+                )}
+              >
+                {i.title}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
       <div className="rounded-2xl border border-primary/20 bg-primary/5 p-4">
         <p className="text-[11px] uppercase tracking-wide text-muted-foreground font-semibold">Scripting</p>
         <p className="font-semibold text-sm mt-1">{idea.title}</p>

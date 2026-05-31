@@ -1,5 +1,5 @@
-import { useMemo, useState } from 'react';
-import { Lightbulb, Plus, Loader2, Trash2, ChevronRight, Mic, Pencil } from 'lucide-react';
+import { useMemo, useRef, useState } from 'react';
+import { Lightbulb, Plus, Loader2, Trash2, ChevronRight, Mic, Send, Link as LinkIcon, Youtube, Instagram, Image as ImageIcon, X } from 'lucide-react';
 import { AudioRecorderField } from '@/components/creator/AudioRecorderField';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
@@ -13,25 +13,39 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { cn } from '@/lib/utils';
 import { LinkPreviewCard } from '@/components/creator/LinkPreviewCard';
 
 const ALL = '__all__';
 
+type Attach =
+  | { kind: 'instagram'; url: string }
+  | { kind: 'youtube'; url: string }
+  | { kind: 'audio'; url: string };
+
+function detectUrl(text: string): Attach | null {
+  const t = text.trim();
+  if (!/^https?:\/\//i.test(t)) return null;
+  if (/youtube\.com|youtu\.be/i.test(t)) return { kind: 'youtube', url: t };
+  if (/instagram\.com/i.test(t)) return { kind: 'instagram', url: t };
+  return null;
+}
+
 export default function Ideas() {
   const navigate = useNavigate();
   const { activeAccountId } = useCreatorAccount();
   const { accounts } = useContentAccounts();
-  const { ideas, isLoading, createIdea, creating, updateIdea, deleteIdea } = useContentIdeas(activeAccountId);
+  const { ideas, isLoading, createIdea, updateIdea, deleteIdea } = useContentIdeas(activeAccountId);
   const { categories, createCategory } = useContentCategories();
 
   const [activeCategory, setActiveCategory] = useState<string>(ALL);
   const [newCatOpen, setNewCatOpen] = useState(false);
   const [newCatName, setNewCatName] = useState('');
   const [editing, setEditing] = useState<ContentIdea | null>(null);
-  const [formOpen, setFormOpen] = useState(false);
+  const [editOpen, setEditOpen] = useState(false);
 
-  // form fields
+  // Edit form
   const [title, setTitle] = useState('');
   const [categoryId, setCategoryId] = useState<string>('');
   const [igUrl, setIgUrl] = useState('');
@@ -39,16 +53,20 @@ export default function Ideas() {
   const [contextNote, setContextNote] = useState('');
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
 
+  // Composer
+  const [draft, setDraft] = useState('');
+  const [attach, setAttach] = useState<Attach | null>(null);
+  const [attachOpen, setAttachOpen] = useState(false);
+  const [linkSheet, setLinkSheet] = useState<'instagram' | 'youtube' | null>(null);
+  const [linkInput, setLinkInput] = useState('');
+  const [audioSheetOpen, setAudioSheetOpen] = useState(false);
+  const [audioDraft, setAudioDraft] = useState<string | null>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+
   const filtered = useMemo(() => {
     if (activeCategory === ALL) return ideas;
     return ideas.filter((i) => i.category_id === activeCategory);
   }, [ideas, activeCategory]);
-
-  const openCreate = () => {
-    setEditing(null);
-    setTitle(''); setCategoryId(''); setIgUrl(''); setYtUrl(''); setContextNote(''); setAudioUrl(null);
-    setFormOpen(true);
-  };
 
   const openEdit = (i: ContentIdea) => {
     setEditing(i);
@@ -58,44 +76,73 @@ export default function Ideas() {
     setYtUrl(i.youtube_url || '');
     setContextNote(i.context_note || '');
     setAudioUrl(i.audio_url || null);
-    setFormOpen(true);
+    setEditOpen(true);
   };
 
-  const handleSave = async () => {
-    if (!title.trim()) return;
-    if (editing) {
-      await updateIdea({
-        id: editing.id,
-        updates: {
-          title: title.trim(),
-          category_id: categoryId || null,
-          instagram_url: igUrl.trim() || null,
-          youtube_url: ytUrl.trim() || null,
-          context_note: contextNote.trim() || null,
-          audio_url: audioUrl,
-        },
-      });
-      toast.success('Topic updated');
-    } else {
-      await createIdea({
-        title,
+  const handleEditSave = async () => {
+    if (!editing || !title.trim()) return;
+    await updateIdea({
+      id: editing.id,
+      updates: {
+        title: title.trim(),
         category_id: categoryId || null,
-        instagram_url: igUrl || null,
-        youtube_url: ytUrl || null,
-        context_note: contextNote || null,
+        instagram_url: igUrl.trim() || null,
+        youtube_url: ytUrl.trim() || null,
+        context_note: contextNote.trim() || null,
         audio_url: audioUrl,
-        account_id: activeAccountId || null,
-      });
-    }
-    setFormOpen(false);
+      },
+    });
+    toast.success('Topic updated');
+    setEditOpen(false);
   };
 
   const handleNewCategory = async () => {
     if (!newCatName.trim()) return;
-    const cat = await createCategory(newCatName);
+    await createCategory(newCatName);
     setNewCatName('');
     setNewCatOpen(false);
-    setCategoryId(cat.id);
+  };
+
+  // --- composer send ---
+  const handleSend = async () => {
+    const text = draft.trim();
+    if (!text && !attach) return;
+
+    // If draft is a pure URL with no other text, use a generic title
+    const draftUrl = detectUrl(text);
+    const finalTitle = draftUrl ? (draftUrl.kind === 'youtube' ? 'YouTube reference' : 'Instagram reference') : text;
+    const fromDraftIg = draftUrl?.kind === 'instagram' ? draftUrl.url : null;
+    const fromDraftYt = draftUrl?.kind === 'youtube' ? draftUrl.url : null;
+
+    const payload = {
+      title: finalTitle,
+      instagram_url: fromDraftIg || (attach?.kind === 'instagram' ? attach.url : null),
+      youtube_url: fromDraftYt || (attach?.kind === 'youtube' ? attach.url : null),
+      audio_url: attach?.kind === 'audio' ? attach.url : null,
+      account_id: activeAccountId || null,
+    };
+
+    // Reset immediately for snappy feel
+    setDraft('');
+    setAttach(null);
+    inputRef.current?.focus();
+
+    try {
+      await createIdea(payload);
+    } catch {
+      // hook surfaces error toast
+    }
+  };
+
+  const onPaste = (e: React.ClipboardEvent<HTMLInputElement>) => {
+    const pasted = e.clipboardData.getData('text');
+    const detected = detectUrl(pasted);
+    if (detected && !attach) {
+      e.preventDefault();
+      setAttach(detected);
+      setDraft((d) => d); // keep existing
+      toast(`${detected.kind === 'youtube' ? 'YouTube' : 'Instagram'} link attached`);
+    }
   };
 
   if (accounts.length === 0) {
@@ -128,60 +175,68 @@ export default function Ideas() {
         </div>
       </div>
 
-      <Button onClick={openCreate} className="w-full">
-        <Plus className="h-4 w-4 mr-1.5" /> Add topic
-      </Button>
-
+      {/* List */}
       {isLoading ? (
         <div className="flex justify-center py-10"><Loader2 className="h-6 w-6 animate-spin text-primary" /></div>
       ) : filtered.length === 0 ? (
         <CreatorEmptyState
           icon={Lightbulb}
           headline="No topics yet"
-          body="Capture an idea above. Tag it with a category, drop in an Instagram or YouTube reference, and send it to Studio when you're ready to script."
+          body="Type a topic below and hit send. Paste an Instagram or YouTube link to attach it instantly."
         />
       ) : (
-        <div className="space-y-2">
+        <div className="space-y-2 pb-4">
           {filtered.map((idea) => {
             const cat = categories.find((c) => c.id === idea.category_id);
             return (
-              <div key={idea.id} className="rounded-xl border border-border/50 bg-card p-3 flex items-start gap-3">
-                <div className="flex-1 min-w-0">
-                  <p className="font-medium text-sm leading-snug">{idea.title}</p>
-                  {idea.context_note && (
-                    <p className="text-[12px] text-muted-foreground mt-0.5 line-clamp-2">{idea.context_note}</p>
-                  )}
-                  {(idea.youtube_url || idea.instagram_url) && (
-                    <div className="mt-2 space-y-1.5">
-                      {idea.youtube_url && <LinkPreviewCard url={idea.youtube_url} />}
-                      {idea.instagram_url && <LinkPreviewCard url={idea.instagram_url} />}
+              <div key={idea.id} className="rounded-xl border border-border/50 bg-card overflow-hidden">
+                <button
+                  type="button"
+                  onClick={() => openEdit(idea)}
+                  className="w-full text-left p-3 flex items-start gap-3 active:bg-muted/40 transition-colors"
+                >
+                  <div className="flex-1 min-w-0">
+                    <p className="font-medium text-sm leading-snug">{idea.title}</p>
+                    {idea.context_note && (
+                      <p className="text-[12px] text-muted-foreground mt-0.5 line-clamp-2">{idea.context_note}</p>
+                    )}
+                    {(idea.youtube_url || idea.instagram_url) && (
+                      <div className="mt-2 space-y-1.5">
+                        {idea.youtube_url && <LinkPreviewCard url={idea.youtube_url} />}
+                        {idea.instagram_url && <LinkPreviewCard url={idea.instagram_url} />}
+                      </div>
+                    )}
+                    <div className="flex flex-wrap items-center gap-1.5 mt-2">
+                      {cat ? (
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-primary/10 text-primary border border-primary/20">
+                          {cat.name}
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-muted text-muted-foreground border border-border/40">
+                          Uncategorized
+                        </span>
+                      )}
+                      {idea.audio_url && (
+                        <span className="inline-flex items-center gap-0.5 text-[10px] text-muted-foreground">
+                          <Mic className="h-2.5 w-2.5" /> audio
+                        </span>
+                      )}
                     </div>
-                  )}
-                  <div className="flex flex-wrap items-center gap-1.5 mt-2">
-                    {cat && (
-                      <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-primary/10 text-primary border border-primary/20">
-                        {cat.name}
-                      </span>
-                    )}
-                    {idea.audio_url && (
-                      <span className="inline-flex items-center gap-0.5 text-[10px] text-muted-foreground">
-                        <Mic className="h-2.5 w-2.5" /> audio
-                      </span>
-                    )}
                   </div>
-                </div>
-                <div className="flex flex-col items-end gap-1 shrink-0">
-                  <Button variant="ghost" size="sm" className="h-7 px-2 text-xs" onClick={() => navigate(`/studio?idea=${idea.id}`)}>
-                    Script<ChevronRight className="h-3 w-3 ml-0.5" />
-                  </Button>
-                  <div className="flex">
-                    <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openEdit(idea)}>
-                      <Pencil className="h-3 w-3" />
-                    </Button>
-                    <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-destructive" onClick={() => deleteIdea(idea.id)}>
-                      <Trash2 className="h-3 w-3" />
-                    </Button>
-                  </div>
+                </button>
+                <div className="flex items-center border-t border-border/40 divide-x divide-border/40">
+                  <button
+                    onClick={(e) => { e.stopPropagation(); navigate(`/studio?idea=${idea.id}`); }}
+                    className="flex-1 flex items-center justify-center gap-1 py-2 text-xs font-semibold text-primary active:bg-primary/5"
+                  >
+                    Script <ChevronRight className="h-3 w-3" />
+                  </button>
+                  <button
+                    onClick={(e) => { e.stopPropagation(); deleteIdea(idea.id); }}
+                    className="flex items-center justify-center gap-1 py-2 px-4 text-xs text-muted-foreground hover:text-destructive active:bg-destructive/5"
+                  >
+                    <Trash2 className="h-3 w-3" />
+                  </button>
                 </div>
               </div>
             );
@@ -189,11 +244,122 @@ export default function Ideas() {
         </div>
       )}
 
-      {/* Add/Edit dialog */}
-      <Dialog open={formOpen} onOpenChange={setFormOpen}>
-        <DialogContent className="max-w-md">
+      {/* Spacer so the composer doesn't overlap last item */}
+      <div className="h-24" />
+
+      {/* WhatsApp-style composer */}
+      <div
+        className="fixed left-0 right-0 z-30 px-3 pt-2 pb-[max(env(safe-area-inset-bottom),8px)] bg-background/95 backdrop-blur-md border-t border-border/50"
+        style={{ bottom: '72px' }}
+      >
+        <div className="max-w-lg mx-auto">
+          {attach && (
+            <div className="flex items-center gap-2 mb-2 px-2 py-1.5 rounded-lg bg-muted/60 border border-border/50">
+              {attach.kind === 'youtube' && <Youtube className="h-3.5 w-3.5 text-red-500 shrink-0" />}
+              {attach.kind === 'instagram' && <Instagram className="h-3.5 w-3.5 text-pink-500 shrink-0" />}
+              {attach.kind === 'audio' && <Mic className="h-3.5 w-3.5 text-primary shrink-0" />}
+              <span className="text-[11px] truncate flex-1">
+                {attach.kind === 'audio' ? 'Audio note attached' : attach.url}
+              </span>
+              <button onClick={() => setAttach(null)} className="text-muted-foreground hover:text-foreground">
+                <X className="h-3.5 w-3.5" />
+              </button>
+            </div>
+          )}
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setAttachOpen(true)}
+              className="h-10 w-10 shrink-0 rounded-full flex items-center justify-center bg-muted hover:bg-muted/80 active:scale-95 transition-all"
+              aria-label="Attach"
+            >
+              <Plus className="h-5 w-5" />
+            </button>
+            <Input
+              ref={inputRef}
+              value={draft}
+              onChange={(e) => setDraft(e.target.value)}
+              onPaste={onPaste}
+              onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleSend(); } }}
+              placeholder="Quick capture a topic…"
+              className="flex-1 h-10 rounded-full bg-card"
+            />
+            <button
+              type="button"
+              onClick={handleSend}
+              disabled={!draft.trim() && !attach}
+              className="h-10 w-10 shrink-0 rounded-full flex items-center justify-center bg-primary text-primary-foreground active:scale-95 transition-all disabled:opacity-40 disabled:active:scale-100"
+              aria-label="Send"
+            >
+              <Send className="h-4 w-4" />
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Attach sheet */}
+      <Sheet open={attachOpen} onOpenChange={setAttachOpen}>
+        <SheetContent side="bottom" className="rounded-t-2xl">
+          <SheetHeader><SheetTitle>Attach</SheetTitle></SheetHeader>
+          <div className="grid grid-cols-2 gap-2 pt-3 pb-2">
+            <AttachOption icon={Instagram} label="Instagram link" onClick={() => { setAttachOpen(false); setLinkInput(''); setLinkSheet('instagram'); }} />
+            <AttachOption icon={Youtube} label="YouTube link" onClick={() => { setAttachOpen(false); setLinkInput(''); setLinkSheet('youtube'); }} />
+            <AttachOption icon={Mic} label="Audio note" onClick={() => { setAttachOpen(false); setAudioDraft(null); setAudioSheetOpen(true); }} />
+            <AttachOption icon={ImageIcon} label="Photo" disabled subtitle="coming soon" />
+          </div>
+        </SheetContent>
+      </Sheet>
+
+      {/* Link sheet */}
+      <Sheet open={!!linkSheet} onOpenChange={(o) => !o && setLinkSheet(null)}>
+        <SheetContent side="bottom" className="rounded-t-2xl">
+          <SheetHeader><SheetTitle>{linkSheet === 'youtube' ? 'YouTube link' : 'Instagram link'}</SheetTitle></SheetHeader>
+          <div className="space-y-3 pt-3">
+            <Input
+              autoFocus
+              value={linkInput}
+              onChange={(e) => setLinkInput(e.target.value)}
+              placeholder={linkSheet === 'youtube' ? 'https://youtube.com/…' : 'https://instagram.com/reel/…'}
+            />
+            <Button
+              className="w-full"
+              disabled={!linkInput.trim() || !/^https?:\/\//i.test(linkInput.trim())}
+              onClick={() => {
+                setAttach({ kind: linkSheet === 'youtube' ? 'youtube' : 'instagram', url: linkInput.trim() });
+                setLinkSheet(null);
+              }}
+            >
+              <LinkIcon className="h-4 w-4 mr-1.5" /> Attach link
+            </Button>
+          </div>
+        </SheetContent>
+      </Sheet>
+
+      {/* Audio sheet */}
+      <Sheet open={audioSheetOpen} onOpenChange={setAudioSheetOpen}>
+        <SheetContent side="bottom" className="rounded-t-2xl">
+          <SheetHeader><SheetTitle>Audio note</SheetTitle></SheetHeader>
+          <div className="space-y-3 pt-3">
+            <AudioRecorderField value={audioDraft} onChange={setAudioDraft} label="Record" />
+            <Button
+              className="w-full"
+              disabled={!audioDraft}
+              onClick={() => {
+                if (audioDraft) setAttach({ kind: 'audio', url: audioDraft });
+                setAudioSheetOpen(false);
+              }}
+            >
+              Attach audio
+            </Button>
+          </div>
+        </SheetContent>
+      </Sheet>
+
+      {/* Edit dialog */}
+      <Dialog open={editOpen} onOpenChange={setEditOpen}>
+        <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>{editing ? 'Edit topic' : 'New topic'}</DialogTitle>
+            <DialogTitle>Edit topic</DialogTitle>
           </DialogHeader>
           <div className="space-y-3">
             <div className="space-y-1">
@@ -210,29 +376,27 @@ export default function Ideas() {
               </div>
             </div>
             <div className="space-y-1">
-              <Label className="text-xs">Instagram URL (optional)</Label>
+              <Label className="text-xs">Instagram URL</Label>
               <Input value={igUrl} onChange={(e) => setIgUrl(e.target.value)} placeholder="https://instagram.com/reel/..." />
               {igUrl.trim() && /^https?:\/\//i.test(igUrl.trim()) && <LinkPreviewCard url={igUrl.trim()} />}
             </div>
             <div className="space-y-1">
-              <Label className="text-xs">YouTube URL (optional)</Label>
+              <Label className="text-xs">YouTube URL</Label>
               <Input value={ytUrl} onChange={(e) => setYtUrl(e.target.value)} placeholder="https://youtube.com/..." />
               {ytUrl.trim() && /^https?:\/\//i.test(ytUrl.trim()) && <LinkPreviewCard url={ytUrl.trim()} />}
             </div>
             <div className="space-y-1">
-              <Label className="text-xs">Context note (optional)</Label>
+              <Label className="text-xs">Context note</Label>
               <Textarea value={contextNote} onChange={(e) => setContextNote(e.target.value)} rows={3} placeholder="Any context or angle for this topic…" />
             </div>
             <div className="space-y-1">
-              <Label className="text-xs">Audio note (optional)</Label>
-              <AudioRecorderField value={audioUrl} onChange={(url) => setAudioUrl(url)} label="Record" />
+              <Label className="text-xs">Audio note</Label>
+              <AudioRecorderField value={audioUrl} onChange={setAudioUrl} label="Record" />
             </div>
           </div>
           <DialogFooter>
-            <Button variant="ghost" onClick={() => setFormOpen(false)}>Cancel</Button>
-            <Button onClick={handleSave} disabled={!title.trim() || creating}>
-              {creating ? <Loader2 className="h-4 w-4 animate-spin" /> : (editing ? 'Save' : 'Add topic')}
-            </Button>
+            <Button variant="ghost" onClick={() => setEditOpen(false)}>Cancel</Button>
+            <Button onClick={handleEditSave} disabled={!title.trim()}>Save</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -264,6 +428,32 @@ function CategoryChip({ label, active, onClick }: { label: string; active: boole
       )}
     >
       {label}
+    </button>
+  );
+}
+
+function AttachOption({
+  icon: Icon, label, subtitle, onClick, disabled,
+}: {
+  icon: React.ComponentType<{ className?: string }>;
+  label: string;
+  subtitle?: string;
+  onClick?: () => void;
+  disabled?: boolean;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={disabled}
+      className={cn(
+        'flex flex-col items-start gap-1 p-3 rounded-xl border border-border/50 bg-card text-left transition-all',
+        disabled ? 'opacity-50 cursor-not-allowed' : 'active:scale-[0.98] hover:bg-muted/50',
+      )}
+    >
+      <Icon className="h-4 w-4 text-primary" />
+      <span className="text-sm font-semibold">{label}</span>
+      {subtitle && <span className="text-[10px] text-muted-foreground">{subtitle}</span>}
     </button>
   );
 }

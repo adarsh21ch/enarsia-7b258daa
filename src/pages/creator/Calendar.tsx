@@ -145,8 +145,8 @@ export default function Activity() {
           </div>
         </div>
 
-        {/* 90-day grid: 15 cols x 6 rows */}
-        <div className="grid grid-cols-[repeat(15,minmax(0,1fr))] gap-1">
+        {/* 90-day heatmap: fixed-size cells so it never stretches on desktop */}
+        <div className="grid w-fit grid-cols-[repeat(15,1rem)] sm:grid-cols-[repeat(18,1rem)] md:grid-cols-[repeat(30,1rem)] gap-1">
           {days.map((d) => {
             const posted = postedDates.has(d.iso);
             const isToday = d.iso === today;
@@ -156,7 +156,7 @@ export default function Activity() {
                 onClick={() => handleDayTap(d.iso)}
                 title={d.iso}
                 className={cn(
-                  'aspect-square rounded-[4px] border transition-transform active:scale-90',
+                  'h-4 w-4 rounded-[3px] border transition-transform active:scale-90',
                   posted ? 'bg-emerald-500 border-emerald-600' : 'bg-muted/50 border-border/30',
                   isToday && 'ring-1 ring-primary ring-offset-1 ring-offset-card',
                 )}
