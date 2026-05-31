@@ -465,7 +465,11 @@ export default function Ideas() {
                 onPaste={onPaste}
                 onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleSend(); } }}
                 placeholder="Quick capture a topic…"
-                className="flex-1 h-10 rounded-full bg-card"
+                enterKeyHint="send"
+                autoComplete="off"
+                autoCorrect="on"
+                spellCheck
+                className="flex-1 h-10 rounded-full bg-card text-foreground placeholder:text-muted-foreground text-base"
               />
               {(draft.trim() || attach) ? (
                 <button
