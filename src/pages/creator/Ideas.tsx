@@ -119,11 +119,24 @@ export default function Ideas() {
     setNewCatOpen(false);
   };
 
-  // --- audio: tap-to-start, tap-send-to-finish ---
+  // --- audio: press-and-hold ---
+  const holdingRef = useRef(false);
   const startMic = async () => {
     if (!user) { toast.error('Please sign in to record'); return; }
     if (!audio.supported) { toast.error('Audio not supported — try Chrome or Safari iOS 14.3+'); return; }
+    holdingRef.current = true;
     await audio.start();
+  };
+  const releaseMic = async () => {
+    if (!holdingRef.current) return;
+    holdingRef.current = false;
+    await handleSend();
+  };
+  const abortMic = () => {
+    if (!holdingRef.current) return;
+    holdingRef.current = false;
+    audio.cancel();
+    toast('Cancelled');
   };
 
   const uploadAudioBlob = async (blob: Blob): Promise<string | null> => {
