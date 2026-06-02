@@ -28,7 +28,7 @@ function AuthHeader() {
         {appName}
       </h1>
       <p className="text-muted-foreground text-[13px] mt-0.5 font-body">
-        by Nevorai
+        by Nevorai Technologies
       </p>
       <p className="text-muted-foreground text-[15px] mt-1 italic font-body">
         {tagline}

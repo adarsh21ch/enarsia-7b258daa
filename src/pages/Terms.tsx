@@ -17,7 +17,7 @@ export default function Terms() {
 
         <div className="flex items-baseline gap-2 mb-2">
           <span className="text-xl font-extrabold text-primary">{appName}</span>
-          <span className="text-xs text-muted-foreground">by Nevorai</span>
+          <span className="text-xs text-muted-foreground">by Nevorai Technologies</span>
         </div>
         <h1 className="text-3xl font-bold text-foreground mb-2">Terms of Service</h1>
         <p className="text-sm text-muted-foreground mb-4">Last updated: May 2026</p>
@@ -35,7 +35,7 @@ export default function Terms() {
             <section>
               <h2 className="text-xl font-semibold mb-3">1. About Enarsia</h2>
               <p className="text-muted-foreground leading-relaxed">
-                Enarsia is a calling and lead management tool for network marketers and sales professionals, built by Nevorai Technologies. These terms govern your use of the Enarsia application and all related services.
+                Enarsia is a calling and lead management tool for network marketers and sales professionals, built by Nevorai Technologies Technologies. These terms govern your use of the Enarsia application and all related services.
               </p>
             </section>
 
