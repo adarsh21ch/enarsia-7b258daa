@@ -99,7 +99,7 @@ export function HelpSupportDrawer() {
             <div className="space-y-3">
               {/* Contact email - quick access */}
               <a
-                href="mailto:teamnevorai@gmail.com"
+                href="mailto:support@nevorai.com"
                 className={cn(
                   "w-full px-4 py-3 rounded-xl border border-primary/20",
                   "flex items-center gap-3 text-left",
@@ -111,7 +111,7 @@ export function HelpSupportDrawer() {
                 </div>
                 <div className="flex-1">
                   <p className="font-medium text-sm">Email Us</p>
-                  <p className="text-[11px] text-primary">teamnevorai@gmail.com</p>
+                  <p className="text-[11px] text-primary">support@nevorai.com</p>
                 </div>
                 <ChevronRight className="h-4 w-4 text-muted-foreground" />
               </a>

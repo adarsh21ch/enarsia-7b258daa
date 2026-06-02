@@ -4,7 +4,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { buildWhatsAppLink } from '@/lib/whatsapp';
 import { useBranding } from '@/hooks/useBranding';
 
-const SUPPORT_EMAIL = 'teamnevorai@gmail.com';
+const SUPPORT_EMAIL = 'support@nevorai.com';
 const SUPPORT_WHATSAPP = '+919329040508';
 
 export default function Privacy() {

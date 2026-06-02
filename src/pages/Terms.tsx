@@ -3,7 +3,7 @@ import { ArrowLeft } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useBranding } from '@/hooks/useBranding';
 
-const SUPPORT_EMAIL = 'teamnevorai@gmail.com';
+const SUPPORT_EMAIL = 'support@nevorai.com';
 
 export default function Terms() {
   const { appName } = useBranding();
