@@ -22,7 +22,7 @@ export default function Refund() {
           <span className="text-xs text-muted-foreground">by Nevorai Technologies</span>
         </div>
         <h1 className="text-3xl font-bold text-foreground mb-2">Refund Policy</h1>
-        <p className="text-sm text-muted-foreground mb-4">Last updated: May 2026</p>
+        <p className="text-sm text-muted-foreground mb-4">Last updated: June 2, 2026</p>
       </div>
 
       <ScrollArea className="flex-1 px-4">
