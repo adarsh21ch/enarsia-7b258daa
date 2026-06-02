@@ -140,11 +140,11 @@ export function BrandingManager() {
         <h3 className="text-sm font-semibold">App Name</h3>
         <div className="space-y-2">
           <Label htmlFor="app-name" className="text-xs">Full app name</Label>
-          <Input id="app-name" value={appName} onChange={(e) => setAppName(e.target.value)} placeholder="Nevorai CRM" />
+          <Input id="app-name" value={appName} onChange={(e) => setAppName(e.target.value)} placeholder="Enarsia" />
         </div>
         <div className="space-y-2">
           <Label htmlFor="short-name" className="text-xs">Short name (PWA, tabs)</Label>
-          <Input id="short-name" value={shortName} onChange={(e) => setShortName(e.target.value)} placeholder="nCRM" maxLength={12} />
+          <Input id="short-name" value={shortName} onChange={(e) => setShortName(e.target.value)} placeholder="Enarsia" maxLength={12} />
         </div>
         <div className="space-y-2">
           <Label htmlFor="tagline" className="text-xs">Tagline</Label>

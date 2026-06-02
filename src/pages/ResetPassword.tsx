@@ -146,7 +146,7 @@ export default function ResetPassword() {
         <header className="text-center mb-8">
           <img
             src={nevoraLogo}
-            alt="Nevorai CRM logo"
+            alt="Enarsia logo"
             className="h-16 w-16 mx-auto mb-4 object-contain"
           />
           <h1 className="text-2xl font-bold">Reset password</h1>

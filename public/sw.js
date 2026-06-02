@@ -74,7 +74,7 @@ self.addEventListener('fetch', event => {
 
 // Push notification handler
 self.addEventListener('push', event => {
-  let data = { title: 'Nevorai CRM', body: 'You have a new notification' };
+  let data = { title: 'Enarsia', body: 'You have a new notification' };
   try {
     if (event.data) {
       data = event.data.json();
@@ -84,7 +84,7 @@ self.addEventListener('push', event => {
   }
 
   event.waitUntil(
-    self.registration.showNotification(data.title || 'Nevorai CRM', {
+    self.registration.showNotification(data.title || 'Enarsia', {
       body: data.body || '',
       icon: '/icons/icon-192.png',
       badge: '/icons/icon-192.png',

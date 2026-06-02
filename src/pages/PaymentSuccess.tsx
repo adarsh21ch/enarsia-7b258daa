@@ -142,7 +142,7 @@ export default function PaymentSuccess() {
         <div className="flex justify-center mb-8">
           <img 
             src={nevoraLogo} 
-            alt="Nevorai CRM Logo" 
+            alt="Enarsia Logo" 
             className="h-16 w-16 object-contain"
           />
         </div>
@@ -223,7 +223,7 @@ export default function PaymentSuccess() {
             </div>
             
             <p className="text-xs text-muted-foreground mt-4">
-              If you've completed payment, please contact teamnevorai@gmail.com with your payment details.
+              If you've completed payment, please contact support@nevorai.com with your payment details.
             </p>
           </div>
         )}
@@ -253,7 +253,7 @@ export default function PaymentSuccess() {
             </div>
             
             <p className="text-xs text-muted-foreground mt-4">
-              If the issue persists, contact us at teamnevorai@gmail.com
+              If the issue persists, contact us at support@nevorai.com
             </p>
           </div>
         )}

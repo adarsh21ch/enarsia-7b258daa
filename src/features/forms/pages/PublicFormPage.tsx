@@ -193,7 +193,7 @@ export default function PublicFormPage() {
       {/* Footer trust line */}
       <div className="flex items-center justify-center gap-1.5 mt-5 text-[11px] text-muted-foreground">
         <ShieldCheck className="h-3.5 w-3.5" />
-        <span>Secured by Nevorai · Never submit passwords</span>
+        <span>Secured by Enarsia · Never submit passwords</span>
       </div>
     </PublicFormShell>
   );

@@ -20,19 +20,19 @@ const ONBOARDING_SEQUENCES: NotificationSequence[] = [
     triggerType: 'onboarding_4h',
     condition: 'signup_4h',
     title: 'Your leads are waiting 👋',
-    body: 'You signed up for Nevorai CRM! Import your first leads in 2 minutes.',
+    body: 'You signed up for Enarsia! Import your first leads in 2 minutes.',
   },
   {
     triggerType: 'onboarding_day1',
     condition: 'signup_day1_not_step3',
     title: 'One small step 📋',
-    body: "You're 3 taps away from organizing your first prospect. Open Nevorai CRM now.",
+    body: "You're 3 taps away from organizing your first prospect. Open Enarsia now.",
   },
   {
     triggerType: 'onboarding_day3',
     condition: 'signup_day3_not_complete',
     title: "Don't lose momentum 🔥",
-    body: 'Top network marketers follow up 5x more. Nevorai CRM makes it automatic.',
+    body: 'Top network marketers follow up 5x more. Enarsia makes it automatic.',
   },
   {
     triggerType: 'onboarding_day7',
@@ -76,7 +76,7 @@ const REENGAGEMENT_SEQUENCES: NotificationSequence[] = [
     triggerType: 'dormant_7d',
     condition: 'no_activity_7d',
     title: 'Quick question 🤔',
-    body: "What's stopping you from using Nevorai CRM? We want to make it better for you.",
+    body: "What's stopping you from using Enarsia? We want to make it better for you.",
   },
   {
     triggerType: 'dormant_14d',
