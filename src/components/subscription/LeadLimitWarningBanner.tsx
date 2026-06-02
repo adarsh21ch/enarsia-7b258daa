@@ -40,7 +40,7 @@ export function LeadLimitWarningBanner({ compact = false, context = 'calling' }:
   const getSubText = () => {
     if (context === 'profile') {
       return isAtLimit
-        ? 'Upgrade to Pro to continue using Nevorai CRM.'
+        ? 'Upgrade to Pro to continue using Enarsia.'
         : 'Upgrade to Pro for unlimited access.';
     }
     return 'Upgrade to Pro for unlimited prospects.';

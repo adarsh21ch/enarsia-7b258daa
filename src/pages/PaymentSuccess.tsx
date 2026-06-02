@@ -142,7 +142,7 @@ export default function PaymentSuccess() {
         <div className="flex justify-center mb-8">
           <img 
             src={nevoraLogo} 
-            alt="Nevorai CRM Logo" 
+            alt="Enarsia Logo" 
             className="h-16 w-16 object-contain"
           />
         </div>

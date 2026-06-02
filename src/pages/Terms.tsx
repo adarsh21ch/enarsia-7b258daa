@@ -28,14 +28,14 @@ export default function Terms() {
           <div className="prose prose-sm max-w-none space-y-6 text-foreground">
             <section className="bg-primary/5 border border-primary/15 rounded-xl p-4">
               <p className="text-muted-foreground leading-relaxed m-0">
-                By creating an account or using Nevorai CRM, you agree to these Terms of Service. Please read them carefully — if you do not agree, do not use Nevorai CRM.
+                By creating an account or using Enarsia, you agree to these Terms of Service. Please read them carefully — if you do not agree, do not use Enarsia.
               </p>
             </section>
 
             <section>
-              <h2 className="text-xl font-semibold mb-3">1. About Nevorai CRM</h2>
+              <h2 className="text-xl font-semibold mb-3">1. About Enarsia</h2>
               <p className="text-muted-foreground leading-relaxed">
-                Nevorai CRM is a calling and lead management tool for network marketers and sales professionals, built by Nevorai Technologies. These terms govern your use of the Nevorai CRM application and all related services.
+                Enarsia is a calling and lead management tool for network marketers and sales professionals, built by Nevorai Technologies. These terms govern your use of the Enarsia application and all related services.
               </p>
             </section>
 
@@ -53,7 +53,7 @@ export default function Terms() {
             <section>
               <h2 className="text-xl font-semibold mb-3">3. Free Trial</h2>
               <p className="text-muted-foreground leading-relaxed">
-                New users receive a free trial (duration shown at signup). During the trial you get full access. After the trial ends, you must subscribe to a paid plan to continue using Nevorai CRM. Your data is retained for 30 days after trial expiry before being eligible for deletion.
+                New users receive a free trial (duration shown at signup). During the trial you get full access. After the trial ends, you must subscribe to a paid plan to continue using Enarsia. Your data is retained for 30 days after trial expiry before being eligible for deletion.
               </p>
             </section>
 
@@ -70,7 +70,7 @@ export default function Terms() {
 
             <section>
               <h2 className="text-xl font-semibold mb-3">5. Acceptable Use</h2>
-              <p className="text-muted-foreground mb-2">You agree NOT to use Nevorai CRM to:</p>
+              <p className="text-muted-foreground mb-2">You agree NOT to use Enarsia to:</p>
               <ul className="list-disc pl-5 space-y-2 text-muted-foreground">
                 <li>Spam, harass, or send unsolicited messages.</li>
                 <li>Import or store data of individuals without their consent.</li>
@@ -78,14 +78,14 @@ export default function Terms() {
                 <li>Reverse-engineer, hack, or disrupt the service.</li>
                 <li>Create fake accounts or misrepresent your identity.</li>
                 <li>Run any illegal multi-level marketing or pyramid scheme.</li>
-                <li>Resell or white-label Nevorai CRM without written permission from Nevorai Technologies.</li>
+                <li>Resell or white-label Enarsia without written permission from Nevorai Technologies.</li>
               </ul>
             </section>
 
             <section>
               <h2 className="text-xl font-semibold mb-3">6. Your Data</h2>
               <p className="text-muted-foreground leading-relaxed">
-                You own your data — leads, contacts, call notes and any content you create inside Nevorai CRM. By using Nevorai CRM, you grant Nevorai Technologies a limited licence to store and process this data solely to provide the service to you. We do not use your data for any other purpose.
+                You own your data — leads, contacts, call notes and any content you create inside Enarsia. By using Enarsia, you grant Nevorai Technologies a limited licence to store and process this data solely to provide the service to you. We do not use your data for any other purpose.
               </p>
             </section>
 
@@ -113,7 +113,7 @@ export default function Terms() {
             <section>
               <h2 className="text-xl font-semibold mb-3">10. Limitation of Liability</h2>
               <p className="text-muted-foreground leading-relaxed">
-                Nevorai CRM is provided "as is". Nevorai Technologies is not liable for indirect, incidental or consequential damages — including lost profits, lost leads or missed business opportunities. Our total liability is limited to the amount you paid us in the 3 months preceding the claim.
+                Enarsia is provided "as is". Nevorai Technologies is not liable for indirect, incidental or consequential damages — including lost profits, lost leads or missed business opportunities. Our total liability is limited to the amount you paid us in the 3 months preceding the claim.
               </p>
             </section>
 
@@ -145,7 +145,7 @@ export default function Terms() {
               <Link to="/privacy" className="hover:text-foreground">Privacy Policy</Link>
               <Link to="/refund" className="hover:text-foreground">Refund Policy</Link>
             </div>
-            <p className="text-xs text-muted-foreground mt-4">© 2026 Nevorai · Nevorai CRM · All rights reserved</p>
+            <p className="text-xs text-muted-foreground mt-4">© 2026 Nevorai Technologies. All rights reserved.</p>
           </div>
         </div>
       </ScrollArea>

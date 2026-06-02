@@ -1,6 +1,6 @@
 const ALLOWED_ORIGINS = [
   'https://app.nevorai.com',
-  'https://ncall.nevorai.com',
+  'https://enarsia.nevorai.com',
   'https://nevorai.com',
   'https://ncall.lovable.app',
 ];

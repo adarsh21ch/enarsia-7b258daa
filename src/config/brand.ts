@@ -3,11 +3,11 @@
  * to ensure consistent branding everywhere.
  */
 
-export const BRAND_NAME = 'Nevorai CRM';
+export const BRAND_NAME = 'Enarsia';
 export const BRAND_NAME_UPPER = 'NEVORAI CRM';
 export const BRAND_NAME_LOWER = 'nevorai-crm';
 export const PARENT_COMPANY_NAME = 'Nevorai';
-export const BRAND_SHORT_NAME = 'nCRM';
+export const BRAND_SHORT_NAME = 'Enarsia';
 export const BRAND_TAGLINE = 'Your personal CRM for network marketers.';
 
 // Plan names – display-facing (Basic = internal "pro", Pro = internal "premium")

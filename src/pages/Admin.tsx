@@ -68,7 +68,7 @@ export default function Admin() {
           <div className="flex items-center gap-3">
             <img 
               src={nevoraLogo} 
-              alt="Nevorai CRM Logo" 
+              alt="Enarsia Logo" 
               className="h-9 w-9 object-contain"
             />
             <div>
