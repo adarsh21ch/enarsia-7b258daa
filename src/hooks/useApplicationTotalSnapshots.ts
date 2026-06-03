@@ -69,7 +69,6 @@ export function useApplicationTotalSnapshots(
     enabled: !!user && !!monthYear,
     staleTime: 300_000,
     gcTime: 600_000,
-    refetchOnMount: 'always',
   });
 
   // Post-process team snapshots: convert slot keys to tag names
