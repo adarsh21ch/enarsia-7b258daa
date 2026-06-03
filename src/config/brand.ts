@@ -7,7 +7,7 @@ export const BRAND_NAME_UPPER = 'ENARSIA';
 export const BRAND_NAME_LOWER = 'enarsia';
 export const PARENT_COMPANY_NAME = 'Nevorai Technologies';
 export const BRAND_SHORT_NAME = 'Enarsia';
-export const BRAND_TAGLINE = 'Your personal CRM for work';
+export const BRAND_TAGLINE = 'Your personal CRM for network marketers';
 export const BRAND_URL = 'https://enarsia.nevorai.com';
 export const BRAND_COPYRIGHT = '© 2026 Nevorai Technologies. All rights reserved.';
 
