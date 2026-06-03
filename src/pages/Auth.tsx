@@ -485,7 +485,79 @@ export default function Auth() {
     );
   }
 
+  // --- Profession Picker (post-signup) ---
+  if (signupStep === 'profession') {
+    const modes = getEnabledModes();
+    return (
+      <div className="auth-page-layout bg-background dark:bg-gradient-to-b dark:from-[hsl(233,40%,3%)] dark:to-[hsl(240,35%,8%)]">
+        <div className="auth-page-content">
+          <div className="w-full max-w-md px-6 py-8">
+            <AuthHeader />
+            <div className="text-center mb-6">
+              <h2 className="text-xl font-bold text-foreground font-heading mb-2">What do you do?</h2>
+              <p className="text-sm text-muted-foreground font-body">
+                Pick one or more. You can switch or add more later from Profile.
+              </p>
+            </div>
+            <div className="space-y-3 mb-6">
+              {modes.map((m) => {
+                const isBase = m.id === BASE_MODE_ID;
+                const checked = selectedProfessions.includes(m.id);
+                return (
+                  <button
+                    key={m.id}
+                    type="button"
+                    onClick={() => toggleProfession(m.id)}
+                    disabled={isBase}
+                    className={`w-full text-left rounded-xl border-2 p-4 transition-all ${
+                      checked
+                        ? 'border-primary bg-primary/5'
+                        : 'border-border bg-card hover:border-border/80'
+                    } ${isBase ? 'cursor-default opacity-95' : ''}`}
+                  >
+                    <div className="flex items-center justify-between gap-3">
+                      <div className="min-w-0">
+                        <p className="font-semibold text-sm text-foreground">{m.label}</p>
+                        <p className="text-[12px] text-muted-foreground truncate">{m.terms.tagline}</p>
+                      </div>
+                      <div className={`h-6 w-6 rounded-full flex items-center justify-center shrink-0 ${
+                        checked ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'
+                      }`}>
+                        {checked && <Check className="h-4 w-4" />}
+                      </div>
+                    </div>
+                    {isBase && (
+                      <p className="text-[10px] uppercase tracking-wider text-muted-foreground mt-2">
+                        Always included
+                      </p>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+            <Button
+              onClick={handleSaveProfessions}
+              className="w-full h-12 rounded-xl font-bold text-base btn-press mb-3"
+              disabled={savingProfessions}
+            >
+              {savingProfessions ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Saving...</> : 'Continue'}
+            </Button>
+            <button
+              type="button"
+              onClick={handleSkipProfessions}
+              disabled={savingProfessions}
+              className="w-full text-sm text-muted-foreground hover:text-foreground transition-premium"
+            >
+              Skip — I'll decide later
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   // --- Main Auth Form ---
+
   return (
     <div className="auth-page-layout bg-background dark:bg-gradient-to-b dark:from-[hsl(233,40%,3%)] dark:to-[hsl(240,35%,8%)]">
       {/* Subtle radial glow in dark mode */}
