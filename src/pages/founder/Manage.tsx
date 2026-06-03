@@ -1,7 +1,6 @@
 import { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Compass, Megaphone, TrendingUp, SlidersHorizontal, Wallet, Scale, Users, AlertTriangle, ChevronRight } from 'lucide-react';
-import { Header } from '@/components/layout/Header';
+import { Compass, Megaphone, TrendingUp, SlidersHorizontal, Wallet, Scale, Users, AlertTriangle, ChevronRight, LayoutGrid } from 'lucide-react';
 import { BottomNav } from '@/components/layout/BottomNav';
 import { FOUNDER_FUNCTIONS, useFounderFunctions, type FounderFunctionKey, type FounderStatus } from '@/hooks/useFounderFunctions';
 import { cn } from '@/lib/utils';
@@ -38,7 +37,13 @@ export default function Manage() {
 
   return (
     <div className="h-screen min-h-[100dvh] flex flex-col bg-background">
-      <Header title="Manage" subtitle="Your business at a glance" />
+      <header className="sticky top-0 z-10 bg-background border-b border-border px-4 py-3 flex items-center gap-3">
+        <div className="h-9 w-9 rounded-lg bg-primary/10 flex items-center justify-center"><LayoutGrid className="h-4.5 w-4.5 text-primary" /></div>
+        <div>
+          <h1 className="text-lg font-bold leading-tight">Manage</h1>
+          <p className="text-[11px] text-muted-foreground">Your business at a glance</p>
+        </div>
+      </header>
 
       <div className="flex-1 overflow-y-auto px-4 py-4 pb-28 space-y-5">
         {/* Business health */}

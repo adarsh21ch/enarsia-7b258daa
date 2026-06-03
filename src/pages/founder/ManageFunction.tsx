@@ -207,7 +207,7 @@ function SalesLive() {
   const stats = useMemo(() => {
     const now = new Date();
     const weekAgo = new Date(now.getTime() - 7 * 86400_000);
-    const active = prospects.filter((p) => !p.deleted_at);
+    const active = prospects;
     const addedThisWeek = active.filter((p) => new Date(p.date_added) >= weekAgo).length;
 
     const today = new Date(); today.setHours(0, 0, 0, 0);
