@@ -64,6 +64,9 @@ export default function Auth() {
   const [otpSending, setOtpSending] = useState(false);
   const [otpVerifying, setOtpVerifying] = useState(false);
   const [resendCooldown, setResendCooldown] = useState(0);
+  const [selectedProfessions, setSelectedProfessions] = useState<ModeId[]>([BASE_MODE_ID]);
+  const [savingProfessions, setSavingProfessions] = useState(false);
+
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
   
   const uplineParam = searchParams.get('upline');
