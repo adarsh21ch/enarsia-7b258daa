@@ -50,7 +50,7 @@ export default function Auth() {
   const [isSignUp, setIsSignUp] = useState(false);
   const [isForgotPassword, setIsForgotPassword] = useState(false);
   
-  const [signupStep, setSignupStep] = useState<'form' | 'otp'>('form');
+  const [signupStep, setSignupStep] = useState<'form' | 'otp' | 'profession'>('form');
   const [pendingSignupData, setPendingSignupData] = useState<{
     email: string;
     password: string;
