@@ -1,7 +1,7 @@
 import { useState, type ComponentType } from 'react';
 import { useProfile } from '@/hooks/useProfile';
-import { useMode } from '@/hooks/useMode';
-import { useAdmin } from '@/hooks/useAdmin';
+import { useMode, writeCachedMode } from '@/hooks/useMode';
+
 import { MODES, getAddonModes, normalizeEnabledModes, type ModeId } from '@/config/modes';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
