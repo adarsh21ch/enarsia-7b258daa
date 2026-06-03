@@ -52,7 +52,18 @@ const Index = () => {
       return;
     }
 
-    // Logged out, no leader → show marketing landing page
+    // Installed PWA (Add to Home Screen) → skip marketing, go straight to auth
+    const isStandalone =
+      typeof window !== 'undefined' &&
+      (window.matchMedia?.('(display-mode: standalone)').matches ||
+        // @ts-expect-error legacy iOS standalone flag
+        window.navigator.standalone === true);
+    if (isStandalone) {
+      navigate('/auth', { replace: true });
+      return;
+    }
+
+    // Logged out, no leader, browser → show marketing landing page
     setShowLanding(true);
   }, [user, loading, profile, profileLoading, navigate, searchParams]);
 
