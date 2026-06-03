@@ -74,7 +74,7 @@ export default function Landing() {
   const [videoPlaying, setVideoPlaying] = useState(false);
 
   return (
-    <div className="min-h-screen w-full bg-background text-foreground overflow-x-hidden">
+    <div className="h-screen min-h-[100dvh] w-full overflow-y-auto overflow-x-hidden bg-background text-foreground">
       {/* Top nav */}
       <header className="sticky top-0 z-40 bg-background/85 backdrop-blur-md border-b border-border/60">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 h-16 sm:h-20 flex items-center justify-between">
