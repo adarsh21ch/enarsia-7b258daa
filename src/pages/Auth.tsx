@@ -293,6 +293,45 @@ export default function Auth() {
     setPendingSignupData(null);
   };
 
+  const toggleProfession = (id: ModeId) => {
+    if (id === BASE_MODE_ID) return; // base profession is always on
+    setSelectedProfessions((prev) =>
+      prev.includes(id) ? prev.filter((p) => p !== id) : [...prev, id],
+    );
+  };
+
+  const persistProfessions = async (modes: ModeId[]) => {
+    // Pick the first non-base selection as the primary mode; fall back to base.
+    const primary = modes.find((m) => m !== BASE_MODE_ID) ?? BASE_MODE_ID;
+    const enabled_modes = Array.from(new Set([BASE_MODE_ID, ...modes]));
+    if (!user) return;
+    const { error } = await supabase
+      .from('profiles')
+      .update({ mode: primary, enabled_modes } as never)
+      .eq('user_id', user.id);
+    if (error) {
+      console.error('Failed to save professions:', error);
+      toast.error('Could not save your profession — defaulting to Network Marketing.');
+    }
+    writeCachedMode(primary);
+  };
+
+  const handleSaveProfessions = async () => {
+    setSavingProfessions(true);
+    await persistProfessions(selectedProfessions);
+    setSavingProfessions(false);
+    navigate('/dashboard');
+  };
+
+  const handleSkipProfessions = async () => {
+    setSavingProfessions(true);
+    await persistProfessions([BASE_MODE_ID]);
+    setSavingProfessions(false);
+    navigate('/dashboard');
+  };
+
+
+
   const handleForgotPassword = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!emailOrLeaderId) { toast.error('Please enter your email'); return; }
