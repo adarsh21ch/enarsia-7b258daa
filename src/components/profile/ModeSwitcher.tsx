@@ -27,13 +27,13 @@ const MODE_ICONS: Record<ModeId, ComponentType<{ className?: string }>> = {
 export function ModeSwitcher() {
   const { profile, updateProfile, updating } = useProfile();
   const { modeId: activeModeId } = useMode();
-  const { isAdmin } = useAdmin();
   const [pendingId, setPendingId] = useState<ModeId | null>(null);
 
   const enabled = normalizeEnabledModes(profile?.enabled_modes);
-  // Add-on professions stay admin-only until they're finished (Content Creator
-  // still has scaffold tabs). Flip this to show them to everyone when ready.
-  const addable = isAdmin ? getAddonModes().filter((m) => !enabled.includes(m.id)) : [];
+  // All live add-on professions are available to every user. Add-ons are
+  // appended to `enabled_modes` and become switchable from the list above.
+  const addable = getAddonModes().filter((m) => !enabled.includes(m.id));
+
 
   // Nothing actionable for a single-profession user → render nothing (keeps
   // normal users' Profile clean; no lone "Network Marketing" row).
