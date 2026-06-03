@@ -46,7 +46,6 @@ export function usePersonalSnapshotV2Read(
     enabled: !!user && !!monthYear,
     staleTime: 300_000,
     gcTime: 600_000,
-    refetchOnMount: 'always',
   });
 
   // Post-process: convert slot keys to tag names reactively using passed-in names
