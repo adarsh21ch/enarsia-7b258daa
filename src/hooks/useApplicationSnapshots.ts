@@ -45,8 +45,8 @@ export function useApplicationSnapshots(
       return data || [];
     },
     enabled: !!user && !!monthYear,
-    staleTime: 30_000,
-    refetchOnMount: 'always',
+    staleTime: 60_000,
+    gcTime: 300_000,
   });
 
   // Group prospects by date and compute SnapshotRow per day
