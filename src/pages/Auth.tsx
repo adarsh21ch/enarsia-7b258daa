@@ -12,6 +12,10 @@ import { Loader2, Mail, Lock, Eye, EyeOff, ArrowLeft, User, Phone } from 'lucide
 import nevoraLogo from '@/assets/nevorai-call-logo.png';
 import { useBranding } from '@/hooks/useBranding';
 import { getPasswordRecoveryRedirectUrl, PUBLISHED_APP_URL } from '@/config/siteUrl';
+import { getEnabledModes, BASE_MODE_ID, type ModeId } from '@/config/modes';
+import { writeCachedMode } from '@/hooks/useMode';
+import { Check } from 'lucide-react';
+
 
 function AuthHeader() {
   const { logoUrl, appName, tagline } = useBranding();
@@ -50,7 +54,7 @@ export default function Auth() {
   const [isSignUp, setIsSignUp] = useState(false);
   const [isForgotPassword, setIsForgotPassword] = useState(false);
   
-  const [signupStep, setSignupStep] = useState<'form' | 'otp'>('form');
+  const [signupStep, setSignupStep] = useState<'form' | 'otp' | 'profession'>('form');
   const [pendingSignupData, setPendingSignupData] = useState<{
     email: string;
     password: string;
@@ -60,18 +64,22 @@ export default function Auth() {
   const [otpSending, setOtpSending] = useState(false);
   const [otpVerifying, setOtpVerifying] = useState(false);
   const [resendCooldown, setResendCooldown] = useState(0);
+  const [selectedProfessions, setSelectedProfessions] = useState<ModeId[]>([BASE_MODE_ID]);
+  const [savingProfessions, setSavingProfessions] = useState(false);
+
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
   
   const uplineParam = searchParams.get('upline');
 
   useEffect(() => {
-    if (user && !authLoading) {
+    if (user && !authLoading && signupStep !== 'profession') {
       if (uplineParam) {
         sessionStorage.setItem('pending_upline_email', uplineParam);
       }
       navigate('/dashboard');
     }
-  }, [user, authLoading, navigate, uplineParam]);
+  }, [user, authLoading, navigate, uplineParam, signupStep]);
+
 
   useEffect(() => {
     if (resendCooldown > 0) {
@@ -261,10 +269,12 @@ export default function Auth() {
       setSignupStep('form');
       setIsSignUp(false);
     } else {
-      navigate('/dashboard');
+      // Show profession picker before sending the user into the app.
+      setSignupStep('profession');
     }
     setOtpVerifying(false);
   };
+
 
   const handleResendOtp = async () => {
     if (!pendingSignupData || resendCooldown > 0) return;
@@ -282,6 +292,45 @@ export default function Auth() {
     setOtpCode('');
     setPendingSignupData(null);
   };
+
+  const toggleProfession = (id: ModeId) => {
+    if (id === BASE_MODE_ID) return; // base profession is always on
+    setSelectedProfessions((prev) =>
+      prev.includes(id) ? prev.filter((p) => p !== id) : [...prev, id],
+    );
+  };
+
+  const persistProfessions = async (modes: ModeId[]) => {
+    // Pick the first non-base selection as the primary mode; fall back to base.
+    const primary = modes.find((m) => m !== BASE_MODE_ID) ?? BASE_MODE_ID;
+    const enabled_modes = Array.from(new Set([BASE_MODE_ID, ...modes]));
+    if (!user) return;
+    const { error } = await supabase
+      .from('profiles')
+      .update({ mode: primary, enabled_modes } as never)
+      .eq('user_id', user.id);
+    if (error) {
+      console.error('Failed to save professions:', error);
+      toast.error('Could not save your profession — defaulting to Network Marketing.');
+    }
+    writeCachedMode(primary);
+  };
+
+  const handleSaveProfessions = async () => {
+    setSavingProfessions(true);
+    await persistProfessions(selectedProfessions);
+    setSavingProfessions(false);
+    navigate('/dashboard');
+  };
+
+  const handleSkipProfessions = async () => {
+    setSavingProfessions(true);
+    await persistProfessions([BASE_MODE_ID]);
+    setSavingProfessions(false);
+    navigate('/dashboard');
+  };
+
+
 
   const handleForgotPassword = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -436,7 +485,79 @@ export default function Auth() {
     );
   }
 
+  // --- Profession Picker (post-signup) ---
+  if (signupStep === 'profession') {
+    const modes = getEnabledModes();
+    return (
+      <div className="auth-page-layout bg-background dark:bg-gradient-to-b dark:from-[hsl(233,40%,3%)] dark:to-[hsl(240,35%,8%)]">
+        <div className="auth-page-content">
+          <div className="w-full max-w-md px-6 py-8">
+            <AuthHeader />
+            <div className="text-center mb-6">
+              <h2 className="text-xl font-bold text-foreground font-heading mb-2">What do you do?</h2>
+              <p className="text-sm text-muted-foreground font-body">
+                Pick one or more. You can switch or add more later from Profile.
+              </p>
+            </div>
+            <div className="space-y-3 mb-6">
+              {modes.map((m) => {
+                const isBase = m.id === BASE_MODE_ID;
+                const checked = selectedProfessions.includes(m.id);
+                return (
+                  <button
+                    key={m.id}
+                    type="button"
+                    onClick={() => toggleProfession(m.id)}
+                    disabled={isBase}
+                    className={`w-full text-left rounded-xl border-2 p-4 transition-all ${
+                      checked
+                        ? 'border-primary bg-primary/5'
+                        : 'border-border bg-card hover:border-border/80'
+                    } ${isBase ? 'cursor-default opacity-95' : ''}`}
+                  >
+                    <div className="flex items-center justify-between gap-3">
+                      <div className="min-w-0">
+                        <p className="font-semibold text-sm text-foreground">{m.label}</p>
+                        <p className="text-[12px] text-muted-foreground truncate">{m.terms.tagline}</p>
+                      </div>
+                      <div className={`h-6 w-6 rounded-full flex items-center justify-center shrink-0 ${
+                        checked ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'
+                      }`}>
+                        {checked && <Check className="h-4 w-4" />}
+                      </div>
+                    </div>
+                    {isBase && (
+                      <p className="text-[10px] uppercase tracking-wider text-muted-foreground mt-2">
+                        Always included
+                      </p>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+            <Button
+              onClick={handleSaveProfessions}
+              className="w-full h-12 rounded-xl font-bold text-base btn-press mb-3"
+              disabled={savingProfessions}
+            >
+              {savingProfessions ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Saving...</> : 'Continue'}
+            </Button>
+            <button
+              type="button"
+              onClick={handleSkipProfessions}
+              disabled={savingProfessions}
+              className="w-full text-sm text-muted-foreground hover:text-foreground transition-premium"
+            >
+              Skip — I'll decide later
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   // --- Main Auth Form ---
+
   return (
     <div className="auth-page-layout bg-background dark:bg-gradient-to-b dark:from-[hsl(233,40%,3%)] dark:to-[hsl(240,35%,8%)]">
       {/* Subtle radial glow in dark mode */}

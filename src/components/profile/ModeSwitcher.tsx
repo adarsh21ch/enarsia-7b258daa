@@ -1,7 +1,7 @@
 import { useState, type ComponentType } from 'react';
 import { useProfile } from '@/hooks/useProfile';
-import { useMode } from '@/hooks/useMode';
-import { useAdmin } from '@/hooks/useAdmin';
+import { useMode, writeCachedMode } from '@/hooks/useMode';
+
 import { MODES, getAddonModes, normalizeEnabledModes, type ModeId } from '@/config/modes';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
@@ -27,13 +27,13 @@ const MODE_ICONS: Record<ModeId, ComponentType<{ className?: string }>> = {
 export function ModeSwitcher() {
   const { profile, updateProfile, updating } = useProfile();
   const { modeId: activeModeId } = useMode();
-  const { isAdmin } = useAdmin();
   const [pendingId, setPendingId] = useState<ModeId | null>(null);
 
   const enabled = normalizeEnabledModes(profile?.enabled_modes);
-  // Add-on professions stay admin-only until they're finished (Content Creator
-  // still has scaffold tabs). Flip this to show them to everyone when ready.
-  const addable = isAdmin ? getAddonModes().filter((m) => !enabled.includes(m.id)) : [];
+  // All live add-on professions are available to every user. Add-ons are
+  // appended to `enabled_modes` and become switchable from the list above.
+  const addable = getAddonModes().filter((m) => !enabled.includes(m.id));
+
 
   // Nothing actionable for a single-profession user → render nothing (keeps
   // normal users' Profile clean; no lone "Network Marketing" row).
@@ -42,6 +42,7 @@ export function ModeSwitcher() {
   const handleSwitch = async (id: ModeId) => {
     if (id === activeModeId || updating) return;
     setPendingId(id);
+    writeCachedMode(id); // optimistic cache so reloads stay on this mode
     const { error } = await updateProfile({ mode: id });
     setPendingId(null);
     if (error) return toast.error('Could not switch profession.');
@@ -51,11 +52,13 @@ export function ModeSwitcher() {
   const handleAdd = async (id: ModeId) => {
     if (updating) return;
     setPendingId(id);
+    writeCachedMode(id);
     const { error } = await updateProfile({ mode: id, enabled_modes: [...enabled, id] });
     setPendingId(null);
     if (error) return toast.error('Could not add profession.');
     toast.success(`Added ${MODES[id].label}`);
   };
+
 
   return (
     <div className="space-y-3">
