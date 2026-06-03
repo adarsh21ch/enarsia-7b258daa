@@ -2752,42 +2752,6 @@ export type Database = {
           },
         ]
       }
-      founder_functions: {
-        Row: {
-          cadence: string | null
-          checklist: Json
-          created_at: string
-          function_key: string
-          id: string
-          notes: string | null
-          status: string
-          updated_at: string
-          user_id: string
-        }
-        Insert: {
-          cadence?: string | null
-          checklist?: Json
-          created_at?: string
-          function_key: string
-          id?: string
-          notes?: string | null
-          status?: string
-          updated_at?: string
-          user_id: string
-        }
-        Update: {
-          cadence?: string | null
-          checklist?: Json
-          created_at?: string
-          function_key?: string
-          id?: string
-          notes?: string | null
-          status?: string
-          updated_at?: string
-          user_id?: string
-        }
-        Relationships: []
-      }
       funnel_access: {
         Row: {
           created_at: string | null

@@ -9,7 +9,7 @@ import { Label } from '@/components/ui/label';
 import { InputOTP, InputOTPGroup, InputOTPSlot } from '@/components/ui/input-otp';
 import { toast } from 'sonner';
 import { Loader2, Mail, Lock, Eye, EyeOff, ArrowLeft, User, Phone } from 'lucide-react';
-import nevoraLogo from '@/assets/enarsia-symbol.png';
+import nevoraLogo from '@/assets/nevorai-call-logo.png';
 import { useBranding } from '@/hooks/useBranding';
 import { getPasswordRecoveryRedirectUrl, PUBLISHED_APP_URL } from '@/config/siteUrl';
 
