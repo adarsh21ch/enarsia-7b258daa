@@ -1,0 +1,1 @@
+UPDATE public.admin_branding SET tagline = 'Your personal CRM for work', updated_at = now() WHERE id = 1;
