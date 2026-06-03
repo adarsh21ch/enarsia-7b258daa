@@ -65,13 +65,14 @@ export default function Auth() {
   const uplineParam = searchParams.get('upline');
 
   useEffect(() => {
-    if (user && !authLoading) {
+    if (user && !authLoading && signupStep !== 'profession') {
       if (uplineParam) {
         sessionStorage.setItem('pending_upline_email', uplineParam);
       }
       navigate('/dashboard');
     }
-  }, [user, authLoading, navigate, uplineParam]);
+  }, [user, authLoading, navigate, uplineParam, signupStep]);
+
 
   useEffect(() => {
     if (resendCooldown > 0) {
