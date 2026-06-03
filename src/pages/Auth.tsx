@@ -17,18 +17,18 @@ function AuthHeader() {
   const { logoUrl, appName, tagline } = useBranding();
   return (
     <div className="text-center mb-8">
-      <div className="relative inline-block mb-3">
+      <div className="relative inline-block mb-4">
         <img
           src={logoUrl}
           alt={`${appName} Logo`}
-          className="w-[112px] h-[112px] object-contain block"
+          className="w-[72px] h-[72px] object-contain"
         />
       </div>
       <h1 className="text-[28px] font-extrabold text-foreground font-heading tracking-tight">
         {appName}
       </h1>
       <p className="text-muted-foreground text-[13px] mt-0.5 font-body">
-        by Nevorai
+        by Nevorai Technologies
       </p>
       <p className="text-muted-foreground text-[15px] mt-1 italic font-body">
         {tagline}
