@@ -1,18 +1,20 @@
 import type { AppMode } from './types';
 
 /**
- * Founder — third mode (stub). Not designed in depth yet; kept here so the
- * registry is complete. `enabled: false` until we design it.
+ * Founder — runs the whole business in one place.
+ *
+ * Nav surfaces the 3 cockpit areas (Manage / Marketing / Sales) plus Profile.
+ * Each tab maps to its own page; Marketing & Sales reuse the function-detail
+ * view from /manage so all founder data lives in `founder_functions`.
  */
 export const founderMode: AppMode = {
   id: 'founder',
   label: 'Founder',
   shortLabel: 'Founder',
   nav: [
-    { path: '/dashboard', label: 'Overview', iconKey: 'overview', onboardingId: 'nav-overview' },
-    { path: '/listup', label: 'Pipeline', iconKey: 'followup', onboardingId: 'nav-pipeline' },
-    { path: '/action', label: 'To-Do', iconKey: 'todo', onboardingId: 'nav-todo' },
-    { path: '/tracking', label: 'Growth', iconKey: 'trackup', onboardingId: 'nav-growth' },
+    { path: '/manage', label: 'Manage', iconKey: 'manage', onboardingId: 'nav-manage' },
+    { path: '/marketing', label: 'Marketing', iconKey: 'marketing', onboardingId: 'nav-marketing' },
+    { path: '/sales', label: 'Sales', iconKey: 'sales', onboardingId: 'nav-sales' },
     { path: '/profile', label: 'Profile', iconKey: 'profile', isProfile: true, onboardingId: 'nav-profile' },
   ],
   terms: {
@@ -21,7 +23,7 @@ export const founderMode: AppMode = {
     pipeline: 'Pipeline',
     lead: 'Customer',
     team: 'Customers',
-    primaryAction: 'Overview',
+    primaryAction: 'Manage',
     tracker: 'Growth',
     tagline: 'Run your company in one place.',
   },

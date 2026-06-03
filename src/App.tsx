@@ -56,6 +56,10 @@ const CreatorStudio = lazy(() => import("./pages/creator/Studio"));
 const CreatorCalendar = lazy(() => import("./pages/creator/Calendar"));
 const CreatorInsights = lazy(() => import("./pages/creator/Insights"));
 
+// Founder mode tabs
+const Manage = lazy(() => import("./pages/founder/Manage"));
+const ManageFunction = lazy(() => import("./pages/founder/ManageFunction"));
+
 // Minimal loading fallback
 const PageLoader = () => (
   <div className="min-h-screen flex items-center justify-center bg-background">
@@ -159,6 +163,10 @@ function App() {
                         <Route path="/studio" element={<CreatorStudio />} />
                         <Route path="/calendar" element={<CreatorCalendar />} />
                         <Route path="/insights" element={<CreatorInsights />} />
+                        <Route path="/manage" element={<Manage />} />
+                        <Route path="/manage/:functionKey" element={<ManageFunction />} />
+                        <Route path="/marketing" element={<ManageFunction fixedKey="marketing" />} />
+                        <Route path="/sales" element={<ManageFunction fixedKey="sales" />} />
                         <Route path="*" element={<NotFound />} />
                       </Routes>
                     </Suspense>
