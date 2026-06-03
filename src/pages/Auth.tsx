@@ -12,6 +12,10 @@ import { Loader2, Mail, Lock, Eye, EyeOff, ArrowLeft, User, Phone } from 'lucide
 import nevoraLogo from '@/assets/nevorai-call-logo.png';
 import { useBranding } from '@/hooks/useBranding';
 import { getPasswordRecoveryRedirectUrl, PUBLISHED_APP_URL } from '@/config/siteUrl';
+import { getEnabledModes, BASE_MODE_ID, type ModeId } from '@/config/modes';
+import { writeCachedMode } from '@/hooks/useMode';
+import { Check } from 'lucide-react';
+
 
 function AuthHeader() {
   const { logoUrl, appName, tagline } = useBranding();
