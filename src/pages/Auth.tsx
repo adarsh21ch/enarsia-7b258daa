@@ -261,10 +261,12 @@ export default function Auth() {
       setSignupStep('form');
       setIsSignUp(false);
     } else {
-      navigate('/dashboard');
+      // Show profession picker before sending the user into the app.
+      setSignupStep('profession');
     }
     setOtpVerifying(false);
   };
+
 
   const handleResendOtp = async () => {
     if (!pendingSignupData || resendCooldown > 0) return;
