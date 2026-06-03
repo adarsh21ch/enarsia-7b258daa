@@ -42,6 +42,7 @@ export function ModeSwitcher() {
   const handleSwitch = async (id: ModeId) => {
     if (id === activeModeId || updating) return;
     setPendingId(id);
+    writeCachedMode(id); // optimistic cache so reloads stay on this mode
     const { error } = await updateProfile({ mode: id });
     setPendingId(null);
     if (error) return toast.error('Could not switch profession.');
@@ -51,11 +52,13 @@ export function ModeSwitcher() {
   const handleAdd = async (id: ModeId) => {
     if (updating) return;
     setPendingId(id);
+    writeCachedMode(id);
     const { error } = await updateProfile({ mode: id, enabled_modes: [...enabled, id] });
     setPendingId(null);
     if (error) return toast.error('Could not add profession.');
     toast.success(`Added ${MODES[id].label}`);
   };
+
 
   return (
     <div className="space-y-3">
