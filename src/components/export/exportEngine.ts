@@ -12,14 +12,56 @@ export interface ExportOptions {
   filenamePrefix?: string;
 }
 
+// Column order: identity first, then the most important signal (Last Response),
+// then contact details, then qualifiers, then meta. Empty columns are dropped per tab.
 const COLUMNS = [
-  'Name', 'Phone', 'Phone 2', 'Email', 'Age/DOB', 'Gender', 'Address',
-  'Sheet', 'Enrollment Status', 'Call Stage', 'Last Response',
-  'Last Response At (IST)', 'Notes', 'Priority', 'Quality',
-  'Profession', 'Instagram', 'Personal Tags', 'Date Added',
+  'S.No',
+  'Name',
+  'Last Response',
+  'Last Response At (IST)',
+  'Phone',
+  'Phone 2',
+  'Email',
+  'Age/DOB',
+  'Gender',
+  'Address',
+  'Profession',
+  'Instagram',
+  'Call Stage',
+  'Enrollment Status',
+  'Priority',
+  'Quality',
+  'Personal Tags',
+  'Notes',
+  'Sheet',
+  'Date Added',
 ];
 
-const COL_WIDTHS = [25, 15, 15, 22, 10, 8, 28, 18, 16, 18, 20, 18, 35, 10, 12, 18, 18, 22, 12];
+const COL_WIDTH: Record<string, number> = {
+  'S.No': 6,
+  'Name': 25,
+  'Last Response': 22,
+  'Last Response At (IST)': 20,
+  'Phone': 15,
+  'Phone 2': 15,
+  'Email': 24,
+  'Age/DOB': 10,
+  'Gender': 8,
+  'Address': 28,
+  'Profession': 18,
+  'Instagram': 18,
+  'Call Stage': 18,
+  'Enrollment Status': 16,
+  'Priority': 10,
+  'Quality': 12,
+  'Personal Tags': 22,
+  'Notes': 35,
+  'Sheet': 18,
+  'Date Added': 12,
+};
+
+// Columns we always keep even if empty across a tab, so structure stays predictable.
+const ALWAYS_KEEP = new Set(['S.No', 'Name', 'Last Response', 'Last Response At (IST)', 'Phone', 'Sheet', 'Date Added']);
 
 function lastResponse(p: Prospect): { label: string; at: string } {
   const candidates: { val?: string | null; at?: string | null }[] = [
@@ -40,23 +82,23 @@ function rowFor(p: Prospect, sheetName: string) {
   const lr = lastResponse(p);
   return {
     'Name': p.name || '',
+    'Last Response': lr.label,
+    'Last Response At (IST)': lr.at,
     'Phone': p.phone || '',
     'Phone 2': p.phone2 || '',
     'Email': p.email || '',
     'Age/DOB': p.age_or_dob || '',
     'Gender': p.gender || '',
     'Address': p.address || '',
-    'Sheet': sheetName,
-    'Enrollment Status': p.enrollment_status || (p.funnel_stage ? 'Enrolled' : 'Not Enrolled'),
-    'Call Stage': p.funnel_stage || '',
-    'Last Response': lr.label,
-    'Last Response At (IST)': lr.at,
-    'Notes': p.notes || '',
-    'Priority': p.priority || '',
-    'Quality': p.prospect_status || '',
     'Profession': p.profession || '',
     'Instagram': p.instagram || '',
+    'Call Stage': p.funnel_stage || '',
+    'Enrollment Status': p.enrollment_status || (p.funnel_stage ? 'Enrolled' : 'Not Enrolled'),
+    'Priority': p.priority || '',
+    'Quality': p.prospect_status || '',
     'Personal Tags': (p.personal_tags || []).join(', '),
+    'Notes': p.notes || '',
+    'Sheet': sheetName,
     'Date Added': p.date_added ? format(toIST(new Date(p.date_added)), 'dd/MM/yyyy') : '',
   };
 }
@@ -140,18 +182,28 @@ export function runExport(opts: ExportOptions): { count: number; bucketCount: nu
   let total = 0;
 
   for (const bucket of buckets) {
-    const cleanRows = bucket.rows.map(({ _ts, ...rest }) => rest);
-    total += cleanRows.length;
+    const baseRows = bucket.rows.map(({ _ts, ...rest }) => rest);
+    total += baseRows.length;
 
-    const headerRow1 = [`${bucket.label} — ${cleanRows.length} leads`];
+    // Add S.No, then drop columns that are empty across this entire tab (unless always-kept).
+    const numbered = baseRows.map((r, i) => ({ 'S.No': i + 1, ...r }));
+    const activeCols = COLUMNS.filter((col) => {
+      if (ALWAYS_KEEP.has(col)) return true;
+      return numbered.some((r) => {
+        const v = (r as any)[col];
+        return v !== '' && v !== null && v !== undefined;
+      });
+    });
+
+    const headerRow1 = [`${bucket.label} — ${baseRows.length} leads`];
     const headerRow2 = [`Exported: ${format(toIST(new Date()), 'dd MMM yyyy HH:mm')} IST`];
-    const ws = XLSX.utils.aoa_to_sheet([headerRow1, headerRow2, [], COLUMNS]);
-    XLSX.utils.sheet_add_json(ws, cleanRows, {
-      header: COLUMNS,
+    const ws = XLSX.utils.aoa_to_sheet([headerRow1, headerRow2, [], activeCols]);
+    XLSX.utils.sheet_add_json(ws, numbered, {
+      header: activeCols,
       origin: 'A5',
       skipHeader: true,
     });
-    ws['!cols'] = COL_WIDTHS.map((wch) => ({ wch }));
+    ws['!cols'] = activeCols.map((col) => ({ wch: COL_WIDTH[col] ?? 14 }));
 
     let name = sanitizeTabName(bucket.label);
     let i = 2;
