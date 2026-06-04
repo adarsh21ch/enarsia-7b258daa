@@ -182,18 +182,28 @@ export function runExport(opts: ExportOptions): { count: number; bucketCount: nu
   let total = 0;
 
   for (const bucket of buckets) {
-    const cleanRows = bucket.rows.map(({ _ts, ...rest }) => rest);
-    total += cleanRows.length;
+    const baseRows = bucket.rows.map(({ _ts, ...rest }) => rest);
+    total += baseRows.length;
 
-    const headerRow1 = [`${bucket.label} — ${cleanRows.length} leads`];
+    // Add S.No, then drop columns that are empty across this entire tab (unless always-kept).
+    const numbered = baseRows.map((r, i) => ({ 'S.No': i + 1, ...r }));
+    const activeCols = COLUMNS.filter((col) => {
+      if (ALWAYS_KEEP.has(col)) return true;
+      return numbered.some((r) => {
+        const v = (r as any)[col];
+        return v !== '' && v !== null && v !== undefined;
+      });
+    });
+
+    const headerRow1 = [`${bucket.label} — ${baseRows.length} leads`];
     const headerRow2 = [`Exported: ${format(toIST(new Date()), 'dd MMM yyyy HH:mm')} IST`];
-    const ws = XLSX.utils.aoa_to_sheet([headerRow1, headerRow2, [], COLUMNS]);
-    XLSX.utils.sheet_add_json(ws, cleanRows, {
-      header: COLUMNS,
+    const ws = XLSX.utils.aoa_to_sheet([headerRow1, headerRow2, [], activeCols]);
+    XLSX.utils.sheet_add_json(ws, numbered, {
+      header: activeCols,
       origin: 'A5',
       skipHeader: true,
     });
-    ws['!cols'] = COL_WIDTHS.map((wch) => ({ wch }));
+    ws['!cols'] = activeCols.map((col) => ({ wch: COL_WIDTH[col] ?? 14 }));
 
     let name = sanitizeTabName(bucket.label);
     let i = 2;
