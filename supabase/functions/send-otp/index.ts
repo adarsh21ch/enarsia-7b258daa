@@ -17,7 +17,9 @@ const jsonResponse = (data: object, status = 200) =>
 
 // Generate a 4-digit OTP
 function generateOTP(): string {
-  return Math.floor(1000 + Math.random() * 9000).toString();
+  const array = new Uint32Array(1);
+  crypto.getRandomValues(array);
+  return (1000 + (array[0] % 9000)).toString();
 }
 
 // Validate email format
