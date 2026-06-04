@@ -1,98 +1,53 @@
+## Simplify Export My Data
 
-# Export My Data — flexible backup & download
+Strip the dialog down to the minimum. No date range, no scope picker, no week grouping. One screen, two questions, done.
 
-Give users a real "take my data home" feature so they can recover leads if anything is lost or deleted. One reusable export engine, two entry points, free vs Pro split.
+### New Export dialog (replaces current one)
 
-## What the user gets
-
-- **In Sheet tabs (Calling tab) → "Download All" / Sheet menu**
-  Tapping Download opens a popup instead of instantly exporting.
-- **In Profile → new "Export My Data" row**
-  Full-page version for backups, with date range + grouping.
-
-Both surfaces use the **same engine and same popup component** — just different launch points.
-
-## Export popup options
-
-A single `ExportDialog` with these controls:
-
-1. **Scope**
-   - All leads
-   - Current sheet only (when launched from a specific sheet)
-   - Pick sheets (multi-select)
-
-2. **Date range** (filters by `date_added`)
-   - All time
-   - Last 7 days / Last 30 days / Last 90 days
-   - This month / Last month
-   - Custom from–to (shadcn date picker)
-
-3. **Grouping** (how tabs inside the .xlsx are split)
-   - One combined sheet (default — free)
-   - One tab per existing Sheet (Pro)
-   - One tab per month (Pro)
-   - One tab per week (Pro)
-
-4. **Columns**: fixed set = current export columns **plus** `Last Response` (latest non-empty of `action_taken` / `funnel_stage`) and `Last Response At`. No column picker (keeps UI simple, matches your answer).
-
-5. **Pro gating**
-   - Free: only "One combined sheet" + "All time" or last 30 days
-   - Pro: every grouping + custom date range + multi-sheet selection
-   - Existing `export_data` feature flag stays the gate; advanced options show a small "Pro" badge and trigger the upgrade drawer when clicked on free.
-
-## Output file
-
-- Single `.xlsx` with multiple tabs depending on grouping
-- Filename: `Enarsia_Export_{YYYY-MM-DD}_{scope}.xlsx`
-- Tab order: chronological (oldest → newest) for month/week grouping; alphabetical for per-sheet grouping
-- Each tab has a small header block (row 1–2): "Sheet: X • Range: ..." then column headers in row 3, data from row 4
-- Empty groups are skipped (no blank tabs)
-
-## Where it lives in code
-
-```text
-src/components/export/
-  ExportDialog.tsx           ← shared popup UI (scope/range/grouping)
-  exportEngine.ts            ← pure function: prospects[] + options → xlsx blob
-  groupProspects.ts          ← helpers: byMonth, byWeek, bySheet (IST)
-src/pages/profile/
-  ExportData.tsx             ← full-page entry, lazy-routed at /profile/export
+```
+┌─────────────────────────────────────────┐
+│  ⬇  Export Leads                    ✕  │
+│  Download all your leads as Excel.      │
+│                                         │
+│  HOW TO ORGANIZE                        │
+│  ◉ One file (all leads together)        │
+│  ○ Split by sheet           [PRO]       │
+│  ○ Split by month           [PRO]       │
+│                                         │
+│         [ Cancel ]  [ ⬇ Export Excel ]  │
+└─────────────────────────────────────────┘
 ```
 
-Wiring:
-- `src/components/prospects/SheetTabs.tsx` — replace direct `onExportSheet?.(null)` / `onExportSheet?.(sheet.id)` calls with `setExportTarget(...)` that opens `ExportDialog`.
-- `src/components/trackup/ExportFunnelData.tsx` — keep the existing simple export but add a "More export options →" link that opens the same dialog.
-- `src/pages/Profile.tsx` — add a new menu row "Export My Data" → navigates to `/profile/export`.
-- `src/App.tsx` — lazy route for `ExportData`.
+That is the entire UI. No date range. No "which leads" picker. Always exports **every lead the user has, all time**.
 
-## Data & gating
+### Behavior
 
-- Source: existing `prospects` table via `useGlobalProspects` (already loaded/cached). No new DB tables, no schema migration needed.
-- Sheet names: `useSheets`.
-- Pro check: `usePermissions().checkFeature('export_data')` for advanced options; free users still get the basic combined export.
-- IST-aware grouping (matches the project-wide IST standard): convert `date_added` to IST before bucketing into month/week.
+- **Free users**: only "One file" is selectable. The two PRO rows are visible but locked with a small PRO badge; clicking shows the upgrade nudge.
+- **Pro users**: all three options selectable. "Split by month" produces one tab per month (e.g. `Jun 2026`, `May 2026`, …), tabs ordered newest → oldest. Inside each tab, rows are sorted by `date_added` descending — that gives the "date-wise inside monthly" view the user described, no extra UI needed.
+- **Split by sheet**: one tab per existing sheet, plus an `Unassigned` tab if needed.
+- Filename: `Enarsia_Export_YYYY-MM-DD.xlsx`.
 
-## Technical notes
+### Entry points (unchanged surfaces, simpler dialog)
 
-- Use already-installed `xlsx` package (`SheetJS`) — same lib `ExportFunnelData` uses, no new deps.
-- "Last Response" derivation:
-  ```ts
-  const lastResponseAt = [p.action_taken_at, p.funnel_stage_at]
-    .filter(Boolean).sort().pop();
-  const lastResponse = lastResponseAt === p.action_taken_at
-    ? p.action_taken : p.funnel_stage;
-  ```
-- Week buckets: ISO weeks in IST, labeled `2026-W23 (Jun 1–7)`.
-- Month buckets: labeled `Jun 2026`.
-- Column widths reuse the existing widths from `ExportFunnelData.tsx`.
-- Toast progress + success count, same pattern as today.
-- No backend / no edge function changes.
+- **Profile → Export My Data** page: keep as-is, just opens the new dialog.
+- **Calling tab → Sheet menu**: keep "Quick Download" (current one-click per-sheet export) and "Custom Export…" which opens the same simplified dialog. No pre-scoping needed since the dialog always exports everything.
 
-## Out of scope (intentionally)
+### Correctness fixes
 
-- Auto-scheduled backups / email-the-file
-- CSV / PDF formats (xlsx only, matches current behavior)
-- Column picker UI
-- Importing exports back in (separate flow already exists)
+- Make sure the export pulls from `useGlobalProspects()` (all sheets, all leads) — not the currently filtered view. Verified `ExportData.tsx` already does this; confirm `SheetTabs` path also passes the global list, not the sheet-filtered list.
+- Include leads with no `date_added` in a `No Date` tab when splitting by month (so nothing is silently dropped).
+- Keep the existing column set + `Last Response` + `Last Response At (IST)`. No changes there.
+- Toast shows `Exported N leads across M tabs`.
 
-Once you approve, I'll switch to build mode and implement.
+### Files to change
+
+- `src/components/export/ExportDialog.tsx` — rewrite: remove scope selector, date-range grid, custom-range picker, week grouping. Keep only the 3 grouping radios with PRO gating.
+- `src/components/export/exportEngine.ts` — remove `scope`, `sheetIds`, `dateRange`, `week` grouping code paths. Add `No Date` bucket for month grouping. Keep combined / sheet / month only.
+- `src/pages/ExportData.tsx` — minor copy update to match.
+- `src/components/prospects/SheetTabs.tsx` — "Custom Export…" now just opens the dialog (no pre-scope prop needed).
+
+No backend, no schema, no new deps.
+
+### Out of scope
+
+Date range filters, week grouping, per-sheet multi-pick, column picker, CSV/PDF, scheduled backups.
