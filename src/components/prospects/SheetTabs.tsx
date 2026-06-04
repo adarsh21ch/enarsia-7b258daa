@@ -8,6 +8,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Plus, MoreVertical, Pencil, Trash2, FileSpreadsheet, CheckSquare, Trash, Download } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
+import { ExportDialog } from '@/components/export/ExportDialog';
 interface SheetTabsProps {
   sheets: Sheet[];
   selectedSheetId: string | null;
@@ -40,6 +41,7 @@ export function SheetTabs({
   const [newSheetName, setNewSheetName] = useState('');
   const [editingSheet, setEditingSheet] = useState<Sheet | null>(null);
   const [deleteAllConfirmSheet, setDeleteAllConfirmSheet] = useState<{id: string | null;name: string;} | null>(null);
+  const [exportDialogSheetId, setExportDialogSheetId] = useState<string | null | undefined>(undefined);
 
   // Refs for auto-scrolling to selected sheet
   const sheetRefs = useRef<Map<string, HTMLDivElement>>(new Map());
@@ -118,7 +120,11 @@ export function SheetTabs({
       <DropdownMenuContent align="end" className="bg-popover border-border z-50">
         <DropdownMenuItem onClick={() => onExportSheet?.(null)}>
           <Download className="h-3.5 w-3.5 mr-2" />
-          Download All
+          Quick Download (All)
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={() => setExportDialogSheetId(null)}>
+          <FileSpreadsheet className="h-3.5 w-3.5 mr-2" />
+          Custom Export…
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>;
@@ -191,7 +197,11 @@ export function SheetTabs({
                       </DropdownMenuItem>
                       <DropdownMenuItem onClick={() => onExportSheet?.(sheet.id)}>
                         <Download className="h-3.5 w-3.5 mr-2" />
-                        Download Sheet
+                        Quick Download Sheet
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => setExportDialogSheetId(sheet.id)}>
+                        <FileSpreadsheet className="h-3.5 w-3.5 mr-2" />
+                        Custom Export…
                       </DropdownMenuItem>
                       <DropdownMenuItem onClick={() => handleSelectAndDelete(sheet.id)}>
                         <CheckSquare className="h-3.5 w-3.5 mr-2" />
@@ -295,6 +305,12 @@ export function SheetTabs({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <ExportDialog
+        open={exportDialogSheetId !== undefined}
+        onOpenChange={(v) => { if (!v) setExportDialogSheetId(undefined); }}
+        initialSheetId={exportDialogSheetId ?? null}
+      />
     </>);
 
 }
