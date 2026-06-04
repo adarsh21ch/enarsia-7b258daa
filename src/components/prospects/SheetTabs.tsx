@@ -120,7 +120,11 @@ export function SheetTabs({
       <DropdownMenuContent align="end" className="bg-popover border-border z-50">
         <DropdownMenuItem onClick={() => onExportSheet?.(null)}>
           <Download className="h-3.5 w-3.5 mr-2" />
-          Download All
+          Quick Download (All)
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={() => setExportDialogSheetId(null)}>
+          <FileSpreadsheet className="h-3.5 w-3.5 mr-2" />
+          Custom Export…
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>;
