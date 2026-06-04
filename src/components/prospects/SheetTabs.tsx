@@ -197,7 +197,11 @@ export function SheetTabs({
                       </DropdownMenuItem>
                       <DropdownMenuItem onClick={() => onExportSheet?.(sheet.id)}>
                         <Download className="h-3.5 w-3.5 mr-2" />
-                        Download Sheet
+                        Quick Download Sheet
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => setExportDialogSheetId(sheet.id)}>
+                        <FileSpreadsheet className="h-3.5 w-3.5 mr-2" />
+                        Custom Export…
                       </DropdownMenuItem>
                       <DropdownMenuItem onClick={() => handleSelectAndDelete(sheet.id)}>
                         <CheckSquare className="h-3.5 w-3.5 mr-2" />
