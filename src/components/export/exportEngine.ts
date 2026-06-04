@@ -12,14 +12,56 @@ export interface ExportOptions {
   filenamePrefix?: string;
 }
 
+// Column order: identity first, then the most important signal (Last Response),
+// then contact details, then qualifiers, then meta. Empty columns are dropped per tab.
 const COLUMNS = [
-  'Name', 'Phone', 'Phone 2', 'Email', 'Age/DOB', 'Gender', 'Address',
-  'Sheet', 'Enrollment Status', 'Call Stage', 'Last Response',
-  'Last Response At (IST)', 'Notes', 'Priority', 'Quality',
-  'Profession', 'Instagram', 'Personal Tags', 'Date Added',
+  'S.No',
+  'Name',
+  'Last Response',
+  'Last Response At (IST)',
+  'Phone',
+  'Phone 2',
+  'Email',
+  'Age/DOB',
+  'Gender',
+  'Address',
+  'Profession',
+  'Instagram',
+  'Call Stage',
+  'Enrollment Status',
+  'Priority',
+  'Quality',
+  'Personal Tags',
+  'Notes',
+  'Sheet',
+  'Date Added',
 ];
 
-const COL_WIDTHS = [25, 15, 15, 22, 10, 8, 28, 18, 16, 18, 20, 18, 35, 10, 12, 18, 18, 22, 12];
+const COL_WIDTH: Record<string, number> = {
+  'S.No': 6,
+  'Name': 25,
+  'Last Response': 22,
+  'Last Response At (IST)': 20,
+  'Phone': 15,
+  'Phone 2': 15,
+  'Email': 24,
+  'Age/DOB': 10,
+  'Gender': 8,
+  'Address': 28,
+  'Profession': 18,
+  'Instagram': 18,
+  'Call Stage': 18,
+  'Enrollment Status': 16,
+  'Priority': 10,
+  'Quality': 12,
+  'Personal Tags': 22,
+  'Notes': 35,
+  'Sheet': 18,
+  'Date Added': 12,
+};
+
+// Columns we always keep even if empty across a tab, so structure stays predictable.
+const ALWAYS_KEEP = new Set(['S.No', 'Name', 'Last Response', 'Last Response At (IST)', 'Phone', 'Sheet', 'Date Added']);
 
 function lastResponse(p: Prospect): { label: string; at: string } {
   const candidates: { val?: string | null; at?: string | null }[] = [
