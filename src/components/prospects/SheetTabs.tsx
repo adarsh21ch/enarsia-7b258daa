@@ -305,6 +305,12 @@ export function SheetTabs({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <ExportDialog
+        open={exportDialogSheetId !== undefined}
+        onOpenChange={(v) => { if (!v) setExportDialogSheetId(undefined); }}
+        initialSheetId={exportDialogSheetId ?? null}
+      />
     </>);
 
 }
