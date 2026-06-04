@@ -3,14 +3,11 @@ import { format } from 'date-fns';
 import { toIST } from '@/lib/dateUtils';
 import type { Prospect, Sheet } from '@/types/prospect';
 
-export type GroupingMode = 'combined' | 'sheet' | 'month' | 'week';
+export type GroupingMode = 'combined' | 'sheet' | 'month';
 
 export interface ExportOptions {
   prospects: Prospect[];
   sheets: Sheet[];
-  scope: 'all' | 'sheets'; // 'sheets' uses sheetIds filter
-  sheetIds?: string[]; // when scope='sheets'
-  dateRange?: { from?: Date; to?: Date }; // inclusive
   grouping: GroupingMode;
   filenamePrefix?: string;
 }
@@ -65,117 +62,91 @@ function rowFor(p: Prospect, sheetName: string) {
 }
 
 function sanitizeTabName(name: string): string {
-  // Excel sheet names: <=31 chars, no : \ / ? * [ ]
-  return name.replace(/[:\\/\?\*\[\]]/g, '-').slice(0, 31) || 'Sheet';
+  return (name.replace(/[:\\/\?\*\[\]]/g, '-').slice(0, 31) || 'Sheet').trim() || 'Sheet';
 }
 
-function getISOWeekKey(date: Date): { key: string; label: string } {
-  const ist = toIST(date);
-  const d = new Date(Date.UTC(ist.getFullYear(), ist.getMonth(), ist.getDate()));
-  const dayNum = d.getUTCDay() || 7;
-  d.setUTCDate(d.getUTCDate() + 4 - dayNum);
-  const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
-  const weekNo = Math.ceil(((d.getTime() - yearStart.getTime()) / 86400000 + 1) / 7);
-  const key = `${d.getUTCFullYear()}-W${String(weekNo).padStart(2, '0')}`;
-  // Compute Monday of week for label
-  const monday = new Date(ist);
-  const day = ist.getDay() || 7;
-  monday.setDate(ist.getDate() - day + 1);
-  const sunday = new Date(monday);
-  sunday.setDate(monday.getDate() + 6);
-  const label = `${key} (${format(monday, 'MMM d')}–${format(sunday, 'MMM d')})`;
-  return { key, label };
-}
-
-function getMonthKey(date: Date): { key: string; label: string } {
-  const ist = toIST(date);
-  const key = format(ist, 'yyyy-MM');
-  const label = format(ist, 'MMM yyyy');
-  return { key, label };
+function dateDescSort<T extends { _ts: number }>(a: T, b: T) {
+  return b._ts - a._ts;
 }
 
 interface GroupBucket {
   key: string;
   label: string;
-  rows: Record<string, string>[];
+  sortKey: string;
+  rows: Array<Record<string, any> & { _ts: number }>;
 }
 
-function applyFilters(opts: ExportOptions): Prospect[] {
-  let arr = opts.prospects;
-  if (opts.scope === 'sheets' && opts.sheetIds && opts.sheetIds.length > 0) {
-    const set = new Set(opts.sheetIds);
-    arr = arr.filter((p) => p.sheet_id && set.has(p.sheet_id));
-  }
-  const from = opts.dateRange?.from ? new Date(opts.dateRange.from).getTime() : null;
-  const to = opts.dateRange?.to ? new Date(opts.dateRange.to).getTime() + 86400000 - 1 : null;
-  if (from !== null || to !== null) {
-    arr = arr.filter((p) => {
-      if (!p.date_added) return false;
-      const t = new Date(p.date_added).getTime();
-      if (from !== null && t < from) return false;
-      if (to !== null && t > to) return false;
-      return true;
-    });
-  }
-  return arr;
-}
 
-function group(opts: ExportOptions, filtered: Prospect[]): GroupBucket[] {
+function group(opts: ExportOptions): GroupBucket[] {
   const sheetNameById = new Map(opts.sheets.map((s) => [s.id, s.name]));
   const nameFor = (p: Prospect) => (p.sheet_id ? sheetNameById.get(p.sheet_id) || 'Unassigned' : 'Unassigned');
+  const tsFor = (p: Prospect) => (p.date_added ? new Date(p.date_added).getTime() : 0);
+
+  const makeRow = (p: Prospect) => ({ ...rowFor(p, nameFor(p)), _ts: tsFor(p) });
 
   if (opts.grouping === 'combined') {
-    return [{
-      key: 'all',
-      label: 'All Leads',
-      rows: filtered.map((p) => rowFor(p, nameFor(p))),
-    }];
+    const rows = opts.prospects.map(makeRow).sort(dateDescSort);
+    return [{ key: 'all', label: 'All Leads', sortKey: '0', rows }];
   }
 
   const map = new Map<string, GroupBucket>();
-  for (const p of filtered) {
+  for (const p of opts.prospects) {
     let key: string;
     let label: string;
+    let sortKey: string;
     if (opts.grouping === 'sheet') {
       key = p.sheet_id || 'unassigned';
       label = nameFor(p);
-    } else if (opts.grouping === 'month') {
-      const d = p.date_added ? new Date(p.date_added) : new Date();
-      const g = getMonthKey(d);
-      key = g.key; label = g.label;
+      sortKey = label.toLowerCase();
     } else {
-      const d = p.date_added ? new Date(p.date_added) : new Date();
-      const g = getISOWeekKey(d);
-      key = g.key; label = g.label;
+      // month
+      if (!p.date_added) {
+        key = 'no-date';
+        label = 'No Date';
+        sortKey = '0000-00';
+      } else {
+        const ist = toIST(new Date(p.date_added));
+        key = format(ist, 'yyyy-MM');
+        label = format(ist, 'MMM yyyy');
+        sortKey = key;
+      }
     }
-    if (!map.has(key)) map.set(key, { key, label, rows: [] });
-    map.get(key)!.rows.push(rowFor(p, nameFor(p)));
+    if (!map.has(key)) map.set(key, { key, label, sortKey, rows: [] });
+    map.get(key)!.rows.push(makeRow(p));
   }
 
   const buckets = Array.from(map.values());
+  for (const b of buckets) b.rows.sort(dateDescSort);
+
   if (opts.grouping === 'sheet') {
-    buckets.sort((a, b) => a.label.localeCompare(b.label));
+    buckets.sort((a, b) => a.sortKey.localeCompare(b.sortKey));
   } else {
-    buckets.sort((a, b) => a.key.localeCompare(b.key));
+    // month: newest first; push "no-date" last
+    buckets.sort((a, b) => {
+      if (a.key === 'no-date') return 1;
+      if (b.key === 'no-date') return -1;
+      return b.sortKey.localeCompare(a.sortKey);
+    });
   }
   return buckets;
 }
 
 export function runExport(opts: ExportOptions): { count: number; bucketCount: number } {
-  const filtered = applyFilters(opts);
-  if (filtered.length === 0) {
-    return { count: 0, bucketCount: 0 };
-  }
+  if (opts.prospects.length === 0) return { count: 0, bucketCount: 0 };
 
-  const buckets = group(opts, filtered).filter((b) => b.rows.length > 0);
+  const buckets = group(opts).filter((b) => b.rows.length > 0);
   const wb = XLSX.utils.book_new();
   const usedNames = new Set<string>();
+  let total = 0;
 
   for (const bucket of buckets) {
-    const headerRow1 = [`${bucket.label} — ${bucket.rows.length} leads`];
+    const cleanRows = bucket.rows.map(({ _ts, ...rest }) => rest);
+    total += cleanRows.length;
+
+    const headerRow1 = [`${bucket.label} — ${cleanRows.length} leads`];
     const headerRow2 = [`Exported: ${format(toIST(new Date()), 'dd MMM yyyy HH:mm')} IST`];
     const ws = XLSX.utils.aoa_to_sheet([headerRow1, headerRow2, [], COLUMNS]);
-    XLSX.utils.sheet_add_json(ws, bucket.rows, {
+    XLSX.utils.sheet_add_json(ws, cleanRows, {
       header: COLUMNS,
       origin: 'A5',
       skipHeader: true,
@@ -195,9 +166,8 @@ export function runExport(opts: ExportOptions): { count: number; bucketCount: nu
 
   const prefix = opts.filenamePrefix || 'Enarsia_Export';
   const dateStr = format(new Date(), 'yyyy-MM-dd');
-  const grpTag = opts.grouping === 'combined' ? 'All' : `by-${opts.grouping}`;
-  const filename = `${prefix}_${dateStr}_${grpTag}.xlsx`;
+  const filename = `${prefix}_${dateStr}.xlsx`;
   XLSX.writeFile(wb, filename);
 
-  return { count: filtered.length, bucketCount: buckets.length };
+  return { count: total, bucketCount: buckets.length };
 }
