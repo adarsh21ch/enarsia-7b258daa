@@ -72,9 +72,10 @@ function dateDescSort<T extends { _ts: number }>(a: T, b: T) {
 interface GroupBucket {
   key: string;
   label: string;
-  sortKey: string; // for ordering buckets
-  rows: (Record<string, string> & { _ts: number })[];
+  sortKey: string;
+  rows: Array<Record<string, any> & { _ts: number }>;
 }
+
 
 function group(opts: ExportOptions): GroupBucket[] {
   const sheetNameById = new Map(opts.sheets.map((s) => [s.id, s.name]));
