@@ -8,6 +8,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Plus, MoreVertical, Pencil, Trash2, FileSpreadsheet, CheckSquare, Trash, Download } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
+import { ExportDialog } from '@/components/export/ExportDialog';
 interface SheetTabsProps {
   sheets: Sheet[];
   selectedSheetId: string | null;
@@ -40,6 +41,7 @@ export function SheetTabs({
   const [newSheetName, setNewSheetName] = useState('');
   const [editingSheet, setEditingSheet] = useState<Sheet | null>(null);
   const [deleteAllConfirmSheet, setDeleteAllConfirmSheet] = useState<{id: string | null;name: string;} | null>(null);
+  const [exportDialogSheetId, setExportDialogSheetId] = useState<string | null | undefined>(undefined);
 
   // Refs for auto-scrolling to selected sheet
   const sheetRefs = useRef<Map<string, HTMLDivElement>>(new Map());
