@@ -50,6 +50,7 @@ const Notes = lazy(() => import("./pages/Notes"));
 const NoteEditor = lazy(() => import("./pages/NoteEditor"));
 const TrackingFormat = lazy(() => import("./pages/TrackingFormat"));
 const RecentlyDeleted = lazy(() => import("./pages/RecentlyDeleted"));
+const ExportData = lazy(() => import("./pages/ExportData"));
 // Content Creator mode tabs
 const CreatorIdeas = lazy(() => import("./pages/creator/Ideas"));
 const CreatorStudio = lazy(() => import("./pages/creator/Studio"));
@@ -159,6 +160,7 @@ function App() {
                         <Route path="/notes/:id" element={<NoteEditor />} />
                         <Route path="/tracking-format" element={<TrackingFormat />} />
                         <Route path="/recently-deleted" element={<RecentlyDeleted />} />
+                        <Route path="/profile/export" element={<ExportData />} />
                         <Route path="/ideas" element={<CreatorIdeas />} />
                         <Route path="/studio" element={<CreatorStudio />} />
                         <Route path="/calendar" element={<CreatorCalendar />} />
