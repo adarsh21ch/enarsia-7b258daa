@@ -515,6 +515,21 @@ export default function Profile() {
           {/* Notifications Toggle */}
           <NotificationToggle canSendTest={isAdmin} />
 
+          {/* Export My Data */}
+          <button
+            onClick={() => navigate('/profile/export')}
+            className="w-full rounded-xl px-4 py-2 bg-card border border-border/50 flex items-center justify-between transition-colors hover:bg-muted/50"
+          >
+            <div className="flex items-center gap-2.5">
+              <FileText className="h-4 w-4 text-primary" />
+              <div className="flex flex-col items-start">
+                <span className="font-medium text-sm">Export My Data</span>
+                <span className="text-[11px] text-muted-foreground">Download leads by month, week, or sheet</span>
+              </div>
+            </div>
+            <ChevronRight className="h-3.5 w-3.5 text-muted-foreground" />
+          </button>
+
           {/* Recently Deleted */}
           <RecentlyDeletedRow />
           </div>{/* end Account */}
