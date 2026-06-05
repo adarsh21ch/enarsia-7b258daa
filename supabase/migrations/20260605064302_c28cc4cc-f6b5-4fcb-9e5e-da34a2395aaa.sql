@@ -1,0 +1,1 @@
+CREATE POLICY "Users can insert their own free subscription" ON public.user_subscriptions FOR INSERT TO authenticated WITH CHECK (auth.uid() = user_id AND plan = 'free' AND COALESCE(is_admin_override, false) = false);
