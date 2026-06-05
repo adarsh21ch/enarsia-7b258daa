@@ -75,6 +75,11 @@ export default function Tracking() {
     setDataMode, setViewType, setViewMode,
   } = useTrackingModes();
 
+  // Mobile single-user view: force Personal mode (Total is for team/upline only)
+  useEffect(() => {
+    if (dataMode !== 'personal') setDataMode('personal');
+  }, [dataMode, setDataMode]);
+
   // Tracking format (tags from leader/own)
   const {
     leadsTrackingTags, stageTags, leadsTrackingTagNames, stageTagNames,
@@ -218,7 +223,7 @@ export default function Tracking() {
             <div className="flex items-center gap-2">
               <BarChart3 className="h-4 w-4 text-primary" />
               <h3 className="text-sm font-semibold text-foreground">
-                {dataMode === 'personal' ? 'Personal Activity' : 'Total Activity'}
+                Activity
               </h3>
               <TooltipProvider>
                 <Tooltip>
