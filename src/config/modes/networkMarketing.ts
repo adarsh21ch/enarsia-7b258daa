@@ -16,7 +16,7 @@ export const networkMarketingMode: AppMode = {
     { path: '/dashboard', label: 'Calling', iconKey: 'calling', onboardingId: 'nav-calling' },
     { path: '/listup', label: 'Follow-Up', iconKey: 'followup', onboardingId: 'nav-followup' },
     { path: '/action', label: 'To-Do', iconKey: 'todo', onboardingId: 'nav-todo' },
-    { path: '/tracking', label: 'TrackUp', iconKey: 'trackup', onboardingId: 'nav-trackup' },
+    { path: '/tracking', label: 'Tracking', iconKey: 'trackup', onboardingId: 'nav-trackup' },
     { path: '/profile', label: 'Profile', iconKey: 'profile', isProfile: true, onboardingId: 'nav-profile' },
   ],
   terms: {
@@ -26,7 +26,7 @@ export const networkMarketingMode: AppMode = {
     lead: 'Lead',
     team: 'Team',
     primaryAction: 'Calling',
-    tracker: 'TrackUp',
+    tracker: 'Tracking',
     tagline: 'Your personal CRM for network marketers.',
   },
   aiPersona: 'network_marketing',

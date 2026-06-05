@@ -18,7 +18,7 @@ const START_OPTIONS = [
   { value: '0', label: 'Beginning (Step 0 — Welcome screen)' },
   { value: '3', label: 'Step 3 — Lead profile & tagging' },
   { value: '6', label: 'Step 6 — Follow-Up activity' },
-  { value: '9', label: 'Step 9 — TrackUp numbers' },
+  { value: '9', label: 'Step 9 — Tracking numbers' },
   { value: '11', label: 'Completion screen' },
 ];
 

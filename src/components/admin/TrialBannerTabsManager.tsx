@@ -13,7 +13,7 @@ const ALL_TABS = [
   { id: 'listup', label: 'Follow-Up (ListUp)', description: 'Follow-up prospects view' },
   { id: 'profile', label: 'Profile', description: 'User profile page' },
   { id: 'todoup', label: 'To-Do', description: 'Todo tasks page' },
-  { id: 'tracking', label: 'TrackUp', description: 'Tracking analytics page' },
+  { id: 'tracking', label: 'Tracking', description: 'Tracking analytics page' },
 ];
 
 export function TrialBannerTabsManager() {

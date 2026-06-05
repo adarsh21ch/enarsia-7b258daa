@@ -80,7 +80,7 @@ const TOUR_STEPS: Record<number, TourStep> = {
     autoAction: 'none',
   },
   10: {
-    title: 'TrackUp — Your Performance',
+    title: 'Tracking — Your Performance',
     description: 'See your daily stats — leads added, calls made, enrolments done. Track your progress every day.',
     selector: '[data-onboarding="nav-trackup"]',
     navigateTo: '/listup',
