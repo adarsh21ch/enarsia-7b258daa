@@ -48,19 +48,19 @@ export function MonthlyTotalsTable({
             ))}
           </colgroup>
           <thead>
-            <tr>
-              <th className="sticky left-0 z-10 bg-accent text-accent-foreground px-2 py-2 text-left font-semibold whitespace-nowrap">Month</th>
+            <tr className="bg-muted/60 border-b border-border">
+              <th className="sticky left-0 z-10 bg-muted/60 text-muted-foreground px-2 py-2 text-left font-semibold whitespace-nowrap uppercase tracking-wider text-[10px]">Month</th>
               {allTags.map((tag) => (
-                <th key={tag.label} className="bg-accent text-accent-foreground px-2 py-2 text-center font-semibold whitespace-nowrap">{tag.label}</th>
+                <th key={tag.label} className="bg-muted/60 text-muted-foreground px-2 py-2 text-center font-semibold whitespace-nowrap uppercase tracking-wider text-[10px]">{tag.label}</th>
               ))}
             </tr>
           </thead>
           <tbody>
-            <tr className="border-t border-border/30">
-              <td className="sticky left-0 z-10 bg-accent text-accent-foreground px-2 py-2 font-medium whitespace-nowrap overflow-hidden text-ellipsis">{monthLabel}</td>
+            <tr className="border-t border-border/40">
+              <td className="sticky left-0 z-10 bg-card text-foreground px-2 py-2 font-medium whitespace-nowrap overflow-hidden text-ellipsis">{monthLabel}</td>
               {allTags.map((tag) => (
-                <td key={tag.label} className={cn('px-2 py-2 text-center', tag.value > 0 ? 'text-foreground font-medium' : 'text-muted-foreground')}>
-                  {formatTrackingValue(tag.value)}
+                <td key={tag.label} className={cn('px-2 py-2 text-center', tag.value > 0 ? 'text-primary font-semibold' : 'text-muted-foreground/60')}>
+                  {tag.value > 0 ? formatTrackingValue(tag.value) : '–'}
                 </td>
               ))}
             </tr>

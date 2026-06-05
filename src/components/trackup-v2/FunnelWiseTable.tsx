@@ -87,30 +87,30 @@ export function FunnelWiseTable({
             <col style={{ width: '52px' }} />
           </colgroup>
           <thead>
-            <tr className="bg-accent text-accent-foreground">
-              <th className="sticky left-0 z-10 bg-accent text-accent-foreground px-2 py-2 text-left font-semibold whitespace-nowrap">Stage</th>
+            <tr className="bg-muted/60 border-b border-border">
+              <th className="sticky left-0 z-10 bg-muted/60 text-muted-foreground px-2 py-2 text-left font-semibold whitespace-nowrap uppercase tracking-wider text-[10px]">Stage</th>
               {funnelPeriods.map((period, index) => (
-                <th key={period.label} className="px-2 py-2 text-center font-semibold min-w-[80px]">
+                <th key={period.label} className="px-2 py-2 text-center font-semibold min-w-[80px] text-muted-foreground">
                   <div className="font-bold text-[11px]">Funnel {index + 1}</div>
-                  <div className="text-[10px] text-accent-foreground/70 font-normal">({formatDateRange(period.startDate, period.endDate)})</div>
+                  <div className="text-[10px] opacity-70 font-normal">({formatDateRange(period.startDate, period.endDate)})</div>
                 </th>
               ))}
-              <th className="px-2 py-2 text-center font-semibold bg-accent/90 text-accent-foreground">Total</th>
+              <th className="px-2 py-2 text-center font-semibold bg-muted text-foreground uppercase tracking-wider text-[10px]">Total</th>
             </tr>
           </thead>
           <tbody>
             {stageTagNames.map((stageName) => (
-              <tr key={stageName} className="border-t border-border/30">
-                <td className="sticky left-0 z-10 bg-accent text-accent-foreground px-2 py-2 font-medium whitespace-nowrap overflow-hidden text-ellipsis">{stageName}</td>
+              <tr key={stageName} className="border-t border-border/40">
+                <td className="sticky left-0 z-10 bg-card text-foreground px-2 py-2 font-medium whitespace-nowrap overflow-hidden text-ellipsis">{stageName}</td>
                 {funnelPeriods.map((period) => {
                   const val = period.stageTotals[stageName] ?? 0;
                   return (
-                    <td key={period.label} className={cn('px-2 py-2 text-center', val > 0 ? 'text-foreground font-medium' : 'text-muted-foreground')}>
-                      {formatTrackingValue(val)}
+                    <td key={period.label} className={cn('px-2 py-2 text-center', val > 0 ? 'text-primary font-semibold' : 'text-muted-foreground/60')}>
+                      {val > 0 ? formatTrackingValue(val) : '–'}
                     </td>
                   );
                 })}
-                <td className="px-2 py-2 text-center font-semibold bg-accent text-accent-foreground">
+                <td className="px-2 py-2 text-center font-semibold bg-muted/70 text-foreground">
                   {formatTrackingValue(stageTotalsAll[stageName] ?? 0)}
                 </td>
               </tr>
