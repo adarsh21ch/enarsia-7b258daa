@@ -217,7 +217,7 @@ const GUIDE_SECTIONS: GuideSection[] = [
         <FeatureHighlight features={[
           { icon: Phone, label: 'Follow Up' },
           { icon: List, label: 'ListUp' },
-          { icon: BarChart3, label: 'TrackUp' },
+          { icon: BarChart3, label: 'Tracking' },
           { icon: CheckSquare, label: 'TodoUp' },
         ]} />
         <h4 className="font-medium text-sm">First Steps</h4>
@@ -331,7 +331,7 @@ const GUIDE_SECTIONS: GuideSection[] = [
   },
   {
     id: 'trackup-tab',
-    title: 'TrackUp Tab',
+    title: 'Tracking Tab',
     icon: BarChart3,
     content: (
       <div className="space-y-3">
@@ -362,17 +362,17 @@ const GUIDE_SECTIONS: GuideSection[] = [
   },
   {
     id: 'trackup-dashboard',
-    title: 'TrackUp Dashboard (Team View)',
+    title: 'Team Tracking Dashboard (Team View)',
     icon: LayoutDashboard,
     content: (
       <div className="space-y-3">
         <p className="text-sm text-muted-foreground">
-          View your team's tracking data and analytics in one place. The TrackUp Dashboard is available on the website for a full-screen experience.
+          View your team's tracking data and analytics in one place. The Team Tracking Dashboard is available on the website for a full-screen experience.
         </p>
         
-        <h4 className="font-medium text-sm">What is TrackUp Dashboard?</h4>
+        <h4 className="font-medium text-sm">What is Team Tracking Dashboard?</h4>
         <p className="text-sm text-muted-foreground">
-          TrackUp Dashboard shows your team's combined tracking data including leads, responses, and funnel stages. Leaders can see their entire team's progress at a glance.
+          Team Tracking Dashboard shows your team's combined tracking data including leads, responses, and funnel stages. Leaders can see their entire team's progress at a glance.
         </p>
         <FeatureHighlight features={[
           { icon: Users, label: 'Team View' },
@@ -384,7 +384,7 @@ const GUIDE_SECTIONS: GuideSection[] = [
         <StepList
           steps={[
             'Go to Profile tab',
-            'Find "TrackUp Dashboard" button',
+            'Find "Team Tracking Dashboard" button',
             'Tap to open the dashboard in your browser',
             'You\'ll be automatically logged in',
           ]}
@@ -392,15 +392,15 @@ const GUIDE_SECTIONS: GuideSection[] = [
 
         <div className="p-3 rounded-lg bg-primary/5 border border-primary/20 my-3">
           <p className="text-sm text-muted-foreground mb-2">
-            <strong>Access TrackUp Dashboard on website:</strong>
+            <strong>Access Team Tracking Dashboard on website:</strong>
           </p>
           <ExternalLinkButton href="https://nevorai.com/trackup">
-            Open TrackUp Dashboard
+            Open Team Tracking Dashboard
           </ExternalLinkButton>
         </div>
 
         <TipBox>
-          Use TrackUp Dashboard for team meetings and reviews - it provides a comprehensive view of everyone's progress!
+          Use Team Tracking Dashboard for team meetings and reviews - it provides a comprehensive view of everyone's progress!
         </TipBox>
       </div>
     ),
@@ -486,7 +486,7 @@ const GUIDE_SECTIONS: GuideSection[] = [
         
         <h4 className="font-medium text-sm">Tracking Tags (Leader's Tags)</h4>
         <p className="text-sm text-muted-foreground">
-          These are the main tags that appear in your TrackUp analytics. If you're connected to an upline leader, you'll use their tracking tags for team-wide consistency.
+          These are the main tags that appear in your Tracking analytics. If you're connected to an upline leader, you'll use their tracking tags for team-wide consistency.
         </p>
         <ul className="list-disc list-inside text-sm text-muted-foreground space-y-1 ml-2">
           <li><strong>Leads Tags:</strong> Response statuses like "Not picked", "Video send", "Enrolment"</li>
@@ -564,7 +564,7 @@ const GUIDE_SECTIONS: GuideSection[] = [
         </p>
 
         <TipBox>
-          After connecting, you can use the TrackUp Dashboard to view combined team tracking data!
+          After connecting, you can use the Team Tracking Dashboard to view combined team tracking data!
         </TipBox>
       </div>
     ),
@@ -581,7 +581,7 @@ const GUIDE_SECTIONS: GuideSection[] = [
             'Start each day in ListUp to see pending follow-ups',
             'Make calls and update statuses immediately in Follow Up tab',
             'Add notes during/after calls for future reference',
-            'Check TrackUp tab at end of day to see progress',
+            'Check Tracking tab at end of day to see progress',
           ]}
         />
 

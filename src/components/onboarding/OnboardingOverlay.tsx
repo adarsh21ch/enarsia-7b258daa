@@ -80,9 +80,9 @@ const STEPS: Record<number, StepDef> = {
   },
   8: {
     icon: <BarChart2 className="h-5 w-5 text-[#1FA37A]" />,
-    title: 'Open TrackUp',
-    description: 'TrackUp shows your daily performance numbers and tracking history.',
-    actionHint: 'Tap TrackUp in the bottom menu',
+    title: 'Open Tracking',
+    description: 'Tracking shows your daily performance numbers and tracking history.',
+    actionHint: 'Tap Tracking in the bottom menu',
     selector: '[data-onboarding="nav-trackup"]',
     navigateTo: '/listup',
   },

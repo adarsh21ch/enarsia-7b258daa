@@ -89,7 +89,7 @@ const STEP_LABELS = [
   'Follow-Up activity',
   'Prospects view',
   'To-Do task',
-  'TrackUp numbers',
+  'Tracking numbers',
   'Profile tools',
   'Completion screen',
 ];

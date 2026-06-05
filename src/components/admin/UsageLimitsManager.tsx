@@ -43,7 +43,7 @@ const SETTING_META: Record<string, LimitSettingMeta> = {
     isBoolean: true,
     onEnabled: 'Free users can only view recent data (based on Allowed Past Days below)',
     onDisabled: 'Free users can view ALL historical data',
-    tooltip: 'This setting applies only to Free users. When ON, past date data in TrackUp is locked behind an upgrade wall. Pro and Trial users always have full access.',
+    tooltip: 'This setting applies only to Free users. When ON, past date data in Tracking is locked behind an upgrade wall. Pro and Trial users always have full access.',
   },
   allowed_past_days: {
     title: 'Free Users: Allowed Past Data Days',
@@ -51,7 +51,7 @@ const SETTING_META: Record<string, LimitSettingMeta> = {
     kind: 'LIMIT',
     onEnabled: 'Free users can view the last X days of data',
     onDisabled: 'Historical restriction is inactive (all data visible)',
-    tooltip: 'This setting applies only to Free users. Controls how many days back a Free user can see in TrackUp. Only works when "Limit Historical Data Access" is ON.',
+    tooltip: 'This setting applies only to Free users. Controls how many days back a Free user can see in Tracking. Only works when "Limit Historical Data Access" is ON.',
     valueHint: '0 = today only, 7 = last 7 days, 30 = last 30 days',
   },
 

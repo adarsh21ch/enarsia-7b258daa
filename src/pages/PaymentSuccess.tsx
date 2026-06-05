@@ -181,7 +181,7 @@ export default function PaymentSuccess() {
               <ul className="text-sm text-muted-foreground space-y-1">
                 {(planScope === 'app' || planScope === 'combined') && (
                   <>
-                    <li>✓ TrackUp - Funnel & Leads Tracker</li>
+                    <li>✓ Tracking - Funnel & Leads Tracker</li>
                     <li>✓ ActionUp - Activity Center</li>
                     <li>✓ Advanced Analytics</li>
                   </>

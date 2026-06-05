@@ -20,7 +20,7 @@ export function TierCard({ tierName = 'Pro', plans, selectedPlanKey, onSelectPla
 
   const defaultFeatures = [
     'Full Application Access (Calling + Follow-up)',
-    'TrackUp Dashboard (Advanced Tracking)',
+    'Team Tracking Dashboard (Advanced Tracking)',
     'Higher Limits & Productivity Tools',
     'Faster Workflow & Automation',
     'Best for individual network marketers.',

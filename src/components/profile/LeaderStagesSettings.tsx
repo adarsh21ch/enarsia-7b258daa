@@ -269,7 +269,7 @@ export function LeaderStagesSettings({
         </div>
         
         <p className="text-xs text-muted-foreground">
-          Tracking tags are used in your Calling List (Response column) and Sales Stages to follow each lead's progress. Custom tags are your own temporary labels and are not included in TrackUp totals.
+          Tracking tags are used in your Calling List (Response column) and Sales Stages to follow each lead's progress. Custom tags are your own temporary labels and are not included in Tracking totals.
         </p>
 
         <RadioGroup 
