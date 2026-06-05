@@ -26,7 +26,7 @@ export const networkMarketingMode: AppMode = {
     lead: 'Lead',
     team: 'Team',
     primaryAction: 'Calling',
-    tracker: 'TrackUp',
+    tracker: 'Tracking',
     tagline: 'Your personal CRM for network marketers.',
   },
   aiPersona: 'network_marketing',
