@@ -143,7 +143,7 @@ export default function Tracking() {
           <div className="flex items-center gap-2.5">
             <img src={nevoraLogo} alt="Enarsia Logo" className="h-9 w-9 rounded-xl object-cover shadow-sm" />
             <div>
-              <h1 className="text-lg font-bold tracking-tight">Track Up</h1>
+              <h1 className="text-lg font-bold tracking-tight">Tracking</h1>
               <p className="text-[11px] text-muted-foreground font-medium">Track Your Numbers</p>
             </div>
           </div>
@@ -176,21 +176,15 @@ export default function Tracking() {
           </div>
         </div>
 
-        {/* Mode selectors */}
+        {/* Mode selectors — Personal/Total hidden on mobile (single-user view); only Leads/Funnel shown */}
         <div className="px-4 pb-3">
           <ModeSelectors
             dataMode={dataMode}
             viewType={viewType}
             onDataModeChange={setDataMode}
             onViewTypeChange={setViewType}
+            hidePersonalTotal
           />
-        </div>
-
-        {/* Active mode status strip */}
-        <div className="flex items-center gap-2 text-[10px] text-muted-foreground px-4 pb-2">
-          <span>Personal: {personalSource === 'AUTO' ? 'Automatic' : 'Manual'}</span>
-          <span className="text-border">|</span>
-          <span>Total: {teamSource === 'AUTO' ? 'Automatic' : 'Manual'}</span>
         </div>
       </header>
 
