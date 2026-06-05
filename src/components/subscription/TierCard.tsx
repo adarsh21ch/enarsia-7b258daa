@@ -15,8 +15,7 @@ interface TierCardProps {
 export function TierCard({ tierName = 'Pro', plans, selectedPlanKey, onSelectPlan, compact = false }: TierCardProps) {
   const sortedPlans = [...plans].sort((a, b) => a.sortOrder - b.sortOrder);
 
-  const getDailyPrice = (plan: PlanConfig) => Math.round(plan.price / plan.durationDays);
-  const lowestDailyPrice = Math.min(...sortedPlans.map(p => Math.round(p.price / p.durationDays)));
+  const selectedPlan = sortedPlans.find(p => p.plan_key === selectedPlanKey) || sortedPlans[0];
 
   const defaultFeatures = [
     'Full Application Access (Calling + Follow-up)',
@@ -44,6 +43,12 @@ export function TierCard({ tierName = 'Pro', plans, selectedPlanKey, onSelectPla
     return `/${months} months`;
   };
 
+  const getMonthlyEquivalent = (plan: PlanConfig) => {
+    const months = Math.round(plan.durationDays / 30);
+    if (months <= 1) return null;
+    return Math.round(plan.price / months);
+  };
+
   return (
     <div className="rounded-2xl border border-[hsl(36,80%,80%)] dark:border-[hsl(36,50%,30%)] bg-card overflow-hidden">
       {/* Light premium header */}
@@ -54,8 +59,8 @@ export function TierCard({ tierName = 'Pro', plans, selectedPlanKey, onSelectPla
             <h4 className="font-bold text-sm text-white tracking-wide">{tierName}</h4>
           </div>
           <div className="flex items-center gap-1">
-            <span className="text-lg font-extrabold text-white">₹{sortedPlans[0]?.price ?? ''}</span>
-            <span className="text-xs text-white/80 font-medium">{getBillingLabel(sortedPlans[0])}</span>
+            <span className="text-lg font-extrabold text-white">₹{selectedPlan?.price ?? sortedPlans[0]?.price ?? ''}</span>
+            <span className="text-xs text-white/80 font-medium">{selectedPlan ? getBillingLabel(selectedPlan) : getBillingLabel(sortedPlans[0])}</span>
           </div>
         </div>
       </div>
@@ -77,11 +82,11 @@ export function TierCard({ tierName = 'Pro', plans, selectedPlanKey, onSelectPla
         <div className={`grid gap-2 ${sortedPlans.length <= 3 ? `grid-cols-${sortedPlans.length}` : 'grid-cols-3'}`}>
           {sortedPlans.map((plan) => {
             const isSelected = selectedPlanKey === plan.plan_key;
-            const dailyPrice = getDailyPrice(plan);
             const renewal = plan.renewalPrice ?? plan.price;
             const first = plan.firstMonthPrice ?? null;
             const hasIntro = typeof first === 'number' && first > 0 && first < renewal;
             const introBadge = plan.offerBadgeText || plan.badgeText;
+            const monthlyEq = getMonthlyEquivalent(plan);
 
             return (
               <button
@@ -111,9 +116,15 @@ export function TierCard({ tierName = 'Pro', plans, selectedPlanKey, onSelectPla
                   <span className="text-[9px] text-muted-foreground mt-0.5 leading-tight">
                     then ₹{renewal}{getBillingLabel(plan)}
                   </span>
+                ) : monthlyEq ? (
+                  <span className={`text-[9px] mt-0.5 leading-tight font-semibold ${
+                    isSelected ? 'text-[hsl(36,75%,40%)] dark:text-[hsl(36,80%,65%)]' : 'text-muted-foreground'
+                  }`}>
+                    ₹{monthlyEq}/month
+                  </span>
                 ) : (
                   <span className="text-[9px] text-muted-foreground mt-0.5 leading-tight">
-                    ₹{dailyPrice}/day
+                    Billed monthly
                   </span>
                 )}
               </button>
