@@ -76,11 +76,11 @@ export function SummaryTable({
             ))}
           </colgroup>
           <thead>
-            <tr className="bg-accent text-accent-foreground">
-              <th className="sticky left-0 z-10 bg-accent text-accent-foreground px-2 py-2 text-left font-semibold whitespace-nowrap">Metric</th>
+            <tr className="bg-muted/60 border-b border-border">
+              <th className="sticky left-0 z-10 bg-muted/60 text-muted-foreground px-2 py-2 text-left font-semibold whitespace-nowrap uppercase tracking-wider text-[10px]">Metric</th>
               {dailyMetrics.map((m) => (
-                <th key={m.date} className={cn('px-2 py-2 text-center font-medium min-w-[48px]', m.isToday && 'bg-accent/80')}>
-                  <div className="text-[10px] text-accent-foreground/70">{m.dayOfWeek}</div>
+                <th key={m.date} className={cn('px-2 py-2 text-center font-medium min-w-[48px] text-muted-foreground', m.isToday && 'bg-primary/10 text-primary')}>
+                  <div className="text-[10px] opacity-70">{m.dayOfWeek}</div>
                   <div className="font-semibold">{m.dateLabel.split(' ')[1]}</div>
                 </th>
               ))}
@@ -88,11 +88,11 @@ export function SummaryTable({
           </thead>
           <tbody>
             {metricRows.map((row) => (
-              <tr key={row.label} className="border-t border-border/30">
-                <td className="sticky left-0 z-10 bg-accent text-accent-foreground px-2 py-2 font-medium whitespace-nowrap overflow-hidden text-ellipsis">{row.label}</td>
+              <tr key={row.label} className="border-t border-border/40">
+                <td className="sticky left-0 z-10 bg-card text-foreground px-2 py-2 font-medium whitespace-nowrap overflow-hidden text-ellipsis">{row.label}</td>
                 {row.values.map((val, i) => (
-                  <td key={i} className={cn('px-2 py-2 text-center', dailyMetrics[i]?.isToday && 'bg-accent/10', val > 0 ? 'text-foreground font-medium' : 'text-muted-foreground')}>
-                    {formatTrackingValue(val)}
+                  <td key={i} className={cn('px-2 py-2 text-center', dailyMetrics[i]?.isToday && 'bg-primary/5', val > 0 ? 'text-primary font-semibold' : 'text-muted-foreground/60')}>
+                    {val > 0 ? formatTrackingValue(val) : '–'}
                   </td>
                 ))}
               </tr>
