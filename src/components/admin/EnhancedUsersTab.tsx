@@ -268,36 +268,57 @@ export function EnhancedUsersTab({ headerPlanFilter }: EnhancedUsersTabProps) {
 
   const handleGrantPlan = async (user: EnhancedUser, tier: string, durationDays: number) => {
     const tierDisplayName = getTierDisplayName(tier as InternalTier);
+    let granted = false;
     try {
-      const { error } = await supabase.functions.invoke('admin-update-subscription', {
+      const { data, error } = await supabase.functions.invoke('admin-update-subscription', {
         body: { user_id: user.user_id, plan: 'pro', tier, duration_days: durationDays },
       });
-      if (error) throw error;
-      await logAdminAction('user_plan_granted', 'user', user.user_id, { plan: user.plan, tier: user.tier }, { plan: 'pro', tier, duration_days: durationDays }, `Granted ${tierDisplayName} access to ${user.email || user.user_id} for ${durationDays} days`);
-      await fetchUsers();
-      queryClient.invalidateQueries({ queryKey: ['admin-analytics'] });
-      toast.success(`${tierDisplayName} access granted`);
+      // Success when the function returned success:true, regardless of any
+      // transient SDK-level error from a flaky parse.
+      if ((data as any)?.success) {
+        granted = true;
+      } else if (error) {
+        throw error;
+      } else {
+        throw new Error((data as any)?.error || 'Unknown error');
+      }
     } catch (err) {
       console.error('Failed to grant plan:', err);
       toast.error(`Failed to grant ${tierDisplayName} access`);
+      return;
     }
+
+    // Post-success side effects — never fail the grant if these throw.
+    toast.success(`${tierDisplayName} access granted`);
+    try {
+      await logAdminAction('user_plan_granted', 'user', user.user_id, { plan: user.plan, tier: user.tier }, { plan: 'pro', tier, duration_days: durationDays }, `Granted ${tierDisplayName} access to ${user.email || user.user_id} for ${durationDays} days`);
+    } catch (e) { console.warn('audit log failed:', e); }
+    try { await fetchUsers(); } catch (e) { console.warn('refresh failed:', e); }
+    try { queryClient.invalidateQueries({ queryKey: ['admin-analytics'] }); } catch {}
   };
 
   const handleRevokePlan = async (user: EnhancedUser) => {
     const currentTierName = getTierDisplayName(user.tier as InternalTier);
     try {
-      const { error } = await supabase.functions.invoke('admin-update-subscription', {
+      const { data, error } = await supabase.functions.invoke('admin-update-subscription', {
         body: { user_id: user.user_id, plan: 'free', tier: 'basic' },
       });
-      if (error) throw error;
-      await logAdminAction('user_plan_revoked', 'user', user.user_id, { plan: user.plan, tier: user.tier }, { plan: 'free', tier: 'basic' }, `Revoked ${currentTierName} access from ${user.email || user.user_id}`);
-      await fetchUsers();
-      queryClient.invalidateQueries({ queryKey: ['admin-analytics'] });
-      toast.success(`${currentTierName} access revoked`);
+      if (!(data as any)?.success) {
+        if (error) throw error;
+        throw new Error((data as any)?.error || 'Unknown error');
+      }
     } catch (err) {
       console.error('Failed to revoke plan:', err);
       toast.error('Failed to revoke access');
+      return;
     }
+
+    toast.success(`${currentTierName} access revoked`);
+    try {
+      await logAdminAction('user_plan_revoked', 'user', user.user_id, { plan: user.plan, tier: user.tier }, { plan: 'free', tier: 'basic' }, `Revoked ${currentTierName} access from ${user.email || user.user_id}`);
+    } catch (e) { console.warn('audit log failed:', e); }
+    try { await fetchUsers(); } catch (e) { console.warn('refresh failed:', e); }
+    try { queryClient.invalidateQueries({ queryKey: ['admin-analytics'] }); } catch {}
   };
 
   const copyEmail = (email: string | null) => {
