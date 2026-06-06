@@ -104,6 +104,26 @@ export function useUserDailyTasks(selectedDate: string) {
     }
   }, [user, tasks]);
 
+  // Rename task
+  const renameTask = useCallback(async (taskId: string, title: string) => {
+    if (!user) return;
+    const trimmed = title.trim();
+    if (!trimmed) return;
+    const prev = tasks;
+    setTasks((p) => p.map((t) => (t.id === taskId ? { ...t, title: trimmed } : t)));
+    try {
+      const { error } = await supabase
+        .from('user_daily_tasks')
+        .update({ title: trimmed })
+        .eq('id', taskId);
+      if (error) throw error;
+    } catch (error) {
+      console.error('Error renaming task:', error);
+      setTasks(prev);
+      toast.error('Failed to rename task');
+    }
+  }, [user, tasks]);
+
   // Delete task
   const deleteTask = useCallback(async (taskId: string) => {
     if (!user) return;
@@ -169,7 +189,9 @@ export function useUserDailyTasks(selectedDate: string) {
     loading,
     addTask,
     deleteTask,
+    renameTask,
     markTask,
     refetch: fetchTasks
   };
 }
+
