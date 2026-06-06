@@ -350,6 +350,7 @@ export default function Tracking() {
       {/* Tracking Settings Dialog */}
       <TrackingSettingsDialog open={showSettings} onOpenChange={setShowSettings} />
       <TrackingGuideSheet open={showGuide} onOpenChange={setShowGuide} />
+      <AIInsightsSettings open={showAIInsights} onOpenChange={setShowAIInsights} hideGlobalToggles />
 
       <BottomNav />
     </div>
