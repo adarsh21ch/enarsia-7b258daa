@@ -29,7 +29,7 @@ import { PullToRefreshIndicator } from '@/components/PullToRefreshIndicator';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import { User, LogOut, ChevronRight, ChevronDown, Loader2, FileText, Shield, Receipt, Settings, ExternalLink, BarChart3, Crown, Gift, Trash2, Sparkles, Lock, Share2, Video, Sliders, NotebookPen, Bell, BrainCircuit, PlayCircle, Clock, Smartphone } from 'lucide-react';
+import { User, LogOut, ChevronRight, ChevronDown, Loader2, FileText, Shield, Receipt, Settings, ExternalLink, BarChart3, Crown, Gift, Trash2, Sparkles, Lock, Share2, Video, Sliders, NotebookPen, Bell, BrainCircuit, PlayCircle, Clock, Smartphone, GraduationCap } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
 import { usePushNotifications } from '@/hooks/usePushNotifications';
 
@@ -573,6 +573,21 @@ export default function Profile() {
               <div className="flex flex-col items-start">
                 <span className="font-medium text-sm">Install App</span>
                 <span className="text-[11px] text-muted-foreground">Add Enarsia to your Home Screen</span>
+              </div>
+            </div>
+            <ChevronRight className="h-3.5 w-3.5 text-muted-foreground" />
+          </button>
+
+          {/* Enarsia Academy */}
+          <button
+            onClick={() => navigate('/academy')}
+            className="w-full rounded-xl bg-card border border-border/50 px-4 py-2.5 flex items-center justify-between hover:bg-muted/50 transition-colors"
+          >
+            <div className="flex items-center gap-2.5">
+              <GraduationCap className="h-4 w-4 text-primary" />
+              <div className="flex flex-col items-start">
+                <span className="font-medium text-sm">Enarsia Academy</span>
+                <span className="text-[11px] text-muted-foreground">Free video tutorials</span>
               </div>
             </div>
             <ChevronRight className="h-3.5 w-3.5 text-muted-foreground" />
