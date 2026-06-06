@@ -189,7 +189,9 @@ export function useUserDailyTasks(selectedDate: string) {
     loading,
     addTask,
     deleteTask,
+    renameTask,
     markTask,
     refetch: fetchTasks
   };
 }
+
