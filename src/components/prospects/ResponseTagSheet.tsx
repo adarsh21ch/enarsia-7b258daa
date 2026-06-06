@@ -111,12 +111,20 @@ export const ResponseTagSheet = memo(function ResponseTagSheet({
         type="button"
         onClick={() => handlePick(option)}
         className={cn(
-          'w-full flex items-center justify-between gap-2 px-3 transition-colors duration-150',
-          'min-h-[52px] text-left border-b border-border/30 last:border-b-0',
-          'active:opacity-80',
-          !isSelected && 'hover:bg-muted/40'
+          'group w-full flex items-center justify-between gap-2 px-3 rounded-xl border transition-all duration-150',
+          'min-h-[52px] text-left active:scale-[0.985]',
+          isSelected
+            ? 'shadow-sm'
+            : 'border-border/50 bg-card/50 hover:bg-muted/50 hover:border-border'
         )}
-        style={isSelected ? { backgroundColor: `${color}1A` } : undefined}
+        style={
+          isSelected
+            ? {
+                backgroundColor: `${color}1F`,
+                borderColor: `${color}66`,
+              }
+            : undefined
+        }
       >
         <div className="flex items-center gap-2 min-w-0">
           <ActionBadge action={option} />
@@ -125,7 +133,12 @@ export const ResponseTagSheet = memo(function ResponseTagSheet({
           )}
         </div>
         {isSelected && (
-          <Check className="h-4 w-4 shrink-0" strokeWidth={3} style={{ color }} />
+          <div
+            className="flex items-center justify-center h-6 w-6 rounded-full shrink-0"
+            style={{ backgroundColor: color }}
+          >
+            <Check className="h-3.5 w-3.5 text-white" strokeWidth={3} />
+          </div>
         )}
       </button>
     );
@@ -173,14 +186,14 @@ export const ResponseTagSheet = memo(function ResponseTagSheet({
       </div>
 
       {/* Scrollable body */}
-      <div className="flex-1 overflow-y-auto py-2">
+      <div className="flex-1 overflow-y-auto px-3 py-3 space-y-3">
         {/* Tracking tags */}
         {trackingOptions.length > 0 && (
-          <div>
-            <p className="text-[9px] font-semibold uppercase tracking-wider text-muted-foreground/70 px-3 py-1.5">
+          <div className="space-y-1.5">
+            <p className="text-[9px] font-semibold uppercase tracking-wider text-muted-foreground/70 px-1">
               Tracking (analytics)
             </p>
-            <div>
+            <div className="space-y-1">
               {trackingOptions.map((opt) => {
                 const showStar =
                   stageTag === opt ||
@@ -193,11 +206,11 @@ export const ResponseTagSheet = memo(function ResponseTagSheet({
 
         {/* Personal tags */}
         {nonTrackingOptions.length > 0 && (
-          <div className="mt-2">
-            <p className="text-[9px] font-semibold uppercase tracking-wider text-muted-foreground/70 px-3 py-1.5">
+          <div className="space-y-1.5">
+            <p className="text-[9px] font-semibold uppercase tracking-wider text-muted-foreground/70 px-1">
               Personal (not counted)
             </p>
-            <div>
+            <div className="space-y-1">
               {nonTrackingOptions.map((opt) => renderRow(opt, false, 'response'))}
             </div>
           </div>
