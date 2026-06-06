@@ -9,75 +9,63 @@ interface TriStateToggleProps {
 }
 
 /**
- * 3-state sliding toggle: No (left, red) — Unset (center, grey) — Yes (right, green).
- * Tap a side to set it; tap the active side again to return to unset.
- * Knob animates between positions. Min 44px tap target.
+ * iOS-style 3-state switch: No (left, red) — Unset (center, grey) — Yes (right, green).
+ * One tap on a half sets that side instantly; tap the active side again to unset.
+ * No drag required. Each half is a full-height ≥44px tap target.
  */
 export function TriStateToggle({ value, onChange, className }: TriStateToggleProps) {
-  const pos = value === 'no' ? 0 : value === 'yes' ? 2 : 1;
-  const knobColor =
+  // Track 56×30, knob 18 (60% of track). Positions: 3 / 19 / 35.
+  const knobLeft = value === 'no' ? 3 : value === 'yes' ? 35 : 19;
+  const trackColor =
     value === 'yes'
       ? 'bg-[#1DAA8B]'
       : value === 'no'
-      ? 'bg-red-500'
-      : 'bg-muted-foreground/50';
+      ? 'bg-[#EF4444]'
+      : 'bg-[#E5E7EB] dark:bg-muted/60';
 
-  // Track: 96 wide × 44 tall. Knob 36 × 36. Positions: 4 / 30 / 56.
-  const knobLeft = pos === 0 ? 4 : pos === 1 ? 30 : 56;
+  const handleLeft = () => onChange(value === 'no' ? null : 'no');
+  const handleRight = () => onChange(value === 'yes' ? null : 'yes');
 
   return (
     <div
       role="radiogroup"
       aria-label="Mark task: No, Unset, or Yes"
       className={cn(
-        'relative h-11 w-24 shrink-0 rounded-full bg-muted/60 dark:bg-muted/40 border border-border/40',
+        'relative inline-flex h-11 w-14 shrink-0 items-center justify-center',
         className,
       )}
     >
-      {/* Side labels */}
-      <span className="pointer-events-none absolute left-2 top-1/2 -translate-y-1/2 text-[10px] font-semibold uppercase text-red-500/60">
-        No
-      </span>
-      <span className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 text-[10px] font-semibold uppercase text-[#1DAA8B]/70">
-        Yes
-      </span>
-
-      {/* Sliding knob */}
+      {/* Track */}
       <div
         className={cn(
-          'absolute top-1 h-9 w-9 rounded-full shadow-md transition-all duration-200 ease-out',
-          knobColor,
+          'pointer-events-none relative h-[30px] w-14 rounded-full transition-colors duration-150 ease-out',
+          trackColor,
         )}
-        style={{ left: knobLeft }}
-      />
-
-      {/* 3 invisible tap zones */}
-      <div className="relative grid h-full grid-cols-3">
-        <button
-          type="button"
-          role="radio"
-          aria-checked={value === 'no'}
-          aria-label="No"
-          onClick={() => onChange(value === 'no' ? null : 'no')}
-          className="h-full rounded-l-full focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-        />
-        <button
-          type="button"
-          role="radio"
-          aria-checked={value === null}
-          aria-label="Unset"
-          onClick={() => onChange(null)}
-          className="h-full focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-        />
-        <button
-          type="button"
-          role="radio"
-          aria-checked={value === 'yes'}
-          aria-label="Yes"
-          onClick={() => onChange(value === 'yes' ? null : 'yes')}
-          className="h-full rounded-r-full focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+      >
+        {/* Knob */}
+        <div
+          className="absolute top-1/2 h-[18px] w-[18px] -translate-y-1/2 rounded-full bg-white shadow-[0_1px_2px_rgba(0,0,0,0.15),0_2px_4px_rgba(0,0,0,0.1)] transition-[left] duration-150 ease-out"
+          style={{ left: knobLeft }}
         />
       </div>
+
+      {/* Two full-height tap zones overlayed */}
+      <button
+        type="button"
+        role="radio"
+        aria-checked={value === 'no'}
+        aria-label="No"
+        onClick={handleLeft}
+        className="absolute inset-y-0 left-0 w-1/2 rounded-l-full focus:outline-none focus-visible:ring-2 focus-visible:ring-ring active:scale-[0.98]"
+      />
+      <button
+        type="button"
+        role="radio"
+        aria-checked={value === 'yes'}
+        aria-label="Yes"
+        onClick={handleRight}
+        className="absolute inset-y-0 right-0 w-1/2 rounded-r-full focus:outline-none focus-visible:ring-2 focus-visible:ring-ring active:scale-[0.98]"
+      />
     </div>
   );
 }
