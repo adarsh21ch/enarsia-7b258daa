@@ -5,6 +5,7 @@ import { ActionBadge } from './StatusBadge';
 import { cn } from '@/lib/utils';
 import { getTagColor } from '@/lib/tagColors';
 import type { ExtendedActionTaken } from '@/types/prospect';
+import { useTrackingFormatContext } from '@/contexts/TrackingFormatContext';
 
 // Light haptic feedback (mobile only; no-op on desktop / unsupported)
 function triggerHaptic() {
