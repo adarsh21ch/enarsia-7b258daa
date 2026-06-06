@@ -246,18 +246,18 @@ export function RecentActivityView({ selectedDate: externalDate, searchQuery: ex
         )}
       </div>
 
-      {/* Contact Action Sheet */}
-      <Drawer open={!!selectedActivity} onOpenChange={(open) => !open && setSelectedActivity(null)}>
-        <DrawerContent className="px-0 pb-6">
-          <DrawerHeader className="px-5 pb-2 text-left">
-            <DrawerTitle className="text-lg font-semibold truncate">{selectedActivity?.name}</DrawerTitle>
-            <DrawerDescription className="text-sm text-muted-foreground">
+      {/* Contact Action Modal */}
+      <Dialog open={!!selectedActivity} onOpenChange={(open) => !open && setSelectedActivity(null)}>
+        <DialogContent className="sm:max-w-sm gap-3">
+          <DialogHeader className="text-left pb-0">
+            <DialogTitle className="text-lg font-semibold truncate">{selectedActivity?.name}</DialogTitle>
+            <DialogDescription className="text-sm text-muted-foreground">
               {selectedActivity?.phone}
-            </DrawerDescription>
-          </DrawerHeader>
+            </DialogDescription>
+          </DialogHeader>
 
           {/* Tags preview */}
-          <div className="px-5 pb-4 flex flex-wrap gap-1.5">
+          <div className="flex flex-wrap gap-1.5">
             {selectedActivity?.stage && (
               <span className="text-[10px] px-2 py-0.5 rounded-full bg-primary/10 text-primary font-medium">
                 {selectedActivity.stage}
@@ -270,37 +270,30 @@ export function RecentActivityView({ selectedDate: externalDate, searchQuery: ex
             )}
           </div>
 
-          <DrawerFooter className="px-5 gap-3">
-            {selectedActivity?.phone && (
-              <>
-                <a
-                  href={`tel:${cleanPhoneNumber(selectedActivity.phone)}`}
-                  onClick={(e) => {
-                    e.preventDefault();
-                    handleCall(selectedActivity.phone!);
-                  }}
-                  className="flex items-center justify-center gap-2 w-full rounded-xl bg-primary py-3.5 text-primary-foreground font-semibold text-base active:scale-[0.96] transition-transform"
-                >
-                  <Phone className="h-5 w-5" />
-                  Call
-                </a>
-                <button
-                  onClick={() => selectedActivity?.phone && handleWhatsApp(selectedActivity.phone)}
-                  className="flex items-center justify-center gap-2 w-full rounded-xl bg-green-600 py-3.5 text-white font-semibold text-base active:scale-[0.96] transition-transform"
-                >
-                  <WhatsAppIcon className="h-5 w-5" />
-                  WhatsApp
-                </button>
-              </>
-            )}
-            <DrawerClose asChild>
-              <button className="w-full rounded-xl border border-border bg-background py-3 text-sm font-medium text-muted-foreground active:scale-[0.96] transition-transform">
-                Cancel
+          {selectedActivity?.phone && (
+            <div className="flex gap-3 pt-1">
+              <a
+                href={`tel:${cleanPhoneNumber(selectedActivity.phone)}`}
+                onClick={(e) => {
+                  e.preventDefault();
+                  handleCall(selectedActivity.phone!);
+                }}
+                className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-primary py-3.5 text-primary-foreground font-semibold text-base active:scale-[0.96] transition-transform"
+              >
+                <Phone className="h-5 w-5" />
+                Call
+              </a>
+              <button
+                onClick={() => selectedActivity?.phone && handleWhatsApp(selectedActivity.phone)}
+                className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-green-600 py-3.5 text-white font-semibold text-base active:scale-[0.96] transition-transform"
+              >
+                <WhatsAppIcon className="h-5 w-5" />
+                WhatsApp
               </button>
-            </DrawerClose>
-          </DrawerFooter>
-        </DrawerContent>
-      </Drawer>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
