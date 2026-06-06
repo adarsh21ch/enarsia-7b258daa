@@ -1,9 +1,17 @@
 // Daily Tasks View - Shows leader-assigned tasks + user's recurring daily tasks
+import { useState } from 'react';
 import { useDailyTasks } from '@/hooks/useDailyTasks';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from '@/components/ui/dialog';
 import { Loader2, ClipboardList, Trash2, ListTodo } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { format } from 'date-fns';
 import { TriStateToggle } from './TriStateToggle';
 
 interface UserDailyTaskWithStatus {
@@ -21,31 +29,52 @@ interface DailyTasksViewProps {
   userTasksLoading: boolean;
   markUserTask: (taskId: string, status: 'yes' | 'no' | null) => Promise<void>;
   deleteUserTask: (taskId: string) => Promise<void>;
+  renameUserTask?: (taskId: string, title: string) => Promise<void>;
 }
 
-export function DailyTasksView({ 
-  selectedDate, 
+export function DailyTasksView({
+  selectedDate,
   selectedDateString,
   userTasks,
   userTasksLoading,
   markUserTask,
-  deleteUserTask
+  deleteUserTask,
+  renameUserTask,
 }: DailyTasksViewProps) {
   const { tasks: leaderTasks, templateName, loading: leaderLoading, hasLeader, markTask: markLeaderTask } = useDailyTasks(selectedDateString);
 
+  const [editingTask, setEditingTask] = useState<UserDailyTaskWithStatus | null>(null);
+  const [editTitle, setEditTitle] = useState('');
+
+  const openEdit = (task: UserDailyTaskWithStatus) => {
+    setEditingTask(task);
+    setEditTitle(task.title);
+  };
+
+  const closeEdit = () => {
+    setEditingTask(null);
+    setEditTitle('');
+  };
+
+  const handleSave = async () => {
+    if (!editingTask || !renameUserTask) return closeEdit();
+    const trimmed = editTitle.trim();
+    if (trimmed && trimmed !== editingTask.title) {
+      await renameUserTask(editingTask.id, trimmed);
+    }
+    closeEdit();
+  };
+
+  const handleDelete = async () => {
+    if (!editingTask) return;
+    await deleteUserTask(editingTask.id);
+    closeEdit();
+  };
+
   const leaderCompletedCount = leaderTasks.filter(t => t.status === 'yes').length;
   const leaderTotalCount = leaderTasks.length;
-
   const userCompletedCount = userTasks.filter(t => t.status === 'yes').length;
   const userTotalCount = userTasks.length;
-
-  const handleLeaderStatusChange = async (taskId: string, newStatus: 'yes' | 'no' | null) => {
-    await markLeaderTask(taskId, newStatus);
-  };
-
-  const handleUserStatusChange = async (taskId: string, newStatus: 'yes' | 'no' | null) => {
-    await markUserTask(taskId, newStatus);
-  };
 
   if (leaderLoading || userTasksLoading) {
     return (
@@ -63,23 +92,17 @@ export function DailyTasksView({
     return (
       <div className="py-12 px-4 text-center">
         <ClipboardList className="h-12 w-12 mx-auto text-muted-foreground/30 mb-3" />
-        <p className="text-sm font-medium text-muted-foreground mb-1">
-          No Daily Tasks
-        </p>
-        <p className="text-xs text-muted-foreground/70">
-          Add a recurring daily task using the input below
-        </p>
+        <p className="text-sm font-medium text-muted-foreground mb-1">No Daily Tasks</p>
+        <p className="text-xs text-muted-foreground/70">Add a recurring daily task using the input below</p>
       </div>
     );
   }
 
   return (
     <div className="space-y-4 pt-[5px]">
-
       {/* Leader Tasks Section */}
       {hasLeaderTasks && (
         <div className="space-y-2">
-          {/* Header with template name and progress */}
           <div className="flex items-center justify-between">
             <div>
               <p className="text-xs text-muted-foreground">From Leader: Compulsory Actions</p>
@@ -94,55 +117,42 @@ export function DailyTasksView({
             </div>
           </div>
 
-          {/* Leader Tasks list */}
           <div className="bg-white dark:bg-card rounded-xl border border-border/40 shadow-sm overflow-hidden">
             <div className="divide-y divide-border/20">
               {leaderTasks.map((task, index) => (
                 <div
                   key={task.id}
                   className={cn(
-                    "flex items-center gap-3 px-4 py-3 transition-all",
-                    index % 2 === 0 
-                      ? "bg-white dark:bg-card" 
-                      : "bg-gray-50/50 dark:bg-muted/10"
+                    'flex items-center gap-3 px-4 py-3 transition-all',
+                    index % 2 === 0 ? 'bg-white dark:bg-card' : 'bg-gray-50/50 dark:bg-muted/10'
                   )}
                 >
-                  {/* Task title */}
+                  <span className="text-xs font-semibold text-muted-foreground w-5 shrink-0 tabular-nums">
+                    {index + 1}.
+                  </span>
                   <div className="flex-1 min-w-0">
-                    <p className={cn(
-                      "text-sm font-medium",
-                      task.status === 'yes' && "text-green-700 dark:text-green-400",
-                      task.status === 'no' && "text-red-600 dark:text-red-400 line-through opacity-70"
-                    )}>
+                    <p
+                      className={cn(
+                        'text-sm font-medium',
+                        task.status === 'yes' && 'text-green-700 dark:text-green-400',
+                        task.status === 'no' && 'text-red-600 dark:text-red-400 line-through opacity-70'
+                      )}
+                    >
                       {task.item_title}
                     </p>
                   </div>
-
-                  {/* 3-state sliding toggle */}
-                  <TriStateToggle
-                    value={task.status}
-                    onChange={(s) => handleLeaderStatusChange(task.id, s)}
-                  />
+                  <TriStateToggle value={task.status} onChange={(s) => markLeaderTask(task.id, s)} />
                 </div>
               ))}
             </div>
 
-            {/* Summary footer */}
             <div className="px-4 py-3 bg-muted/30 border-t border-border/30">
               <div className="flex items-center justify-between text-xs">
-                <span className="text-muted-foreground">
-                  {leaderTasks.filter(t => t.status === null).length} not marked
-                </span>
-                <span className="font-medium">
-                  {Math.round((leaderCompletedCount / leaderTotalCount) * 100)}% complete
-                </span>
+                <span className="text-muted-foreground">{leaderTasks.filter(t => t.status === null).length} not marked</span>
+                <span className="font-medium">{Math.round((leaderCompletedCount / leaderTotalCount) * 100)}% complete</span>
               </div>
-              {/* Progress bar */}
               <div className="mt-2 h-1.5 bg-muted rounded-full overflow-hidden">
-                <div 
-                  className="h-full bg-green-500 transition-all duration-300"
-                  style={{ width: `${(leaderCompletedCount / leaderTotalCount) * 100}%` }}
-                />
+                <div className="h-full bg-green-500 transition-all duration-300" style={{ width: `${(leaderCompletedCount / leaderTotalCount) * 100}%` }} />
               </div>
             </div>
           </div>
@@ -172,63 +182,77 @@ export function DailyTasksView({
                 <div
                   key={task.id}
                   className={cn(
-                    "flex items-center gap-3 px-4 py-3 transition-all group",
-                    index % 2 === 0 
-                      ? "bg-white dark:bg-card" 
-                      : "bg-gray-50/50 dark:bg-muted/10"
+                    'flex items-center gap-3 px-4 py-3 transition-all',
+                    index % 2 === 0 ? 'bg-white dark:bg-card' : 'bg-gray-50/50 dark:bg-muted/10'
                   )}
                 >
-                  {/* Task title */}
-                  <div className="flex-1 min-w-0">
-                    <p className={cn(
-                      "text-sm font-medium",
-                      task.status === 'yes' && "text-green-700 dark:text-green-400",
-                      task.status === 'no' && "text-red-600 dark:text-red-400 line-through opacity-70"
-                    )}>
+                  <span className="text-xs font-semibold text-muted-foreground w-5 shrink-0 tabular-nums">
+                    {index + 1}.
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => openEdit(task)}
+                    className="flex-1 min-w-0 text-left active:opacity-70 transition-opacity"
+                  >
+                    <p
+                      className={cn(
+                        'text-sm font-medium truncate',
+                        task.status === 'yes' && 'text-green-700 dark:text-green-400',
+                        task.status === 'no' && 'text-red-600 dark:text-red-400 line-through opacity-70'
+                      )}
+                    >
                       {task.title}
                     </p>
-                  </div>
-
-                  {/* Delete button */}
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity shrink-0"
-                    onClick={() => deleteUserTask(task.id)}
-                  >
-                    <Trash2 className="h-3.5 w-3.5 text-gray-500" />
-                  </Button>
-
-                  {/* 3-state sliding toggle */}
-                  <TriStateToggle
-                    value={task.status}
-                    onChange={(s) => handleUserStatusChange(task.id, s)}
-                  />
+                  </button>
+                  <TriStateToggle value={task.status} onChange={(s) => markUserTask(task.id, s)} />
                 </div>
               ))}
             </div>
 
-            {/* Summary footer */}
             <div className="px-4 py-3 bg-muted/30 border-t border-border/30">
               <div className="flex items-center justify-between text-xs">
-                <span className="text-muted-foreground">
-                  {userTasks.filter(t => t.status === null).length} not marked
-                </span>
-                <span className="font-medium">
-                  {Math.round((userCompletedCount / userTotalCount) * 100)}% complete
-                </span>
+                <span className="text-muted-foreground">{userTasks.filter(t => t.status === null).length} not marked</span>
+                <span className="font-medium">{Math.round((userCompletedCount / userTotalCount) * 100)}% complete</span>
               </div>
-              {/* Progress bar */}
               <div className="mt-2 h-1.5 bg-muted rounded-full overflow-hidden">
-                <div 
-                  className="h-full bg-green-500 transition-all duration-300"
-                  style={{ width: `${(userCompletedCount / userTotalCount) * 100}%` }}
-                />
+                <div className="h-full bg-green-500 transition-all duration-300" style={{ width: `${(userCompletedCount / userTotalCount) * 100}%` }} />
               </div>
             </div>
           </div>
         </div>
       )}
+
+      {/* Edit / Delete dialog for user tasks */}
+      <Dialog open={!!editingTask} onOpenChange={(open) => !open && closeEdit()}>
+        <DialogContent className="sm:max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Edit Daily Task</DialogTitle>
+          </DialogHeader>
+          <Input
+            value={editTitle}
+            onChange={(e) => setEditTitle(e.target.value)}
+            placeholder="Task name"
+            autoFocus
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') handleSave();
+            }}
+          />
+          <DialogFooter className="flex-row justify-between gap-2 sm:justify-between">
+            <Button
+              variant="ghost"
+              onClick={handleDelete}
+              className="text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950/30"
+            >
+              <Trash2 className="h-4 w-4 mr-1.5" />
+              Delete
+            </Button>
+            <div className="flex gap-2">
+              <Button variant="outline" onClick={closeEdit}>Cancel</Button>
+              <Button onClick={handleSave}>Save</Button>
+            </div>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
