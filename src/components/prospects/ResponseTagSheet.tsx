@@ -3,7 +3,19 @@ import { motion } from 'framer-motion';
 import { Star, Check, X } from 'lucide-react';
 import { ActionBadge } from './StatusBadge';
 import { cn } from '@/lib/utils';
+import { getTagColor } from '@/lib/tagColors';
 import type { ExtendedActionTaken } from '@/types/prospect';
+
+// Light haptic feedback (mobile only; no-op on desktop / unsupported)
+function triggerHaptic() {
+  try {
+    if (typeof navigator !== 'undefined' && 'vibrate' in navigator) {
+      navigator.vibrate?.(8);
+    }
+  } catch {
+    /* ignore */
+  }
+}
 
 interface ResponseTagSheetProps {
   open: boolean;
@@ -77,7 +89,9 @@ export const ResponseTagSheet = memo(function ResponseTagSheet({
 
   const handlePick = useCallback(
     (value: string) => {
-      // Toggle off if same value tapped (parity with InlineSelect)
+      triggerHaptic();
+      // Single-select: applying a new tag replaces the old one.
+      // Tapping the already-selected row clears it (parity with InlineSelect).
       if (value === currentValue) {
         onSelect('' as ExtendedActionTaken);
       } else {
@@ -88,28 +102,44 @@ export const ResponseTagSheet = memo(function ResponseTagSheet({
     [currentValue, onSelect, onOpenChange]
   );
 
-  const renderRow = (option: string, showStar: boolean) => {
+  const renderRow = (option: string, showStar: boolean, tagType: 'response' | 'stage') => {
     const isSelected = option === currentValue;
+    const color = getTagColor(option, tagType);
     return (
       <button
         key={option}
         type="button"
         onClick={() => handlePick(option)}
         className={cn(
-          'w-full flex items-center justify-between gap-2 px-2 py-1.5 rounded-lg border transition-all duration-150',
-          'min-h-[34px] text-left active:scale-[0.97]',
+          'group w-full flex items-center justify-between gap-2 px-3 rounded-xl border transition-all duration-150',
+          'min-h-[52px] text-left active:scale-[0.985]',
           isSelected
-            ? 'border-primary bg-primary/10 shadow-sm'
-            : 'border-border/60 bg-card/60 hover:bg-muted/60 hover:border-border'
+            ? 'shadow-sm'
+            : 'border-border/50 bg-card/50 hover:bg-muted/50 hover:border-border'
         )}
+        style={
+          isSelected
+            ? {
+                backgroundColor: `${color}1F`,
+                borderColor: `${color}66`,
+              }
+            : undefined
+        }
       >
-        <div className="flex items-center gap-1.5 min-w-0">
+        <div className="flex items-center gap-2 min-w-0">
           <ActionBadge action={option} />
           {showStar && (
-            <Star className="h-3 w-3 text-yellow-500 fill-yellow-500 shrink-0" />
+            <Star className="h-3.5 w-3.5 text-yellow-500 fill-yellow-500 shrink-0" />
           )}
         </div>
-        {isSelected && <Check className="h-3.5 w-3.5 text-primary shrink-0" />}
+        {isSelected && (
+          <div
+            className="flex items-center justify-center h-6 w-6 rounded-full shrink-0"
+            style={{ backgroundColor: color }}
+          >
+            <Check className="h-3.5 w-3.5 text-white" strokeWidth={3} />
+          </div>
+        )}
       </button>
     );
   };
@@ -168,7 +198,7 @@ export const ResponseTagSheet = memo(function ResponseTagSheet({
                 const showStar =
                   stageTag === opt ||
                   (finalTargetTag === opt && finalTargetTag !== stageTag);
-                return renderRow(opt, showStar);
+                return renderRow(opt, showStar, 'response');
               })}
             </div>
           </div>
@@ -181,7 +211,7 @@ export const ResponseTagSheet = memo(function ResponseTagSheet({
               Personal (not counted)
             </p>
             <div className="space-y-1">
-              {nonTrackingOptions.map((opt) => renderRow(opt, false))}
+              {nonTrackingOptions.map((opt) => renderRow(opt, false, 'response'))}
             </div>
           </div>
         )}
