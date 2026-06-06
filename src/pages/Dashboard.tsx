@@ -141,6 +141,28 @@ export default function Dashboard() {
 
     return () => window.clearTimeout(timer);
   }, [searchQuery]);
+
+  // First-time Academy tip toast — show once per user
+  useEffect(() => {
+    if (!user?.id) return;
+    const key = `academy_welcome_tip_${user.id}`;
+    try {
+      if (localStorage.getItem(key)) return;
+      const timer = window.setTimeout(() => {
+        toast('🎓 New here? Visit Enarsia Academy', {
+          description: 'Free video tutorials to master the CRM in minutes.',
+          duration: 8000,
+          action: {
+            label: 'Open',
+            onClick: () => navigate('/academy'),
+          },
+        });
+        localStorage.setItem(key, '1');
+      }, 1500);
+      return () => window.clearTimeout(timer);
+    } catch {}
+  }, [user?.id, navigate]);
+
   
   const {
     prospects,
