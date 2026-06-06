@@ -3,7 +3,19 @@ import { motion } from 'framer-motion';
 import { Star, Check, X } from 'lucide-react';
 import { ActionBadge } from './StatusBadge';
 import { cn } from '@/lib/utils';
+import { getTagColor } from '@/lib/tagColors';
 import type { ExtendedActionTaken } from '@/types/prospect';
+
+// Light haptic feedback (mobile only; no-op on desktop / unsupported)
+function triggerHaptic() {
+  try {
+    if (typeof navigator !== 'undefined' && 'vibrate' in navigator) {
+      navigator.vibrate?.(8);
+    }
+  } catch {
+    /* ignore */
+  }
+}
 
 interface ResponseTagSheetProps {
   open: boolean;
