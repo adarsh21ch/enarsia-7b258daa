@@ -58,6 +58,7 @@ export const ResponseTagSheet = memo(function ResponseTagSheet({
   title = 'Response Tag',
 }: ResponseTagSheetProps) {
   const panelRef = useRef<HTMLDivElement | null>(null);
+  const { loading: tagsLoading } = useTrackingFormatContext();
 
   // Close on Escape
   useEffect(() => {
