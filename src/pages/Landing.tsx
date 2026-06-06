@@ -4,14 +4,12 @@ import { Button } from '@/components/ui/button';
 import {
   Play,
   Users,
-  Link2,
-  Sparkles,
-  Briefcase,
-  Store,
-  Scale,
+  Phone,
+  Clock,
+  Bot,
+  TrendingUp,
   Layers,
   Zap,
-  Bot,
   Flag,
 } from 'lucide-react';
 import enarsiaSymbol from '@/assets/enarsia-symbol.png';
@@ -19,26 +17,26 @@ import enarsiaSymbol from '@/assets/enarsia-symbol.png';
 const INTRO_VIDEO_URL = 'https://<R2_PUBLIC_URL>/enarsia-intro.mp4';
 const INTRO_POSTER_URL = '';
 
-const personas = [
-  { icon: Users, title: 'Direct sellers & network marketers', desc: 'Track every lead and follow-up so no prospect goes cold.' },
-  { icon: Link2, title: 'Affiliate marketers', desc: 'Manage your contacts, links, and conversations in one place.' },
-  { icon: Sparkles, title: 'Content creators', desc: 'Plan ideas, scripts, and your content calendar like a pro.' },
-  { icon: Briefcase, title: 'Founders & business owners', desc: 'Run your sales, marketing, and team operations from one app.' },
-  { icon: Store, title: 'Shop & small-business owners', desc: 'Keep customers, orders, and follow-ups organized.' },
-  { icon: Scale, title: 'Consultants & professionals', desc: 'Manage clients, notes, and reminders without the mess.' },
+const features = [
+  { icon: Users, title: 'Track every lead', desc: 'No prospect goes cold, no follow-up ever missed.' },
+  { icon: Phone, title: 'Daily calling list', desc: 'The app tells you who to call today.' },
+  { icon: Clock, title: 'Smart follow-up reminders', desc: 'Reach the right prospect at the right time.' },
+  { icon: Users, title: 'Team & enrolments', desc: 'Your downline and enrolments in one place.' },
+  { icon: Bot, title: 'AI assistant (Inertia)', desc: 'Ask it for scripts, objection handling, and "what to do today."' },
+  { icon: TrendingUp, title: 'Tracking & growth', desc: 'See your daily activity and results on one dashboard.' },
 ];
 
 const benefits = [
-  { icon: Layers, title: 'All your work in one place', desc: 'Leads, contacts, content, and tasks — no more scattered notes.' },
-  { icon: Zap, title: 'Never lose momentum', desc: 'Smart reminders keep every follow-up and task moving.' },
-  { icon: Bot, title: 'AI does the boring part', desc: 'Let AI help you write, organize, and stay on top.' },
-  { icon: Flag, title: 'Made for India', desc: 'Simple, fast, and built for how you actually work. 🇮🇳' },
+  { icon: Layers, title: 'All your prospects in one place', desc: 'Leads, follow-ups, and enrolments — no more scattered notes.' },
+  { icon: Zap, title: 'Never miss a follow-up', desc: 'Smart reminders keep every prospect moving forward.' },
+  { icon: Bot, title: 'AI helps with scripts and plans', desc: 'Get calling scripts, objection replies, and daily plans in seconds.' },
+  { icon: Flag, title: 'Built in India', desc: 'Simple, fast, and built for how Indian network marketers work. 🇮🇳' },
 ];
 
 const steps = [
-  { n: '1', title: 'Add your work', desc: 'Drop in leads, contacts, or ideas in seconds.' },
-  { n: '2', title: 'Stay in motion', desc: 'Reminders & follow-ups keep everything moving.' },
-  { n: '3', title: 'Get more done', desc: 'Close, ship, and grow — without dropping a thing.' },
+  { n: '1', title: 'Add your prospects', desc: 'Drop in leads and contacts in seconds.' },
+  { n: '2', title: 'Follow up on time', desc: 'The app tells you who to call and when.' },
+  { n: '3', title: 'Close more enrolments', desc: 'Track every step from first call to enrolment.' },
 ];
 
 function Reveal({ children, delay = 0, className = '' }: { children: React.ReactNode; delay?: number; className?: string }) {
@@ -88,7 +86,7 @@ export default function Landing() {
             </Link>
             <Link to="/auth">
               <Button className="bg-primary hover:bg-primary/90 text-primary-foreground font-semibold shadow-sm shadow-primary/20">
-                Sign up free
+                Start Free
               </Button>
             </Link>
           </div>
@@ -106,21 +104,21 @@ export default function Landing() {
           <Reveal>
             <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary/10 text-primary text-xs sm:text-sm font-semibold border border-primary/20">
               <span className="h-1.5 w-1.5 rounded-full bg-primary animate-pulse" />
-              Built in India · for your work
+              Built in India 🇮🇳 for network marketers
             </div>
             <h1 className="mt-5 text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-extrabold tracking-tight leading-[1.05]">
-              Keep your work<br />
+              The personal CRM<br />
               <span className="bg-gradient-to-r from-primary via-primary to-accent bg-clip-text text-transparent">
-                in motion.
+                built for network marketers.
               </span>
             </h1>
             <p className="mt-5 text-base sm:text-lg text-muted-foreground max-w-xl leading-relaxed">
-              Enarsia is your AI workspace to manage leads, content, and daily operations — so once your work starts, it never stops.
+              Manage your leads, follow up on time, and close more enrolments — all in one app, right on your phone.
             </p>
             <div className="mt-7 flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-5">
               <Link to="/auth">
                 <Button size="lg" className="bg-primary hover:bg-primary/90 text-primary-foreground w-full sm:w-auto px-8 h-12 text-base font-semibold shadow-lg shadow-primary/25 hover:shadow-xl hover:shadow-primary/30 transition-all">
-                  Start free
+                  Start Free
                 </Button>
               </Link>
               <Link to="/auth" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
@@ -167,30 +165,30 @@ export default function Landing() {
         </div>
       </section>
 
-      {/* Who it's for */}
+      {/* What you get */}
       <section className="px-4 sm:px-6 py-16 sm:py-24 bg-secondary/40 border-y border-border/60">
         <div className="max-w-6xl mx-auto">
           <Reveal>
             <div className="text-center max-w-2xl mx-auto">
-              <span className="text-xs sm:text-sm font-bold uppercase tracking-widest text-primary">Who it's for</span>
+              <span className="text-xs sm:text-sm font-bold uppercase tracking-widest text-primary">What you get</span>
               <h2 className="mt-3 text-3xl sm:text-4xl md:text-5xl font-extrabold tracking-tight">
-                Made for how you actually work
+                Everything a network marketer needs
               </h2>
               <p className="mt-4 text-muted-foreground">
-                Enarsia adapts to your profession — sales, content, founder mode, and more.
+                Enarsia is built around the way you work — prospecting, calling, following up, and enrolling.
               </p>
             </div>
           </Reveal>
 
           <div className="mt-12 grid sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
-            {personas.map((p, i) => (
-              <Reveal key={p.title} delay={i * 60}>
+            {features.map((f, i) => (
+              <Reveal key={f.title} delay={i * 60}>
                 <div className="group h-full p-6 rounded-2xl bg-card border border-border hover:border-primary/50 hover:-translate-y-1 hover:shadow-xl hover:shadow-primary/5 transition-all duration-300">
                   <div className="h-11 w-11 rounded-xl bg-primary/10 text-primary flex items-center justify-center group-hover:bg-primary group-hover:text-primary-foreground transition-colors">
-                    <p.icon className="h-5 w-5" />
+                    <f.icon className="h-5 w-5" />
                   </div>
-                  <h3 className="mt-4 font-bold text-base sm:text-lg">{p.title}</h3>
-                  <p className="mt-2 text-sm text-muted-foreground leading-relaxed">{p.desc}</p>
+                  <h3 className="mt-4 font-bold text-base sm:text-lg">{f.title}</h3>
+                  <p className="mt-2 text-sm text-muted-foreground leading-relaxed">{f.desc}</p>
                 </div>
               </Reveal>
             ))}
@@ -198,7 +196,7 @@ export default function Landing() {
 
           <Reveal delay={200}>
             <p className="mt-10 text-center text-base sm:text-lg font-semibold text-foreground/80">
-              Whatever your work is — <span className="text-primary">Enarsia keeps it moving.</span>
+              From first call to enrolment — <span className="text-primary">Enarsia keeps you moving.</span>
             </p>
           </Reveal>
         </div>
@@ -249,7 +247,7 @@ export default function Landing() {
             <div className="mt-8">
               <Link to="/auth">
                 <Button size="lg" className="bg-primary hover:bg-primary/90 text-primary-foreground px-8 h-12 font-semibold shadow-lg shadow-primary/25">
-                  Start free
+                  Start Free
                 </Button>
               </Link>
             </div>
@@ -264,7 +262,7 @@ export default function Landing() {
             <div className="text-center max-w-2xl mx-auto">
               <span className="text-xs sm:text-sm font-bold uppercase tracking-widest text-primary">Why Enarsia</span>
               <h2 className="mt-3 text-3xl sm:text-4xl md:text-5xl font-extrabold tracking-tight">
-                Everything you need to stay on top
+                Built for your business
               </h2>
             </div>
           </Reveal>
@@ -311,6 +309,31 @@ export default function Landing() {
         </div>
       </section>
 
+      {/* Pricing */}
+      <section className="px-4 sm:px-6 py-16 sm:py-20">
+        <div className="max-w-3xl mx-auto text-center">
+          <Reveal>
+            <span className="text-xs sm:text-sm font-bold uppercase tracking-widest text-primary">Pricing</span>
+            <h2 className="mt-3 text-3xl sm:text-4xl md:text-5xl font-extrabold tracking-tight">
+              Just ₹599/year
+            </h2>
+            <p className="mt-3 text-lg text-muted-foreground">
+              Less than ₹50 a month.
+            </p>
+            <p className="mt-2 text-sm text-muted-foreground">
+              Close one prospect and the whole year pays for itself.
+            </p>
+            <div className="mt-8">
+              <Link to="/auth">
+                <Button size="lg" className="bg-primary hover:bg-primary/90 text-primary-foreground px-8 h-12 text-base font-semibold shadow-lg shadow-primary/25">
+                  Start your free trial
+                </Button>
+              </Link>
+            </div>
+          </Reveal>
+        </div>
+      </section>
+
       {/* Final CTA */}
       <section className="px-4 sm:px-6 py-20 sm:py-28 bg-gradient-to-br from-primary via-primary to-accent text-primary-foreground relative overflow-hidden">
         <div className="absolute inset-0 opacity-20 pointer-events-none">
@@ -323,17 +346,17 @@ export default function Landing() {
               Your work is ready to move.
             </h2>
             <p className="mt-5 text-base sm:text-lg text-primary-foreground/90 max-w-xl mx-auto">
-              Join thousands of professionals keeping their work in motion with Enarsia.
+              Bring your leads and follow-ups into one place today.
             </p>
             <div className="mt-8">
               <Link to="/auth">
                 <Button size="lg" className="bg-background text-foreground hover:bg-background/90 px-10 h-13 text-base font-bold shadow-2xl">
-                  Start free
+                  Start Free
                 </Button>
               </Link>
             </div>
             <p className="mt-5 text-xs sm:text-sm text-primary-foreground/80">
-              7-day free trial · No card needed
+              Made in India, for network marketers.
             </p>
           </Reveal>
         </div>
