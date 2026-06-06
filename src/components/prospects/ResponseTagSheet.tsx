@@ -5,6 +5,7 @@ import { ActionBadge } from './StatusBadge';
 import { cn } from '@/lib/utils';
 import { getTagColor } from '@/lib/tagColors';
 import type { ExtendedActionTaken } from '@/types/prospect';
+import { useTrackingFormatContext } from '@/contexts/TrackingFormatContext';
 
 // Light haptic feedback (mobile only; no-op on desktop / unsupported)
 function triggerHaptic() {
@@ -57,6 +58,7 @@ export const ResponseTagSheet = memo(function ResponseTagSheet({
   title = 'Response Tag',
 }: ResponseTagSheetProps) {
   const panelRef = useRef<HTMLDivElement | null>(null);
+  const { loading: tagsLoading } = useTrackingFormatContext();
 
   // Close on Escape
   useEffect(() => {
@@ -187,43 +189,59 @@ export const ResponseTagSheet = memo(function ResponseTagSheet({
 
       {/* Scrollable body */}
       <div className="flex-1 overflow-y-auto px-3 py-3 space-y-3">
-        {/* Tracking tags */}
-        {trackingOptions.length > 0 && (
-          <div className="space-y-1.5">
-            <p className="text-[9px] font-semibold uppercase tracking-wider text-muted-foreground/70 px-1">
-              Tracking (analytics)
-            </p>
-            <div className="space-y-1">
-              {trackingOptions.map((opt) => {
-                const showStar =
-                  stageTag === opt ||
-                  (finalTargetTag === opt && finalTargetTag !== stageTag);
-                return renderRow(opt, showStar, 'response');
-              })}
-            </div>
+        {/* Loading skeleton — shown while tracking format is still being fetched.
+            Prevents the misleading "No response tags configured yet." flash on
+            the very first open (e.g. right after login or after a long idle). */}
+        {tagsLoading && trackingOptions.length === 0 && nonTrackingOptions.length === 0 ? (
+          <div className="space-y-2 py-1">
+            {[0, 1, 2, 3, 4].map((i) => (
+              <div
+                key={i}
+                className="h-[52px] rounded-xl bg-muted/40 animate-pulse"
+              />
+            ))}
           </div>
-        )}
+        ) : (
+          <>
+            {/* Tracking tags */}
+            {trackingOptions.length > 0 && (
+              <div className="space-y-1.5">
+                <p className="text-[9px] font-semibold uppercase tracking-wider text-muted-foreground/70 px-1">
+                  Tracking (analytics)
+                </p>
+                <div className="space-y-1">
+                  {trackingOptions.map((opt) => {
+                    const showStar =
+                      stageTag === opt ||
+                      (finalTargetTag === opt && finalTargetTag !== stageTag);
+                    return renderRow(opt, showStar, 'response');
+                  })}
+                </div>
+              </div>
+            )}
 
-        {/* Personal tags */}
-        {nonTrackingOptions.length > 0 && (
-          <div className="space-y-1.5">
-            <p className="text-[9px] font-semibold uppercase tracking-wider text-muted-foreground/70 px-1">
-              Personal (not counted)
-            </p>
-            <div className="space-y-1">
-              {nonTrackingOptions.map((opt) => renderRow(opt, false, 'response'))}
-            </div>
-          </div>
-        )}
+            {/* Personal tags */}
+            {nonTrackingOptions.length > 0 && (
+              <div className="space-y-1.5">
+                <p className="text-[9px] font-semibold uppercase tracking-wider text-muted-foreground/70 px-1">
+                  Personal (not counted)
+                </p>
+                <div className="space-y-1">
+                  {nonTrackingOptions.map((opt) => renderRow(opt, false, 'response'))}
+                </div>
+              </div>
+            )}
 
-        {/* Empty state */}
-        {trackingOptions.length === 0 &&
-          nonTrackingOptions.length === 0 && (
-            <div className="py-6 text-center text-xs text-muted-foreground">
-              No response tags configured yet.
-            </div>
-          )}
+            {/* Empty state — only shown after loading completes with no tags */}
+            {trackingOptions.length === 0 && nonTrackingOptions.length === 0 && (
+              <div className="py-6 text-center text-xs text-muted-foreground">
+                No response tags configured yet.
+              </div>
+            )}
+          </>
+        )}
       </div>
+
 
       {/* Sticky Cancel footer — large tap target for easy thumb access */}
       <div className="border-t border-border/40 p-2.5 bg-popover/95 backdrop-blur-xl">
