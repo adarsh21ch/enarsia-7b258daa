@@ -779,6 +779,98 @@ export type Database = {
         }
         Relationships: []
       }
+      academy_category_order: {
+        Row: {
+          category: string
+          label: string
+          order_index: number
+          updated_at: string
+        }
+        Insert: {
+          category: string
+          label?: string
+          order_index?: number
+          updated_at?: string
+        }
+        Update: {
+          category?: string
+          label?: string
+          order_index?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      academy_completions: {
+        Row: {
+          completed_at: string
+          tutorial_id: string
+          user_id: string
+        }
+        Insert: {
+          completed_at?: string
+          tutorial_id: string
+          user_id: string
+        }
+        Update: {
+          completed_at?: string
+          tutorial_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "academy_completions_tutorial_id_fkey"
+            columns: ["tutorial_id"]
+            isOneToOne: false
+            referencedRelation: "academy_tutorials"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      academy_tutorials: {
+        Row: {
+          category: string
+          created_at: string
+          description: string
+          duration_seconds: number
+          id: string
+          is_published: boolean
+          order_index: number
+          slug: string
+          thumbnail_url: string | null
+          title: string
+          updated_at: string
+          video_url: string
+        }
+        Insert: {
+          category?: string
+          created_at?: string
+          description?: string
+          duration_seconds?: number
+          id?: string
+          is_published?: boolean
+          order_index?: number
+          slug: string
+          thumbnail_url?: string | null
+          title: string
+          updated_at?: string
+          video_url?: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          description?: string
+          duration_seconds?: number
+          id?: string
+          is_published?: boolean
+          order_index?: number
+          slug?: string
+          thumbnail_url?: string | null
+          title?: string
+          updated_at?: string
+          video_url?: string
+        }
+        Relationships: []
+      }
       achievements: {
         Row: {
           achieved_at: string
