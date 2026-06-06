@@ -6854,10 +6854,10 @@ export type Database = {
           }
       admin_search_users_enhanced: {
         Args: {
-          page_offset?: number
-          page_size?: number
-          plan_filter?: string
-          search_query?: string
+          page_offset: number
+          page_size: number
+          plan_filter: string
+          search_query: string
         }
         Returns: {
           created_at: string
