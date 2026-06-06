@@ -106,6 +106,7 @@ export default function TodoUp() {
     loading: userDailyTasksLoading,
     addTask: addDailyTask,
     deleteTask: deleteDailyTask,
+    renameTask: renameDailyTask,
     markTask: markDailyTask,
     refetch: refetchDailyTasks
   } = useUserDailyTasks(calendar.selectedDateString);
