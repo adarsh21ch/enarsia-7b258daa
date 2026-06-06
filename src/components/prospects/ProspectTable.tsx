@@ -1184,8 +1184,6 @@ export function ProspectTable({
         )}
       </div>
 
-      {/* All sheet info chip */}
-      {isAllSheet && <AllSheetInfoChip />}
 
       {/* Table */}
       <div data-onboarding="lead-list" className="bg-card rounded-xl border border-border/50 shadow-sm pb-28">

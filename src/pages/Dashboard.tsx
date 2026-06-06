@@ -17,7 +17,8 @@ import { KPIStrip } from '@/components/prospects/KPIStrip';
 import { TrialBanner } from '@/components/subscription/TrialBanner';
 import { UpgradeButton } from '@/components/subscription/UpgradeButton';
 import { SubscriptionStatusBanner } from '@/components/subscription/SubscriptionStatusBanner';
-import { Loader2, Phone, Layers, Flame } from 'lucide-react';
+import { Loader2, Phone, Layers, Flame, GraduationCap } from 'lucide-react';
+import { toast } from 'sonner';
 import nevoraLogo from '@/assets/nevorai-call-logo.png';
 import { useStreak } from '@/hooks/useStreak';
 
@@ -140,6 +141,28 @@ export default function Dashboard() {
 
     return () => window.clearTimeout(timer);
   }, [searchQuery]);
+
+  // First-time Academy tip toast — show once per user
+  useEffect(() => {
+    if (!user?.id) return;
+    const key = `academy_welcome_tip_${user.id}`;
+    try {
+      if (localStorage.getItem(key)) return;
+      const timer = window.setTimeout(() => {
+        toast('🎓 New here? Visit Enarsia Academy', {
+          description: 'Free video tutorials to master the CRM in minutes.',
+          duration: 8000,
+          action: {
+            label: 'Open',
+            onClick: () => navigate('/academy'),
+          },
+        });
+        localStorage.setItem(key, '1');
+      }, 1500);
+      return () => window.clearTimeout(timer);
+    } catch {}
+  }, [user?.id, navigate]);
+
   
   const {
     prospects,
@@ -248,7 +271,7 @@ export default function Dashboard() {
       {/* Compact Header - matching To-Do density */}
       <header ref={headerRef} className="fixed-header z-40 bg-card/80 backdrop-blur-xl border-b border-border/40">
         {/* Row A: Page title - compact & premium */}
-        <div className="flex items-center px-4 py-2.5">
+        <div className="flex items-center justify-between px-4 py-2.5">
           <div className="flex items-center gap-2.5">
             <img src={nevoraLogo} alt="Enarsia Logo" className="h-9 w-9 rounded-xl object-cover shadow-sm" />
             <div>
@@ -264,7 +287,17 @@ export default function Dashboard() {
               <p className="text-[11px] text-muted-foreground font-medium">Manage your prospects</p>
             </div>
           </div>
+          {/* Academy quick-access (top-right) */}
+          <button
+            onClick={() => navigate('/academy')}
+            aria-label="Open Enarsia Academy"
+            className="relative p-2 rounded-xl bg-gradient-to-br from-amber-400 via-orange-500 to-fuchsia-500 shadow-md shadow-amber-500/30 active:scale-95 transition-transform"
+          >
+            <GraduationCap className="h-4 w-4 text-white drop-shadow" />
+            <span className="absolute -top-1 -right-1 h-2 w-2 rounded-full bg-amber-300 ring-2 ring-background animate-pulse" />
+          </button>
         </div>
+
         
         {/* Row B: Segmented control */}
         <div className="px-4 pb-2">

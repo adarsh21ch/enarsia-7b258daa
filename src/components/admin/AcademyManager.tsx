@@ -421,13 +421,21 @@ export function AcademyManager() {
             </div>
             <div>
               <label className="text-xs font-medium">Video file</label>
-              <Input
-                type="file"
-                accept="video/mp4,video/webm,video/quicktime"
-                onChange={(e) =>
-                  setEditing((s) => ({ ...s, _videoFile: e.target.files?.[0] }))
-                }
-              />
+              <label className="mt-1 flex items-center gap-2 cursor-pointer rounded-lg border border-dashed border-border bg-muted/30 hover:bg-muted/60 px-3 py-2.5 transition-colors">
+                <PlayCircle className="h-4 w-4 text-primary shrink-0" />
+                <span className="text-xs flex-1 truncate">
+                  {editing._videoFile?.name || (editing.video_url ? 'Replace current video' : 'Choose video file (mp4, webm, mov)')}
+                </span>
+                <span className="text-[10px] font-semibold px-2 py-1 rounded bg-primary text-primary-foreground">Browse</span>
+                <input
+                  type="file"
+                  accept="video/mp4,video/webm,video/quicktime"
+                  className="hidden"
+                  onChange={(e) =>
+                    setEditing((s) => ({ ...s, _videoFile: e.target.files?.[0] }))
+                  }
+                />
+              </label>
               {editing.video_url && !editing._videoFile && (
                 <p className="text-[10px] text-muted-foreground mt-0.5 truncate">
                   Current: {editing.video_url}
@@ -436,19 +444,28 @@ export function AcademyManager() {
             </div>
             <div>
               <label className="text-xs font-medium">Thumbnail image</label>
-              <Input
-                type="file"
-                accept="image/jpeg,image/png,image/webp"
-                onChange={(e) =>
-                  setEditing((s) => ({ ...s, _thumbFile: e.target.files?.[0] }))
-                }
-              />
+              <label className="mt-1 flex items-center gap-2 cursor-pointer rounded-lg border border-dashed border-border bg-muted/30 hover:bg-muted/60 px-3 py-2.5 transition-colors">
+                <ImageIcon className="h-4 w-4 text-primary shrink-0" />
+                <span className="text-xs flex-1 truncate">
+                  {editing._thumbFile?.name || (editing.thumbnail_url ? 'Replace current thumbnail' : 'Choose thumbnail (jpg, png, webp)')}
+                </span>
+                <span className="text-[10px] font-semibold px-2 py-1 rounded bg-primary text-primary-foreground">Browse</span>
+                <input
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp"
+                  className="hidden"
+                  onChange={(e) =>
+                    setEditing((s) => ({ ...s, _thumbFile: e.target.files?.[0] }))
+                  }
+                />
+              </label>
               {editing.thumbnail_url && !editing._thumbFile && (
                 <p className="text-[10px] text-muted-foreground mt-0.5 truncate">
                   Current: {editing.thumbnail_url}
                 </p>
               )}
             </div>
+
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <label className="text-xs font-medium">Duration (sec)</label>
