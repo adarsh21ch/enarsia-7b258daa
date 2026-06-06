@@ -150,6 +150,13 @@ export function useDailyTrackingLog() {
         ).then(() => {
           queryClient.invalidateQueries({ queryKey: ['user-streak', user.id] });
         });
+
+        // Invalidate Tracking snapshot caches so numbers refresh instantly
+        // across all months/sources. Match by query-key prefix.
+        queryClient.invalidateQueries({ queryKey: ['personal-snapshot-v2'] });
+        queryClient.invalidateQueries({ queryKey: ['total-snapshot-v2'] });
+        queryClient.invalidateQueries({ queryKey: ['application-snapshots'] });
+        queryClient.invalidateQueries({ queryKey: ['team-member-snapshots'] });
       }
     } catch (err) {
       console.error('Exception in logDailyTracking:', err);

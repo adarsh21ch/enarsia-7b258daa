@@ -6,6 +6,7 @@
  * Only active when personalSource === 'AUTO'.
  */
 import { useCallback, useRef } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { usePersonalSnapshotV2Write } from '@/hooks/usePersonalSnapshotV2Write';
@@ -16,6 +17,7 @@ import { getTodayIST, getISTDayBoundsUTC } from '@/lib/dateUtils';
 
 export function useAutoTrackingSync() {
   const { user } = useAuth();
+  const queryClient = useQueryClient();
   const { savePersonal } = usePersonalSnapshotV2Write();
   const {
     leadsTrackingTagNames,
@@ -100,10 +102,17 @@ export function useAutoTrackingSync() {
         responseTagNames: leadsTrackingTagNames,
         stageTagNames,
       });
+
+      // Invalidate all snapshot caches so the Tracking page refetches instantly.
+      // Match by query-key prefix — covers any month/source variant.
+      queryClient.invalidateQueries({ queryKey: ['personal-snapshot-v2'] });
+      queryClient.invalidateQueries({ queryKey: ['total-snapshot-v2'] });
+      queryClient.invalidateQueries({ queryKey: ['application-snapshots'] });
+      queryClient.invalidateQueries({ queryKey: ['team-member-snapshots'] });
     } catch (err) {
       console.error('Auto-sync: exception:', err);
     }
-  }, [user, savePersonal, leadsTrackingTagNames, stageTagNames, leadsFinalTargetTag, stageFinalTargetTag, directLeaderUserId, getEffectiveConfig]);
+  }, [user, queryClient, savePersonal, leadsTrackingTagNames, stageTagNames, leadsFinalTargetTag, stageFinalTargetTag, directLeaderUserId, getEffectiveConfig]);
 
   // Debounced trigger - only syncs when source is AUTO
   const triggerAutoSync = useCallback(() => {
