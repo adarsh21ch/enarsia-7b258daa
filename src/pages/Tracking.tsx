@@ -49,6 +49,7 @@ export default function Tracking() {
   const [showUpdateDrawer, setShowUpdateDrawer] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [showGuide, setShowGuide] = useState(false);
+  const [showAIInsights, setShowAIInsights] = useState(false);
 
   // Layout mode (Table / Card / Chart) — persisted per data mode (personal vs total)
   const [layoutMode, setLayoutModeState] = useState<LayoutMode>(() => {
