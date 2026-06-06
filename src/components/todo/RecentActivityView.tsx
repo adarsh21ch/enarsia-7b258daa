@@ -1,21 +1,19 @@
 // Activity History View - Universal component with built-in calendar
 import { useMemo, useState, useCallback } from 'react';
-import { motion, useMotionValue, useTransform, animate, type PanInfo } from 'framer-motion';
+import { motion, AnimatePresence, useMotionValue, useTransform, animate, type PanInfo } from 'framer-motion';
 import { useProspectsQuery } from '@/hooks/useProspectsQuery';
 import { useGlobalTodos } from '@/contexts/TodosContext';
 import { useActivityLogs } from '@/hooks/useActivityLogs';
 import { useCalendarStrip } from '@/hooks/useCalendarStrip';
 import { CalendarStrip } from '@/components/calendar/CalendarStrip';
 import { SearchBar } from '@/components/ui/SearchBar';
-import { Clock, Loader2, Phone } from 'lucide-react';
+import { Clock, Loader2, Phone, X } from 'lucide-react';
 import { parseISO, format, isSameDay } from 'date-fns';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-} from '@/components/ui/dialog';
+
+// Light haptic helper (mobile only)
+const haptic = (ms = 8) => {
+  try { if (typeof navigator !== 'undefined' && 'vibrate' in navigator) (navigator as any).vibrate?.(ms); } catch {}
+};
 
 // Consistent WhatsApp icon
 const WhatsAppIcon = ({ className }: { className?: string }) => (
