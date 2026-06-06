@@ -1,0 +1,1 @@
+CREATE POLICY "Users can delete their own task status" ON public.user_daily_task_status FOR DELETE USING (auth.uid() = user_id);
