@@ -323,6 +323,9 @@ export default function Landing() {
             <p className="mt-2 text-sm text-muted-foreground">
               Close one prospect and the whole year pays for itself.
             </p>
+            <p className="mt-2 text-xs text-primary/80">
+              Launch pricing — for the first 100 subscribers only. Price goes to ₹1,499/year after that.
+            </p>
             <div className="mt-8">
               <Link to="/auth">
                 <Button size="lg" className="bg-primary hover:bg-primary/90 text-primary-foreground px-8 h-12 text-base font-semibold shadow-lg shadow-primary/25">
