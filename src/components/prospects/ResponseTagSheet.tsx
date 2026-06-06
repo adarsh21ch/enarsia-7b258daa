@@ -111,20 +111,12 @@ export const ResponseTagSheet = memo(function ResponseTagSheet({
         type="button"
         onClick={() => handlePick(option)}
         className={cn(
-          'group w-full flex items-center justify-between gap-2 px-3 rounded-xl border transition-all duration-150',
-          'min-h-[52px] text-left active:scale-[0.985]',
-          isSelected
-            ? 'shadow-sm'
-            : 'border-border/50 bg-card/50 hover:bg-muted/50 hover:border-border'
+          'w-full flex items-center justify-between gap-2 px-3 transition-colors duration-150',
+          'min-h-[52px] text-left border-b border-border/30 last:border-b-0',
+          'active:opacity-80',
+          !isSelected && 'hover:bg-muted/40'
         )}
-        style={
-          isSelected
-            ? {
-                backgroundColor: `${color}1F`,
-                borderColor: `${color}66`,
-              }
-            : undefined
-        }
+        style={isSelected ? { backgroundColor: `${color}1A` } : undefined}
       >
         <div className="flex items-center gap-2 min-w-0">
           <ActionBadge action={option} />
@@ -133,12 +125,7 @@ export const ResponseTagSheet = memo(function ResponseTagSheet({
           )}
         </div>
         {isSelected && (
-          <div
-            className="flex items-center justify-center h-6 w-6 rounded-full shrink-0"
-            style={{ backgroundColor: color }}
-          >
-            <Check className="h-3.5 w-3.5 text-white" strokeWidth={3} />
-          </div>
+          <Check className="h-4 w-4 shrink-0" strokeWidth={3} style={{ color }} />
         )}
       </button>
     );
