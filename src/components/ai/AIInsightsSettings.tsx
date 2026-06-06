@@ -70,6 +70,7 @@ export function AIInsightsSettings({ open, onOpenChange, hideGlobalToggles = fal
           ) : (
             <>
               {/* Global Toggles */}
+              {!hideGlobalToggles && (
               <div className="space-y-3">
                 <h3 className="text-sm font-semibold text-foreground">Automatic Insights</h3>
                 <ToggleRow
@@ -118,6 +119,7 @@ export function AIInsightsSettings({ open, onOpenChange, hideGlobalToggles = fal
                   </Select>
                 </div>
               </div>
+              )}
 
               {/* Trackers Section */}
               <div className="space-y-3">
