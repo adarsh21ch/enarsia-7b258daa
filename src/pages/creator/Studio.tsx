@@ -58,7 +58,7 @@ export default function Studio() {
     });
     if (ideaId) await updateIdea({ id: ideaId, updates: { status: 'scripted' } });
     toast.success('Saved to pipeline');
-    navigate('/calendar');
+    navigate('/creator/calendar');
   };
 
   if (isLoading) {
@@ -100,7 +100,7 @@ export default function Studio() {
               headline="Capture a topic first"
               body="Add a topic in the Topics tab, then come back here to draft your hook, body and CTA."
             />
-            <Button variant="outline" className="w-full" onClick={() => navigate('/ideas')}>
+            <Button variant="outline" className="w-full" onClick={() => navigate('/creator/ideas')}>
               Go to Topics<ArrowRight className="h-4 w-4 ml-1.5" />
             </Button>
           </>

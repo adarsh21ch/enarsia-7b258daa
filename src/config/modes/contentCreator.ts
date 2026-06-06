@@ -1,22 +1,22 @@
 import type { AppMode } from './types';
 
 /**
- * Content Creator — pilot of the second mode (Instagram Reels-first).
+ * Content Creator — opt-in sub-section.
  *
- * Not yet enabled (`enabled: false`) — the tabs/pages don't exist yet. This
- * config is the source of truth we build against. See
- * docs/modes/content-creator-mode.md.
+ * No longer a global mode that re-skins the bottom nav. The CRM
+ * (Network Marketing) is always the home; Creator is a dedicated section the
+ * user enters from Profile → "Open Content Studio" and exits via "Back to CRM".
+ * Nav paths live under `/creator/*`.
  */
 export const contentCreatorMode: AppMode = {
   id: 'content_creator',
   label: 'Content Creator',
   shortLabel: 'Creator',
   nav: [
-    { path: '/ideas', label: 'Topics', iconKey: 'ideas', onboardingId: 'nav-ideas' },
-    { path: '/studio', label: 'Scripting', iconKey: 'scripting', onboardingId: 'nav-studio' },
-    { path: '/calendar', label: 'Posting', iconKey: 'posting', onboardingId: 'nav-calendar' },
-    { path: '/insights', label: 'Insights', iconKey: 'insights', onboardingId: 'nav-insights' },
-    { path: '/profile', label: 'Profile', iconKey: 'profile', isProfile: true, onboardingId: 'nav-profile' },
+    { path: '/creator/ideas', label: 'Ideas', iconKey: 'ideas', onboardingId: 'nav-ideas' },
+    { path: '/creator/studio', label: 'Studio', iconKey: 'scripting', onboardingId: 'nav-studio' },
+    { path: '/creator/calendar', label: 'Calendar', iconKey: 'posting', onboardingId: 'nav-calendar' },
+    { path: '/creator/insights', label: 'Insights', iconKey: 'insights', onboardingId: 'nav-insights' },
   ],
   terms: {
     prospect: 'Idea',
