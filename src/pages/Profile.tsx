@@ -386,6 +386,17 @@ export default function Profile() {
           {/* Progressive Upgrade Nudge Banner - non-spammy, stage-based */}
           {!isPaid && <ProgressiveNudgeBanner context="profile" />}
 
+          {/* Admin Panel — compact, admin-only, near the top */}
+          {isAdmin && (
+            <Link to="/admin" className="w-full rounded-xl px-4 py-2.5 bg-card border border-destructive/30 flex items-center justify-between transition-colors hover:bg-muted/50">
+              <div className="flex items-center gap-2.5">
+                <Shield className="h-4 w-4 text-destructive" />
+                <span className="font-medium text-sm">Admin Panel</span>
+              </div>
+              <ChevronRight className="h-3.5 w-3.5 text-muted-foreground" />
+            </Link>
+          )}
+
           {/* Connect to Upline - Collapsible card */}
           <ConnectUplineCard profile={profile} updating={updating} onUpdateProfile={updateProfile} onUpdateUplineByEmail={updateUplineByEmail} onClearLeaderHierarchy={clearLeaderHierarchy} />
 
