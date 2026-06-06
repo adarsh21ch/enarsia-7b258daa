@@ -28,5 +28,5 @@ export const founderMode: AppMode = {
     tagline: 'Run your company in one place.',
   },
   aiPersona: 'founder',
-  enabled: true,
+  enabled: false,
 };
