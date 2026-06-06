@@ -147,14 +147,16 @@ export default function AcademyTutorial() {
       </header>
 
       <main className="max-w-3xl mx-auto px-4 py-4 pb-24 space-y-4">
-        <div className="aspect-video bg-black rounded-xl overflow-hidden">
+        <div className="aspect-video bg-black rounded-xl overflow-hidden shadow-2xl ring-1 ring-white/5">
           {tutorial.video_url ? (
             <video
               src={tutorial.video_url}
               controls
               playsInline
+              preload="metadata"
+              controlsList="nodownload"
               poster={tutorial.thumbnail_url || undefined}
-              className="w-full h-full"
+              className="w-full h-full object-contain bg-black"
             />
           ) : (
             <div className="w-full h-full flex flex-col items-center justify-center text-white/70">
@@ -163,6 +165,7 @@ export default function AcademyTutorial() {
             </div>
           )}
         </div>
+
 
         <div>
           <h1 className="text-xl font-bold leading-tight">{tutorial.title}</h1>
