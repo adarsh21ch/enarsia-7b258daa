@@ -1,7 +1,8 @@
 import { useEffect, useState, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { format, subMonths, addMonths } from 'date-fns';
-import { ChevronLeft, ChevronRight, ExternalLink, Settings, Info, BarChart3, HelpCircle } from 'lucide-react';
+import { ChevronLeft, ChevronRight, ExternalLink, Settings, Info, BarChart3, HelpCircle, Sparkles } from 'lucide-react';
+import { AIInsightsSettings } from '@/components/ai/AIInsightsSettings';
 import { useAuth } from '@/contexts/AuthContext';
 import { BottomNav } from '@/components/layout/BottomNav';
 import { TrialBanner } from '@/components/subscription/TrialBanner';
