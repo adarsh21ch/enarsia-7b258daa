@@ -165,10 +165,16 @@ function App() {
                         <Route path="/tracking-format" element={<TrackingFormat />} />
                         <Route path="/recently-deleted" element={<RecentlyDeleted />} />
                         <Route path="/profile/export" element={<ExportData />} />
-                        <Route path="/ideas" element={<CreatorIdeas />} />
-                        <Route path="/studio" element={<CreatorStudio />} />
-                        <Route path="/calendar" element={<CreatorCalendar />} />
-                        <Route path="/insights" element={<CreatorInsights />} />
+                        <Route path="/creator" element={<Navigate to="/creator/ideas" replace />} />
+                        <Route path="/creator/ideas" element={<CreatorIdeas />} />
+                        <Route path="/creator/studio" element={<CreatorStudio />} />
+                        <Route path="/creator/calendar" element={<CreatorCalendar />} />
+                        <Route path="/creator/insights" element={<CreatorInsights />} />
+                        {/* Legacy creator paths → new /creator/* */}
+                        <Route path="/ideas" element={<Navigate to="/creator/ideas" replace />} />
+                        <Route path="/studio" element={<Navigate to="/creator/studio" replace />} />
+                        <Route path="/calendar" element={<Navigate to="/creator/calendar" replace />} />
+                        <Route path="/insights" element={<Navigate to="/creator/insights" replace />} />
                         <Route path="/manage" element={<Manage />} />
                         <Route path="/manage/:functionKey" element={<ManageFunction />} />
                         <Route path="/marketing" element={<ManageFunction fixedKey="marketing" />} />
