@@ -198,7 +198,7 @@ export const ResponseTagSheet = memo(function ResponseTagSheet({
                 const showStar =
                   stageTag === opt ||
                   (finalTargetTag === opt && finalTargetTag !== stageTag);
-                return renderRow(opt, showStar);
+                return renderRow(opt, showStar, 'response');
               })}
             </div>
           </div>
