@@ -303,10 +303,8 @@ export function EnhancedUsersTab({ headerPlanFilter }: EnhancedUsersTabProps) {
       const { data, error } = await supabase.functions.invoke('admin-update-subscription', {
         body: { user_id: user.user_id, plan: 'free', tier: 'basic' },
       });
-      if (!(data as any)?.success) {
-        if (error) throw error;
-        throw new Error((data as any)?.error || 'Unknown error');
-      }
+      if (error) throw error;
+      if (data && (data as any).error) throw new Error((data as any).error);
     } catch (err) {
       console.error('Failed to revoke plan:', err);
       toast.error('Failed to revoke access');
