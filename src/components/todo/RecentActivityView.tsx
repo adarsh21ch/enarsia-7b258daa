@@ -7,17 +7,15 @@ import { useActivityLogs } from '@/hooks/useActivityLogs';
 import { useCalendarStrip } from '@/hooks/useCalendarStrip';
 import { CalendarStrip } from '@/components/calendar/CalendarStrip';
 import { SearchBar } from '@/components/ui/SearchBar';
-import { Clock, Loader2, Phone, X } from 'lucide-react';
+import { Clock, Loader2, Phone } from 'lucide-react';
 import { parseISO, format, isSameDay } from 'date-fns';
 import {
-  Drawer,
-  DrawerContent,
-  DrawerHeader,
-  DrawerTitle,
-  DrawerDescription,
-  DrawerFooter,
-  DrawerClose,
-} from '@/components/ui/drawer';
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from '@/components/ui/dialog';
 
 // Consistent WhatsApp icon
 const WhatsAppIcon = ({ className }: { className?: string }) => (
