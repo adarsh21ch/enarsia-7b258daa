@@ -211,7 +211,7 @@ export const ResponseTagSheet = memo(function ResponseTagSheet({
               Personal (not counted)
             </p>
             <div className="space-y-1">
-              {nonTrackingOptions.map((opt) => renderRow(opt, false))}
+              {nonTrackingOptions.map((opt) => renderRow(opt, false, 'response'))}
             </div>
           </div>
         )}
