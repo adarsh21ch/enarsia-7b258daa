@@ -296,7 +296,24 @@ export default function Profile() {
               <p className="text-xs text-muted-foreground font-medium">Your Account & Settings</p>
             </div>
           </div>
-          <HeaderBellIcon />
+          <div className="flex items-center gap-1">
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button variant="ghost" size="icon" className="h-9 w-9" aria-label="Edit account">
+                  <Pencil className="h-4 w-4" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent align="end" className="w-52 p-1">
+                <button onClick={() => setEditOpen(true)} className="w-full flex items-center gap-2 px-3 py-2 text-sm rounded-md hover:bg-muted">
+                  <User className="h-4 w-4 text-muted-foreground" /> Edit Profile
+                </button>
+                <button onClick={() => setShowChangePwd(true)} className="w-full flex items-center gap-2 px-3 py-2 text-sm rounded-md hover:bg-muted">
+                  <Lock className="h-4 w-4 text-muted-foreground" /> Change Password
+                </button>
+              </PopoverContent>
+            </Popover>
+            <HeaderBellIcon />
+          </div>
         </div>
       </header>
 
