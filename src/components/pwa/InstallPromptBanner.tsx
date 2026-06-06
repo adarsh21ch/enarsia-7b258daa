@@ -25,7 +25,15 @@ function detectPlatform(): Platform {
   return 'desktop';
 }
 
-const DISMISS_KEY = 'nvc-install-popup-dismissed-v2';
+// Bumped to v3 — permanent dismissal (once closed, never auto-shown again).
+const DISMISS_KEY = 'nvc-install-popup-dismissed-v3';
+
+// Routes where we never auto-show the install sheet (avoids interrupting
+// active form/onboarding flows or public funnel/share pages).
+const BLOCKED_PREFIXES = [
+  '/funnel', '/f/', '/form', '/share', '/public', '/reset-password',
+  '/payment-success', '/refund', '/privacy', '/terms',
+];
 
 export function InstallPromptBanner() {
   const location = useLocation();
@@ -33,11 +41,15 @@ export function InstallPromptBanner() {
   const [open, setOpen] = useState(false);
   const platform = detectPlatform();
 
-  // Only auto-show on the marketing entry route — never during auth or form completion flows
-  const isPublicRoute = location.pathname === '/';
+  // Show on the landing page, the auth page, and any in-app (post-login) route —
+  // i.e. anywhere the user is actually evaluating or using Enarsia. Skip public
+  // funnel/form/share routes so visitors filling a form aren't interrupted.
+  const path = location.pathname;
+  const isBlocked = BLOCKED_PREFIXES.some((p) => path === p || path.startsWith(p + '/'));
+  const canShowHere = !isBlocked;
 
   useEffect(() => {
-    if (!isPublicRoute) return;
+    if (!canShowHere) return;
 
     const isStandalone =
       window.matchMedia('(display-mode: standalone)').matches ||
@@ -46,11 +58,8 @@ export function InstallPromptBanner() {
       window.navigator.standalone === true;
     if (isStandalone) return;
 
-    const dismissed = localStorage.getItem(DISMISS_KEY);
-    if (dismissed) {
-      const t = parseInt(dismissed, 10);
-      if (Date.now() - t < 3 * 24 * 60 * 60 * 1000) return; // 3-day cooldown
-    }
+    // Permanent dismissal — once closed, never auto-show again on this device.
+    if (localStorage.getItem(DISMISS_KEY)) return;
 
     const handler = (e: Event) => {
       e.preventDefault();
@@ -65,10 +74,11 @@ export function InstallPromptBanner() {
       window.removeEventListener('beforeinstallprompt', handler);
       clearTimeout(t);
     };
-  }, [isPublicRoute]);
+  }, [canShowHere]);
 
   const dismiss = () => {
     setOpen(false);
+    // Permanent — store a flag with no expiry check.
     localStorage.setItem(DISMISS_KEY, Date.now().toString());
   };
 
@@ -80,7 +90,7 @@ export function InstallPromptBanner() {
     dismiss();
   };
 
-  if (!isPublicRoute || !open) return null;
+  if (!canShowHere || !open) return null;
 
   return (
     <InstallInstructionsSheet
@@ -124,10 +134,10 @@ export function InstallInstructionsSheet({
       >
         <button
           onClick={onClose}
-          aria-label="Close"
-          className="absolute right-3 top-3 rounded-full p-1.5 text-muted-foreground hover:bg-muted transition-colors"
+          aria-label="Close install prompt"
+          className="absolute right-2 top-2 flex h-10 w-10 items-center justify-center rounded-full text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
         >
-          <X className="h-4 w-4" />
+          <X className="h-5 w-5" />
         </button>
 
         <div className="flex items-center gap-3">
