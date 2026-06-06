@@ -244,54 +244,107 @@ export function RecentActivityView({ selectedDate: externalDate, searchQuery: ex
         )}
       </div>
 
-      {/* Contact Action Modal */}
-      <Dialog open={!!selectedActivity} onOpenChange={(open) => !open && setSelectedActivity(null)}>
-        <DialogContent className="sm:max-w-sm gap-3">
-          <DialogHeader className="text-left pb-0">
-            <DialogTitle className="text-lg font-semibold truncate">{selectedActivity?.name}</DialogTitle>
-            <DialogDescription className="text-sm text-muted-foreground">
-              {selectedActivity?.phone}
-            </DialogDescription>
-          </DialogHeader>
+      {/* Premium iOS-style Contact Action Modal */}
+      <AnimatePresence>
+        {selectedActivity && (
+          <motion.div
+            className="fixed inset-0 z-[100] flex items-center justify-center p-5"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.18 }}
+          >
+            {/* Frosted backdrop */}
+            <button
+              aria-label="Close"
+              onClick={() => setSelectedActivity(null)}
+              className="absolute inset-0 bg-black/40 backdrop-blur-md"
+            />
 
-          {/* Tags preview */}
-          <div className="flex flex-wrap gap-1.5">
-            {selectedActivity?.stage && (
-              <span className="text-[10px] px-2 py-0.5 rounded-full bg-primary/10 text-primary font-medium">
-                {selectedActivity.stage}
-              </span>
-            )}
-            {selectedActivity?.action && (
-              <span className="text-[10px] px-2 py-0.5 rounded-full bg-muted text-muted-foreground font-medium">
-                {selectedActivity.action}
-              </span>
-            )}
-          </div>
-
-          {selectedActivity?.phone && (
-            <div className="flex gap-3 pt-1">
-              <a
-                href={`tel:${cleanPhoneNumber(selectedActivity.phone)}`}
-                onClick={(e) => {
-                  e.preventDefault();
-                  handleCall(selectedActivity.phone!);
-                }}
-                className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-primary py-3.5 text-primary-foreground font-semibold text-base active:scale-[0.96] transition-transform"
-              >
-                <Phone className="h-5 w-5" />
-                Call
-              </a>
+            {/* Card */}
+            <motion.div
+              role="dialog"
+              aria-modal="true"
+              initial={{ opacity: 0, scale: 0.92, y: 8 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.94, y: 6 }}
+              transition={{ type: 'spring', stiffness: 380, damping: 28, mass: 0.7 }}
+              className="relative w-full max-w-[340px] rounded-[24px] bg-card text-card-foreground p-6 shadow-[0_25px_60px_-15px_rgba(0,0,0,0.35)] ring-1 ring-black/5 dark:ring-white/5"
+              onAnimationStart={() => haptic(8)}
+            >
+              {/* Close */}
               <button
-                onClick={() => selectedActivity?.phone && handleWhatsApp(selectedActivity.phone)}
-                className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-green-600 py-3.5 text-white font-semibold text-base active:scale-[0.96] transition-transform"
+                onClick={() => setSelectedActivity(null)}
+                aria-label="Close"
+                className="absolute top-3.5 right-3.5 h-7 w-7 rounded-full flex items-center justify-center text-muted-foreground/70 hover:text-foreground hover:bg-muted/60 transition-colors"
               >
-                <WhatsAppIcon className="h-5 w-5" />
-                WhatsApp
+                <X className="h-4 w-4" />
               </button>
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
+
+              {/* Avatar */}
+              <div className="flex justify-center mb-4">
+                <div className="h-16 w-16 rounded-full bg-primary/15 text-primary flex items-center justify-center text-2xl font-semibold ring-4 ring-primary/5">
+                  {selectedActivity.name?.trim()?.[0]?.toUpperCase() || '?'}
+                </div>
+              </div>
+
+              {/* Identity */}
+              <div className="text-center space-y-1">
+                <h2 className="text-[21px] leading-tight font-bold tracking-tight truncate">
+                  {selectedActivity.name}
+                </h2>
+                {selectedActivity.phone && (
+                  <p className="text-[15px] text-muted-foreground tabular-nums">
+                    {selectedActivity.phone}
+                  </p>
+                )}
+              </div>
+
+              {/* Tags */}
+              {(selectedActivity.stage || selectedActivity.action) && (
+                <div className="flex flex-wrap justify-center gap-1.5 mt-3">
+                  {selectedActivity.stage && (
+                    <span className="text-[11px] px-2.5 py-1 rounded-full bg-primary/10 text-primary font-medium">
+                      {selectedActivity.stage}
+                    </span>
+                  )}
+                  {selectedActivity.action && (
+                    <span className="text-[11px] px-2.5 py-1 rounded-full bg-muted text-muted-foreground font-medium">
+                      {selectedActivity.action}
+                    </span>
+                  )}
+                </div>
+              )}
+
+              {/* Actions */}
+              {selectedActivity.phone && (
+                <div className="flex gap-3 mt-6">
+                  <a
+                    href={`tel:${cleanPhoneNumber(selectedActivity.phone)}`}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      haptic(10);
+                      handleCall(selectedActivity.phone!);
+                    }}
+                    className="flex flex-1 items-center justify-center gap-2 rounded-2xl bg-primary py-3.5 min-h-[52px] text-primary-foreground font-semibold text-[15px] shadow-[0_8px_20px_-8px_hsl(var(--primary)/0.55)] active:scale-[0.97] active:opacity-90 transition-all"
+                  >
+                    <Phone className="h-[18px] w-[18px]" />
+                    Call
+                  </a>
+                  <button
+                    onClick={() => { haptic(10); selectedActivity?.phone && handleWhatsApp(selectedActivity.phone); }}
+                    className="flex flex-1 items-center justify-center gap-2 rounded-2xl py-3.5 min-h-[52px] text-white font-semibold text-[15px] shadow-[0_8px_20px_-8px_rgba(37,211,102,0.6)] active:scale-[0.97] active:opacity-90 transition-all"
+                    style={{ backgroundColor: '#25D366' }}
+                  >
+                    <WhatsAppIcon className="h-[18px] w-[18px]" />
+                    WhatsApp
+                  </button>
+                </div>
+              )}
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
