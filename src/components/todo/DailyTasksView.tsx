@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Loader2, ClipboardList, Trash2, ListTodo } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
+import { TriStateToggle } from './TriStateToggle';
 
 interface UserDailyTaskWithStatus {
   id: string;
@@ -117,35 +118,11 @@ export function DailyTasksView({
                     </p>
                   </div>
 
-                  {/* 3-state compact toggle */}
-                  <div className="flex items-center bg-muted/50 rounded-full p-0.5 h-7 shrink-0">
-                    <button
-                      onClick={() => handleLeaderStatusChange(task.id, task.status === 'no' ? null : 'no')}
-                      className={cn(
-                        "px-2.5 py-1 rounded-full text-xs font-medium transition-all",
-                        task.status === 'no' 
-                          ? "bg-red-500 text-white" 
-                          : "text-muted-foreground hover:text-red-500"
-                      )}
-                    >
-                      No
-                    </button>
-                    <div className={cn(
-                      "w-1.5 h-1.5 rounded-full mx-1 transition-all",
-                      task.status === null ? "bg-muted-foreground/50" : "bg-transparent"
-                    )} />
-                    <button
-                      onClick={() => handleLeaderStatusChange(task.id, task.status === 'yes' ? null : 'yes')}
-                      className={cn(
-                        "px-2.5 py-1 rounded-full text-xs font-medium transition-all",
-                        task.status === 'yes' 
-                          ? "bg-green-500 text-white" 
-                          : "text-muted-foreground hover:text-green-500"
-                      )}
-                    >
-                      Yes
-                    </button>
-                  </div>
+                  {/* 3-state sliding toggle */}
+                  <TriStateToggle
+                    value={task.status}
+                    onChange={(s) => handleLeaderStatusChange(task.id, s)}
+                  />
                 </div>
               ))}
             </div>
