@@ -173,14 +173,14 @@ export const ResponseTagSheet = memo(function ResponseTagSheet({
       </div>
 
       {/* Scrollable body */}
-      <div className="flex-1 overflow-y-auto px-3 py-3 space-y-3">
+      <div className="flex-1 overflow-y-auto py-2">
         {/* Tracking tags */}
         {trackingOptions.length > 0 && (
-          <div className="space-y-1.5">
-            <p className="text-[9px] font-semibold uppercase tracking-wider text-muted-foreground/70 px-1">
+          <div>
+            <p className="text-[9px] font-semibold uppercase tracking-wider text-muted-foreground/70 px-3 py-1.5">
               Tracking (analytics)
             </p>
-            <div className="space-y-1">
+            <div>
               {trackingOptions.map((opt) => {
                 const showStar =
                   stageTag === opt ||
@@ -193,11 +193,11 @@ export const ResponseTagSheet = memo(function ResponseTagSheet({
 
         {/* Personal tags */}
         {nonTrackingOptions.length > 0 && (
-          <div className="space-y-1.5">
-            <p className="text-[9px] font-semibold uppercase tracking-wider text-muted-foreground/70 px-1">
+          <div className="mt-2">
+            <p className="text-[9px] font-semibold uppercase tracking-wider text-muted-foreground/70 px-3 py-1.5">
               Personal (not counted)
             </p>
-            <div className="space-y-1">
+            <div>
               {nonTrackingOptions.map((opt) => renderRow(opt, false, 'response'))}
             </div>
           </div>
