@@ -302,32 +302,8 @@ export default function Profile() {
       <main ref={containerRef} className="scrollable-content relative">
         <PullToRefreshIndicator isRefreshing={isRefreshing} pullDistance={pullDistance} showIndicator={showIndicator} />
         <div className="container py-3 px-4 space-y-4 pb-20">
-          {/* ⭐ Enarsia Academy — First & most important entry (3D highlight) */}
-          <button
-            onClick={() => navigate('/academy')}
-            className="group relative w-full overflow-hidden rounded-2xl p-[1.5px] bg-gradient-to-br from-amber-400 via-fuchsia-500 to-indigo-500 shadow-[0_10px_30px_-10px_hsl(var(--primary)/0.5)] hover:shadow-[0_18px_40px_-12px_hsl(var(--primary)/0.7)] active:scale-[0.98] transition-all duration-200"
-            style={{ transform: 'perspective(800px) rotateX(0deg)' }}
-          >
-            <div className="relative rounded-[14px] bg-gradient-to-br from-indigo-950 via-slate-900 to-fuchsia-950 px-4 py-3.5 flex items-center justify-between overflow-hidden">
-              {/* shine */}
-              <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_20%_0%,rgba(255,255,255,0.18),transparent_50%)]" />
-              <div className="pointer-events-none absolute -right-6 -bottom-8 h-28 w-28 rounded-full bg-amber-400/20 blur-2xl" />
-              <div className="pointer-events-none absolute -left-6 -top-8 h-24 w-24 rounded-full bg-fuchsia-500/20 blur-2xl" />
-              <div className="relative flex items-center gap-3">
-                <div className="p-2.5 rounded-xl bg-gradient-to-br from-amber-300 to-orange-500 shadow-lg shadow-amber-500/40 ring-1 ring-white/30">
-                  <GraduationCap className="h-5 w-5 text-white drop-shadow" />
-                </div>
-                <div className="text-left">
-                  <div className="flex items-center gap-1.5">
-                    <span className="font-bold text-[15px] text-white tracking-tight">Enarsia Academy</span>
-                    <span className="px-1.5 py-0.5 rounded-full text-[9px] font-bold bg-amber-400 text-amber-950">NEW</span>
-                  </div>
-                  <span className="text-[11px] text-white/70">Free video tutorials · Learn the CRM</span>
-                </div>
-              </div>
-              <ChevronRight className="relative h-4 w-4 text-white/80 group-hover:translate-x-0.5 transition-transform" />
-            </div>
-          </button>
+          {/* User Card */}
+
 
 
           <div className="relative overflow-hidden rounded-2xl p-5 bg-gradient-to-br from-primary/10 via-primary/5 to-transparent border border-primary/10 shadow-lg">
@@ -395,6 +371,30 @@ export default function Profile() {
           {/* Connect to Upline - Collapsible card */}
           <ConnectUplineCard profile={profile} updating={updating} onUpdateProfile={updateProfile} onUpdateUplineByEmail={updateUplineByEmail} onClearLeaderHierarchy={clearLeaderHierarchy} />
 
+          {/* ⭐ Enarsia Academy — featured entry (premium 3D on mobile, refined on desktop) */}
+          <button
+            onClick={() => navigate('/academy')}
+            className="group relative w-full overflow-hidden rounded-2xl p-[1.5px] bg-gradient-to-br from-amber-400 via-fuchsia-500 to-indigo-500 shadow-[0_10px_30px_-10px_rgba(168,85,247,0.35)] hover:shadow-[0_18px_40px_-12px_rgba(168,85,247,0.55)] active:scale-[0.98] transition-all duration-200 md:from-primary/40 md:via-primary/30 md:to-primary/40"
+          >
+            <div className="relative rounded-[14px] bg-gradient-to-br from-indigo-950 via-slate-900 to-fuchsia-950 md:bg-card md:from-card md:via-card md:to-card px-4 py-3.5 flex items-center justify-between overflow-hidden">
+              <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_20%_0%,rgba(255,255,255,0.18),transparent_50%)] md:hidden" />
+              <div className="pointer-events-none absolute -right-6 -bottom-8 h-28 w-28 rounded-full bg-amber-400/20 blur-2xl md:hidden" />
+              <div className="pointer-events-none absolute -left-6 -top-8 h-24 w-24 rounded-full bg-fuchsia-500/20 blur-2xl md:hidden" />
+              <div className="relative flex items-center gap-3">
+                <div className="p-2.5 rounded-xl bg-gradient-to-br from-amber-300 to-orange-500 shadow-lg shadow-amber-500/40 ring-1 ring-white/30 md:from-primary md:to-primary md:shadow-primary/30 md:ring-primary/20">
+                  <GraduationCap className="h-5 w-5 text-white drop-shadow" />
+                </div>
+                <div className="text-left">
+                  <div className="flex items-center gap-1.5">
+                    <span className="font-bold text-[15px] text-white md:text-foreground tracking-tight">Enarsia Academy</span>
+                    <span className="px-1.5 py-0.5 rounded-full text-[9px] font-bold bg-amber-400 text-amber-950">NEW</span>
+                  </div>
+                  <span className="text-[11px] text-white/70 md:text-muted-foreground">Free video tutorials · Learn the CRM</span>
+                </div>
+              </div>
+              <ChevronRight className="relative h-4 w-4 text-white/80 md:text-muted-foreground group-hover:translate-x-0.5 transition-transform" />
+            </div>
+          </button>
 
           {/* Bio only - phone/company/location hidden for cleaner UI */}
           {profile?.bio && (
@@ -403,6 +403,7 @@ export default function Profile() {
               <p className="text-sm">{profile.bio}</p>
             </div>
           )}
+
 
           {/* ── SECTION: Profession (renders its own header, or nothing) ── */}
           <ModeSwitcher />
