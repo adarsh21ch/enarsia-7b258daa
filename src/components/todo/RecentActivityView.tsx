@@ -1,5 +1,5 @@
 // Activity History View - Universal component with built-in calendar
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useCallback } from 'react';
 import { motion, useMotionValue, useTransform, animate, type PanInfo } from 'framer-motion';
 import { useProspectsQuery } from '@/hooks/useProspectsQuery';
 import { useGlobalTodos } from '@/contexts/TodosContext';
@@ -7,15 +7,17 @@ import { useActivityLogs } from '@/hooks/useActivityLogs';
 import { useCalendarStrip } from '@/hooks/useCalendarStrip';
 import { CalendarStrip } from '@/components/calendar/CalendarStrip';
 import { SearchBar } from '@/components/ui/SearchBar';
-import { Clock, Loader2 } from 'lucide-react';
+import { Clock, Loader2, Phone, X } from 'lucide-react';
 import { parseISO, format, isSameDay } from 'date-fns';
-
-// Consistent Call icon
-const CallIcon = ({ className }: { className?: string }) => (
-  <svg viewBox="0 0 24 24" className={className} fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
-    <path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07 19.5 19.5 0 01-6-6 19.79 19.79 0 01-3.07-8.67A2 2 0 014.11 2h3a2 2 0 012 1.72c.127.96.362 1.903.7 2.81a2 2 0 01-.45 2.11L8.09 9.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.338 1.85.573 2.81.7A2 2 0 0122 16.92z" />
-  </svg>
-);
+import {
+  Drawer,
+  DrawerContent,
+  DrawerHeader,
+  DrawerTitle,
+  DrawerDescription,
+  DrawerFooter,
+  DrawerClose,
+} from '@/components/ui/drawer';
 
 // Consistent WhatsApp icon
 const WhatsAppIcon = ({ className }: { className?: string }) => (
@@ -23,6 +25,16 @@ const WhatsAppIcon = ({ className }: { className?: string }) => (
     <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z" />
   </svg>
 );
+
+type ActivityItem = {
+  id: string;
+  type: 'lead' | 'import' | 'todo';
+  name: string;
+  phone: string | null;
+  stage: string | null;
+  action: string | null;
+  time: Date;
+};
 
 interface RecentActivityViewProps {
   /** Optional: if provided externally, the built-in calendar is hidden */
@@ -36,6 +48,7 @@ interface RecentActivityViewProps {
 export function RecentActivityView({ selectedDate: externalDate, searchQuery: externalSearch, onSearchChange: externalOnSearchChange, hideCalendar = false }: RecentActivityViewProps) {
   // Internal state for calendar and search when not controlled externally
   const [internalSearch, setInternalSearch] = useState('');
+  const [selectedActivity, setSelectedActivity] = useState<ActivityItem | null>(null);
   const calendar = useCalendarStrip();
 
   const selectedDate = externalDate ?? calendar.selectedDate;
@@ -49,7 +62,7 @@ export function RecentActivityView({ selectedDate: externalDate, searchQuery: ex
   const loading = prospectsLoading || todosLoading || logsLoading;
 
   // Get personal activities for the selected date
-  const activities = useMemo(() => {
+  const activities = useMemo<ActivityItem[]>(() => {
     // Get bulk import entries from activity_logs for the selected date
     const importEntries = activityLogs
       .filter(log => log.activity_type === 'bulk_import' && isSameDay(parseISO(log.created_at), selectedDate))
@@ -94,7 +107,7 @@ export function RecentActivityView({ selectedDate: externalDate, searchQuery: ex
         time: new Date(t.updated_at)
       }));
 
-    let activitiesList = [...prospectActivities, ...importEntries, ...todoActivities].sort(
+    let activitiesList: ActivityItem[] = [...prospectActivities, ...importEntries, ...todoActivities].sort(
       (a, b) => b.time.getTime() - a.time.getTime()
     );
 
@@ -109,13 +122,19 @@ export function RecentActivityView({ selectedDate: externalDate, searchQuery: ex
 
   const cleanPhoneNumber = (phone: string) => phone.replace(/[^0-9+]/g, '');
   
-  const handleWhatsApp = (phone: string) => {
+  const handleWhatsApp = useCallback((phone: string) => {
     window.open(`https://wa.me/${cleanPhoneNumber(phone)}`, '_blank');
-  };
+  }, []);
   
-  const handleCall = (phone: string) => {
+  const handleCall = useCallback((phone: string) => {
     window.open(`tel:${cleanPhoneNumber(phone)}`, '_self');
-  };
+  }, []);
+
+  const handleRowTap = useCallback((activity: ActivityItem) => {
+    if (activity.phone) {
+      setSelectedActivity(activity);
+    }
+  }, []);
 
   if (loading) {
     return (
@@ -188,53 +207,38 @@ export function RecentActivityView({ selectedDate: externalDate, searchQuery: ex
                   {/* Activity content */}
                   <div className="flex-1 min-w-0 pb-2">
                     {activity.type === 'import' ? (
-                      <div className="flex items-center gap-2 p-2 rounded-lg bg-muted/30">
+                      <div className="flex items-center gap-2 p-3 rounded-lg bg-muted/30">
                         <span className="text-xs text-muted-foreground">📥 {activity.name}</span>
                       </div>
                     ) : (
-                    <SwipeableActivityRow
-                      phone={activity.phone}
-                      onCall={() => activity.phone && handleCall(activity.phone)}
-                    >
-                      <div className="flex items-start justify-between gap-2 p-2 rounded-lg bg-muted/30 hover:bg-muted/40 transition-colors">
-                        <div className="min-w-0 flex-1">
-                          <p className="text-sm font-medium truncate">{activity.name}</p>
-                          <div className="flex items-center gap-1.5 flex-wrap mt-1">
-                            {activity.stage && (
-                              <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-primary/10 text-primary">
-                                {activity.stage}
-                              </span>
-                            )}
-                            {activity.action && (
-                              <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-muted text-muted-foreground">
-                                {activity.action}
-                              </span>
-                            )}
-                            {activity.type === 'todo' && (
-                              <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-blue-500/10 text-blue-600">
-                                To-Do
-                              </span>
-                            )}
+                      <SwipeableActivityRow
+                        phone={activity.phone}
+                        onCall={() => activity.phone && handleCall(activity.phone)}
+                        onTap={() => handleRowTap(activity)}
+                      >
+                        <div className="flex items-start justify-between gap-2 p-3 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors cursor-pointer select-none">
+                          <div className="min-w-0 flex-1">
+                            <p className="text-sm font-semibold truncate">{activity.name}</p>
+                            <div className="flex items-center gap-1.5 flex-wrap mt-1.5">
+                              {activity.stage && (
+                                <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-primary/10 text-primary">
+                                  {activity.stage}
+                                </span>
+                              )}
+                              {activity.action && (
+                                <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-muted text-muted-foreground">
+                                  {activity.action}
+                                </span>
+                              )}
+                              {activity.type === 'todo' && (
+                                <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-blue-500/10 text-blue-600">
+                                  To-Do
+                                </span>
+                              )}
+                            </div>
                           </div>
                         </div>
-                        {activity.phone && (
-                          <div className="flex items-center gap-1 shrink-0">
-                            <button
-                              onClick={() => handleCall(activity.phone!)}
-                              className="p-1.5 rounded-full transition-colors bg-secondary"
-                            >
-                              <CallIcon className="h-3.5 w-3.5 text-primary" />
-                            </button>
-                            <button
-                              onClick={() => handleWhatsApp(activity.phone!)}
-                              className="p-1.5 rounded-full bg-green-500/10 hover:bg-green-500/20 transition-colors"
-                            >
-                              <WhatsAppIcon className="h-3.5 w-3.5 text-green-600" />
-                            </button>
-                          </div>
-                        )}
-                      </div>
-                    </SwipeableActivityRow>
+                      </SwipeableActivityRow>
                     )}
                   </div>
                 </div>
@@ -243,6 +247,139 @@ export function RecentActivityView({ selectedDate: externalDate, searchQuery: ex
           </div>
         )}
       </div>
+
+      {/* Contact Action Sheet */}
+      <Drawer open={!!selectedActivity} onOpenChange={(open) => !open && setSelectedActivity(null)}>
+        <DrawerContent className="px-0 pb-6">
+          <DrawerHeader className="px-5 pb-2 text-left">
+            <DrawerTitle className="text-lg font-semibold truncate">{selectedActivity?.name}</DrawerTitle>
+            <DrawerDescription className="text-sm text-muted-foreground">
+              {selectedActivity?.phone}
+            </DrawerDescription>
+          </DrawerHeader>
+
+          {/* Tags preview */}
+          <div className="px-5 pb-4 flex flex-wrap gap-1.5">
+            {selectedActivity?.stage && (
+              <span className="text-[10px] px-2 py-0.5 rounded-full bg-primary/10 text-primary font-medium">
+                {selectedActivity.stage}
+              </span>
+            )}
+            {selectedActivity?.action && (
+              <span className="text-[10px] px-2 py-0.5 rounded-full bg-muted text-muted-foreground font-medium">
+                {selectedActivity.action}
+              </span>
+            )}
+          </div>
+
+          <DrawerFooter className="px-5 gap-3">
+            {selectedActivity?.phone && (
+              <>
+                <a
+                  href={`tel:${cleanPhoneNumber(selectedActivity.phone)}`}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    handleCall(selectedActivity.phone!);
+                  }}
+                  className="flex items-center justify-center gap-2 w-full rounded-xl bg-primary py-3.5 text-primary-foreground font-semibold text-base active:scale-[0.96] transition-transform"
+                >
+                  <Phone className="h-5 w-5" />
+                  Call
+                </a>
+                <button
+                  onClick={() => selectedActivity?.phone && handleWhatsApp(selectedActivity.phone)}
+                  className="flex items-center justify-center gap-2 w-full rounded-xl bg-green-600 py-3.5 text-white font-semibold text-base active:scale-[0.96] transition-transform"
+                >
+                  <WhatsAppIcon className="h-5 w-5" />
+                  WhatsApp
+                </button>
+              </>
+            )}
+            <DrawerClose asChild>
+              <button className="w-full rounded-xl border border-border bg-background py-3 text-sm font-medium text-muted-foreground active:scale-[0.96] transition-transform">
+                Cancel
+              </button>
+            </DrawerClose>
+          </DrawerFooter>
+        </DrawerContent>
+      </Drawer>
+    </div>
+  );
+}
+
+// ===== Swipeable activity row — LEFT swipe → call (parity with Calling tab) =====
+interface SwipeableActivityRowProps {
+  phone: string | null;
+  onCall: () => void;
+  onTap: () => void;
+  children: React.ReactNode;
+}
+
+function SwipeableActivityRow({ phone, onCall, onTap, children }: SwipeableActivityRowProps) {
+  const SWIPE_REVEAL = 96;
+  const SWIPE_TRIGGER = 140;
+  const x = useMotionValue(0);
+
+  const surfaceOpacity = useTransform(x, [0, -30, -SWIPE_REVEAL], [0, 0.5, 1]);
+  const callBtnOpacity = useTransform(x, [-15, -SWIPE_REVEAL * 0.7], [0, 1]);
+  const callBtnTranslate = useTransform(x, [0, -SWIPE_REVEAL], [30, 0]);
+
+  // No phone → render children plainly (no swipe affordance)
+  if (!phone) return <>{children}</>;
+
+  const snapBack = () => {
+    animate(x, 0, { type: 'spring', stiffness: 500, damping: 42 });
+  };
+
+  const handleDragEnd = (_: unknown, info: PanInfo) => {
+    const offset = info.offset.x;
+    const velocity = info.velocity.x;
+    if (offset < -SWIPE_TRIGGER || velocity < -650) {
+      onCall();
+      try {
+        if (typeof navigator !== 'undefined' && 'vibrate' in navigator) {
+          (navigator as Navigator & { vibrate: (p: number) => void }).vibrate(15);
+        }
+      } catch { /* noop */ }
+    }
+    // Always snap back to neutral so the row is never stuck off-screen
+    snapBack();
+  };
+
+  return (
+    <div className="relative overflow-hidden rounded-lg">
+      {/* Green call surface revealed beneath */}
+      <motion.div
+        aria-hidden="true"
+        style={{ opacity: surfaceOpacity }}
+        className="absolute inset-0 rounded-lg bg-green-500/15"
+      />
+      {/* Revealed Call icon — vertically centered on the right edge */}
+      <motion.div
+        aria-hidden="true"
+        style={{ opacity: callBtnOpacity, x: callBtnTranslate }}
+        className="absolute inset-y-0 right-3 flex items-center pointer-events-none"
+      >
+        <span className="flex items-center justify-center h-9 w-9 rounded-full bg-green-500 shadow-md">
+          <svg viewBox="0 0 24 24" className="h-4 w-4 text-white" fill="none" stroke="currentColor" strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round">
+            <path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07 19.5 19.5 0 01-6-6 19.79 19.79 0 01-3.07-8.67A2 2 0 014.11 2h3a2 2 0 012 1.72c.127.96.362 1.903.7 2.81a2 2 0 01-.45 2.11L8.09 9.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.338 1.85.573 2.81.7A2 2 0 0122 16.92z" />
+          </svg>
+        </span>
+      </motion.div>
+      {/* Draggable foreground */}
+      <motion.div
+        drag="x"
+        dragConstraints={{ left: -SWIPE_REVEAL * 1.4, right: 0 }}
+        dragElastic={0.12}
+        dragMomentum={false}
+        dragDirectionLock
+        style={{ x }}
+        onDragEnd={handleDragEnd}
+        onTap={onTap}
+        className="relative touch-pan-y"
+      >
+        {children}
+      </motion.div>
     </div>
   );
 }
