@@ -216,28 +216,29 @@ export function RecentActivityView({ selectedDate: externalDate, searchQuery: ex
                         onCall={() => activity.phone && handleCall(activity.phone)}
                         onTap={() => handleRowTap(activity)}
                       >
-                        <div className="flex items-start justify-between gap-2 p-3 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors cursor-pointer select-none">
+                        <div className="flex items-center justify-between gap-3 p-3 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors cursor-pointer select-none">
                           <div className="min-w-0 flex-1">
                             <p className="text-sm font-semibold truncate">{activity.name}</p>
-                            <div className="flex items-center gap-1.5 flex-wrap mt-1.5">
-                              {activity.stage && (
-                                <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-primary/10 text-primary">
-                                  {activity.stage}
-                                </span>
-                              )}
-                              {activity.action && (
-                                <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-muted text-muted-foreground">
-                                  {activity.action}
-                                </span>
-                              )}
-                              {activity.type === 'todo' && (
-                                <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-blue-500/10 text-blue-600">
-                                  To-Do
-                                </span>
-                              )}
-                            </div>
+                          </div>
+                          <div className="flex items-center gap-1.5 flex-wrap justify-end shrink-0 max-w-[60%]">
+                            {activity.stage && (
+                              <span className="text-[10px] px-2 py-0.5 rounded-full bg-primary/10 text-primary whitespace-nowrap">
+                                {activity.stage}
+                              </span>
+                            )}
+                            {activity.action && (
+                              <span className="text-[10px] px-2 py-0.5 rounded-full bg-muted text-muted-foreground whitespace-nowrap">
+                                {activity.action}
+                              </span>
+                            )}
+                            {activity.type === 'todo' && (
+                              <span className="text-[10px] px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-600 whitespace-nowrap">
+                                To-Do
+                              </span>
+                            )}
                           </div>
                         </div>
+
                       </SwipeableActivityRow>
                     )}
                   </div>
