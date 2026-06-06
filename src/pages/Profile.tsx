@@ -578,20 +578,6 @@ export default function Profile() {
             <ChevronRight className="h-3.5 w-3.5 text-muted-foreground" />
           </button>
 
-          {/* Enarsia Academy */}
-          <button
-            onClick={() => navigate('/academy')}
-            className="w-full rounded-xl bg-card border border-border/50 px-4 py-2.5 flex items-center justify-between hover:bg-muted/50 transition-colors"
-          >
-            <div className="flex items-center gap-2.5">
-              <GraduationCap className="h-4 w-4 text-primary" />
-              <div className="flex flex-col items-start">
-                <span className="font-medium text-sm">Enarsia Academy</span>
-                <span className="text-[11px] text-muted-foreground">Free video tutorials</span>
-              </div>
-            </div>
-            <ChevronRight className="h-3.5 w-3.5 text-muted-foreground" />
-          </button>
 
           {/* User Guide */}
           <UserGuideDrawer />
