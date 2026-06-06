@@ -298,7 +298,7 @@ export default function TodoUp() {
           {isRecentActivity && <RecentActivityView selectedDate={calendar.selectedDate} searchQuery={activitySearchQuery} onSearchChange={setActivitySearchQuery} hideCalendar />}
 
           {/* Daily Tasks View */}
-          {viewMode === 'daily-tasks' && <DailyTasksView selectedDate={calendar.selectedDate} selectedDateString={calendar.selectedDateString} userTasks={userDailyTasks} userTasksLoading={userDailyTasksLoading} markUserTask={markDailyTask} deleteUserTask={deleteDailyTask} />}
+          {viewMode === 'daily-tasks' && <DailyTasksView selectedDate={calendar.selectedDate} selectedDateString={calendar.selectedDateString} userTasks={userDailyTasks} userTasksLoading={userDailyTasksLoading} markUserTask={markDailyTask} deleteUserTask={deleteDailyTask} renameUserTask={renameDailyTask} />}
 
           {/* To-Do List View (existing UI) */}
           {viewMode === 'todo-list' && <>
