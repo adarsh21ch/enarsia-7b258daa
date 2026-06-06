@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, startTransition, useRef, type Compone
 import { useLocation, useNavigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { useProfile } from '@/hooks/useProfile';
-import { useMode } from '@/hooks/useMode';
+import { MODES, BASE_MODE_ID } from '@/config/modes';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Crown, Lightbulb, FilePen, Send, BarChart3, LayoutDashboard, LayoutGrid, Megaphone, TrendingUp } from 'lucide-react';
 import { useUpgradeUrgency } from '@/lib/planUtils';
@@ -66,8 +66,9 @@ export function BottomNav({ className }: { className?: string }) {
   const location = useLocation();
   const navigate = useNavigate();
   const { profile } = useProfile();
-  const { mode } = useMode();
-  const navItems = mode.nav;
+  // CRM (Network Marketing) is the permanent home — bottom nav is never
+  // swapped to another mode's nav. Creator/etc. live in their own sub-sections.
+  const navItems = MODES[BASE_MODE_ID].nav;
   const { isUrgent, isExpired, isAtLeadLimit } = useUpgradeUrgency();
   const [keyboardVisible, setKeyboardVisible] = useState(false);
   const [bouncingTab, setBouncingTab] = useState<string | null>(null);
@@ -98,14 +99,13 @@ export function BottomNav({ className }: { className?: string }) {
     }
   };
 
-  const isCreator = mode.id === 'content_creator';
   return (
     <nav
       className={cn(
         "fixed bottom-0 left-0 right-0 z-50",
         "bg-card/85 backdrop-blur-2xl",
         "border-t border-border/50",
-        isCreator ? "pb-[max(env(safe-area-inset-bottom),12px)]" : "pb-[10px]",
+        "pb-[10px]",
         className
       )}
     >
