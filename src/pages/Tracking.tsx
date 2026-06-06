@@ -303,6 +303,32 @@ export default function Tracking() {
             )}
           </div>
 
+          {/* AI Insights — relocated from Profile */}
+          <div className="mt-5">
+            <div className="flex items-center gap-2 mb-2">
+              <Sparkles className="h-4 w-4 text-primary" />
+              <h3 className="text-sm font-semibold text-foreground">AI Insights</h3>
+            </div>
+            <button
+              onClick={() => setShowAIInsights(true)}
+              className="w-full rounded-xl px-4 py-3 bg-gradient-to-r from-primary/10 to-primary/5 border border-primary/20 flex items-center justify-between transition-all hover:shadow-md"
+            >
+              <div className="flex items-center gap-3 text-left">
+                <div className="p-1.5 rounded-lg bg-primary/10">
+                  <Sparkles className="h-4 w-4 text-primary" />
+                </div>
+                <div>
+                  <span className="font-medium text-sm block">Trackers & AI Coaching</span>
+                  <span className="text-[11px] text-muted-foreground">Configure metrics tracked by AI on your data</span>
+                </div>
+              </div>
+              <ChevronRight className="h-4 w-4 text-muted-foreground" />
+            </button>
+            <p className="text-[11px] text-muted-foreground mt-2">
+              Notification preferences live in Profile → App Notifications.
+            </p>
+          </div>
+
         </div>
       </main>
 
