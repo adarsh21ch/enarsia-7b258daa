@@ -20,9 +20,11 @@ const HOURS = Array.from({ length: 24 }, (_, i) => ({
 interface AIInsightsSettingsProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  /** Hide the global notification toggles (Daily Snapshot, AI Alerts, etc.) — they live in App Notifications now. */
+  hideGlobalToggles?: boolean;
 }
 
-export function AIInsightsSettings({ open, onOpenChange }: AIInsightsSettingsProps) {
+export function AIInsightsSettings({ open, onOpenChange, hideGlobalToggles = false }: AIInsightsSettingsProps) {
   const {
     trackers, trackersLoading,
     preferences, prefsLoading,
@@ -68,6 +70,7 @@ export function AIInsightsSettings({ open, onOpenChange }: AIInsightsSettingsPro
           ) : (
             <>
               {/* Global Toggles */}
+              {!hideGlobalToggles && (
               <div className="space-y-3">
                 <h3 className="text-sm font-semibold text-foreground">Automatic Insights</h3>
                 <ToggleRow
@@ -116,6 +119,7 @@ export function AIInsightsSettings({ open, onOpenChange }: AIInsightsSettingsPro
                   </Select>
                 </div>
               </div>
+              )}
 
               {/* Trackers Section */}
               <div className="space-y-3">

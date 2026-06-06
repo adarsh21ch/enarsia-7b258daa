@@ -1,7 +1,8 @@
 import { useEffect, useState, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { format, subMonths, addMonths } from 'date-fns';
-import { ChevronLeft, ChevronRight, ExternalLink, Settings, Info, BarChart3, HelpCircle } from 'lucide-react';
+import { ChevronLeft, ChevronRight, ExternalLink, Settings, Info, BarChart3, HelpCircle, Sparkles } from 'lucide-react';
+import { AIInsightsSettings } from '@/components/ai/AIInsightsSettings';
 import { useAuth } from '@/contexts/AuthContext';
 import { BottomNav } from '@/components/layout/BottomNav';
 import { TrialBanner } from '@/components/subscription/TrialBanner';
@@ -48,6 +49,7 @@ export default function Tracking() {
   const [showUpdateDrawer, setShowUpdateDrawer] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [showGuide, setShowGuide] = useState(false);
+  const [showAIInsights, setShowAIInsights] = useState(false);
 
   // Layout mode (Table / Card / Chart) — persisted per data mode (personal vs total)
   const [layoutMode, setLayoutModeState] = useState<LayoutMode>(() => {
@@ -301,6 +303,32 @@ export default function Tracking() {
             )}
           </div>
 
+          {/* AI Insights — relocated from Profile */}
+          <div className="mt-5">
+            <div className="flex items-center gap-2 mb-2">
+              <Sparkles className="h-4 w-4 text-primary" />
+              <h3 className="text-sm font-semibold text-foreground">AI Insights</h3>
+            </div>
+            <button
+              onClick={() => setShowAIInsights(true)}
+              className="w-full rounded-xl px-4 py-3 bg-gradient-to-r from-primary/10 to-primary/5 border border-primary/20 flex items-center justify-between transition-all hover:shadow-md"
+            >
+              <div className="flex items-center gap-3 text-left">
+                <div className="p-1.5 rounded-lg bg-primary/10">
+                  <Sparkles className="h-4 w-4 text-primary" />
+                </div>
+                <div>
+                  <span className="font-medium text-sm block">Trackers & AI Coaching</span>
+                  <span className="text-[11px] text-muted-foreground">Configure metrics tracked by AI on your data</span>
+                </div>
+              </div>
+              <ChevronRight className="h-4 w-4 text-muted-foreground" />
+            </button>
+            <p className="text-[11px] text-muted-foreground mt-2">
+              Notification preferences live in Profile → App Notifications.
+            </p>
+          </div>
+
         </div>
       </main>
 
@@ -322,6 +350,7 @@ export default function Tracking() {
       {/* Tracking Settings Dialog */}
       <TrackingSettingsDialog open={showSettings} onOpenChange={setShowSettings} />
       <TrackingGuideSheet open={showGuide} onOpenChange={setShowGuide} />
+      <AIInsightsSettings open={showAIInsights} onOpenChange={setShowAIInsights} hideGlobalToggles />
 
       <BottomNav />
     </div>
