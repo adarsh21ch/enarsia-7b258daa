@@ -434,52 +434,81 @@ export default function Profile() {
           )}
 
 
-          {/* ── SECTION: Profession (renders its own header, or nothing) ── */}
-          <ModeSwitcher />
-
           {/* ── SECTION: Tools ────────────────── */}
           <SectionHeader>Tools</SectionHeader>
           <div data-onboarding="profile-tools" className="space-y-2">
-          {/* Nevorai Forms */}
-          <button onClick={() => navigate('/forms')} className={cn("w-full rounded-xl px-4 py-2.5", "bg-gradient-to-r backdrop-blur-sm", "border border-blue-500/30", "flex items-center justify-between", "transition-all duration-200 hover:shadow-md", "from-blue-500/20 to-blue-500/5")}>
+
+          {/* Enarsia AI Assistant */}
+          <button onClick={() => {
+            if (canAccessAI) setShowAIChat(true);
+            else toast('Upgrade your plan to unlock AI Assistant', { icon: '🔒' });
+          }} className={cn(
+            "w-full rounded-xl px-4 py-2.5 bg-gradient-to-r backdrop-blur-sm border flex items-center justify-between transition-all duration-200 hover:shadow-md",
+            canAccessAI ? "from-primary/20 to-primary/5 border-primary/30" : "from-muted/40 to-muted/20 border-border/50 opacity-80"
+          )}>
+            <div className="flex items-center gap-3">
+              <div className={cn("p-1.5 rounded-lg", canAccessAI ? "bg-primary/10" : "bg-muted")}>
+                <Sparkles className={cn("h-4 w-4", canAccessAI ? "text-primary" : "text-muted-foreground")} />
+              </div>
+              <div className="text-left">
+                <span className="font-medium text-sm block flex items-center gap-1.5">
+                  Enarsia AI Assistant
+                  {!canAccessAI && <Lock className="h-3 w-3 text-muted-foreground" />}
+                </span>
+                <span className="text-[11px] text-muted-foreground">
+                  {canAccessAI ? "Smart help for follow-ups & strategy" : "Upgrade to unlock"}
+                </span>
+              </div>
+            </div>
+            {canAccessAI ? <ChevronRight className="h-4 w-4 text-muted-foreground" /> : <Crown className="h-4 w-4 text-amber-500" />}
+          </button>
+
+          {/* Content Studio */}
+          <button onClick={() => navigate('/creator')} className={cn(
+            "w-full rounded-xl px-4 py-2.5 bg-gradient-to-r from-fuchsia-500/15 via-card to-amber-400/10 backdrop-blur-sm border border-fuchsia-500/30 flex items-center justify-between transition-all duration-200 hover:shadow-md"
+          )}>
+            <div className="flex items-center gap-3">
+              <div className="p-1.5 rounded-lg bg-gradient-to-br from-fuchsia-500/20 to-amber-400/20">
+                <Clapperboard className="h-4 w-4 text-fuchsia-500" />
+              </div>
+              <div className="text-left">
+                <span className="font-medium text-sm block">Content Studio</span>
+                <span className="text-[11px] text-muted-foreground">Your content command center</span>
+              </div>
+            </div>
+            <ChevronRight className="h-4 w-4 text-muted-foreground" />
+          </button>
+
+          {/* Enarsia Forms */}
+          <button onClick={() => navigate('/forms')} className={cn("w-full rounded-xl px-4 py-2.5 bg-gradient-to-r backdrop-blur-sm border border-blue-500/30 flex items-center justify-between transition-all duration-200 hover:shadow-md from-blue-500/20 to-blue-500/5")}>
             <div className="flex items-center gap-3">
               <div className="p-1.5 rounded-lg bg-blue-500/10">
                 <FileText className="h-4 w-4 text-blue-500" />
               </div>
               <div className="text-left">
-                <span className="font-medium text-sm block">Nevorai Forms</span>
+                <span className="font-medium text-sm block">Enarsia Forms</span>
                 <span className="text-[11px] text-muted-foreground">Create & manage forms</span>
               </div>
             </div>
             <ChevronRight className="h-4 w-4 text-muted-foreground" />
           </button>
 
-          {/* Nevorai Notes */}
-          <button onClick={() => navigate('/notes')} className={cn("w-full rounded-xl px-4 py-2.5", "bg-gradient-to-r backdrop-blur-sm", "border border-accent/30", "flex items-center justify-between", "transition-all duration-200 hover:shadow-md", "from-accent/15 to-accent/5")}>
+          {/* Enarsia Notes */}
+          <button onClick={() => navigate('/notes')} className={cn("w-full rounded-xl px-4 py-2.5 bg-gradient-to-r backdrop-blur-sm border border-accent/30 flex items-center justify-between transition-all duration-200 hover:shadow-md from-accent/15 to-accent/5")}>
             <div className="flex items-center gap-3">
               <div className="p-1.5 rounded-lg bg-accent/10">
                 <NotebookPen className="h-4 w-4 text-accent" />
               </div>
               <div className="text-left">
-                <span className="font-medium text-sm block">Nevorai Notes</span>
+                <span className="font-medium text-sm block">Enarsia Notes</span>
                 <span className="text-[11px] text-muted-foreground">Quick notes, voice memos & more</span>
               </div>
             </div>
             <ChevronRight className="h-4 w-4 text-muted-foreground" />
           </button>
-          </div>{/* end data-onboarding="profile-tools" */}
 
-          {/* ── SECTION: Leads & AI ───────────── */}
-          <SectionHeader>Leads & AI</SectionHeader>
-          <div className="space-y-2">
-          <button onClick={() => navigate('/shared-leads')} className={cn(
-            "w-full rounded-xl px-4 py-2.5",
-            "bg-gradient-to-r backdrop-blur-sm",
-            "border border-orange-500/30",
-            "flex items-center justify-between",
-            "transition-all duration-200 hover:shadow-md",
-            "from-orange-500/20 to-orange-500/5"
-          )}>
+          {/* Shared Leads */}
+          <button onClick={() => navigate('/shared-leads')} className={cn("w-full rounded-xl px-4 py-2.5 bg-gradient-to-r backdrop-blur-sm border border-orange-500/30 flex items-center justify-between transition-all duration-200 hover:shadow-md from-orange-500/20 to-orange-500/5")}>
             <div className="flex items-center gap-3">
               <div className="p-1.5 rounded-lg bg-orange-500/10">
                 <Share2 className="h-4 w-4 text-orange-500" />
@@ -498,69 +527,15 @@ export default function Profile() {
               <ChevronRight className="h-4 w-4 text-muted-foreground" />
             </div>
           </button>
-          <button onClick={() => {
-            if (canAccessAI) {
-              setShowAIChat(true);
-            } else {
-              toast('Upgrade your plan to unlock AI Assistant', { icon: '🔒' });
-            }
-          }} className={cn(
-            "w-full rounded-xl px-4 py-2.5",
-            "bg-gradient-to-r backdrop-blur-sm",
-            "border",
-            "flex items-center justify-between",
-            "transition-all duration-200 hover:shadow-md",
-            canAccessAI
-              ? "from-primary/20 to-primary/5 border-primary/30"
-              : "from-muted/40 to-muted/20 border-border/50 opacity-80"
-          )}>
-            <div className="flex items-center gap-3">
-              <div className={cn("p-1.5 rounded-lg", canAccessAI ? "bg-primary/10" : "bg-muted")}>
-                <Sparkles className={cn("h-4 w-4", canAccessAI ? "text-primary" : "text-muted-foreground")} />
-              </div>
-              <div className="text-left">
-                <span className="font-medium text-sm block flex items-center gap-1.5">
-                  Enarsia AI Assistant
-                  {!canAccessAI && <Lock className="h-3 w-3 text-muted-foreground" />}
-                </span>
-                <span className="text-[11px] text-muted-foreground">
-                  {canAccessAI ? "Smart help for follow-ups & strategy" : "Upgrade to unlock"}
-                </span>
-              </div>
-            </div>
-            {canAccessAI ? (
-              <ChevronRight className="h-4 w-4 text-muted-foreground" />
-            ) : (
-              <Crown className="h-4 w-4 text-amber-500" />
-            )}
-          </button>
-
-          {/* AI Insights Settings */}
-          <button
-            onClick={() => setShowAIInsights(true)}
-            className="w-full rounded-xl px-4 py-2.5 bg-gradient-to-r from-primary/15 to-primary/5 backdrop-blur-sm border border-primary/20 flex items-center justify-between transition-all duration-200 hover:shadow-md"
-          >
-            <div className="flex items-center gap-3">
-              <div className="p-1.5 rounded-lg bg-primary/10">
-                <BrainCircuit className="h-4 w-4 text-primary" />
-              </div>
-              <div className="text-left">
-                <span className="font-medium text-sm block">AI Insights</span>
-                <span className="text-[11px] text-muted-foreground">Trackers, alerts & coaching</span>
-              </div>
-            </div>
-            <ChevronRight className="h-4 w-4 text-muted-foreground" />
-          </button>
-          </div>{/* end Leads & AI */}
-
+          </div>{/* end Tools */}
 
           {/* ── SECTION: Account ──────────────── */}
           <SectionHeader>Account</SectionHeader>
           <div className="space-y-2">
-          {/* Tracking Format - Full page */}
+          {/* Tracking Format */}
           <button
             onClick={() => navigate('/tracking-format')}
-            className="w-full rounded-xl px-4 py-2 bg-card border border-border/50 flex items-center justify-between transition-colors hover:bg-muted/50"
+            className="w-full rounded-xl px-4 py-2.5 bg-card border border-border/50 flex items-center justify-between transition-colors hover:bg-muted/50"
           >
             <div className="flex items-center gap-2.5">
               <Sliders className="h-4 w-4 text-muted-foreground" />
@@ -569,13 +544,25 @@ export default function Profile() {
             <ChevronRight className="h-3.5 w-3.5 text-muted-foreground" />
           </button>
 
-          {/* Notifications Toggle */}
-          <NotificationToggle canSendTest={isAdmin} />
+          {/* App Notifications — one panel for all alert prefs */}
+          <button
+            onClick={() => setShowAppNotifs(true)}
+            className="w-full rounded-xl px-4 py-2.5 bg-card border border-border/50 flex items-center justify-between transition-colors hover:bg-muted/50"
+          >
+            <div className="flex items-center gap-2.5">
+              <Bell className="h-4 w-4 text-primary" />
+              <div className="flex flex-col items-start">
+                <span className="font-medium text-sm">App Notifications</span>
+                <span className="text-[11px] text-muted-foreground">Push, alerts & insights</span>
+              </div>
+            </div>
+            <ChevronRight className="h-3.5 w-3.5 text-muted-foreground" />
+          </button>
 
           {/* Export My Data */}
           <button
             onClick={() => navigate('/profile/export')}
-            className="w-full rounded-xl px-4 py-2 bg-card border border-border/50 flex items-center justify-between transition-colors hover:bg-muted/50"
+            className="w-full rounded-xl px-4 py-2.5 bg-card border border-border/50 flex items-center justify-between transition-colors hover:bg-muted/50"
           >
             <div className="flex items-center gap-2.5">
               <FileText className="h-4 w-4 text-primary" />
@@ -595,101 +582,72 @@ export default function Profile() {
           <SectionHeader>Settings & Support</SectionHeader>
           <div className="space-y-2">
 
-          {/* Theme — top-level, always visible */}
+          {/* Appearance — Theme toggle, always visible */}
           <ThemeSettings />
 
+          {/* Help & Support — one collapsible group */}
           <Collapsible className="rounded-xl bg-card border border-border/50 overflow-hidden">
-            <CollapsibleTrigger className="w-full px-4 py-2 flex items-center justify-between hover:bg-muted/50 transition-colors">
+            <CollapsibleTrigger className="w-full px-4 py-2.5 flex items-center justify-between hover:bg-muted/50 transition-colors">
               <div className="flex items-center gap-2.5">
                 <Settings className="h-4 w-4 text-muted-foreground" />
-                <span className="font-medium text-sm">Settings</span>
+                <span className="font-medium text-sm">Help & Support</span>
               </div>
               <ChevronDown className="h-3.5 w-3.5 text-muted-foreground transition-transform [[data-state=open]>&]:rotate-180" />
             </CollapsibleTrigger>
             <CollapsibleContent>
-              <div className="px-4 pb-3 space-y-0.5">
-                <button onClick={() => setEditOpen(true)} className="w-full flex items-center justify-between p-2 rounded-lg hover:bg-muted/50 transition-colors">
+              <div className="px-2 pb-2 space-y-0.5">
+                <UserGuideDrawer />
+                <HelpSupportDrawer />
+                <button
+                  onClick={() => setShowInstallSheet(true)}
+                  className="w-full flex items-center justify-between p-2 rounded-lg hover:bg-muted/50 transition-colors"
+                >
                   <div className="flex items-center gap-2.5">
-                    <User className="h-3.5 w-3.5 text-muted-foreground" />
-                    <span className="text-sm">Edit Profile</span>
+                    <Smartphone className="h-4 w-4 text-primary" />
+                    <span className="text-sm">Install App</span>
                   </div>
                   <ChevronRight className="h-3.5 w-3.5 text-muted-foreground" />
                 </button>
-                <ChangePasswordDialog />
+                {/* Legal & Policies — nested */}
+                <Collapsible className="overflow-hidden">
+                  <CollapsibleTrigger className="w-full px-2 py-2 flex items-center justify-between hover:bg-muted/50 transition-colors rounded-lg">
+                    <div className="flex items-center gap-2.5">
+                      <FileText className="h-4 w-4 text-muted-foreground" />
+                      <span className="text-sm">Legal & Policies</span>
+                    </div>
+                    <ChevronDown className="h-3.5 w-3.5 text-muted-foreground transition-transform [[data-state=open]>&]:rotate-180" />
+                  </CollapsibleTrigger>
+                  <CollapsibleContent>
+                    <div className="pl-6 pr-2 pb-1 space-y-0.5">
+                      <Link to="/terms" className="w-full flex items-center justify-between p-2 rounded-lg hover:bg-muted/50 transition-colors">
+                        <div className="flex items-center gap-2.5">
+                          <FileText className="h-3.5 w-3.5 text-muted-foreground" />
+                          <span className="text-sm">Terms & Conditions</span>
+                        </div>
+                        <ChevronRight className="h-3.5 w-3.5 text-muted-foreground" />
+                      </Link>
+                      <Link to="/privacy" className="w-full flex items-center justify-between p-2 rounded-lg hover:bg-muted/50 transition-colors">
+                        <div className="flex items-center gap-2.5">
+                          <Shield className="h-3.5 w-3.5 text-muted-foreground" />
+                          <span className="text-sm">Privacy Policy</span>
+                        </div>
+                        <ChevronRight className="h-3.5 w-3.5 text-muted-foreground" />
+                      </Link>
+                      <Link to="/refund" className="w-full flex items-center justify-between p-2 rounded-lg hover:bg-muted/50 transition-colors">
+                        <div className="flex items-center gap-2.5">
+                          <Receipt className="h-3.5 w-3.5 text-muted-foreground" />
+                          <span className="text-sm">Refund Policy</span>
+                        </div>
+                        <ChevronRight className="h-3.5 w-3.5 text-muted-foreground" />
+                      </Link>
+                    </div>
+                  </CollapsibleContent>
+                </Collapsible>
               </div>
             </CollapsibleContent>
           </Collapsible>
-
-          {/* Install App */}
-          <button
-            onClick={() => setShowInstallSheet(true)}
-            className="w-full rounded-xl bg-card border border-border/50 px-4 py-2.5 flex items-center justify-between hover:bg-muted/50 transition-colors"
-          >
-            <div className="flex items-center gap-2.5">
-              <Smartphone className="h-4 w-4 text-primary" />
-              <div className="flex flex-col items-start">
-                <span className="font-medium text-sm">Install App</span>
-                <span className="text-[11px] text-muted-foreground">Add Enarsia to your Home Screen</span>
-              </div>
-            </div>
-            <ChevronRight className="h-3.5 w-3.5 text-muted-foreground" />
-          </button>
-
-
-          {/* User Guide */}
-          <UserGuideDrawer />
-
-          {/* Help & Support */}
-          <HelpSupportDrawer />
-
-          {/* Legal & Policies - Collapsible */}
-          <Collapsible className="rounded-xl bg-card border border-border/50 overflow-hidden">
-            <CollapsibleTrigger className="w-full px-4 py-2 flex items-center justify-between hover:bg-muted/50 transition-colors">
-              <div className="flex items-center gap-2.5">
-                <FileText className="h-4 w-4 text-muted-foreground" />
-                <span className="font-medium text-sm">Legal & Policies</span>
-              </div>
-              <ChevronDown className="h-3.5 w-3.5 text-muted-foreground transition-transform [[data-state=open]>&]:rotate-180" />
-            </CollapsibleTrigger>
-            <CollapsibleContent>
-              <div className="px-4 pb-2 space-y-0.5">
-                <Link to="/terms" className="w-full flex items-center justify-between p-2 rounded-lg hover:bg-muted/50 transition-colors">
-                  <div className="flex items-center gap-2.5">
-                    <FileText className="h-3.5 w-3.5 text-muted-foreground" />
-                    <span className="text-sm">Terms & Conditions</span>
-                  </div>
-                  <ChevronRight className="h-3.5 w-3.5 text-muted-foreground" />
-                </Link>
-                <Link to="/privacy" className="w-full flex items-center justify-between p-2 rounded-lg hover:bg-muted/50 transition-colors">
-                  <div className="flex items-center gap-2.5">
-                    <Shield className="h-3.5 w-3.5 text-muted-foreground" />
-                    <span className="text-sm">Privacy Policy</span>
-                  </div>
-                  <ChevronRight className="h-3.5 w-3.5 text-muted-foreground" />
-                </Link>
-                <Link to="/refund" className="w-full flex items-center justify-between p-2 rounded-lg hover:bg-muted/50 transition-colors">
-                  <div className="flex items-center gap-2.5">
-                    <Receipt className="h-3.5 w-3.5 text-muted-foreground" />
-                    <span className="text-sm">Refund Policy</span>
-                  </div>
-                  <ChevronRight className="h-3.5 w-3.5 text-muted-foreground" />
-                </Link>
-              </div>
-            </CollapsibleContent>
-          </Collapsible>
-
-          {/* Admin Panel Link - Only visible to admin */}
-          {isAdmin && <Link to="/admin" className="w-full rounded-xl px-4 py-2 block bg-card border border-destructive/30 flex items-center justify-between transition-colors hover:bg-muted/50">
-              <div className="flex items-center gap-2.5">
-                <Shield className="h-4 w-4 text-destructive" />
-                <span className="font-medium text-sm">Admin Panel</span>
-              </div>
-              <ChevronRight className="h-3.5 w-3.5 text-muted-foreground" />
-            </Link>}
           </div>{/* end Settings & Support */}
 
-          {/* ── SECTION: Community ────────────── */}
-          <SectionHeader>Community</SectionHeader>
           {/* Join WhatsApp Community */}
           <a
             href="https://chat.whatsapp.com/FvNbWgFVR2IFBq6ihWhTs2"
@@ -715,9 +673,9 @@ export default function Profile() {
       </main>
 
       <EditProfileDialog open={editOpen} onOpenChange={setEditOpen} profile={profile} onSave={updateProfile} updating={updating} />
-
+      <ChangePasswordDialog open={showChangePwd} onOpenChange={setShowChangePwd} />
       <AIAssistantChat open={showAIChat} onOpenChange={setShowAIChat} />
-      <AIInsightsSettings open={showAIInsights} onOpenChange={setShowAIInsights} />
+      <AppNotificationsSheet open={showAppNotifs} onOpenChange={setShowAppNotifs} isAdmin={isAdmin} />
       <InstallInstructionsSheet open={showInstallSheet} onClose={() => setShowInstallSheet(false)} />
 
       
