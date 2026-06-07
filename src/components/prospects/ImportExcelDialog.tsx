@@ -117,25 +117,46 @@ function guessFieldFromValues(values: string[]): { field: keyof ColumnMapping | 
   const igMatches = nonEmpty.filter(v => igPattern.test(v.trim())).length;
   if (igMatches >= nonEmpty.length * 0.5) return { field: 'instagram', score: igMatches / nonEmpty.length };
 
-  const agePattern = /^\d{1,3}$/;
-  const ageMatches = nonEmpty.filter(v => {
-    const n = parseInt(v.trim());
-    return agePattern.test(v.trim()) && n >= 1 && n <= 120;
-  }).length;
-  if (ageMatches >= nonEmpty.length * 0.6) return { field: 'age_or_dob', score: ageMatches / nonEmpty.length };
+// Detect a single field for a column based on the dominant value-shape in its samples.
+// ORDER MATTERS: email → dob/age → state → gender → instagram → phone → name → profession/address.
+function guessFieldFromValues(values: string[]): { field: keyof ColumnMapping | null; score: number } {
+  const nonEmpty = values.filter(v => v && String(v).trim().length > 0).map(v => String(v));
+  if (nonEmpty.length === 0) return { field: null, score: 0 };
+  const ratio = (n: number) => n / nonEmpty.length;
 
-  const dobPattern = /^\d{1,4}[\-\/\.]\d{1,2}[\-\/\.]\d{1,4}$/;
-  const dobMatches = nonEmpty.filter(v => dobPattern.test(v.trim())).length;
-  if (dobMatches >= nonEmpty.length * 0.5) return { field: 'age_or_dob', score: dobMatches / nonEmpty.length };
+  // 1) Email
+  const emailRe = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  const emailN = nonEmpty.filter(v => emailRe.test(v.trim())).length;
+  if (ratio(emailN) >= 0.5) return { field: 'email', score: ratio(emailN) };
 
-  const genderValues = ['male', 'female', 'm', 'f', 'other', 'man', 'woman'];
-  const genderMatches = nonEmpty.filter(v => genderValues.includes(v.trim().toLowerCase())).length;
-  if (genderMatches >= nonEmpty.length * 0.5) return { field: 'gender', score: genderMatches / nonEmpty.length };
+  // 2) Age / DOB — run BEFORE phone so "14-03-1995" is never a phone
+  const dobN = nonEmpty.filter(v => isDateLike(v) || isAgeLike(v)).length;
+  if (ratio(dobN) >= 0.6) return { field: 'age_or_dob', score: ratio(dobN) };
 
-  // Name: 2+ words, letters only
-  const namePattern = /^[a-zA-Z\u0900-\u097F\s\.]{2,50}$/;
-  const nameMatches = nonEmpty.filter(v => namePattern.test(v.trim()) && v.trim().includes(' ')).length;
-  if (nameMatches >= nonEmpty.length * 0.5) return { field: 'name', score: nameMatches / nonEmpty.length };
+  // 3) State (Indian states / abbreviations)
+  const stateN = nonEmpty.filter(v => isStateValue(v)).length;
+  if (ratio(stateN) >= 0.5) return { field: 'state', score: ratio(stateN) };
+
+  // 4) Gender
+  const genderSet = new Set(['male','female','m','f','other','man','woman']);
+  const genderN = nonEmpty.filter(v => genderSet.has(v.trim().toLowerCase())).length;
+  if (ratio(genderN) >= 0.6) return { field: 'gender', score: ratio(genderN) };
+
+  // 5) Instagram handle
+  const igRe = /^@[\w.]{1,30}$/;
+  const igN = nonEmpty.filter(v => igRe.test(v.trim())).length;
+  if (ratio(igN) >= 0.5) return { field: 'instagram', score: ratio(igN) };
+
+  // 6) Phone — strict, never date-shaped
+  const phoneN = nonEmpty.filter(v => isPhoneLike(v)).length;
+  if (ratio(phoneN) >= 0.6) return { field: 'phone', score: ratio(phoneN) };
+
+  // 7) Name — mostly alphabetic, 2+ chars
+  const nameRe = /^[a-zA-Z\u0900-\u097F\s\.\']{2,60}$/;
+  const nameN = nonEmpty.filter(v => nameRe.test(v.trim())).length;
+  const nameMultiWord = nonEmpty.filter(v => nameRe.test(v.trim()) && v.trim().includes(' ')).length;
+  if (ratio(nameMultiWord) >= 0.4) return { field: 'name', score: ratio(nameMultiWord) };
+  if (ratio(nameN) >= 0.7) return { field: 'name', score: ratio(nameN) };
 
   return { field: null, score: 0 };
 }
@@ -153,7 +174,8 @@ function autoDetectMapping(columns: string[], allData: Record<string, string>[])
     ['phone', /^(phone|mobile|contact|cell|whatsapp|number|phoneno|mobileno|phone1|mobile1)$/],
     ['phone2', /^(phone2|mobile2|altphone|alternatephone|secondaryphone|whatsapp2)$/],
     ['email', /^(email|emailid|mail|gmail)$/],
-    ['address', /^(address|city|location|state|place|area)$/],
+    ['address', /^(address|city|location|place|area|town|locality)$/],
+    ['state', /^(state|province|region)$/],
     ['age_or_dob', /^(age|dob|birthdate|dateofbirth|birthday)$/],
     ['gender', /^(gender|sex)$/],
     ['instagram', /^(instagram|insta|ighandle|igusername)$/],
@@ -179,7 +201,8 @@ function autoDetectMapping(columns: string[], allData: Record<string, string>[])
     ['phone', /phone|mobile|contact|whatsapp/],
     ['phone2', /phone.*2|alt.*phone|secondary/],
     ['email', /email|mail/],
-    ['address', /address|city|state|location/],
+    ['state', /state|province|region/],
+    ['address', /address|city|location|town|locality|area/],
     ['age_or_dob', /age|dob|birth/],
     ['gender', /gender|sex/],
     ['instagram', /insta|\big\b/],
@@ -199,7 +222,7 @@ function autoDetectMapping(columns: string[], allData: Record<string, string>[])
     }
   }
 
-  // Pass 3: data-shape detection for unmapped columns
+  // Pass 3: data-shape detection for unmapped columns (uses ordered guess above)
   const sampleRows = allData.slice(0, 15);
   for (const col of columns) {
     if (result[col]) continue;
@@ -209,7 +232,15 @@ function autoDetectMapping(columns: string[], allData: Record<string, string>[])
       result[col] = null;
       continue;
     }
+    // Safety: never let a date-like column become a phone
     if (guess === 'phone') {
+      const dateLike = sampleValues.filter(v => v && isDateLike(String(v))).length;
+      const nonEmpty = sampleValues.filter(v => v && String(v).trim()).length || 1;
+      if (dateLike / nonEmpty >= 0.3) {
+        result[col] = 'age_or_dob';
+        if (!used.has('age_or_dob')) used.add('age_or_dob');
+        continue;
+      }
       if (!used.has('phone')) {
         result[col] = 'phone';
         used.add('phone');
