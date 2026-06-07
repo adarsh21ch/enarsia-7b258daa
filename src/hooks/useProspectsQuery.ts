@@ -575,6 +575,7 @@ export function useProspectsQuery(options: UseProspectsQueryOptions = {}) {
         email: (p as any).email || null,
         notes: (p as any).notes || null,
         address: p.address || null,
+        state: (p as any).state || null,
         age_or_dob: (p as any).age_or_dob || null,
         gender: (p as any).gender || null,
         instagram: (p as any).instagram || null,
