@@ -78,6 +78,11 @@ const openWhatsApp = (phone: string) => window.open(buildWhatsAppLink(phone), '_
 interface PersonTableViewProps {
   prospects: Prospect[];
   loading: boolean;
+  onAdd?: (prospect: Partial<Prospect>) => Promise<Prospect | null>;
+  onImport?: (
+    prospects: Partial<Prospect>[],
+    onProgress?: (imported: number, total: number) => void,
+  ) => Promise<{ imported: number; skipped: number }>;
   onUpdate: (id: string, updates: Partial<Prospect>) => Promise<Prospect | null>;
   onDelete: (id: string) => Promise<Prospect | null | boolean>;
   onBulkDelete?: (ids: string[]) => Promise<{ deleted: number; prospects: Prospect[] }>;
