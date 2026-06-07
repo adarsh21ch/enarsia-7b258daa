@@ -162,6 +162,8 @@ function downloadCSV(rows: Prospect[], source: string) {
 export function PersonTableView({
   prospects,
   loading,
+  onAdd,
+  onImport,
   onUpdate,
   onDelete,
   onBulkDelete,
@@ -192,6 +194,8 @@ export function PersonTableView({
   const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false);
   const [editingNotes, setEditingNotes] = useState<string | null>(null);
   const [notesDraft, setNotesDraft] = useState('');
+  const [addProspectOpen, setAddProspectOpen] = useState(false);
+  const [fixMappingOpen, setFixMappingOpen] = useState(false);
 
   useEffect(() => {
     if (externalSearch !== undefined) setSearch(externalSearch);
