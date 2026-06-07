@@ -7,7 +7,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Plus, MoreVertical, Pencil, Trash2, FileSpreadsheet, CheckSquare, Trash, Download } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
+
 import { ExportDialog } from '@/components/export/ExportDialog';
 interface SheetTabsProps {
   sheets: Sheet[];
@@ -46,6 +46,7 @@ export function SheetTabs({
   // Refs for auto-scrolling to selected sheet
   const sheetRefs = useRef<Map<string, HTMLDivElement>>(new Map());
   const scrollAreaRef = useRef<HTMLDivElement>(null);
+  void scrollAreaRef;
 
   // Auto-scroll to selected sheet when it changes or on initial mount
   useEffect(() => {
@@ -150,22 +151,26 @@ export function SheetTabs({
           {renderAllTabMenu()}
         </div>
 
-        {/* Scrollable sheet tabs area */}
+        {/* Scrollable sheet tabs area (native scroll for reliable mobile taps) */}
         {sheets.length > 0 &&
-        <ScrollArea className="flex-1 whitespace-nowrap" ref={scrollAreaRef}>
+        <div
+          className="flex-1 overflow-x-auto whitespace-nowrap scrollbar-hide"
+          style={{ scrollbarWidth: 'none', msOverflowStyle: 'none', WebkitOverflowScrolling: 'touch' }}
+        >
             <div className="flex items-center">
               {sheets.map((sheet) =>
             <div
               key={sheet.id}
-              className="flex items-center border-r border-border/30"
+              className="flex items-center border-r border-border/30 shrink-0"
               ref={(el) => {
                 if (el) sheetRefs.current.set(sheet.id, el);else
                 sheetRefs.current.delete(sheet.id);
               }}>
 
                   <button
+                type="button"
                 onClick={() => onSelectSheet(sheet.id)}
-                className={cn("px-3 min-h-[36px] text-xs font-medium transition-colors rounded-lg mx-0.5",
+                className={cn("px-3 min-h-[36px] text-xs font-medium transition-colors rounded-lg mx-0.5 touch-manipulation",
 
                 selectedSheetId === sheet.id ?
                 "bg-primary text-primary-foreground shadow-sm" :
@@ -227,8 +232,7 @@ export function SheetTabs({
                 </div>
             )}
             </div>
-            <ScrollBar orientation="horizontal" />
-          </ScrollArea>
+          </div>
         }
 
         {/* Fixed Add Sheet button */}
