@@ -1156,6 +1156,37 @@ export function ProspectTable({
               </div> : <>
                 <ProspectFilters filters={filters} onFiltersChange={setFilters} showStagesFilter={!isCalling} showResponsesFilter={isCalling} filterTagButton={!isCalling ? <ChangeFilterTagButton /> : undefined} hideSearch={true} />
                 <Suspense fallback={null}><ImportExcelDialog onImport={handleImportProspects} /></Suspense>
+                {onToggleView && (
+                  <div className="hidden sm:inline-flex items-center rounded-xl border border-border bg-background p-0.5 shadow-sm" role="group" aria-label="View mode">
+                    <button
+                      type="button"
+                      onClick={() => { if (peopleViewMode !== 'card') onToggleView(); }}
+                      className={cn(
+                        "h-8 px-2.5 rounded-lg text-xs font-medium inline-flex items-center gap-1 transition-colors",
+                        peopleViewMode !== 'table' ? "bg-primary text-primary-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
+                      )}
+                      title="Card view"
+                      aria-pressed={peopleViewMode !== 'table'}
+                    >
+                      <LayoutGrid className="h-3.5 w-3.5" />
+                      <span className="hidden md:inline">Card</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => { if (peopleViewMode !== 'table' && !viewToggleDisabled) onToggleView(); }}
+                      disabled={viewToggleDisabled}
+                      className={cn(
+                        "h-8 px-2.5 rounded-lg text-xs font-medium inline-flex items-center gap-1 transition-colors disabled:opacity-40",
+                        peopleViewMode === 'table' ? "bg-primary text-primary-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
+                      )}
+                      title={viewToggleDisabled ? 'List view requires a wider screen' : 'List view'}
+                      aria-pressed={peopleViewMode === 'table'}
+                    >
+                      <List className="h-3.5 w-3.5" />
+                      <span className="hidden md:inline">List</span>
+                    </button>
+                  </div>
+                )}
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button variant="outline" size="icon" className="h-9 w-9 rounded-xl">
