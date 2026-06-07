@@ -59,7 +59,11 @@ import {
   ChevronLeft,
   ChevronRight,
   List,
+  LayoutGrid,
   Check,
+  UserPlus,
+  Upload,
+  Share2,
 } from 'lucide-react';
 import { WhatsAppIcon } from '@/components/ui/ActionIcons';
 import { SheetTabs } from '@/components/prospects/SheetTabs';
