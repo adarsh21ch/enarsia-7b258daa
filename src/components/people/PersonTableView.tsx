@@ -438,7 +438,8 @@ export function PersonTableView({
   const selectedCount = selectedRows.length;
 
   return (
-    <div className="flex flex-col gap-2">
+    <div className="flex flex-col gap-2 pb-28">
+
       {/* Toolbar */}
       <div className="flex flex-wrap items-center gap-2">
         <div className="relative flex-1 min-w-[180px] max-w-xs">
