@@ -424,7 +424,7 @@ export function ImportExcelDialog({ onImport, open: controlledOpen, onOpenChange
 
   const handleImport = async () => {
     const mapping: ColumnMapping = {
-      name: null, phone: null, phone2: null, email: null, address: null,
+      name: null, phone: null, phone2: null, email: null, address: null, state: null,
       age_or_dob: null, gender: null, instagram: null, profession: null,
     };
     for (const [col, field] of Object.entries(reverseMapping)) {
