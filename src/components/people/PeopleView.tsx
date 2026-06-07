@@ -105,7 +105,7 @@ export function PeopleView(props: PeopleViewProps) {
         source={props.source}
         viewMode={effectiveMode}
         onToggleView={toggleView}
-        viewToggleDisabled={isMobile}
+        viewToggleDisabled={false}
       />
     );
   }
