@@ -705,7 +705,7 @@ export function PersonTableView({
                 <TableRow
                   key={row.id}
                   data-state={row.getIsSelected() ? 'selected' : undefined}
-                  className="cursor-pointer"
+                  className="cursor-pointer group/row"
                   onClick={() => setActiveProspect(row.original)}
                 >
                   {row.getVisibleCells().map((cell) => {
