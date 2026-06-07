@@ -370,7 +370,7 @@ export default function NoteEditor() {
             </button>
             <div className="flex items-center gap-1.5">
               <NotebookPen className="h-4 w-4 text-accent" />
-              <span className="text-sm font-semibold text-foreground">Nevorai Notes</span>
+              <span className="text-sm font-semibold text-foreground">Enarsia Notes</span>
             </div>
           </div>
           <div className="flex items-center gap-0.5">
