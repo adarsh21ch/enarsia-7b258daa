@@ -361,141 +361,14 @@ const [localData, setLocalData] = useState({
         </div>
       </div>
 
-      {/* Expanded Report Card */}
-      {isExpanded && (
-        <div className="border-t border-border/50 p-4 space-y-4 bg-muted/10 animate-in fade-in-0 slide-in-from-top-2 duration-200">
-          {/* Contact Info */}
-          <div className="space-y-2">
-            <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Contact Info</h4>
-            <div className="grid grid-cols-2 gap-2">
-              <div className="flex items-center gap-2">
-                <MapPin className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
-                <Input
-                  value={localData.address}
-                  onChange={(e) => setLocalData(prev => ({ ...prev, address: e.target.value }))}
-                  onBlur={handleAddressBlur}
-                  placeholder="City, State"
-                  className="h-8 text-sm"
-                />
-              </div>
-              {localData.phone2 || true ? (
-                <div>
-                  <label className="text-[10px] text-muted-foreground mb-0.5 block">Phone 2</label>
-                  <Input
-                    value={localData.phone2}
-                    onChange={(e) => setLocalData(prev => ({ ...prev, phone2: e.target.value }))}
-                    onBlur={() => handleFieldUpdate('phone2' as any, localData.phone2)}
-                    placeholder="Alt number"
-                    className="h-8 text-sm"
-                  />
-                </div>
-              ) : null}
-            </div>
-            <div className="grid grid-cols-3 gap-2">
-              <div>
-                <label className="text-[10px] text-muted-foreground mb-0.5 block">Age</label>
-                <Input
-                  value={localData.age_or_dob}
-                  onChange={(e) => setLocalData(prev => ({ ...prev, age_or_dob: e.target.value }))}
-                  onBlur={() => handleFieldUpdate('age_or_dob', localData.age_or_dob)}
-                  placeholder="25"
-                  className="h-8 text-sm"
-                />
-              </div>
-              <div>
-                <label className="text-[10px] text-muted-foreground mb-0.5 block">Gender</label>
-                <Input
-                  value={localData.gender}
-                  onChange={(e) => setLocalData(prev => ({ ...prev, gender: e.target.value }))}
-                  onBlur={() => handleFieldUpdate('gender', localData.gender)}
-                  placeholder="M/F"
-                  className="h-8 text-sm"
-                />
-              </div>
-              <div>
-                <label className="text-[10px] text-muted-foreground mb-0.5 block">Profession</label>
-                <Input
-                  value={localData.profession}
-                  onChange={(e) => setLocalData(prev => ({ ...prev, profession: e.target.value }))}
-                  onBlur={() => handleFieldUpdate('profession', localData.profession)}
-                  placeholder="student / job"
-                  className="h-8 text-sm"
-                />
-              </div>
-            </div>
-            <div>
-              <label className="text-[10px] text-muted-foreground mb-0.5 block">Instagram</label>
-              <Input
-                value={localData.instagram}
-                onChange={(e) => setLocalData(prev => ({ ...prev, instagram: e.target.value }))}
-                onBlur={() => handleFieldUpdate('instagram', localData.instagram)}
-                placeholder="@username"
-                className="h-8 text-sm"
-              />
-            </div>
-            <div>
-              <label className="text-[10px] text-muted-foreground mb-0.5 block">Email</label>
-              <Input
-                value={localData.email}
-                onChange={(e) => setLocalData(prev => ({ ...prev, email: e.target.value }))}
-                onBlur={() => handleFieldUpdate('email', localData.email)}
-                placeholder="email@example.com"
-                className="h-8 text-sm"
-              />
-            </div>
-          </div>
-
-          {/* Why/Need */}
-          <div className="space-y-2">
-            <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
-              <Target className="h-3.5 w-3.5" />
-              Why / Need
-            </h4>
-            <Textarea
-              value={localData.why_need}
-              onChange={(e) => setLocalData(prev => ({ ...prev, why_need: e.target.value }))}
-              onBlur={() => handleFieldUpdate('why_need', localData.why_need)}
-              placeholder="Why do they want to earn?"
-              className="min-h-[60px] text-sm resize-none"
-            />
-          </div>
-
-          {/* Notes */}
-          <div className="space-y-2">
-            <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Notes</h4>
-            <Textarea
-              value={localData.notes}
-              onChange={(e) => setLocalData(prev => ({ ...prev, notes: e.target.value }))}
-              onBlur={() => handleFieldUpdate('notes', localData.notes)}
-              placeholder="Call notes, action items..."
-              className="min-h-[80px] text-sm resize-none"
-            />
-          </div>
-
-
-          {/* Recent Activity */}
-          {prospectActivities.length > 0 && (
-            <div className="space-y-2">
-              <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Activity History</h4>
-              <div className="space-y-1.5">
-                {prospectActivities.map((activity) => (
-                  <div key={activity.id} className="text-xs bg-background rounded-lg p-2 border border-border/30">
-                    <p className="text-foreground">{activity.description}</p>
-                    <p className="text-muted-foreground mt-0.5">
-                      {formatDistanceToNow(parseISO(activity.created_at), { addSuffix: true })}
-                    </p>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Meta */}
-          <div className="pt-2 border-t border-border/30 text-xs text-muted-foreground">
-            <p>Added {formatDistanceToNow(parseISO(prospect.date_added), { addSuffix: true })}</p>
-          </div>
-        </div>
-      )}
+      {/* Detail modal (replaces inline expand) */}
+      <ProspectDetailModal
+        prospect={prospect}
+        open={isExpanded}
+        onOpenChange={setIsExpanded}
+        onUpdate={onUpdate}
+        onDelete={onDelete as any}
+      />
 
       {/* Centered popups for tag selection — same UI as the swipe-right reveal */}
       <ResponseTagSheet
