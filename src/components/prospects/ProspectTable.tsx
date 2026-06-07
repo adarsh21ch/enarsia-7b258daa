@@ -14,7 +14,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
-import { Users, Undo2, Redo2, X, Trash2, Edit, Star, FileSpreadsheet, Upload, Share2, MoreHorizontal, Plus, Download, Lock, UserPlus, Loader2, List, Check } from 'lucide-react';
+import { Users, Undo2, Redo2, X, Trash2, Edit, Star, FileSpreadsheet, Upload, Share2, MoreHorizontal, Plus, Download, Lock, UserPlus, Loader2, List, LayoutGrid, Check } from 'lucide-react';
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { cn } from '@/lib/utils';
