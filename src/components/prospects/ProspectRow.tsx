@@ -5,6 +5,7 @@ import { Prospect, FunnelStage, ActionTaken, ProspectStatus, FUNNEL_STAGES, EXTE
 import { InlineSelect } from './InlineSelect';
 import { StatusBadge, StageBadge, ActionBadge } from './StatusBadge';
 import { InlineReportCard } from './InlineReportCard';
+import { ProspectDetailModal } from './ProspectDetailModal';
 import { ResponseTagSheet } from './ResponseTagSheet';
 import { Checkbox } from '@/components/ui/checkbox';
 import { CallIconButton } from '@/components/ui/ActionIcons';
