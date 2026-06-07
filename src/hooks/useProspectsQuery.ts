@@ -313,6 +313,7 @@ export function useProspectsQuery(options: UseProspectsQueryOptions = {}) {
         }
       }
       if (updates.address !== undefined) dbUpdates.address = updates.address;
+      if ((updates as any).state !== undefined) dbUpdates.state = (updates as any).state;
       if ((updates as any).age_or_dob !== undefined) dbUpdates.age_or_dob = (updates as any).age_or_dob;
       if ((updates as any).gender !== undefined) dbUpdates.gender = (updates as any).gender;
       if ((updates as any).instagram !== undefined) dbUpdates.instagram = (updates as any).instagram;
