@@ -63,6 +63,11 @@ import {
   Upload,
   Share2,
   Columns3,
+  Mail,
+  MapPin,
+  Cake,
+  User as UserIcon,
+  Instagram,
 } from 'lucide-react';
 import { WhatsAppIcon } from '@/components/ui/ActionIcons';
 import { SheetTabs } from '@/components/prospects/SheetTabs';
