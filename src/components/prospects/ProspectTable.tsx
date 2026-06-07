@@ -86,6 +86,10 @@ interface ProspectTableProps {
   fetchAllForExport?: (sheetId?: string | null) => Promise<Prospect[]>;
   // Sticky header top offset for parent scroll
   stickyHeaderTop?: number;
+  // View mode toggle (Card / List) — injected into the kebab menu
+  viewMode?: 'card' | 'table';
+  onToggleView?: () => void;
+  viewToggleDisabled?: boolean;
 }
 
 // Simplified column configuration - only 3 columns, no horizontal scroll needed
