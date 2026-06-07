@@ -437,83 +437,58 @@ export function PersonTableView({
   return (
     <div className="flex flex-col gap-2 pb-28">
 
-      {/* Toolbar */}
-      <div className="flex flex-wrap items-center gap-2">
-        <div className="relative flex-1 min-w-[180px] max-w-xs">
-          <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
-          <Input
-            value={search}
-            onChange={(e) => handleSearchChange(e.target.value)}
-            placeholder="Search name, phone, email…"
-            className="h-8 pl-7 text-xs"
-          />
+      {/* Toolbar — mirrors Card view density: search left (collapsible on mobile), filters + actions right */}
+      <div className="flex items-center gap-2">
+        {/* Search: icon on mobile (expands), full on desktop */}
+        <div className="flex items-center gap-2 flex-1 min-w-0">
+          {searchOpen || search ? (
+            <div className="relative flex-1 min-w-0 max-w-xs">
+              <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+              <Input
+                autoFocus
+                value={search}
+                onChange={(e) => handleSearchChange(e.target.value)}
+                onBlur={() => { if (!search) setSearchOpen(false); }}
+                placeholder="Search name, phone, email…"
+                className="h-8 pl-7 text-xs"
+              />
+            </div>
+          ) : (
+            <Button
+              variant="outline"
+              size="icon"
+              className="h-8 w-8 md:hidden"
+              onClick={() => setSearchOpen(true)}
+              aria-label="Search"
+            >
+              <Search className="h-3.5 w-3.5" />
+            </Button>
+          )}
+          {/* Desktop always shows search */}
+          {!searchOpen && !search && (
+            <div className="relative hidden md:block flex-1 min-w-0 max-w-xs">
+              <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+              <Input
+                value={search}
+                onChange={(e) => handleSearchChange(e.target.value)}
+                placeholder="Search name, phone, email…"
+                className="h-8 pl-7 text-xs"
+              />
+            </div>
+          )}
         </div>
 
-        <select
-          value={stageFilter}
-          onChange={(e) => setStageFilter(e.target.value)}
-          className="h-8 text-xs rounded-md border border-input bg-background px-2"
-        >
-          <option value="">All stages</option>
-          {stageOptions.map((s) => (
-            <option key={s} value={s}>
-              {s}
-            </option>
-          ))}
-        </select>
-
-        <select
-          value={qualityFilter}
-          onChange={(e) => setQualityFilter(e.target.value)}
-          className="h-8 text-xs rounded-md border border-input bg-background px-2"
-        >
-          <option value="">All quality</option>
-          {qualityOptions.map((s) => (
-            <option key={s} value={s}>
-              {s}
-            </option>
-          ))}
-        </select>
-
-        {sourceOptions.length > 0 && (
-          <select
-            value={sourceFilter}
-            onChange={(e) => setSourceFilter(e.target.value)}
-            className="h-8 text-xs rounded-md border border-input bg-background px-2"
-          >
-            <option value="">All sources</option>
-            {sourceOptions.map((s) => (
-              <option key={s} value={s}>
-                {s}
-              </option>
-            ))}
-          </select>
-        )}
-
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="outline" size="sm" className="h-8 text-xs">
-              <Settings2 className="h-3.5 w-3.5 mr-1" /> Columns
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuLabel>Show columns</DropdownMenuLabel>
-            {table
-              .getAllLeafColumns()
-              .filter((c) => c.id !== 'select' && c.id !== 'actions')
-              .map((col) => (
-                <DropdownMenuCheckboxItem
-                  key={col.id}
-                  checked={col.getIsVisible()}
-                  onCheckedChange={(v) => col.toggleVisibility(!!v)}
-                >
-                  {typeof col.columnDef.header === 'string' ? col.columnDef.header : col.id}
-                </DropdownMenuCheckboxItem>
-              ))}
-          </DropdownMenuContent>
-        </DropdownMenu>
-
+        {/* Right cluster — filters + 3-dot menu (matches Card view) */}
         <div className="ml-auto flex items-center gap-2">
+          <ProspectFilters
+            filters={filters}
+            onFiltersChange={setFilters}
+            showStagesFilter={!isCalling}
+            showResponsesFilter={isCalling}
+            filterTagButton={!isCalling ? <ChangeFilterTagButton /> : undefined}
+            hideSearch={true}
+          />
+
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="outline" size="icon" className="h-8 w-8">
@@ -530,25 +505,27 @@ export function PersonTableView({
                         type="button"
                         onClick={() => { if (viewMode !== 'card') onToggleView(); }}
                         className={cn(
-                          "flex-1 h-7 rounded-md inline-flex items-center justify-center transition-colors",
-                          viewMode !== 'table' ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
+                          "flex-1 h-7 rounded-md inline-flex items-center justify-center gap-1.5 text-xs font-medium transition-colors",
+                          viewMode !== 'table' ? "bg-primary text-primary-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
                         )}
                         title="Card view"
                         aria-pressed={viewMode !== 'table'}
                       >
-                        <LayoutGrid className="h-4 w-4" />
+                        <LayoutGrid className="h-3.5 w-3.5" />
+                        <span>Card</span>
                       </button>
                       <button
                         type="button"
                         onClick={() => { if (viewMode !== 'table') onToggleView(); }}
                         className={cn(
-                          "flex-1 h-7 rounded-md inline-flex items-center justify-center transition-colors",
-                          viewMode === 'table' ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
+                          "flex-1 h-7 rounded-md inline-flex items-center justify-center gap-1.5 text-xs font-medium transition-colors",
+                          viewMode === 'table' ? "bg-primary text-primary-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
                         )}
                         title="List view"
                         aria-pressed={viewMode === 'table'}
                       >
-                        <List className="h-4 w-4" />
+                        <List className="h-3.5 w-3.5" />
+                        <span>List</span>
                       </button>
                     </div>
                   </div>
@@ -576,6 +553,20 @@ export function PersonTableView({
                 </DropdownMenuItem>
               )}
               <DropdownMenuSeparator />
+              <DropdownMenuLabel className="text-[10px] uppercase tracking-wider text-muted-foreground">Columns</DropdownMenuLabel>
+              {table
+                .getAllLeafColumns()
+                .filter((c) => c.id !== 'select' && c.id !== 'actions')
+                .map((col) => (
+                  <DropdownMenuCheckboxItem
+                    key={col.id}
+                    checked={col.getIsVisible()}
+                    onCheckedChange={(v) => col.toggleVisibility(!!v)}
+                  >
+                    {typeof col.columnDef.header === 'string' ? col.columnDef.header : col.id}
+                  </DropdownMenuCheckboxItem>
+                ))}
+              <DropdownMenuSeparator />
               <DropdownMenuItem
                 onClick={() => {
                   if (onToggleView && !viewToggleDisabled) onToggleView();
@@ -590,6 +581,8 @@ export function PersonTableView({
           </DropdownMenu>
         </div>
       </div>
+
+
 
 
       {/* Bulk action bar */}
