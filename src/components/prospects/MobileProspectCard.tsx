@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { Prospect, FunnelStage, ProspectStatus, FUNNEL_STAGES, EXTENDED_ACTIONS, STATUSES, ExtendedActionTaken, ActionTaken } from '@/types/prospect';
 import { InlineSelect } from './InlineSelect';
 import { ResponseTagSheet } from './ResponseTagSheet';
+import { ProspectDetailModal } from './ProspectDetailModal';
 import { StatusBadge, StageBadge, ActionBadge } from './StatusBadge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
