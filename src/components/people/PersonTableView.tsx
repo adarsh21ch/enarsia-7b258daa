@@ -62,6 +62,7 @@ import {
   UserPlus,
   Upload,
   Share2,
+  Columns3,
 } from 'lucide-react';
 import { WhatsAppIcon } from '@/components/ui/ActionIcons';
 import { SheetTabs } from '@/components/prospects/SheetTabs';
@@ -507,6 +508,30 @@ export function PersonTableView({
             hideSearch={true}
           />
 
+          {/* Columns visibility — dedicated button */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="icon" className="h-8 w-8" title="Columns" aria-label="Toggle columns">
+                <Columns3 className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-48">
+              <DropdownMenuLabel className="text-[10px] uppercase tracking-wider text-muted-foreground">Columns</DropdownMenuLabel>
+              {table
+                .getAllLeafColumns()
+                .filter((c) => c.id !== 'select' && c.id !== 'actions')
+                .map((col) => (
+                  <DropdownMenuCheckboxItem
+                    key={col.id}
+                    checked={col.getIsVisible()}
+                    onCheckedChange={(v) => col.toggleVisibility(!!v)}
+                  >
+                    {typeof col.columnDef.header === 'string' ? col.columnDef.header : col.id}
+                  </DropdownMenuCheckboxItem>
+                ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
+
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="outline" size="icon" className="h-8 w-8">
@@ -570,20 +595,6 @@ export function PersonTableView({
                   Fix column mapping
                 </DropdownMenuItem>
               )}
-              <DropdownMenuSeparator />
-              <DropdownMenuLabel className="text-[10px] uppercase tracking-wider text-muted-foreground">Columns</DropdownMenuLabel>
-              {table
-                .getAllLeafColumns()
-                .filter((c) => c.id !== 'select' && c.id !== 'actions')
-                .map((col) => (
-                  <DropdownMenuCheckboxItem
-                    key={col.id}
-                    checked={col.getIsVisible()}
-                    onCheckedChange={(v) => col.toggleVisibility(!!v)}
-                  >
-                    {typeof col.columnDef.header === 'string' ? col.columnDef.header : col.id}
-                  </DropdownMenuCheckboxItem>
-                ))}
               <DropdownMenuSeparator />
               <DropdownMenuItem
                 onClick={() => {
