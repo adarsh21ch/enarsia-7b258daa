@@ -360,7 +360,7 @@ export function ProspectTable({
   kpiTagCounts,
   fetchAllForExport,
   stickyHeaderTop = 0,
-  viewMode,
+  viewMode: peopleViewMode,
   onToggleView,
   viewToggleDisabled
 }: ProspectTableProps) {
