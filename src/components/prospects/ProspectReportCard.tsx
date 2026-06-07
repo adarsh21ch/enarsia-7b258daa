@@ -69,6 +69,7 @@ export function ProspectReportCard({ prospect, open, onOpenChange, onUpdate }: P
       if (localData.phone !== prospect.phone) updates.phone = localData.phone;
       if ((localData.email || null) !== (prospect.email || null)) updates.email = localData.email || null;
       if ((localData.address || null) !== (prospect.address || null)) updates.address = localData.address || null;
+      if ((localData.state || null) !== (prospect.state || null)) (updates as any).state = localData.state || null;
       if ((localData.age_or_dob || null) !== (prospect.age_or_dob || null)) updates.age_or_dob = localData.age_or_dob || null;
       if ((localData.gender || null) !== (prospect.gender || null)) updates.gender = localData.gender || null;
       if ((localData.why_need || null) !== (prospect.why_need || null)) updates.why_need = localData.why_need || null;
