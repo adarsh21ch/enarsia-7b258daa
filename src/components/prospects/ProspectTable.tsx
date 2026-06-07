@@ -1162,7 +1162,22 @@ export function ProspectTable({
                       <MoreHorizontal className="h-4 w-4" />
                     </Button>
                   </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="w-48 bg-popover border-border z-50">
+                  <DropdownMenuContent align="end" className="w-52 bg-popover border-border z-50">
+                    {onToggleView && (
+                      <>
+                        <DropdownMenuItem
+                          onClick={() => { if (!viewToggleDisabled) onToggleView(); }}
+                          disabled={viewToggleDisabled}
+                          className="gap-2"
+                          title={viewToggleDisabled ? 'List view requires a wider screen' : undefined}
+                        >
+                          <List className="h-4 w-4" />
+                          {peopleViewMode === 'table' ? 'Switch to Card view' : 'Switch to List view'}
+                          {peopleViewMode === 'table' && <Check className="ml-auto h-4 w-4" />}
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                      </>
+                    )}
                     <DropdownMenuItem onClick={() => setAddProspectOpen(true)} className="gap-2">
                       <UserPlus className="h-4 w-4" />
                       Add Prospect
