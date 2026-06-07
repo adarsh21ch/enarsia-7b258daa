@@ -465,7 +465,7 @@ export function ImportExcelDialog({ onImport, open: controlledOpen, onOpenChange
 
     // Navigate to Calling page after a confident one-tap import
     if (result.imported > 0) {
-      try { navigate('/calling'); } catch {}
+      try { navigate('/action'); } catch {}
     }
   };
 
