@@ -14,7 +14,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
-import { Users, Undo2, Redo2, X, Trash2, Edit, Star, FileSpreadsheet, Upload, Share2, MoreHorizontal, Plus, Download, Lock, UserPlus, Loader2 } from 'lucide-react';
+import { Users, Undo2, Redo2, X, Trash2, Edit, Star, FileSpreadsheet, Upload, Share2, MoreHorizontal, Plus, Download, Lock, UserPlus, Loader2, List, Check } from 'lucide-react';
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { cn } from '@/lib/utils';
@@ -86,6 +86,10 @@ interface ProspectTableProps {
   fetchAllForExport?: (sheetId?: string | null) => Promise<Prospect[]>;
   // Sticky header top offset for parent scroll
   stickyHeaderTop?: number;
+  // View mode toggle (Card / List) — injected into the kebab menu
+  viewMode?: 'card' | 'table';
+  onToggleView?: () => void;
+  viewToggleDisabled?: boolean;
 }
 
 // Simplified column configuration - only 3 columns, no horizontal scroll needed
@@ -355,7 +359,10 @@ export function ProspectTable({
   kpiTotal,
   kpiTagCounts,
   fetchAllForExport,
-  stickyHeaderTop = 0
+  stickyHeaderTop = 0,
+  viewMode: peopleViewMode,
+  onToggleView,
+  viewToggleDisabled
 }: ProspectTableProps) {
   const {
     logBulkActivity
@@ -1155,7 +1162,22 @@ export function ProspectTable({
                       <MoreHorizontal className="h-4 w-4" />
                     </Button>
                   </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="w-48 bg-popover border-border z-50">
+                  <DropdownMenuContent align="end" className="w-52 bg-popover border-border z-50">
+                    {onToggleView && (
+                      <>
+                        <DropdownMenuItem
+                          onClick={() => { if (!viewToggleDisabled) onToggleView(); }}
+                          disabled={viewToggleDisabled}
+                          className="gap-2"
+                          title={viewToggleDisabled ? 'List view requires a wider screen' : undefined}
+                        >
+                          <List className="h-4 w-4" />
+                          {peopleViewMode === 'table' ? 'Switch to Card view' : 'Switch to List view'}
+                          {peopleViewMode === 'table' && <Check className="ml-auto h-4 w-4" />}
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                      </>
+                    )}
                     <DropdownMenuItem onClick={() => setAddProspectOpen(true)} className="gap-2">
                       <UserPlus className="h-4 w-4" />
                       Add Prospect

@@ -55,6 +55,8 @@ import {
   Settings2,
   ChevronLeft,
   ChevronRight,
+  List,
+  Check,
 } from 'lucide-react';
 import { WhatsAppIcon } from '@/components/ui/ActionIcons';
 import { SheetTabs } from '@/components/prospects/SheetTabs';
@@ -87,6 +89,9 @@ interface PersonTableViewProps {
   onLoadMore?: () => void;
   isLoadingMore?: boolean;
   source: 'leads' | 'funnel';
+  viewMode?: 'card' | 'table';
+  onToggleView?: () => void;
+  viewToggleDisabled?: boolean;
 }
 
 function csvEscape(v: unknown): string {
@@ -160,6 +165,9 @@ export function PersonTableView({
   onLoadMore,
   isLoadingMore,
   source,
+  viewMode,
+  onToggleView,
+  viewToggleDisabled,
 }: PersonTableViewProps) {
   const [sorting, setSorting] = useState<SortingState>([]);
   const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
@@ -500,6 +508,28 @@ export function PersonTableView({
           <Download className="h-3.5 w-3.5 mr-1" />
           {selectedCount ? `Export ${selectedCount}` : 'Export All'}
         </Button>
+
+        {onToggleView && (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="icon" className="h-8 w-8">
+                <MoreHorizontal className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-52">
+              <DropdownMenuItem
+                onClick={() => { if (!viewToggleDisabled) onToggleView(); }}
+                disabled={viewToggleDisabled}
+                className="gap-2"
+                title={viewToggleDisabled ? 'List view requires a wider screen' : undefined}
+              >
+                <List className="h-4 w-4" />
+                {viewMode === 'table' ? 'Switch to Card view' : 'Switch to List view'}
+                {viewMode === 'table' && <Check className="ml-auto h-4 w-4" />}
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        )}
       </div>
 
       {/* Bulk action bar */}

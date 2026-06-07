@@ -1,12 +1,12 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { ProspectTable } from '@/components/prospects/ProspectTable';
 import { PersonTableView } from './PersonTableView';
-import { ViewSwitcher, PeopleViewMode } from './ViewSwitcher';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { toast } from 'sonner';
 import { Prospect, Sheet as SheetType } from '@/types/prospect';
 
 const STORAGE_KEY = 'people_view_mode';
+export type PeopleViewMode = 'card' | 'table';
 
 function readMode(): PeopleViewMode {
   try {
@@ -55,54 +55,69 @@ interface PeopleViewProps {
 
 export function PeopleView(props: PeopleViewProps) {
   const isMobile = useIsMobile();
-  const [mode, setMode] = useState<PeopleViewMode>(readMode);
+  const [storedMode, setStoredMode] = useState<PeopleViewMode>(readMode);
 
-  // On mobile, force card and notify once
-  useEffect(() => {
-    if (isMobile && mode === 'table') {
-      setMode('card');
-      toast.message('Switched to Card view', {
-        description: 'Table view requires a wider screen.',
-      });
+  // Mobile forces card view but preserves the stored desktop preference
+  const effectiveMode: PeopleViewMode = isMobile ? 'card' : storedMode;
+
+  const toggleView = useCallback(() => {
+    if (isMobile) {
+      toast.message('List view requires a wider screen');
+      return;
     }
-  }, [isMobile, mode]);
+    setStoredMode((prev) => {
+      const next: PeopleViewMode = prev === 'card' ? 'table' : 'card';
+      try {
+        localStorage.setItem(STORAGE_KEY, next);
+      } catch {}
+      return next;
+    });
+  }, [isMobile]);
 
-  const handleChange = (v: PeopleViewMode) => {
-    setMode(v);
-    try {
-      localStorage.setItem(STORAGE_KEY, v);
-    } catch {}
-  };
+  // Cross-tab sync
+  useEffect(() => {
+    const onStorage = (e: StorageEvent) => {
+      if (e.key === STORAGE_KEY && (e.newValue === 'card' || e.newValue === 'table')) {
+        setStoredMode(e.newValue);
+      }
+    };
+    window.addEventListener('storage', onStorage);
+    return () => window.removeEventListener('storage', onStorage);
+  }, []);
+
+  if (effectiveMode === 'table') {
+    return (
+      <PersonTableView
+        prospects={props.prospects}
+        loading={props.loading}
+        onUpdate={props.onUpdate}
+        onDelete={props.onDelete}
+        onBulkDelete={props.onBulkDelete}
+        sheets={props.sheets}
+        selectedSheetId={props.selectedSheetId}
+        onSelectSheet={props.onSelectSheet}
+        onAddSheet={props.onAddSheet}
+        onUpdateSheet={props.onUpdateSheet}
+        onDeleteSheet={props.onDeleteSheet}
+        externalSearch={props.externalSearch}
+        onExternalSearchChange={props.onExternalSearchChange}
+        hasNextPage={props.hasNextPage}
+        onLoadMore={props.onLoadMore}
+        isLoadingMore={props.isLoadingMore}
+        source={props.source}
+        viewMode={effectiveMode}
+        onToggleView={toggleView}
+        viewToggleDisabled={isMobile}
+      />
+    );
+  }
 
   return (
-    <div className="flex flex-col gap-2">
-      <div className="flex items-center justify-end">
-        <ViewSwitcher value={mode} onChange={handleChange} disableTable={isMobile} />
-      </div>
-
-      {mode === 'table' && !isMobile ? (
-        <PersonTableView
-          prospects={props.prospects}
-          loading={props.loading}
-          onUpdate={props.onUpdate}
-          onDelete={props.onDelete}
-          onBulkDelete={props.onBulkDelete}
-          sheets={props.sheets}
-          selectedSheetId={props.selectedSheetId}
-          onSelectSheet={props.onSelectSheet}
-          onAddSheet={props.onAddSheet}
-          onUpdateSheet={props.onUpdateSheet}
-          onDeleteSheet={props.onDeleteSheet}
-          externalSearch={props.externalSearch}
-          onExternalSearchChange={props.onExternalSearchChange}
-          hasNextPage={props.hasNextPage}
-          onLoadMore={props.onLoadMore}
-          isLoadingMore={props.isLoadingMore}
-          source={props.source}
-        />
-      ) : (
-        <ProspectTable {...props} />
-      )}
-    </div>
+    <ProspectTable
+      {...props}
+      viewMode={effectiveMode}
+      onToggleView={toggleView}
+      viewToggleDisabled={isMobile}
+    />
   );
 }
