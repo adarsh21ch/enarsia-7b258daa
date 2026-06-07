@@ -178,16 +178,24 @@ export function ProspectReportCard({ prospect, open, onOpenChange, onUpdate }: P
               />
             </div>
 
-            <div className="grid grid-cols-1 gap-4">
+            <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label className="flex items-center gap-2 text-muted-foreground">
                   <MapPin className="h-4 w-4" />
-                  Address
+                  Address / City
                 </Label>
                 <Input
                   value={localData.address || ''}
                   onChange={(e) => handleFieldChange('address', e.target.value)}
-                  placeholder="City, State"
+                  placeholder="City / area"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label className="text-muted-foreground">State</Label>
+                <Input
+                  value={(localData as any).state || ''}
+                  onChange={(e) => handleFieldChange('state' as any, e.target.value)}
+                  placeholder="e.g. Rajasthan"
                 />
               </div>
             </div>
