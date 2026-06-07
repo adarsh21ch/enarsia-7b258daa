@@ -165,6 +165,9 @@ export function PersonTableView({
   onLoadMore,
   isLoadingMore,
   source,
+  viewMode,
+  onToggleView,
+  viewToggleDisabled,
 }: PersonTableViewProps) {
   const [sorting, setSorting] = useState<SortingState>([]);
   const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
