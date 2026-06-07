@@ -4696,6 +4696,7 @@ export type Database = {
           sheet_id: string | null
           sort_order: number | null
           stage_index: number | null
+          state: string | null
           updated_at: string
           user_id: string
           why_need: string | null
@@ -4729,6 +4730,7 @@ export type Database = {
           sheet_id?: string | null
           sort_order?: number | null
           stage_index?: number | null
+          state?: string | null
           updated_at?: string
           user_id: string
           why_need?: string | null
@@ -4762,6 +4764,7 @@ export type Database = {
           sheet_id?: string | null
           sort_order?: number | null
           stage_index?: number | null
+          state?: string | null
           updated_at?: string
           user_id?: string
           why_need?: string | null
