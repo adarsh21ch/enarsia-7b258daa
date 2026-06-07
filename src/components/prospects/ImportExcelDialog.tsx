@@ -96,26 +96,6 @@ interface DetectionResult {
   confidence: { name: number; phone: number };
 }
 
-// Heuristic field detection from sample values (0..1 score is implicit via thresholds)
-function guessFieldFromValues(values: string[]): { field: keyof ColumnMapping | null; score: number } {
-  const nonEmpty = values.filter(v => v && v.trim().length > 0);
-  if (nonEmpty.length === 0) return { field: null, score: 0 };
-
-  // Phone: mostly 10-digit numbers (India focus) or 7-15 digit pattern
-  const phonePattern = /^[\+]?[\d\s\-\(\)]{7,15}$/;
-  const tenDigit = /^[6-9]\d{9}$/;
-  const phoneMatches = nonEmpty.filter(v => phonePattern.test(v.trim())).length;
-  const tenDigitMatches = nonEmpty.filter(v => tenDigit.test(v.replace(/\D/g, ''))).length;
-  if (tenDigitMatches >= nonEmpty.length * 0.7) return { field: 'phone', score: tenDigitMatches / nonEmpty.length };
-  if (phoneMatches >= nonEmpty.length * 0.6) return { field: 'phone', score: phoneMatches / nonEmpty.length };
-
-  const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  const emailMatches = nonEmpty.filter(v => emailPattern.test(v.trim())).length;
-  if (emailMatches >= nonEmpty.length * 0.5) return { field: 'email', score: emailMatches / nonEmpty.length };
-
-  const igPattern = /^@[\w.]{1,30}$/;
-  const igMatches = nonEmpty.filter(v => igPattern.test(v.trim())).length;
-  if (igMatches >= nonEmpty.length * 0.5) return { field: 'instagram', score: igMatches / nonEmpty.length };
 
 // Detect a single field for a column based on the dominant value-shape in its samples.
 // ORDER MATTERS: email → dob/age → state → gender → instagram → phone → name → profession/address.
