@@ -517,38 +517,6 @@ export function PersonTableView({
         </DropdownMenu>
 
         <div className="ml-auto flex items-center gap-2">
-          {onToggleView && (
-            <div className="inline-flex items-center rounded-xl border border-border bg-background p-0.5 shadow-sm" role="group" aria-label="View mode">
-              <button
-                type="button"
-                onClick={() => { if (viewMode !== 'card') onToggleView(); }}
-                className={cn(
-                  "h-7 px-2.5 rounded-lg text-xs font-medium inline-flex items-center gap-1 transition-colors",
-                  viewMode !== 'table' ? "bg-primary text-primary-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
-                )}
-                aria-pressed={viewMode !== 'table'}
-                title="Card view"
-              >
-                <LayoutGrid className="h-3.5 w-3.5" />
-                <span className="hidden md:inline">Card</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => { if (viewMode !== 'table' && !viewToggleDisabled) onToggleView(); }}
-                disabled={viewToggleDisabled}
-                className={cn(
-                  "h-7 px-2.5 rounded-lg text-xs font-medium inline-flex items-center gap-1 transition-colors disabled:opacity-40",
-                  viewMode === 'table' ? "bg-primary text-primary-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
-                )}
-                aria-pressed={viewMode === 'table'}
-                title={viewToggleDisabled ? 'List view requires a wider screen' : 'List view'}
-              >
-                <List className="h-3.5 w-3.5" />
-                <span className="hidden md:inline">List</span>
-              </button>
-            </div>
-          )}
-
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="outline" size="icon" className="h-8 w-8">
@@ -558,17 +526,39 @@ export function PersonTableView({
             <DropdownMenuContent align="end" className="w-56">
               {onToggleView && (
                 <>
-                  <DropdownMenuItem
-                    onClick={() => { if (!viewToggleDisabled) onToggleView(); }}
-                    disabled={viewToggleDisabled}
-                    className="gap-2"
-                  >
-                    <List className="h-4 w-4" />
-                    Switch to Card view
-                  </DropdownMenuItem>
+                  <div className="px-2 py-1.5">
+                    <div className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-1.5 px-1">View</div>
+                    <div className="inline-flex w-full items-center rounded-lg border border-border bg-muted/40 p-0.5" role="group" aria-label="View mode">
+                      <button
+                        type="button"
+                        onClick={() => { if (viewMode !== 'card') onToggleView(); }}
+                        className={cn(
+                          "flex-1 h-7 rounded-md inline-flex items-center justify-center transition-colors",
+                          viewMode !== 'table' ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
+                        )}
+                        title="Card view"
+                        aria-pressed={viewMode !== 'table'}
+                      >
+                        <LayoutGrid className="h-4 w-4" />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => { if (viewMode !== 'table') onToggleView(); }}
+                        className={cn(
+                          "flex-1 h-7 rounded-md inline-flex items-center justify-center transition-colors",
+                          viewMode === 'table' ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
+                        )}
+                        title="List view"
+                        aria-pressed={viewMode === 'table'}
+                      >
+                        <List className="h-4 w-4" />
+                      </button>
+                    </div>
+                  </div>
                   <DropdownMenuSeparator />
                 </>
               )}
+
               {onAdd && (
                 <DropdownMenuItem onClick={() => setAddProspectOpen(true)} className="gap-2">
                   <UserPlus className="h-4 w-4" />
