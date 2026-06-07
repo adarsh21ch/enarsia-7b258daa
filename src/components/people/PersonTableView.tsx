@@ -63,11 +63,6 @@ import {
   Upload,
   Share2,
   Columns3,
-  Mail,
-  MapPin,
-  Cake,
-  User as UserIcon,
-  Instagram,
 } from 'lucide-react';
 import { WhatsAppIcon } from '@/components/ui/ActionIcons';
 import { SheetTabs } from '@/components/prospects/SheetTabs';
@@ -194,15 +189,7 @@ export function PersonTableView({
 }: PersonTableViewProps) {
   const [sorting, setSorting] = useState<SortingState>([]);
   const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
-  const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({
-    phone2: false,
-    email: false,
-    address: false,
-    age_or_dob: false,
-    gender: false,
-    instagram: false,
-    source: false,
-  });
+  const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
   const [search, setSearch] = useState(externalSearch ?? '');
   const [searchOpen, setSearchOpen] = useState(false);
   const [activeProspect, setActiveProspect] = useState<Prospect | null>(null);
@@ -379,81 +366,6 @@ export function PersonTableView({
         ),
       },
       {
-        accessorKey: 'phone2',
-        header: 'Phone 2',
-        cell: ({ row }) =>
-          row.original.phone2 ? (
-            <a
-              href={`tel:${row.original.phone2}`}
-              onClick={(e) => e.stopPropagation()}
-              className="text-primary hover:underline tabular-nums text-xs"
-            >
-              {row.original.phone2}
-            </a>
-          ) : (
-            <span className="text-muted-foreground text-xs">—</span>
-          ),
-      },
-      {
-        accessorKey: 'email',
-        header: 'Email',
-        cell: ({ row }) =>
-          row.original.email ? (
-            <a
-              href={`mailto:${row.original.email}`}
-              onClick={(e) => e.stopPropagation()}
-              className="text-primary hover:underline text-xs truncate max-w-[180px] inline-block"
-            >
-              {row.original.email}
-            </a>
-          ) : (
-            <span className="text-muted-foreground text-xs">—</span>
-          ),
-      },
-      {
-        accessorKey: 'address',
-        header: 'Address',
-        cell: ({ row }) => (
-          <span className="text-xs text-muted-foreground truncate max-w-[160px] inline-block">
-            {row.original.address || '—'}
-          </span>
-        ),
-      },
-      {
-        accessorKey: 'age_or_dob',
-        header: 'Age / DOB',
-        cell: ({ row }) => (
-          <span className="text-xs text-muted-foreground">{row.original.age_or_dob || '—'}</span>
-        ),
-      },
-      {
-        accessorKey: 'gender',
-        header: 'Gender',
-        cell: ({ row }) => (
-          <span className="text-xs text-muted-foreground">{row.original.gender || '—'}</span>
-        ),
-      },
-      {
-        accessorKey: 'instagram',
-        header: 'Instagram',
-        cell: ({ row }) => {
-          const ig = row.original.instagram;
-          if (!ig) return <span className="text-muted-foreground text-xs">—</span>;
-          const handle = ig.replace('@', '').trim();
-          return (
-            <a
-              href={`https://instagram.com/${handle}`}
-              target="_blank"
-              rel="noreferrer"
-              onClick={(e) => e.stopPropagation()}
-              className="text-xs text-pink-500 hover:underline inline-flex items-center gap-1"
-            >
-              <Instagram className="h-3 w-3" />@{handle}
-            </a>
-          );
-        },
-      },
-      {
         accessorKey: 'prospect_status',
         header: 'Quality',
         cell: ({ row }) => (
@@ -469,47 +381,42 @@ export function PersonTableView({
         cell: ({ row }) => {
           const p = row.original;
           return (
-            <div className="flex items-center justify-end gap-0.5" onClick={(e) => e.stopPropagation()}>
-              <a
-                href={`tel:${p.phone}`}
-                title="Call"
-                className="inline-flex items-center justify-center h-7 w-7 rounded-md text-emerald-600 hover:bg-emerald-500/10 transition-colors"
-              >
-                <Phone className="h-4 w-4" />
-              </a>
-              <button
-                onClick={() => openWhatsApp(p.phone)}
-                title="WhatsApp"
-                className="inline-flex items-center justify-center h-7 w-7 rounded-md text-green-600 hover:bg-green-500/10 transition-colors"
-              >
-                <WhatsAppIcon className="h-4 w-4" />
-              </button>
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="icon" className="h-7 w-7">
-                    <MoreHorizontal className="h-4 w-4" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
-                  <DropdownMenuItem onClick={() => setActiveProspect(p)}>
-                    Open / Edit
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => (window.location.href = `sms:${p.phone}`)}>
-                    <MessageSquareText className="h-3.5 w-3.5 mr-2" /> Text
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem
-                    className="text-destructive"
-                    onClick={async () => {
-                      await onDelete(p.id);
-                      toast.success('Lead deleted');
-                    }}
-                  >
-                    <Trash2 className="h-3.5 w-3.5 mr-2" /> Delete
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </div>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-7 w-7"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <MoreHorizontal className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
+                <DropdownMenuItem onClick={() => setActiveProspect(p)}>
+                  Open / Edit
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => (window.location.href = `tel:${p.phone}`)}>
+                  <Phone className="h-3.5 w-3.5 mr-2" /> Call
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => openWhatsApp(p.phone)}>
+                  <WhatsAppIcon className="h-3.5 w-3.5 mr-2" /> WhatsApp
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => (window.location.href = `sms:${p.phone}`)}>
+                  <MessageSquareText className="h-3.5 w-3.5 mr-2" /> Text
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  className="text-destructive"
+                  onClick={async () => {
+                    await onDelete(p.id);
+                    toast.success('Lead deleted');
+                  }}
+                >
+                  <Trash2 className="h-3.5 w-3.5 mr-2" /> Delete
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           );
         },
       },
@@ -748,164 +655,8 @@ export function PersonTableView({
         </div>
       )}
 
-      {/* Mobile: stacked compact list (Apple-Mail style) */}
-      <div className="md:hidden rounded-lg border border-border/40 bg-card divide-y divide-border/40 overflow-hidden">
-        {loading && prospects.length === 0 ? (
-          <div className="text-center py-8 text-muted-foreground text-sm">Loading…</div>
-        ) : table.getRowModel().rows.length === 0 ? (
-          <div className="text-center py-8 text-muted-foreground text-sm">No leads found</div>
-        ) : (
-          table.getRowModel().rows.map((row) => {
-            const p = row.original;
-            const isSelected = row.getIsSelected();
-            const anySelected = Object.keys(table.getState().rowSelection).length > 0;
-            return (
-              <div
-                key={row.id}
-                className={cn(
-                  'flex items-start gap-2 px-3 py-2.5 active:bg-muted/40 transition-colors',
-                  isSelected && 'bg-primary/5',
-                )}
-                onClick={() => setActiveProspect(p)}
-              >
-                {/* Serial / checkbox */}
-                <div className="shrink-0 w-7 pt-0.5 flex items-center justify-center">
-                  {anySelected || isSelected ? (
-                    <Checkbox
-                      checked={isSelected}
-                      onCheckedChange={(v) => row.toggleSelected(!!v)}
-                      onClick={(e) => e.stopPropagation()}
-                    />
-                  ) : (
-                    <button
-                      onClick={(e) => { e.stopPropagation(); row.toggleSelected(true); }}
-                      className="text-[11px] tabular-nums text-muted-foreground w-full text-center"
-                    >
-                      {row.index + 1}
-                    </button>
-                  )}
-                </div>
-
-                {/* Main content */}
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center justify-between gap-2">
-                    <h4 className="text-sm font-semibold text-foreground truncate">
-                      {p.name || '—'}
-                    </h4>
-                    <div className="flex items-center gap-0.5 shrink-0" onClick={(e) => e.stopPropagation()}>
-                      <a
-                        href={`tel:${p.phone}`}
-                        className="inline-flex items-center justify-center h-8 w-8 rounded-full text-emerald-600 hover:bg-emerald-500/10 active:scale-95 transition"
-                        title="Call"
-                      >
-                        <Phone className="h-4 w-4" />
-                      </a>
-                      <button
-                        onClick={() => openWhatsApp(p.phone)}
-                        className="inline-flex items-center justify-center h-8 w-8 rounded-full text-green-600 hover:bg-green-500/10 active:scale-95 transition"
-                        title="WhatsApp"
-                      >
-                        <WhatsAppIcon className="h-4 w-4" />
-                      </button>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={(e) => e.stopPropagation()}>
-                            <MoreHorizontal className="h-4 w-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
-                          <DropdownMenuItem onClick={() => setActiveProspect(p)}>Open / Edit</DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => (window.location.href = `sms:${p.phone}`)}>
-                            <MessageSquareText className="h-3.5 w-3.5 mr-2" /> Text
-                          </DropdownMenuItem>
-                          <DropdownMenuSeparator />
-                          <DropdownMenuItem
-                            className="text-destructive"
-                            onClick={async () => { await onDelete(p.id); toast.success('Lead deleted'); }}
-                          >
-                            <Trash2 className="h-3.5 w-3.5 mr-2" /> Delete
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </div>
-                  </div>
-
-                  {/* Phone line */}
-                  <div className="flex items-center gap-1.5 mt-0.5 text-xs text-muted-foreground">
-                    <Phone className="h-3 w-3 shrink-0" />
-                    <span className="tabular-nums truncate">{p.phone}</span>
-                    {p.phone2 && <span className="tabular-nums truncate opacity-70">· {p.phone2}</span>}
-                  </div>
-
-                  {/* Details row: only render available fields */}
-                  {(p.email || p.address || p.age_or_dob || p.gender || p.instagram) && (
-                    <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 mt-1 text-[11px] text-muted-foreground">
-                      {p.email && (
-                        <span className="inline-flex items-center gap-1 truncate max-w-[60%]">
-                          <Mail className="h-3 w-3" />
-                          <span className="truncate">{p.email}</span>
-                        </span>
-                      )}
-                      {p.address && (
-                        <span className="inline-flex items-center gap-1 truncate max-w-[50%]">
-                          <MapPin className="h-3 w-3" />
-                          <span className="truncate">{p.address}</span>
-                        </span>
-                      )}
-                      {p.age_or_dob && (
-                        <span className="inline-flex items-center gap-1">
-                          <Cake className="h-3 w-3" />
-                          {p.age_or_dob}
-                        </span>
-                      )}
-                      {p.gender && (
-                        <span className="inline-flex items-center gap-1">
-                          <UserIcon className="h-3 w-3" />
-                          {p.gender}
-                        </span>
-                      )}
-                      {p.instagram && (
-                        <a
-                          href={`https://instagram.com/${p.instagram.replace('@', '').trim()}`}
-                          target="_blank"
-                          rel="noreferrer"
-                          onClick={(e) => e.stopPropagation()}
-                          className="inline-flex items-center gap-1 text-pink-500 hover:underline"
-                        >
-                          <Instagram className="h-3 w-3" />
-                          @{p.instagram.replace('@', '').trim()}
-                        </a>
-                      )}
-                    </div>
-                  )}
-
-                  {/* Tag row: stage + quality */}
-                  <div className="flex items-center gap-1.5 mt-1.5 flex-wrap">
-                    {p.funnel_stage && (
-                      <span className="text-[10px] px-1.5 py-0.5 rounded bg-muted/60 text-foreground">
-                        {p.funnel_stage}
-                      </span>
-                    )}
-                    {p.prospect_status && (
-                      <span className="text-[10px] px-1.5 py-0.5 rounded bg-primary/10 text-primary">
-                        {p.prospect_status}
-                      </span>
-                    )}
-                    {p.notes && (
-                      <span className="text-[10px] text-muted-foreground italic truncate max-w-[60%]">
-                        “{p.notes}”
-                      </span>
-                    )}
-                  </div>
-                </div>
-              </div>
-            );
-          })
-        )}
-      </div>
-
-      {/* Desktop table */}
-      <div className="hidden md:block rounded-lg border border-border/40 bg-card overflow-x-auto">
+      {/* Table */}
+      <div className="rounded-lg border border-border/40 bg-card overflow-x-auto">
         <Table>
           <TableHeader>
             {table.getHeaderGroups().map((hg) => (
