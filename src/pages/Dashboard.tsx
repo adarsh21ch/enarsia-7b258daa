@@ -9,7 +9,6 @@ import { BottomNav } from '@/components/layout/BottomNav';
 
 import { LeadLimitCounter } from '@/components/subscription/LeadLimitCounter';
 
-import { ProspectTable } from '@/components/prospects/ProspectTable';
 import { PeopleView } from '@/components/people/PeopleView';
 import { PullToRefreshIndicator } from '@/components/PullToRefreshIndicator';
 import { TopTabBar } from '@/components/ui/TopTabBar';
