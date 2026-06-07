@@ -55,12 +55,10 @@ import {
   Trash2,
   Download,
   Search,
-  Settings2,
   ChevronLeft,
   ChevronRight,
   List,
   LayoutGrid,
-  Check,
   UserPlus,
   Upload,
   Share2,
@@ -68,6 +66,9 @@ import {
 import { WhatsAppIcon } from '@/components/ui/ActionIcons';
 import { SheetTabs } from '@/components/prospects/SheetTabs';
 import { ProspectDetailModal } from '@/components/prospects/ProspectDetailModal';
+import { ProspectFilters } from '@/components/prospects/ProspectFilters';
+import { ChangeFilterTagButton } from '@/components/prospects/ChangeFilterTagButton';
+import { usePersistedFilters } from '@/hooks/usePersistedFilters';
 import { formatDistanceToNow } from 'date-fns';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
@@ -101,6 +102,7 @@ interface PersonTableViewProps {
   onLoadMore?: () => void;
   isLoadingMore?: boolean;
   source: 'leads' | 'funnel';
+  filterMode?: 'calling' | 'funnel';
   viewMode?: 'card' | 'table';
   onToggleView?: () => void;
   viewToggleDisabled?: boolean;
@@ -179,6 +181,7 @@ export function PersonTableView({
   onLoadMore,
   isLoadingMore,
   source,
+  filterMode = 'calling',
   viewMode,
   onToggleView,
   viewToggleDisabled,
@@ -186,16 +189,18 @@ export function PersonTableView({
   const [sorting, setSorting] = useState<SortingState>([]);
   const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
-  const [stageFilter, setStageFilter] = useState<string>('');
-  const [qualityFilter, setQualityFilter] = useState<string>('');
-  const [sourceFilter, setSourceFilter] = useState<string>('');
   const [search, setSearch] = useState(externalSearch ?? '');
+  const [searchOpen, setSearchOpen] = useState(false);
   const [activeProspect, setActiveProspect] = useState<Prospect | null>(null);
   const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false);
   const [editingNotes, setEditingNotes] = useState<string | null>(null);
   const [notesDraft, setNotesDraft] = useState('');
   const [addProspectOpen, setAddProspectOpen] = useState(false);
   const [fixMappingOpen, setFixMappingOpen] = useState(false);
+
+  // Shared filter state with card view (per filterMode key)
+  const { filters, setFilters } = usePersistedFilters(filterMode);
+  const isCalling = filterMode === 'calling';
 
   useEffect(() => {
     if (externalSearch !== undefined) setSearch(externalSearch);
@@ -206,28 +211,18 @@ export function PersonTableView({
     onExternalSearchChange?.(v);
   };
 
-  // Build options from data
-  const stageOptions = useMemo(
-    () => Array.from(new Set(prospects.map((p) => p.funnel_stage).filter(Boolean))) as string[],
-    [prospects],
-  );
-  const qualityOptions = useMemo(
-    () => Array.from(new Set(prospects.map((p) => p.prospect_status).filter(Boolean))) as string[],
-    [prospects],
-  );
-  const sourceOptions = useMemo(
-    () => Array.from(new Set(prospects.map((p) => (p as any).source).filter(Boolean))) as string[],
-    [prospects],
-  );
-
   const filtered = useMemo(() => {
     return prospects.filter((p) => {
-      if (stageFilter && p.funnel_stage !== stageFilter) return false;
-      if (qualityFilter && p.prospect_status !== qualityFilter) return false;
-      if (sourceFilter && (p as any).source !== sourceFilter) return false;
+      if (filters.stages.length > 0 && !filters.stages.includes(p.funnel_stage as any)) return false;
+      if (filters.actions.length > 0 && !filters.actions.includes(p.action_taken as any)) return false;
+      if (filters.qualities.length > 0 && !filters.qualities.includes(p.prospect_status as any)) return false;
+      if (filters.incompleteOnly) {
+        const isIncomplete = !p.action_taken && !p.funnel_stage;
+        if (!isIncomplete) return false;
+      }
       return true;
     });
-  }, [prospects, stageFilter, qualityFilter, sourceFilter]);
+  }, [prospects, filters]);
 
   const columns = useMemo<ColumnDef<Prospect>[]>(
     () => [
@@ -246,17 +241,37 @@ export function PersonTableView({
             aria-label="Select all"
           />
         ),
-        cell: ({ row }) => (
-          <Checkbox
-            checked={row.getIsSelected()}
-            onCheckedChange={(v) => row.toggleSelected(!!v)}
-            onClick={(e) => e.stopPropagation()}
-            aria-label="Select row"
-          />
-        ),
+        cell: ({ row, table }) => {
+          const isSelected = row.getIsSelected();
+          const anySelected = Object.keys(table.getState().rowSelection).length > 0;
+          // Show serial number normally; checkbox on hover, when selected, or when any row is selected
+          return (
+            <div className="relative w-6 h-6 flex items-center justify-center group/sn">
+              <span
+                className={cn(
+                  'absolute inset-0 flex items-center justify-center text-[11px] tabular-nums text-muted-foreground transition-opacity',
+                  (isSelected || anySelected) ? 'opacity-0' : 'opacity-100 group-hover/sn:opacity-0 sm:group-hover/row:opacity-0',
+                )}
+              >
+                {row.index + 1}
+              </span>
+              <Checkbox
+                checked={isSelected}
+                onCheckedChange={(v) => row.toggleSelected(!!v)}
+                onClick={(e) => e.stopPropagation()}
+                aria-label="Select row"
+                className={cn(
+                  'transition-opacity',
+                  (isSelected || anySelected) ? 'opacity-100' : 'opacity-0 group-hover/sn:opacity-100 sm:group-hover/row:opacity-100',
+                )}
+              />
+            </div>
+          );
+        },
         enableSorting: false,
-        size: 32,
+        size: 36,
       },
+
       {
         accessorKey: 'name',
         header: 'Name',
@@ -283,15 +298,6 @@ export function PersonTableView({
         cell: ({ row }) => (
           <span className="text-xs px-2 py-0.5 rounded-md bg-muted/60 text-foreground">
             {row.original.funnel_stage || '—'}
-          </span>
-        ),
-      },
-      {
-        accessorKey: 'prospect_status',
-        header: 'Quality',
-        cell: ({ row }) => (
-          <span className="text-xs px-2 py-0.5 rounded-md bg-muted/60 text-foreground">
-            {row.original.prospect_status || '—'}
           </span>
         ),
       },
@@ -355,6 +361,15 @@ export function PersonTableView({
         cell: ({ getValue }) => (
           <span className="text-xs text-muted-foreground">
             {(getValue() as string) || '—'}
+          </span>
+        ),
+      },
+      {
+        accessorKey: 'prospect_status',
+        header: 'Quality',
+        cell: ({ row }) => (
+          <span className="text-xs px-2 py-0.5 rounded-md bg-muted/60 text-foreground">
+            {row.original.prospect_status || '—'}
           </span>
         ),
       },
@@ -440,83 +455,58 @@ export function PersonTableView({
   return (
     <div className="flex flex-col gap-2 pb-28">
 
-      {/* Toolbar */}
-      <div className="flex flex-wrap items-center gap-2">
-        <div className="relative flex-1 min-w-[180px] max-w-xs">
-          <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
-          <Input
-            value={search}
-            onChange={(e) => handleSearchChange(e.target.value)}
-            placeholder="Search name, phone, email…"
-            className="h-8 pl-7 text-xs"
-          />
+      {/* Toolbar — mirrors Card view density: search left (collapsible on mobile), filters + actions right */}
+      <div className="flex items-center gap-2">
+        {/* Search: icon on mobile (expands), full on desktop */}
+        <div className="flex items-center gap-2 flex-1 min-w-0">
+          {searchOpen || search ? (
+            <div className="relative flex-1 min-w-0 max-w-xs">
+              <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+              <Input
+                autoFocus
+                value={search}
+                onChange={(e) => handleSearchChange(e.target.value)}
+                onBlur={() => { if (!search) setSearchOpen(false); }}
+                placeholder="Search name, phone, email…"
+                className="h-8 pl-7 text-xs"
+              />
+            </div>
+          ) : (
+            <Button
+              variant="outline"
+              size="icon"
+              className="h-8 w-8 md:hidden"
+              onClick={() => setSearchOpen(true)}
+              aria-label="Search"
+            >
+              <Search className="h-3.5 w-3.5" />
+            </Button>
+          )}
+          {/* Desktop always shows search */}
+          {!searchOpen && !search && (
+            <div className="relative hidden md:block flex-1 min-w-0 max-w-xs">
+              <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+              <Input
+                value={search}
+                onChange={(e) => handleSearchChange(e.target.value)}
+                placeholder="Search name, phone, email…"
+                className="h-8 pl-7 text-xs"
+              />
+            </div>
+          )}
         </div>
 
-        <select
-          value={stageFilter}
-          onChange={(e) => setStageFilter(e.target.value)}
-          className="h-8 text-xs rounded-md border border-input bg-background px-2"
-        >
-          <option value="">All stages</option>
-          {stageOptions.map((s) => (
-            <option key={s} value={s}>
-              {s}
-            </option>
-          ))}
-        </select>
-
-        <select
-          value={qualityFilter}
-          onChange={(e) => setQualityFilter(e.target.value)}
-          className="h-8 text-xs rounded-md border border-input bg-background px-2"
-        >
-          <option value="">All quality</option>
-          {qualityOptions.map((s) => (
-            <option key={s} value={s}>
-              {s}
-            </option>
-          ))}
-        </select>
-
-        {sourceOptions.length > 0 && (
-          <select
-            value={sourceFilter}
-            onChange={(e) => setSourceFilter(e.target.value)}
-            className="h-8 text-xs rounded-md border border-input bg-background px-2"
-          >
-            <option value="">All sources</option>
-            {sourceOptions.map((s) => (
-              <option key={s} value={s}>
-                {s}
-              </option>
-            ))}
-          </select>
-        )}
-
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="outline" size="sm" className="h-8 text-xs">
-              <Settings2 className="h-3.5 w-3.5 mr-1" /> Columns
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuLabel>Show columns</DropdownMenuLabel>
-            {table
-              .getAllLeafColumns()
-              .filter((c) => c.id !== 'select' && c.id !== 'actions')
-              .map((col) => (
-                <DropdownMenuCheckboxItem
-                  key={col.id}
-                  checked={col.getIsVisible()}
-                  onCheckedChange={(v) => col.toggleVisibility(!!v)}
-                >
-                  {typeof col.columnDef.header === 'string' ? col.columnDef.header : col.id}
-                </DropdownMenuCheckboxItem>
-              ))}
-          </DropdownMenuContent>
-        </DropdownMenu>
-
+        {/* Right cluster — filters + 3-dot menu (matches Card view) */}
         <div className="ml-auto flex items-center gap-2">
+          <ProspectFilters
+            filters={filters}
+            onFiltersChange={setFilters}
+            showStagesFilter={!isCalling}
+            showResponsesFilter={isCalling}
+            filterTagButton={!isCalling ? <ChangeFilterTagButton /> : undefined}
+            hideSearch={true}
+          />
+
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="outline" size="icon" className="h-8 w-8">
@@ -533,25 +523,27 @@ export function PersonTableView({
                         type="button"
                         onClick={() => { if (viewMode !== 'card') onToggleView(); }}
                         className={cn(
-                          "flex-1 h-7 rounded-md inline-flex items-center justify-center transition-colors",
-                          viewMode !== 'table' ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
+                          "flex-1 h-7 rounded-md inline-flex items-center justify-center gap-1.5 text-xs font-medium transition-colors",
+                          viewMode !== 'table' ? "bg-primary text-primary-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
                         )}
                         title="Card view"
                         aria-pressed={viewMode !== 'table'}
                       >
-                        <LayoutGrid className="h-4 w-4" />
+                        <LayoutGrid className="h-3.5 w-3.5" />
+                        <span>Card</span>
                       </button>
                       <button
                         type="button"
                         onClick={() => { if (viewMode !== 'table') onToggleView(); }}
                         className={cn(
-                          "flex-1 h-7 rounded-md inline-flex items-center justify-center transition-colors",
-                          viewMode === 'table' ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
+                          "flex-1 h-7 rounded-md inline-flex items-center justify-center gap-1.5 text-xs font-medium transition-colors",
+                          viewMode === 'table' ? "bg-primary text-primary-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
                         )}
                         title="List view"
                         aria-pressed={viewMode === 'table'}
                       >
-                        <List className="h-4 w-4" />
+                        <List className="h-3.5 w-3.5" />
+                        <span>List</span>
                       </button>
                     </div>
                   </div>
@@ -579,6 +571,20 @@ export function PersonTableView({
                 </DropdownMenuItem>
               )}
               <DropdownMenuSeparator />
+              <DropdownMenuLabel className="text-[10px] uppercase tracking-wider text-muted-foreground">Columns</DropdownMenuLabel>
+              {table
+                .getAllLeafColumns()
+                .filter((c) => c.id !== 'select' && c.id !== 'actions')
+                .map((col) => (
+                  <DropdownMenuCheckboxItem
+                    key={col.id}
+                    checked={col.getIsVisible()}
+                    onCheckedChange={(v) => col.toggleVisibility(!!v)}
+                  >
+                    {typeof col.columnDef.header === 'string' ? col.columnDef.header : col.id}
+                  </DropdownMenuCheckboxItem>
+                ))}
+              <DropdownMenuSeparator />
               <DropdownMenuItem
                 onClick={() => {
                   if (onToggleView && !viewToggleDisabled) onToggleView();
@@ -593,6 +599,8 @@ export function PersonTableView({
           </DropdownMenu>
         </div>
       </div>
+
+
 
 
       {/* Bulk action bar */}
@@ -695,7 +703,7 @@ export function PersonTableView({
                 <TableRow
                   key={row.id}
                   data-state={row.getIsSelected() ? 'selected' : undefined}
-                  className="cursor-pointer"
+                  className="cursor-pointer group/row"
                   onClick={() => setActiveProspect(row.original)}
                 >
                   {row.getVisibleCells().map((cell) => {
