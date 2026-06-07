@@ -359,7 +359,10 @@ export function ProspectTable({
   kpiTotal,
   kpiTagCounts,
   fetchAllForExport,
-  stickyHeaderTop = 0
+  stickyHeaderTop = 0,
+  viewMode,
+  onToggleView,
+  viewToggleDisabled
 }: ProspectTableProps) {
   const {
     logBulkActivity
