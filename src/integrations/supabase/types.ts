@@ -4673,6 +4673,7 @@ export type Database = {
           address: string | null
           age_or_dob: string | null
           batch_date: string | null
+          custom_fields: Json
           date_added: string
           deleted_at: string | null
           deletion_batch_id: string | null
@@ -4705,6 +4706,7 @@ export type Database = {
           address?: string | null
           age_or_dob?: string | null
           batch_date?: string | null
+          custom_fields?: Json
           date_added?: string
           deleted_at?: string | null
           deletion_batch_id?: string | null
@@ -4737,6 +4739,7 @@ export type Database = {
           address?: string | null
           age_or_dob?: string | null
           batch_date?: string | null
+          custom_fields?: Json
           date_added?: string
           deleted_at?: string | null
           deletion_batch_id?: string | null

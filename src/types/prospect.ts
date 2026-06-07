@@ -44,6 +44,10 @@ export interface Prospect {
   // Personal tags (private to user, NOT for analytics)
   personal_tags?: string[] | null;
 
+  // Flexible per-prospect extras (from Excel import unmapped columns)
+  custom_fields?: Record<string, string> | null;
+
+
   // Legacy/optional UI fields
   last_contact_date?: string | null;
 }

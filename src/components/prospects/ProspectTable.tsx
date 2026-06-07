@@ -398,6 +398,8 @@ export function ProspectTable({
 
   // Share leads state
   const [shareDrawerOpen, setShareDrawerOpen] = useState(false);
+  const [fixMappingOpen, setFixMappingOpen] = useState(false);
+
 
   // Infinite scroll sentinel ref
   const sentinelRef = useRef<HTMLDivElement>(null);
@@ -1168,6 +1170,13 @@ export function ProspectTable({
                       {exporting ? 'Exporting...' : 'Export Leads'}
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
+                    <DropdownMenuItem
+                      onClick={() => setFixMappingOpen(true)}
+                      className="gap-2"
+                    >
+                      <Edit className="h-4 w-4" />
+                      Fix column mapping
+                    </DropdownMenuItem>
                     <DropdownMenuItem 
                       onClick={canShareLeads ? () => handleEnterSelectMode(selectedSheetId) : () => toast.error('Upgrade your plan to share leads')}
                       className="gap-2"
@@ -1179,7 +1188,11 @@ export function ProspectTable({
                   </DropdownMenuContent>
                 </DropdownMenu>
                 <AddProspectDialog onAdd={handleAddProspect} existingProspects={prospects} open={addProspectOpen} onOpenChange={setAddProspectOpen} />
+                <Suspense fallback={null}>
+                  <ImportExcelDialog onImport={handleImportProspects} open={fixMappingOpen} onOpenChange={setFixMappingOpen} hideTrigger />
+                </Suspense>
               </>}
+
           </div>
         )}
       </div>

@@ -571,17 +571,22 @@ export function useProspectsQuery(options: UseProspectsQueryOptions = {}) {
         user_id: user.id,
         name: p.name!,
         phone: p.phone!,
+        phone2: (p as any).phone2 || null,
+        email: (p as any).email || null,
+        notes: (p as any).notes || null,
         address: p.address || null,
         age_or_dob: (p as any).age_or_dob || null,
         gender: (p as any).gender || null,
         instagram: (p as any).instagram || null,
         profession: (p as any).profession || null,
+        custom_fields: (p as any).custom_fields || {},
         sheet_id: p.sheet_id || null,
         batch_date: p.batch_date || getTodayIST(),
         // Preserve exact Excel row order: row 1 = sort_order 1, row 2 = sort_order 2, etc.
         // Use timestamp offset to keep different imports in separate "batches"
         sort_order: index + 1,
       }));
+
 
       const CHUNK_SIZE = 50;
       const chunks = [];
