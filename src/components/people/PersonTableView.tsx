@@ -62,7 +62,9 @@ import { ProspectDetailModal } from '@/components/prospects/ProspectDetailModal'
 import { formatDistanceToNow } from 'date-fns';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
-import { openWhatsApp } from '@/lib/whatsapp';
+import { buildWhatsAppLink } from '@/lib/whatsapp';
+
+const openWhatsApp = (phone: string) => window.open(buildWhatsAppLink(phone), '_blank');
 
 interface PersonTableViewProps {
   prospects: Prospect[];
@@ -210,8 +212,11 @@ export function PersonTableView({
         header: ({ table }) => (
           <Checkbox
             checked={
-              table.getIsAllPageRowsSelected() ||
-              (table.getIsSomePageRowsSelected() && 'indeterminate')
+              table.getIsAllPageRowsSelected()
+                ? true
+                : table.getIsSomePageRowsSelected()
+                  ? 'indeterminate'
+                  : false
             }
             onCheckedChange={(v) => table.toggleAllPageRowsSelected(!!v)}
             aria-label="Select all"
