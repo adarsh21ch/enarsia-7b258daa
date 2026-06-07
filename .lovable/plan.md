@@ -1,53 +1,51 @@
-## Simplify Export My Data
+## Add Table View to Leads & Funnel (Universal Components)
 
-Strip the dialog down to the minimum. No date range, no scope picker, no week grouping. One screen, two questions, done.
+Build a shared **PeopleView** layer used by both Leads and Funnel tabs, with a view switcher (Card / Table / Kanban-soon), a TanStack table, and a shared detail modal.
 
-### New Export dialog (replaces current one)
+### New files
 
-```
-┌─────────────────────────────────────────┐
-│  ⬇  Export Leads                    ✕  │
-│  Download all your leads as Excel.      │
-│                                         │
-│  HOW TO ORGANIZE                        │
-│  ◉ One file (all leads together)        │
-│  ○ Split by sheet           [PRO]       │
-│  ○ Split by month           [PRO]       │
-│                                         │
-│         [ Cancel ]  [ ⬇ Export Excel ]  │
-└─────────────────────────────────────────┘
-```
+1. **`src/components/people/ViewSwitcher.tsx`**
+   - 3-icon segmented control (LayoutGrid / Table2 / Kanban).
+   - Reads/writes `localStorage['people_view_mode']` (values: `card` | `table`).
+   - Kanban disabled with tooltip "Coming soon".
+   - Auto-forces `card` on mobile (`useIsMobile`) and shows a one-time toast hint when downgrading from table.
 
-That is the entire UI. No date range. No "which leads" picker. Always exports **every lead the user has, all time**.
+2. **`src/components/people/PersonTableView.tsx`**
+   - TanStack Table v8 (`@tanstack/react-table` — already in deps; install if missing).
+   - Columns: checkbox, Name, Phone 1, Stage, Quality, Last Updated (relative), Source, Actions (3-dot).
+   - Sortable headers, column resize, show/hide columns dropdown, search input (name/phone/email), filter dropdowns (Stage/Quality/Source).
+   - Pagination 50/page (client-side over the already-paginated React Query data; auto-loads next page when nearing end).
+   - Bulk action bar: Delete / Change Stage / Send WhatsApp / Export CSV.
+   - Row click (outside actions) → opens existing `ProspectDetailModal`.
+   - Inline-edit Notes (click → input → Enter saves via `onUpdate`).
+   - Tablet (`md` but not `lg`): hides Source + Last Updated via responsive classes.
 
-### Behavior
+3. **`src/components/people/PeopleView.tsx`**
+   - Wrapper accepting all the props `ProspectTable` already takes plus a `source: 'leads' | 'funnel'` flag.
+   - Owns the view-mode state, renders `ViewSwitcher` + (`ProspectTable` for card mode | `PersonTableView` for table mode).
+   - Passes the same `prospects`, handlers, sheets, pagination props through to either child — single data source.
 
-- **Free users**: only "One file" is selectable. The two PRO rows are visible but locked with a small PRO badge; clicking shows the upgrade nudge.
-- **Pro users**: all three options selectable. "Split by month" produces one tab per month (e.g. `Jun 2026`, `May 2026`, …), tabs ordered newest → oldest. Inside each tab, rows are sorted by `date_added` descending — that gives the "date-wise inside monthly" view the user described, no extra UI needed.
-- **Split by sheet**: one tab per existing sheet, plus an `Unassigned` tab if needed.
-- Filename: `Enarsia_Export_YYYY-MM-DD.xlsx`.
+### Edits
 
-### Entry points (unchanged surfaces, simpler dialog)
+4. **`src/pages/Dashboard.tsx`**
+   - Replace the two `<ProspectTable>` blocks with `<PeopleView source="leads"|"funnel" ... />` (same props, just wrapped).
+   - No changes to data fetching, sheets, KPI strip, or header.
 
-- **Profile → Export My Data** page: keep as-is, just opens the new dialog.
-- **Calling tab → Sheet menu**: keep "Quick Download" (current one-click per-sheet export) and "Custom Export…" which opens the same simplified dialog. No pre-scoping needed since the dialog always exports everything.
+5. **`src/components/prospects/ProspectDetailModal.tsx`** (already universal — re-export from `src/components/people/PersonDetailModal.tsx` as a thin alias so future consumers import from `people/`).
 
-### Correctness fixes
+### CSV export
 
-- Make sure the export pulls from `useGlobalProspects()` (all sheets, all leads) — not the currently filtered view. Verified `ExportData.tsx` already does this; confirm `SheetTabs` path also passes the global list, not the sheet-filtered list.
-- Include leads with no `date_added` in a `No Date` tab when splitting by month (so nothing is silently dropped).
-- Keep the existing column set + `Last Response` + `Last Response At (IST)`. No changes there.
-- Toast shows `Exported N leads across M tabs`.
+- Use existing `exportEngine` if compatible, otherwise simple in-place CSV builder for selected (or all loaded) rows. Filename `nevorai-leads-{YYYY-MM-DD}.csv` (Leads) / `nevorai-funnel-{date}.csv` (Funnel).
 
-### Files to change
+### Performance & preservation
 
-- `src/components/export/ExportDialog.tsx` — rewrite: remove scope selector, date-range grid, custom-range picker, week grouping. Keep only the 3 grouping radios with PRO gating.
-- `src/components/export/exportEngine.ts` — remove `scope`, `sheetIds`, `dateRange`, `week` grouping code paths. Add `No Date` bucket for month grouping. Keep combined / sheet / month only.
-- `src/pages/ExportData.tsx` — minor copy update to match.
-- `src/components/prospects/SheetTabs.tsx` — "Custom Export…" now just opens the dialog (no pre-scope prop needed).
+- No new network calls; reuses `useProspectsQuery` data already fetched in `Dashboard`.
+- Sheet tabs, KPI strip, search, infinite pagination, import flow, card view behavior all untouched.
+- View preference shared across both tabs via single localStorage key.
+- Mobile auto-switches to card (with toast hint) and hides the Table option visually.
 
-No backend, no schema, no new deps.
+### Out of scope (explicit)
 
-### Out of scope
-
-Date range filters, week grouping, per-sheet multi-pick, column picker, CSV/PDF, scheduled backups.
+- No Kanban implementation (button disabled).
+- No virtualization unless loaded > 200 (skip for v1 — TanStack table handles 50/page fine).
+- No schema/migration changes.
