@@ -27,7 +27,7 @@ function blocksToPlainText(title: string, blocks: NoteBlock[], updatedAt: string
     }
   }
 
-  lines.push('', `— Nevorai Notes • ${new Date(updatedAt).toLocaleDateString()}`);
+  lines.push('', `— Enarsia Notes • ${new Date(updatedAt).toLocaleDateString()}`);
   return lines.join('\n');
 }
 
@@ -70,7 +70,7 @@ export function NoteShareSheet({ open, onClose, title, blocks, updatedAt }: Note
   const handleNativeShare = async () => {
     if (navigator.share) {
       try {
-        await navigator.share({ title: title || 'Nevorai Note', text: plainText });
+        await navigator.share({ title: title || 'Enarsia Note', text: plainText });
         onClose();
       } catch {
         // User cancelled

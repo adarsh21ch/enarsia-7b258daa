@@ -39,8 +39,8 @@ export default function FormsDashboard() {
           <Button variant="ghost" size="icon" onClick={() => navigate('/profile')} className="shrink-0">
             <ArrowLeft className="h-5 w-5" />
           </Button>
-          <img src={formsLogo} alt="Nevorai Forms" width={28} height={28} className="rounded-md shrink-0" loading="lazy" />
-          <h1 className="text-base font-semibold tracking-tight">Nevorai Forms</h1>
+          <img src={formsLogo} alt="Enarsia Forms" width={28} height={28} className="rounded-md shrink-0" loading="lazy" />
+          <h1 className="text-base font-semibold tracking-tight">Enarsia Forms</h1>
         </div>
       </header>
 

@@ -78,7 +78,7 @@ export default function Notes() {
             </button>
             <div className="flex items-center gap-2 flex-1">
               <NotebookPen className="h-5 w-5 text-accent" />
-              <h1 className="text-lg font-bold">Nevorai Notes</h1>
+              <h1 className="text-lg font-bold">Enarsia Notes</h1>
             </div>
             <span className="text-[10px] text-muted-foreground/40 font-medium">
               {notes.length} {notes.length === 1 ? 'note' : 'notes'}
