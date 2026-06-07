@@ -183,6 +183,7 @@ export function PersonTableView({
   onLoadMore,
   isLoadingMore,
   source,
+  filterMode = 'calling',
   viewMode,
   onToggleView,
   viewToggleDisabled,
@@ -190,16 +191,18 @@ export function PersonTableView({
   const [sorting, setSorting] = useState<SortingState>([]);
   const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
-  const [stageFilter, setStageFilter] = useState<string>('');
-  const [qualityFilter, setQualityFilter] = useState<string>('');
-  const [sourceFilter, setSourceFilter] = useState<string>('');
   const [search, setSearch] = useState(externalSearch ?? '');
+  const [searchOpen, setSearchOpen] = useState(false);
   const [activeProspect, setActiveProspect] = useState<Prospect | null>(null);
   const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false);
   const [editingNotes, setEditingNotes] = useState<string | null>(null);
   const [notesDraft, setNotesDraft] = useState('');
   const [addProspectOpen, setAddProspectOpen] = useState(false);
   const [fixMappingOpen, setFixMappingOpen] = useState(false);
+
+  // Shared filter state with card view (per filterMode key)
+  const { filters, setFilters } = usePersistedFilters(filterMode);
+  const isCalling = filterMode === 'calling';
 
   useEffect(() => {
     if (externalSearch !== undefined) setSearch(externalSearch);
@@ -210,28 +213,18 @@ export function PersonTableView({
     onExternalSearchChange?.(v);
   };
 
-  // Build options from data
-  const stageOptions = useMemo(
-    () => Array.from(new Set(prospects.map((p) => p.funnel_stage).filter(Boolean))) as string[],
-    [prospects],
-  );
-  const qualityOptions = useMemo(
-    () => Array.from(new Set(prospects.map((p) => p.prospect_status).filter(Boolean))) as string[],
-    [prospects],
-  );
-  const sourceOptions = useMemo(
-    () => Array.from(new Set(prospects.map((p) => (p as any).source).filter(Boolean))) as string[],
-    [prospects],
-  );
-
   const filtered = useMemo(() => {
     return prospects.filter((p) => {
-      if (stageFilter && p.funnel_stage !== stageFilter) return false;
-      if (qualityFilter && p.prospect_status !== qualityFilter) return false;
-      if (sourceFilter && (p as any).source !== sourceFilter) return false;
+      if (filters.stages.length > 0 && !filters.stages.includes(p.funnel_stage as any)) return false;
+      if (filters.actions.length > 0 && !filters.actions.includes(p.action_taken as any)) return false;
+      if (filters.qualities.length > 0 && !filters.qualities.includes(p.prospect_status as any)) return false;
+      if (filters.incompleteOnly) {
+        const isIncomplete = !p.action_taken && !p.funnel_stage;
+        if (!isIncomplete) return false;
+      }
       return true;
     });
-  }, [prospects, stageFilter, qualityFilter, sourceFilter]);
+  }, [prospects, filters]);
 
   const columns = useMemo<ColumnDef<Prospect>[]>(
     () => [
