@@ -87,6 +87,9 @@ interface PersonTableViewProps {
   onLoadMore?: () => void;
   isLoadingMore?: boolean;
   source: 'leads' | 'funnel';
+  viewMode?: 'card' | 'table';
+  onToggleView?: () => void;
+  viewToggleDisabled?: boolean;
 }
 
 function csvEscape(v: unknown): string {
