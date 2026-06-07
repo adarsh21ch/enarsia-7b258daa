@@ -194,7 +194,15 @@ export function PersonTableView({
 }: PersonTableViewProps) {
   const [sorting, setSorting] = useState<SortingState>([]);
   const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
-  const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
+  const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({
+    phone2: false,
+    email: false,
+    address: false,
+    age_or_dob: false,
+    gender: false,
+    instagram: false,
+    source: false,
+  });
   const [search, setSearch] = useState(externalSearch ?? '');
   const [searchOpen, setSearchOpen] = useState(false);
   const [activeProspect, setActiveProspect] = useState<Prospect | null>(null);
