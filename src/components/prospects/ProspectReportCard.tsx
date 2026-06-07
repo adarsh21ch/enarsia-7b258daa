@@ -363,6 +363,21 @@ export function ProspectReportCard({ prospect, open, onOpenChange, onUpdate }: P
             />
           </div>
 
+          {/* Extra details from import (custom_fields) */}
+          {prospect.custom_fields && Object.keys(prospect.custom_fields).length > 0 && (
+            <div className="space-y-2 pt-2 border-t border-border/50">
+              <Label className="text-muted-foreground">Extra details</Label>
+              <div className="rounded-lg border border-border/60 bg-muted/30 divide-y divide-border/50">
+                {Object.entries(prospect.custom_fields).map(([k, v]) => (
+                  <div key={k} className="flex items-start gap-3 px-3 py-2 text-xs">
+                    <span className="font-medium text-foreground/80 min-w-[35%] max-w-[45%] break-words">{k}</span>
+                    <span className="flex-1 text-muted-foreground break-words">{String(v)}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
           {/* Meta Info */}
           <div className="pt-4 border-t border-border/50 space-y-2 text-xs text-muted-foreground">
             <div className="flex items-center gap-2">
@@ -374,6 +389,7 @@ export function ProspectReportCard({ prospect, open, onOpenChange, onUpdate }: P
               <span>Updated {formatDistanceToNow(parseISO(prospect.updated_at), { addSuffix: true })}</span>
             </div>
           </div>
+
         </div>
 
         {/* Fixed Save Button at bottom */}
