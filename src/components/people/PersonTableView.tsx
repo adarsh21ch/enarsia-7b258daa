@@ -1,4 +1,7 @@
-import { useMemo, useState, useEffect } from 'react';
+import { useMemo, useState, useEffect, Suspense, lazy } from 'react';
+import { AddProspectDialog } from '@/components/prospects/AddProspectDialog';
+const ImportExcelDialog = lazy(() => import('@/components/prospects/ImportExcelDialog').then(m => ({ default: m.ImportExcelDialog })));
+
 import {
   useReactTable,
   getCoreRowModel,
