@@ -515,38 +515,94 @@ export function PersonTableView({
           </DropdownMenuContent>
         </DropdownMenu>
 
-        <Button
-          variant="outline"
-          size="sm"
-          className="h-8 text-xs ml-auto"
-          onClick={() => downloadCSV(selectedCount ? selectedRows : filtered, source)}
-        >
-          <Download className="h-3.5 w-3.5 mr-1" />
-          {selectedCount ? `Export ${selectedCount}` : 'Export All'}
-        </Button>
+        <div className="ml-auto flex items-center gap-2">
+          {onToggleView && (
+            <div className="inline-flex items-center rounded-xl border border-border bg-background p-0.5 shadow-sm" role="group" aria-label="View mode">
+              <button
+                type="button"
+                onClick={() => { if (viewMode !== 'card') onToggleView(); }}
+                className={cn(
+                  "h-7 px-2.5 rounded-lg text-xs font-medium inline-flex items-center gap-1 transition-colors",
+                  viewMode !== 'table' ? "bg-primary text-primary-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
+                )}
+                aria-pressed={viewMode !== 'table'}
+                title="Card view"
+              >
+                <LayoutGrid className="h-3.5 w-3.5" />
+                <span className="hidden md:inline">Card</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => { if (viewMode !== 'table' && !viewToggleDisabled) onToggleView(); }}
+                disabled={viewToggleDisabled}
+                className={cn(
+                  "h-7 px-2.5 rounded-lg text-xs font-medium inline-flex items-center gap-1 transition-colors disabled:opacity-40",
+                  viewMode === 'table' ? "bg-primary text-primary-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
+                )}
+                aria-pressed={viewMode === 'table'}
+                title={viewToggleDisabled ? 'List view requires a wider screen' : 'List view'}
+              >
+                <List className="h-3.5 w-3.5" />
+                <span className="hidden md:inline">List</span>
+              </button>
+            </div>
+          )}
 
-        {onToggleView && (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="outline" size="icon" className="h-8 w-8">
                 <MoreHorizontal className="h-4 w-4" />
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-52">
+            <DropdownMenuContent align="end" className="w-56">
+              {onToggleView && (
+                <>
+                  <DropdownMenuItem
+                    onClick={() => { if (!viewToggleDisabled) onToggleView(); }}
+                    disabled={viewToggleDisabled}
+                    className="gap-2"
+                  >
+                    <List className="h-4 w-4" />
+                    Switch to Card view
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                </>
+              )}
+              {onAdd && (
+                <DropdownMenuItem onClick={() => setAddProspectOpen(true)} className="gap-2">
+                  <UserPlus className="h-4 w-4" />
+                  Add Prospect
+                </DropdownMenuItem>
+              )}
               <DropdownMenuItem
-                onClick={() => { if (!viewToggleDisabled) onToggleView(); }}
-                disabled={viewToggleDisabled}
+                onClick={() => downloadCSV(selectedCount ? selectedRows : filtered, source)}
                 className="gap-2"
-                title={viewToggleDisabled ? 'List view requires a wider screen' : undefined}
               >
-                <List className="h-4 w-4" />
-                {viewMode === 'table' ? 'Switch to Card view' : 'Switch to List view'}
-                {viewMode === 'table' && <Check className="ml-auto h-4 w-4" />}
+                <Download className="h-4 w-4" />
+                {selectedCount ? `Export ${selectedCount} Selected` : 'Export Leads'}
+              </DropdownMenuItem>
+              {onImport && (
+                <DropdownMenuItem onClick={() => setFixMappingOpen(true)} className="gap-2">
+                  <Upload className="h-4 w-4" />
+                  Fix column mapping
+                </DropdownMenuItem>
+              )}
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
+                onClick={() => {
+                  if (onToggleView && !viewToggleDisabled) onToggleView();
+                  toast.message('Switched to Card view', { description: 'Use the 3-dot menu → Share Leads to share.' });
+                }}
+                className="gap-2"
+              >
+                <Share2 className="h-4 w-4" />
+                Share Leads
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
-        )}
+        </div>
       </div>
+
 
       {/* Bulk action bar */}
       {selectedCount > 0 && (
