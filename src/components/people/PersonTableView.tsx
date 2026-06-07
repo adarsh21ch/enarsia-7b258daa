@@ -367,6 +367,15 @@ export function PersonTableView({
         ),
       },
       {
+        accessorKey: 'prospect_status',
+        header: 'Quality',
+        cell: ({ row }) => (
+          <span className="text-xs px-2 py-0.5 rounded-md bg-muted/60 text-foreground">
+            {row.original.prospect_status || '—'}
+          </span>
+        ),
+      },
+      {
         id: 'actions',
         header: '',
         enableSorting: false,
