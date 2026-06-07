@@ -4,7 +4,6 @@ import { Phone, Tag } from 'lucide-react';
 import { Prospect, FunnelStage, ActionTaken, ProspectStatus, FUNNEL_STAGES, EXTENDED_ACTIONS, STATUSES, ExtendedActionTaken } from '@/types/prospect';
 import { InlineSelect } from './InlineSelect';
 import { StatusBadge, StageBadge, ActionBadge } from './StatusBadge';
-import { InlineReportCard } from './InlineReportCard';
 import { ProspectDetailModal } from './ProspectDetailModal';
 import { ResponseTagSheet } from './ResponseTagSheet';
 import { Checkbox } from '@/components/ui/checkbox';
