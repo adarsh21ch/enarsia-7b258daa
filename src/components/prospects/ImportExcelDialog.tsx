@@ -30,6 +30,7 @@ interface ColumnMapping {
   phone2: string | null;
   email: string | null;
   address: string | null;
+  state: string | null;
   age_or_dob: string | null;
   gender: string | null;
   instagram: string | null;
@@ -41,12 +42,52 @@ const APP_FIELDS: { key: keyof ColumnMapping; label: string; required?: boolean 
   { key: 'phone', label: 'Phone 1', required: true },
   { key: 'phone2', label: 'Phone 2' },
   { key: 'email', label: 'Email' },
-  { key: 'address', label: 'Address' },
+  { key: 'address', label: 'Address / City' },
+  { key: 'state', label: 'State' },
   { key: 'age_or_dob', label: 'Age / DOB' },
   { key: 'gender', label: 'Gender' },
   { key: 'instagram', label: 'Instagram' },
   { key: 'profession', label: 'Profession' },
 ];
+
+// Indian states + common abbreviations (lowercased, no spaces) for state detection
+const INDIAN_STATES = new Set<string>([
+  'andhrapradesh','ap','arunachalpradesh','ar','assam','as','bihar','br','chhattisgarh','cg','goa','ga',
+  'gujarat','gj','haryana','hr','himachalpradesh','hp','jharkhand','jh','karnataka','ka','kerala','kl',
+  'madhyapradesh','mp','maharashtra','mh','manipur','mn','meghalaya','ml','mizoram','mz','nagaland','nl',
+  'odisha','orissa','od','or','punjab','pb','rajasthan','rj','sikkim','sk','tamilnadu','tn','telangana','tg','ts',
+  'tripura','tr','uttarpradesh','up','uttarakhand','uk','ut','westbengal','wb','delhi','dl','newdelhi',
+  'jammuandkashmir','jk','ladakh','la','chandigarh','ch','puducherry','pondicherry','py','andamanandnicobar','an',
+  'dadraandnagarhaveli','dn','damananddiu','dd','lakshadweep','ld',
+]);
+const isStateValue = (v: string) => INDIAN_STATES.has(v.trim().toLowerCase().replace(/[\s_\-\.]+/g, ''));
+
+// Date detection: DD-MM-YYYY, DD/MM/YYYY, YYYY-MM-DD, DD.MM.YYYY, DD MM YYYY, or 4-digit year
+const DATE_PATTERNS: RegExp[] = [
+  /^\d{1,2}[\-\/\.\s]\d{1,2}[\-\/\.\s]\d{2,4}$/,
+  /^\d{4}[\-\/\.\s]\d{1,2}[\-\/\.\s]\d{1,2}$/,
+  /^(19|20)\d{2}$/,
+];
+const isDateLike = (v: string) => {
+  const t = v.trim();
+  return DATE_PATTERNS.some(re => re.test(t));
+};
+const isAgeLike = (v: string) => {
+  const t = v.trim();
+  if (!/^\d{1,3}$/.test(t)) return false;
+  const n = parseInt(t, 10);
+  return n >= 10 && n <= 99;
+};
+// Phone: mostly digits 9-13 long, optional +91, spaces; MUST NOT match a date pattern
+const isPhoneLike = (v: string) => {
+  const t = v.trim();
+  if (isDateLike(t)) return false;
+  // Reject if contains date-shape separators around digits (any hyphen/slash/dot between digits)
+  if (/\d[\-\/\.]\d/.test(t)) return false;
+  const digits = t.replace(/[\s\(\)\-]/g, '').replace(/^\+/, '');
+  if (!/^\d+$/.test(digits)) return false;
+  return digits.length >= 9 && digits.length <= 13;
+};
 
 type ReverseMapping = Record<string, keyof ColumnMapping | 'skip' | null>;
 
