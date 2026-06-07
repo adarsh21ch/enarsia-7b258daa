@@ -103,6 +103,7 @@ export function PeopleView(props: PeopleViewProps) {
         onLoadMore={props.onLoadMore}
         isLoadingMore={props.isLoadingMore}
         source={props.source}
+        filterMode={props.filterMode}
         viewMode={effectiveMode}
         onToggleView={toggleView}
         viewToggleDisabled={false}
