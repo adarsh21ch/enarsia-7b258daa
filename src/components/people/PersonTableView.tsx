@@ -101,6 +101,7 @@ interface PersonTableViewProps {
   onLoadMore?: () => void;
   isLoadingMore?: boolean;
   source: 'leads' | 'funnel';
+  filterMode?: 'calling' | 'funnel';
   viewMode?: 'card' | 'table';
   onToggleView?: () => void;
   viewToggleDisabled?: boolean;
