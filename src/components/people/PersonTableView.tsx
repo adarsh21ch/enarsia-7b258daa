@@ -508,6 +508,28 @@ export function PersonTableView({
           <Download className="h-3.5 w-3.5 mr-1" />
           {selectedCount ? `Export ${selectedCount}` : 'Export All'}
         </Button>
+
+        {onToggleView && (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="icon" className="h-8 w-8">
+                <MoreHorizontal className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-52">
+              <DropdownMenuItem
+                onClick={() => { if (!viewToggleDisabled) onToggleView(); }}
+                disabled={viewToggleDisabled}
+                className="gap-2"
+                title={viewToggleDisabled ? 'List view requires a wider screen' : undefined}
+              >
+                <List className="h-4 w-4" />
+                {viewMode === 'table' ? 'Switch to Card view' : 'Switch to List view'}
+                {viewMode === 'table' && <Check className="ml-auto h-4 w-4" />}
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        )}
       </div>
 
       {/* Bulk action bar */}
