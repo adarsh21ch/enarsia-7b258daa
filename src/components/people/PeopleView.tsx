@@ -90,6 +90,8 @@ export function PeopleView(props: PeopleViewProps) {
       <PersonTableView
         prospects={props.prospects}
         loading={props.loading}
+        onAdd={props.onAdd}
+        onImport={props.onImport}
         onUpdate={props.onUpdate}
         onDelete={props.onDelete}
         onBulkDelete={props.onBulkDelete}
