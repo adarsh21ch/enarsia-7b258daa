@@ -371,6 +371,81 @@ export function PersonTableView({
         ),
       },
       {
+        accessorKey: 'phone2',
+        header: 'Phone 2',
+        cell: ({ row }) =>
+          row.original.phone2 ? (
+            <a
+              href={`tel:${row.original.phone2}`}
+              onClick={(e) => e.stopPropagation()}
+              className="text-primary hover:underline tabular-nums text-xs"
+            >
+              {row.original.phone2}
+            </a>
+          ) : (
+            <span className="text-muted-foreground text-xs">—</span>
+          ),
+      },
+      {
+        accessorKey: 'email',
+        header: 'Email',
+        cell: ({ row }) =>
+          row.original.email ? (
+            <a
+              href={`mailto:${row.original.email}`}
+              onClick={(e) => e.stopPropagation()}
+              className="text-primary hover:underline text-xs truncate max-w-[180px] inline-block"
+            >
+              {row.original.email}
+            </a>
+          ) : (
+            <span className="text-muted-foreground text-xs">—</span>
+          ),
+      },
+      {
+        accessorKey: 'address',
+        header: 'Address',
+        cell: ({ row }) => (
+          <span className="text-xs text-muted-foreground truncate max-w-[160px] inline-block">
+            {row.original.address || '—'}
+          </span>
+        ),
+      },
+      {
+        accessorKey: 'age_or_dob',
+        header: 'Age / DOB',
+        cell: ({ row }) => (
+          <span className="text-xs text-muted-foreground">{row.original.age_or_dob || '—'}</span>
+        ),
+      },
+      {
+        accessorKey: 'gender',
+        header: 'Gender',
+        cell: ({ row }) => (
+          <span className="text-xs text-muted-foreground">{row.original.gender || '—'}</span>
+        ),
+      },
+      {
+        accessorKey: 'instagram',
+        header: 'Instagram',
+        cell: ({ row }) => {
+          const ig = row.original.instagram;
+          if (!ig) return <span className="text-muted-foreground text-xs">—</span>;
+          const handle = ig.replace('@', '').trim();
+          return (
+            <a
+              href={`https://instagram.com/${handle}`}
+              target="_blank"
+              rel="noreferrer"
+              onClick={(e) => e.stopPropagation()}
+              className="text-xs text-pink-500 hover:underline inline-flex items-center gap-1"
+            >
+              <Instagram className="h-3 w-3" />@{handle}
+            </a>
+          );
+        },
+      },
+      {
         accessorKey: 'prospect_status',
         header: 'Quality',
         cell: ({ row }) => (
@@ -386,42 +461,47 @@ export function PersonTableView({
         cell: ({ row }) => {
           const p = row.original;
           return (
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-7 w-7"
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  <MoreHorizontal className="h-4 w-4" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
-                <DropdownMenuItem onClick={() => setActiveProspect(p)}>
-                  Open / Edit
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => (window.location.href = `tel:${p.phone}`)}>
-                  <Phone className="h-3.5 w-3.5 mr-2" /> Call
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => openWhatsApp(p.phone)}>
-                  <WhatsAppIcon className="h-3.5 w-3.5 mr-2" /> WhatsApp
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => (window.location.href = `sms:${p.phone}`)}>
-                  <MessageSquareText className="h-3.5 w-3.5 mr-2" /> Text
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem
-                  className="text-destructive"
-                  onClick={async () => {
-                    await onDelete(p.id);
-                    toast.success('Lead deleted');
-                  }}
-                >
-                  <Trash2 className="h-3.5 w-3.5 mr-2" /> Delete
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+            <div className="flex items-center justify-end gap-0.5" onClick={(e) => e.stopPropagation()}>
+              <a
+                href={`tel:${p.phone}`}
+                title="Call"
+                className="inline-flex items-center justify-center h-7 w-7 rounded-md text-emerald-600 hover:bg-emerald-500/10 transition-colors"
+              >
+                <Phone className="h-4 w-4" />
+              </a>
+              <button
+                onClick={() => openWhatsApp(p.phone)}
+                title="WhatsApp"
+                className="inline-flex items-center justify-center h-7 w-7 rounded-md text-green-600 hover:bg-green-500/10 transition-colors"
+              >
+                <WhatsAppIcon className="h-4 w-4" />
+              </button>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="icon" className="h-7 w-7">
+                    <MoreHorizontal className="h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
+                  <DropdownMenuItem onClick={() => setActiveProspect(p)}>
+                    Open / Edit
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => (window.location.href = `sms:${p.phone}`)}>
+                    <MessageSquareText className="h-3.5 w-3.5 mr-2" /> Text
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem
+                    className="text-destructive"
+                    onClick={async () => {
+                      await onDelete(p.id);
+                      toast.success('Lead deleted');
+                    }}
+                  >
+                    <Trash2 className="h-3.5 w-3.5 mr-2" /> Delete
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
           );
         },
       },
