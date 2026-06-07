@@ -1156,37 +1156,6 @@ export function ProspectTable({
               </div> : <>
                 <ProspectFilters filters={filters} onFiltersChange={setFilters} showStagesFilter={!isCalling} showResponsesFilter={isCalling} filterTagButton={!isCalling ? <ChangeFilterTagButton /> : undefined} hideSearch={true} />
                 <Suspense fallback={null}><ImportExcelDialog onImport={handleImportProspects} /></Suspense>
-                {onToggleView && (
-                  <div className="hidden sm:inline-flex items-center rounded-xl border border-border bg-background p-0.5 shadow-sm" role="group" aria-label="View mode">
-                    <button
-                      type="button"
-                      onClick={() => { if (peopleViewMode !== 'card') onToggleView(); }}
-                      className={cn(
-                        "h-8 px-2.5 rounded-lg text-xs font-medium inline-flex items-center gap-1 transition-colors",
-                        peopleViewMode !== 'table' ? "bg-primary text-primary-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
-                      )}
-                      title="Card view"
-                      aria-pressed={peopleViewMode !== 'table'}
-                    >
-                      <LayoutGrid className="h-3.5 w-3.5" />
-                      <span className="hidden md:inline">Card</span>
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => { if (peopleViewMode !== 'table' && !viewToggleDisabled) onToggleView(); }}
-                      disabled={viewToggleDisabled}
-                      className={cn(
-                        "h-8 px-2.5 rounded-lg text-xs font-medium inline-flex items-center gap-1 transition-colors disabled:opacity-40",
-                        peopleViewMode === 'table' ? "bg-primary text-primary-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
-                      )}
-                      title={viewToggleDisabled ? 'List view requires a wider screen' : 'List view'}
-                      aria-pressed={peopleViewMode === 'table'}
-                    >
-                      <List className="h-3.5 w-3.5" />
-                      <span className="hidden md:inline">List</span>
-                    </button>
-                  </div>
-                )}
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button variant="outline" size="icon" className="h-9 w-9 rounded-xl">
@@ -1196,16 +1165,35 @@ export function ProspectTable({
                   <DropdownMenuContent align="end" className="w-52 bg-popover border-border z-50">
                     {onToggleView && (
                       <>
-                        <DropdownMenuItem
-                          onClick={() => { if (!viewToggleDisabled) onToggleView(); }}
-                          disabled={viewToggleDisabled}
-                          className="gap-2"
-                          title={viewToggleDisabled ? 'List view requires a wider screen' : undefined}
-                        >
-                          <List className="h-4 w-4" />
-                          {peopleViewMode === 'table' ? 'Switch to Card view' : 'Switch to List view'}
-                          {peopleViewMode === 'table' && <Check className="ml-auto h-4 w-4" />}
-                        </DropdownMenuItem>
+                        <div className="px-2 py-1.5">
+                          <div className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-1.5 px-1">View</div>
+                          <div className="inline-flex w-full items-center rounded-lg border border-border bg-muted/40 p-0.5" role="group" aria-label="View mode">
+                            <button
+                              type="button"
+                              onClick={() => { if (peopleViewMode !== 'card') onToggleView(); }}
+                              className={cn(
+                                "flex-1 h-7 rounded-md inline-flex items-center justify-center transition-colors",
+                                peopleViewMode !== 'table' ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
+                              )}
+                              title="Card view"
+                              aria-pressed={peopleViewMode !== 'table'}
+                            >
+                              <LayoutGrid className="h-4 w-4" />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => { if (peopleViewMode !== 'table') onToggleView(); }}
+                              className={cn(
+                                "flex-1 h-7 rounded-md inline-flex items-center justify-center transition-colors",
+                                peopleViewMode === 'table' ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
+                              )}
+                              title="List view"
+                              aria-pressed={peopleViewMode === 'table'}
+                            >
+                              <List className="h-4 w-4" />
+                            </button>
+                          </div>
+                        </div>
                         <DropdownMenuSeparator />
                       </>
                     )}
@@ -1218,6 +1206,7 @@ export function ProspectTable({
                       disabled={exporting}
                       className="gap-2"
                     >
+
                       {!canExport && <Lock className="h-3.5 w-3.5" />}
                       {exporting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
                       {exporting ? 'Exporting...' : 'Export Leads'}
