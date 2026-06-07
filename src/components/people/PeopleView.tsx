@@ -57,14 +57,10 @@ export function PeopleView(props: PeopleViewProps) {
   const isMobile = useIsMobile();
   const [storedMode, setStoredMode] = useState<PeopleViewMode>(readMode);
 
-  // Mobile forces card view but preserves the stored desktop preference
-  const effectiveMode: PeopleViewMode = isMobile ? 'card' : storedMode;
+  // Users can switch to list view on any device
+  const effectiveMode: PeopleViewMode = storedMode;
 
   const toggleView = useCallback(() => {
-    if (isMobile) {
-      toast.message('List view requires a wider screen');
-      return;
-    }
     setStoredMode((prev) => {
       const next: PeopleViewMode = prev === 'card' ? 'table' : 'card';
       try {
@@ -72,7 +68,7 @@ export function PeopleView(props: PeopleViewProps) {
       } catch {}
       return next;
     });
-  }, [isMobile]);
+  }, []);
 
   // Cross-tab sync
   useEffect(() => {
