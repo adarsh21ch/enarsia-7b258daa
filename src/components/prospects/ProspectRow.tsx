@@ -568,15 +568,17 @@ export const ProspectRow = memo(function ProspectRow({
           </motion.div>
         </td>
       </tr>
-      {isExpanded && (
-        <InlineReportCard
-          prospect={prospect}
-          onUpdate={onUpdate}
-          onDelete={onDelete}
-          onClose={onToggleExpand}
-          colSpan={columnOrder.length + (showSelection ? 1 : 0)}
-        />
-      )}
+      <tr className="hidden">
+        <td>
+          <ProspectDetailModal
+            prospect={prospect}
+            open={isExpanded}
+            onOpenChange={(o) => { if (!o) onToggleExpand(); }}
+            onUpdate={onUpdate}
+            onDelete={onDelete}
+          />
+        </td>
+      </tr>
 
       {/* Response Tag popup — opens on tap of Response cell or right-swipe (Leads tab) */}
       {isCalling && (
