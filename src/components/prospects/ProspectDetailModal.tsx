@@ -280,6 +280,37 @@ function ProspectDetailBody({
             Added {format(parseISO(prospect.date_added), 'MMM d, yyyy')}
           </p>
         </div>
+        <AlertDialog>
+          <AlertDialogTrigger asChild>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8 rounded-full shrink-0 text-destructive hover:bg-destructive/10 hover:text-destructive"
+              title="Delete lead"
+            >
+              <Trash2 className="h-4 w-4" />
+            </Button>
+          </AlertDialogTrigger>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Delete this lead?</AlertDialogTitle>
+              <AlertDialogDescription>
+                This will permanently remove <strong>{prospect.name}</strong>{' '}
+                and their data. This action cannot be undone.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={handleDelete}
+                disabled={isDeleting}
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              >
+                {isDeleting ? 'Deleting...' : 'Delete'}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
         <Button
           variant="ghost"
           size="icon"
@@ -289,6 +320,7 @@ function ProspectDetailBody({
           <X className="h-4 w-4" />
         </Button>
       </div>
+
 
       {/* Body */}
       <div className="flex-1 overflow-y-auto px-4 py-4 space-y-5">
