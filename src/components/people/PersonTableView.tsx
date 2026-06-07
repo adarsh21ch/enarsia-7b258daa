@@ -772,8 +772,8 @@ export function PersonTableView({
         </div>
       </div>
 
-      {/* Sheet tabs persist at bottom */}
-      <div className="pt-1">
+      {/* Sheet tabs - fixed above bottom nav, matches Card view positioning */}
+      <div className="fixed bottom-16 left-0 right-0 md:bottom-24 lg:bottom-16 z-20 bg-card border-t border-border/50 shadow-[0_-2px_8px_rgba(0,0,0,0.1)] pb-[10px]">
         <SheetTabs
           sheets={sheets}
           selectedSheetId={selectedSheetId}
@@ -783,6 +783,28 @@ export function PersonTableView({
           onDeleteSheet={onDeleteSheet}
         />
       </div>
+
+      {/* Add Prospect dialog */}
+      {onAdd && (
+        <AddProspectDialog
+          onAdd={onAdd}
+          existingProspects={prospects}
+          open={addProspectOpen}
+          onOpenChange={setAddProspectOpen}
+        />
+      )}
+
+      {/* Fix column mapping dialog */}
+      {onImport && (
+        <Suspense fallback={null}>
+          <ImportExcelDialog
+            onImport={onImport}
+            open={fixMappingOpen}
+            onOpenChange={setFixMappingOpen}
+            hideTrigger
+          />
+        </Suspense>
+      )}
 
       {/* Detail modal */}
       {activeProspect && (
@@ -794,6 +816,7 @@ export function PersonTableView({
           onDelete={onDelete}
         />
       )}
+
 
       {/* Bulk delete confirm */}
       <AlertDialog open={bulkDeleteOpen} onOpenChange={setBulkDeleteOpen}>
