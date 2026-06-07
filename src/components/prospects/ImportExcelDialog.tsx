@@ -461,6 +461,7 @@ export function ImportExcelDialog({ onImport, open: controlledOpen, onOpenChange
 
       if (mapping.phone2 && row[mapping.phone2]) (prospect as any).phone2 = sanitizeImportString(row[mapping.phone2], 20);
       if (mapping.address && row[mapping.address]) prospect.address = sanitizeImportString(row[mapping.address], 200);
+      if (mapping.state && row[mapping.state]) (prospect as any).state = sanitizeImportString(row[mapping.state], 80);
       if (mapping.age_or_dob && row[mapping.age_or_dob]) (prospect as any).age_or_dob = sanitizeImportString(row[mapping.age_or_dob], 50);
       if (mapping.gender && row[mapping.gender]) (prospect as any).gender = sanitizeImportString(row[mapping.gender], 20);
       if (mapping.email && row[mapping.email]) prospect.email = sanitizeImportString(row[mapping.email], 200);
