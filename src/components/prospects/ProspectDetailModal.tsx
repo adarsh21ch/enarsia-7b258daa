@@ -516,40 +516,19 @@ function ProspectDetailBody({
 
       {/* Footer */}
       <div className="shrink-0 px-4 py-3 border-t border-border/40 bg-background/80 backdrop-blur-sm">
-        <AlertDialog>
-          <AlertDialogTrigger asChild>
-            <Button
-              variant="outline"
-              className="w-full h-10 gap-2 border-destructive/30 text-destructive hover:bg-destructive/10 hover:text-destructive"
-            >
-              <Trash2 className="h-4 w-4" />
-              Delete Lead
-            </Button>
-          </AlertDialogTrigger>
-          <AlertDialogContent>
-            <AlertDialogHeader>
-              <AlertDialogTitle>Delete this lead?</AlertDialogTitle>
-              <AlertDialogDescription>
-                This will permanently remove <strong>{prospect.name}</strong>{' '}
-                and their data. This action cannot be undone.
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel>Cancel</AlertDialogCancel>
-              <AlertDialogAction
-                onClick={handleDelete}
-                disabled={isDeleting}
-                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-              >
-                {isDeleting ? 'Deleting...' : 'Delete'}
-              </AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
+        <Button
+          variant="secondary"
+          onClick={onClose}
+          className="w-full h-10 gap-2"
+        >
+          <X className="h-4 w-4" />
+          Close
+        </Button>
       </div>
     </div>
   );
 }
+
 
 export function ProspectDetailModal({
   prospect,
