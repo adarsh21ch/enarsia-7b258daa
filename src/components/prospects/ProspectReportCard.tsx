@@ -33,6 +33,7 @@ export function ProspectReportCard({ prospect, open, onOpenChange, onUpdate }: P
         phone: prospect.phone,
         email: prospect.email || '',
         address: prospect.address || '',
+        state: prospect.state || '',
         age_or_dob: prospect.age_or_dob || '',
         gender: prospect.gender || '',
         why_need: prospect.why_need || '',
