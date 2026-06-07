@@ -243,17 +243,37 @@ export function PersonTableView({
             aria-label="Select all"
           />
         ),
-        cell: ({ row }) => (
-          <Checkbox
-            checked={row.getIsSelected()}
-            onCheckedChange={(v) => row.toggleSelected(!!v)}
-            onClick={(e) => e.stopPropagation()}
-            aria-label="Select row"
-          />
-        ),
+        cell: ({ row, table }) => {
+          const isSelected = row.getIsSelected();
+          const anySelected = Object.keys(table.getState().rowSelection).length > 0;
+          // Show serial number normally; checkbox on hover, when selected, or when any row is selected
+          return (
+            <div className="relative w-6 h-6 flex items-center justify-center group/sn">
+              <span
+                className={cn(
+                  'absolute inset-0 flex items-center justify-center text-[11px] tabular-nums text-muted-foreground transition-opacity',
+                  (isSelected || anySelected) ? 'opacity-0' : 'opacity-100 group-hover/sn:opacity-0 sm:group-hover/row:opacity-0',
+                )}
+              >
+                {row.index + 1}
+              </span>
+              <Checkbox
+                checked={isSelected}
+                onCheckedChange={(v) => row.toggleSelected(!!v)}
+                onClick={(e) => e.stopPropagation()}
+                aria-label="Select row"
+                className={cn(
+                  'transition-opacity',
+                  (isSelected || anySelected) ? 'opacity-100' : 'opacity-0 group-hover/sn:opacity-100 sm:group-hover/row:opacity-100',
+                )}
+              />
+            </div>
+          );
+        },
         enableSorting: false,
-        size: 32,
+        size: 36,
       },
+
       {
         accessorKey: 'name',
         header: 'Name',
