@@ -217,10 +217,10 @@ export default function Dashboard() {
 
   // Handle tab change - show setup dialog when switching to Stages for first time
   const handleTabChange = (newTab: string) => {
-    if (newTab === 'filter' && needsSetup) {
+    if (newTab === 'funnel' && needsSetup) {
       setShowFilterSetup(true);
     }
-    setMainTab(newTab as 'leads' | 'filter');
+    setMainTab(newTab as 'leads' | 'funnel');
   };
 
   // Pull-to-refresh
@@ -264,7 +264,7 @@ export default function Dashboard() {
     label: 'Leads',
     icon: Phone
   }, {
-    value: 'filter',
+    value: 'funnel',
     label: 'Filter',
     icon: Layers,
     'data-onboarding': 'funnel-tab'
