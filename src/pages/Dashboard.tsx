@@ -368,7 +368,7 @@ export default function Dashboard() {
         />
       ) : (
         <PeopleView
-          source="funnel"
+          source="filter"
           key={`funnel-${tableScrollKey.current}`}
           prospects={prospects} 
           loading={loading} 
