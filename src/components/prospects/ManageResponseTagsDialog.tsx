@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { AlertCircle, Plus, Trash2, Star, Tag, X, Loader2, Check, Lock, Pencil } from 'lucide-react';
+import { AlertCircle, Plus, Trash2, Star, Tag, X, Loader2, Check, Lock, Settings2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useTrackingFormatContext } from '@/contexts/TrackingFormatContext';
 import { supabase } from '@/integrations/supabase/client';
@@ -445,8 +445,8 @@ export function ManageResponseTagsDialog({ open, onOpenChange }: ManageResponseT
               // Editable view for root leaders
               <div className="space-y-2">
                 {trackingTags.map((tag, index) => (
-                  <div key={index} className="flex items-center gap-2 p-2 bg-muted/30 rounded-lg">
-                    <span className="text-xs text-muted-foreground w-6 shrink-0">#{index + 3}</span>
+                  <div key={index} className="flex items-center gap-2 p-2 bg-muted/30 rounded-lg group">
+                    <Settings2 className="h-3 w-3 text-muted-foreground/40 group-focus-within:text-primary transition-colors" />
                     <Input
                       value={tag.name}
                       onChange={(e) => handleTrackingTagChange(index, 'name', e.target.value.toUpperCase())}
@@ -521,7 +521,7 @@ export function ManageResponseTagsDialog({ open, onOpenChange }: ManageResponseT
                     <div className="flex items-center gap-2 flex-1 p-2 bg-muted/30 rounded-lg">
                       <span className="text-sm flex-1">{tag}</span>
                       <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleStartEditPersonalTag(idx)}>
-                        <Pencil className="h-3 w-3" />
+                        <Settings2 className="h-3 w-3" />
                       </Button>
                       <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleRemovePersonalTag(idx)}>
                         <Trash2 className="h-3 w-3" />

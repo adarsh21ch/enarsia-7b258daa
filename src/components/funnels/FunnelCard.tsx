@@ -5,7 +5,8 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { 
   MoreHorizontal, 
-  Edit, 
+  Settings2, 
+
   Eye, 
   Copy, 
   Trash2, 
@@ -106,7 +107,7 @@ export function FunnelCard({
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
               <DropdownMenuItem onClick={() => onEdit(funnel)}>
-                <Edit className="w-4 h-4 mr-2" />
+                <Settings2 className="w-4 h-4 mr-2" />
                 Edit
               </DropdownMenuItem>
               <DropdownMenuItem onClick={() => onPreview(funnel)}>
@@ -148,7 +149,7 @@ export function FunnelCard({
             className="flex-1"
             onClick={() => onEdit(funnel)}
           >
-            <Edit className="w-3.5 h-3.5 mr-1" />
+            <Settings2 className="w-3.5 h-3.5 mr-1" />
             Edit
           </Button>
           <Button 
