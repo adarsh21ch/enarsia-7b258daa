@@ -516,10 +516,8 @@ export function ImportExcelDialog({ onImport, open: controlledOpen, onOpenChange
     resetState();
     setOpen(false);
 
-    // Navigate to Calling page after a confident one-tap import
-    if (result.imported > 0) {
-      try { navigate('/action'); } catch {}
-    }
+    // Stay on the current page (e.g. Calling tab) after import — no forced navigation.
+    void navigate;
   };
 
   const nameCol = Object.entries(reverseMapping).find(([, f]) => f === 'name')?.[0];
