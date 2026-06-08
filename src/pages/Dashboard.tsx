@@ -106,7 +106,7 @@ export default function Dashboard() {
   useDemoSeed();
 
   // Main tab state - Calling is default
-  const [mainTab, setMainTab] = useState<'leads' | 'filter'>('leads');
+  const [mainTab, setMainTab] = useState<'leads' | 'funnel'>('leads');
 
   // Search state
   const [searchQuery, setSearchQuery] = useState('');
@@ -132,10 +132,10 @@ export default function Dashboard() {
 
   // Use paginated query with sheet/search/filterMode for proper cache separation
   // Map 'leads' tab to 'calling' filterMode for backend
-  const queryFilterMode = mainTab === 'leads' ? 'calling' : 'filter';
+  const queryFilterMode = mainTab === 'leads' ? 'calling' : 'funnel';
   
   // Pass filterTag for server-side filtering in filter mode
-  const filterTag = mainTab === 'filter' ? leadsStageTag : null;
+  const filterTag = mainTab === 'funnel' ? leadsStageTag : null;
 
   useEffect(() => {
     const timer = window.setTimeout(() => {
