@@ -1,6 +1,23 @@
 import { useState, useEffect, useCallback } from "react";
 import { APP_VERSION, VERSION_STORAGE_KEY } from "@/config/appVersion";
 
+function isPwaUpdateCapableContext() {
+  const hostname = window.location.hostname;
+
+  return (
+    import.meta.env.PROD &&
+    window.self === window.top &&
+    !hostname.startsWith("id-preview--") &&
+    !hostname.startsWith("preview--") &&
+    hostname !== "lovableproject.com" &&
+    !hostname.endsWith(".lovableproject.com") &&
+    hostname !== "lovableproject-dev.com" &&
+    !hostname.endsWith(".lovableproject-dev.com") &&
+    hostname !== "beta.lovable.dev" &&
+    !hostname.endsWith(".beta.lovable.dev")
+  );
+}
+
 export function useVersionCheck() {
   const [showUpdateBanner, setShowUpdateBanner] = useState(false);
   const [swUpdateAvailable, setSwUpdateAvailable] = useState(false);
@@ -22,14 +39,16 @@ export function useVersionCheck() {
 
   // Check for service worker updates
   useEffect(() => {
-    if (!("serviceWorker" in navigator)) return;
+    if (!("serviceWorker" in navigator) || !isPwaUpdateCapableContext()) return;
 
     const checkForUpdates = async () => {
       try {
         const registration = await navigator.serviceWorker.getRegistration();
         if (registration) {
           // Check for updates
-          await registration.update();
+          if (registration.installing || registration.waiting || registration.active) {
+            await registration.update();
+          }
           
           // Listen for new service worker
           registration.addEventListener("updatefound", () => {
@@ -85,7 +104,7 @@ export function useVersionCheck() {
     localStorage.setItem(VERSION_STORAGE_KEY, APP_VERSION);
 
     // Check for waiting service worker
-    if ("serviceWorker" in navigator) {
+    if ("serviceWorker" in navigator && isPwaUpdateCapableContext()) {
       try {
         const registration = await navigator.serviceWorker.getRegistration();
         if (registration?.waiting) {
