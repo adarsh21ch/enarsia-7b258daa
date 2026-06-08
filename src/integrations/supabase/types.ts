@@ -2782,6 +2782,51 @@ export type Database = {
         }
         Relationships: []
       }
+      demo_leads_master: {
+        Row: {
+          address: string | null
+          age_or_dob: string | null
+          created_at: string
+          email: string | null
+          gender: string | null
+          id: string
+          name: string
+          phone: string
+          phone2: string | null
+          profession: string | null
+          sort_order: number
+          state: string | null
+        }
+        Insert: {
+          address?: string | null
+          age_or_dob?: string | null
+          created_at?: string
+          email?: string | null
+          gender?: string | null
+          id?: string
+          name: string
+          phone: string
+          phone2?: string | null
+          profession?: string | null
+          sort_order?: number
+          state?: string | null
+        }
+        Update: {
+          address?: string | null
+          age_or_dob?: string | null
+          created_at?: string
+          email?: string | null
+          gender?: string | null
+          id?: string
+          name?: string
+          phone?: string
+          phone2?: string | null
+          profession?: string | null
+          sort_order?: number
+          state?: string | null
+        }
+        Relationships: []
+      }
       email_otps: {
         Row: {
           attempts: number | null
@@ -4547,6 +4592,7 @@ export type Database = {
           company_name: string | null
           created_at: string
           demo_data_created: boolean | null
+          demo_notice_seen: boolean
           display_name: string | null
           email: string | null
           enabled_modes: string[]
@@ -4590,6 +4636,7 @@ export type Database = {
           company_name?: string | null
           created_at?: string
           demo_data_created?: boolean | null
+          demo_notice_seen?: boolean
           display_name?: string | null
           email?: string | null
           enabled_modes?: string[]
@@ -4633,6 +4680,7 @@ export type Database = {
           company_name?: string | null
           created_at?: string
           demo_data_created?: boolean | null
+          demo_notice_seen?: boolean
           display_name?: string | null
           email?: string | null
           enabled_modes?: string[]
@@ -6947,6 +6995,7 @@ export type Database = {
       }
       clear_upline_relationship: { Args: { p_user_id: string }; Returns: Json }
       community_slug_exists: { Args: { p_slug: string }; Returns: boolean }
+      delete_demo_data_for_user: { Args: { p_user_id: string }; Returns: Json }
       ensure_ac_profile_exists: { Args: never; Returns: Json }
       gen_random_bytes: { Args: { n: number }; Returns: string }
       gen_random_uuid: { Args: never; Returns: string }
@@ -7191,11 +7240,13 @@ export type Database = {
       purge_deletion_batch: { Args: { p_batch_id: string }; Returns: Json }
       purge_expired_deleted_items: { Args: never; Returns: undefined }
       record_app_access: { Args: { p_app: string }; Returns: undefined }
+      replace_demo_leads_master: { Args: { p_rows: Json }; Returns: Json }
       restore_deletion_batch: { Args: { p_batch_id: string }; Returns: Json }
       restore_deletion_batch_lead: {
         Args: { p_lead_id: string }
         Returns: Json
       }
+      seed_demo_data_for_user: { Args: { p_user_id: string }; Returns: Json }
       setup_new_user_onboarding: { Args: { p_user_id: string }; Returns: Json }
       update_leader_hierarchy: {
         Args: { p_leader_id: string; p_user_id: string }
