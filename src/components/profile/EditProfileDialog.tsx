@@ -96,8 +96,9 @@ export function EditProfileDialog({
     // Upload to Supabase Storage
     setUploadingAvatar(true);
     try {
-      const fileExt = file.name.split('.').pop();
-      const fileName = `${user.id}-${Date.now()}.${fileExt}`;
+      const fileExt = (file.name.split('.').pop() || 'jpg').toLowerCase();
+      // Path MUST start with `{user.id}/` to satisfy storage RLS policy
+      const fileName = `${user.id}/${Date.now()}.${fileExt}`;
 
       const { error: uploadError } = await supabase.storage
         .from('avatars')
