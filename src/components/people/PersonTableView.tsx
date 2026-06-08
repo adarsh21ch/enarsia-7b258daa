@@ -710,27 +710,49 @@ export function PersonTableView({
                 </TableCell>
               </TableRow>
             ) : (
-              table.getRowModel().rows.map((row) => (
-                <TableRow
-                  key={row.id}
-                  data-state={row.getIsSelected() ? 'selected' : undefined}
-                  className="cursor-pointer group/row"
-                  onClick={() => setActiveProspect(row.original)}
-                >
-                  {row.getVisibleCells().map((cell) => {
-                    const hideOnTablet =
-                      cell.column.id === 'source' || cell.column.id === 'updated_at';
-                    return (
-                      <TableCell
-                        key={cell.id}
-                        className={cn('py-2 text-sm', hideOnTablet && 'hidden lg:table-cell')}
-                      >
-                        {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                      </TableCell>
-                    );
-                  })}
-                </TableRow>
-              ))
+              table.getRowModel().rows.map((row) => {
+                // Tap-vs-swipe guard: only open detail modal on a real tap (minimal movement),
+                // so horizontal/vertical scrolls on the table don't accidentally trigger it.
+                let startX = 0; let startY = 0; let startT = 0; let moved = false;
+                const TAP_PX = 8;
+                const TAP_MS = 500;
+                return (
+                  <TableRow
+                    key={row.id}
+                    data-state={row.getIsSelected() ? 'selected' : undefined}
+                    className="cursor-pointer group/row"
+                    onPointerDown={(e) => {
+                      startX = e.clientX; startY = e.clientY; startT = Date.now(); moved = false;
+                    }}
+                    onPointerMove={(e) => {
+                      if (Math.abs(e.clientX - startX) > TAP_PX || Math.abs(e.clientY - startY) > TAP_PX) {
+                        moved = true;
+                      }
+                    }}
+                    onClick={(e) => {
+                      // Ignore clicks bubbled from interactive controls
+                      const target = e.target as HTMLElement;
+                      if (target.closest('button, a, input, [role="menuitem"], [data-no-row-open]')) return;
+                      if (moved) return;
+                      if (Date.now() - startT > TAP_MS) return;
+                      setActiveProspect(row.original);
+                    }}
+                  >
+                    {row.getVisibleCells().map((cell) => {
+                      const hideOnTablet =
+                        cell.column.id === 'source' || cell.column.id === 'updated_at';
+                      return (
+                        <TableCell
+                          key={cell.id}
+                          className={cn('py-2 text-sm', hideOnTablet && 'hidden lg:table-cell')}
+                        >
+                          {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                        </TableCell>
+                      );
+                    })}
+                  </TableRow>
+                );
+              })
             )}
           </TableBody>
         </Table>
