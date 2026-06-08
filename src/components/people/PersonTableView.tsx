@@ -102,7 +102,7 @@ interface PersonTableViewProps {
   hasNextPage?: boolean;
   onLoadMore?: () => void;
   isLoadingMore?: boolean;
-  source: 'leads' | 'funnel';
+  source: 'leads' | 'filter';
   filterMode?: 'calling' | 'funnel';
   viewMode?: 'card' | 'table';
   onToggleView?: () => void;
