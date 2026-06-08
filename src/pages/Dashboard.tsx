@@ -21,6 +21,8 @@ import { Loader2, Phone, Layers, Flame, GraduationCap } from 'lucide-react';
 import { toast } from 'sonner';
 import nevoraLogo from '@/assets/nevorai-call-logo.png';
 import { useStreak } from '@/hooks/useStreak';
+import { useDemoSeed } from '@/hooks/useDemoSeed';
+import { DemoLeadsBanner } from '@/components/prospects/DemoLeadsBanner';
 
 
 // Pull-to-refresh hook - fixed to not interfere with normal scrolling
