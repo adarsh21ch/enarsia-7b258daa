@@ -106,7 +106,7 @@ export default function Dashboard() {
   useDemoSeed();
 
   // Main tab state - Calling is default
-  const [mainTab, setMainTab] = useState<'leads' | 'filter'>('leads');
+  const [mainTab, setMainTab] = useState<'leads' | 'funnel'>('leads');
 
   // Search state
   const [searchQuery, setSearchQuery] = useState('');
@@ -132,10 +132,10 @@ export default function Dashboard() {
 
   // Use paginated query with sheet/search/filterMode for proper cache separation
   // Map 'leads' tab to 'calling' filterMode for backend
-  const queryFilterMode = mainTab === 'leads' ? 'calling' : 'filter';
+  const queryFilterMode = mainTab === 'leads' ? 'calling' : 'funnel';
   
   // Pass filterTag for server-side filtering in filter mode
-  const filterTag = mainTab === 'filter' ? leadsStageTag : null;
+  const filterTag = mainTab === 'funnel' ? leadsStageTag : null;
 
   useEffect(() => {
     const timer = window.setTimeout(() => {
@@ -217,10 +217,10 @@ export default function Dashboard() {
 
   // Handle tab change - show setup dialog when switching to Stages for first time
   const handleTabChange = (newTab: string) => {
-    if (newTab === 'filter' && needsSetup) {
+    if (newTab === 'funnel' && needsSetup) {
       setShowFilterSetup(true);
     }
-    setMainTab(newTab as 'leads' | 'filter');
+    setMainTab(newTab as 'leads' | 'funnel');
   };
 
   // Pull-to-refresh
@@ -264,7 +264,7 @@ export default function Dashboard() {
     label: 'Leads',
     icon: Phone
   }, {
-    value: 'filter',
+    value: 'funnel',
     label: 'Filter',
     icon: Layers,
     'data-onboarding': 'funnel-tab'

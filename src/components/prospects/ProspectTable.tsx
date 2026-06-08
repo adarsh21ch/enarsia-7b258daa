@@ -1,5 +1,5 @@
 import { useState, useMemo, useCallback, useEffect, useRef, lazy, Suspense } from 'react';
-import { Prospect, FilterStage, ProspectQuality, Sheet, ExtendedActionTaken, FUNNEL_STAGES, EXTENDED_ACTIONS } from '@/types/prospect';
+import { Prospect, FunnelStage, ProspectQuality, Sheet, ExtendedActionTaken, FUNNEL_STAGES, EXTENDED_ACTIONS } from '@/types/prospect';
 import { SortableProspectRow } from './SortableProspectRow';
 import { MobileProspectCard } from './MobileProspectCard';
 import { ProspectFilters } from './ProspectFilters';

@@ -239,7 +239,7 @@ export function FunnelTracker({
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-border/50 bg-muted/30">
-                <th className="px-3 py-3 text-left font-medium text-muted-foreground w-20">Funnel</th>
+                <th className="px-3 py-3 text-left font-medium text-muted-foreground w-20">Filter</th>
                 <th className="px-3 py-3 text-center font-medium text-muted-foreground">Day 1</th>
                 <th className="px-3 py-3 text-center font-medium text-muted-foreground">Day 2</th>
                 <th className="px-3 py-3 text-center font-medium text-muted-foreground">Day 3</th>

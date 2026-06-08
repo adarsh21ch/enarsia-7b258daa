@@ -14,7 +14,7 @@ import { toast } from 'sonner';
 import { Profile, ProfileUpdate } from '@/hooks/useProfile';
 import { useTrackingFormatContext } from '@/contexts/TrackingFormatContext';
 import { useLeaderLevels } from '@/hooks/useLeaderLevels';
-import { useFilterConfig } from '@/hooks/useFilterConfig';
+import { useFunnelConfig } from '@/hooks/useFunnelConfig';
 import { supabase } from '@/integrations/supabase/client';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
@@ -106,7 +106,7 @@ export function LeaderTrackingFormatSettings({
     loading: funnelConfigLoading,
     isReadOnly: isFilterConfigReadOnly,
     hasLeaderConfig,
-  } = useFilterConfig();
+  } = useFunnelConfig();
   
   const [copiedId, setCopiedId] = useState(false);
   const [leaderIdInput, setLeaderIdInput] = useState('');

@@ -340,7 +340,7 @@ const GUIDE_SECTIONS: GuideSection[] = [
         </p>
         <FeatureHighlight features={[
           { icon: BarChart3, label: 'Analytics' },
-          { icon: Target, label: 'Funnel' },
+          { icon: Target, label: 'Filter' },
           { icon: Clock, label: 'Daily Stats' },
         ]} />
         
