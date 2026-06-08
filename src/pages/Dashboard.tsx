@@ -127,15 +127,15 @@ export default function Dashboard() {
     getOrCreateTodaySheet
   } = useSheets();
 
-  // Get the funnel tag for server-side filtering
+  // Get the filter tag for server-side filtering
   const { leadsStageTag } = useTrackingFormatContext();
 
   // Use paginated query with sheet/search/filterMode for proper cache separation
   // Map 'leads' tab to 'calling' filterMode for backend
   const queryFilterMode = mainTab === 'leads' ? 'calling' : 'funnel';
   
-  // Pass funnelTag for server-side filtering in funnel mode
-  const funnelTag = mainTab === 'funnel' ? leadsStageTag : null;
+  // Pass filterTag for server-side filtering in filter mode
+  const filterTag = mainTab === 'funnel' ? leadsStageTag : null;
 
   useEffect(() => {
     const timer = window.setTimeout(() => {
@@ -191,7 +191,7 @@ export default function Dashboard() {
     sheetId: selectedSheetId,
     search: debouncedSearchQuery,
     filterMode: queryFilterMode,
-    funnelTag
+    funnelTag: filterTag
   });
 
   // Filter tag setup dialog
@@ -265,7 +265,7 @@ export default function Dashboard() {
     icon: Phone
   }, {
     value: 'funnel',
-    label: 'Funnel',
+    label: 'Filter',
     icon: Layers,
     'data-onboarding': 'funnel-tab'
   }];

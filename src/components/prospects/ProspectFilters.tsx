@@ -154,7 +154,7 @@ export function ProspectFilters({
           </PopoverContent>}
         </Popover>}
 
-        {/* Funnel Tag button - inline with other controls (only on desktop) */}
+        {/* Filter Tag button - inline with other controls (only on desktop) */}
         {!isMobile && filterTagButton}
 
         {hasFilters && <Button variant="ghost" size="sm" onClick={clearFilters} className="h-9 px-2 text-xs shrink-0">

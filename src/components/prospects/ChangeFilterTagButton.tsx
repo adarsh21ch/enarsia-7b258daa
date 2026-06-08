@@ -96,7 +96,7 @@ export function ChangeFilterTagButton({ onTagChanged }: ChangeFilterTagButtonPro
               Choose Filter Tag
             </DialogTitle>
             <DialogDescription>
-              Select ONE Response tag to use as your Filter Tag. Only leads with this Response tag will appear in the Funnel view.
+              Select ONE Response tag to use as your Filter Tag. Only leads with this Response tag will appear in the Filter view.
 
             </DialogDescription>
           </DialogHeader>
