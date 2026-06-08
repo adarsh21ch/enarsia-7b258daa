@@ -491,7 +491,7 @@ const GUIDE_SECTIONS: GuideSection[] = [
         <ul className="list-disc list-inside text-sm text-muted-foreground space-y-1 ml-2">
           <li><strong>Leads Tags:</strong> Response statuses like "Not picked", "Video send", "Enrolment"</li>
           <li><strong>Filter Tag:</strong> One special tag (marked with ⚡) that moves leads to the Filter tab</li>
-          <li><strong>Stage Tags:</strong> Funnel stages like "Day1", "Day2", "Day3"</li>
+          <li><strong>Stage Tags:</strong> Filter stages like "Day1", "Day2", "Day3"</li>
         </ul>
         <FeatureHighlight features={[
           { icon: Plus, label: 'Add Tag' },
