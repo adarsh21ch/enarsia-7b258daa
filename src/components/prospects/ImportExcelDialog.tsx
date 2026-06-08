@@ -530,14 +530,14 @@ export function ImportExcelDialog({ onImport, open: controlledOpen, onOpenChange
         <DialogTrigger asChild>
           <Button data-import-trigger data-onboarding="import-btn" variant="outline" size="sm" className="h-9 gap-1.5 px-2.5 rounded-xl text-xs">
             <Upload className="h-4 w-4" />
-            <span>Import</span>
+            <span>Upload</span>
           </Button>
         </DialogTrigger>
       )}
       <DialogContent className="sm:max-w-2xl bg-card border-border max-h-[90vh] overflow-y-auto overflow-x-hidden">
         <DialogHeader>
           <DialogTitle>
-            {step === 'upload' ? 'Import from Excel/CSV' : step === 'confirm' ? 'Ready to import' : 'Map Columns'}
+            {step === 'upload' ? 'Upload from Excel/CSV' : step === 'confirm' ? 'Ready to upload' : 'Map Columns'}
           </DialogTitle>
         </DialogHeader>
 
@@ -558,7 +558,7 @@ export function ImportExcelDialog({ onImport, open: controlledOpen, onOpenChange
                 <Upload className="h-6 w-6 text-primary" />
               </div>
               <div>
-                <p className="text-base font-semibold">Import from Excel / CSV</p>
+                <p className="text-base font-semibold">Upload from Excel / CSV</p>
                 <p className="text-xs text-muted-foreground mt-1">.xlsx, .xls, .csv — Tap to select file</p>
               </div>
             </div>
@@ -581,7 +581,7 @@ export function ImportExcelDialog({ onImport, open: controlledOpen, onOpenChange
                 onClick={() => { setOpen(false); setSharedLeadsOpen(true); }}
               >
                 <Share2 className="h-4 w-4" />
-                <span>Import from Shared Leads</span>
+                <span>Upload from Shared Leads</span>
               </button>
             </div>
 
@@ -633,8 +633,8 @@ export function ImportExcelDialog({ onImport, open: controlledOpen, onOpenChange
               </button>
               <Button onClick={handleImport} disabled={isImporting} size="sm" className="min-w-[160px]">
                 {isImporting && importProgress
-                  ? `Importing ${importProgress.current}/${importProgress.total}`
-                  : `Import ${fullData.length} leads`}
+                  ? `Uploading ${importProgress.current}/${importProgress.total}`
+                  : `Upload ${fullData.length} leads`}
               </Button>
             </div>
           </div>
