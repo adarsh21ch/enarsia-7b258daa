@@ -802,18 +802,27 @@ export type Database = {
       }
       academy_completions: {
         Row: {
+          completed: boolean
           completed_at: string
+          last_position_seconds: number
           tutorial_id: string
+          updated_at: string
           user_id: string
         }
         Insert: {
+          completed?: boolean
           completed_at?: string
+          last_position_seconds?: number
           tutorial_id: string
+          updated_at?: string
           user_id: string
         }
         Update: {
+          completed?: boolean
           completed_at?: string
+          last_position_seconds?: number
           tutorial_id?: string
+          updated_at?: string
           user_id?: string
         }
         Relationships: [
