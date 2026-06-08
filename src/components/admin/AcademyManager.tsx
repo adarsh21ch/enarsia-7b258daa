@@ -214,7 +214,7 @@ export function AcademyManager() {
         <div>
           <h3 className="text-base font-semibold">Enarsia Academy</h3>
           <p className="text-xs text-muted-foreground">
-            Manage tutorial videos, categories, and ordering.
+            Mobile View ({tutorials.filter((t) => (t.format || 'mobile') === 'mobile').length}) · Desktop View ({tutorials.filter((t) => t.format === 'desktop').length})
           </p>
         </div>
         <Button size="sm" onClick={openNew}>
