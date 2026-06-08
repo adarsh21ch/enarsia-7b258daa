@@ -221,6 +221,7 @@ export default function Ideas() {
       youtube_url: fromDraftYt || (attach?.kind === 'youtube' ? attach.url : null),
       audio_url: attach?.kind === 'audio' ? attach.url : null,
       account_id: activeAccountId || null,
+      category_id: activeCategory !== ALL ? activeCategory : null,
     };
 
     // Reset immediately for snappy feel; blur so keyboard closes and the
