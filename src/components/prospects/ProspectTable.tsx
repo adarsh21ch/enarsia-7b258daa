@@ -549,7 +549,7 @@ export function ProspectTable({
     if (filters.actions.length > 0) return filters.actions.join('_').replace(/\s+/g, '');
     if (filters.qualities.length > 0) return filters.qualities.join('_');
     if (filters.incompleteOnly) return 'Incomplete';
-    return filterMode === 'calling' ? 'Calling' : 'Filter';
+    return filterMode === 'calling' ? 'Calling' : 'Funnel';
   };
   const exportToExcel = async () => {
     if (!canExport) { toast.error('Upgrade your plan to export data'); return; }
@@ -601,7 +601,7 @@ export function ProspectTable({
         'Gender': p.gender || '',
         'Address': p.address || '',
         'Enrollment Status': p.enrollment_status || (p.funnel_stage ? 'Enrolled' : 'Not Enrolled'),
-        'Filter Stage': p.funnel_stage || '',
+        'Funnel Stage': p.funnel_stage || '',
         'Last Action': p.action_taken || 'No Action',
         'Last Action Date': p.updated_at ? format(new Date(p.updated_at), 'dd/MM/yyyy HH:mm') : '',
         'Quality': p.prospect_status || '',
@@ -688,7 +688,7 @@ export function ProspectTable({
         'Gender': p.gender || '',
         'Address': p.address || '',
         'Enrollment Status': p.enrollment_status || (p.funnel_stage ? 'Enrolled' : 'Not Enrolled'),
-        'Filter Stage': p.funnel_stage || '',
+        'Funnel Stage': p.funnel_stage || '',
         'Last Action': p.action_taken || 'No Action',
         'Last Action Date': p.updated_at ? format(new Date(p.updated_at), 'dd/MM/yyyy HH:mm') : '',
         'Quality': p.prospect_status || '',

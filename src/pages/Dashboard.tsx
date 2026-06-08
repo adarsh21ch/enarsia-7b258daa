@@ -265,7 +265,7 @@ export default function Dashboard() {
     icon: Phone
   }, {
     value: 'funnel',
-    label: 'Filter',
+    label: 'Funnel',
     icon: Layers,
     'data-onboarding': 'funnel-tab'
   }];
