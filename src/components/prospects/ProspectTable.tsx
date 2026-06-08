@@ -251,9 +251,9 @@ function TableContent({
                       <div className="h-14 w-14 mx-auto rounded-2xl bg-primary/10 flex items-center justify-center">
                         <FileSpreadsheet className="h-7 w-7 text-primary" />
                       </div>
-                      <p className="text-base font-semibold text-foreground">Start by importing your leads</p>
+                      <p className="text-base font-semibold text-foreground">Start by uploading your leads</p>
                       <p className="text-sm text-muted-foreground">
-                        You don't have any leads yet. Import your leads to start calling and follow-ups.
+                        You don't have any leads yet. Upload your leads to start calling and follow-ups.
                       </p>
                       <div className="flex flex-col items-center gap-2 pt-1">
                         <Button size="sm" className="gap-1.5" onClick={() => {
@@ -261,7 +261,7 @@ function TableContent({
                           if (importBtn) importBtn.click();
                         }}>
                           <Upload className="h-4 w-4" />
-                          Import Leads
+                          Upload Leads
                         </Button>
                         <button className="text-xs text-muted-foreground hover:text-accent transition-colors" onClick={() => {
                           const addBtn = document.querySelector('[data-add-trigger]') as HTMLButtonElement;
@@ -278,7 +278,7 @@ function TableContent({
                         {selectedSheetId ? "No leads in this sheet" : "No leads match your filters"}
                       </p>
                       <p className="text-xs text-muted-foreground/70 mb-3">
-                        {selectedSheetId && sheetFilteredProspects.length === 0 ? "Import Excel or Add Lead to get started" : <button onClick={() => setFilters({
+                        {selectedSheetId && sheetFilteredProspects.length === 0 ? "Upload Excel or Add Lead to get started" : <button onClick={() => setFilters({
                       search: '',
                       stages: [],
                       qualities: [],
