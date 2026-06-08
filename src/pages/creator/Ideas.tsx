@@ -195,6 +195,7 @@ export default function Ideas() {
           title: text || 'Voice note',
           audio_url: url,
           account_id: activeAccountId || null,
+          category_id: activeCategory !== ALL ? activeCategory : null,
         });
         setDraft('');
         setAttach(null);
