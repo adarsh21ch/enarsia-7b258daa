@@ -865,7 +865,7 @@ export function LeaderTrackingFormatSettings({
             </div>
 
             <p className="text-xs text-muted-foreground">
-              Mark one as ★ Filter Tag to move leads to the Funnel tab.
+              Mark one as ★ Filter Tag to move leads to the Filter tab.
             </p>
             
             <div className="space-y-2">

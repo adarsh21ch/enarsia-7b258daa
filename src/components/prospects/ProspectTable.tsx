@@ -462,7 +462,7 @@ export function ProspectTable({
     }
   };
 
-  // Get the Funnel Tag from TrackingFormatContext (the Response tag with isStageTag = true)
+  // Get the Filter Tag from TrackingFormatContext (the Response tag with isStageTag = true)
   const {
     leadsStageTag
   } = useTrackingFormatContext();
@@ -478,10 +478,10 @@ export function ProspectTable({
     return prospects;
   }, [prospects]);
 
-  // Funnel tab: Server-side filtering now handles the funnel tag filter
-  // We just need to sort by action_taken_at for stable funnel ordering
-  const funnelProspects = useMemo(() => {
-    // Server-side already filtered by funnelTag, just sort
+  // Filter tab: Server-side filtering now handles the filter tag filter
+  // We just need to sort by action_taken_at for stable filter ordering
+  const filterProspects = useMemo(() => {
+    // Server-side already filtered by filterTag, just sort
     return [...prospects].sort((a, b) => {
       const aTagAt = (a as any).action_taken_at as string | null | undefined;
       const bTagAt = (b as any).action_taken_at as string | null | undefined;
@@ -497,7 +497,7 @@ export function ProspectTable({
 
   // Get base prospects based on filter mode
   const baseProspects = useMemo(() => {
-    const base = filterMode === 'calling' ? callingProspects : funnelProspects;
+    const base = filterMode === 'calling' ? callingProspects : filterProspects;
     if (filterMode === 'calling') {
       switch (subFilter) {
         case 'hot':
@@ -517,7 +517,7 @@ export function ProspectTable({
           return base;
       }
     }
-  }, [callingProspects, funnelProspects, filterMode, subFilter]);
+  }, [callingProspects, filterProspects, filterMode, subFilter]);
 
   // Filter by sheet (works for both Calling and Funnel tabs)
   const sheetFilteredProspects = useMemo(() => {
