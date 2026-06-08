@@ -55,13 +55,6 @@ const EMPTY: Partial<AcademyTutorial> & { _videoFile?: File; _thumbFile?: File }
   is_published: true,
   format: 'mobile',
 };
-  video_url: '',
-  thumbnail_url: '',
-  category: 'getting-started',
-  order_index: 1,
-  duration_seconds: 0,
-  is_published: true,
-};
 
 export function AcademyManager() {
   const { categories, refetch: refetchCats } = useAcademyCategories();
