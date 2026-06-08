@@ -753,8 +753,8 @@ export function ImportExcelDialog({ onImport, open: controlledOpen, onOpenChange
                 className="min-w-[120px]"
               >
                 {isImporting && importProgress
-                  ? `Importing ${importProgress.current} of ${importProgress.total}`
-                  : `Import ${fullData.length} rows`}
+                  ? `Uploading ${importProgress.current} of ${importProgress.total}`
+                  : `Upload ${fullData.length} rows`}
               </Button>
             </div>
           </div>
