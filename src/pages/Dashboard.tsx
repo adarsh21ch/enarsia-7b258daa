@@ -103,6 +103,7 @@ export default function Dashboard() {
 
   // Streak
   const { currentStreak, isInGracePeriod, streakEnabled, loading: streakLoading } = useStreak();
+  useDemoSeed();
 
   // Main tab state - Calling is default
   const [mainTab, setMainTab] = useState<'leads' | 'funnel'>('leads');
