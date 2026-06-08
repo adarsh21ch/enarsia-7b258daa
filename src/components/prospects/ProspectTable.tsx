@@ -1,5 +1,5 @@
 import { useState, useMemo, useCallback, useEffect, useRef, lazy, Suspense } from 'react';
-import { Prospect, FunnelStage, ProspectQuality, Sheet, ExtendedActionTaken, FUNNEL_STAGES, EXTENDED_ACTIONS } from '@/types/prospect';
+import { Prospect, FilterStage, ProspectQuality, Sheet, ExtendedActionTaken, FUNNEL_STAGES, EXTENDED_ACTIONS } from '@/types/prospect';
 import { SortableProspectRow } from './SortableProspectRow';
 import { MobileProspectCard } from './MobileProspectCard';
 import { ProspectFilters } from './ProspectFilters';
@@ -117,7 +117,7 @@ const COLUMNS = [{
 
 // Column order for Calling tab: #, Name, Response
 const CALLING_COLUMN_ORDER = ['index', 'name', 'action'];
-// Column order for Funnel tab: #, Name, Funnel
+// Column order for Filter tab: #, Name, Filter
 const FILTER_COLUMN_ORDER = ['index', 'name', 'stage'];
 
 // TableContent component
@@ -519,7 +519,7 @@ export function ProspectTable({
     }
   }, [callingProspects, filterProspects, filterMode, subFilter]);
 
-  // Filter by sheet (works for both Calling and Funnel tabs)
+  // Filter by sheet (works for both Calling and Filter tabs)
   const sheetFilteredProspects = useMemo(() => {
     if (!selectedSheetId) return baseProspects;
     return baseProspects.filter(p => p.sheet_id === selectedSheetId);
