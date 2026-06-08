@@ -495,7 +495,7 @@ const GUIDE_SECTIONS: GuideSection[] = [
         </ul>
         <FeatureHighlight features={[
           { icon: Plus, label: 'Add Tag' },
-          { icon: Edit, label: 'Edit' },
+          { icon: Settings2, label: 'Edit' },
           { icon: Trash2, label: 'Delete' },
         ]} />
 

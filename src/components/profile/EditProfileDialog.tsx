@@ -193,7 +193,7 @@ export function EditProfileDialog({
                 {uploadingAvatar ? (
                   <Loader2 className="h-4 w-4 animate-spin" />
                 ) : (
-                  <Camera className="h-4 w-4" />
+                  <Pencil className="h-4 w-4" />
                 )}
               </button>
               <input
