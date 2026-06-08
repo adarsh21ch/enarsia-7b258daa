@@ -931,7 +931,7 @@ export function LeaderTrackingFormatSettings({
               )}
             </div>
             <p className="text-xs text-muted-foreground leading-relaxed">
-              Define stages for your funnel (e.g., DAY1, DAY2, MB). Mark one as ★ Final stage.
+              Define stages for your filter (e.g., DAY1, DAY2, MB). Mark one as ★ Final stage.
             </p>
             
             
