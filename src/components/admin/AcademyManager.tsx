@@ -432,6 +432,34 @@ export function AcademyManager() {
               </div>
             </div>
             <div>
+              <label className="text-xs font-medium">Format</label>
+              <div className="mt-1 grid grid-cols-2 gap-2">
+                {(['mobile', 'desktop'] as const).map((f) => {
+                  const active = (editing.format || 'mobile') === f;
+                  const Icon = f === 'mobile' ? Smartphone : Monitor;
+                  return (
+                    <button
+                      key={f}
+                      type="button"
+                      onClick={() => setEditing((s) => ({ ...s, format: f }))}
+                      className={cn(
+                        'flex items-center gap-2 px-3 py-2 rounded-lg border text-xs font-semibold transition-colors',
+                        active
+                          ? 'border-primary bg-primary/10 text-primary'
+                          : 'border-border bg-muted/30 text-muted-foreground hover:bg-muted/60'
+                      )}
+                    >
+                      <Icon className="h-4 w-4" />
+                      {f === 'mobile' ? 'Mobile View (9:16)' : 'Desktop View (16:9)'}
+                    </button>
+                  );
+                })}
+              </div>
+              <p className="text-[10px] text-muted-foreground mt-1">
+                Mobile = vertical short. Desktop = wide landscape tutorial.
+              </p>
+            </div>
+            <div>
               <label className="text-xs font-medium">Video file</label>
               <label className="mt-1 flex items-center gap-2 cursor-pointer rounded-lg border border-dashed border-border bg-muted/30 hover:bg-muted/60 px-3 py-2.5 transition-colors">
                 <PlayCircle className="h-4 w-4 text-primary shrink-0" />
