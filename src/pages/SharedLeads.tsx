@@ -280,7 +280,7 @@ export default function SharedLeads() {
                                 {importingId === share.id ?
                               <Loader2 className="h-3 w-3 animate-spin" /> :
                               <FileSpreadsheet className="h-3 w-3" />}
-                                Import
+                                Upload
                               </Button>
                               <Button
                               size="sm"

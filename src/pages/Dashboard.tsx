@@ -21,6 +21,8 @@ import { Loader2, Phone, Layers, Flame, GraduationCap } from 'lucide-react';
 import { toast } from 'sonner';
 import nevoraLogo from '@/assets/nevorai-call-logo.png';
 import { useStreak } from '@/hooks/useStreak';
+import { useDemoSeed } from '@/hooks/useDemoSeed';
+import { DemoLeadsBanner } from '@/components/prospects/DemoLeadsBanner';
 
 
 // Pull-to-refresh hook - fixed to not interfere with normal scrolling
@@ -101,6 +103,7 @@ export default function Dashboard() {
 
   // Streak
   const { currentStreak, isInGracePeriod, streakEnabled, loading: streakLoading } = useStreak();
+  useDemoSeed();
 
   // Main tab state - Calling is default
   const [mainTab, setMainTab] = useState<'leads' | 'funnel'>('leads');
@@ -324,7 +327,8 @@ export default function Dashboard() {
 
         {/* Lead limit counter for free users */}
         <LeadLimitCounter />
-        
+        <DemoLeadsBanner />
+
         {/* Table area - flex-1 to fill remaining space, pb for bottom nav */}
         <div className="flex-1 min-h-0 px-4 pb-48 lg:pb-20 transition-opacity duration-200">
       {mainTab === 'leads' ? (
