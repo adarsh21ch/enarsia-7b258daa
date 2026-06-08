@@ -146,6 +146,7 @@ export function AcademyManager() {
         order_index: Number(editing.order_index) || 0,
         duration_seconds: Number(duration_seconds) || 0,
         is_published: !!editing.is_published,
+        format: editing.format || 'mobile',
       };
 
       if (editing.id) {
