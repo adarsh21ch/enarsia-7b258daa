@@ -864,6 +864,7 @@ export function LeaderTrackingFormatSettings({
               </div>
             </div>
 
+
             <p className="text-xs text-muted-foreground">
               Mark one as ★ Filter Tag to move leads to the Filter tab.
             </p>
