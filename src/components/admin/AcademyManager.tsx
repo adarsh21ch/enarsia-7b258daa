@@ -39,12 +39,22 @@ import {
   ArrowDown,
   PlayCircle,
   ImageIcon,
+  Smartphone,
+  Monitor,
 } from 'lucide-react';
 
 const EMPTY: Partial<AcademyTutorial> & { _videoFile?: File; _thumbFile?: File } = {
   title: '',
   slug: '',
   description: '',
+  video_url: '',
+  thumbnail_url: '',
+  category: 'getting-started',
+  order_index: 1,
+  duration_seconds: 0,
+  is_published: true,
+  format: 'mobile',
+};
   video_url: '',
   thumbnail_url: '',
   category: 'getting-started',
