@@ -327,7 +327,8 @@ export default function Dashboard() {
 
         {/* Lead limit counter for free users */}
         <LeadLimitCounter />
-        
+        <DemoLeadsBanner />
+
         {/* Table area - flex-1 to fill remaining space, pb for bottom nav */}
         <div className="flex-1 min-h-0 px-4 pb-48 lg:pb-20 transition-opacity duration-200">
       {mainTab === 'leads' ? (
