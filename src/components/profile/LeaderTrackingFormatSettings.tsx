@@ -934,6 +934,7 @@ export function LeaderTrackingFormatSettings({
               Define stages for your funnel (e.g., DAY1, DAY2, MB). Mark one as ★ Final stage.
             </p>
             
+            
             <div className="space-y-2">
               {stageTags.map((tag, index) => (
                 <div key={index} className="flex items-center gap-2 p-2.5 bg-muted/30 rounded-lg border border-border/30">
