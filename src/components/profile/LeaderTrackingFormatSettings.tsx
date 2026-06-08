@@ -884,10 +884,10 @@ export function LeaderTrackingFormatSettings({
                       "p-1.5 rounded-lg transition-colors flex items-center gap-1 text-xs",
                       tag.isStageTag ? "text-amber-600 bg-amber-100 dark:bg-amber-900/30" : "text-muted-foreground hover:text-amber-600"
                     )}
-                    title="Mark as Funnel Tag"
+                    title="Mark as Filter Tag"
                   >
                     <Star className={cn("h-3.5 w-3.5", tag.isStageTag && "fill-amber-500 text-amber-500")} />
-                    {tag.isStageTag && <span className="text-[10px]">Funnel</span>}
+                    {tag.isStageTag && <span className="text-[10px]">Filter</span>}
                   </button>
                   {leadsTrackingTags.length > 1 && (
                     <Button variant="ghost" size="icon" onClick={() => handleRemoveLeadsTag(index)} className="h-7 w-7 text-destructive">
