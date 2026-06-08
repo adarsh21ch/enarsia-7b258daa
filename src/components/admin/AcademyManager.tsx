@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react';
+import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -39,6 +40,8 @@ import {
   ArrowDown,
   PlayCircle,
   ImageIcon,
+  Smartphone,
+  Monitor,
 } from 'lucide-react';
 
 const EMPTY: Partial<AcademyTutorial> & { _videoFile?: File; _thumbFile?: File } = {
@@ -51,6 +54,7 @@ const EMPTY: Partial<AcademyTutorial> & { _videoFile?: File; _thumbFile?: File }
   order_index: 1,
   duration_seconds: 0,
   is_published: true,
+  format: 'mobile',
 };
 
 export function AcademyManager() {
@@ -143,6 +147,7 @@ export function AcademyManager() {
         order_index: Number(editing.order_index) || 0,
         duration_seconds: Number(duration_seconds) || 0,
         is_published: !!editing.is_published,
+        format: editing.format || 'mobile',
       };
 
       if (editing.id) {
@@ -210,7 +215,7 @@ export function AcademyManager() {
         <div>
           <h3 className="text-base font-semibold">Enarsia Academy</h3>
           <p className="text-xs text-muted-foreground">
-            Manage tutorial videos, categories, and ordering.
+            Mobile View ({tutorials.filter((t) => (t.format || 'mobile') === 'mobile').length}) · Desktop View ({tutorials.filter((t) => t.format === 'desktop').length})
           </p>
         </div>
         <Button size="sm" onClick={openNew}>
@@ -273,7 +278,10 @@ export function AcademyManager() {
                       key={t.id}
                       className="flex items-center gap-2 p-2 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors"
                     >
-                      <div className="h-10 w-14 rounded bg-muted shrink-0 overflow-hidden flex items-center justify-center">
+                      <div className={cn(
+                        "rounded bg-muted shrink-0 overflow-hidden flex items-center justify-center",
+                        (t.format || 'mobile') === 'mobile' ? 'h-14 w-8' : 'h-10 w-[72px]'
+                      )}>
                         {t.thumbnail_url ? (
                           <img
                             src={t.thumbnail_url}
@@ -287,6 +295,10 @@ export function AcademyManager() {
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center gap-2">
                           <span className="text-sm font-medium truncate">{t.title}</span>
+                          <span className="text-[10px] px-1.5 py-0.5 rounded bg-primary/10 text-primary flex items-center gap-0.5">
+                            {(t.format || 'mobile') === 'mobile' ? <Smartphone className="h-2.5 w-2.5" /> : <Monitor className="h-2.5 w-2.5" />}
+                            {(t.format || 'mobile') === 'mobile' ? 'Mobile' : 'Desktop'}
+                          </span>
                           {!t.is_published && (
                             <span className="text-[10px] px-1.5 py-0.5 rounded bg-muted text-muted-foreground">
                               Draft
@@ -418,6 +430,34 @@ export function AcademyManager() {
                   }
                 />
               </div>
+            </div>
+            <div>
+              <label className="text-xs font-medium">Format</label>
+              <div className="mt-1 grid grid-cols-2 gap-2">
+                {(['mobile', 'desktop'] as const).map((f) => {
+                  const active = (editing.format || 'mobile') === f;
+                  const Icon = f === 'mobile' ? Smartphone : Monitor;
+                  return (
+                    <button
+                      key={f}
+                      type="button"
+                      onClick={() => setEditing((s) => ({ ...s, format: f }))}
+                      className={cn(
+                        'flex items-center gap-2 px-3 py-2 rounded-lg border text-xs font-semibold transition-colors',
+                        active
+                          ? 'border-primary bg-primary/10 text-primary'
+                          : 'border-border bg-muted/30 text-muted-foreground hover:bg-muted/60'
+                      )}
+                    >
+                      <Icon className="h-4 w-4" />
+                      {f === 'mobile' ? 'Mobile View (9:16)' : 'Desktop View (16:9)'}
+                    </button>
+                  );
+                })}
+              </div>
+              <p className="text-[10px] text-muted-foreground mt-1">
+                Mobile = vertical short. Desktop = wide landscape tutorial.
+              </p>
             </div>
             <div>
               <label className="text-xs font-medium">Video file</label>

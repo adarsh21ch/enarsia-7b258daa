@@ -2,6 +2,13 @@ import { useEffect, useState, useCallback, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 
+export type AcademyFormat = 'mobile' | 'desktop';
+
+export const ACADEMY_FORMAT_LABEL: Record<AcademyFormat, string> = {
+  mobile: 'Mobile View',
+  desktop: 'Desktop View',
+};
+
 export interface AcademyTutorial {
   id: string;
   title: string;
@@ -13,6 +20,7 @@ export interface AcademyTutorial {
   order_index: number;
   duration_seconds: number;
   is_published: boolean;
+  format: AcademyFormat;
   created_at: string;
   updated_at: string;
 }
