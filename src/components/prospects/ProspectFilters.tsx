@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Checkbox } from '@/components/ui/checkbox';
 import { X, ChevronDown, Settings2, Lock } from 'lucide-react';
-import { FUNNEL_STAGES, EXTENDED_ACTIONS, FunnelStage, ProspectQuality, ExtendedActionTaken } from '@/types/prospect';
+import { FUNNEL_STAGES, EXTENDED_ACTIONS, FilterStage, ProspectQuality, ExtendedActionTaken } from '@/types/prospect';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useTrackingFormatContext } from '@/contexts/TrackingFormatContext';
 import { cn } from '@/lib/utils';
@@ -13,7 +13,7 @@ import { ManageResponseTagsDialog } from './ManageResponseTagsDialog';
 import { ManageStageTagsDialog } from './ManageStageTagsDialog';
 interface Filters {
   search: string;
-  stages: FunnelStage[];
+  stages: FilterStage[];
   qualities: ProspectQuality[];
   actions: ExtendedActionTaken[];
   incompleteOnly: boolean;
@@ -54,8 +54,8 @@ export function ProspectFilters({
   // Build options: merge tracking + personal tags, fallback only when BOTH empty
   const combinedLeadsOptions = [...leadsTrackingTagNames, ...leadsNonTrackingTags] as ExtendedActionTaken[];
   const actionOptions = combinedLeadsOptions.length > 0 ? combinedLeadsOptions : EXTENDED_ACTIONS as ExtendedActionTaken[];
-  const combinedStageOptions = [...stageTagNames, ...stageNonTrackingTags] as FunnelStage[];
-  const stageOptions = combinedStageOptions.length > 0 ? combinedStageOptions : FUNNEL_STAGES as FunnelStage[];
+  const combinedStageOptions = [...stageTagNames, ...stageNonTrackingTags] as FilterStage[];
+  const stageOptions = combinedStageOptions.length > 0 ? combinedStageOptions : FUNNEL_STAGES as FilterStage[];
   const clearFilters = () => {
     onFiltersChange({
       search: '',
@@ -65,7 +65,7 @@ export function ProspectFilters({
       incompleteOnly: false
     });
   };
-  const toggleStage = (stage: FunnelStage) => {
+  const toggleStage = (stage: FilterStage) => {
     const newStages = filters.stages.includes(stage) ? filters.stages.filter(s => s !== stage) : [...filters.stages, stage];
     onFiltersChange({
       ...filters,
@@ -154,7 +154,7 @@ export function ProspectFilters({
           </PopoverContent>}
         </Popover>}
 
-        {/* Funnel Tag button - inline with other controls (only on desktop) */}
+        {/* Filter Tag button - inline with other controls (only on desktop) */}
         {!isMobile && filterTagButton}
 
         {hasFilters && <Button variant="ghost" size="sm" onClick={clearFilters} className="h-9 px-2 text-xs shrink-0">

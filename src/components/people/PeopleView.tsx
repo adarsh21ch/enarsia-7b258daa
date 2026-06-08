@@ -17,7 +17,7 @@ function readMode(): PeopleViewMode {
 }
 
 interface PeopleViewProps {
-  source: 'leads' | 'funnel';
+  source: 'leads' | 'filter';
   prospects: Prospect[];
   loading: boolean;
   onAdd: (p: Partial<Prospect>) => Promise<Prospect | null>;

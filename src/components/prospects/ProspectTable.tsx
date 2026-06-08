@@ -1,5 +1,5 @@
 import { useState, useMemo, useCallback, useEffect, useRef, lazy, Suspense } from 'react';
-import { Prospect, FunnelStage, ProspectQuality, Sheet, ExtendedActionTaken, FUNNEL_STAGES, EXTENDED_ACTIONS } from '@/types/prospect';
+import { Prospect, FilterStage, ProspectQuality, Sheet, ExtendedActionTaken, FUNNEL_STAGES, EXTENDED_ACTIONS } from '@/types/prospect';
 import { SortableProspectRow } from './SortableProspectRow';
 import { MobileProspectCard } from './MobileProspectCard';
 import { ProspectFilters } from './ProspectFilters';
@@ -117,7 +117,7 @@ const COLUMNS = [{
 
 // Column order for Calling tab: #, Name, Response
 const CALLING_COLUMN_ORDER = ['index', 'name', 'action'];
-// Column order for Funnel tab: #, Name, Funnel
+// Column order for Filter tab: #, Name, Filter
 const FILTER_COLUMN_ORDER = ['index', 'name', 'stage'];
 
 // TableContent component
@@ -462,7 +462,7 @@ export function ProspectTable({
     }
   };
 
-  // Get the Funnel Tag from TrackingFormatContext (the Response tag with isStageTag = true)
+  // Get the Filter Tag from TrackingFormatContext (the Response tag with isStageTag = true)
   const {
     leadsStageTag
   } = useTrackingFormatContext();
@@ -478,10 +478,10 @@ export function ProspectTable({
     return prospects;
   }, [prospects]);
 
-  // Funnel tab: Server-side filtering now handles the funnel tag filter
-  // We just need to sort by action_taken_at for stable funnel ordering
-  const funnelProspects = useMemo(() => {
-    // Server-side already filtered by funnelTag, just sort
+  // Filter tab: Server-side filtering now handles the filter tag filter
+  // We just need to sort by action_taken_at for stable filter ordering
+  const filterProspects = useMemo(() => {
+    // Server-side already filtered by filterTag, just sort
     return [...prospects].sort((a, b) => {
       const aTagAt = (a as any).action_taken_at as string | null | undefined;
       const bTagAt = (b as any).action_taken_at as string | null | undefined;
@@ -497,7 +497,7 @@ export function ProspectTable({
 
   // Get base prospects based on filter mode
   const baseProspects = useMemo(() => {
-    const base = filterMode === 'calling' ? callingProspects : funnelProspects;
+    const base = filterMode === 'calling' ? callingProspects : filterProspects;
     if (filterMode === 'calling') {
       switch (subFilter) {
         case 'hot':
@@ -517,9 +517,9 @@ export function ProspectTable({
           return base;
       }
     }
-  }, [callingProspects, funnelProspects, filterMode, subFilter]);
+  }, [callingProspects, filterProspects, filterMode, subFilter]);
 
-  // Filter by sheet (works for both Calling and Funnel tabs)
+  // Filter by sheet (works for both Calling and Filter tabs)
   const sheetFilteredProspects = useMemo(() => {
     if (!selectedSheetId) return baseProspects;
     return baseProspects.filter(p => p.sheet_id === selectedSheetId);
@@ -601,7 +601,7 @@ export function ProspectTable({
         'Gender': p.gender || '',
         'Address': p.address || '',
         'Enrollment Status': p.enrollment_status || (p.funnel_stage ? 'Enrolled' : 'Not Enrolled'),
-        'Funnel Stage': p.funnel_stage || '',
+        'Filter Stage': p.funnel_stage || '',
         'Last Action': p.action_taken || 'No Action',
         'Last Action Date': p.updated_at ? format(new Date(p.updated_at), 'dd/MM/yyyy HH:mm') : '',
         'Quality': p.prospect_status || '',
@@ -688,7 +688,7 @@ export function ProspectTable({
         'Gender': p.gender || '',
         'Address': p.address || '',
         'Enrollment Status': p.enrollment_status || (p.funnel_stage ? 'Enrolled' : 'Not Enrolled'),
-        'Funnel Stage': p.funnel_stage || '',
+        'Filter Stage': p.funnel_stage || '',
         'Last Action': p.action_taken || 'No Action',
         'Last Action Date': p.updated_at ? format(new Date(p.updated_at), 'dd/MM/yyyy HH:mm') : '',
         'Quality': p.prospect_status || '',
