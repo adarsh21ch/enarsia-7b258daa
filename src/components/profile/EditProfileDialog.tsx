@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Loader2, User, Phone, Building2, MapPin, FileText, Camera } from 'lucide-react';
+import { Loader2, User, Phone, Building2, MapPin, FileText, Camera, Settings2 } from 'lucide-react';
 import { Profile, ProfileUpdate } from '@/hooks/useProfile';
 import { validateProfile } from '@/lib/profileValidations';
 import { useToast } from '@/hooks/use-toast';
@@ -193,7 +193,7 @@ export function EditProfileDialog({
                 {uploadingAvatar ? (
                   <Loader2 className="h-4 w-4 animate-spin" />
                 ) : (
-                  <Pencil className="h-4 w-4" />
+                  <Settings2 className="h-4 w-4" />
                 )}
               </button>
               <input

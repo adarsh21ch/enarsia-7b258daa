@@ -42,7 +42,7 @@ import {
   FolderOpen,
   Zap,
   Eye,
-  Edit,
+  Settings2,
   Trash2,
   Link,
   ArrowRight,

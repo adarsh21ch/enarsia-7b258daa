@@ -521,7 +521,7 @@ export function ManageResponseTagsDialog({ open, onOpenChange }: ManageResponseT
                     <div className="flex items-center gap-2 flex-1 p-2 bg-muted/30 rounded-lg">
                       <span className="text-sm flex-1">{tag}</span>
                       <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleStartEditPersonalTag(idx)}>
-                        <Pencil className="h-3 w-3" />
+                        <Settings2 className="h-3 w-3" />
                       </Button>
                       <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleRemovePersonalTag(idx)}>
                         <Trash2 className="h-3 w-3" />
