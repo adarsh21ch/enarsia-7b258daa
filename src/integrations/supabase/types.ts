@@ -841,6 +841,7 @@ export type Database = {
           created_at: string
           description: string
           duration_seconds: number
+          format: string
           id: string
           is_published: boolean
           order_index: number
@@ -855,6 +856,7 @@ export type Database = {
           created_at?: string
           description?: string
           duration_seconds?: number
+          format?: string
           id?: string
           is_published?: boolean
           order_index?: number
@@ -869,6 +871,7 @@ export type Database = {
           created_at?: string
           description?: string
           duration_seconds?: number
+          format?: string
           id?: string
           is_published?: boolean
           order_index?: number
