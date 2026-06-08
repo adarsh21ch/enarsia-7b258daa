@@ -363,7 +363,7 @@ export default function ListUp() {
               <h1 className="text-xl font-bold tracking-tight">Follow Up</h1>
               <p className="text-xs text-muted-foreground font-medium">
                 {mainTab === 'prospects' 
-                  ? `${leadMode === 'funnel' ? 'Funnel Leads' : 'Response Leads'} (${modeFilteredProspects.length})`
+                  ? `${leadMode === 'funnel' ? 'Filter Leads' : 'Response Leads'} (${modeFilteredProspects.length})`
                   : 'Activity History'}
               </p>
             </div>
