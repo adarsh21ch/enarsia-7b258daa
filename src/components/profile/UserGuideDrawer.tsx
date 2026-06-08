@@ -512,7 +512,7 @@ const GUIDE_SECTIONS: GuideSection[] = [
             'Go to Profile → Tracking Format Settings',
             'Tap on "Manage Response Tags" or "Manage Stage Tags"',
             'Add new tags, edit existing ones, or delete tags',
-            'Set which tag is the "Funnel Tag" and "Final Target"',
+            'Set which tag is the "Filter Tag" and "Final Target"',
           ]}
         />
         
