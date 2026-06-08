@@ -208,11 +208,11 @@ export function LeaderTrackingFormatSettings({
     setFilterDay1Date(date);
     setDatePickerOpen(false);
     await saveFilterConfig({
-      funnel_name: 'Default Filter',
+      funnel_name: 'Default Funnel',
       funnel_length: funnelLength,
       day_1_start: format(date, 'yyyy-MM-dd'),
     });
-    toast.success('Filter start date saved');
+    toast.success('Funnel start date saved');
   };
 
   const handleFilterLengthChange = async (value: string) => {
@@ -220,11 +220,11 @@ export function LeaderTrackingFormatSettings({
     setFilterLength(length);
     if (funnelDay1Date) {
       await saveFilterConfig({
-        funnel_name: 'Default Filter',
+        funnel_name: 'Default Funnel',
         funnel_length: length,
         day_1_start: format(funnelDay1Date, 'yyyy-MM-dd'),
       });
-      toast.success('Filter length saved');
+      toast.success('Funnel length saved');
     }
   };
 
@@ -591,7 +591,7 @@ export function LeaderTrackingFormatSettings({
               {trackingFormat?.stageTags && trackingFormat.stageTags.length > 0 && (
                 <div className="space-y-1.5">
                   <p className="text-[11px] font-medium text-muted-foreground flex items-center gap-1">
-                    <Layers className="h-3 w-3" /> Filter Stages
+                    <Layers className="h-3 w-3" /> Funnel Stages
                   </p>
                   <div className="flex flex-wrap gap-1">
                     {trackingFormat.stageTags.map((tag, idx) => (
@@ -635,7 +635,7 @@ export function LeaderTrackingFormatSettings({
       <Section>
         <SectionHeader
           icon={Settings2}
-          title="Filter Configuration"
+          title="Funnel Configuration"
           badge={isFilterConfigReadOnly ? (
             <Badge variant="secondary" className="text-[10px] gap-1">
               <RefreshCw className="h-3 w-3" /> Synced with Leader
@@ -660,7 +660,7 @@ export function LeaderTrackingFormatSettings({
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div className="space-y-1.5">
                 <Label className="text-xs text-muted-foreground flex items-center gap-1">
-                  <Lock className="h-3 w-3" /> Filter Day 1 Start
+                  <Lock className="h-3 w-3" /> Funnel Day 1 Start
                 </Label>
                 <div className="flex items-center gap-2 h-10 px-3 rounded-lg border border-border bg-muted/40">
                   <CalendarDays className="h-4 w-4 text-muted-foreground" />
@@ -671,7 +671,7 @@ export function LeaderTrackingFormatSettings({
               </div>
               <div className="space-y-1.5">
                 <Label className="text-xs text-muted-foreground flex items-center gap-1">
-                  <Lock className="h-3 w-3" /> Days per Filter
+                  <Lock className="h-3 w-3" /> Days per Funnel
                 </Label>
                 <div className="flex items-center gap-2 h-10 px-3 rounded-lg border border-border bg-muted/40">
                   <span className="text-sm">
@@ -698,7 +698,7 @@ export function LeaderTrackingFormatSettings({
           <div className="space-y-3">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div className="space-y-1.5">
-                <Label className="text-xs text-muted-foreground">Filter Day 1 Start</Label>
+                <Label className="text-xs text-muted-foreground">Funnel Day 1 Start</Label>
                 <Popover open={datePickerOpen} onOpenChange={setDatePickerOpen}>
                   <PopoverTrigger asChild>
                     <Button variant="outline" className={cn("w-full justify-start text-left font-normal h-10", !funnelDay1Date && "text-muted-foreground")}>
@@ -712,7 +712,7 @@ export function LeaderTrackingFormatSettings({
                 </Popover>
               </div>
               <div className="space-y-1.5">
-                <Label className="text-xs text-muted-foreground">Days per Filter</Label>
+                <Label className="text-xs text-muted-foreground">Days per Funnel</Label>
                 <Select value={funnelLength.toString()} onValueChange={handleFilterLengthChange}>
                   <SelectTrigger className="w-full h-10">
                     <SelectValue placeholder="Select days" />
@@ -923,7 +923,7 @@ export function LeaderTrackingFormatSettings({
           {/* Filter Tracking Tags */}
           <Section>
             <div className="flex items-center justify-between">
-              <SectionHeader icon={Layers} title="Filter Stages" />
+              <SectionHeader icon={Layers} title="Funnel Stages" />
               {stageTags.length < 10 && (
                 <Button variant="outline" size="sm" onClick={handleAddStageTag} className="h-8 gap-1 text-xs">
                   <Plus className="h-3 w-3" /> Add
