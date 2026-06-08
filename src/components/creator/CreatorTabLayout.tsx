@@ -37,12 +37,12 @@ export function CreatorTabLayout({
         <div className="flex items-center justify-between px-4 py-3 gap-2">
           <button
             type="button"
-            onClick={() => navigate('/profile')}
+            onClick={() => navigate('/calling')}
             className="flex items-center gap-1.5 rounded-full px-2.5 py-1.5 -ml-1 text-xs font-semibold text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-colors shrink-0"
-            aria-label="Back to Profile"
+            aria-label="Back to CRM"
           >
             <ArrowLeft className="h-3.5 w-3.5" />
-            <span className="hidden sm:inline">Back to Profile</span>
+            <span className="hidden sm:inline">Back to CRM</span>
           </button>
           <div className="flex items-center gap-2.5 min-w-0 flex-1 justify-center sm:justify-start sm:ml-2">
             <img src={logoUrl || nevoraLogo} alt={`${appName} Logo`} className="h-8 w-8 rounded-lg object-cover shadow-sm shrink-0" />

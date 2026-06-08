@@ -63,7 +63,7 @@ export function ModeSelectors({
       <TopTabBar
         options={[
           { value: 'leads', label: 'Leads', icon: Phone },
-          { value: 'funnel', label: 'Filter', icon: Layers },
+          { value: 'funnel', label: 'Funnel', icon: Layers },
         ]}
         value={viewType}
         onChange={(v) => onViewTypeChange(v as ViewType)}

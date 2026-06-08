@@ -118,7 +118,7 @@ export default function ListUp() {
   // Toggle options for TopTabBar (same as Calling and Tracking tabs)
   const toggleOptions: [{ value: string; label: string; icon: typeof Phone }, { value: string; label: string; icon: typeof Layers }] = [
     { value: 'leads', label: 'Leads', icon: Phone },
-    { value: 'funnel', label: 'Filter', icon: Layers }
+    { value: 'funnel', label: 'Funnel', icon: Layers }
   ];
 
   // Main tab: Activity vs Prospects - persist to sessionStorage, default activity
@@ -363,7 +363,7 @@ export default function ListUp() {
               <h1 className="text-xl font-bold tracking-tight">Follow Up</h1>
               <p className="text-xs text-muted-foreground font-medium">
                 {mainTab === 'prospects' 
-                  ? `${leadMode === 'funnel' ? 'Filter Leads' : 'Response Leads'} (${modeFilteredProspects.length})`
+                  ? `${leadMode === 'funnel' ? 'Funnel Leads' : 'Response Leads'} (${modeFilteredProspects.length})`
                   : 'Activity History'}
               </p>
             </div>

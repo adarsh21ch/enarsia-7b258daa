@@ -457,10 +457,10 @@ export function ManageResponseTagsDialog({ open, onOpenChange }: ManageResponseT
                       <button
                         onClick={() => handleTrackingTagChange(index, 'isStageTag', !tag.isStageTag)}
                         className={`p-1 rounded transition-colors flex items-center gap-1 text-xs ${tag.isStageTag ? 'text-yellow-600 bg-yellow-100 dark:bg-yellow-900/30' : 'text-muted-foreground hover:text-yellow-600'}`}
-                        title="Mark as Filter Tag (moves leads to Filter tab)"
+                        title="Mark as Funnel Tag (moves leads to Funnel tab)"
                       >
                         <Star className={`h-4 w-4 ${tag.isStageTag ? 'fill-yellow-500 text-yellow-500' : ''}`} />
-                        {tag.isStageTag && <span>Filter</span>}
+                        {tag.isStageTag && <span>Funnel</span>}
                       </button>
                       {trackingTags.length > 1 && (
                         <Button

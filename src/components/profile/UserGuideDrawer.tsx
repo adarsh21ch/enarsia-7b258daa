@@ -480,7 +480,7 @@ const GUIDE_SECTIONS: GuideSection[] = [
         </p>
         <FeatureHighlight features={[
           { icon: Tags, label: 'Leads Tags' },
-          { icon: Zap, label: 'Filter Tag' },
+          { icon: Zap, label: 'Funnel Tag' },
           { icon: Target, label: 'Stage Tags' },
         ]} />
         
@@ -490,8 +490,8 @@ const GUIDE_SECTIONS: GuideSection[] = [
         </p>
         <ul className="list-disc list-inside text-sm text-muted-foreground space-y-1 ml-2">
           <li><strong>Leads Tags:</strong> Response statuses like "Not picked", "Video send", "Enrolment"</li>
-          <li><strong>Filter Tag:</strong> One special tag (marked with ⚡) that moves leads to the Filter tab</li>
-          <li><strong>Stage Tags:</strong> Filter stages like "Day1", "Day2", "Day3"</li>
+          <li><strong>Funnel Tag:</strong> One special tag (marked with ⚡) that moves leads to the Funnel tab</li>
+          <li><strong>Stage Tags:</strong> Funnel stages like "Day1", "Day2", "Day3"</li>
         </ul>
         <FeatureHighlight features={[
           { icon: Plus, label: 'Add Tag' },
@@ -512,7 +512,7 @@ const GUIDE_SECTIONS: GuideSection[] = [
             'Go to Profile → Tracking Format Settings',
             'Tap on "Manage Response Tags" or "Manage Stage Tags"',
             'Add new tags, edit existing ones, or delete tags',
-            'Set which tag is the "Filter Tag" and "Final Target"',
+            'Set which tag is the "Funnel Tag" and "Final Target"',
           ]}
         />
         

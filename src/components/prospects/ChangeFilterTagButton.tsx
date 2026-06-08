@@ -77,12 +77,12 @@ export function ChangeFilterTagButton({ onTagChanged }: ChangeFilterTagButtonPro
         size="sm"
         onClick={handleOpen}
         className="h-9 gap-1.5 text-xs font-medium shrink-0"
-        title={`Filter Tag: ${activeTag || 'Not Set'}`}
+        title={`Funnel Tag: ${activeTag || 'Not Set'}`}
       >
         <Star className="h-3.5 w-3.5 text-yellow-500 fill-yellow-500" />
         {!isMobile && (
           <>
-            <span className="hidden sm:inline">Filter Tag:</span>
+            <span className="hidden sm:inline">Funnel Tag:</span>
             <span className="font-semibold truncate max-w-[80px]">{activeTag || 'Not Set'}</span>
           </>
         )}
@@ -93,10 +93,10 @@ export function ChangeFilterTagButton({ onTagChanged }: ChangeFilterTagButtonPro
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Star className="h-5 w-5 text-yellow-500" />
-              Choose Response Tag for Filter
+              Choose Response Tag for Funnel
             </DialogTitle>
             <DialogDescription>
-              Select ONE Response tag to use as your Filter Tag. Only leads with this Response tag will appear in the Filter view.
+              Select ONE Response tag to use as your Funnel Tag. Only leads with this Response tag will appear in the Funnel view.
             </DialogDescription>
           </DialogHeader>
 
