@@ -277,7 +277,10 @@ export function AcademyManager() {
                       key={t.id}
                       className="flex items-center gap-2 p-2 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors"
                     >
-                      <div className="h-10 w-14 rounded bg-muted shrink-0 overflow-hidden flex items-center justify-center">
+                      <div className={cn(
+                        "rounded bg-muted shrink-0 overflow-hidden flex items-center justify-center",
+                        (t.format || 'mobile') === 'mobile' ? 'h-14 w-8' : 'h-10 w-[72px]'
+                      )}>
                         {t.thumbnail_url ? (
                           <img
                             src={t.thumbnail_url}
@@ -291,6 +294,10 @@ export function AcademyManager() {
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center gap-2">
                           <span className="text-sm font-medium truncate">{t.title}</span>
+                          <span className="text-[10px] px-1.5 py-0.5 rounded bg-primary/10 text-primary flex items-center gap-0.5">
+                            {(t.format || 'mobile') === 'mobile' ? <Smartphone className="h-2.5 w-2.5" /> : <Monitor className="h-2.5 w-2.5" />}
+                            {(t.format || 'mobile') === 'mobile' ? 'Mobile' : 'Desktop'}
+                          </span>
                           {!t.is_published && (
                             <span className="text-[10px] px-1.5 py-0.5 rounded bg-muted text-muted-foreground">
                               Draft
