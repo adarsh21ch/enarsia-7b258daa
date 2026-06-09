@@ -43,13 +43,33 @@ Deno.serve(async (req) => {
     const body = await req.json();
     const { action } = body;
 
-    console.log(`update-tracking: action=${action} user=${user.id} date=${body.date}`);
+    // Resolve effective write target. When on_behalf_of_user_id is set, the caller
+    // (a leader) is writing for a downline member. Validate via SECURITY DEFINER
+    // can_leader_view_member; only direct downline is allowed. Reject otherwise.
+    let effectiveUserId = user.id;
+    if (body.on_behalf_of_user_id && body.on_behalf_of_user_id !== user.id) {
+      const { data: allowed, error: rpcErr } = await adminClient.rpc('can_leader_view_member', {
+        p_leader_user_id: user.id,
+        p_member_user_id: body.on_behalf_of_user_id,
+      });
+      if (rpcErr || !allowed) {
+        console.warn(`on-behalf write denied: ${user.id} -> ${body.on_behalf_of_user_id}`, rpcErr);
+        return new Response(JSON.stringify({ error: 'Forbidden: not your direct downline' }), {
+          status: 403,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+      effectiveUserId = body.on_behalf_of_user_id;
+    }
+
+    console.log(`update-tracking: action=${action} caller=${user.id} target=${effectiveUserId} date=${body.date}`);
 
     if (action === 'save_personal') {
-      return await savePersonal(adminClient, user.id, body);
+      return await savePersonal(adminClient, effectiveUserId, body);
     } else if (action === 'save_total_manual') {
-      return await saveTotalManual(adminClient, user.id, body);
+      return await saveTotalManual(adminClient, effectiveUserId, body);
     } else if (action === 'save_total_automated') {
+      // Aggregation always runs as the caller; on-behalf not supported here.
       return await saveTotalAutomated(adminClient, user.id, body);
     } else {
       return new Response(JSON.stringify({ error: `Unknown action: ${action}` }), {
