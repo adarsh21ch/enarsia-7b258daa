@@ -80,6 +80,14 @@ export function SendMessageDrawer({ open, onOpenChange, membersOverride, levelsO
 
   const hasContent = title.trim() || body.trim();
 
+  // Apply preselection when drawer opens
+  useEffect(() => {
+    if (open && preselectedMemberId) {
+      setTargetType('single');
+      setTargetMember(preselectedMemberId);
+    }
+  }, [open, preselectedMemberId]);
+
   const resetForm = () => {
     setTitle('');
     setBody('');
