@@ -1,8 +1,12 @@
 import { useEffect, useMemo, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { format, subMonths, addMonths } from 'date-fns';
-import { ChevronLeft, ChevronRight, Users, ArrowLeft, BarChart3, Info, Crown, ChevronDown, ChevronUp, Activity } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Users, ArrowLeft, BarChart3, Info, Crown, ChevronDown, ChevronUp, Activity, Columns3 } from 'lucide-react';
 import { EyeViewSheet } from '@/components/team-tracking/EyeViewSheet';
+import { CallingTrackingBox } from '@/components/team-tracking/CallingTrackingBox';
+import { FilterTrackingBox } from '@/components/team-tracking/FilterTrackingBox';
+import { CompareColumnsSheet } from '@/components/team-tracking/CompareColumnsSheet';
+import { endOfMonth, startOfMonth } from 'date-fns';
 import { useAuth } from '@/contexts/AuthContext';
 import { useProfile } from '@/hooks/useProfile';
 import { BottomNav } from '@/components/layout/BottomNav';
