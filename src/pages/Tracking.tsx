@@ -172,9 +172,18 @@ export default function Tracking() {
               size="sm"
               onClick={handleOpenDashboard}
               className="h-8 gap-1.5 text-xs font-medium"
+              aria-label={downlineCount > 0 ? `Open Team Tracking — ${downlineCount} downline member${downlineCount === 1 ? '' : 's'}` : 'Open Team Tracking'}
             >
               <Users className="h-3.5 w-3.5" />
               Team Tracking
+              {downlineCount > 0 && (
+                <span
+                  className="ml-0.5 inline-flex items-center justify-center h-4 min-w-4 px-1 rounded-full text-[10px] font-bold bg-primary/15 text-primary"
+                  aria-hidden="true"
+                >
+                  {downlineCount}
+                </span>
+              )}
             </Button>
             <Button
               variant="ghost"
