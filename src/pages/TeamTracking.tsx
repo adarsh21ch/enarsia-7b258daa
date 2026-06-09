@@ -689,6 +689,31 @@ export default function TeamTracking() {
           levelsOverride={levels.map(l => ({ id: l.id, position: l.position, label: l.label }))}
           preselectedMemberId={selected.kind === 'member' ? selected.userId : null}
         />
+
+        <QuickUpdateModal
+          open={quickUpdateOpen}
+          onOpenChange={setQuickUpdateOpen}
+          responseTagNames={responseTagNames}
+          stageTagNames={computedStageNames}
+          finalTagName={finalTagName}
+          personalSnapshots={personalSnapshots}
+          uplineLeaderId={null}
+          targetUserId={selected.kind === 'member' ? selected.userId : null}
+          targetUserName={selected.kind === 'member' ? selected.displayName : null}
+        />
+
+        <ManualUpdateDrawer
+          open={manualUpdateOpen}
+          onOpenChange={setManualUpdateOpen}
+          responseTagNames={responseTagNames}
+          stageTagNames={computedStageNames}
+          finalTagName={finalTagName}
+          personalSnapshots={personalSnapshots}
+          totalSnapshots={totalSnapshots}
+          uplineLeaderId={null}
+          targetUserId={selected.kind === 'member' ? selected.userId : null}
+          targetUserName={selected.kind === 'member' ? selected.displayName : null}
+        />
       </div>
     </TooltipProvider>
   );
