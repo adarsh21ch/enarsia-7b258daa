@@ -51,7 +51,22 @@ export const ResponseTagSheet = memo(function ResponseTagSheet({
   prospectName,
   title = 'Response Tag',
 }: ResponseTagSheetProps) {
-  const { loading: tagsLoading } = useTrackingFormatContext();
+  const { loading: tagsLoading, refreshFormat } = useTrackingFormatContext();
+  const autoRefreshedRef = useRef(false);
+
+  // If the picker opens with no tags at all (stale state after long session),
+  // force a refetch so the user never sees a permanently empty + unclosable list.
+  useEffect(() => {
+    if (!open) {
+      autoRefreshedRef.current = false;
+      return;
+    }
+    const isEmpty = trackingOptions.length === 0 && nonTrackingOptions.length === 0;
+    if (isEmpty && !tagsLoading && !autoRefreshedRef.current) {
+      autoRefreshedRef.current = true;
+      refreshFormat();
+    }
+  }, [open, trackingOptions.length, nonTrackingOptions.length, tagsLoading, refreshFormat]);
 
   const handlePick = useCallback(
     (value: string) => {
