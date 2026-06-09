@@ -35,6 +35,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { usePushNotifications } from '@/hooks/usePushNotifications';
 
 import { useSharedLeads } from '@/hooks/useSharedLeads';
+import { useLeaderTeamMembers } from '@/hooks/useLeaderTeamMembers';
 import { AIAssistantChat } from '@/components/ai/AIAssistantChat';
 import { InstallInstructionsSheet } from '@/components/pwa/InstallPromptBanner';
 import { AppNotificationsSheet } from '@/components/profile/AppNotificationsSheet';
