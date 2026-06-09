@@ -12,6 +12,7 @@ import { ChevronRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useTrackingFormatContext } from '@/contexts/TrackingFormatContext';
 import { getTagColor } from '@/lib/tagColors';
+import { logCallMade } from '@/lib/callLog';
 
 interface DragHandleProps {
   ref: (node: HTMLElement | null) => void;
@@ -363,8 +364,9 @@ export const ProspectRow = memo(function ProspectRow({
 
   const triggerCall = useCallback(() => {
     onMarkLastContacted?.();
+    logCallMade({ prospectId: prospect.id, name: prospect.name, phone: prospect.phone });
     window.open(`tel:${cleanPhoneNumber(prospect.phone)}`, '_self');
-  }, [prospect.phone, onMarkLastContacted]);
+  }, [prospect.id, prospect.name, prospect.phone, onMarkLastContacted]);
 
   const microBounce = useCallback(() => {
     // Micro-bounce on snap back: 1 → 1.02 → 1 over ~80ms
