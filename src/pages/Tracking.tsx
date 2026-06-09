@@ -39,6 +39,8 @@ import { useTrackingSourcePreferences } from '@/hooks/useTrackingSourcePreferenc
 import { useApplicationTotalSnapshots } from '@/hooks/useApplicationTotalSnapshots';
 import { useApplicationSnapshots } from '@/hooks/useApplicationSnapshots';
 import { useFunnelConfig } from '@/hooks/useFunnelConfig';
+import { useProfile } from '@/hooks/useProfile';
+import { useLeaderTeamMembers } from '@/hooks/useLeaderTeamMembers';
 
 import nevoraLogo from '@/assets/nevorai-call-logo.png';
 
