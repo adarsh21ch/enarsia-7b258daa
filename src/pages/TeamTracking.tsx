@@ -16,7 +16,7 @@ import { endOfMonth, startOfMonth } from 'date-fns';
 import { useAuth } from '@/contexts/AuthContext';
 import { useProfile } from '@/hooks/useProfile';
 import { useIsMobile } from '@/hooks/use-mobile';
-import { BottomNav } from '@/components/layout/BottomNav';
+
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Sheet, SheetContent } from '@/components/ui/sheet';
@@ -549,7 +549,7 @@ export default function TeamTracking() {
           </header>
 
           {/* Body */}
-          <main className="flex-1 overflow-x-hidden overflow-y-auto px-3 py-2 pb-24">
+          <main className="flex-1 overflow-x-hidden overflow-y-auto px-3 py-2 pb-6">
             <div className="mx-auto w-full min-w-0 max-w-[1400px]">
               <div className="mb-3 flex items-center justify-between gap-2">
                 <div className="flex min-w-0 items-center gap-2">
@@ -649,7 +649,6 @@ export default function TeamTracking() {
             </div>
           </main>
 
-          <BottomNav />
         </div>
 
         <EyeViewSheet

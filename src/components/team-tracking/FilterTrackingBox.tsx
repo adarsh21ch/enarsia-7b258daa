@@ -1,4 +1,4 @@
-import { Filter, Target } from 'lucide-react';
+import { Filter, Star } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { KPIData } from '@/hooks/useSnapshotV2ComputedData';
 
@@ -11,7 +11,7 @@ interface FilterTrackingBoxProps {
 /**
  * Compact "Filter" / Stage funnel box — stage-tag breakdown.
  * Stages count cumulatively (reaching Stage N fills 1..N).
- * Read-only. Mirrors website's FilterTrackingBox layout.
+ * The stage marked as the starred/final tag is highlighted inline.
  */
 export function FilterTrackingBox({ kpi, stageTagNames, className }: FilterTrackingBoxProps) {
   const maxStage = Math.max(1, ...stageTagNames.map(n => kpi.stageTagTotals[n] ?? 0));
@@ -36,35 +36,41 @@ export function FilterTrackingBox({ kpi, stageTagNames, className }: FilterTrack
           {stageTagNames.map((name, idx) => {
             const value = kpi.stageTagTotals[name] ?? 0;
             const pct = maxStage > 0 ? (value / maxStage) * 100 : 0;
+            const isStarred = !!kpi.finalTagName && name === kpi.finalTagName;
             return (
               <div key={name} className="space-y-0.5">
                 <div className="flex items-center justify-between text-[11px]">
-                  <span className="flex items-center gap-1 text-muted-foreground">
-                    <span className="inline-flex h-4 w-4 items-center justify-center rounded-full bg-violet-500/15 text-[9px] font-bold text-violet-600 dark:text-violet-400">
-                      {idx + 1}
+                  <span className={cn(
+                    'flex items-center gap-1 min-w-0',
+                    isStarred ? 'text-amber-700 dark:text-amber-400 font-semibold' : 'text-muted-foreground',
+                  )}>
+                    <span className={cn(
+                      'inline-flex h-4 w-4 items-center justify-center rounded-full text-[9px] font-bold',
+                      isStarred
+                        ? 'bg-amber-500/20 text-amber-700 dark:text-amber-400'
+                        : 'bg-violet-500/15 text-violet-600 dark:text-violet-400',
+                    )}>
+                      {isStarred ? <Star className="h-2.5 w-2.5 fill-current" /> : idx + 1}
                     </span>
                     <span className="truncate">{name}</span>
                   </span>
-                  <span className="font-semibold tabular-nums">{value}</span>
+                  <span className={cn(
+                    'font-semibold tabular-nums',
+                    isStarred && 'text-amber-700 dark:text-amber-400',
+                  )}>{value}</span>
                 </div>
                 <div className="h-1 w-full overflow-hidden rounded-full bg-muted">
                   <div
-                    className="h-full rounded-full bg-violet-500 transition-all"
+                    className={cn(
+                      'h-full rounded-full transition-all',
+                      isStarred ? 'bg-amber-500' : 'bg-violet-500',
+                    )}
                     style={{ width: `${pct}%` }}
                   />
                 </div>
               </div>
             );
           })}
-        </div>
-      )}
-
-      {kpi.finalTagName && (
-        <div className="mt-2 flex items-center justify-between rounded-md bg-amber-500/10 px-2 py-1 text-[11px]">
-          <span className="flex items-center gap-1 text-amber-700 dark:text-amber-400">
-            <Target className="h-3 w-3" /> {kpi.finalTagName} (final)
-          </span>
-          <span className="font-bold tabular-nums">{kpi.finalTagTotal}</span>
         </div>
       )}
     </div>
