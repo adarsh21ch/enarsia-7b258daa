@@ -229,7 +229,9 @@ export function ManualUpdateDrawer({
     <Drawer open={open} onOpenChange={onOpenChange}>
       <DrawerContent className="max-h-[100dvh] h-[100dvh] flex flex-col">
         <DrawerHeader className="border-b border-border/50 pb-2">
-          <DrawerTitle className="text-base font-bold">Update Tracking</DrawerTitle>
+          <DrawerTitle className="text-base font-bold">
+            Update Tracking{targetUserName ? ` — ${targetUserName}` : ''}
+          </DrawerTitle>
         </DrawerHeader>
 
         <div className="flex-1 overflow-y-auto py-3 space-y-4">
