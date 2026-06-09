@@ -47,6 +47,7 @@ export default function TeamTracking() {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [collapsedLevels, setCollapsedLevels] = useState<Record<string, boolean>>({});
   const [eyeViewOpen, setEyeViewOpen] = useState(false);
+  const [compareOpen, setCompareOpen] = useState(false);
 
   const monthYear = format(currentMonth, 'yyyy-MM');
   const monthLabel = format(currentMonth, 'MMMM yyyy');
