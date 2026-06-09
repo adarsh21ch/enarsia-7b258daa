@@ -60,64 +60,82 @@ function EditableTag<T extends string>({
   onChange,
   renderBadge,
   placeholder = 'Select',
+  title = 'Select',
 }: {
   value: T | null | undefined;
   options: readonly T[];
   onChange: (val: T | null) => void;
   renderBadge: (val: T) => React.ReactNode;
   placeholder?: string;
+  title?: string;
 }) {
   const [open, setOpen] = useState(false);
   return (
-    <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger asChild>
-        <button className="inline-flex items-center gap-1 hover:opacity-80 transition-opacity">
-          {value ? (
-            renderBadge(value)
-          ) : (
-            <span className="text-xs text-muted-foreground bg-muted/50 rounded px-2 py-0.5">
-              {placeholder}
-            </span>
-          )}
-          <ChevronDown className="h-3 w-3 text-muted-foreground" />
-        </button>
-      </PopoverTrigger>
-      <PopoverContent
-        className="w-auto p-1 bg-popover border-border z-[60]"
-        align="end"
+    <>
+      <button
+        type="button"
+        onClick={() => setOpen(true)}
+        className="inline-flex items-center gap-1 hover:opacity-80 transition-opacity"
       >
-        <div className="flex flex-col gap-0.5 max-h-56 overflow-y-auto">
-          {options.map((opt) => (
+        {value ? (
+          renderBadge(value)
+        ) : (
+          <span className="text-xs text-muted-foreground bg-muted/50 rounded px-2 py-0.5">
+            {placeholder}
+          </span>
+        )}
+        <ChevronDown className="h-3 w-3 text-muted-foreground" />
+      </button>
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogContent className="w-[88vw] max-w-[360px] max-h-[75vh] p-0 gap-0 overflow-hidden rounded-2xl [&>button]:hidden border border-border/60 shadow-2xl">
+          <div className="px-3.5 pt-3 pb-2.5 border-b border-border/40">
+            <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+              {title}
+            </p>
+          </div>
+          <div className="flex-1 overflow-y-auto p-2 space-y-1 max-h-[55vh]">
+            {options.map((opt) => (
+              <button
+                key={opt}
+                onClick={() => {
+                  onChange(opt);
+                  setOpen(false);
+                }}
+                className={cn(
+                  'w-full text-left px-3 py-2.5 text-sm rounded-xl hover:bg-muted/60 transition-colors min-h-[44px] flex items-center',
+                  value === opt && 'bg-primary/10 text-primary font-medium',
+                )}
+              >
+                {opt}
+              </button>
+            ))}
+            {value && (
+              <button
+                onClick={() => {
+                  onChange(null);
+                  setOpen(false);
+                }}
+                className="w-full text-left px-3 py-2.5 text-sm rounded-xl hover:bg-destructive/10 text-muted-foreground min-h-[44px]"
+              >
+                Clear
+              </button>
+            )}
+          </div>
+          <div className="border-t border-border/40 p-2.5">
             <button
-              key={opt}
-              onClick={() => {
-                onChange(opt);
-                setOpen(false);
-              }}
-              className={cn(
-                'text-left px-3 py-1.5 text-sm rounded hover:bg-muted/60 transition-colors',
-                value === opt && 'bg-primary/10 text-primary',
-              )}
+              type="button"
+              onClick={() => setOpen(false)}
+              className="w-full min-h-[44px] rounded-xl bg-muted/60 hover:bg-muted text-sm font-semibold border border-border/60"
             >
-              {opt}
+              Cancel
             </button>
-          ))}
-          {value && (
-            <button
-              onClick={() => {
-                onChange(null);
-                setOpen(false);
-              }}
-              className="text-left px-3 py-1.5 text-sm rounded hover:bg-destructive/10 text-muted-foreground"
-            >
-              Clear
-            </button>
-          )}
-        </div>
-      </PopoverContent>
-    </Popover>
+          </div>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }
+
 
 function Row({
   label,
@@ -325,33 +343,7 @@ function ProspectDetailBody({
 
       {/* Body */}
       <div className="flex-1 overflow-y-auto px-4 py-4 space-y-5">
-        {/* Quick actions */}
-        <div className="grid grid-cols-3 gap-2">
-          <a
-            href={`tel:${phone}`}
-            onClick={() => logCallMade({ prospectId: prospect.id, name: prospect.name, phone: prospect.phone })}
-            className="flex flex-col items-center justify-center gap-1 py-3 rounded-xl bg-muted/40 hover:bg-muted/60 transition-colors active:scale-[0.97]"
-          >
-            <Phone className="h-5 w-5 text-accent" />
-            <span className="text-xs font-medium">Call</span>
-          </a>
-          <a
-            href={`sms:${phone}`}
-            className="flex flex-col items-center justify-center gap-1 py-3 rounded-xl bg-muted/40 hover:bg-muted/60 transition-colors active:scale-[0.97]"
-          >
-            <MessageSquareText className="h-5 w-5 text-blue-500" />
-            <span className="text-xs font-medium">Text</span>
-          </a>
-          <a
-            href={`https://wa.me/${phone}`}
-            target="_blank"
-            rel="noreferrer"
-            className="flex flex-col items-center justify-center gap-1 py-3 rounded-xl bg-muted/40 hover:bg-muted/60 transition-colors active:scale-[0.97]"
-          >
-            <WhatsAppIcon className="h-5 w-5 text-green-600" />
-            <span className="text-xs font-medium">WhatsApp</span>
-          </a>
-        </div>
+
 
         {/* Personal Info */}
         <Section title="Personal Info">
@@ -458,6 +450,7 @@ function ProspectDetailBody({
               onChange={(v) => commitTag('action_taken', v)}
               renderBadge={(v) => <ActionBadge action={v} />}
               placeholder="Set response"
+              title="Response Tag"
             />
           </Row>
           <Row label="Stage">
@@ -467,6 +460,7 @@ function ProspectDetailBody({
               onChange={(v) => commitTag('funnel_stage', v)}
               renderBadge={(v) => <StageBadge stage={v} />}
               placeholder="Set stage"
+              title="Funnel Stage"
             />
           </Row>
           <Row label="Quality">
@@ -476,8 +470,10 @@ function ProspectDetailBody({
               onChange={(v) => commitTag('prospect_status', v)}
               renderBadge={(v) => <StatusBadge status={v} />}
               placeholder="Set quality"
+              title="Quality"
             />
           </Row>
+
         </Section>
 
         {/* Why / Need */}
@@ -516,17 +512,44 @@ function ProspectDetailBody({
         </p>
       </div>
 
-      {/* Footer */}
-      <div className="shrink-0 px-4 py-3 border-t border-border/40 bg-background/80 backdrop-blur-sm">
-        <Button
-          variant="secondary"
+      {/* Footer — fixed action bar */}
+      <div className="shrink-0 px-3 pt-2.5 pb-3 border-t border-border/40 bg-background/95 backdrop-blur-sm space-y-2">
+        <div className="grid grid-cols-3 gap-2">
+          <a
+            href={`tel:${phone}`}
+            onClick={() => logCallMade({ prospectId: prospect.id, name: prospect.name, phone: prospect.phone })}
+            className="flex items-center justify-center gap-1.5 h-10 rounded-xl bg-muted/50 hover:bg-muted active:scale-[0.97] transition-all"
+          >
+            <Phone className="h-4 w-4 text-accent" />
+            <span className="text-xs font-semibold">Call</span>
+          </a>
+          <a
+            href={`sms:${phone}`}
+            className="flex items-center justify-center gap-1.5 h-10 rounded-xl bg-muted/50 hover:bg-muted active:scale-[0.97] transition-all"
+          >
+            <MessageSquareText className="h-4 w-4 text-blue-500" />
+            <span className="text-xs font-semibold">Text</span>
+          </a>
+          <a
+            href={`https://wa.me/${phone}`}
+            target="_blank"
+            rel="noreferrer"
+            className="flex items-center justify-center gap-1.5 h-10 rounded-xl bg-muted/50 hover:bg-muted active:scale-[0.97] transition-all"
+          >
+            <WhatsAppIcon className="h-4 w-4 text-green-600" />
+            <span className="text-xs font-semibold">WhatsApp</span>
+          </a>
+        </div>
+        <button
+          type="button"
           onClick={onClose}
-          className="w-full h-10 gap-2"
+          className="w-full h-9 rounded-xl bg-muted/40 hover:bg-muted/60 text-xs font-medium text-muted-foreground flex items-center justify-center gap-1.5 transition-colors"
         >
-          <X className="h-4 w-4" />
+          <X className="h-3.5 w-3.5" />
           Close
-        </Button>
+        </button>
       </div>
+
     </div>
   );
 }
