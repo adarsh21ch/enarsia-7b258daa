@@ -59,6 +59,7 @@ export function usePersonalSnapshotV2Write() {
           funnel_start_date: params.funnelStartDate,
           funnel_day: params.funnelDay,
           upline_leader_id: params.uplineLeaderId,
+          on_behalf_of_user_id: params.onBehalfOfUserId ?? null,
         },
       });
 
