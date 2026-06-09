@@ -13,7 +13,12 @@ interface CallingTrackingBoxProps {
  * The tag marked as the starred/final tag is highlighted inline.
  */
 export function CallingTrackingBox({ kpi, responseTagNames, className }: CallingTrackingBoxProps) {
-  const maxValue = Math.max(1, ...responseTagNames.map(n => kpi.responseTagTotals[n] ?? 0));
+  const rows = [
+    { name: 'Total Leads', value: kpi.totalLeads },
+    { name: 'Total Responses', value: kpi.totalResponses },
+    ...responseTagNames.map(name => ({ name, value: kpi.responseTagTotals[name] ?? 0 })),
+  ];
+  const maxValue = Math.max(1, ...rows.map(r => r.value));
 
   return (
     <div className={cn(
@@ -28,50 +33,46 @@ export function CallingTrackingBox({ kpi, responseTagNames, className }: Calling
         <span className="text-[10px] text-muted-foreground">{kpi.daysWithData}d data</span>
       </div>
 
-      {responseTagNames.length === 0 ? (
-        <p className="text-[11px] text-muted-foreground italic text-center py-2">No response tags configured</p>
-      ) : (
-        <div className="space-y-1">
-          {responseTagNames.map((name, idx) => {
-            const value = kpi.responseTagTotals[name] ?? 0;
-            const pct = maxValue > 0 ? (value / maxValue) * 100 : 0;
-            const isStarred = !!kpi.finalTagName && name === kpi.finalTagName;
-            return (
-              <div key={name} className="space-y-0.5">
-                <div className="flex items-center justify-between text-[11px]">
+      <div className="space-y-1">
+        {rows.map((row, idx) => {
+          const pct = maxValue > 0 ? (row.value / maxValue) * 100 : 0;
+          const isStarred = !!kpi.finalTagName && row.name === kpi.finalTagName;
+          return (
+            <div key={row.name} className="space-y-0.5">
+              <div className="flex items-center justify-between text-[11px]">
+                <span className={cn(
+                  'flex items-center gap-1 min-w-0',
+                  isStarred ? 'text-amber-700 dark:text-amber-400 font-semibold' : 'text-muted-foreground',
+                )}>
                   <span className={cn(
-                    'flex items-center gap-1 min-w-0',
-                    isStarred ? 'text-amber-700 dark:text-amber-400 font-semibold' : 'text-muted-foreground',
+                    'inline-flex h-4 w-4 items-center justify-center rounded-full text-[9px] font-bold',
+                    isStarred
+                      ? 'bg-amber-500/20 text-amber-700 dark:text-amber-400'
+                      : 'bg-primary/15 text-primary',
                   )}>
-                    <span className={cn(
-                      'inline-flex h-4 w-4 items-center justify-center rounded-full text-[9px] font-bold',
-                      isStarred
-                        ? 'bg-amber-500/20 text-amber-700 dark:text-amber-400'
-                        : 'bg-primary/15 text-primary',
-                    )}>
-                      {isStarred ? <Star className="h-2.5 w-2.5 fill-current" /> : idx + 1}
-                    </span>
-                    <span className="truncate">{name}</span>
+                    {isStarred ? <Star className="h-2.5 w-2.5 fill-current" /> : idx + 1}
                   </span>
-                  <span className={cn(
-                    'font-semibold tabular-nums',
-                    isStarred && 'text-amber-700 dark:text-amber-400',
-                  )}>{value}</span>
-                </div>
-                <div className="h-1 w-full overflow-hidden rounded-full bg-muted">
-                  <div
-                    className={cn(
-                      'h-full rounded-full transition-all',
-                      isStarred ? 'bg-amber-500' : 'bg-primary',
-                    )}
-                    style={{ width: `${pct}%` }}
-                  />
-                </div>
+                  <span className="truncate">{row.name}</span>
+                </span>
+                <span className={cn(
+                  'font-semibold tabular-nums',
+                  isStarred && 'text-amber-700 dark:text-amber-400',
+                )}>{row.value}</span>
               </div>
-            );
-          })}
-        </div>
-      )}
+              <div className="h-1 w-full overflow-hidden rounded-full bg-muted">
+                <div
+                  className={cn(
+                    'h-full rounded-full transition-all',
+                    isStarred ? 'bg-amber-500' : 'bg-primary',
+                  )}
+                  style={{ width: `${pct}%` }}
+                />
+              </div>
+            </div>
+          );
+        })}
+      </div>
     </div>
   );
 }
+
