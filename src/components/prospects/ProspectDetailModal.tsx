@@ -450,6 +450,7 @@ function ProspectDetailBody({
               onChange={(v) => commitTag('action_taken', v)}
               renderBadge={(v) => <ActionBadge action={v} />}
               placeholder="Set response"
+              title="Response Tag"
             />
           </Row>
           <Row label="Stage">
@@ -459,6 +460,7 @@ function ProspectDetailBody({
               onChange={(v) => commitTag('funnel_stage', v)}
               renderBadge={(v) => <StageBadge stage={v} />}
               placeholder="Set stage"
+              title="Funnel Stage"
             />
           </Row>
           <Row label="Quality">
@@ -468,8 +470,10 @@ function ProspectDetailBody({
               onChange={(v) => commitTag('prospect_status', v)}
               renderBadge={(v) => <StatusBadge status={v} />}
               placeholder="Set quality"
+              title="Quality"
             />
           </Row>
+
         </Section>
 
         {/* Why / Need */}
