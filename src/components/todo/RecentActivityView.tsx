@@ -118,16 +118,23 @@ export function RecentActivityView({ selectedDate: externalDate, searchQuery: ex
       time: new Date(t.updated_at),
     }));
 
-    let list: ActivityItem[] = [...prospectActivities, ...importEntries, ...callEntries, ...todoActivities].sort(
-      (a, b) => b.time.getTime() - a.time.getTime()
-    );
+    // Restrict to currently-viewed month (network marketers think month-by-month)
+    const monthStart = startOfMonth(calendar.currentMonth).getTime();
+    const monthEnd = endOfMonth(calendar.currentMonth).getTime();
+
+    let list: ActivityItem[] = [...prospectActivities, ...importEntries, ...callEntries, ...todoActivities]
+      .filter(a => {
+        const t = a.time.getTime();
+        return t >= monthStart && t <= monthEnd;
+      })
+      .sort((a, b) => b.time.getTime() - a.time.getTime());
 
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase();
       list = list.filter(a => a.name.toLowerCase().includes(q) || (a.phone && a.phone.includes(q)));
     }
     return list;
-  }, [prospects, todos, activityLogs, searchQuery]);
+  }, [prospects, todos, activityLogs, searchQuery, calendar.currentMonth]);
 
   // Group by day (descending)
   const groupedActivities = useMemo(() => {
