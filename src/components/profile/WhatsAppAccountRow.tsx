@@ -55,6 +55,9 @@ export function WhatsAppAccountRow() {
           <div className="flex flex-col items-start">
             <span className="font-medium text-sm">WhatsApp Account</span>
             <span className="text-[11px] text-muted-foreground">{LABELS[pref]}</span>
+            <span className="text-[10px] text-amber-600/80 leading-tight">
+              On iPhone, iOS decides which WhatsApp app opens.
+            </span>
           </div>
         </div>
         <ChevronRight className="h-3.5 w-3.5 text-muted-foreground" />
