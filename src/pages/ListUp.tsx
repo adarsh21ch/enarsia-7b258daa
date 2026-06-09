@@ -24,6 +24,7 @@ import { cn } from '@/lib/utils';
 import { getTagStyle } from '@/lib/tagColors';
 import { Prospect } from '@/types/prospect';
 import nevoraLogo from '@/assets/nevorai-call-logo.png';
+import { logCallMade } from '@/lib/callLog';
 
 type LeadMode = 'leads' | 'funnel';
 
@@ -344,7 +345,8 @@ export default function ListUp() {
     const cleanPhone = phone.replace(/\D/g, '');
     window.open(`https://wa.me/${cleanPhone}`, '_blank');
   };
-  const handleCall = (phone: string) => {
+  const handleCall = (phone: string, prospect?: { id: string; name: string }) => {
+    logCallMade({ prospectId: prospect?.id, name: prospect?.name || 'Call', phone });
     window.open(`tel:${phone}`, '_self');
   };
   // Only show loading on initial auth check - data shows instantly from cache
@@ -582,7 +584,7 @@ export default function ListUp() {
                                 <div className="flex items-center gap-2 pt-1">
                                   <Button size="sm" variant="outline" onClick={e => {
                           e.stopPropagation();
-                          handleCall(prospect.phone);
+                          handleCall(prospect.phone, { id: prospect.id, name: prospect.name });
                         }} className="gap-1.5">
                                     <PhoneOutlineIcon className="h-3.5 w-3.5" />
                                     Call

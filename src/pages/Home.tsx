@@ -20,6 +20,7 @@ import { Loader2, Clock } from 'lucide-react';
 import { SearchBar } from '@/components/ui/SearchBar';
 import { parseISO, format, isSameDay } from 'date-fns';
 import nevoraLogo from '@/assets/nevorai-call-logo.png';
+import { logCallMade } from '@/lib/callLog';
 
 // Consistent Call icon
 const CallIcon = ({
@@ -220,7 +221,8 @@ export default function Home() {
   const handleWhatsApp = (phone: string) => {
     window.open(`https://wa.me/${cleanPhoneNumber(phone)}`, '_blank');
   };
-  const handleCall = (phone: string) => {
+  const handleCall = (phone: string, name?: string) => {
+    logCallMade({ name: name || 'Call', phone });
     window.open(`tel:${cleanPhoneNumber(phone)}`, '_self');
   };
   
@@ -324,7 +326,7 @@ export default function Home() {
                             
                             {/* Call/WhatsApp buttons */}
                             {activity.phone && <div className="flex items-center gap-1 shrink-0">
-                                <button onClick={() => handleCall(activity.phone!)} className="p-1.5 rounded-full transition-colors bg-secondary">
+                                <button onClick={() => handleCall(activity.phone!, activity.name)} className="p-1.5 rounded-full transition-colors bg-secondary">
                                   <CallIcon className="h-4 w-4 text-primary" />
                                 </button>
                                 <button onClick={() => handleWhatsApp(activity.phone!)} className="p-1.5 rounded-full bg-green-500/10 hover:bg-green-500/20 transition-colors">
