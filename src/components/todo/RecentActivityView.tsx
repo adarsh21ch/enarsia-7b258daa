@@ -1,15 +1,17 @@
 // Activity History View - Universal component with built-in calendar
 import { useMemo, useState, useCallback } from 'react';
-import { motion, AnimatePresence, useMotionValue, useTransform, animate, type PanInfo } from 'framer-motion';
+import { motion, useMotionValue, useTransform, animate, type PanInfo } from 'framer-motion';
 import { useProspectsQuery } from '@/hooks/useProspectsQuery';
+import { useGlobalProspects } from '@/contexts/ProspectsContext';
 import { useGlobalTodos } from '@/contexts/TodosContext';
 import { useActivityLogs } from '@/hooks/useActivityLogs';
 import { useCalendarStrip } from '@/hooks/useCalendarStrip';
 import { CalendarStrip } from '@/components/calendar/CalendarStrip';
 import { SearchBar } from '@/components/ui/SearchBar';
-import { Clock, Loader2, Phone, X } from 'lucide-react';
+import { Clock, Loader2, Phone } from 'lucide-react';
 import { parseISO, format, isSameDay } from 'date-fns';
 import { logCallMade } from '@/lib/callLog';
+import { ProspectDetailModal } from '@/components/prospects/ProspectDetailModal';
 
 // Light haptic helper (mobile only)
 const haptic = (ms = 8) => {
@@ -31,6 +33,7 @@ type ActivityItem = {
   stage: string | null;
   action: string | null;
   time: Date;
+  prospectId?: string | null;
 };
 
 interface RecentActivityViewProps {
@@ -45,8 +48,9 @@ interface RecentActivityViewProps {
 export function RecentActivityView({ selectedDate: externalDate, searchQuery: externalSearch, onSearchChange: externalOnSearchChange, hideCalendar = false }: RecentActivityViewProps) {
   // Internal state for calendar and search when not controlled externally
   const [internalSearch, setInternalSearch] = useState('');
-  const [selectedActivity, setSelectedActivity] = useState<ActivityItem | null>(null);
+  const [detailProspectId, setDetailProspectId] = useState<string | null>(null);
   const calendar = useCalendarStrip();
+  const { updateProspect, deleteProspect } = useGlobalProspects();
 
   const selectedDate = externalDate ?? calendar.selectedDate;
   const searchQuery = externalSearch ?? internalSearch;
@@ -83,7 +87,8 @@ export function RecentActivityView({ selectedDate: externalDate, searchQuery: ex
         phone: log.new_value || null,
         stage: null as string | null,
         action: null as string | null,
-        time: new Date(log.created_at)
+        time: new Date(log.created_at),
+        prospectId: log.prospect_id || null,
       }));
 
     // For prospects, only show those that were genuinely updated (not just created)
@@ -101,7 +106,8 @@ export function RecentActivityView({ selectedDate: externalDate, searchQuery: ex
       phone: p.phone,
       stage: p.funnel_stage,
       action: p.action_taken,
-      time: new Date(p.updated_at)
+      time: new Date(p.updated_at),
+      prospectId: p.id,
     }));
     
     const todoActivities = todos
@@ -130,21 +136,23 @@ export function RecentActivityView({ selectedDate: externalDate, searchQuery: ex
   }, [prospects, todos, activityLogs, selectedDate, searchQuery]);
 
   const cleanPhoneNumber = (phone: string) => phone.replace(/[^0-9+]/g, '');
-  
-  const handleWhatsApp = useCallback((phone: string) => {
-    window.open(`https://wa.me/${cleanPhoneNumber(phone)}`, '_blank');
-  }, []);
-  
-  const handleCall = useCallback((phone: string, name?: string) => {
-    logCallMade({ name: name || 'Call', phone });
+
+  const handleCall = useCallback((phone: string, name?: string, prospectId?: string | null) => {
+    logCallMade({ prospectId: prospectId || undefined, name: name || 'Call', phone });
     window.open(`tel:${cleanPhoneNumber(phone)}`, '_self');
   }, []);
 
   const handleRowTap = useCallback((activity: ActivityItem) => {
-    if (activity.phone) {
-      setSelectedActivity(activity);
+    // iPhone-Recents behavior: tap the row → open full prospect detail modal
+    if (activity.prospectId) {
+      setDetailProspectId(activity.prospectId);
     }
   }, []);
+
+  const detailProspect = useMemo(
+    () => (detailProspectId ? prospects.find(p => p.id === detailProspectId) || null : null),
+    [detailProspectId, prospects]
+  );
 
   if (loading) {
     return (
@@ -199,178 +207,78 @@ export function RecentActivityView({ selectedDate: externalDate, searchQuery: ex
           </div>
         ) : (
           <div className="space-y-0">
-            {activities.map((activity, index) => (
+            {activities.map((activity) => (
               <div key={`${activity.type}-${activity.id}`} className="relative">
-                {/* Connecting line between items */}
-                {index < activities.length - 1 && (
-                  <div className="absolute left-[26px] top-[22px] bottom-0 w-px bg-border/60" />
-                )}
-                
-                <div className="relative flex gap-3">
-                  {/* Time label */}
-                  <div className="shrink-0 w-14 flex items-center justify-center">
-                    <span className="text-[10px] text-muted-foreground/80 font-medium">
+                {activity.type === 'import' ? (
+                  <div className="flex items-center justify-between gap-2 p-3 mb-1 rounded-lg bg-muted/30">
+                    <span className="text-xs text-muted-foreground truncate">📥 {activity.name}</span>
+                    <span className="text-[10px] text-muted-foreground/80 font-medium tabular-nums shrink-0">
                       {format(activity.time, 'h:mm a')}
                     </span>
                   </div>
-                  
-                  {/* Activity content */}
-                  <div className="flex-1 min-w-0 pb-2">
-                    {activity.type === 'import' ? (
-                      <div className="flex items-center gap-2 p-3 rounded-lg bg-muted/30">
-                        <span className="text-xs text-muted-foreground">📥 {activity.name}</span>
-                      </div>
-                    ) : (
-                      <SwipeableActivityRow
-                        phone={activity.phone}
-                        onCall={() => activity.phone && handleCall(activity.phone, activity.name)}
-                        onTap={() => handleRowTap(activity)}
-                      >
-                        <div className="flex items-start justify-between gap-2 p-3 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors cursor-pointer select-none">
-                          <div className="min-w-0 flex-1 flex items-start gap-2">
-                            {activity.type === 'call' && (
-                              <span className="shrink-0 mt-0.5 h-6 w-6 rounded-full bg-green-500/15 text-green-600 flex items-center justify-center">
-                                <Phone className="h-3 w-3" />
+                ) : (
+                  <SwipeableActivityRow
+                    phone={activity.phone}
+                    onCall={() => activity.phone && handleCall(activity.phone, activity.name, activity.prospectId)}
+                    onTap={() => handleRowTap(activity)}
+                  >
+                    <div className="flex items-start justify-between gap-2 p-3 mb-1 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors cursor-pointer select-none">
+                      {/* LEFT: name + tags (iPhone-Recents style) */}
+                      <div className="min-w-0 flex-1 flex items-start gap-2">
+                        {activity.type === 'call' && (
+                          <span className="shrink-0 mt-0.5 h-6 w-6 rounded-full bg-green-500/15 text-green-600 flex items-center justify-center">
+                            <Phone className="h-3 w-3" />
+                          </span>
+                        )}
+                        <div className="min-w-0 flex-1">
+                          <p className="text-sm font-semibold truncate">{activity.name}</p>
+                          <div className="flex items-center gap-1.5 flex-wrap mt-1.5">
+                            {activity.type === 'call' && activity.phone && (
+                              <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-green-500/10 text-green-600 font-medium">
+                                Called · {activity.phone}
                               </span>
                             )}
-                            <div className="min-w-0 flex-1">
-                              <p className="text-sm font-semibold truncate">{activity.name}</p>
-                              <div className="flex items-center gap-1.5 flex-wrap mt-1.5">
-                                {activity.type === 'call' && activity.phone && (
-                                  <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-green-500/10 text-green-600 font-medium">
-                                    Called · {activity.phone}
-                                  </span>
-                                )}
-                                {activity.stage && (
-                                  <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-primary/10 text-primary">
-                                    {activity.stage}
-                                  </span>
-                                )}
-                                {activity.action && (
-                                  <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-muted text-muted-foreground">
-                                    {activity.action}
-                                  </span>
-                                )}
-                                {activity.type === 'todo' && (
-                                  <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-blue-500/10 text-blue-600">
-                                    To-Do
-                                  </span>
-                                )}
-                              </div>
-                            </div>
+                            {activity.stage && (
+                              <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-primary/10 text-primary">
+                                {activity.stage}
+                              </span>
+                            )}
+                            {activity.action && (
+                              <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-muted text-muted-foreground">
+                                {activity.action}
+                              </span>
+                            )}
+                            {activity.type === 'todo' && (
+                              <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-blue-500/10 text-blue-600">
+                                To-Do
+                              </span>
+                            )}
                           </div>
                         </div>
-                      </SwipeableActivityRow>
-                    )}
-                  </div>
-                </div>
+                      </div>
+                      {/* RIGHT: time (like iPhone Recents) */}
+                      <span className="text-[10px] text-muted-foreground/80 font-medium tabular-nums shrink-0 mt-0.5">
+                        {format(activity.time, 'h:mm a')}
+                      </span>
+                    </div>
+                  </SwipeableActivityRow>
+                )}
               </div>
             ))}
           </div>
         )}
       </div>
 
-      {/* Premium iOS-style Contact Action Modal */}
-      <AnimatePresence>
-        {selectedActivity && (
-          <motion.div
-            className="fixed inset-0 z-[100] flex items-center justify-center p-5"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.18 }}
-          >
-            {/* Frosted backdrop */}
-            <button
-              aria-label="Close"
-              onClick={() => setSelectedActivity(null)}
-              className="absolute inset-0 bg-black/40 backdrop-blur-md"
-            />
-
-            {/* Card */}
-            <motion.div
-              role="dialog"
-              aria-modal="true"
-              initial={{ opacity: 0, scale: 0.92, y: 8 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.94, y: 6 }}
-              transition={{ type: 'spring', stiffness: 380, damping: 28, mass: 0.7 }}
-              className="relative w-full max-w-[340px] rounded-[24px] bg-card text-card-foreground p-6 shadow-[0_25px_60px_-15px_rgba(0,0,0,0.35)] ring-1 ring-black/5 dark:ring-white/5"
-              onAnimationStart={() => haptic(8)}
-            >
-              {/* Close */}
-              <button
-                onClick={() => setSelectedActivity(null)}
-                aria-label="Close"
-                className="absolute top-3.5 right-3.5 h-7 w-7 rounded-full flex items-center justify-center text-muted-foreground/70 hover:text-foreground hover:bg-muted/60 transition-colors"
-              >
-                <X className="h-4 w-4" />
-              </button>
-
-              {/* Avatar */}
-              <div className="flex justify-center mb-4">
-                <div className="h-16 w-16 rounded-full bg-primary/15 text-primary flex items-center justify-center text-2xl font-semibold ring-4 ring-primary/5">
-                  {selectedActivity.name?.trim()?.[0]?.toUpperCase() || '?'}
-                </div>
-              </div>
-
-              {/* Identity */}
-              <div className="text-center space-y-1">
-                <h2 className="text-[21px] leading-tight font-bold tracking-tight truncate">
-                  {selectedActivity.name}
-                </h2>
-                {selectedActivity.phone && (
-                  <p className="text-[15px] text-muted-foreground tabular-nums">
-                    {selectedActivity.phone}
-                  </p>
-                )}
-              </div>
-
-              {/* Tags */}
-              {(selectedActivity.stage || selectedActivity.action) && (
-                <div className="flex flex-wrap justify-center gap-1.5 mt-3">
-                  {selectedActivity.stage && (
-                    <span className="text-[11px] px-2.5 py-1 rounded-full bg-primary/10 text-primary font-medium">
-                      {selectedActivity.stage}
-                    </span>
-                  )}
-                  {selectedActivity.action && (
-                    <span className="text-[11px] px-2.5 py-1 rounded-full bg-muted text-muted-foreground font-medium">
-                      {selectedActivity.action}
-                    </span>
-                  )}
-                </div>
-              )}
-
-              {/* Actions */}
-              {selectedActivity.phone && (
-                <div className="flex gap-3 mt-6">
-                  <a
-                    href={`tel:${cleanPhoneNumber(selectedActivity.phone)}`}
-                    onClick={(e) => {
-                      e.preventDefault();
-                      haptic(10);
-                      handleCall(selectedActivity.phone!, selectedActivity.name);
-                    }}
-                    className="flex flex-1 items-center justify-center gap-2 rounded-2xl bg-primary py-3.5 min-h-[52px] text-primary-foreground font-semibold text-[15px] shadow-[0_8px_20px_-8px_hsl(var(--primary)/0.55)] active:scale-[0.97] active:opacity-90 transition-all"
-                  >
-                    <Phone className="h-[18px] w-[18px]" />
-                    Call
-                  </a>
-                  <button
-                    onClick={() => { haptic(10); selectedActivity?.phone && handleWhatsApp(selectedActivity.phone); }}
-                    className="flex flex-1 items-center justify-center gap-2 rounded-2xl py-3.5 min-h-[52px] text-white font-semibold text-[15px] shadow-[0_8px_20px_-8px_rgba(37,211,102,0.6)] active:scale-[0.97] active:opacity-90 transition-all"
-                    style={{ backgroundColor: '#25D366' }}
-                  >
-                    <WhatsAppIcon className="h-[18px] w-[18px]" />
-                    WhatsApp
-                  </button>
-                </div>
-              )}
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+      {/* Full prospect detail modal — matches the Calling tab experience */}
+      {detailProspect && (
+        <ProspectDetailModal
+          prospect={detailProspect}
+          open={!!detailProspect}
+          onOpenChange={(o) => !o && setDetailProspectId(null)}
+          onUpdate={updateProspect}
+          onDelete={deleteProspect}
+        />
+      )}
     </div>
   );
 }
