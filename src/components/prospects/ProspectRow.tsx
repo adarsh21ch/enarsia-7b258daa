@@ -151,8 +151,9 @@ export const ProspectRow = memo(function ProspectRow({
     e.preventDefault();
     e.stopPropagation();
     onMarkLastContacted?.();
+    logCallMade({ prospectId: prospect.id, name: prospect.name, phone: prospect.phone });
     window.open(`tel:${cleanPhoneNumber(prospect.phone)}`, '_self');
-  }, [prospect.phone, onMarkLastContacted]);
+  }, [prospect.id, prospect.name, prospect.phone, onMarkLastContacted]);
 
   const getActionDisplayValue = (): ExtendedActionTaken | null => {
     // Use optimistic value if available, otherwise use prospect value
