@@ -223,28 +223,40 @@ export function RecentActivityView({ selectedDate: externalDate, searchQuery: ex
                     ) : (
                       <SwipeableActivityRow
                         phone={activity.phone}
-                        onCall={() => activity.phone && handleCall(activity.phone)}
+                        onCall={() => activity.phone && handleCall(activity.phone, activity.name)}
                         onTap={() => handleRowTap(activity)}
                       >
                         <div className="flex items-start justify-between gap-2 p-3 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors cursor-pointer select-none">
-                          <div className="min-w-0 flex-1">
-                            <p className="text-sm font-semibold truncate">{activity.name}</p>
-                            <div className="flex items-center gap-1.5 flex-wrap mt-1.5">
-                              {activity.stage && (
-                                <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-primary/10 text-primary">
-                                  {activity.stage}
-                                </span>
-                              )}
-                              {activity.action && (
-                                <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-muted text-muted-foreground">
-                                  {activity.action}
-                                </span>
-                              )}
-                              {activity.type === 'todo' && (
-                                <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-blue-500/10 text-blue-600">
-                                  To-Do
-                                </span>
-                              )}
+                          <div className="min-w-0 flex-1 flex items-start gap-2">
+                            {activity.type === 'call' && (
+                              <span className="shrink-0 mt-0.5 h-6 w-6 rounded-full bg-green-500/15 text-green-600 flex items-center justify-center">
+                                <Phone className="h-3 w-3" />
+                              </span>
+                            )}
+                            <div className="min-w-0 flex-1">
+                              <p className="text-sm font-semibold truncate">{activity.name}</p>
+                              <div className="flex items-center gap-1.5 flex-wrap mt-1.5">
+                                {activity.type === 'call' && activity.phone && (
+                                  <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-green-500/10 text-green-600 font-medium">
+                                    Called · {activity.phone}
+                                  </span>
+                                )}
+                                {activity.stage && (
+                                  <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-primary/10 text-primary">
+                                    {activity.stage}
+                                  </span>
+                                )}
+                                {activity.action && (
+                                  <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-muted text-muted-foreground">
+                                    {activity.action}
+                                  </span>
+                                )}
+                                {activity.type === 'todo' && (
+                                  <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-blue-500/10 text-blue-600">
+                                    To-Do
+                                  </span>
+                                )}
+                              </div>
                             </div>
                           </div>
                         </div>
