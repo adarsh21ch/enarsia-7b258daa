@@ -4,18 +4,26 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { parseSnapshotRow, hasSlotKeys, slotKeysToTagNames, type SnapshotRow } from '@/lib/snapshotSlotUtils';
 
+/**
+ * Read personal_snapshot_v2 rows for a month.
+ * - By default reads the AUTHENTICATED user's rows.
+ * - Pass `targetUserId` to read someone else's rows (e.g. a downline member when
+ *   viewing Team Tracking). RLS allows this when the caller is the row's upline.
+ */
 export function usePersonalSnapshotV2Read(
   monthYear: string,
   leadsTrackingTagNames: string[] = [],
   stageTagNames: string[] = [],
   sourceFilter?: 'MANUAL' | 'APPLICATION' | null,
+  targetUserId?: string | null,
 ) {
   const { user } = useAuth();
+  const effectiveUserId = targetUserId || user?.id || null;
 
   const { data: rawSnapshots = [], isLoading, refetch } = useQuery({
-    queryKey: ['personal-snapshot-v2', user?.id, monthYear, sourceFilter ?? 'all'],
+    queryKey: ['personal-snapshot-v2', effectiveUserId, monthYear, sourceFilter ?? 'all'],
     queryFn: async (): Promise<SnapshotRow[]> => {
-      if (!user) return [];
+      if (!effectiveUserId) return [];
 
       const startDate = `${monthYear}-01`;
       const [year, month] = monthYear.split('-').map(Number);
@@ -25,7 +33,7 @@ export function usePersonalSnapshotV2Read(
       let query = supabase
         .from('personal_snapshot_v2')
         .select('*')
-        .eq('user_id', user.id)
+        .eq('user_id', effectiveUserId)
         .gte('date', startDate)
         .lte('date', endDate)
         .order('date', { ascending: true });
@@ -43,12 +51,11 @@ export function usePersonalSnapshotV2Read(
 
       return (data || []).map((raw) => parseSnapshotRow(raw));
     },
-    enabled: !!user && !!monthYear,
+    enabled: !!effectiveUserId && !!monthYear,
     staleTime: 300_000,
     gcTime: 600_000,
   });
 
-  // Post-process: convert slot keys to tag names reactively using passed-in names
   const snapshots = useMemo(() => {
     return rawSnapshots.map((row) => {
       const mapped = { ...row };
@@ -62,7 +69,6 @@ export function usePersonalSnapshotV2Read(
     });
   }, [rawSnapshots, leadsTrackingTagNames, stageTagNames]);
 
-  // Listen for sync events from write hooks
   useEffect(() => {
     const handler = (e: Event) => {
       const detail = (e as CustomEvent).detail;
