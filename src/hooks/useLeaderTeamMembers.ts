@@ -6,8 +6,14 @@
  *   AND profile.allow_leader_to_view = true
  *
  * Returns members with their level info, so the team-tracking sidebar can group by level.
+ *
+ * Backed by react-query so multiple consumers on different pages
+ * (Profile menu badge, Tracking header badge, /team-tracking page) share
+ * a single cached fetch. staleTime = 5 min so flipping between tabs does
+ * not re-query.
  */
-import { useEffect, useState, useCallback, useMemo } from 'react';
+import { useCallback, useMemo } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 
 export interface LeaderLevel {
@@ -40,33 +46,37 @@ interface UseLeaderTeamMembersReturn {
   getMembersByLevel: (levelId: string | null) => TeamMemberProfile[];
 }
 
+interface FetchResult {
+  members: TeamMemberProfile[];
+  levels: LeaderLevel[];
+}
+
+const EMPTY_MEMBERS: TeamMemberProfile[] = [];
+const EMPTY_LEVELS: LeaderLevel[] = [];
+
 export function useLeaderTeamMembers(
   leaderUserId: string | undefined | null,
   leaderEmail: string | undefined | null,
   leaderNeveraiId: string | undefined | null,
 ): UseLeaderTeamMembersReturn {
-  const [members, setMembers] = useState<TeamMemberProfile[]>([]);
-  const [levels, setLevels] = useState<LeaderLevel[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const enabled = !!leaderUserId && !!(leaderEmail || leaderNeveraiId);
 
-  const fetchData = useCallback(async () => {
-    if (!leaderUserId || (!leaderEmail && !leaderNeveraiId)) {
-      setMembers([]);
-      setLevels([]);
-      setLoading(false);
-      return;
-    }
-
-    setLoading(true);
-    setError(null);
-
-    try {
+  const { data, isLoading, error, refetch } = useQuery<FetchResult, Error>({
+    queryKey: [
+      'leader-team-members',
+      leaderUserId ?? null,
+      (leaderEmail ?? '').toLowerCase(),
+      leaderNeveraiId ?? null,
+    ],
+    enabled,
+    staleTime: 5 * 60 * 1000,
+    gcTime: 10 * 60 * 1000,
+    queryFn: async (): Promise<FetchResult> => {
       // Leader's own levels (so we can show level groups)
       const { data: lvlRows, error: lvlErr } = await supabase
         .from('leader_levels')
         .select('id, leader_id, label, code, position')
-        .eq('leader_id', leaderUserId)
+        .eq('leader_id', leaderUserId!)
         .order('position', { ascending: true });
 
       if (lvlErr) throw lvlErr;
@@ -86,10 +96,10 @@ export function useLeaderTeamMembers(
 
       if (orParts.length > 0) query = query.or(orParts.join(','));
 
-      const { data, error: memErr } = await query;
+      const { data: rows, error: memErr } = await query;
       if (memErr) throw memErr;
 
-      const out: TeamMemberProfile[] = (data || []).map((p: any) => ({
+      const out: TeamMemberProfile[] = (rows || []).map((p: any) => ({
         user_id: p.user_id,
         display_name: p.display_name,
         email: p.email,
@@ -101,17 +111,12 @@ export function useLeaderTeamMembers(
         allow_leader_to_view: p.allow_leader_to_view,
       }));
 
-      setLevels(fetchedLevels);
-      setMembers(out);
-    } catch (err: any) {
-      console.error('[useLeaderTeamMembers] Error:', err);
-      setError(err?.message || 'Failed to fetch team members');
-    } finally {
-      setLoading(false);
-    }
-  }, [leaderUserId, leaderEmail, leaderNeveraiId]);
+      return { members: out, levels: fetchedLevels };
+    },
+  });
 
-  useEffect(() => { fetchData(); }, [fetchData]);
+  const members = useMemo(() => data?.members ?? EMPTY_MEMBERS, [data]);
+  const levels = useMemo(() => data?.levels ?? EMPTY_LEVELS, [data]);
 
   const memberIds = useMemo(() => members.map(m => m.user_id), [members]);
 
@@ -120,5 +125,15 @@ export function useLeaderTeamMembers(
     return members.filter(m => m.level_id === levelId);
   }, [members]);
 
-  return { members, memberIds, levels, loading, error, refresh: fetchData, getMembersByLevel };
+  const refresh = useCallback(() => { void refetch(); }, [refetch]);
+
+  return {
+    members,
+    memberIds,
+    levels,
+    loading: enabled ? isLoading : false,
+    error: error ? (error.message || 'Failed to fetch team members') : null,
+    refresh,
+    getMembersByLevel,
+  };
 }
