@@ -1,8 +1,9 @@
 import { useEffect, useMemo, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { format, subMonths, addMonths } from 'date-fns';
-import { ChevronLeft, ChevronRight, Users, ArrowLeft, BarChart3, Info, Crown, ChevronDown, ChevronUp, Activity, Columns3 } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Users, ArrowLeft, BarChart3, Info, Crown, ChevronDown, ChevronUp, Activity, Columns3, ListChecks } from 'lucide-react';
 import { EyeViewSheet } from '@/components/team-tracking/EyeViewSheet';
+import { CompulsoryActionsSheet } from '@/components/team-tracking/CompulsoryActionsSheet';
 import { CallingTrackingBox } from '@/components/team-tracking/CallingTrackingBox';
 import { FilterTrackingBox } from '@/components/team-tracking/FilterTrackingBox';
 import { CompareColumnsSheet } from '@/components/team-tracking/CompareColumnsSheet';
@@ -48,6 +49,7 @@ export default function TeamTracking() {
   const [collapsedLevels, setCollapsedLevels] = useState<Record<string, boolean>>({});
   const [eyeViewOpen, setEyeViewOpen] = useState(false);
   const [compareOpen, setCompareOpen] = useState(false);
+  const [compulsoryOpen, setCompulsoryOpen] = useState(false);
 
   const monthYear = format(currentMonth, 'yyyy-MM');
   const monthLabel = format(currentMonth, 'MMMM yyyy');
@@ -293,6 +295,15 @@ export default function TeamTracking() {
                 variant="outline"
                 size="sm"
                 className="h-8 gap-1.5 px-2.5 text-xs"
+                onClick={() => setCompulsoryOpen(true)}
+              >
+                <ListChecks className="h-3.5 w-3.5 text-amber-500" />
+                <span className="hidden sm:inline">Checklist</span>
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-8 gap-1.5 px-2.5 text-xs"
                 onClick={() => setCompareOpen(true)}
               >
                 <Columns3 className="h-3.5 w-3.5 text-primary" />
@@ -473,6 +484,14 @@ export default function TeamTracking() {
         responseTagNames={responseTagNames}
         stageTagNames={computedStageNames}
         finalTagName={finalTagName}
+      />
+
+      <CompulsoryActionsSheet
+        open={compulsoryOpen}
+        onOpenChange={setCompulsoryOpen}
+        leaderUserId={user.id}
+        members={members}
+        levels={levels}
       />
     </div>
   );
