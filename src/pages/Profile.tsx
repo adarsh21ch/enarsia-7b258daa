@@ -29,7 +29,7 @@ import { PullToRefreshIndicator } from '@/components/PullToRefreshIndicator';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import { User, LogOut, ChevronRight, ChevronDown, Loader2, FileText, Shield, Receipt, Settings, ExternalLink, BarChart3, Crown, Gift, Trash2, Sparkles, Lock, Share2, Video, Sliders, NotebookPen, Bell, BrainCircuit, PlayCircle, Clock, Smartphone, GraduationCap, Settings2, Clapperboard } from 'lucide-react';
+import { User, LogOut, ChevronRight, ChevronDown, Loader2, FileText, Shield, Receipt, Settings, ExternalLink, BarChart3, Crown, Gift, Trash2, Sparkles, Lock, Share2, Video, Sliders, NotebookPen, Bell, BrainCircuit, PlayCircle, Clock, Smartphone, GraduationCap, Settings2, Clapperboard, Users } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { usePushNotifications } from '@/hooks/usePushNotifications';
