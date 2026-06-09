@@ -379,10 +379,35 @@ export function useTrackingFormat() {
       }
     } catch (error) {
       console.error('Error loading tracking format:', error);
+      // Fallback: restore the last-known-good cached format so the picker
+      // doesn't end up permanently empty after a transient network/session blip.
+      if (user?.id) {
+        const cached = getCachedTrackingFormat(user.id);
+        if (cached) setTrackingFormat((prev) => prev ?? cached);
+      }
     } finally {
+      lastFetchAtRef.current = Date.now();
       setLoading(false);
     }
   }, [user, fetchLeaderMeta, fetchLeaderFormat]);
+
+  // Refetch when the tab regains focus / becomes visible after >60s.
+  // This catches the "picker is empty after 30-40 min" bug caused by stale state.
+  useEffect(() => {
+    if (!user?.id) return;
+    const maybeRefetch = () => {
+      const stale = Date.now() - lastFetchAtRef.current > 60_000;
+      if (stale && document.visibilityState === 'visible') {
+        loadTrackingFormat();
+      }
+    };
+    window.addEventListener('focus', maybeRefetch);
+    document.addEventListener('visibilitychange', maybeRefetch);
+    return () => {
+      window.removeEventListener('focus', maybeRefetch);
+      document.removeEventListener('visibilitychange', maybeRefetch);
+    };
+  }, [user?.id, loadTrackingFormat]);
 
   useEffect(() => {
     if (user) {
