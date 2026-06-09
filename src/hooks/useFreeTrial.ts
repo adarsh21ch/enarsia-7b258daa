@@ -42,8 +42,8 @@ export function useFreeTrial() {
   const { config, loading: configLoading } = useAdminConfig();
   const { isPaid, loading: subscriptionLoading } = useSubscription();
 
-  // Fetch which tabs should show the trial banner
-  const { data: allowedTabs = ['dashboard', 'profile', 'listup'] } = useQuery({
+  // Fetch which tabs should show the trial banner / upgrade CTA
+  const { data: allowedTabs = ['profile'] } = useQuery({
     queryKey: ['trial-banner-tabs'],
     queryFn: fetchTrialBannerTabs,
     staleTime: 30 * 1000,
