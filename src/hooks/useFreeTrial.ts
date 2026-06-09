@@ -13,12 +13,18 @@ async function fetchTrialBannerTabs(): Promise<string[]> {
     .select('config_value, is_enabled')
     .eq('config_key', 'trial_banner_tabs')
     .maybeSingle();
-  
+
+  // Source of truth = admin panel. If row is missing/disabled, default to
+  // showing the upgrade CTA only on the Profile tab so trialing users aren't
+  // nudged across calling/follow-up/to-do/tracking by accident.
   if (error || !data || !data.is_enabled) {
-    return ['dashboard', 'profile', 'listup']; // Default tabs
+    return ['profile'];
   }
-  
-  return data.config_value.split(',').map((t: string) => t.trim().toLowerCase());
+
+  return data.config_value
+    .split(',')
+    .map((t: string) => t.trim().toLowerCase())
+    .filter(Boolean);
 }
 
 /**
