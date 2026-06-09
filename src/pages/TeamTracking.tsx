@@ -450,6 +450,32 @@ export default function TeamTracking() {
                   </div>
                 </div>
                 <div className="flex flex-shrink-0 items-center gap-1">
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="relative h-8 px-2"
+                        onClick={() => setInboxOpen(true)}
+                        aria-label="Inbox"
+                      >
+                        <Bell className="h-3.5 w-3.5 text-primary" />
+                        {unreadCount > 0 && (
+                          <span className="absolute -top-1 -right-1 min-w-[16px] h-[16px] flex items-center justify-center rounded-full bg-destructive text-destructive-foreground text-[9px] font-bold px-1">
+                            {unreadCount > 99 ? '99+' : unreadCount}
+                          </span>
+                        )}
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent side="bottom">Inbox</TooltipContent>
+                  </Tooltip>
+                  {members.length > 0 && (
+                    <HeaderButton
+                      icon={<Send className="h-3.5 w-3.5 text-sky-500" />}
+                      label="Message"
+                      onClick={() => setSendOpen(true)}
+                    />
+                  )}
                   <HeaderButton
                     icon={<ListChecks className="h-3.5 w-3.5 text-amber-500" />}
                     label="Checklist"
@@ -467,6 +493,7 @@ export default function TeamTracking() {
                   />
                 </div>
               </div>
+
 
               {selected.kind === 'member' && (
                 <div className="mt-2 flex gap-1 rounded-lg bg-muted p-0.5">
