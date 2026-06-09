@@ -63,6 +63,9 @@ export default function TeamTracking() {
   const [eyeViewOpen, setEyeViewOpen] = useState(false);
   const [compareOpen, setCompareOpen] = useState(false);
   const [compulsoryOpen, setCompulsoryOpen] = useState(false);
+  const [inboxOpen, setInboxOpen] = useState(false);
+  const [sendOpen, setSendOpen] = useState(false);
+  const { unreadCount } = useInbox();
 
   // Mobile drawer
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
