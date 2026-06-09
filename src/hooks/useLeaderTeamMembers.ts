@@ -51,6 +51,9 @@ interface FetchResult {
   levels: LeaderLevel[];
 }
 
+const EMPTY_MEMBERS: TeamMemberProfile[] = [];
+const EMPTY_LEVELS: LeaderLevel[] = [];
+
 export function useLeaderTeamMembers(
   leaderUserId: string | undefined | null,
   leaderEmail: string | undefined | null,
