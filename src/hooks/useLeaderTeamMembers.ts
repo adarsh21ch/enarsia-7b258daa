@@ -71,7 +71,7 @@ export function useLeaderTeamMembers(
 
       if (lvlErr) throw lvlErr;
 
-      const fetchedLevels: LeaderLevel[] = (lvlRows || []) as LeaderLevel[];
+      const fetchedLevels: LeaderLevel[] = (lvlRows || []) as unknown as LeaderLevel[];
       const levelPosMap = new Map(fetchedLevels.map(l => [l.id, l.position]));
 
       // Dual-key OR query — supports both email and legacy neverai_id connections
