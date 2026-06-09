@@ -42,6 +42,8 @@ export function ManualUpdateDrawer({
   personalSnapshots,
   totalSnapshots,
   uplineLeaderId,
+  targetUserId = null,
+  targetUserName = null,
 }: ManualUpdateDrawerProps) {
   const calendar = useCalendarStrip({
     initialDate: new Date(),
