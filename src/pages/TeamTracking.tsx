@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { format, subMonths, addMonths } from 'date-fns';
-import { ChevronLeft, ChevronRight, Users, ArrowLeft, BarChart3, Info, Crown, ChevronDown, ChevronUp } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Users, ArrowLeft, BarChart3, Info, Crown, ChevronDown, ChevronUp, Activity } from 'lucide-react';
+import { EyeViewSheet } from '@/components/team-tracking/EyeViewSheet';
 import { useAuth } from '@/contexts/AuthContext';
 import { useProfile } from '@/hooks/useProfile';
 import { BottomNav } from '@/components/layout/BottomNav';
@@ -41,6 +42,7 @@ export default function TeamTracking() {
   const [selected, setSelected] = useState<SelectedEntity>({ kind: 'self_total' });
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [collapsedLevels, setCollapsedLevels] = useState<Record<string, boolean>>({});
+  const [eyeViewOpen, setEyeViewOpen] = useState(false);
 
   const monthYear = format(currentMonth, 'yyyy-MM');
   const monthLabel = format(currentMonth, 'MMMM yyyy');
@@ -281,6 +283,15 @@ export default function TeamTracking() {
                 <p className="text-[11px] text-muted-foreground truncate">{headerSubtitle}</p>
               </div>
             </div>
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-8 gap-1.5 px-2.5 text-xs"
+              onClick={() => setEyeViewOpen(true)}
+            >
+              <Activity className="h-3.5 w-3.5 text-emerald-500" />
+              <span className="hidden sm:inline">Activity</span>
+            </Button>
           </div>
 
           {/* Personal/Total toggle for selected member */}
@@ -417,6 +428,13 @@ export default function TeamTracking() {
           onClick={() => setSidebarOpen(false)}
         />
       )}
+
+      <EyeViewSheet
+        open={eyeViewOpen}
+        onOpenChange={setEyeViewOpen}
+        rootLeaderUserId={user.id}
+        rootLeaderName={profile?.display_name || 'You'}
+      />
     </div>
   );
 }

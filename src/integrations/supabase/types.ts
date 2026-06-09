@@ -7074,6 +7074,16 @@ export type Database = {
           why_need: string
         }[]
       }
+      get_team_activity_status: {
+        Args: { _date: string; _leader_user_id: string }
+        Returns: {
+          display_name: string
+          email: string
+          has_personal_snapshot: boolean
+          personal_source: string
+          user_id: string
+        }[]
+      }
       get_user_by_email: {
         Args: { target_email: string }
         Returns: {
