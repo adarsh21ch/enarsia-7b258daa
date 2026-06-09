@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { format, subMonths, addMonths } from 'date-fns';
-import { ChevronLeft, ChevronRight, Users, ArrowLeft, BarChart3, Info, Crown, ChevronDown, ChevronUp } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Users, ArrowLeft, BarChart3, Info, Crown, ChevronDown, ChevronUp, Activity } from 'lucide-react';
+import { EyeViewSheet } from '@/components/team-tracking/EyeViewSheet';
 import { useAuth } from '@/contexts/AuthContext';
 import { useProfile } from '@/hooks/useProfile';
 import { BottomNav } from '@/components/layout/BottomNav';
