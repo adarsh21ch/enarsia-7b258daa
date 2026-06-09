@@ -233,21 +233,20 @@ export function RecentActivityView({ selectedDate: externalDate, searchQuery: ex
                 }}
                 className="scroll-mt-2"
               >
-                {/* Day header (iPhone style) */}
-                <div className="sticky top-0 z-10 bg-card/95 backdrop-blur-sm py-1 mb-1">
-                  <h4 className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
-                    {formatDayHeader(group.date)}
-                  </h4>
-                </div>
                 <div className="space-y-0">
                   {group.items.map(activity => (
                     <div key={`${activity.type}-${activity.id}`} className="relative">
                       {activity.type === 'import' ? (
                         <div className="flex items-center justify-between gap-2 p-3 mb-1 rounded-lg bg-muted/30">
                           <span className="text-xs text-muted-foreground truncate">📥 {activity.name}</span>
-                          <span className="text-[10px] text-muted-foreground/80 font-medium tabular-nums shrink-0">
-                            {format(activity.time, 'h:mm a')}
-                          </span>
+                          <div className="flex flex-col items-end shrink-0">
+                            <span className="text-[10px] text-muted-foreground/80 font-medium tabular-nums">
+                              {format(activity.time, 'h:mm a')}
+                            </span>
+                            <span className="text-[9px] text-muted-foreground/60 font-medium mt-0.5 whitespace-nowrap">
+                              {formatDayHeader(group.date)}
+                            </span>
+                          </div>
                         </div>
                       ) : (
                         <SwipeableActivityRow
@@ -288,9 +287,14 @@ export function RecentActivityView({ selectedDate: externalDate, searchQuery: ex
                                 </div>
                               </div>
                             </div>
-                            <span className="text-[10px] text-muted-foreground/80 font-medium tabular-nums shrink-0 mt-0.5">
-                              {format(activity.time, 'h:mm a')}
-                            </span>
+                            <div className="flex flex-col items-end shrink-0 mt-0.5">
+                              <span className="text-[10px] text-muted-foreground/80 font-medium tabular-nums">
+                                {format(activity.time, 'h:mm a')}
+                              </span>
+                              <span className="text-[9px] text-muted-foreground/60 font-medium mt-0.5 whitespace-nowrap">
+                                {formatDayHeader(group.date)}
+                              </span>
+                            </div>
                           </div>
                         </SwipeableActivityRow>
                       )}
