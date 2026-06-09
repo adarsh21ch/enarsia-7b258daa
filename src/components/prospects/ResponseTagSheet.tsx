@@ -1,4 +1,5 @@
 import { memo, useCallback, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { motion } from 'framer-motion';
 import { Star, Check, X } from 'lucide-react';
 import { ActionBadge } from './StatusBadge';
@@ -148,8 +149,9 @@ export const ResponseTagSheet = memo(function ResponseTagSheet({
 
   // Unmount instantly on close — no exit animation, no lingering overlay.
   if (!open) return null;
+  if (typeof document === 'undefined') return null;
 
-  return (
+  return createPortal(
     <>
       {/* Soft dimming backdrop — purely visual, pointer-events disabled so the
           outside-tap listener (above) still drives dismissal without any
@@ -272,6 +274,7 @@ export const ResponseTagSheet = memo(function ResponseTagSheet({
         </button>
       </div>
     </motion.div>
-    </>
+    </>,
+    document.body
   );
 });
