@@ -352,7 +352,7 @@ export default function TeamTracking() {
 
   return (
     <TooltipProvider delayDuration={200}>
-      <div className="flex min-h-screen w-full bg-background">
+      <div className="flex h-[100dvh] w-full overflow-hidden bg-background">
         {/* Desktop sidebar */}
         {!isMobile && (
           <aside
