@@ -65,6 +65,8 @@ export default function TeamTracking() {
   const [compulsoryOpen, setCompulsoryOpen] = useState(false);
   const [inboxOpen, setInboxOpen] = useState(false);
   const [sendOpen, setSendOpen] = useState(false);
+  const [quickUpdateOpen, setQuickUpdateOpen] = useState(false);
+  const [manualUpdateOpen, setManualUpdateOpen] = useState(false);
   const { unreadCount } = useInbox();
 
   // Mobile drawer
