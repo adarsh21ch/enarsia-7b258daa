@@ -207,6 +207,7 @@ export function ManualUpdateDrawer({
           uplineLeaderId,
           responseTagNames,
           stageTagNames,
+          onBehalfOfUserId: targetUserId,
         })
       );
     }
