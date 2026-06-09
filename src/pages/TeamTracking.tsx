@@ -283,6 +283,15 @@ export default function TeamTracking() {
                 <p className="text-[11px] text-muted-foreground truncate">{headerSubtitle}</p>
               </div>
             </div>
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-8 gap-1.5 px-2.5 text-xs"
+              onClick={() => setEyeViewOpen(true)}
+            >
+              <Activity className="h-3.5 w-3.5 text-emerald-500" />
+              <span className="hidden sm:inline">Activity</span>
+            </Button>
           </div>
 
           {/* Personal/Total toggle for selected member */}
