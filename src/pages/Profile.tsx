@@ -232,6 +232,15 @@ export default function Profile() {
 
   const { canAccess: canAccessAI } = useFeatureAccess('ai_assistant');
   const { pendingCount } = useSharedLeads();
+  // Direct downline (dual-key, allow_leader_to_view = true). Used to gate the
+  // Team Tracking menu row: hide it for users with no downline.
+  const { members: teamMembers } = useLeaderTeamMembers(
+    user?.id,
+    profile?.email,
+    profile?.neverai_id,
+  );
+  const downlineCount = teamMembers?.length ?? 0;
+  
   
 
   // Handle SSO redirect to nevorai.com pages
