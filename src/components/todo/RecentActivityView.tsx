@@ -1,5 +1,5 @@
-// Activity History View - Universal component with built-in calendar
-import { useMemo, useState, useCallback } from 'react';
+// Activity History View - iPhone "Recents" style scrollable list grouped by day
+import { useMemo, useState, useCallback, useRef, useEffect } from 'react';
 import { motion, useMotionValue, useTransform, animate, type PanInfo } from 'framer-motion';
 import { useProspectsQuery } from '@/hooks/useProspectsQuery';
 import { useGlobalProspects } from '@/contexts/ProspectsContext';
@@ -9,14 +9,9 @@ import { useCalendarStrip } from '@/hooks/useCalendarStrip';
 import { CalendarStrip } from '@/components/calendar/CalendarStrip';
 import { SearchBar } from '@/components/ui/SearchBar';
 import { Clock, Loader2, Phone } from 'lucide-react';
-import { parseISO, format, isSameDay } from 'date-fns';
+import { parseISO, format, isSameDay, isToday, isYesterday, differenceInCalendarDays, startOfDay } from 'date-fns';
 import { logCallMade } from '@/lib/callLog';
 import { ProspectDetailModal } from '@/components/prospects/ProspectDetailModal';
-
-// Light haptic helper (mobile only)
-const haptic = (ms = 8) => {
-  try { if (typeof navigator !== 'undefined' && 'vibrate' in navigator) (navigator as any).vibrate?.(ms); } catch {}
-};
 
 // Consistent WhatsApp icon
 const WhatsAppIcon = ({ className }: { className?: string }) => (
@@ -37,16 +32,21 @@ type ActivityItem = {
 };
 
 interface RecentActivityViewProps {
-  /** Optional: if provided externally, the built-in calendar is hidden */
   selectedDate?: Date;
   searchQuery?: string;
   onSearchChange?: (query: string) => void;
-  /** Hide the built-in calendar (e.g. when parent already shows one) */
   hideCalendar?: boolean;
 }
 
+function formatDayHeader(date: Date): string {
+  if (isToday(date)) return 'Today';
+  if (isYesterday(date)) return 'Yesterday';
+  const diff = differenceInCalendarDays(new Date(), date);
+  if (diff > 1 && diff < 7) return format(date, 'EEEE'); // Monday, Tuesday...
+  return format(date, 'EEE, MMM d');
+}
+
 export function RecentActivityView({ selectedDate: externalDate, searchQuery: externalSearch, onSearchChange: externalOnSearchChange, hideCalendar = false }: RecentActivityViewProps) {
-  // Internal state for calendar and search when not controlled externally
   const [internalSearch, setInternalSearch] = useState('');
   const [detailProspectId, setDetailProspectId] = useState<string | null>(null);
   const calendar = useCalendarStrip();
@@ -58,82 +58,92 @@ export function RecentActivityView({ selectedDate: externalDate, searchQuery: ex
 
   const { prospects, loading: prospectsLoading } = useProspectsQuery();
   const { todos, loading: todosLoading } = useGlobalTodos();
-  const { activities: activityLogs, loading: logsLoading } = useActivityLogs(200);
+  const { activities: activityLogs, loading: logsLoading } = useActivityLogs(500);
 
   const loading = prospectsLoading || todosLoading || logsLoading;
 
-  // Get personal activities for the selected date
-  const activities = useMemo<ActivityItem[]>(() => {
-    // Bulk import entries
-    const importEntries = activityLogs
-      .filter(log => log.activity_type === 'bulk_import' && isSameDay(parseISO(log.created_at), selectedDate))
+  // All activities across all dates, sorted desc
+  const allActivities = useMemo<ActivityItem[]>(() => {
+    const importEntries: ActivityItem[] = activityLogs
+      .filter(log => log.activity_type === 'bulk_import')
       .map(log => ({
         id: log.id,
-        type: 'import' as const,
+        type: 'import',
         name: `Imported ${log.new_value || '?'} lead${Number(log.new_value) !== 1 ? 's' : ''}`,
-        phone: null as string | null,
-        stage: null as string | null,
-        action: null as string | null,
-        time: new Date(log.created_at)
+        phone: null,
+        stage: null,
+        action: null,
+        time: new Date(log.created_at),
       }));
 
-    // Outbound call entries (iPhone-Recents style)
-    const callEntries = activityLogs
-      .filter(log => log.activity_type === 'call_made' && isSameDay(parseISO(log.created_at), selectedDate))
+    const callEntries: ActivityItem[] = activityLogs
+      .filter(log => log.activity_type === 'call_made')
       .map(log => ({
         id: log.id,
-        type: 'call' as const,
+        type: 'call',
         name: log.description || 'Call',
         phone: log.new_value || null,
-        stage: null as string | null,
-        action: null as string | null,
+        stage: null,
+        action: null,
         time: new Date(log.created_at),
         prospectId: log.prospect_id || null,
       }));
 
-    // For prospects, only show those that were genuinely updated (not just created)
-    const dayProspects = prospects.filter(p => {
-      if (!isSameDay(parseISO(p.updated_at), selectedDate)) return false;
-      const addedTime = new Date(p.date_added).getTime();
-      const updatedTime = new Date(p.updated_at).getTime();
-      return Math.abs(updatedTime - addedTime) > 5000;
-    });
-
-    const prospectActivities = dayProspects.map(p => ({
-      id: p.id,
-      type: 'lead' as const,
-      name: p.name,
-      phone: p.phone,
-      stage: p.funnel_stage,
-      action: p.action_taken,
-      time: new Date(p.updated_at),
-      prospectId: p.id,
-    }));
-    
-    const todoActivities = todos
-      .filter(t => isSameDay(parseISO(t.updated_at), selectedDate))
-      .map(t => ({
-        id: t.id,
-        type: 'todo' as const,
-        name: t.title,
-        phone: null as string | null,
-        stage: t.completed ? 'Completed' : 'Updated',
-        action: null as string | null,
-        time: new Date(t.updated_at)
+    const prospectActivities: ActivityItem[] = prospects
+      .filter(p => {
+        const addedTime = new Date(p.date_added).getTime();
+        const updatedTime = new Date(p.updated_at).getTime();
+        return Math.abs(updatedTime - addedTime) > 5000;
+      })
+      .map(p => ({
+        id: p.id,
+        type: 'lead',
+        name: p.name,
+        phone: p.phone,
+        stage: p.funnel_stage,
+        action: p.action_taken,
+        time: new Date(p.updated_at),
+        prospectId: p.id,
       }));
 
-    let activitiesList: ActivityItem[] = [...prospectActivities, ...importEntries, ...callEntries, ...todoActivities].sort(
+    const todoActivities: ActivityItem[] = todos.map(t => ({
+      id: t.id,
+      type: 'todo',
+      name: t.title,
+      phone: null,
+      stage: t.completed ? 'Completed' : 'Updated',
+      action: null,
+      time: new Date(t.updated_at),
+    }));
+
+    let list: ActivityItem[] = [...prospectActivities, ...importEntries, ...callEntries, ...todoActivities].sort(
       (a, b) => b.time.getTime() - a.time.getTime()
     );
 
     if (searchQuery.trim()) {
-      const query = searchQuery.toLowerCase();
-      activitiesList = activitiesList.filter(
-        a => a.name.toLowerCase().includes(query) || (a.phone && a.phone.includes(query))
-      );
+      const q = searchQuery.toLowerCase();
+      list = list.filter(a => a.name.toLowerCase().includes(q) || (a.phone && a.phone.includes(q)));
     }
-    return activitiesList;
-  }, [prospects, todos, activityLogs, selectedDate, searchQuery]);
+    return list;
+  }, [prospects, todos, activityLogs, searchQuery]);
+
+  // Group by day (descending)
+  const groupedActivities = useMemo(() => {
+    const map = new Map<string, { date: Date; items: ActivityItem[] }>();
+    allActivities.forEach(a => {
+      const key = format(startOfDay(a.time), 'yyyy-MM-dd');
+      if (!map.has(key)) map.set(key, { date: startOfDay(a.time), items: [] });
+      map.get(key)!.items.push(a);
+    });
+    return Array.from(map.entries())
+      .map(([key, val]) => ({ key, ...val }))
+      .sort((a, b) => b.date.getTime() - a.date.getTime());
+  }, [allActivities]);
+
+  // Dates with activity (for calendar dots)
+  const datesWithTasks = useMemo(() => {
+    return new Set(groupedActivities.map(g => g.key));
+  }, [groupedActivities]);
 
   const cleanPhoneNumber = (phone: string) => phone.replace(/[^0-9+]/g, '');
 
@@ -143,16 +153,25 @@ export function RecentActivityView({ selectedDate: externalDate, searchQuery: ex
   }, []);
 
   const handleRowTap = useCallback((activity: ActivityItem) => {
-    // iPhone-Recents behavior: tap the row → open full prospect detail modal
-    if (activity.prospectId) {
-      setDetailProspectId(activity.prospectId);
-    }
+    if (activity.prospectId) setDetailProspectId(activity.prospectId);
   }, []);
 
   const detailProspect = useMemo(
     () => (detailProspectId ? prospects.find(p => p.id === detailProspectId) || null : null),
     [detailProspectId, prospects]
   );
+
+  // Scroll-to-date: when calendar date changes, scroll its group into view
+  const listContainerRef = useRef<HTMLDivElement>(null);
+  const sectionRefs = useRef<Map<string, HTMLDivElement>>(new Map());
+
+  useEffect(() => {
+    const key = format(startOfDay(selectedDate), 'yyyy-MM-dd');
+    const el = sectionRefs.current.get(key);
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }, [selectedDate]);
 
   if (loading) {
     return (
@@ -164,7 +183,6 @@ export function RecentActivityView({ selectedDate: externalDate, searchQuery: ex
 
   return (
     <div className="space-y-3">
-      {/* Built-in Calendar Strip */}
       {!hideCalendar && (
         <CalendarStrip
           selectedDate={calendar.selectedDate}
@@ -174,102 +192,117 @@ export function RecentActivityView({ selectedDate: externalDate, searchQuery: ex
           onPreviousMonth={calendar.goToPreviousMonth}
           onNextMonth={calendar.goToNextMonth}
           onTodayClick={calendar.goToToday}
+          datesWithTasks={datesWithTasks}
           className="rounded-lg"
         />
       )}
 
-      {/* Search Bar */}
-      <SearchBar 
-        value={searchQuery} 
-        onChange={onSearchChange} 
-        placeholder="Search name, phone..." 
+      <SearchBar
+        value={searchQuery}
+        onChange={onSearchChange}
+        placeholder="Search name, phone..."
       />
 
-      {/* Activities List */}
       <div className="bg-card rounded-xl p-3 border border-border/50">
         <div className="flex items-center gap-2 mb-3">
           <Clock className="h-4 w-4 text-primary" />
           <div>
-            <h3 className="font-medium text-sm">Activities</h3>
-            <p className="text-xs text-muted-foreground">{activities.length} activities</p>
+            <h3 className="font-medium text-sm">Recents</h3>
+            <p className="text-xs text-muted-foreground">{allActivities.length} activities</p>
           </div>
         </div>
 
-        {activities.length === 0 ? (
+        {groupedActivities.length === 0 ? (
           <div className="text-center py-8">
             <Clock className="h-10 w-10 mx-auto text-muted-foreground/30 mb-2" />
             <p className="text-sm text-muted-foreground">
-              {searchQuery.trim() ? 'No matching activities' : 'No activity for this date'}
+              {searchQuery.trim() ? 'No matching activities' : 'No activity yet'}
             </p>
             <p className="text-xs text-muted-foreground/70 mt-1">
               {searchQuery.trim() ? 'Try a different search term' : 'Activities will appear here'}
             </p>
           </div>
         ) : (
-          <div className="space-y-0">
-            {activities.map((activity) => (
-              <div key={`${activity.type}-${activity.id}`} className="relative">
-                {activity.type === 'import' ? (
-                  <div className="flex items-center justify-between gap-2 p-3 mb-1 rounded-lg bg-muted/30">
-                    <span className="text-xs text-muted-foreground truncate">📥 {activity.name}</span>
-                    <span className="text-[10px] text-muted-foreground/80 font-medium tabular-nums shrink-0">
-                      {format(activity.time, 'h:mm a')}
-                    </span>
-                  </div>
-                ) : (
-                  <SwipeableActivityRow
-                    phone={activity.phone}
-                    onCall={() => activity.phone && handleCall(activity.phone, activity.name, activity.prospectId)}
-                    onTap={() => handleRowTap(activity)}
-                  >
-                    <div className="flex items-start justify-between gap-2 p-3 mb-1 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors cursor-pointer select-none">
-                      {/* LEFT: name + tags (iPhone-Recents style) */}
-                      <div className="min-w-0 flex-1 flex items-start gap-2">
-                        {activity.type === 'call' && (
-                          <span className="shrink-0 mt-0.5 h-6 w-6 rounded-full bg-green-500/15 text-green-600 flex items-center justify-center">
-                            <Phone className="h-3 w-3" />
+          <div ref={listContainerRef} className="space-y-4">
+            {groupedActivities.map(group => (
+              <div
+                key={group.key}
+                ref={el => {
+                  if (el) sectionRefs.current.set(group.key, el);
+                  else sectionRefs.current.delete(group.key);
+                }}
+                className="scroll-mt-2"
+              >
+                {/* Day header (iPhone style) */}
+                <div className="sticky top-0 z-10 bg-card/95 backdrop-blur-sm py-1 mb-1">
+                  <h4 className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
+                    {formatDayHeader(group.date)}
+                  </h4>
+                </div>
+                <div className="space-y-0">
+                  {group.items.map(activity => (
+                    <div key={`${activity.type}-${activity.id}`} className="relative">
+                      {activity.type === 'import' ? (
+                        <div className="flex items-center justify-between gap-2 p-3 mb-1 rounded-lg bg-muted/30">
+                          <span className="text-xs text-muted-foreground truncate">📥 {activity.name}</span>
+                          <span className="text-[10px] text-muted-foreground/80 font-medium tabular-nums shrink-0">
+                            {format(activity.time, 'h:mm a')}
                           </span>
-                        )}
-                        <div className="min-w-0 flex-1">
-                          <p className="text-sm font-semibold truncate">{activity.name}</p>
-                          <div className="flex items-center gap-1.5 flex-wrap mt-1.5">
-                            {activity.type === 'call' && activity.phone && (
-                              <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-green-500/10 text-green-600 font-medium">
-                                Called · {activity.phone}
-                              </span>
-                            )}
-                            {activity.stage && (
-                              <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-primary/10 text-primary">
-                                {activity.stage}
-                              </span>
-                            )}
-                            {activity.action && (
-                              <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-muted text-muted-foreground">
-                                {activity.action}
-                              </span>
-                            )}
-                            {activity.type === 'todo' && (
-                              <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-blue-500/10 text-blue-600">
-                                To-Do
-                              </span>
-                            )}
-                          </div>
                         </div>
-                      </div>
-                      {/* RIGHT: time (like iPhone Recents) */}
-                      <span className="text-[10px] text-muted-foreground/80 font-medium tabular-nums shrink-0 mt-0.5">
-                        {format(activity.time, 'h:mm a')}
-                      </span>
+                      ) : (
+                        <SwipeableActivityRow
+                          phone={activity.phone}
+                          onCall={() => activity.phone && handleCall(activity.phone, activity.name, activity.prospectId)}
+                          onTap={() => handleRowTap(activity)}
+                        >
+                          <div className="flex items-start justify-between gap-2 p-3 mb-1 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors cursor-pointer select-none">
+                            <div className="min-w-0 flex-1 flex items-start gap-2">
+                              {activity.type === 'call' && (
+                                <span className="shrink-0 mt-0.5 h-6 w-6 rounded-full bg-green-500/15 text-green-600 flex items-center justify-center">
+                                  <Phone className="h-3 w-3" />
+                                </span>
+                              )}
+                              <div className="min-w-0 flex-1">
+                                <p className="text-sm font-semibold truncate">{activity.name}</p>
+                                <div className="flex items-center gap-1.5 flex-wrap mt-1.5">
+                                  {activity.type === 'call' && activity.phone && (
+                                    <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-green-500/10 text-green-600 font-medium">
+                                      Called · {activity.phone}
+                                    </span>
+                                  )}
+                                  {activity.stage && (
+                                    <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-primary/10 text-primary">
+                                      {activity.stage}
+                                    </span>
+                                  )}
+                                  {activity.action && (
+                                    <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-muted text-muted-foreground">
+                                      {activity.action}
+                                    </span>
+                                  )}
+                                  {activity.type === 'todo' && (
+                                    <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-blue-500/10 text-blue-600">
+                                      To-Do
+                                    </span>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+                            <span className="text-[10px] text-muted-foreground/80 font-medium tabular-nums shrink-0 mt-0.5">
+                              {format(activity.time, 'h:mm a')}
+                            </span>
+                          </div>
+                        </SwipeableActivityRow>
+                      )}
                     </div>
-                  </SwipeableActivityRow>
-                )}
+                  ))}
+                </div>
               </div>
             ))}
           </div>
         )}
       </div>
 
-      {/* Full prospect detail modal — matches the Calling tab experience */}
       {detailProspect && (
         <ProspectDetailModal
           prospect={detailProspect}
@@ -283,7 +316,7 @@ export function RecentActivityView({ selectedDate: externalDate, searchQuery: ex
   );
 }
 
-// ===== Swipeable activity row — LEFT swipe → call (parity with Calling tab) =====
+// ===== Swipeable activity row — LEFT swipe → call =====
 interface SwipeableActivityRowProps {
   phone: string | null;
   onCall: () => void;
@@ -300,7 +333,6 @@ function SwipeableActivityRow({ phone, onCall, onTap, children }: SwipeableActiv
   const callBtnOpacity = useTransform(x, [-15, -SWIPE_REVEAL * 0.7], [0, 1]);
   const callBtnTranslate = useTransform(x, [0, -SWIPE_REVEAL], [30, 0]);
 
-  // No phone → render children plainly (no swipe affordance)
   if (!phone) return <>{children}</>;
 
   const snapBack = () => {
@@ -318,19 +350,16 @@ function SwipeableActivityRow({ phone, onCall, onTap, children }: SwipeableActiv
         }
       } catch { /* noop */ }
     }
-    // Always snap back to neutral so the row is never stuck off-screen
     snapBack();
   };
 
   return (
     <div className="relative overflow-hidden rounded-lg">
-      {/* Green call surface revealed beneath */}
       <motion.div
         aria-hidden="true"
         style={{ opacity: surfaceOpacity }}
         className="absolute inset-0 rounded-lg bg-green-500/15"
       />
-      {/* Revealed Call icon — vertically centered on the right edge */}
       <motion.div
         aria-hidden="true"
         style={{ opacity: callBtnOpacity, x: callBtnTranslate }}
@@ -342,7 +371,6 @@ function SwipeableActivityRow({ phone, onCall, onTap, children }: SwipeableActiv
           </svg>
         </span>
       </motion.div>
-      {/* Draggable foreground */}
       <motion.div
         drag="x"
         dragConstraints={{ left: -SWIPE_REVEAL * 1.4, right: 0 }}
@@ -359,4 +387,3 @@ function SwipeableActivityRow({ phone, onCall, onTap, children }: SwipeableActiv
     </div>
   );
 }
-
