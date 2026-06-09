@@ -47,6 +47,16 @@ import nevoraLogo from '@/assets/nevorai-call-logo.png';
 export default function Tracking() {
   const navigate = useNavigate();
   const { user, loading: authLoading } = useAuth();
+  const { profile } = useProfile();
+  // Direct-downline count for the Team Tracking entry badge in the header.
+  // Dual-key discovery is identical to the Team Tracking page itself, so the
+  // react-query/state cache is shared and warm by the time the user opens it.
+  const { members: teamMembers } = useLeaderTeamMembers(
+    user?.id,
+    profile?.email,
+    profile?.neverai_id,
+  );
+  const downlineCount = teamMembers?.length ?? 0;
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [showUpdateDrawer, setShowUpdateDrawer] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
