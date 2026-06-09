@@ -22,6 +22,8 @@ interface SavePersonalParams {
   responseTagNames?: string[];
   stageTagNames?: string[];
   silent?: boolean;
+  /** Leader-on-behalf: when set, write the row with user_id=this member. Caller must be a direct upline. */
+  onBehalfOfUserId?: string | null;
 }
 
 export function usePersonalSnapshotV2Write() {
