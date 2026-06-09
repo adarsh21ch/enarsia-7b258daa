@@ -1,7 +1,6 @@
-import { memo, useCallback, useEffect, useRef } from 'react';
-import { createPortal } from 'react-dom';
-import { motion } from 'framer-motion';
+import { memo, useCallback } from 'react';
 import { Star, Check, X } from 'lucide-react';
+import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { ActionBadge } from './StatusBadge';
 import { cn } from '@/lib/utils';
 import { getTagColor } from '@/lib/tagColors';
@@ -29,22 +28,16 @@ interface ResponseTagSheetProps {
   stageTag?: string | null;
   onSelect: (value: ExtendedActionTaken) => void;
   prospectName?: string;
-  /** Title shown at the top of the sheet. Defaults to "Response Tag". */
+  /** Title shown at the top of the dialog. Defaults to "Response Tag". */
   title?: string;
 }
 
 /**
- * Compact anchored tag-picker panel.
+ * Centered tag-picker modal — used everywhere a response / stage tag is
+ * picked (Leads card + table, Funnel card + table, mobile + desktop).
  *
- * Scroll-freeze fix (Apr 2026):
- *  - No AnimatePresence + no full-screen backdrop overlay. Previously the
- *    backdrop lingered during exit animation, blocking touches on the table
- *    below for 1-2s after dismissal. Now the panel unmounts instantly on
- *    close so the table is immediately scrollable.
- *  - Outside-tap dismissal uses a window-level pointerdown listener that
- *    only fires when the panel is open — no DOM overlay required.
- *  - `will-change: transform` keeps the panel composited so the enter
- *    animation doesn't fight with table scroll.
+ * Built on shadcn Dialog so it is ALWAYS centered with a dark backdrop on
+ * every viewport. Never a side panel, never a bottom sheet.
  */
 export const ResponseTagSheet = memo(function ResponseTagSheet({
   open,
@@ -58,37 +51,7 @@ export const ResponseTagSheet = memo(function ResponseTagSheet({
   prospectName,
   title = 'Response Tag',
 }: ResponseTagSheetProps) {
-  const panelRef = useRef<HTMLDivElement | null>(null);
   const { loading: tagsLoading } = useTrackingFormatContext();
-
-  // Close on Escape
-  useEffect(() => {
-    if (!open) return;
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onOpenChange(false);
-    };
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
-  }, [open, onOpenChange]);
-
-  // Outside-tap dismissal — no DOM overlay, so the table below stays
-  // immediately interactive (no scroll freeze after close).
-  useEffect(() => {
-    if (!open) return;
-    const handlePointer = (e: PointerEvent) => {
-      const target = e.target as Node | null;
-      if (panelRef.current && target && panelRef.current.contains(target)) return;
-      onOpenChange(false);
-    };
-    // Defer one tick so the opening tap doesn't immediately close it
-    const id = window.setTimeout(() => {
-      window.addEventListener('pointerdown', handlePointer, true);
-    }, 0);
-    return () => {
-      window.clearTimeout(id);
-      window.removeEventListener('pointerdown', handlePointer, true);
-    };
-  }, [open, onOpenChange]);
 
   const handlePick = useCallback(
     (value: string) => {
@@ -102,7 +65,7 @@ export const ResponseTagSheet = memo(function ResponseTagSheet({
       }
       onOpenChange(false);
     },
-    [currentValue, onSelect, onOpenChange]
+    [currentValue, onSelect, onOpenChange],
   );
 
   const renderRow = (option: string, showStar: boolean, tagType: 'response' | 'stage') => {
@@ -118,7 +81,7 @@ export const ResponseTagSheet = memo(function ResponseTagSheet({
           'min-h-[52px] text-left active:scale-[0.985]',
           isSelected
             ? 'shadow-sm'
-            : 'border-border/50 bg-card/50 hover:bg-muted/50 hover:border-border'
+            : 'border-border/50 bg-card/50 hover:bg-muted/50 hover:border-border',
         )}
         style={
           isSelected
@@ -147,134 +110,100 @@ export const ResponseTagSheet = memo(function ResponseTagSheet({
     );
   };
 
-  // Unmount instantly on close — no exit animation, no lingering overlay.
-  if (!open) return null;
-  if (typeof document === 'undefined') return null;
-
-  return createPortal(
-    <>
-      {/* Soft dimming backdrop — purely visual, pointer-events disabled so the
-          outside-tap listener (above) still drives dismissal without any
-          scroll-freeze risk on the table below. */}
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 0.15 }}
-        className="fixed inset-0 z-40 bg-black/40 backdrop-blur-[2px] pointer-events-none"
-        aria-hidden
-      />
-    <motion.div
-      ref={panelRef}
-      role="dialog"
-      aria-modal="true"
-      aria-label={title}
-      initial={{ opacity: 0, scale: 0.92, y: 8 }}
-      animate={{ opacity: 1, scale: 1, y: 0 }}
-      transition={{ type: 'spring', stiffness: 380, damping: 30 }}
-      style={{ willChange: 'transform' }}
-      className={cn(
-        // Centered iOS-style modal
-        'fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-50 flex flex-col',
-        // Sizing — comfortable on mobile, capped on desktop
-        'w-[88vw] max-w-[360px]',
-        'max-h-[75vh]',
-        // Premium glassy surface
-        'rounded-2xl border border-border/60',
-        'bg-popover/95 backdrop-blur-xl',
-        'shadow-2xl shadow-black/40',
-        'overflow-hidden'
-      )}
-    >
-      {/* Header — compact, with prominent prospect name */}
-      <div className="px-3.5 pt-3 pb-2.5 border-b border-border/40">
-        <div className="min-w-0 space-y-0.5">
-          <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-            {title}
-          </p>
-          {prospectName && (
-            <p className="text-sm text-foreground truncate font-semibold tracking-tight leading-snug">
-              {prospectName}
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent
+        aria-label={title}
+        className={cn(
+          // Centered on every viewport (Radix Dialog handles fixed-center +
+          // dark backdrop + Esc/backdrop dismissal automatically).
+          'p-0 gap-0 overflow-hidden flex flex-col',
+          'w-[calc(100%-32px)] max-w-md max-h-[80vh]',
+          'rounded-2xl border border-border/60 shadow-2xl',
+          'bg-popover/95 backdrop-blur-xl',
+          // Hide default close button — we render our own Cancel footer.
+          '[&>button]:hidden',
+        )}
+      >
+        {/* Header — compact, with prominent prospect name */}
+        <div className="px-3.5 pt-3 pb-2.5 border-b border-border/40 shrink-0">
+          <div className="min-w-0 space-y-0.5">
+            <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+              {title}
             </p>
+            {prospectName && (
+              <p className="text-sm text-foreground truncate font-semibold tracking-tight leading-snug">
+                {prospectName}
+              </p>
+            )}
+          </div>
+        </div>
+
+        {/* Scrollable body */}
+        <div className="flex-1 overflow-y-auto px-3 py-3 space-y-3">
+          {tagsLoading && trackingOptions.length === 0 && nonTrackingOptions.length === 0 ? (
+            <div className="space-y-2 py-1">
+              {[0, 1, 2, 3, 4].map((i) => (
+                <div key={i} className="h-[52px] rounded-xl bg-muted/40 animate-pulse" />
+              ))}
+            </div>
+          ) : (
+            <>
+              {trackingOptions.length > 0 && (
+                <div className="space-y-1.5">
+                  <p className="text-[9px] font-semibold uppercase tracking-wider text-muted-foreground/70 px-1">
+                    Tracking (analytics)
+                  </p>
+                  <div className="space-y-1">
+                    {trackingOptions.map((opt) => {
+                      const showStar =
+                        stageTag === opt ||
+                        (finalTargetTag === opt && finalTargetTag !== stageTag);
+                      return renderRow(opt, showStar, 'response');
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {nonTrackingOptions.length > 0 && (
+                <div className="space-y-1.5">
+                  <p className="text-[9px] font-semibold uppercase tracking-wider text-muted-foreground/70 px-1">
+                    Personal (not counted)
+                  </p>
+                  <div className="space-y-1">
+                    {nonTrackingOptions.map((opt) => renderRow(opt, false, 'response'))}
+                  </div>
+                </div>
+              )}
+
+              {trackingOptions.length === 0 && nonTrackingOptions.length === 0 && (
+                <div className="py-6 text-center text-xs text-muted-foreground">
+                  No response tags configured yet.
+                </div>
+              )}
+            </>
           )}
         </div>
-      </div>
 
-      {/* Scrollable body */}
-      <div className="flex-1 overflow-y-auto px-3 py-3 space-y-3">
-        {/* Loading skeleton — shown while tracking format is still being fetched.
-            Prevents the misleading "No response tags configured yet." flash on
-            the very first open (e.g. right after login or after a long idle). */}
-        {tagsLoading && trackingOptions.length === 0 && nonTrackingOptions.length === 0 ? (
-          <div className="space-y-2 py-1">
-            {[0, 1, 2, 3, 4].map((i) => (
-              <div
-                key={i}
-                className="h-[52px] rounded-xl bg-muted/40 animate-pulse"
-              />
-            ))}
-          </div>
-        ) : (
-          <>
-            {/* Tracking tags */}
-            {trackingOptions.length > 0 && (
-              <div className="space-y-1.5">
-                <p className="text-[9px] font-semibold uppercase tracking-wider text-muted-foreground/70 px-1">
-                  Tracking (analytics)
-                </p>
-                <div className="space-y-1">
-                  {trackingOptions.map((opt) => {
-                    const showStar =
-                      stageTag === opt ||
-                      (finalTargetTag === opt && finalTargetTag !== stageTag);
-                    return renderRow(opt, showStar, 'response');
-                  })}
-                </div>
-              </div>
+        {/* Sticky Cancel footer — large tap target */}
+        <div className="border-t border-border/40 p-2.5 bg-popover/95 backdrop-blur-xl shrink-0">
+          <button
+            type="button"
+            onClick={() => onOpenChange(false)}
+            className={cn(
+              'w-full flex items-center justify-center gap-1.5',
+              'min-h-[44px] rounded-xl',
+              'bg-muted/60 hover:bg-muted active:scale-[0.98]',
+              'text-sm font-semibold text-foreground',
+              'border border-border/60',
+              'transition-all duration-150',
             )}
-
-            {/* Personal tags */}
-            {nonTrackingOptions.length > 0 && (
-              <div className="space-y-1.5">
-                <p className="text-[9px] font-semibold uppercase tracking-wider text-muted-foreground/70 px-1">
-                  Personal (not counted)
-                </p>
-                <div className="space-y-1">
-                  {nonTrackingOptions.map((opt) => renderRow(opt, false, 'response'))}
-                </div>
-              </div>
-            )}
-
-            {/* Empty state — only shown after loading completes with no tags */}
-            {trackingOptions.length === 0 && nonTrackingOptions.length === 0 && (
-              <div className="py-6 text-center text-xs text-muted-foreground">
-                No response tags configured yet.
-              </div>
-            )}
-          </>
-        )}
-      </div>
-
-
-      {/* Sticky Cancel footer — large tap target for easy thumb access */}
-      <div className="border-t border-border/40 p-2.5 bg-popover/95 backdrop-blur-xl">
-        <button
-          type="button"
-          onClick={() => onOpenChange(false)}
-          className={cn(
-            'w-full flex items-center justify-center gap-1.5',
-            'min-h-[44px] rounded-xl',
-            'bg-muted/60 hover:bg-muted active:scale-[0.98]',
-            'text-sm font-semibold text-foreground',
-            'border border-border/60',
-            'transition-all duration-150'
-          )}
-        >
-          <X className="h-4 w-4" />
-          <span>Cancel</span>
-        </button>
-      </div>
-    </motion.div>
-    </>,
-    document.body
+          >
+            <X className="h-4 w-4" />
+            <span>Cancel</span>
+          </button>
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 });
