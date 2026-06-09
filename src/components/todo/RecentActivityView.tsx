@@ -9,7 +9,7 @@ import { useCalendarStrip } from '@/hooks/useCalendarStrip';
 import { CalendarStrip } from '@/components/calendar/CalendarStrip';
 import { SearchBar } from '@/components/ui/SearchBar';
 import { Clock, Loader2, Phone } from 'lucide-react';
-import { parseISO, format, isSameDay, isToday, isYesterday, differenceInCalendarDays, startOfDay } from 'date-fns';
+import { parseISO, format, isSameDay, isToday, isYesterday, differenceInCalendarDays, startOfDay, startOfMonth, endOfMonth, isSameMonth } from 'date-fns';
 import { logCallMade } from '@/lib/callLog';
 import { ProspectDetailModal } from '@/components/prospects/ProspectDetailModal';
 
