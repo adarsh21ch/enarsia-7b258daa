@@ -40,6 +40,7 @@ import { AIAssistantChat } from '@/components/ai/AIAssistantChat';
 import { InstallInstructionsSheet } from '@/components/pwa/InstallPromptBanner';
 import { AppNotificationsSheet } from '@/components/profile/AppNotificationsSheet';
 import { ThemeSettings } from '@/components/profile/ThemeSettings';
+import { WhatsAppAccountRow } from '@/components/profile/WhatsAppAccountRow';
 import { useFeatureAccess } from '@/hooks/useFeatureAccess';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
@@ -610,6 +611,9 @@ export default function Profile() {
             </div>
             <ChevronRight className="h-3.5 w-3.5 text-muted-foreground" />
           </button>
+
+          {/* WhatsApp Account */}
+          <WhatsAppAccountRow />
 
           {/* Recently Deleted */}
           <RecentlyDeletedRow />

@@ -12,3 +12,6 @@ export function buildWhatsAppLink(phone: string, message?: string): string {
   if (message) url += `?text=${encodeURIComponent(message)}`;
   return url;
 }
+
+// Re-export the preference-aware opener so existing imports can switch easily.
+export { requestOpenWhatsApp } from './whatsappPreference';

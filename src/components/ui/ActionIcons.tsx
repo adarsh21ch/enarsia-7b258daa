@@ -2,6 +2,7 @@
 // These match the Activity tab card design
 
 import { cn } from '@/lib/utils';
+import { requestOpenWhatsApp } from '@/lib/whatsappPreference';
 
 interface IconButtonProps {
   onClick: () => void;
@@ -84,8 +85,7 @@ export function WhatsAppButton({ phone, onClick, className, size = 'md' }: Whats
   const handleClick = (e: React.MouseEvent) => {
     e.stopPropagation();
     onClick?.(e);
-    // Use whatsapp:// protocol to open native app directly
-    window.location.href = `whatsapp://send?phone=${phone}`;
+    requestOpenWhatsApp(phone);
   };
 
   return (
@@ -128,8 +128,7 @@ export function WhatsAppIconButton({ phone, onClick, className }: { phone: strin
   const handleClick = (e: React.MouseEvent) => {
     e.stopPropagation();
     onClick?.(e);
-    // Use whatsapp:// protocol to open native app directly
-    window.location.href = `whatsapp://send?phone=${phone}`;
+    requestOpenWhatsApp(phone);
   };
 
   return (
