@@ -361,6 +361,17 @@ export default function TeamTracking() {
             <ViewSelector viewMode={viewMode} options={viewModeOptions} onViewModeChange={setViewMode} />
           </div>
 
+          <div className="mb-3 grid grid-cols-1 gap-2 md:grid-cols-2">
+            <CallingTrackingBox
+              kpi={kpiData}
+              responseTagNames={responseTagNames}
+            />
+            <FilterTrackingBox
+              kpi={kpiData}
+              stageTagNames={computedStageNames}
+            />
+          </div>
+
           <div className="mb-3">
             <CollapsibleKPI
               kpi={kpiData}
