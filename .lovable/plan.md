@@ -1,59 +1,84 @@
-# Port Team Tracking → Enarsia (1:1 parity)
-
 ## Goal
-Make the website's `/trackup` dashboard available natively inside Enarsia at `/team-tracking`, reading/writing the same Lovable Cloud backend (`personal_snapshot_v2`, `team_snapshot_v2`, `team_access`, `leader_levels`, `leader_member_aliases`, `profiles`, `prospects`, `inbox_messages`, `funnel_configs`, etc.). Replace the existing external "Team Tracking" button in the Tracking page header with an internal link.
 
-## What's already in Enarsia (reuse as-is)
-- Backend tables (shared project `kisankusogixarejjphi`).
-- Hooks: `useSnapshotV2ComputedData`, `useTrackingModes`, `useTrackingSourcePreferences`, `useTeamAccess`, `useFunnelConfig`, `useLeaderLevels`, `useMemberAliases`, `useProfile`, `useSubscription`, `useAdmin`, `useInbox`, `useProspectsQuery`, `useTodos`, `useDailyTasks`.
-- Components: `TeamMemberSelector`, `TeamBar`, `TeamToggle`, `InboxDrawer`, follow-up / calling / todo / profile / forms / recent-activity / admin tabs.
+1. Demo leads behave like a real, deletable sheet — not mixed into "All".
+2. Demo leads light up the same surfaces real leads do (Follow-up activity, Tracking numbers).
+3. Kill the "Response Tag picker shows empty + can't close" bug that appears after ~30–40 min of use.
 
-## What needs porting from website (`NevorAI Website`)
-All under `src/components/trackup-dashboard/`:
-- Layout shell: `TrackUpSidebar`, `MobileDrawerSidebar`, `TrackUpStatusCard`, `TrackingViewToggle`, `TrackingOverflowMenu`, `LevelFilterDropdown`, `FloatingUpdateButton`, `PaywallModal`, `LockedFeatureCard`, `MemberLevelBadge`, `MemberListPanel`, `TeamExplorer`.
-- Team-data views (the core of "Team Tracking"): `LeadsTrackingView`, `StageTrackingView`, `ExcelSummaryTables`, `CallingTrackingBox`, `CallingTrackingTable`, `FilterTrackingBox`, `FilterTrackingTable`, `StageFinalSummary`, `DateWiseLeadsTable`, `CompareColumns`, `DateFilter`, `EyeViewSheet`.
-- Tab wrappers reused inside dashboard: `ActionsTrackingTab`, `ActivityStatusTab`, `CompulsoryActionsLeaderTab`, `CompulsoryActionsMemberTab`, `CompulsoryActionsSheet`, `SendMessageTab`, `SendMessageButton`, `QuickUpdateForm`, `ManualUpdateModal`, `UpdateTrackingButton`, `InboxBell`, `InboxPanel`, `AIChat`, `LeaderTrackingFormat` (website's version), `ContactButtons`, `AdminUsersTab`, `UpgradeTab`, `ProfileTab`, `FollowUpListTab`, `CallingTab`, `TodoListTab`, `TodoListTabWithDailyTasks`, `RecentActivityTab`.
-- Page: `src/pages/TrackUpDashboard.tsx` → becomes `src/pages/TeamTracking.tsx`.
-- Hooks not in Enarsia: `useTrackUpData`, `useProspectsCache`, `useTeamSnapshotV2Read`, `useTeamSnapshotV2Write`, `useViewedMemberTeam`, `useAutoSnapshotSync`, `useLevelFilterPreference`.
+---
 
-## Approach
-Two-pass copy + adapt — do NOT touch backend (shared schema already supports everything).
+## 1) Demo leads as a real, isolated sheet
 
-### Pass 1 — wholesale copy
-Use `cross_project--read_project_file` on each file above and recreate inside Enarsia at the same relative paths:
-- `src/pages/TeamTracking.tsx`
-- `src/components/trackup-dashboard/*` (entire folder)
-- `src/hooks/useTrackUpData.ts`, `useProspectsCache.ts`, `useTeamSnapshotV2Read.ts`, `useTeamSnapshotV2Write.ts`, `useViewedMemberTeam.ts`, `useAutoSnapshotSync.ts`, `useLevelFilterPreference.ts`.
+Today the seeder already creates a `Demo Leads` sheet with `is_demo=true`, but those prospects also appear under **All**. The user wants them visible **only** when the user opens the Demo Leads sheet.
 
-### Pass 2 — rewire to Enarsia conventions
-Search-replace across the copied files:
-- `@/contexts/AppAuthContext` (`useAppAuth`) → `@/contexts/AuthContext` (`useAuth`). Map `profile`/`loading`/`signOut` to Enarsia equivalents (load profile via `useProfile`).
-- `@/integrations/app-supabase/client` (`appSupabase`, `AppProspect`, `AppProfile`, `FunnelConfig`, etc.) → `@/integrations/supabase/client` (`supabase`) and Enarsia types in `src/types/prospect.ts` / `src/integrations/supabase/types.ts`.
-- `useProAccess` / `useAppSubscription` / `tierUtils` → Enarsia's `useSubscription` + `src/config/tierLabels.ts` + `src/lib/planUtils.ts`. Keep paywall gating but feed it through `useFeatureAccess` + `admin_feature_flags` (project standard).
-- `useAdminAccess` → Enarsia's `useAdmin` (still gated by hardcoded `teamnevorai@gmail.com`).
-- Forms tab: website imports `@/components/forms` (`FormsListTab`). Use Enarsia's `src/features/forms/components/FormsListTab.tsx`.
-- Auth redirect: send to `/auth` (Enarsia route).
-- Brand strings: any "Nevorai App"/"NevorAI" labels → "Enarsia"; logo → `src/assets/nevorai-call-logo.png`.
-- Remove the website-only `TRACKUP_PAYWALL_ENABLED` config import; replace with `useFeatureAccess('team_tracking')` (add flag to `admin_feature_flags` if missing — but no schema change needed, just a row insert via migration).
+### Frontend (`src/hooks/useProspectsQuery.ts`)
+- In both the KPI query (around line 60) and the infinite-scroll query (around line 131), when `sheetId` is `null` (i.e. "All" view), add `query.eq('is_demo', false)`.
+- When a specific `sheetId` is selected (including the Demo Leads sheet), do not filter — they show normally.
+- Net effect: demo leads only appear inside the Demo Leads sheet tab, and disappear from "All" automatically once the user deletes that sheet.
 
-### Pass 3 — entry point
-- Add `<Route path="/team-tracking" element={<TeamTracking />} />` in `src/App.tsx` behind the auth-protected layout.
-- In `src/pages/Tracking.tsx` change the header "Team Tracking" button: replace `window.open(NEVORAI_WEBSITE_URL + '/trackup')` with `navigate('/team-tracking')` and drop the `ExternalLink` icon for `Users`/`BarChart3`.
-- (Optional) Add a bottom-nav / profile menu entry to `/team-tracking` for discoverability — confirm before adding.
+Tagging, calling, WhatsApp, Response Tag, Stage Tag, edit, delete already work on demo rows (no `is_demo` gating in the row components) — once they're in their own sheet the user will be able to use every feature on them exactly like real leads. No row-level code changes needed.
 
-### Pass 4 — verification
-- Build passes; route loads without console errors.
-- Sidebar shows the signed-in user's downline (data already exists in shared `team_access` / `personal_snapshot_v2`).
-- Selecting a member renders Leads + Stage + Excel summary tables with the same numbers as the website.
-- Quick-update / Manual-update writes land in `personal_snapshot_v2` and aggregate into `team_snapshot_v2` (cross-checked via `supabase--read_query`).
-- Confirm reading the same row in both apps shows identical numbers (sanity check that the shared backend is wired correctly).
+---
 
-## Technical notes (for reference)
-- Source page is 1,569 lines and pulls ~50 components + ~15 hooks. Plan on a multi-file copy job (~60 files). Most logic is presentational over the snapshot V2 tables, so the adapter surface is small (auth + supabase client + tier check).
-- No backend migrations required — shared schema already has every table/RLS policy the website uses. The only optional DB change is inserting a `team_tracking` row into `admin_feature_flags` so we can gate visibility centrally.
-- Keep the website code as the upstream reference; do not delete files there. If/when the website's version evolves, re-run Pass 1 for the changed files only.
+## 2) Demo data shows up in Follow-up + Tracking
+
+The seed function (`public.seed_demo_data_for_user`) already inserts `activity_logs` rows (so Recent Activity will populate), but it does **not** populate the tracking snapshot for today, which is why the Tracking tab looks empty until the user manually tags a real lead.
+
+### Migration — extend `seed_demo_data_for_user`
+After the existing prospect loop, compute today's tag counts from the just-inserted demo prospects and insert one row into `personal_snapshot_v2` for the current IST day with `source='APPLICATION'`:
+
+```sql
+-- Pseudocode inside the function, after the FOR loop:
+INSERT INTO public.personal_snapshot_v2 (
+  user_id, snapshot_date, source,
+  total_leads, total_responses,
+  response_tags, stage_tags
+)
+SELECT
+  p_user_id,
+  (date_trunc('day', now() AT TIME ZONE 'Asia/Kolkata'))::date,
+  'APPLICATION',
+  count(*) FILTER (WHERE p.is_demo),
+  count(*) FILTER (WHERE p.action_taken IS NOT NULL),
+  jsonb_object_agg(...response counts...),
+  jsonb_object_agg(...stage counts...)
+FROM public.prospects p
+WHERE p.user_id = p_user_id AND p.is_demo = true
+ON CONFLICT (user_id, snapshot_date, source) DO UPDATE SET ...;
+```
+
+Also add the same row to `total_snapshot_v2` so the user's Tracking tab shows numbers immediately, with the exact totals that match the seeded demo data.
+
+To-Do tab: the seeder already inserts the default daily tasks and a placeholder To-Do — that's fine, no change.
+
+---
+
+## 3) Response Tag picker goes blank / unclosable after ~30–40 min
+
+Root cause: `useTrackingFormat` is a hand-rolled hook (not react-query). It loads once on mount. If the auth session refresh or the realtime subscription drops in the background, the `loadTrackingFormat` call can silently fail and the in-memory `trackingFormat` becomes `null` while `loading=false`. The picker then renders no rows and the empty-state path doesn't crash but feels stuck.
+
+### Frontend (`src/hooks/useTrackingFormat.ts`)
+- On `loadTrackingFormat` failure, **fall back to the cached format** (`getCachedTrackingFormat(user.id)`) instead of leaving state empty.
+- Add a `visibilitychange` + `focus` listener that calls `loadTrackingFormat()` when the tab regains focus and the last fetch was > 60s ago.
+- Track the last successful fetch timestamp in a ref; expose it to skip redundant refetches.
+
+### Frontend (`src/components/prospects/ResponseTagSheet.tsx`)
+- If the dialog opens and both `trackingOptions` and `nonTrackingOptions` are empty (no cached tags either), trigger `refreshFormat()` from `useTrackingFormatContext` once on open so the user never sees a permanently empty picker.
+- Keep the existing Cancel footer + backdrop close paths; the picker is already a centered Dialog so dismiss works even when content is empty.
+
+---
+
+## Files touched
+
+- `src/hooks/useProspectsQuery.ts` — hide `is_demo` from All view.
+- `src/hooks/useTrackingFormat.ts` — cache-fallback + focus refetch.
+- `src/components/prospects/ResponseTagSheet.tsx` — auto-refresh on empty open.
+- New migration extending `public.seed_demo_data_for_user` to also seed `personal_snapshot_v2` + `total_snapshot_v2` for the seeding day.
+
+No changes to tag save logic, dialog centering, RLS, or unrelated tabs.
+
+---
 
 ## Out of scope
-- Any change to backend schema, RLS, or edge functions.
-- Removing the website's `/trackup` page (already hidden from website nav per your note).
-- Visual redesign — porting at 1:1 parity first; restyling can be a follow-up.
+
+- Backfilling tracking snapshots for users who were seeded before this change (they can re-trigger seed by deleting demo and clearing `demo_data_created`, but that's a separate admin task).
+- Re-skinning the Demo Leads sheet badge (already shows a DEMO chip).
