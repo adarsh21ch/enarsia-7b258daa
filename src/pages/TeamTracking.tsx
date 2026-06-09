@@ -453,17 +453,22 @@ export default function TeamTracking() {
                     <p className="truncate text-[11px] text-muted-foreground">{headerSubtitle}</p>
                   </div>
                 </div>
-                <div className="flex flex-shrink-0 items-center gap-1">
+              </div>
+
+              {/* Action toolbar — moved out of title row so mobile has room and scrolls */}
+              <div className="mt-2 -mx-3 px-3 overflow-x-auto scrollbar-hide">
+                <div className="flex items-center gap-1 w-max">
                   <Tooltip>
                     <TooltipTrigger asChild>
                       <Button
                         variant="outline"
                         size="sm"
-                        className="relative h-8 px-2"
+                        className="relative h-8 px-2 flex-shrink-0"
                         onClick={() => setInboxOpen(true)}
                         aria-label="Inbox"
                       >
                         <Bell className="h-3.5 w-3.5 text-primary" />
+                        <span className="ml-1.5 text-xs">Inbox</span>
                         {unreadCount > 0 && (
                           <span className="absolute -top-1 -right-1 min-w-[16px] h-[16px] flex items-center justify-center rounded-full bg-destructive text-destructive-foreground text-[9px] font-bold px-1">
                             {unreadCount > 99 ? '99+' : unreadCount}
@@ -507,7 +512,6 @@ export default function TeamTracking() {
                   />
                 </div>
               </div>
-
 
               {selected.kind === 'member' && (
                 <div className="mt-2 flex gap-1 rounded-lg bg-muted p-0.5">
