@@ -660,6 +660,21 @@ export default function TeamTracking() {
           members={members}
           levels={levels}
         />
+
+        <InboxDrawer open={inboxOpen} onOpenChange={setInboxOpen} />
+
+        <SendMessageDrawer
+          open={sendOpen}
+          onOpenChange={setSendOpen}
+          membersOverride={members.map(m => ({
+            user_id: m.user_id,
+            display_name: m.display_name,
+            level_id: m.level_id,
+            level_position: m.level_position,
+          }))}
+          levelsOverride={levels.map(l => ({ id: l.id, position: l.position, label: l.label }))}
+          preselectedMemberId={selected.kind === 'member' ? selected.userId : null}
+        />
       </div>
     </TooltipProvider>
   );
