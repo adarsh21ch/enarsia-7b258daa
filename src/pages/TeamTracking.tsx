@@ -428,6 +428,13 @@ export default function TeamTracking() {
           onClick={() => setSidebarOpen(false)}
         />
       )}
+
+      <EyeViewSheet
+        open={eyeViewOpen}
+        onOpenChange={setEyeViewOpen}
+        rootLeaderUserId={user.id}
+        rootLeaderName={profile?.display_name || 'You'}
+      />
     </div>
   );
 }
