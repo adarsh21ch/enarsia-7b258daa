@@ -481,6 +481,16 @@ export default function TeamTracking() {
                     />
                   )}
                   <HeaderButton
+                    icon={<Zap className="h-3.5 w-3.5 text-amber-500" />}
+                    label="Quick"
+                    onClick={() => setQuickUpdateOpen(true)}
+                  />
+                  <HeaderButton
+                    icon={<Edit3 className="h-3.5 w-3.5 text-violet-500" />}
+                    label="Update"
+                    onClick={() => setManualUpdateOpen(true)}
+                  />
+                  <HeaderButton
                     icon={<ListChecks className="h-3.5 w-3.5 text-amber-500" />}
                     label="Checklist"
                     onClick={() => setCompulsoryOpen(true)}
