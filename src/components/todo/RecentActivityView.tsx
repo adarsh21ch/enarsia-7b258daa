@@ -9,7 +9,7 @@ import { useCalendarStrip } from '@/hooks/useCalendarStrip';
 import { CalendarStrip } from '@/components/calendar/CalendarStrip';
 import { SearchBar } from '@/components/ui/SearchBar';
 import { Clock, Loader2, Phone } from 'lucide-react';
-import { parseISO, format, isSameDay, isToday, isYesterday, differenceInCalendarDays, startOfDay } from 'date-fns';
+import { parseISO, format, isSameDay, isToday, isYesterday, differenceInCalendarDays, startOfDay, startOfMonth, endOfMonth, isSameMonth } from 'date-fns';
 import { logCallMade } from '@/lib/callLog';
 import { ProspectDetailModal } from '@/components/prospects/ProspectDetailModal';
 
@@ -48,6 +48,8 @@ function formatDayHeader(date: Date): string {
 
 export function RecentActivityView({ selectedDate: externalDate, searchQuery: externalSearch, onSearchChange: externalOnSearchChange, hideCalendar = false }: RecentActivityViewProps) {
   const [internalSearch, setInternalSearch] = useState('');
+  // currentMonth from calendar drives the month-filter window
+  
   const [detailProspectId, setDetailProspectId] = useState<string | null>(null);
   const calendar = useCalendarStrip();
   const { updateProspect, deleteProspect } = useGlobalProspects();
@@ -116,16 +118,23 @@ export function RecentActivityView({ selectedDate: externalDate, searchQuery: ex
       time: new Date(t.updated_at),
     }));
 
-    let list: ActivityItem[] = [...prospectActivities, ...importEntries, ...callEntries, ...todoActivities].sort(
-      (a, b) => b.time.getTime() - a.time.getTime()
-    );
+    // Restrict to currently-viewed month (network marketers think month-by-month)
+    const monthStart = startOfMonth(calendar.currentMonth).getTime();
+    const monthEnd = endOfMonth(calendar.currentMonth).getTime();
+
+    let list: ActivityItem[] = [...prospectActivities, ...importEntries, ...callEntries, ...todoActivities]
+      .filter(a => {
+        const t = a.time.getTime();
+        return t >= monthStart && t <= monthEnd;
+      })
+      .sort((a, b) => b.time.getTime() - a.time.getTime());
 
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase();
       list = list.filter(a => a.name.toLowerCase().includes(q) || (a.phone && a.phone.includes(q)));
     }
     return list;
-  }, [prospects, todos, activityLogs, searchQuery]);
+  }, [prospects, todos, activityLogs, searchQuery, calendar.currentMonth]);
 
   // Group by day (descending)
   const groupedActivities = useMemo(() => {
@@ -204,12 +213,14 @@ export function RecentActivityView({ selectedDate: externalDate, searchQuery: ex
       />
 
       <div className="bg-card rounded-xl p-3 border border-border/50">
-        <div className="flex items-center gap-2 mb-3">
-          <Clock className="h-4 w-4 text-primary" />
-          <div>
-            <h3 className="font-medium text-sm">Recents</h3>
-            <p className="text-xs text-muted-foreground">{allActivities.length} activities</p>
+        <div className="flex items-center justify-between gap-2 mb-2">
+          <div className="flex items-center gap-1.5">
+            <Clock className="h-3.5 w-3.5 text-primary" />
+            <h3 className="font-medium text-xs">Recents</h3>
           </div>
+          <span className="text-[10px] text-muted-foreground tabular-nums">
+            {allActivities.length} {allActivities.length === 1 ? 'activity' : 'activities'} · {format(calendar.currentMonth, 'MMM yyyy')}
+          </span>
         </div>
 
         {groupedActivities.length === 0 ? (
