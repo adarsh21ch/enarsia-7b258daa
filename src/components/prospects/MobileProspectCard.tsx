@@ -13,6 +13,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Phone, Trash2, Calendar as CalendarIcon, ChevronDown, MapPin, Target, X } from 'lucide-react';
 import { WhatsAppIcon } from '@/components/ui/ActionIcons';
 import { format, parseISO, formatDistanceToNow } from 'date-fns';
+import { logCallMade } from '@/lib/callLog';
 import { cn } from '@/lib/utils';
 import { useActivityLogs } from '@/hooks/useActivityLogs';
 import { useCustomOptionsContext } from '@/contexts/CustomOptionsContext';
@@ -124,8 +125,9 @@ const [localData, setLocalData] = useState({
     e.preventDefault();
     e.stopPropagation();
     onMarkLastContacted?.();
+    logCallMade({ prospectId: prospect.id, name: prospect.name, phone: prospect.phone });
     window.open(`tel:${cleanPhoneNumber(prospect.phone)}`, '_self');
-  }, [prospect.phone, onMarkLastContacted]);
+  }, [prospect.id, prospect.name, prospect.phone, onMarkLastContacted]);
 
   const handleDelete = async () => {
     setIsDeleting(true);

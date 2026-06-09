@@ -41,6 +41,7 @@ import {
 import { WhatsAppIcon } from '@/components/ui/ActionIcons';
 import { format, parseISO, formatDistanceToNow } from 'date-fns';
 import { toast } from 'sonner';
+import { logCallMade } from '@/lib/callLog';
 import { cn } from '@/lib/utils';
 import { useTrackingTags } from '@/hooks/useTrackingTags';
 import { useIsMobile } from '@/hooks/use-mobile';
@@ -328,6 +329,7 @@ function ProspectDetailBody({
         <div className="grid grid-cols-3 gap-2">
           <a
             href={`tel:${phone}`}
+            onClick={() => logCallMade({ prospectId: prospect.id, name: prospect.name, phone: prospect.phone })}
             className="flex flex-col items-center justify-center gap-1 py-3 rounded-xl bg-muted/40 hover:bg-muted/60 transition-colors active:scale-[0.97]"
           >
             <Phone className="h-5 w-5 text-accent" />

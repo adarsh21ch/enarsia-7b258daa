@@ -11,6 +11,7 @@ import { X, Phone, ChevronDown, Instagram, Clock, Trash2, MessageSquareText, Mai
 import { WhatsAppIcon } from '@/components/ui/ActionIcons';
 import { formatDistanceToNow, parseISO, format } from 'date-fns';
 import { toast } from 'sonner';
+import { logCallMade } from '@/lib/callLog';
 import { cn } from '@/lib/utils';
 import { useTrackingTags } from '@/hooks/useTrackingTags';
 
@@ -157,6 +158,7 @@ const [localData, setLocalData] = useState<Partial<Prospect>>({});
     e.preventDefault();
     e.stopPropagation();
     const cleanPhone = cleanPhoneNumber(prospect.phone);
+    logCallMade({ prospectId: prospect.id, name: prospect.name, phone: prospect.phone });
     window.open(`tel:${cleanPhone}`, '_self');
   };
 

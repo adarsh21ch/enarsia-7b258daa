@@ -9,6 +9,7 @@ import { CalendarStrip } from '@/components/calendar/CalendarStrip';
 import { SearchBar } from '@/components/ui/SearchBar';
 import { Clock, Loader2, Phone, X } from 'lucide-react';
 import { parseISO, format, isSameDay } from 'date-fns';
+import { logCallMade } from '@/lib/callLog';
 
 // Light haptic helper (mobile only)
 const haptic = (ms = 8) => {
@@ -24,7 +25,7 @@ const WhatsAppIcon = ({ className }: { className?: string }) => (
 
 type ActivityItem = {
   id: string;
-  type: 'lead' | 'import' | 'todo';
+  type: 'lead' | 'import' | 'todo' | 'call';
   name: string;
   phone: string | null;
   stage: string | null;
@@ -59,7 +60,7 @@ export function RecentActivityView({ selectedDate: externalDate, searchQuery: ex
 
   // Get personal activities for the selected date
   const activities = useMemo<ActivityItem[]>(() => {
-    // Get bulk import entries from activity_logs for the selected date
+    // Bulk import entries
     const importEntries = activityLogs
       .filter(log => log.activity_type === 'bulk_import' && isSameDay(parseISO(log.created_at), selectedDate))
       .map(log => ({
@@ -72,10 +73,22 @@ export function RecentActivityView({ selectedDate: externalDate, searchQuery: ex
         time: new Date(log.created_at)
       }));
 
+    // Outbound call entries (iPhone-Recents style)
+    const callEntries = activityLogs
+      .filter(log => log.activity_type === 'call_made' && isSameDay(parseISO(log.created_at), selectedDate))
+      .map(log => ({
+        id: log.id,
+        type: 'call' as const,
+        name: log.description || 'Call',
+        phone: log.new_value || null,
+        stage: null as string | null,
+        action: null as string | null,
+        time: new Date(log.created_at)
+      }));
+
     // For prospects, only show those that were genuinely updated (not just created)
     const dayProspects = prospects.filter(p => {
       if (!isSameDay(parseISO(p.updated_at), selectedDate)) return false;
-      // Exclude freshly imported/created leads (updated_at ≈ date_added)
       const addedTime = new Date(p.date_added).getTime();
       const updatedTime = new Date(p.updated_at).getTime();
       return Math.abs(updatedTime - addedTime) > 5000;
@@ -103,7 +116,7 @@ export function RecentActivityView({ selectedDate: externalDate, searchQuery: ex
         time: new Date(t.updated_at)
       }));
 
-    let activitiesList: ActivityItem[] = [...prospectActivities, ...importEntries, ...todoActivities].sort(
+    let activitiesList: ActivityItem[] = [...prospectActivities, ...importEntries, ...callEntries, ...todoActivities].sort(
       (a, b) => b.time.getTime() - a.time.getTime()
     );
 
@@ -122,7 +135,8 @@ export function RecentActivityView({ selectedDate: externalDate, searchQuery: ex
     window.open(`https://wa.me/${cleanPhoneNumber(phone)}`, '_blank');
   }, []);
   
-  const handleCall = useCallback((phone: string) => {
+  const handleCall = useCallback((phone: string, name?: string) => {
+    logCallMade({ name: name || 'Call', phone });
     window.open(`tel:${cleanPhoneNumber(phone)}`, '_self');
   }, []);
 
@@ -209,28 +223,40 @@ export function RecentActivityView({ selectedDate: externalDate, searchQuery: ex
                     ) : (
                       <SwipeableActivityRow
                         phone={activity.phone}
-                        onCall={() => activity.phone && handleCall(activity.phone)}
+                        onCall={() => activity.phone && handleCall(activity.phone, activity.name)}
                         onTap={() => handleRowTap(activity)}
                       >
                         <div className="flex items-start justify-between gap-2 p-3 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors cursor-pointer select-none">
-                          <div className="min-w-0 flex-1">
-                            <p className="text-sm font-semibold truncate">{activity.name}</p>
-                            <div className="flex items-center gap-1.5 flex-wrap mt-1.5">
-                              {activity.stage && (
-                                <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-primary/10 text-primary">
-                                  {activity.stage}
-                                </span>
-                              )}
-                              {activity.action && (
-                                <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-muted text-muted-foreground">
-                                  {activity.action}
-                                </span>
-                              )}
-                              {activity.type === 'todo' && (
-                                <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-blue-500/10 text-blue-600">
-                                  To-Do
-                                </span>
-                              )}
+                          <div className="min-w-0 flex-1 flex items-start gap-2">
+                            {activity.type === 'call' && (
+                              <span className="shrink-0 mt-0.5 h-6 w-6 rounded-full bg-green-500/15 text-green-600 flex items-center justify-center">
+                                <Phone className="h-3 w-3" />
+                              </span>
+                            )}
+                            <div className="min-w-0 flex-1">
+                              <p className="text-sm font-semibold truncate">{activity.name}</p>
+                              <div className="flex items-center gap-1.5 flex-wrap mt-1.5">
+                                {activity.type === 'call' && activity.phone && (
+                                  <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-green-500/10 text-green-600 font-medium">
+                                    Called · {activity.phone}
+                                  </span>
+                                )}
+                                {activity.stage && (
+                                  <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-primary/10 text-primary">
+                                    {activity.stage}
+                                  </span>
+                                )}
+                                {activity.action && (
+                                  <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-muted text-muted-foreground">
+                                    {activity.action}
+                                  </span>
+                                )}
+                                {activity.type === 'todo' && (
+                                  <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-blue-500/10 text-blue-600">
+                                    To-Do
+                                  </span>
+                                )}
+                              </div>
                             </div>
                           </div>
                         </div>
@@ -324,7 +350,7 @@ export function RecentActivityView({ selectedDate: externalDate, searchQuery: ex
                     onClick={(e) => {
                       e.preventDefault();
                       haptic(10);
-                      handleCall(selectedActivity.phone!);
+                      handleCall(selectedActivity.phone!, selectedActivity.name);
                     }}
                     className="flex flex-1 items-center justify-center gap-2 rounded-2xl bg-primary py-3.5 min-h-[52px] text-primary-foreground font-semibold text-[15px] shadow-[0_8px_20px_-8px_hsl(var(--primary)/0.55)] active:scale-[0.97] active:opacity-90 transition-all"
                   >
