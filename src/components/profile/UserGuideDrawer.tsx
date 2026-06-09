@@ -383,24 +383,26 @@ const GUIDE_SECTIONS: GuideSection[] = [
         <h4 className="font-medium text-sm">How to Access</h4>
         <StepList
           steps={[
-            'Go to Profile tab',
-            'Find "Team Tracking Dashboard" button',
-            'Tap to open the dashboard in your browser',
-            'You\'ll be automatically logged in',
+            'Open the Team Tracking page from your profile menu',
+            'Pick a downline member from the sidebar',
+            'Use Activity, Compare, Checklist, Inbox, Quick & Update right inside Enarsia',
           ]}
         />
 
         <div className="p-3 rounded-lg bg-primary/5 border border-primary/20 my-3">
           <p className="text-sm text-muted-foreground mb-2">
-            <strong>Access Team Tracking Dashboard on website:</strong>
+            <strong>Open Team Tracking inside Enarsia:</strong>
           </p>
-          <ExternalLinkButton href="https://nevorai.com/trackup">
-            Open Team Tracking Dashboard
-          </ExternalLinkButton>
+          <a
+            href="/team-tracking"
+            className="inline-flex items-center gap-1.5 text-primary underline underline-offset-2 hover:text-primary/80 text-sm font-medium transition-colors"
+          >
+            Open Team Tracking
+          </a>
         </div>
 
         <TipBox>
-          Use Team Tracking Dashboard for team meetings and reviews - it provides a comprehensive view of everyone's progress!
+          Use Team Tracking for team meetings and reviews — it provides a comprehensive view of everyone's progress, all inside Enarsia.
         </TipBox>
       </div>
     ),
