@@ -213,12 +213,14 @@ export function RecentActivityView({ selectedDate: externalDate, searchQuery: ex
       />
 
       <div className="bg-card rounded-xl p-3 border border-border/50">
-        <div className="flex items-center gap-2 mb-3">
-          <Clock className="h-4 w-4 text-primary" />
-          <div>
-            <h3 className="font-medium text-sm">Recents</h3>
-            <p className="text-xs text-muted-foreground">{allActivities.length} activities</p>
+        <div className="flex items-center justify-between gap-2 mb-2">
+          <div className="flex items-center gap-1.5">
+            <Clock className="h-3.5 w-3.5 text-primary" />
+            <h3 className="font-medium text-xs">Recents</h3>
           </div>
+          <span className="text-[10px] text-muted-foreground tabular-nums">
+            {allActivities.length} {allActivities.length === 1 ? 'activity' : 'activities'} · {format(calendar.currentMonth, 'MMM yyyy')}
+          </span>
         </div>
 
         {groupedActivities.length === 0 ? (
