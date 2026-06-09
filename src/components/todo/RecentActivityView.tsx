@@ -350,7 +350,7 @@ export function RecentActivityView({ selectedDate: externalDate, searchQuery: ex
                     onClick={(e) => {
                       e.preventDefault();
                       haptic(10);
-                      handleCall(selectedActivity.phone!);
+                      handleCall(selectedActivity.phone!, selectedActivity.name);
                     }}
                     className="flex flex-1 items-center justify-center gap-2 rounded-2xl bg-primary py-3.5 min-h-[52px] text-primary-foreground font-semibold text-[15px] shadow-[0_8px_20px_-8px_hsl(var(--primary)/0.55)] active:scale-[0.97] active:opacity-90 transition-all"
                   >
