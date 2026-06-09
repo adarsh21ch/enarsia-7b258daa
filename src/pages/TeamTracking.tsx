@@ -1,10 +1,12 @@
 import { useEffect, useMemo, useState, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { format, subMonths, addMonths } from 'date-fns';
-import { ChevronLeft, ChevronRight, Users, ArrowLeft, BarChart3, Info, Crown, ChevronDown, ChevronUp, Activity, Columns3, ListChecks, PanelLeftClose, PanelLeftOpen, Menu, Bell, Send } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Users, ArrowLeft, BarChart3, Info, Crown, ChevronDown, ChevronUp, Activity, Columns3, ListChecks, PanelLeftClose, PanelLeftOpen, Menu, Bell, Send, Zap, Edit3 } from 'lucide-react';
 import { InboxDrawer } from '@/components/layout/InboxDrawer';
 import { SendMessageDrawer } from '@/components/layout/SendMessageDrawer';
 import { useInbox } from '@/hooks/useInbox';
+import { ManualUpdateDrawer } from '@/components/trackup-v2/ManualUpdateDrawer';
+import { QuickUpdateModal } from '@/components/team-tracking/QuickUpdateModal';
 import { EyeViewSheet } from '@/components/team-tracking/EyeViewSheet';
 import { CompulsoryActionsSheet } from '@/components/team-tracking/CompulsoryActionsSheet';
 import { CallingTrackingBox } from '@/components/team-tracking/CallingTrackingBox';
