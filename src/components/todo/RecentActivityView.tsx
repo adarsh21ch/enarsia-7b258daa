@@ -1,15 +1,17 @@
 // Activity History View - Universal component with built-in calendar
 import { useMemo, useState, useCallback } from 'react';
-import { motion, AnimatePresence, useMotionValue, useTransform, animate, type PanInfo } from 'framer-motion';
+import { motion, useMotionValue, useTransform, animate, type PanInfo } from 'framer-motion';
 import { useProspectsQuery } from '@/hooks/useProspectsQuery';
+import { useGlobalProspects } from '@/contexts/ProspectsContext';
 import { useGlobalTodos } from '@/contexts/TodosContext';
 import { useActivityLogs } from '@/hooks/useActivityLogs';
 import { useCalendarStrip } from '@/hooks/useCalendarStrip';
 import { CalendarStrip } from '@/components/calendar/CalendarStrip';
 import { SearchBar } from '@/components/ui/SearchBar';
-import { Clock, Loader2, Phone, X } from 'lucide-react';
+import { Clock, Loader2, Phone } from 'lucide-react';
 import { parseISO, format, isSameDay } from 'date-fns';
 import { logCallMade } from '@/lib/callLog';
+import { ProspectDetailModal } from '@/components/prospects/ProspectDetailModal';
 
 // Light haptic helper (mobile only)
 const haptic = (ms = 8) => {
@@ -31,6 +33,7 @@ type ActivityItem = {
   stage: string | null;
   action: string | null;
   time: Date;
+  prospectId?: string | null;
 };
 
 interface RecentActivityViewProps {
@@ -45,8 +48,9 @@ interface RecentActivityViewProps {
 export function RecentActivityView({ selectedDate: externalDate, searchQuery: externalSearch, onSearchChange: externalOnSearchChange, hideCalendar = false }: RecentActivityViewProps) {
   // Internal state for calendar and search when not controlled externally
   const [internalSearch, setInternalSearch] = useState('');
-  const [selectedActivity, setSelectedActivity] = useState<ActivityItem | null>(null);
+  const [detailProspectId, setDetailProspectId] = useState<string | null>(null);
   const calendar = useCalendarStrip();
+  const { updateProspect, deleteProspect } = useGlobalProspects();
 
   const selectedDate = externalDate ?? calendar.selectedDate;
   const searchQuery = externalSearch ?? internalSearch;
@@ -83,7 +87,8 @@ export function RecentActivityView({ selectedDate: externalDate, searchQuery: ex
         phone: log.new_value || null,
         stage: null as string | null,
         action: null as string | null,
-        time: new Date(log.created_at)
+        time: new Date(log.created_at),
+        prospectId: log.prospect_id || null,
       }));
 
     // For prospects, only show those that were genuinely updated (not just created)
@@ -101,7 +106,8 @@ export function RecentActivityView({ selectedDate: externalDate, searchQuery: ex
       phone: p.phone,
       stage: p.funnel_stage,
       action: p.action_taken,
-      time: new Date(p.updated_at)
+      time: new Date(p.updated_at),
+      prospectId: p.id,
     }));
     
     const todoActivities = todos
@@ -130,21 +136,23 @@ export function RecentActivityView({ selectedDate: externalDate, searchQuery: ex
   }, [prospects, todos, activityLogs, selectedDate, searchQuery]);
 
   const cleanPhoneNumber = (phone: string) => phone.replace(/[^0-9+]/g, '');
-  
-  const handleWhatsApp = useCallback((phone: string) => {
-    window.open(`https://wa.me/${cleanPhoneNumber(phone)}`, '_blank');
-  }, []);
-  
-  const handleCall = useCallback((phone: string, name?: string) => {
-    logCallMade({ name: name || 'Call', phone });
+
+  const handleCall = useCallback((phone: string, name?: string, prospectId?: string | null) => {
+    logCallMade({ prospectId: prospectId || undefined, name: name || 'Call', phone });
     window.open(`tel:${cleanPhoneNumber(phone)}`, '_self');
   }, []);
 
   const handleRowTap = useCallback((activity: ActivityItem) => {
-    if (activity.phone) {
-      setSelectedActivity(activity);
+    // iPhone-Recents behavior: tap the row → open full prospect detail modal
+    if (activity.prospectId) {
+      setDetailProspectId(activity.prospectId);
     }
   }, []);
+
+  const detailProspect = useMemo(
+    () => (detailProspectId ? prospects.find(p => p.id === detailProspectId) || null : null),
+    [detailProspectId, prospects]
+  );
 
   if (loading) {
     return (
