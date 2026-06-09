@@ -140,6 +140,9 @@ export function useProspectsQuery(options: UseProspectsQueryOptions = {}) {
       // Apply sheet filter SERVER-SIDE (before pagination)
       if (sheetId) {
         query = query.eq('sheet_id', sheetId);
+      } else {
+        // "All" view: hide demo leads — they live in their own Demo Leads sheet
+        query = query.eq('is_demo', false);
       }
 
       // Apply funnel filter SERVER-SIDE for funnel mode
