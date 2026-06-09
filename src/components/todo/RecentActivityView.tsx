@@ -134,7 +134,8 @@ export function RecentActivityView({ selectedDate: externalDate, searchQuery: ex
     window.open(`https://wa.me/${cleanPhoneNumber(phone)}`, '_blank');
   }, []);
   
-  const handleCall = useCallback((phone: string) => {
+  const handleCall = useCallback((phone: string, name?: string) => {
+    logCallMade({ name: name || 'Call', phone });
     window.open(`tel:${cleanPhoneNumber(phone)}`, '_self');
   }, []);
 
