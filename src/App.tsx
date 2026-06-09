@@ -15,6 +15,7 @@ import { UpdateBanner } from "@/components/pwa/UpdateBanner";
 import { ReinstallForNewLogoNotice } from "@/components/pwa/ReinstallForNewLogoNotice";
 import { AppAccessTracker } from "@/components/AppAccessTracker";
 import { AutoDemoTour } from "@/components/onboarding/AutoDemoTour";
+import { WhatsAppChoiceProvider } from "@/components/whatsapp/WhatsAppChoiceProvider";
 import { Loader2 } from "lucide-react";
 
 // Entry-path pages stay eager
@@ -135,6 +136,7 @@ function App() {
                     <ReinstallForNewLogoNotice />
                     <AppAccessTracker />
                     <AutoDemoTour />
+                    <WhatsAppChoiceProvider />
                     <Suspense fallback={<PageLoader />}>
                       <Routes>
                         <Route path="/" element={<Index />} />
