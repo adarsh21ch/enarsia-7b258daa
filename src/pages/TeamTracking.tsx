@@ -730,21 +730,16 @@ interface HeaderButtonProps {
 }
 function HeaderButton({ icon, label, onClick }: HeaderButtonProps) {
   return (
-    <Tooltip>
-      <TooltipTrigger asChild>
-        <Button
-          variant="outline"
-          size="sm"
-          className="h-8 gap-1.5 px-2 text-xs md:px-2.5"
-          onClick={onClick}
-          aria-label={label}
-        >
-          {icon}
-          <span className="hidden md:inline">{label}</span>
-        </Button>
-      </TooltipTrigger>
-      <TooltipContent side="bottom" className="md:hidden">{label}</TooltipContent>
-    </Tooltip>
+    <Button
+      variant="outline"
+      size="sm"
+      className="h-8 gap-1.5 px-2.5 text-xs flex-shrink-0"
+      onClick={onClick}
+      aria-label={label}
+    >
+      {icon}
+      <span>{label}</span>
+    </Button>
   );
 }
 
