@@ -13,7 +13,8 @@ import { supabase } from '@/integrations/supabase/client';
 export interface LeaderLevel {
   id: string;
   leader_id: string;
-  name: string;
+  label: string;
+  code: string | null;
   position: number;
 }
 
@@ -64,7 +65,7 @@ export function useLeaderTeamMembers(
       // Leader's own levels (so we can show level groups)
       const { data: lvlRows, error: lvlErr } = await supabase
         .from('leader_levels')
-        .select('id, leader_id, name, position')
+        .select('id, leader_id, label, code, position')
         .eq('leader_id', leaderUserId)
         .order('position', { ascending: true });
 
