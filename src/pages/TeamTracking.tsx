@@ -1,10 +1,12 @@
 import { useEffect, useMemo, useState, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { format, subMonths, addMonths } from 'date-fns';
-import { ChevronLeft, ChevronRight, Users, ArrowLeft, BarChart3, Info, Crown, ChevronDown, ChevronUp, Activity, Columns3, ListChecks, PanelLeftClose, PanelLeftOpen, Menu, Bell, Send } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Users, ArrowLeft, BarChart3, Info, Crown, ChevronDown, ChevronUp, Activity, Columns3, ListChecks, PanelLeftClose, PanelLeftOpen, Menu, Bell, Send, Zap, Edit3 } from 'lucide-react';
 import { InboxDrawer } from '@/components/layout/InboxDrawer';
 import { SendMessageDrawer } from '@/components/layout/SendMessageDrawer';
 import { useInbox } from '@/hooks/useInbox';
+import { ManualUpdateDrawer } from '@/components/trackup-v2/ManualUpdateDrawer';
+import { QuickUpdateModal } from '@/components/team-tracking/QuickUpdateModal';
 import { EyeViewSheet } from '@/components/team-tracking/EyeViewSheet';
 import { CompulsoryActionsSheet } from '@/components/team-tracking/CompulsoryActionsSheet';
 import { CallingTrackingBox } from '@/components/team-tracking/CallingTrackingBox';
@@ -65,6 +67,8 @@ export default function TeamTracking() {
   const [compulsoryOpen, setCompulsoryOpen] = useState(false);
   const [inboxOpen, setInboxOpen] = useState(false);
   const [sendOpen, setSendOpen] = useState(false);
+  const [quickUpdateOpen, setQuickUpdateOpen] = useState(false);
+  const [manualUpdateOpen, setManualUpdateOpen] = useState(false);
   const { unreadCount } = useInbox();
 
   // Mobile drawer
@@ -477,6 +481,16 @@ export default function TeamTracking() {
                     />
                   )}
                   <HeaderButton
+                    icon={<Zap className="h-3.5 w-3.5 text-amber-500" />}
+                    label="Quick"
+                    onClick={() => setQuickUpdateOpen(true)}
+                  />
+                  <HeaderButton
+                    icon={<Edit3 className="h-3.5 w-3.5 text-violet-500" />}
+                    label="Update"
+                    onClick={() => setManualUpdateOpen(true)}
+                  />
+                  <HeaderButton
                     icon={<ListChecks className="h-3.5 w-3.5 text-amber-500" />}
                     label="Checklist"
                     onClick={() => setCompulsoryOpen(true)}
@@ -674,6 +688,31 @@ export default function TeamTracking() {
           }))}
           levelsOverride={levels.map(l => ({ id: l.id, position: l.position, label: l.label }))}
           preselectedMemberId={selected.kind === 'member' ? selected.userId : null}
+        />
+
+        <QuickUpdateModal
+          open={quickUpdateOpen}
+          onOpenChange={setQuickUpdateOpen}
+          responseTagNames={responseTagNames}
+          stageTagNames={computedStageNames}
+          finalTagName={finalTagName}
+          personalSnapshots={personalSnapshots}
+          uplineLeaderId={null}
+          targetUserId={selected.kind === 'member' ? selected.userId : null}
+          targetUserName={selected.kind === 'member' ? selected.displayName : null}
+        />
+
+        <ManualUpdateDrawer
+          open={manualUpdateOpen}
+          onOpenChange={setManualUpdateOpen}
+          responseTagNames={responseTagNames}
+          stageTagNames={computedStageNames}
+          finalTagName={finalTagName}
+          personalSnapshots={personalSnapshots}
+          totalSnapshots={totalSnapshots}
+          uplineLeaderId={null}
+          targetUserId={selected.kind === 'member' ? selected.userId : null}
+          targetUserName={selected.kind === 'member' ? selected.displayName : null}
         />
       </div>
     </TooltipProvider>
