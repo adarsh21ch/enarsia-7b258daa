@@ -9,6 +9,7 @@ import { CalendarStrip } from '@/components/calendar/CalendarStrip';
 import { SearchBar } from '@/components/ui/SearchBar';
 import { Clock, Loader2, Phone, X } from 'lucide-react';
 import { parseISO, format, isSameDay } from 'date-fns';
+import { logCallMade } from '@/lib/callLog';
 
 // Light haptic helper (mobile only)
 const haptic = (ms = 8) => {
