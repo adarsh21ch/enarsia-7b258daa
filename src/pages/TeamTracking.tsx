@@ -1,8 +1,12 @@
 import { useEffect, useMemo, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { format, subMonths, addMonths } from 'date-fns';
-import { ChevronLeft, ChevronRight, Users, ArrowLeft, BarChart3, Info, Crown, ChevronDown, ChevronUp, Activity } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Users, ArrowLeft, BarChart3, Info, Crown, ChevronDown, ChevronUp, Activity, Columns3 } from 'lucide-react';
 import { EyeViewSheet } from '@/components/team-tracking/EyeViewSheet';
+import { CallingTrackingBox } from '@/components/team-tracking/CallingTrackingBox';
+import { FilterTrackingBox } from '@/components/team-tracking/FilterTrackingBox';
+import { CompareColumnsSheet } from '@/components/team-tracking/CompareColumnsSheet';
+import { endOfMonth, startOfMonth } from 'date-fns';
 import { useAuth } from '@/contexts/AuthContext';
 import { useProfile } from '@/hooks/useProfile';
 import { BottomNav } from '@/components/layout/BottomNav';
@@ -43,6 +47,7 @@ export default function TeamTracking() {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [collapsedLevels, setCollapsedLevels] = useState<Record<string, boolean>>({});
   const [eyeViewOpen, setEyeViewOpen] = useState(false);
+  const [compareOpen, setCompareOpen] = useState(false);
 
   const monthYear = format(currentMonth, 'yyyy-MM');
   const monthLabel = format(currentMonth, 'MMMM yyyy');
@@ -283,15 +288,26 @@ export default function TeamTracking() {
                 <p className="text-[11px] text-muted-foreground truncate">{headerSubtitle}</p>
               </div>
             </div>
-            <Button
-              variant="outline"
-              size="sm"
-              className="h-8 gap-1.5 px-2.5 text-xs"
-              onClick={() => setEyeViewOpen(true)}
-            >
-              <Activity className="h-3.5 w-3.5 text-emerald-500" />
-              <span className="hidden sm:inline">Activity</span>
-            </Button>
+            <div className="flex items-center gap-1">
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-8 gap-1.5 px-2.5 text-xs"
+                onClick={() => setCompareOpen(true)}
+              >
+                <Columns3 className="h-3.5 w-3.5 text-primary" />
+                <span className="hidden sm:inline">Compare</span>
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-8 gap-1.5 px-2.5 text-xs"
+                onClick={() => setEyeViewOpen(true)}
+              >
+                <Activity className="h-3.5 w-3.5 text-emerald-500" />
+                <span className="hidden sm:inline">Activity</span>
+              </Button>
+            </div>
           </div>
 
           {/* Personal/Total toggle for selected member */}
@@ -343,6 +359,17 @@ export default function TeamTracking() {
               </Button>
             </div>
             <ViewSelector viewMode={viewMode} options={viewModeOptions} onViewModeChange={setViewMode} />
+          </div>
+
+          <div className="mb-3 grid grid-cols-1 gap-2 md:grid-cols-2">
+            <CallingTrackingBox
+              kpi={kpiData}
+              responseTagNames={responseTagNames}
+            />
+            <FilterTrackingBox
+              kpi={kpiData}
+              stageTagNames={computedStageNames}
+            />
           </div>
 
           <div className="mb-3">
@@ -434,6 +461,18 @@ export default function TeamTracking() {
         onOpenChange={setEyeViewOpen}
         rootLeaderUserId={user.id}
         rootLeaderName={profile?.display_name || 'You'}
+      />
+
+      <CompareColumnsSheet
+        open={compareOpen}
+        onOpenChange={setCompareOpen}
+        members={members}
+        monthStart={format(startOfMonth(currentMonth), 'yyyy-MM-dd')}
+        monthEnd={format(endOfMonth(currentMonth), 'yyyy-MM-dd')}
+        monthLabel={monthLabel}
+        responseTagNames={responseTagNames}
+        stageTagNames={computedStageNames}
+        finalTagName={finalTagName}
       />
     </div>
   );
