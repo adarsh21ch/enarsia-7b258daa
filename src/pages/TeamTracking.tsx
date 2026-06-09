@@ -462,6 +462,18 @@ export default function TeamTracking() {
         rootLeaderUserId={user.id}
         rootLeaderName={profile?.display_name || 'You'}
       />
+
+      <CompareColumnsSheet
+        open={compareOpen}
+        onOpenChange={setCompareOpen}
+        members={members}
+        monthStart={format(startOfMonth(currentMonth), 'yyyy-MM-dd')}
+        monthEnd={format(endOfMonth(currentMonth), 'yyyy-MM-dd')}
+        monthLabel={monthLabel}
+        responseTagNames={responseTagNames}
+        stageTagNames={computedStageNames}
+        finalTagName={finalTagName}
+      />
     </div>
   );
 }
