@@ -537,6 +537,33 @@ export default function Profile() {
               <ChevronRight className="h-4 w-4 text-muted-foreground" />
             </div>
           </button>
+
+          {/* Team Tracking — only visible to users with at least one direct downline */}
+          {downlineCount > 0 && (
+            <button
+              onClick={() => navigate('/team-tracking')}
+              className={cn("w-full rounded-xl px-4 py-2.5 bg-gradient-to-r backdrop-blur-sm border border-indigo-500/30 flex items-center justify-between transition-all duration-200 hover:shadow-md from-indigo-500/20 to-indigo-500/5")}
+            >
+              <div className="flex items-center gap-3">
+                <div className="p-1.5 rounded-lg bg-indigo-500/10">
+                  <Users className="h-4 w-4 text-indigo-500" />
+                </div>
+                <div className="text-left">
+                  <span className="font-medium text-sm block">Team Tracking</span>
+                  <span className="text-[11px] text-muted-foreground">Review your downline's tracking & activity</span>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <span
+                  aria-label={`${downlineCount} downline member${downlineCount === 1 ? '' : 's'}`}
+                  className="inline-flex items-center justify-center h-5 min-w-5 px-1.5 rounded-full text-[10px] font-bold bg-indigo-500 text-white"
+                >
+                  {downlineCount}
+                </span>
+                <ChevronRight className="h-4 w-4 text-muted-foreground" />
+              </div>
+            </button>
+          )}
           </div>{/* end Tools */}
 
           {/* ── SECTION: Account ──────────────── */}
