@@ -24,7 +24,7 @@ const WhatsAppIcon = ({ className }: { className?: string }) => (
 
 type ActivityItem = {
   id: string;
-  type: 'lead' | 'import' | 'todo';
+  type: 'lead' | 'import' | 'todo' | 'call';
   name: string;
   phone: string | null;
   stage: string | null;
@@ -59,7 +59,7 @@ export function RecentActivityView({ selectedDate: externalDate, searchQuery: ex
 
   // Get personal activities for the selected date
   const activities = useMemo<ActivityItem[]>(() => {
-    // Get bulk import entries from activity_logs for the selected date
+    // Bulk import entries
     const importEntries = activityLogs
       .filter(log => log.activity_type === 'bulk_import' && isSameDay(parseISO(log.created_at), selectedDate))
       .map(log => ({
@@ -72,10 +72,22 @@ export function RecentActivityView({ selectedDate: externalDate, searchQuery: ex
         time: new Date(log.created_at)
       }));
 
+    // Outbound call entries (iPhone-Recents style)
+    const callEntries = activityLogs
+      .filter(log => log.activity_type === 'call_made' && isSameDay(parseISO(log.created_at), selectedDate))
+      .map(log => ({
+        id: log.id,
+        type: 'call' as const,
+        name: log.description || 'Call',
+        phone: log.new_value || null,
+        stage: null as string | null,
+        action: null as string | null,
+        time: new Date(log.created_at)
+      }));
+
     // For prospects, only show those that were genuinely updated (not just created)
     const dayProspects = prospects.filter(p => {
       if (!isSameDay(parseISO(p.updated_at), selectedDate)) return false;
-      // Exclude freshly imported/created leads (updated_at ≈ date_added)
       const addedTime = new Date(p.date_added).getTime();
       const updatedTime = new Date(p.updated_at).getTime();
       return Math.abs(updatedTime - addedTime) > 5000;
@@ -103,7 +115,7 @@ export function RecentActivityView({ selectedDate: externalDate, searchQuery: ex
         time: new Date(t.updated_at)
       }));
 
-    let activitiesList: ActivityItem[] = [...prospectActivities, ...importEntries, ...todoActivities].sort(
+    let activitiesList: ActivityItem[] = [...prospectActivities, ...importEntries, ...callEntries, ...todoActivities].sort(
       (a, b) => b.time.getTime() - a.time.getTime()
     );
 
