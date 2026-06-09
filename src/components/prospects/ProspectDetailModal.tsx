@@ -60,64 +60,82 @@ function EditableTag<T extends string>({
   onChange,
   renderBadge,
   placeholder = 'Select',
+  title = 'Select',
 }: {
   value: T | null | undefined;
   options: readonly T[];
   onChange: (val: T | null) => void;
   renderBadge: (val: T) => React.ReactNode;
   placeholder?: string;
+  title?: string;
 }) {
   const [open, setOpen] = useState(false);
   return (
-    <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger asChild>
-        <button className="inline-flex items-center gap-1 hover:opacity-80 transition-opacity">
-          {value ? (
-            renderBadge(value)
-          ) : (
-            <span className="text-xs text-muted-foreground bg-muted/50 rounded px-2 py-0.5">
-              {placeholder}
-            </span>
-          )}
-          <ChevronDown className="h-3 w-3 text-muted-foreground" />
-        </button>
-      </PopoverTrigger>
-      <PopoverContent
-        className="w-auto p-1 bg-popover border-border z-[60]"
-        align="end"
+    <>
+      <button
+        type="button"
+        onClick={() => setOpen(true)}
+        className="inline-flex items-center gap-1 hover:opacity-80 transition-opacity"
       >
-        <div className="flex flex-col gap-0.5 max-h-56 overflow-y-auto">
-          {options.map((opt) => (
+        {value ? (
+          renderBadge(value)
+        ) : (
+          <span className="text-xs text-muted-foreground bg-muted/50 rounded px-2 py-0.5">
+            {placeholder}
+          </span>
+        )}
+        <ChevronDown className="h-3 w-3 text-muted-foreground" />
+      </button>
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogContent className="w-[88vw] max-w-[360px] max-h-[75vh] p-0 gap-0 overflow-hidden rounded-2xl [&>button]:hidden border border-border/60 shadow-2xl">
+          <div className="px-3.5 pt-3 pb-2.5 border-b border-border/40">
+            <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+              {title}
+            </p>
+          </div>
+          <div className="flex-1 overflow-y-auto p-2 space-y-1 max-h-[55vh]">
+            {options.map((opt) => (
+              <button
+                key={opt}
+                onClick={() => {
+                  onChange(opt);
+                  setOpen(false);
+                }}
+                className={cn(
+                  'w-full text-left px-3 py-2.5 text-sm rounded-xl hover:bg-muted/60 transition-colors min-h-[44px] flex items-center',
+                  value === opt && 'bg-primary/10 text-primary font-medium',
+                )}
+              >
+                {opt}
+              </button>
+            ))}
+            {value && (
+              <button
+                onClick={() => {
+                  onChange(null);
+                  setOpen(false);
+                }}
+                className="w-full text-left px-3 py-2.5 text-sm rounded-xl hover:bg-destructive/10 text-muted-foreground min-h-[44px]"
+              >
+                Clear
+              </button>
+            )}
+          </div>
+          <div className="border-t border-border/40 p-2.5">
             <button
-              key={opt}
-              onClick={() => {
-                onChange(opt);
-                setOpen(false);
-              }}
-              className={cn(
-                'text-left px-3 py-1.5 text-sm rounded hover:bg-muted/60 transition-colors',
-                value === opt && 'bg-primary/10 text-primary',
-              )}
+              type="button"
+              onClick={() => setOpen(false)}
+              className="w-full min-h-[44px] rounded-xl bg-muted/60 hover:bg-muted text-sm font-semibold border border-border/60"
             >
-              {opt}
+              Cancel
             </button>
-          ))}
-          {value && (
-            <button
-              onClick={() => {
-                onChange(null);
-                setOpen(false);
-              }}
-              className="text-left px-3 py-1.5 text-sm rounded hover:bg-destructive/10 text-muted-foreground"
-            >
-              Clear
-            </button>
-          )}
-        </div>
-      </PopoverContent>
-    </Popover>
+          </div>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }
+
 
 function Row({
   label,
