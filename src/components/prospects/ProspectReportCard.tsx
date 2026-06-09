@@ -13,6 +13,7 @@ import { Phone, MessageCircle, MessageSquareText, Calendar as CalendarIcon, Cloc
 import { format, parseISO, formatDistanceToNow } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
+import { logCallMade } from '@/lib/callLog';
 
 interface ProspectReportCardProps {
   prospect: Prospect | null;
@@ -103,6 +104,7 @@ export function ProspectReportCard({ prospect, open, onOpenChange, onUpdate }: P
   };
 
   const openCall = () => {
+    logCallMade({ prospectId: prospect.id, name: prospect.name, phone: prospect.phone });
     window.location.href = `tel:${cleanPhoneNumber(prospect.phone)}`;
   };
 
