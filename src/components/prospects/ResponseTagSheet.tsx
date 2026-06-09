@@ -150,22 +150,32 @@ export const ResponseTagSheet = memo(function ResponseTagSheet({
   if (!open) return null;
 
   return (
+    <>
+      {/* Soft dimming backdrop — purely visual, pointer-events disabled so the
+          outside-tap listener (above) still drives dismissal without any
+          scroll-freeze risk on the table below. */}
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.15 }}
+        className="fixed inset-0 z-40 bg-black/40 backdrop-blur-[2px] pointer-events-none"
+        aria-hidden
+      />
     <motion.div
       ref={panelRef}
       role="dialog"
+      aria-modal="true"
       aria-label={title}
-      initial={{ opacity: 0, x: 20, scale: 0.97 }}
-      animate={{ opacity: 1, x: 0, scale: 1 }}
-      transition={{ type: 'spring', stiffness: 380, damping: 32 }}
+      initial={{ opacity: 0, scale: 0.92, y: 8 }}
+      animate={{ opacity: 1, scale: 1, y: 0 }}
+      transition={{ type: 'spring', stiffness: 380, damping: 30 }}
       style={{ willChange: 'transform' }}
       className={cn(
-        'fixed right-2 z-50 flex flex-col',
-        // Window: starts just below the table header row, ends just
-        // above the SheetTabs strip — uses all available table space
-        'top-[170px] bottom-[112px]',
-        // Width — slightly wider than original for readability, but not
-        // covering the whole screen
-        'w-[75vw] max-w-[340px] sm:w-[50vw] sm:max-w-[360px]',
+        // Centered iOS-style modal
+        'fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-50 flex flex-col',
+        // Sizing — comfortable on mobile, capped on desktop
+        'w-[88vw] max-w-[360px]',
+        'max-h-[75vh]',
         // Premium glassy surface
         'rounded-2xl border border-border/60',
         'bg-popover/95 backdrop-blur-xl',
