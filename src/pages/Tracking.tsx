@@ -1,7 +1,7 @@
 import { useEffect, useState, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { format, subMonths, addMonths } from 'date-fns';
-import { ChevronLeft, ChevronRight, ExternalLink, Settings, Info, BarChart3, HelpCircle, Sparkles } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Users, Settings, Info, BarChart3, HelpCircle, Sparkles } from 'lucide-react';
 import { AIInsightsSettings } from '@/components/ai/AIInsightsSettings';
 import { useAuth } from '@/contexts/AuthContext';
 import { BottomNav } from '@/components/layout/BottomNav';
@@ -39,7 +39,7 @@ import { useTrackingSourcePreferences } from '@/hooks/useTrackingSourcePreferenc
 import { useApplicationTotalSnapshots } from '@/hooks/useApplicationTotalSnapshots';
 import { useApplicationSnapshots } from '@/hooks/useApplicationSnapshots';
 import { useFunnelConfig } from '@/hooks/useFunnelConfig';
-import { NEVORAI_WEBSITE_URL } from '@/config/siteUrl';
+
 import nevoraLogo from '@/assets/nevorai-call-logo.png';
 
 export default function Tracking() {
@@ -135,10 +135,10 @@ export default function Tracking() {
     if (!user && !authLoading) navigate('/auth');
   }, [user, authLoading, navigate]);
 
-  // Open team tracking on website
+  // Open in-app Team Tracking
   const handleOpenDashboard = useCallback(() => {
-    window.open(`${NEVORAI_WEBSITE_URL}/trackup`, '_blank', 'noopener');
-  }, []);
+    navigate('/team-tracking');
+  }, [navigate]);
 
   if (!user) return null;
 
@@ -161,7 +161,7 @@ export default function Tracking() {
               onClick={handleOpenDashboard}
               className="h-8 gap-1.5 text-xs font-medium"
             >
-              <ExternalLink className="h-3.5 w-3.5" />
+              <Users className="h-3.5 w-3.5" />
               Team Tracking
             </Button>
             <Button

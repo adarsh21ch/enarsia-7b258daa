@@ -27,6 +27,7 @@ const Dashboard = lazy(() => import("./pages/Dashboard"));
 const ListUp = lazy(() => import("./pages/ListUp"));
 const TodoUp = lazy(() => import("./pages/TodoUp"));
 const Tracking = lazy(() => import("./pages/Tracking"));
+const TeamTracking = lazy(() => import("./pages/TeamTracking"));
 
 // Lazy load less frequently accessed pages
 const Home = lazy(() => import("./pages/Home"));
@@ -141,6 +142,7 @@ function App() {
                         <Route path="/reset-password" element={<ResetPassword />} />
                         <Route path="/dashboard" element={<Dashboard />} />
                         <Route path="/tracking" element={<Tracking />} />
+                        <Route path="/team-tracking" element={<TeamTracking />} />
                         <Route path="/home" element={<Home />} />
                         <Route path="/action" element={<TodoUp />} />
                         <Route path="/listup" element={<ListUp />} />

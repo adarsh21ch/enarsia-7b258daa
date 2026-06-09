@@ -4,17 +4,23 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { parseSnapshotRow, hasSlotKeys, slotKeysToTagNames, type SnapshotRow } from '@/lib/snapshotSlotUtils';
 
+/**
+ * Read total_snapshot_v2 rows for a month.
+ * Pass `targetUserId` to read someone else's totals (RLS allows when caller is upline).
+ */
 export function useTotalSnapshotV2Read(
   monthYear: string,
   leadsTrackingTagNames: string[] = [],
   stageTagNames: string[] = [],
+  targetUserId?: string | null,
 ) {
   const { user } = useAuth();
+  const effectiveUserId = targetUserId || user?.id || null;
 
   const { data: rawSnapshots = [], isLoading, refetch } = useQuery({
-    queryKey: ['total-snapshot-v2', user?.id, monthYear],
+    queryKey: ['total-snapshot-v2', effectiveUserId, monthYear],
     queryFn: async (): Promise<SnapshotRow[]> => {
-      if (!user) return [];
+      if (!effectiveUserId) return [];
 
       const startDate = `${monthYear}-01`;
       const [year, month] = monthYear.split('-').map(Number);
@@ -24,7 +30,7 @@ export function useTotalSnapshotV2Read(
       const { data, error } = await supabase
         .from('total_snapshot_v2')
         .select('*')
-        .eq('user_id', user.id)
+        .eq('user_id', effectiveUserId)
         .gte('date', startDate)
         .lte('date', endDate)
         .order('date', { ascending: true });
@@ -36,12 +42,11 @@ export function useTotalSnapshotV2Read(
 
       return (data || []).map((raw) => parseSnapshotRow(raw));
     },
-    enabled: !!user && !!monthYear,
+    enabled: !!effectiveUserId && !!monthYear,
     staleTime: 300_000,
     gcTime: 600_000,
   });
 
-  // Post-process: convert slot keys to tag names reactively using passed-in names
   const snapshots = useMemo(() => {
     return rawSnapshots.map((row) => {
       const mapped = { ...row };

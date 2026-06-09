@@ -7246,6 +7246,14 @@ export type Database = {
         Args: { p_lead_id: string }
         Returns: Json
       }
+      rollup_total_cascade: {
+        Args: { _date: string; _user_id: string }
+        Returns: undefined
+      }
+      rollup_total_snapshot_for_user: {
+        Args: { _date: string; _user_id: string }
+        Returns: undefined
+      }
       seed_demo_data_for_user: { Args: { p_user_id: string }; Returns: Json }
       setup_new_user_onboarding: { Args: { p_user_id: string }; Returns: Json }
       update_leader_hierarchy: {
