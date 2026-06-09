@@ -541,30 +541,16 @@ export function ProspectDetailModal({
 }: ProspectDetailModalProps) {
   const isMobile = useIsMobile();
 
-  if (isMobile) {
-    return (
-      <Sheet open={open} onOpenChange={onOpenChange}>
-        <SheetContent
-          side="bottom"
-          className="p-0 rounded-t-3xl border-t border-border/40 h-[90vh] max-h-[90vh] gap-0 [&>button]:hidden"
-        >
-          <div className="flex justify-center pt-2 pb-1 shrink-0">
-            <div className="h-1.5 w-10 rounded-full bg-muted-foreground/30" />
-          </div>
-          <ProspectDetailBody
-            prospect={prospect}
-            onUpdate={onUpdate}
-            onDelete={onDelete}
-            onClose={() => onOpenChange(false)}
-          />
-        </SheetContent>
-      </Sheet>
-    );
-  }
-
+  // iPhone-style centered popup on every viewport — tap outside to dismiss
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-[600px] p-0 gap-0 overflow-hidden rounded-2xl [&>button]:hidden">
+      <DialogContent
+        className={
+          isMobile
+            ? "p-0 gap-0 overflow-hidden rounded-3xl [&>button]:hidden w-[calc(100vw-1.5rem)] max-w-[420px] max-h-[85vh] shadow-2xl border border-border/50"
+            : "max-w-[600px] p-0 gap-0 overflow-hidden rounded-3xl [&>button]:hidden max-h-[85vh] shadow-2xl border border-border/50"
+        }
+      >
         <ProspectDetailBody
           prospect={prospect}
           onUpdate={onUpdate}
