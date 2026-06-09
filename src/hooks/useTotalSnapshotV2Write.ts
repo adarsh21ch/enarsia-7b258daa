@@ -23,6 +23,8 @@ interface SaveTotalParams {
   stageTagNames?: string[];
   memberUserIds?: string[];
   silent?: boolean;
+  /** Leader-on-behalf: only honored for source='MANUAL'. Caller must be a direct upline. */
+  onBehalfOfUserId?: string | null;
 }
 
 export function useTotalSnapshotV2Write() {
