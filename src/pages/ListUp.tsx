@@ -24,6 +24,7 @@ import { cn } from '@/lib/utils';
 import { getTagStyle } from '@/lib/tagColors';
 import { Prospect } from '@/types/prospect';
 import nevoraLogo from '@/assets/nevorai-call-logo.png';
+import { logCallMade } from '@/lib/callLog';
 
 type LeadMode = 'leads' | 'funnel';
 

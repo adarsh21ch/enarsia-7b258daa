@@ -20,6 +20,7 @@ import { Loader2, Clock } from 'lucide-react';
 import { SearchBar } from '@/components/ui/SearchBar';
 import { parseISO, format, isSameDay } from 'date-fns';
 import nevoraLogo from '@/assets/nevorai-call-logo.png';
+import { logCallMade } from '@/lib/callLog';
 
 // Consistent Call icon
 const CallIcon = ({
