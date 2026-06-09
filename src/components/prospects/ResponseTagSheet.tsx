@@ -1,4 +1,4 @@
-import { memo, useCallback } from 'react';
+import { memo, useCallback, useEffect, useRef } from 'react';
 import { Star, Check, X } from 'lucide-react';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { ActionBadge } from './StatusBadge';
