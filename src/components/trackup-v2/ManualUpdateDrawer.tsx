@@ -26,6 +26,9 @@ interface ManualUpdateDrawerProps {
   personalSnapshots: SnapshotRow[];
   totalSnapshots: SnapshotRow[];
   uplineLeaderId: string | null;
+  /** Leader-on-behalf target. When set, writes go to this member's snapshot rows. */
+  targetUserId?: string | null;
+  targetUserName?: string | null;
 }
 
 type Category = 'leads' | 'funnel';
