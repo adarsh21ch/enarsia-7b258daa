@@ -62,6 +62,7 @@ export function useTotalSnapshotV2Write() {
           funnel_day: params.funnelDay,
           upline_leader_id: params.uplineLeaderId,
           member_user_ids: params.memberUserIds ?? [],
+          on_behalf_of_user_id: params.source === 'MANUAL' ? (params.onBehalfOfUserId ?? null) : null,
         },
       });
 
