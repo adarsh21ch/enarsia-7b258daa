@@ -343,33 +343,7 @@ function ProspectDetailBody({
 
       {/* Body */}
       <div className="flex-1 overflow-y-auto px-4 py-4 space-y-5">
-        {/* Quick actions */}
-        <div className="grid grid-cols-3 gap-2">
-          <a
-            href={`tel:${phone}`}
-            onClick={() => logCallMade({ prospectId: prospect.id, name: prospect.name, phone: prospect.phone })}
-            className="flex flex-col items-center justify-center gap-1 py-3 rounded-xl bg-muted/40 hover:bg-muted/60 transition-colors active:scale-[0.97]"
-          >
-            <Phone className="h-5 w-5 text-accent" />
-            <span className="text-xs font-medium">Call</span>
-          </a>
-          <a
-            href={`sms:${phone}`}
-            className="flex flex-col items-center justify-center gap-1 py-3 rounded-xl bg-muted/40 hover:bg-muted/60 transition-colors active:scale-[0.97]"
-          >
-            <MessageSquareText className="h-5 w-5 text-blue-500" />
-            <span className="text-xs font-medium">Text</span>
-          </a>
-          <a
-            href={`https://wa.me/${phone}`}
-            target="_blank"
-            rel="noreferrer"
-            className="flex flex-col items-center justify-center gap-1 py-3 rounded-xl bg-muted/40 hover:bg-muted/60 transition-colors active:scale-[0.97]"
-          >
-            <WhatsAppIcon className="h-5 w-5 text-green-600" />
-            <span className="text-xs font-medium">WhatsApp</span>
-          </a>
-        </div>
+
 
         {/* Personal Info */}
         <Section title="Personal Info">
