@@ -48,6 +48,8 @@ function formatDayHeader(date: Date): string {
 
 export function RecentActivityView({ selectedDate: externalDate, searchQuery: externalSearch, onSearchChange: externalOnSearchChange, hideCalendar = false }: RecentActivityViewProps) {
   const [internalSearch, setInternalSearch] = useState('');
+  // currentMonth from calendar drives the month-filter window
+  
   const [detailProspectId, setDetailProspectId] = useState<string | null>(null);
   const calendar = useCalendarStrip();
   const { updateProspect, deleteProspect } = useGlobalProspects();
