@@ -112,8 +112,8 @@ export function useLeaderTeamMembers(
     },
   });
 
-  const members = data?.members ?? [];
-  const levels = data?.levels ?? [];
+  const members = useMemo(() => data?.members ?? EMPTY_MEMBERS, [data]);
+  const levels = useMemo(() => data?.levels ?? EMPTY_LEVELS, [data]);
 
   const memberIds = useMemo(() => members.map(m => m.user_id), [members]);
 
