@@ -508,17 +508,44 @@ function ProspectDetailBody({
         </p>
       </div>
 
-      {/* Footer */}
-      <div className="shrink-0 px-4 py-3 border-t border-border/40 bg-background/80 backdrop-blur-sm">
-        <Button
-          variant="secondary"
+      {/* Footer — fixed action bar */}
+      <div className="shrink-0 px-3 pt-2.5 pb-3 border-t border-border/40 bg-background/95 backdrop-blur-sm space-y-2">
+        <div className="grid grid-cols-3 gap-2">
+          <a
+            href={`tel:${phone}`}
+            onClick={() => logCallMade({ prospectId: prospect.id, name: prospect.name, phone: prospect.phone })}
+            className="flex items-center justify-center gap-1.5 h-10 rounded-xl bg-muted/50 hover:bg-muted active:scale-[0.97] transition-all"
+          >
+            <Phone className="h-4 w-4 text-accent" />
+            <span className="text-xs font-semibold">Call</span>
+          </a>
+          <a
+            href={`sms:${phone}`}
+            className="flex items-center justify-center gap-1.5 h-10 rounded-xl bg-muted/50 hover:bg-muted active:scale-[0.97] transition-all"
+          >
+            <MessageSquareText className="h-4 w-4 text-blue-500" />
+            <span className="text-xs font-semibold">Text</span>
+          </a>
+          <a
+            href={`https://wa.me/${phone}`}
+            target="_blank"
+            rel="noreferrer"
+            className="flex items-center justify-center gap-1.5 h-10 rounded-xl bg-muted/50 hover:bg-muted active:scale-[0.97] transition-all"
+          >
+            <WhatsAppIcon className="h-4 w-4 text-green-600" />
+            <span className="text-xs font-semibold">WhatsApp</span>
+          </a>
+        </div>
+        <button
+          type="button"
           onClick={onClose}
-          className="w-full h-10 gap-2"
+          className="w-full h-9 rounded-xl bg-muted/40 hover:bg-muted/60 text-xs font-medium text-muted-foreground flex items-center justify-center gap-1.5 transition-colors"
         >
-          <X className="h-4 w-4" />
+          <X className="h-3.5 w-3.5" />
           Close
-        </Button>
+        </button>
       </div>
+
     </div>
   );
 }
