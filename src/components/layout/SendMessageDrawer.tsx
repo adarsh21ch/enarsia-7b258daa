@@ -36,15 +36,37 @@ const DEEP_LINK_OPTIONS: DeepLinkOption[] = [
   { label: 'Open To-Do List', route: '/action?tab=list' }
 ];
 
+interface OverrideMember {
+  user_id: string;
+  display_name: string | null;
+  level_id: string | null;
+  level_position: number | null;
+}
+interface OverrideLevel {
+  id: string;
+  position: number;
+  label: string;
+}
+
 interface SendMessageDrawerProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  /** Use these members instead of useDirectTeam (e.g. dual-key discovery in /team-tracking) */
+  membersOverride?: OverrideMember[];
+  levelsOverride?: OverrideLevel[];
+  /** Preselect a single member (sets targetType='single' on open) */
+  preselectedMemberId?: string | null;
 }
 
-export function SendMessageDrawer({ open, onOpenChange }: SendMessageDrawerProps) {
+export function SendMessageDrawer({ open, onOpenChange, membersOverride, levelsOverride, preselectedMemberId }: SendMessageDrawerProps) {
   const isMobile = useIsMobile();
-  const { members, hasDirectTeam, loading: teamLoading } = useDirectTeam();
-  const { levels, loading: levelsLoading } = useLeaderLevels();
+  const directTeam = useDirectTeam();
+  const directLevels = useLeaderLevels();
+  const members = membersOverride ?? directTeam.members;
+  const levels = levelsOverride ?? directLevels.levels;
+  const hasDirectTeam = membersOverride ? members.length > 0 : directTeam.hasDirectTeam;
+  const teamLoading = membersOverride ? false : directTeam.loading;
+  const levelsLoading = levelsOverride ? false : directLevels.loading;
   const { sendMessage, sending } = useSendMessage();
 
   const [targetType, setTargetType] = useState<TargetType>('all');
@@ -57,6 +79,14 @@ export function SendMessageDrawer({ open, onOpenChange }: SendMessageDrawerProps
   const [pendingClose, setPendingClose] = useState(false);
 
   const hasContent = title.trim() || body.trim();
+
+  // Apply preselection when drawer opens
+  useEffect(() => {
+    if (open && preselectedMemberId) {
+      setTargetType('single');
+      setTargetMember(preselectedMemberId);
+    }
+  }, [open, preselectedMemberId]);
 
   const resetForm = () => {
     setTitle('');

@@ -1,7 +1,10 @@
 import { useEffect, useMemo, useState, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { format, subMonths, addMonths } from 'date-fns';
-import { ChevronLeft, ChevronRight, Users, ArrowLeft, BarChart3, Info, Crown, ChevronDown, ChevronUp, Activity, Columns3, ListChecks, PanelLeftClose, PanelLeftOpen, Menu } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Users, ArrowLeft, BarChart3, Info, Crown, ChevronDown, ChevronUp, Activity, Columns3, ListChecks, PanelLeftClose, PanelLeftOpen, Menu, Bell, Send } from 'lucide-react';
+import { InboxDrawer } from '@/components/layout/InboxDrawer';
+import { SendMessageDrawer } from '@/components/layout/SendMessageDrawer';
+import { useInbox } from '@/hooks/useInbox';
 import { EyeViewSheet } from '@/components/team-tracking/EyeViewSheet';
 import { CompulsoryActionsSheet } from '@/components/team-tracking/CompulsoryActionsSheet';
 import { CallingTrackingBox } from '@/components/team-tracking/CallingTrackingBox';
@@ -60,6 +63,9 @@ export default function TeamTracking() {
   const [eyeViewOpen, setEyeViewOpen] = useState(false);
   const [compareOpen, setCompareOpen] = useState(false);
   const [compulsoryOpen, setCompulsoryOpen] = useState(false);
+  const [inboxOpen, setInboxOpen] = useState(false);
+  const [sendOpen, setSendOpen] = useState(false);
+  const { unreadCount } = useInbox();
 
   // Mobile drawer
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
@@ -444,6 +450,32 @@ export default function TeamTracking() {
                   </div>
                 </div>
                 <div className="flex flex-shrink-0 items-center gap-1">
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="relative h-8 px-2"
+                        onClick={() => setInboxOpen(true)}
+                        aria-label="Inbox"
+                      >
+                        <Bell className="h-3.5 w-3.5 text-primary" />
+                        {unreadCount > 0 && (
+                          <span className="absolute -top-1 -right-1 min-w-[16px] h-[16px] flex items-center justify-center rounded-full bg-destructive text-destructive-foreground text-[9px] font-bold px-1">
+                            {unreadCount > 99 ? '99+' : unreadCount}
+                          </span>
+                        )}
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent side="bottom">Inbox</TooltipContent>
+                  </Tooltip>
+                  {members.length > 0 && (
+                    <HeaderButton
+                      icon={<Send className="h-3.5 w-3.5 text-sky-500" />}
+                      label="Message"
+                      onClick={() => setSendOpen(true)}
+                    />
+                  )}
                   <HeaderButton
                     icon={<ListChecks className="h-3.5 w-3.5 text-amber-500" />}
                     label="Checklist"
@@ -461,6 +493,7 @@ export default function TeamTracking() {
                   />
                 </div>
               </div>
+
 
               {selected.kind === 'member' && (
                 <div className="mt-2 flex gap-1 rounded-lg bg-muted p-0.5">
@@ -626,6 +659,21 @@ export default function TeamTracking() {
           leaderUserId={user.id}
           members={members}
           levels={levels}
+        />
+
+        <InboxDrawer open={inboxOpen} onOpenChange={setInboxOpen} />
+
+        <SendMessageDrawer
+          open={sendOpen}
+          onOpenChange={setSendOpen}
+          membersOverride={members.map(m => ({
+            user_id: m.user_id,
+            display_name: m.display_name,
+            level_id: m.level_id,
+            level_position: m.level_position,
+          }))}
+          levelsOverride={levels.map(l => ({ id: l.id, position: l.position, label: l.label }))}
+          preselectedMemberId={selected.kind === 'member' ? selected.userId : null}
         />
       </div>
     </TooltipProvider>
