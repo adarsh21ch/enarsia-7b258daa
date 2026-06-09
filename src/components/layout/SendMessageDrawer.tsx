@@ -39,7 +39,7 @@ const DEEP_LINK_OPTIONS: DeepLinkOption[] = [
 interface OverrideMember {
   user_id: string;
   display_name: string | null;
-  level_id?: string | null;
+  level_id: string | null;
   level_position: number | null;
 }
 interface OverrideLevel {
