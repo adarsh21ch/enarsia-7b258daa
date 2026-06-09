@@ -649,7 +649,6 @@ export default function TeamTracking() {
             </div>
           </main>
 
-          <BottomNav />
         </div>
 
         <EyeViewSheet
