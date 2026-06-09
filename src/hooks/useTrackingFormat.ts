@@ -151,6 +151,7 @@ export function useTrackingFormat() {
     return true;
   });
   const lastRefreshTokenRef = useRef<string | null>(null);
+  const lastFetchAtRef = useRef<number>(0);
 
   // Fetch a leader's profile meta (name/id). Used for displaying the *direct* leader.
   // IMPORTANT: profiles table is protected by RLS, so we must use SECURITY DEFINER RPCs.
