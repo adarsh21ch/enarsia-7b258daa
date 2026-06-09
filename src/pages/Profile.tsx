@@ -29,12 +29,13 @@ import { PullToRefreshIndicator } from '@/components/PullToRefreshIndicator';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import { User, LogOut, ChevronRight, ChevronDown, Loader2, FileText, Shield, Receipt, Settings, ExternalLink, BarChart3, Crown, Gift, Trash2, Sparkles, Lock, Share2, Video, Sliders, NotebookPen, Bell, BrainCircuit, PlayCircle, Clock, Smartphone, GraduationCap, Settings2, Clapperboard } from 'lucide-react';
+import { User, LogOut, ChevronRight, ChevronDown, Loader2, FileText, Shield, Receipt, Settings, ExternalLink, BarChart3, Crown, Gift, Trash2, Sparkles, Lock, Share2, Video, Sliders, NotebookPen, Bell, BrainCircuit, PlayCircle, Clock, Smartphone, GraduationCap, Settings2, Clapperboard, Users } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { usePushNotifications } from '@/hooks/usePushNotifications';
 
 import { useSharedLeads } from '@/hooks/useSharedLeads';
+import { useLeaderTeamMembers } from '@/hooks/useLeaderTeamMembers';
 import { AIAssistantChat } from '@/components/ai/AIAssistantChat';
 import { InstallInstructionsSheet } from '@/components/pwa/InstallPromptBanner';
 import { AppNotificationsSheet } from '@/components/profile/AppNotificationsSheet';
@@ -231,6 +232,15 @@ export default function Profile() {
 
   const { canAccess: canAccessAI } = useFeatureAccess('ai_assistant');
   const { pendingCount } = useSharedLeads();
+  // Direct downline (dual-key, allow_leader_to_view = true). Used to gate the
+  // Team Tracking menu row: hide it for users with no downline.
+  const { members: teamMembers } = useLeaderTeamMembers(
+    user?.id,
+    profile?.email,
+    profile?.neverai_id,
+  );
+  const downlineCount = teamMembers?.length ?? 0;
+  
   
 
   // Handle SSO redirect to nevorai.com pages
@@ -527,6 +537,33 @@ export default function Profile() {
               <ChevronRight className="h-4 w-4 text-muted-foreground" />
             </div>
           </button>
+
+          {/* Team Tracking — only visible to users with at least one direct downline */}
+          {downlineCount > 0 && (
+            <button
+              onClick={() => navigate('/team-tracking')}
+              className={cn("w-full rounded-xl px-4 py-2.5 bg-gradient-to-r backdrop-blur-sm border border-indigo-500/30 flex items-center justify-between transition-all duration-200 hover:shadow-md from-indigo-500/20 to-indigo-500/5")}
+            >
+              <div className="flex items-center gap-3">
+                <div className="p-1.5 rounded-lg bg-indigo-500/10">
+                  <Users className="h-4 w-4 text-indigo-500" />
+                </div>
+                <div className="text-left">
+                  <span className="font-medium text-sm block">Team Tracking</span>
+                  <span className="text-[11px] text-muted-foreground">Review your downline's tracking & activity</span>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <span
+                  aria-label={`${downlineCount} downline member${downlineCount === 1 ? '' : 's'}`}
+                  className="inline-flex items-center justify-center h-5 min-w-5 px-1.5 rounded-full text-[10px] font-bold bg-indigo-500 text-white"
+                >
+                  {downlineCount}
+                </span>
+                <ChevronRight className="h-4 w-4 text-muted-foreground" />
+              </div>
+            </button>
+          )}
           </div>{/* end Tools */}
 
           {/* ── SECTION: Account ──────────────── */}
