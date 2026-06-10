@@ -730,23 +730,23 @@ export function ProspectTable({
   const handleImportProspects = async (prospectsData: Partial<Prospect>[], onProgress?: (imported: number, total: number) => void) => {
     let targetSheetId: string | null = null;
 
-    // If a specific sheet is selected, always use it
-    if (selectedSheetId) {
+    // Excel imports always go to TODAY's sheet (auto-created if missing).
+    // This restores the "new sheet per import day" behavior. The previously
+    // selected sheet (which may be from an older date) is ignored on import.
+    if (filterMode === 'calling' && getOrCreateTodaySheet) {
+      targetSheetId = await getOrCreateTodaySheet();
+    } else if (selectedSheetId) {
+      // Funnel mode (or no today-sheet helper): fall back to selected sheet
       targetSheetId = selectedSheetId;
+    }
+
+    if (targetSheetId) {
       prospectsData = prospectsData.map(p => ({
         ...p,
-        sheet_id: selectedSheetId
+        sheet_id: targetSheetId,
       }));
-    } else if (filterMode === 'calling' && getOrCreateTodaySheet) {
-      // Only auto-assign to today's sheet when viewing "All" (no sheet selected)
-      targetSheetId = await getOrCreateTodaySheet();
-      if (targetSheetId) {
-        prospectsData = prospectsData.map(p => ({
-          ...p,
-          sheet_id: targetSheetId
-        }));
-      }
     }
+
     const result = await onImport(prospectsData, onProgress);
 
     // Switch to the target sheet after successful import
