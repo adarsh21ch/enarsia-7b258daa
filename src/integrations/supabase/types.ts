@@ -7106,6 +7106,15 @@ export type Database = {
           user_id: string
         }[]
       }
+      get_team_member_daily: {
+        Args: { p_leader: string; p_month: string }
+        Returns: {
+          d: string
+          member_user_id: string
+          total_leads: number
+          total_responses: number
+        }[]
+      }
       get_team_total: {
         Args: { p_leader: string; p_month: string }
         Returns: {
