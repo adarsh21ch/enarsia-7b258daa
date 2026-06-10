@@ -7028,6 +7028,7 @@ export type Database = {
         Args: { p_display_name: string; p_email: string }
         Returns: string
       }
+      get_direct_downline: { Args: { p_leader: string }; Returns: string[] }
       get_form_share_url: { Args: { p_form_id: string }; Returns: string }
       get_funnel_payment_details: {
         Args: { p_access_token: string; p_lead_id: string }
@@ -7105,6 +7106,17 @@ export type Database = {
           user_id: string
         }[]
       }
+      get_team_total: {
+        Args: { p_leader: string; p_month: string }
+        Returns: {
+          d: string
+          member_count: number
+          response_tags: Json
+          stage_tags: Json
+          total_leads: number
+          total_responses: number
+        }[]
+      }
       get_user_by_email: {
         Args: { target_email: string }
         Returns: {
@@ -7144,6 +7156,13 @@ export type Database = {
         Returns: string
       }
       get_user_leader_id: { Args: { user_uuid: string }; Returns: string }
+      get_user_upline_chain: {
+        Args: { p_user: string }
+        Returns: {
+          leader_id: string
+          lvl: number
+        }[]
+      }
       grant_product_access: {
         Args: { p_product: string; p_user_id: string }
         Returns: boolean
@@ -7197,6 +7216,10 @@ export type Database = {
       is_funnels_admin: { Args: { check_user_id: string }; Returns: boolean }
       is_in_downline: {
         Args: { target_user_id: string; viewer_user_id: string }
+        Returns: boolean
+      }
+      is_upline_of: {
+        Args: { p_leader: string; p_member: string }
         Returns: boolean
       }
       is_user_upline: { Args: { target_user_id: string }; Returns: boolean }

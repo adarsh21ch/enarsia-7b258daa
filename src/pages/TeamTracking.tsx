@@ -37,6 +37,7 @@ import { useTrackingFormatContext } from '@/contexts/TrackingFormatContext';
 import { useFunnelConfig } from '@/hooks/useFunnelConfig';
 import { usePersonalSnapshotV2Read } from '@/hooks/usePersonalSnapshotV2Read';
 import { useTotalSnapshotV2Read } from '@/hooks/useTotalSnapshotV2Read';
+import { useTeamTotalRollup } from '@/hooks/useTeamTotalRollup';
 import { useSnapshotV2ComputedData } from '@/hooks/useSnapshotV2ComputedData';
 import { useLeaderTeamMembers, type TeamMemberProfile } from '@/hooks/useLeaderTeamMembers';
 import { useMemberPriority } from '@/hooks/useMemberPriority';
@@ -166,14 +167,16 @@ export default function TeamTracking() {
   const { snapshots: personalSnapshots } = usePersonalSnapshotV2Read(
     monthYear, leadsTrackingTagNames, stageTagNames, undefined, targetUserId,
   );
-  const { snapshots: totalSnapshots } = useTotalSnapshotV2Read(
-    monthYear, leadsTrackingTagNames, stageTagNames, targetUserId,
+  // Server-side rollup for any "Total" view: leader + their direct downline,
+  // aggregated from personal_snapshot_v2 in one RPC call.
+  const { snapshots: rolledTotalSnapshots } = useTeamTotalRollup(
+    targetUserId, monthYear, leadsTrackingTagNames, stageTagNames,
   );
 
   const isPersonalView =
     selected.kind === 'self_personal' ||
     (selected.kind === 'member' && selected.isPersonal);
-  const activeSnapshots = isPersonalView ? personalSnapshots : totalSnapshots;
+  const activeSnapshots = isPersonalView ? personalSnapshots : rolledTotalSnapshots;
 
   const {
     dailyMetrics, monthlyTotals, kpiData, funnelPeriods,
@@ -772,7 +775,7 @@ export default function TeamTracking() {
           stageTagNames={computedStageNames}
           finalTagName={finalTagName}
           personalSnapshots={personalSnapshots}
-          totalSnapshots={totalSnapshots}
+          totalSnapshots={rolledTotalSnapshots}
           uplineLeaderId={null}
           targetUserId={selected.kind === 'member' ? selected.userId : null}
           targetUserName={selected.kind === 'member' ? selected.displayName : null}
