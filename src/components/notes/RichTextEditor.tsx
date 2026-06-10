@@ -1,4 +1,4 @@
-import { useRef, useCallback, KeyboardEvent } from 'react';
+import { useRef, useCallback, useLayoutEffect, KeyboardEvent } from 'react';
 import { NoteBlock } from '@/hooks/useNotes';
 import { cn } from '@/lib/utils';
 import { Square, CheckSquare2 } from 'lucide-react';
@@ -13,8 +13,33 @@ function generateId() {
   return crypto.randomUUID().slice(0, 8);
 }
 
+function resizeEl(el: HTMLTextAreaElement) {
+  el.style.height = 'auto';
+  el.style.height = el.scrollHeight + 'px';
+}
+
+/** Keep the caret/textarea visible above the keyboard + toolbar */
+function keepInView(el: HTMLElement) {
+  requestAnimationFrame(() => {
+    const vv = window.visualViewport;
+    const visibleBottom = vv ? vv.offsetTop + vv.height : window.innerHeight;
+    const rect = el.getBoundingClientRect();
+    // 72px buffer for the fixed toolbar
+    const overshoot = rect.bottom - (visibleBottom - 72);
+    if (overshoot > 0) {
+      window.scrollBy({ top: overshoot, behavior: 'smooth' });
+    }
+  });
+}
+
 export function RichTextEditor({ blocks, onChange, onActiveBlockChange }: RichTextEditorProps) {
   const containerRef = useRef<HTMLDivElement>(null);
+
+  // Resize ALL textareas whenever blocks change (initial load, toolbar actions, etc.)
+  useLayoutEffect(() => {
+    const inputs = containerRef.current?.querySelectorAll<HTMLTextAreaElement>('[data-block-input]');
+    inputs?.forEach(resizeEl);
+  }, [blocks]);
 
   const updateBlock = useCallback((index: number, updates: Partial<NoteBlock>) => {
     const newBlocks = [...blocks];
@@ -22,51 +47,92 @@ export function RichTextEditor({ blocks, onChange, onActiveBlockChange }: RichTe
     onChange(newBlocks);
   }, [blocks, onChange]);
 
-  const addBlockAfter = useCallback((index: number, type: NoteBlock['type'] = 'text') => {
-    const newBlock: NoteBlock = { id: generateId(), type, content: '', style: 'normal' };
+  const focusBlock = useCallback((index: number) => {
+    setTimeout(() => {
+      const inputs = containerRef.current?.querySelectorAll<HTMLElement>('[data-block-input]');
+      const target = inputs?.[index];
+      if (target) {
+        target.focus();
+        keepInView(target);
+      }
+      onActiveBlockChange?.(index);
+    }, 50);
+  }, [onActiveBlockChange]);
+
+  const addBlockAfter = useCallback((index: number, type: NoteBlock['type'] = 'text', content = '') => {
+    const newBlock: NoteBlock = { id: generateId(), type, content, style: 'normal' };
     if (type === 'checklist') newBlock.checked = false;
     const newBlocks = [...blocks];
     newBlocks.splice(index + 1, 0, newBlock);
     onChange(newBlocks);
-    // Focus new block after render
-    setTimeout(() => {
-      const inputs = containerRef.current?.querySelectorAll('[data-block-input]');
-      const target = inputs?.[index + 1] as HTMLElement;
-      target?.focus();
-      onActiveBlockChange?.(index + 1);
-    }, 50);
-  }, [blocks, onChange, onActiveBlockChange]);
+    focusBlock(index + 1);
+  }, [blocks, onChange, focusBlock]);
 
   const removeBlock = useCallback((index: number) => {
     if (blocks.length <= 1) return;
     const newBlocks = blocks.filter((_, i) => i !== index);
     onChange(newBlocks);
-    setTimeout(() => {
-      const inputs = containerRef.current?.querySelectorAll('[data-block-input]');
-      const targetIndex = Math.max(0, index - 1);
-      const target = inputs?.[targetIndex] as HTMLElement;
-      target?.focus();
-      onActiveBlockChange?.(targetIndex);
-    }, 50);
-  }, [blocks, onChange, onActiveBlockChange]);
+    focusBlock(Math.max(0, index - 1));
+  }, [blocks, onChange, focusBlock]);
 
   const handleKeyDown = useCallback((e: KeyboardEvent<HTMLTextAreaElement>, index: number) => {
     const block = blocks[index];
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
-      addBlockAfter(index, block.type === 'checklist' ? 'checklist' : 'text');
+      const isBullet = block.content.startsWith('• ');
+      // Empty list/checklist item → exit the list back to plain text
+      if ((block.type === 'checklist' && block.content.trim() === '') || (isBullet && block.content.trim() === '•')) {
+        const newBlocks = [...blocks];
+        newBlocks[index] = { ...block, type: 'text', content: '', checked: undefined };
+        onChange(newBlocks);
+        return;
+      }
+      if (block.type === 'checklist') {
+        addBlockAfter(index, 'checklist');
+      } else if (isBullet) {
+        addBlockAfter(index, 'text', '• ');
+      } else {
+        addBlockAfter(index, 'text');
+      }
     }
     if (e.key === 'Backspace' && block.content === '' && blocks.length > 1) {
       e.preventDefault();
       removeBlock(index);
     }
-  }, [blocks, addBlockAfter, removeBlock]);
+  }, [blocks, onChange, addBlockAfter, removeBlock]);
 
-  // Auto-resize textarea
-  const handleInput = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+  /** Markdown-style quick shortcuts at the start of a block */
+  const applyShortcuts = (value: string, block: NoteBlock): Partial<NoteBlock> | null => {
+    if (block.type !== 'text' || block.content !== '') return null;
+    if (value === '# ') return { type: 'heading', content: '' };
+    if (value === '- ' || value === '* ') return { content: '• ' };
+    if (value === '[] ' || value === '[ ] ') return { type: 'checklist', content: '', checked: false };
+    return null;
+  };
+
+  const handleInput = (e: React.ChangeEvent<HTMLTextAreaElement>, index: number) => {
     const el = e.target;
-    el.style.height = 'auto';
-    el.style.height = el.scrollHeight + 'px';
+    resizeEl(el);
+    keepInView(el);
+
+    const block = blocks[index];
+    const shortcut = applyShortcuts(el.value, block);
+    if (shortcut) {
+      updateBlock(index, shortcut);
+      return;
+    }
+    updateBlock(index, { content: el.value });
+  };
+
+  // Tap on empty space below the last block → focus it
+  const handleContainerClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (e.target !== containerRef.current) return;
+    const inputs = containerRef.current?.querySelectorAll<HTMLElement>('[data-block-input]');
+    const last = inputs?.[inputs.length - 1];
+    if (last) {
+      last.focus();
+      onActiveBlockChange?.(blocks.length - 1);
+    }
   };
 
   // Ensure at least one block
@@ -75,7 +141,11 @@ export function RichTextEditor({ blocks, onChange, onActiveBlockChange }: RichTe
     : blocks;
 
   return (
-    <div ref={containerRef} className="flex-1 overflow-y-auto px-4 py-3 space-y-0.5">
+    <div
+      ref={containerRef}
+      onClick={handleContainerClick}
+      className="px-4 py-3 space-y-0.5 min-h-[40vh]"
+    >
       {displayBlocks.map((block, i) => (
         <div key={block.id} className="flex items-start gap-1.5">
           {block.type === 'checklist' && (
@@ -94,10 +164,7 @@ export function RichTextEditor({ blocks, onChange, onActiveBlockChange }: RichTe
             data-block-input
             rows={1}
             value={block.content}
-            onChange={(e) => {
-              handleInput(e);
-              updateBlock(i, { content: e.target.value });
-            }}
+            onChange={(e) => handleInput(e, i)}
             onKeyDown={(e) => handleKeyDown(e, i)}
             placeholder={
               block.type === 'heading' ? 'Heading...'
@@ -115,11 +182,10 @@ export function RichTextEditor({ blocks, onChange, onActiveBlockChange }: RichTe
               "text-sm"
             )}
             style={{ overflow: 'hidden', minHeight: '1.75rem' }}
-             onFocus={(e) => {
-               e.target.style.height = 'auto';
-               e.target.style.height = e.target.scrollHeight + 'px';
-               onActiveBlockChange?.(i);
-             }}
+            onFocus={(e) => {
+              resizeEl(e.target);
+              onActiveBlockChange?.(i);
+            }}
           />
         </div>
       ))}
