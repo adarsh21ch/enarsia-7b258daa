@@ -146,6 +146,7 @@ function App() {
                         <Route path="/dashboard" element={<Dashboard />} />
                         <Route path="/tracking" element={<Tracking />} />
                         <Route path="/team-tracking" element={<TeamTracking />} />
+                        <Route path="/team-tracking/member/:userId/prospects" element={<MemberProspectsReadOnly />} />
                         <Route path="/home" element={<Home />} />
                         <Route path="/action" element={<TodoUp />} />
                         <Route path="/listup" element={<ListUp />} />
