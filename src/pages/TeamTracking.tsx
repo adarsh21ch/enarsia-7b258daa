@@ -561,27 +561,40 @@ export default function TeamTracking() {
               </div>
 
               {selected.kind === 'member' && (
-                <div className="mt-2 flex gap-1 rounded-lg bg-muted p-0.5">
-                  <button
-                    onClick={() => setSelected({ ...selected, isPersonal: false })}
-                    className={cn(
-                      'flex-1 rounded-md px-3 py-1.5 text-xs font-medium transition-colors',
-                      !selected.isPersonal ? 'bg-background shadow-sm' : 'text-muted-foreground',
-                    )}
+                <div className="mt-2 flex items-center gap-2">
+                  <div className="flex flex-1 gap-1 rounded-lg bg-muted p-0.5">
+                    <button
+                      onClick={() => setSelected({ ...selected, isPersonal: false })}
+                      className={cn(
+                        'flex-1 rounded-md px-3 py-1.5 text-xs font-medium transition-colors',
+                        !selected.isPersonal ? 'bg-background shadow-sm' : 'text-muted-foreground',
+                      )}
+                    >
+                      Team Total
+                    </button>
+                    <button
+                      onClick={() => setSelected({ ...selected, isPersonal: true })}
+                      className={cn(
+                        'flex-1 rounded-md px-3 py-1.5 text-xs font-medium transition-colors',
+                        selected.isPersonal ? 'bg-background shadow-sm' : 'text-muted-foreground',
+                      )}
+                    >
+                      Personal Only
+                    </button>
+                  </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="h-8 gap-1.5 px-2.5 text-xs flex-shrink-0"
+                    onClick={() => openMemberProspects(selected.userId)}
+                    aria-label="Open member prospects read-only"
                   >
-                    Team Total
-                  </button>
-                  <button
-                    onClick={() => setSelected({ ...selected, isPersonal: true })}
-                    className={cn(
-                      'flex-1 rounded-md px-3 py-1.5 text-xs font-medium transition-colors',
-                      selected.isPersonal ? 'bg-background shadow-sm' : 'text-muted-foreground',
-                    )}
-                  >
-                    Personal Only
-                  </button>
+                    <Eye className="h-3.5 w-3.5 text-primary" />
+                    <span>Prospects</span>
+                  </Button>
                 </div>
               )}
+
 
               <div className="mt-2">
                 <ModeSelectors
