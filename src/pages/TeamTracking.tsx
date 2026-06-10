@@ -318,7 +318,7 @@ export default function TeamTracking() {
         )}
 
         {levels.map(lv => {
-          const group = membersByLevel.groups.get(lv.id) || [];
+          const group = sortMembers(membersByLevel.groups.get(lv.id) || []);
           if (group.length === 0) return null;
           const collapsed = collapsedLevels[lv.id];
           return (
@@ -336,6 +336,8 @@ export default function TeamTracking() {
                   member={m}
                   activeUserId={selected.kind === 'member' ? selected.userId : null}
                   onSelect={selectMember}
+                  isPriority={prioritySet.has(m.user_id)}
+                  onTogglePriority={togglePriority}
                 />
               ))}
             </div>
@@ -349,12 +351,14 @@ export default function TeamTracking() {
                 Other <span className="opacity-50">· {membersByLevel.unleveled.length}</span>
               </div>
             )}
-            {membersByLevel.unleveled.map(m => (
+            {sortMembers(membersByLevel.unleveled).map(m => (
               <MemberRow
                 key={m.user_id}
                 member={m}
                 activeUserId={selected.kind === 'member' ? selected.userId : null}
                 onSelect={selectMember}
+                isPriority={prioritySet.has(m.user_id)}
+                onTogglePriority={togglePriority}
               />
             ))}
           </div>
