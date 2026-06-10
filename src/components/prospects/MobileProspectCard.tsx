@@ -117,9 +117,10 @@ const [localData, setLocalData] = useState({
   const openWhatsApp = useCallback((e: React.MouseEvent) => {
     e.stopPropagation();
     onMarkLastContacted?.();
+    logWhatsAppSent({ prospectId: prospect.id, name: prospect.name, phone: prospect.phone });
     // Use whatsapp:// protocol to open native app directly
     window.location.href = `whatsapp://send?phone=${cleanPhoneNumber(prospect.phone)}`;
-  }, [prospect.phone, onMarkLastContacted]);
+  }, [prospect.id, prospect.name, prospect.phone, onMarkLastContacted]);
 
   const openCall = useCallback((e: React.MouseEvent) => {
     e.preventDefault();
