@@ -208,17 +208,13 @@ export function SheetTabs({
                         <FileSpreadsheet className="h-3.5 w-3.5 mr-2" />
                         Custom Export…
                       </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => handleSelectAndDelete(sheet.id)}>
-                        <CheckSquare className="h-3.5 w-3.5 mr-2" />
-                        Select & Delete
-                      </DropdownMenuItem>
                       <DropdownMenuSeparator />
                       <DropdownMenuItem
-                    onClick={() => handleDeleteAllInSheet(sheet.id, sheet.name)}
+                    onClick={() => handleSelectAndDelete(sheet.id)}
                     className="text-destructive focus:text-destructive">
 
-                        <Trash className="h-3.5 w-3.5 mr-2" />
-                        Delete all rows
+                        <CheckSquare className="h-3.5 w-3.5 mr-2" />
+                        Select & Delete
                       </DropdownMenuItem>
                       <DropdownMenuItem
                     onClick={() => handleDeleteSheet(sheet)}
@@ -227,6 +223,7 @@ export function SheetTabs({
                         <Trash2 className="h-3.5 w-3.5 mr-2" />
                         Delete sheet
                       </DropdownMenuItem>
+
                     </DropdownMenuContent>
                   </DropdownMenu>
                 </div>
