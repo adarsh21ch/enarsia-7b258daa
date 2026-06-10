@@ -1172,27 +1172,30 @@ export function ProspectTable({
                               type="button"
                               onClick={() => { if (peopleViewMode !== 'card') onToggleView(); }}
                               className={cn(
-                                "flex-1 h-7 rounded-md inline-flex items-center justify-center transition-colors",
+                                "flex-1 h-7 rounded-md inline-flex items-center justify-center gap-1.5 text-xs font-medium transition-colors",
                                 peopleViewMode !== 'table' ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
                               )}
                               title="Card view"
                               aria-pressed={peopleViewMode !== 'table'}
                             >
-                              <LayoutGrid className="h-4 w-4" />
+                              <LayoutGrid className="h-3.5 w-3.5" />
+                              <span>Card</span>
                             </button>
                             <button
                               type="button"
                               onClick={() => { if (peopleViewMode !== 'table') onToggleView(); }}
                               className={cn(
-                                "flex-1 h-7 rounded-md inline-flex items-center justify-center transition-colors",
+                                "flex-1 h-7 rounded-md inline-flex items-center justify-center gap-1.5 text-xs font-medium transition-colors",
                                 peopleViewMode === 'table' ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
                               )}
                               title="List view"
                               aria-pressed={peopleViewMode === 'table'}
                             >
-                              <List className="h-4 w-4" />
+                              <List className="h-3.5 w-3.5" />
+                              <span>List</span>
                             </button>
                           </div>
+
                         </div>
                         <DropdownMenuSeparator />
                       </>
