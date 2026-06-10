@@ -29,6 +29,7 @@ const ListUp = lazy(() => import("./pages/ListUp"));
 const TodoUp = lazy(() => import("./pages/TodoUp"));
 const Tracking = lazy(() => import("./pages/Tracking"));
 const TeamTracking = lazy(() => import("./pages/TeamTracking"));
+const MemberProspectsReadOnly = lazy(() => import("./pages/MemberProspectsReadOnly"));
 
 // Lazy load less frequently accessed pages
 const Home = lazy(() => import("./pages/Home"));
