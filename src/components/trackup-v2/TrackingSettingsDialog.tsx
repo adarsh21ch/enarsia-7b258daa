@@ -145,3 +145,61 @@ export function TrackingSettingsDialog({ open, onOpenChange, onEditFunnelConfig 
     </Dialog>
   );
 }
+
+interface ModeToggleProps {
+  title: string;
+  value: TrackingSource;
+  onChange: (v: TrackingSource) => void;
+  autoDisabled: boolean;
+  lockedTierLabel: string;
+  description: string;
+}
+
+function ModeToggle({ title, value, onChange, autoDisabled, lockedTierLabel, description }: ModeToggleProps) {
+  const isAuto = value === 'AUTO';
+  return (
+    <div className="space-y-2">
+      <div className="flex items-center justify-between">
+        <h3 className="text-sm font-semibold text-foreground">{title}</h3>
+        {autoDisabled && (
+          <Badge variant="outline" className="text-[10px] gap-1 border-amber-500/50 text-amber-600">
+            <Crown className="h-3 w-3" /> {lockedTierLabel}
+          </Badge>
+        )}
+      </div>
+      <div className="grid grid-cols-2 gap-1 p-1 rounded-xl bg-muted/60 border border-border/60">
+        <button
+          type="button"
+          onClick={() => onChange('MANUAL')}
+          className={cn(
+            'flex items-center justify-center gap-1.5 py-2 rounded-lg text-xs font-medium transition-all duration-200',
+            !isAuto
+              ? 'bg-background shadow-sm text-foreground'
+              : 'text-muted-foreground hover:text-foreground'
+          )}
+        >
+          <Pencil className="h-3.5 w-3.5" />
+          Manual
+        </button>
+        <button
+          type="button"
+          disabled={autoDisabled}
+          onClick={() => !autoDisabled && onChange('AUTO')}
+          className={cn(
+            'flex items-center justify-center gap-1.5 py-2 rounded-lg text-xs font-medium transition-all duration-200',
+            isAuto
+              ? 'bg-primary text-primary-foreground shadow-sm'
+              : 'text-muted-foreground hover:text-foreground',
+            autoDisabled && 'opacity-50 cursor-not-allowed hover:text-muted-foreground'
+          )}
+        >
+          {autoDisabled ? <Lock className="h-3.5 w-3.5" /> : <Sparkles className="h-3.5 w-3.5" />}
+          Automatic
+        </button>
+      </div>
+      <p className="text-[11px] text-muted-foreground leading-relaxed px-0.5">
+        {description}
+      </p>
+    </div>
+  );
+}
