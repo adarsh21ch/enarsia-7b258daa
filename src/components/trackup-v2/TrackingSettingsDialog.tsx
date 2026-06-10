@@ -29,7 +29,7 @@ export function TrackingSettingsDialog({ open, onOpenChange, onEditFunnelConfig 
   const { personalSource, teamSource, setPreferences, isUpdating } = useTrackingSourcePreferences();
   const { checkFeature } = usePermissions();
   const { config } = useAdminConfig();
-  const { config: funnelConfig, getEffectiveConfig, isReadOnly: funnelReadOnly, leaderName } = useFunnelConfig();
+  const { getEffectiveConfig, isReadOnly: funnelReadOnly, leaderName } = useFunnelConfig();
   const effectiveFunnel = getEffectiveConfig();
 
   const canPersonalAuto = checkFeature('personal_auto_tracking');
