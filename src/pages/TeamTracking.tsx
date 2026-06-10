@@ -37,6 +37,7 @@ import { useTrackingFormatContext } from '@/contexts/TrackingFormatContext';
 import { useFunnelConfig } from '@/hooks/useFunnelConfig';
 import { usePersonalSnapshotV2Read } from '@/hooks/usePersonalSnapshotV2Read';
 import { useTotalSnapshotV2Read } from '@/hooks/useTotalSnapshotV2Read';
+import { useTeamTotalRollup } from '@/hooks/useTeamTotalRollup';
 import { useSnapshotV2ComputedData } from '@/hooks/useSnapshotV2ComputedData';
 import { useLeaderTeamMembers, type TeamMemberProfile } from '@/hooks/useLeaderTeamMembers';
 import { useMemberPriority } from '@/hooks/useMemberPriority';
