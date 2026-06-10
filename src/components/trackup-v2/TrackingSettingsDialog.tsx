@@ -11,15 +11,18 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Crown } from 'lucide-react';
+import { Crown, CalendarDays, ChevronRight } from 'lucide-react';
+import { format } from 'date-fns';
 import { useTrackingSourcePreferences, type TrackingSource } from '@/hooks/useTrackingSourcePreferences';
 import { usePermissions } from '@/contexts/PermissionsContext';
 import { useAdminConfig } from '@/hooks/useAdminConfig';
+import { useFunnelConfig } from '@/hooks/useFunnelConfig';
 import { getTierDisplayName } from '@/config/tierLabels';
 
 interface TrackingSettingsDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  onEditFunnelConfig?: () => void;
 }
 
 export function TrackingSettingsDialog({ open, onOpenChange }: TrackingSettingsDialogProps) {
