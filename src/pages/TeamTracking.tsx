@@ -824,15 +824,16 @@ interface MemberRowProps {
   onSelect: (m: TeamMemberProfile, isPersonal: boolean) => void;
   isPriority?: boolean;
   onTogglePriority?: (memberUserId: string) => void;
+  onOpenProspects?: (memberUserId: string) => void;
 }
-function MemberRow({ member, activeUserId, onSelect, isPriority, onTogglePriority }: MemberRowProps) {
+function MemberRow({ member, activeUserId, onSelect, isPriority, onTogglePriority, onOpenProspects }: MemberRowProps) {
   const active = activeUserId === member.user_id;
   const name = member.display_name || member.email || 'Unnamed';
   const initials = name.slice(0, 2).toUpperCase();
   return (
     <div
       className={cn(
-        'mb-0.5 group flex w-full items-center gap-2 rounded-md px-2 py-1.5 transition-colors',
+        'mb-0.5 group flex w-full items-center gap-1 rounded-md px-2 py-1.5 transition-colors',
         active ? 'bg-primary/10 text-primary' : 'hover:bg-muted/50',
       )}
     >
@@ -848,6 +849,16 @@ function MemberRow({ member, activeUserId, onSelect, isPriority, onTogglePriorit
           {member.email && <div className="truncate text-[10px] text-muted-foreground">{member.email}</div>}
         </div>
       </button>
+      {onOpenProspects && (
+        <button
+          onClick={(e) => { e.stopPropagation(); onOpenProspects(member.user_id); }}
+          className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded text-muted-foreground opacity-0 transition-opacity hover:bg-muted/60 hover:text-primary group-hover:opacity-100"
+          aria-label={`Open ${name}'s prospects (read-only)`}
+          title="View prospects (read-only)"
+        >
+          <Eye className="h-3.5 w-3.5" />
+        </button>
+      )}
       {onTogglePriority && (
         <button
           onClick={(e) => { e.stopPropagation(); onTogglePriority(member.user_id); }}
@@ -865,3 +876,4 @@ function MemberRow({ member, activeUserId, onSelect, isPriority, onTogglePriorit
     </div>
   );
 }
+
