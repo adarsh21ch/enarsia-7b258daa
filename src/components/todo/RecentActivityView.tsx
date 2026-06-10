@@ -22,13 +22,15 @@ const WhatsAppIcon = ({ className }: { className?: string }) => (
 
 type ActivityItem = {
   id: string;
-  type: 'lead' | 'import' | 'todo' | 'call';
+  type: 'lead' | 'import' | 'todo' | 'call' | 'whatsapp' | 'sms' | 'tag' | 'stage';
   name: string;
   phone: string | null;
   stage: string | null;
   action: string | null;
   time: Date;
   prospectId?: string | null;
+  tagOldValue?: string | null;
+  tagNewValue?: string | null;
 };
 
 interface RecentActivityViewProps {
