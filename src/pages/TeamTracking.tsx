@@ -39,6 +39,7 @@ import { usePersonalSnapshotV2Read } from '@/hooks/usePersonalSnapshotV2Read';
 import { useTotalSnapshotV2Read } from '@/hooks/useTotalSnapshotV2Read';
 import { useSnapshotV2ComputedData } from '@/hooks/useSnapshotV2ComputedData';
 import { useLeaderTeamMembers, type TeamMemberProfile } from '@/hooks/useLeaderTeamMembers';
+import { useMemberPriority } from '@/hooks/useMemberPriority';
 import nevoraLogo from '@/assets/nevorai-call-logo.png';
 
 type SelectedEntity =
