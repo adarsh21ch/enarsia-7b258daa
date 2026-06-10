@@ -19,6 +19,7 @@ import { MonthlyTotalsTable } from '@/components/trackup-v2/MonthlyTotalsTable';
 import { ManualUpdateDrawer } from '@/components/trackup-v2/ManualUpdateDrawer';
 import { FloatingUpdateButton } from '@/components/trackup-v2/FloatingUpdateButton';
 import { TrackingSettingsDialog } from '@/components/trackup-v2/TrackingSettingsDialog';
+import { FunnelConfigDialog } from '@/components/trackup-v2/FunnelConfigDialog';
 import { LayoutToggle, type LayoutMode } from '@/components/trackup-v2/LayoutToggle';
 import { MetricCardView } from '@/components/trackup-v2/MetricCardView';
 import { MetricChartView } from '@/components/trackup-v2/MetricChartView';
