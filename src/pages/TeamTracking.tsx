@@ -794,26 +794,46 @@ interface MemberRowProps {
   member: TeamMemberProfile;
   activeUserId: string | null;
   onSelect: (m: TeamMemberProfile, isPersonal: boolean) => void;
+  isPriority?: boolean;
+  onTogglePriority?: (memberUserId: string) => void;
 }
-function MemberRow({ member, activeUserId, onSelect }: MemberRowProps) {
+function MemberRow({ member, activeUserId, onSelect, isPriority, onTogglePriority }: MemberRowProps) {
   const active = activeUserId === member.user_id;
   const name = member.display_name || member.email || 'Unnamed';
   const initials = name.slice(0, 2).toUpperCase();
   return (
-    <button
-      onClick={() => onSelect(member, false)}
+    <div
       className={cn(
-        'mb-0.5 flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left transition-colors',
+        'mb-0.5 group flex w-full items-center gap-2 rounded-md px-2 py-1.5 transition-colors',
         active ? 'bg-primary/10 text-primary' : 'hover:bg-muted/50',
       )}
     >
-      <div className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-primary/15 text-[10px] font-bold text-primary">
-        {initials}
-      </div>
-      <div className="min-w-0 flex-1">
-        <div className="truncate text-xs font-medium">{name}</div>
-        {member.email && <div className="truncate text-[10px] text-muted-foreground">{member.email}</div>}
-      </div>
-    </button>
+      <button
+        onClick={() => onSelect(member, false)}
+        className="flex min-w-0 flex-1 items-center gap-2 text-left"
+      >
+        <div className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-primary/15 text-[10px] font-bold text-primary">
+          {initials}
+        </div>
+        <div className="min-w-0 flex-1">
+          <div className="truncate text-xs font-medium">{name}</div>
+          {member.email && <div className="truncate text-[10px] text-muted-foreground">{member.email}</div>}
+        </div>
+      </button>
+      {onTogglePriority && (
+        <button
+          onClick={(e) => { e.stopPropagation(); onTogglePriority(member.user_id); }}
+          className={cn(
+            'flex h-6 w-6 flex-shrink-0 items-center justify-center rounded transition-opacity',
+            isPriority
+              ? 'opacity-100 text-amber-500'
+              : 'opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-amber-500',
+          )}
+          aria-label={isPriority ? 'Remove from priority' : 'Mark as priority'}
+        >
+          <Star className={cn('h-3.5 w-3.5', isPriority && 'fill-current')} />
+        </button>
+      )}
+    </div>
   );
 }
