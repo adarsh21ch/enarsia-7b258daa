@@ -59,10 +59,10 @@ export function usePersonalSnapshotV2Read(
   const snapshots = useMemo(() => {
     return rawSnapshots.map((row) => {
       const mapped = { ...row };
-      if (hasSlotKeys(mapped.response_tags, 'response_tag') && leadsTrackingTagNames.length > 0) {
+      if (leadsTrackingTagNames.length > 0) {
         mapped.response_tags = slotKeysToTagNames(leadsTrackingTagNames, mapped.response_tags, 'response_tag');
       }
-      if (hasSlotKeys(mapped.stage_tags, 'stage_tag') && stageTagNames.length > 0) {
+      if (stageTagNames.length > 0) {
         mapped.stage_tags = slotKeysToTagNames(stageTagNames, mapped.stage_tags, 'stage_tag');
       }
       return mapped;
