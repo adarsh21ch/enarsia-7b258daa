@@ -107,13 +107,13 @@ export default function Landing() {
               Built in India 🇮🇳 for network marketers
             </div>
             <h1 className="mt-5 text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-extrabold tracking-tight leading-[1.05]">
-              Never Miss a Follow-Up.<br />
+              The personal CRM<br />
               <span className="bg-gradient-to-r from-primary via-primary to-accent bg-clip-text text-transparent">
-                Never Lose a Prospect.
+                built for network marketers.
               </span>
             </h1>
             <p className="mt-5 text-base sm:text-lg text-muted-foreground max-w-xl leading-relaxed">
-              Manage leads, follow up on time, stay organized, and know exactly what to do next—every day.
+              Manage your leads, follow up on time, and close more enrolments — all in one app, right on your phone.
             </p>
             <div className="mt-7 flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-5">
               <Link to="/auth">
@@ -345,17 +345,22 @@ export default function Landing() {
         </div>
         <div className="relative max-w-3xl mx-auto text-center">
           <Reveal>
-            <h2 className="text-3xl sm:text-4xl md:text-6xl font-extrabold tracking-tight leading-tight whitespace-pre-line">
-              {`Built in India 🇮🇳 for network marketers
-Never miss a follow-up.
-Never lose a Prospect.
-Manage leads, follow up on time, stay organized, and know exactly what to do next—every day.
-Start Free
-Already have an account? Log in
-7-day free trial · No card needed · Made in India 🇮🇳
-
-`}
+            <h2 className="text-3xl sm:text-4xl md:text-6xl font-extrabold tracking-tight leading-tight">
+              Your work is ready to move.
             </h2>
+            <p className="mt-5 text-base sm:text-lg text-primary-foreground/90 max-w-xl mx-auto">
+              Bring your leads and follow-ups into one place today.
+            </p>
+            <div className="mt-8">
+              <Link to="/auth">
+                <Button size="lg" className="bg-background text-foreground hover:bg-background/90 px-10 h-13 text-base font-bold shadow-2xl">
+                  Start Free
+                </Button>
+              </Link>
+            </div>
+            <p className="mt-5 text-xs sm:text-sm text-primary-foreground/80">
+              Made in India, for network marketers.
+            </p>
           </Reveal>
         </div>
       </section>
