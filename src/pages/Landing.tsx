@@ -104,7 +104,7 @@ export default function Landing() {
           <Reveal>
             <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary/10 text-primary text-xs sm:text-sm font-semibold border border-primary/20">
               <span className="h-1.5 w-1.5 rounded-full bg-primary animate-pulse" />
-              Built in India 🇮🇳 for network marketers
+              Built in India 🇮🇳 for Network Marketers
             </div>
             <h1 className="mt-5 text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-extrabold tracking-tight leading-[1.05]">
               The personal CRM<br />
