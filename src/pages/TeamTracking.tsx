@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { format, subMonths, addMonths } from 'date-fns';
-import { ChevronLeft, ChevronRight, Users, ArrowLeft, BarChart3, Info, Crown, ChevronDown, ChevronUp, Activity, Columns3, ListChecks, PanelLeftClose, PanelLeftOpen, Menu, Bell, Send, Zap, Edit3 } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Users, ArrowLeft, BarChart3, Info, Crown, ChevronDown, ChevronUp, Activity, Columns3, ListChecks, PanelLeftClose, PanelLeftOpen, Menu, Bell, Send, Zap, Edit3, Star } from 'lucide-react';
 import { InboxDrawer } from '@/components/layout/InboxDrawer';
 import { SendMessageDrawer } from '@/components/layout/SendMessageDrawer';
 import { useInbox } from '@/hooks/useInbox';
@@ -39,6 +39,7 @@ import { usePersonalSnapshotV2Read } from '@/hooks/usePersonalSnapshotV2Read';
 import { useTotalSnapshotV2Read } from '@/hooks/useTotalSnapshotV2Read';
 import { useSnapshotV2ComputedData } from '@/hooks/useSnapshotV2ComputedData';
 import { useLeaderTeamMembers, type TeamMemberProfile } from '@/hooks/useLeaderTeamMembers';
+import { useMemberPriority } from '@/hooks/useMemberPriority';
 import nevoraLogo from '@/assets/nevorai-call-logo.png';
 
 type SelectedEntity =
@@ -136,6 +137,20 @@ export default function TeamTracking() {
   const {
     members, levels, loading: teamLoading,
   } = useLeaderTeamMembers(user?.id, profile?.email, profile?.neverai_id);
+
+  const { prioritySet, toggle: togglePriority } = useMemberPriority();
+
+  // Priority members surface first inside every grouping
+  const sortMembers = useCallback((arr: TeamMemberProfile[]) => {
+    return [...arr].sort((a, b) => {
+      const ap = prioritySet.has(a.user_id) ? 0 : 1;
+      const bp = prioritySet.has(b.user_id) ? 0 : 1;
+      if (ap !== bp) return ap - bp;
+      const an = (a.display_name || a.email || '').toLowerCase();
+      const bn = (b.display_name || b.email || '').toLowerCase();
+      return an.localeCompare(bn);
+    });
+  }, [prioritySet]);
 
   const targetUserId = useMemo(() => {
     if (selected.kind === 'member') return selected.userId;
@@ -303,7 +318,7 @@ export default function TeamTracking() {
         )}
 
         {levels.map(lv => {
-          const group = membersByLevel.groups.get(lv.id) || [];
+          const group = sortMembers(membersByLevel.groups.get(lv.id) || []);
           if (group.length === 0) return null;
           const collapsed = collapsedLevels[lv.id];
           return (
@@ -321,6 +336,8 @@ export default function TeamTracking() {
                   member={m}
                   activeUserId={selected.kind === 'member' ? selected.userId : null}
                   onSelect={selectMember}
+                  isPriority={prioritySet.has(m.user_id)}
+                  onTogglePriority={togglePriority}
                 />
               ))}
             </div>
@@ -334,12 +351,14 @@ export default function TeamTracking() {
                 Other <span className="opacity-50">· {membersByLevel.unleveled.length}</span>
               </div>
             )}
-            {membersByLevel.unleveled.map(m => (
+            {sortMembers(membersByLevel.unleveled).map(m => (
               <MemberRow
                 key={m.user_id}
                 member={m}
                 activeUserId={selected.kind === 'member' ? selected.userId : null}
                 onSelect={selectMember}
+                isPriority={prioritySet.has(m.user_id)}
+                onTogglePriority={togglePriority}
               />
             ))}
           </div>
@@ -775,26 +794,46 @@ interface MemberRowProps {
   member: TeamMemberProfile;
   activeUserId: string | null;
   onSelect: (m: TeamMemberProfile, isPersonal: boolean) => void;
+  isPriority?: boolean;
+  onTogglePriority?: (memberUserId: string) => void;
 }
-function MemberRow({ member, activeUserId, onSelect }: MemberRowProps) {
+function MemberRow({ member, activeUserId, onSelect, isPriority, onTogglePriority }: MemberRowProps) {
   const active = activeUserId === member.user_id;
   const name = member.display_name || member.email || 'Unnamed';
   const initials = name.slice(0, 2).toUpperCase();
   return (
-    <button
-      onClick={() => onSelect(member, false)}
+    <div
       className={cn(
-        'mb-0.5 flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left transition-colors',
+        'mb-0.5 group flex w-full items-center gap-2 rounded-md px-2 py-1.5 transition-colors',
         active ? 'bg-primary/10 text-primary' : 'hover:bg-muted/50',
       )}
     >
-      <div className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-primary/15 text-[10px] font-bold text-primary">
-        {initials}
-      </div>
-      <div className="min-w-0 flex-1">
-        <div className="truncate text-xs font-medium">{name}</div>
-        {member.email && <div className="truncate text-[10px] text-muted-foreground">{member.email}</div>}
-      </div>
-    </button>
+      <button
+        onClick={() => onSelect(member, false)}
+        className="flex min-w-0 flex-1 items-center gap-2 text-left"
+      >
+        <div className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-primary/15 text-[10px] font-bold text-primary">
+          {initials}
+        </div>
+        <div className="min-w-0 flex-1">
+          <div className="truncate text-xs font-medium">{name}</div>
+          {member.email && <div className="truncate text-[10px] text-muted-foreground">{member.email}</div>}
+        </div>
+      </button>
+      {onTogglePriority && (
+        <button
+          onClick={(e) => { e.stopPropagation(); onTogglePriority(member.user_id); }}
+          className={cn(
+            'flex h-6 w-6 flex-shrink-0 items-center justify-center rounded transition-opacity',
+            isPriority
+              ? 'opacity-100 text-amber-500'
+              : 'opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-amber-500',
+          )}
+          aria-label={isPriority ? 'Remove from priority' : 'Mark as priority'}
+        >
+          <Star className={cn('h-3.5 w-3.5', isPriority && 'fill-current')} />
+        </button>
+      )}
+    </div>
   );
 }

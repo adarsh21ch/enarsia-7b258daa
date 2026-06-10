@@ -117,9 +117,9 @@ export function tagNamesToSlotKeys(
 }
 
 /**
- * Convert position-based slot keys back to human-readable tag names.
- * e.g. tagNames = ["Interested", "Follow Up"], slotData = { "response_tag_1": 3, "response_tag_2": 2 }
- * => { "Interested": 3, "Follow Up": 2 }
+ * Hybrid resolve: per position, prefer slot-key value; fall back to legacy
+ * label-keyed value if slot value is missing. Never sums both.
+ * e.g. tagNames=["A","B"], data={ response_tag_1: 3, "B": 2 } => { A:3, B:2 }
  */
 export function slotKeysToTagNames(
   tagNames: string[],
@@ -129,8 +129,12 @@ export function slotKeysToTagNames(
   const result: Record<string, number> = {};
   tagNames.forEach((name, index) => {
     const slotKey = `${prefix}_${index + 1}`;
-    if (slotData[slotKey] !== undefined) {
-      result[name] = slotData[slotKey];
+    const slotVal = slotData[slotKey];
+    const labelVal = slotData[name];
+    if (slotVal !== undefined) {
+      result[name] = slotVal;
+    } else if (labelVal !== undefined) {
+      result[name] = labelVal;
     }
   });
   return result;
