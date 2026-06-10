@@ -3909,6 +3909,27 @@ export type Database = {
           },
         ]
       }
+      member_priority: {
+        Row: {
+          created_at: string
+          leader_id: string
+          member_user_id: string
+          rank: number
+        }
+        Insert: {
+          created_at?: string
+          leader_id: string
+          member_user_id: string
+          rank?: number
+        }
+        Update: {
+          created_at?: string
+          leader_id?: string
+          member_user_id?: string
+          rank?: number
+        }
+        Relationships: []
+      }
       nevorai_form_analytics_daily: {
         Row: {
           created_at: string
@@ -7251,6 +7272,7 @@ export type Database = {
       purge_expired_deleted_items: { Args: never; Returns: undefined }
       record_app_access: { Args: { p_app: string }; Returns: undefined }
       replace_demo_leads_master: { Args: { p_rows: Json }; Returns: Json }
+      resolve_upline_for_user: { Args: { p_user_id: string }; Returns: string }
       restore_deletion_batch: { Args: { p_batch_id: string }; Returns: Json }
       restore_deletion_batch_lead: {
         Args: { p_lead_id: string }
