@@ -316,6 +316,26 @@ export default function TeamTracking() {
         />
         <div className="my-2 border-t border-border/40" />
 
+        {(members.length > 0 || priorityOnly) && (
+          <div className="mb-1 flex items-center justify-between px-2">
+            <span className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Team</span>
+            <button
+              onClick={() => setPriorityOnly(v => !v)}
+              className={cn(
+                'flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-medium transition-colors',
+                priorityOnly
+                  ? 'bg-amber-500/15 text-amber-600 dark:text-amber-400'
+                  : 'text-muted-foreground hover:bg-muted/60',
+              )}
+              aria-pressed={priorityOnly}
+            >
+              <Star className={cn('h-3 w-3', priorityOnly && 'fill-current')} />
+              Priority only
+            </button>
+          </div>
+        )}
+
+
         {teamLoading && <p className="px-2 py-3 text-xs text-muted-foreground">Loading team…</p>}
         {!teamLoading && members.length === 0 && (
           <div className="px-2 py-3 text-xs text-muted-foreground">
