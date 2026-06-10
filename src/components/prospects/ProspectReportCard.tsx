@@ -13,7 +13,7 @@ import { Phone, MessageCircle, MessageSquareText, Calendar as CalendarIcon, Cloc
 import { format, parseISO, formatDistanceToNow } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
-import { logCallMade } from '@/lib/callLog';
+import { logCallMade, logWhatsAppSent, logSmsSent } from '@/lib/callLog';
 
 interface ProspectReportCardProps {
   prospect: Prospect | null;
