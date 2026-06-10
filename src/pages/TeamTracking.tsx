@@ -63,6 +63,7 @@ export default function TeamTracking() {
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [selected, setSelected] = useState<SelectedEntity>({ kind: 'self_total' });
   const [collapsedLevels, setCollapsedLevels] = useState<Record<string, boolean>>({});
+  const [priorityOnly, setPriorityOnly] = useState(false);
   const [eyeViewOpen, setEyeViewOpen] = useState(false);
   const [compareOpen, setCompareOpen] = useState(false);
   const [compulsoryOpen, setCompulsoryOpen] = useState(false);
