@@ -774,7 +774,7 @@ export default function TeamTracking() {
           stageTagNames={computedStageNames}
           finalTagName={finalTagName}
           personalSnapshots={personalSnapshots}
-          totalSnapshots={totalSnapshots}
+          totalSnapshots={rolledTotalSnapshots}
           uplineLeaderId={null}
           targetUserId={selected.kind === 'member' ? selected.userId : null}
           targetUserName={selected.kind === 'member' ? selected.displayName : null}
