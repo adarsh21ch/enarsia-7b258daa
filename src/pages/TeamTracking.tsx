@@ -138,6 +138,20 @@ export default function TeamTracking() {
     members, levels, loading: teamLoading,
   } = useLeaderTeamMembers(user?.id, profile?.email, profile?.neverai_id);
 
+  const { prioritySet, toggle: togglePriority } = useMemberPriority();
+
+  // Priority members surface first inside every grouping
+  const sortMembers = useCallback((arr: TeamMemberProfile[]) => {
+    return [...arr].sort((a, b) => {
+      const ap = prioritySet.has(a.user_id) ? 0 : 1;
+      const bp = prioritySet.has(b.user_id) ? 0 : 1;
+      if (ap !== bp) return ap - bp;
+      const an = (a.display_name || a.email || '').toLowerCase();
+      const bn = (b.display_name || b.email || '').toLowerCase();
+      return an.localeCompare(bn);
+    });
+  }, [prioritySet]);
+
   const targetUserId = useMemo(() => {
     if (selected.kind === 'member') return selected.userId;
     return user?.id ?? null;
