@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { format, subMonths, addMonths } from 'date-fns';
-import { ChevronLeft, ChevronRight, Users, ArrowLeft, BarChart3, Info, Crown, ChevronDown, ChevronUp, Activity, Columns3, ListChecks, PanelLeftClose, PanelLeftOpen, Menu, Bell, Send, Zap, Edit3, Star } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Users, ArrowLeft, BarChart3, Info, Crown, ChevronDown, ChevronUp, Activity, Columns3, ListChecks, PanelLeftClose, PanelLeftOpen, Menu, Bell, Send, Zap, Edit3, Star, Eye } from 'lucide-react';
 import { InboxDrawer } from '@/components/layout/InboxDrawer';
 import { SendMessageDrawer } from '@/components/layout/SendMessageDrawer';
 import { useInbox } from '@/hooks/useInbox';
@@ -63,6 +63,7 @@ export default function TeamTracking() {
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [selected, setSelected] = useState<SelectedEntity>({ kind: 'self_total' });
   const [collapsedLevels, setCollapsedLevels] = useState<Record<string, boolean>>({});
+  const [priorityOnly, setPriorityOnly] = useState(false);
   const [eyeViewOpen, setEyeViewOpen] = useState(false);
   const [compareOpen, setCompareOpen] = useState(false);
   const [compulsoryOpen, setCompulsoryOpen] = useState(false);
@@ -140,9 +141,10 @@ export default function TeamTracking() {
 
   const { prioritySet, toggle: togglePriority } = useMemberPriority();
 
-  // Priority members surface first inside every grouping
+  // Priority members surface first inside every grouping; optional "Priority only" filter
   const sortMembers = useCallback((arr: TeamMemberProfile[]) => {
-    return [...arr].sort((a, b) => {
+    const base = priorityOnly ? arr.filter(m => prioritySet.has(m.user_id)) : arr;
+    return [...base].sort((a, b) => {
       const ap = prioritySet.has(a.user_id) ? 0 : 1;
       const bp = prioritySet.has(b.user_id) ? 0 : 1;
       if (ap !== bp) return ap - bp;
@@ -150,7 +152,11 @@ export default function TeamTracking() {
       const bn = (b.display_name || b.email || '').toLowerCase();
       return an.localeCompare(bn);
     });
-  }, [prioritySet]);
+  }, [prioritySet, priorityOnly]);
+
+  const openMemberProspects = useCallback((memberUserId: string) => {
+    navigate(`/team-tracking/member/${memberUserId}/prospects`);
+  }, [navigate]);
 
   const targetUserId = useMemo(() => {
     if (selected.kind === 'member') return selected.userId;
@@ -310,6 +316,26 @@ export default function TeamTracking() {
         />
         <div className="my-2 border-t border-border/40" />
 
+        {(members.length > 0 || priorityOnly) && (
+          <div className="mb-1 flex items-center justify-between px-2">
+            <span className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Team</span>
+            <button
+              onClick={() => setPriorityOnly(v => !v)}
+              className={cn(
+                'flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-medium transition-colors',
+                priorityOnly
+                  ? 'bg-amber-500/15 text-amber-600 dark:text-amber-400'
+                  : 'text-muted-foreground hover:bg-muted/60',
+              )}
+              aria-pressed={priorityOnly}
+            >
+              <Star className={cn('h-3 w-3', priorityOnly && 'fill-current')} />
+              Priority only
+            </button>
+          </div>
+        )}
+
+
         {teamLoading && <p className="px-2 py-3 text-xs text-muted-foreground">Loading team…</p>}
         {!teamLoading && members.length === 0 && (
           <div className="px-2 py-3 text-xs text-muted-foreground">
@@ -338,6 +364,7 @@ export default function TeamTracking() {
                   onSelect={selectMember}
                   isPriority={prioritySet.has(m.user_id)}
                   onTogglePriority={togglePriority}
+                  onOpenProspects={openMemberProspects}
                 />
               ))}
             </div>
@@ -359,6 +386,7 @@ export default function TeamTracking() {
                 onSelect={selectMember}
                 isPriority={prioritySet.has(m.user_id)}
                 onTogglePriority={togglePriority}
+                onOpenProspects={openMemberProspects}
               />
             ))}
           </div>
@@ -533,27 +561,40 @@ export default function TeamTracking() {
               </div>
 
               {selected.kind === 'member' && (
-                <div className="mt-2 flex gap-1 rounded-lg bg-muted p-0.5">
-                  <button
-                    onClick={() => setSelected({ ...selected, isPersonal: false })}
-                    className={cn(
-                      'flex-1 rounded-md px-3 py-1.5 text-xs font-medium transition-colors',
-                      !selected.isPersonal ? 'bg-background shadow-sm' : 'text-muted-foreground',
-                    )}
+                <div className="mt-2 flex items-center gap-2">
+                  <div className="flex flex-1 gap-1 rounded-lg bg-muted p-0.5">
+                    <button
+                      onClick={() => setSelected({ ...selected, isPersonal: false })}
+                      className={cn(
+                        'flex-1 rounded-md px-3 py-1.5 text-xs font-medium transition-colors',
+                        !selected.isPersonal ? 'bg-background shadow-sm' : 'text-muted-foreground',
+                      )}
+                    >
+                      Team Total
+                    </button>
+                    <button
+                      onClick={() => setSelected({ ...selected, isPersonal: true })}
+                      className={cn(
+                        'flex-1 rounded-md px-3 py-1.5 text-xs font-medium transition-colors',
+                        selected.isPersonal ? 'bg-background shadow-sm' : 'text-muted-foreground',
+                      )}
+                    >
+                      Personal Only
+                    </button>
+                  </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="h-8 gap-1.5 px-2.5 text-xs flex-shrink-0"
+                    onClick={() => openMemberProspects(selected.userId)}
+                    aria-label="Open member prospects read-only"
                   >
-                    Team Total
-                  </button>
-                  <button
-                    onClick={() => setSelected({ ...selected, isPersonal: true })}
-                    className={cn(
-                      'flex-1 rounded-md px-3 py-1.5 text-xs font-medium transition-colors',
-                      selected.isPersonal ? 'bg-background shadow-sm' : 'text-muted-foreground',
-                    )}
-                  >
-                    Personal Only
-                  </button>
+                    <Eye className="h-3.5 w-3.5 text-primary" />
+                    <span>Prospects</span>
+                  </Button>
                 </div>
               )}
+
 
               <div className="mt-2">
                 <ModeSelectors
@@ -796,15 +837,16 @@ interface MemberRowProps {
   onSelect: (m: TeamMemberProfile, isPersonal: boolean) => void;
   isPriority?: boolean;
   onTogglePriority?: (memberUserId: string) => void;
+  onOpenProspects?: (memberUserId: string) => void;
 }
-function MemberRow({ member, activeUserId, onSelect, isPriority, onTogglePriority }: MemberRowProps) {
+function MemberRow({ member, activeUserId, onSelect, isPriority, onTogglePriority, onOpenProspects }: MemberRowProps) {
   const active = activeUserId === member.user_id;
   const name = member.display_name || member.email || 'Unnamed';
   const initials = name.slice(0, 2).toUpperCase();
   return (
     <div
       className={cn(
-        'mb-0.5 group flex w-full items-center gap-2 rounded-md px-2 py-1.5 transition-colors',
+        'mb-0.5 group flex w-full items-center gap-1 rounded-md px-2 py-1.5 transition-colors',
         active ? 'bg-primary/10 text-primary' : 'hover:bg-muted/50',
       )}
     >
@@ -820,6 +862,16 @@ function MemberRow({ member, activeUserId, onSelect, isPriority, onTogglePriorit
           {member.email && <div className="truncate text-[10px] text-muted-foreground">{member.email}</div>}
         </div>
       </button>
+      {onOpenProspects && (
+        <button
+          onClick={(e) => { e.stopPropagation(); onOpenProspects(member.user_id); }}
+          className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded text-muted-foreground opacity-0 transition-opacity hover:bg-muted/60 hover:text-primary group-hover:opacity-100"
+          aria-label={`Open ${name}'s prospects (read-only)`}
+          title="View prospects (read-only)"
+        >
+          <Eye className="h-3.5 w-3.5" />
+        </button>
+      )}
       {onTogglePriority && (
         <button
           onClick={(e) => { e.stopPropagation(); onTogglePriority(member.user_id); }}
@@ -837,3 +889,4 @@ function MemberRow({ member, activeUserId, onSelect, isPriority, onTogglePriorit
     </div>
   );
 }
+

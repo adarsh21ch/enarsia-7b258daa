@@ -29,6 +29,7 @@ const ListUp = lazy(() => import("./pages/ListUp"));
 const TodoUp = lazy(() => import("./pages/TodoUp"));
 const Tracking = lazy(() => import("./pages/Tracking"));
 const TeamTracking = lazy(() => import("./pages/TeamTracking"));
+const MemberProspectsReadOnly = lazy(() => import("./pages/MemberProspectsReadOnly"));
 
 // Lazy load less frequently accessed pages
 const Home = lazy(() => import("./pages/Home"));
@@ -145,6 +146,7 @@ function App() {
                         <Route path="/dashboard" element={<Dashboard />} />
                         <Route path="/tracking" element={<Tracking />} />
                         <Route path="/team-tracking" element={<TeamTracking />} />
+                        <Route path="/team-tracking/member/:userId/prospects" element={<MemberProspectsReadOnly />} />
                         <Route path="/home" element={<Home />} />
                         <Route path="/action" element={<TodoUp />} />
                         <Route path="/listup" element={<ListUp />} />
