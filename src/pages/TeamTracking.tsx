@@ -141,9 +141,10 @@ export default function TeamTracking() {
 
   const { prioritySet, toggle: togglePriority } = useMemberPriority();
 
-  // Priority members surface first inside every grouping
+  // Priority members surface first inside every grouping; optional "Priority only" filter
   const sortMembers = useCallback((arr: TeamMemberProfile[]) => {
-    return [...arr].sort((a, b) => {
+    const base = priorityOnly ? arr.filter(m => prioritySet.has(m.user_id)) : arr;
+    return [...base].sort((a, b) => {
       const ap = prioritySet.has(a.user_id) ? 0 : 1;
       const bp = prioritySet.has(b.user_id) ? 0 : 1;
       if (ap !== bp) return ap - bp;
@@ -151,7 +152,11 @@ export default function TeamTracking() {
       const bn = (b.display_name || b.email || '').toLowerCase();
       return an.localeCompare(bn);
     });
-  }, [prioritySet]);
+  }, [prioritySet, priorityOnly]);
+
+  const openMemberProspects = useCallback((memberUserId: string) => {
+    navigate(`/team-tracking/member/${memberUserId}/prospects`);
+  }, [navigate]);
 
   const targetUserId = useMemo(() => {
     if (selected.kind === 'member') return selected.userId;
