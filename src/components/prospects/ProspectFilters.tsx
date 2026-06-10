@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Close as PopoverPrimitiveClose } from '@radix-ui/react-popover';
+
 import { Checkbox } from '@/components/ui/checkbox';
 import { X, ChevronDown, Settings2, Lock } from 'lucide-react';
 import { FUNNEL_STAGES, EXTENDED_ACTIONS, FunnelStage, ProspectQuality, ExtendedActionTaken } from '@/types/prospect';
