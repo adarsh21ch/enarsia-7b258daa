@@ -7,11 +7,10 @@ import {
   DialogTitle,
   DialogDescription,
 } from '@/components/ui/dialog';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Crown, CalendarDays, ChevronRight } from 'lucide-react';
+import { Crown, CalendarDays, ChevronRight, Pencil, Sparkles, Lock } from 'lucide-react';
+import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { useTrackingSourcePreferences, type TrackingSource } from '@/hooks/useTrackingSourcePreferences';
 import { usePermissions } from '@/contexts/PermissionsContext';
@@ -74,68 +73,34 @@ export function TrackingSettingsDialog({ open, onOpenChange, onEditFunnelConfig 
           <DialogDescription>Choose how your tracking data is recorded.</DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-6 pt-2">
+        <div className="space-y-5 pt-2">
           {/* Personal Tracking Mode */}
-          <div className="space-y-3">
-            <h3 className="text-sm font-semibold text-foreground">Personal Tracking Mode</h3>
-            <RadioGroup
-              value={localPersonal}
-              onValueChange={(v) => setLocalPersonal(v as TrackingSource)}
-              className="gap-3"
-            >
-              <div className="flex items-start gap-3">
-                <RadioGroupItem value="MANUAL" id="personal-manual" className="mt-0.5" />
-                <Label htmlFor="personal-manual" className="text-sm font-normal cursor-pointer">
-                  Manual Entry
-                </Label>
-              </div>
-              <div className="flex items-start gap-3">
-                <RadioGroupItem value="AUTO" id="personal-auto" className="mt-0.5" disabled={!canPersonalAuto} />
-                <Label htmlFor="personal-auto" className={`text-sm font-normal ${canPersonalAuto ? 'cursor-pointer' : 'text-muted-foreground cursor-not-allowed'}`}>
-                  Automatic (From Application)
-                </Label>
-                {!canPersonalAuto && (
-                  <Badge variant="outline" className="text-[10px] gap-1 border-amber-500/50 text-amber-600">
-                    <Crown className="h-3 w-3" /> {personalTierLabel}
-                  </Badge>
-                )}
-              </div>
-            </RadioGroup>
-            <p className="text-[11px] text-muted-foreground leading-relaxed">
-              Automatic mode updates your tracking from app activities like calling, follow-ups, and enrollments.
-            </p>
-          </div>
+          <ModeToggle
+            title="Personal Tracking"
+            value={localPersonal}
+            onChange={setLocalPersonal}
+            autoDisabled={!canPersonalAuto}
+            lockedTierLabel={personalTierLabel}
+            description={
+              localPersonal === 'AUTO'
+                ? 'Updates automatically from your in-app activity — calls, follow-ups, and enrollments.'
+                : 'You enter your own numbers each day. Nothing is tracked from the app.'
+            }
+          />
 
           {/* Total Tracking Mode */}
-          <div className="space-y-3">
-            <h3 className="text-sm font-semibold text-foreground">Total Tracking Mode</h3>
-            <RadioGroup
-              value={localTeam}
-              onValueChange={(v) => setLocalTeam(v as TrackingSource)}
-              className="gap-3"
-            >
-              <div className="flex items-start gap-3">
-                <RadioGroupItem value="MANUAL" id="total-manual" className="mt-0.5" />
-                <Label htmlFor="total-manual" className="text-sm font-normal cursor-pointer">
-                  Manual Entry
-                </Label>
-              </div>
-              <div className="flex items-start gap-3">
-                <RadioGroupItem value="AUTO" id="total-auto" className="mt-0.5" disabled={!canTotalAuto} />
-                <Label htmlFor="total-auto" className={`text-sm font-normal ${canTotalAuto ? 'cursor-pointer' : 'text-muted-foreground cursor-not-allowed'}`}>
-                  Automatic (Personal + Team Auto Calculation)
-                </Label>
-                {!canTotalAuto && (
-                  <Badge variant="outline" className="text-[10px] gap-1 border-amber-500/50 text-amber-600">
-                    <Crown className="h-3 w-3" /> {totalTierLabel}
-                  </Badge>
-                )}
-              </div>
-            </RadioGroup>
-            <p className="text-[11px] text-muted-foreground leading-relaxed">
-              Automatic total tracking calculates your personal + team data automatically.
-            </p>
-          </div>
+          <ModeToggle
+            title="Total Tracking"
+            value={localTeam}
+            onChange={setLocalTeam}
+            autoDisabled={!canTotalAuto}
+            lockedTierLabel={totalTierLabel}
+            description={
+              localTeam === 'AUTO'
+                ? 'Calculates your total as Personal + Team automatically.'
+                : 'You enter total numbers manually. Team data is not added.'
+            }
+          />
 
           {/* Funnel Configuration entry */}
           {onEditFunnelConfig && (
@@ -178,5 +143,63 @@ export function TrackingSettingsDialog({ open, onOpenChange, onEditFunnelConfig 
         </Button>
       </DialogContent>
     </Dialog>
+  );
+}
+
+interface ModeToggleProps {
+  title: string;
+  value: TrackingSource;
+  onChange: (v: TrackingSource) => void;
+  autoDisabled: boolean;
+  lockedTierLabel: string;
+  description: string;
+}
+
+function ModeToggle({ title, value, onChange, autoDisabled, lockedTierLabel, description }: ModeToggleProps) {
+  const isAuto = value === 'AUTO';
+  return (
+    <div className="space-y-2">
+      <div className="flex items-center justify-between">
+        <h3 className="text-sm font-semibold text-foreground">{title}</h3>
+        {autoDisabled && (
+          <Badge variant="outline" className="text-[10px] gap-1 border-amber-500/50 text-amber-600">
+            <Crown className="h-3 w-3" /> {lockedTierLabel}
+          </Badge>
+        )}
+      </div>
+      <div className="grid grid-cols-2 gap-1 p-1 rounded-xl bg-muted/60 border border-border/60">
+        <button
+          type="button"
+          onClick={() => onChange('MANUAL')}
+          className={cn(
+            'flex items-center justify-center gap-1.5 py-2 rounded-lg text-xs font-medium transition-all duration-200',
+            !isAuto
+              ? 'bg-background shadow-sm text-foreground'
+              : 'text-muted-foreground hover:text-foreground'
+          )}
+        >
+          <Pencil className="h-3.5 w-3.5" />
+          Manual
+        </button>
+        <button
+          type="button"
+          disabled={autoDisabled}
+          onClick={() => !autoDisabled && onChange('AUTO')}
+          className={cn(
+            'flex items-center justify-center gap-1.5 py-2 rounded-lg text-xs font-medium transition-all duration-200',
+            isAuto
+              ? 'bg-primary text-primary-foreground shadow-sm'
+              : 'text-muted-foreground hover:text-foreground',
+            autoDisabled && 'opacity-50 cursor-not-allowed hover:text-muted-foreground'
+          )}
+        >
+          {autoDisabled ? <Lock className="h-3.5 w-3.5" /> : <Sparkles className="h-3.5 w-3.5" />}
+          Automatic
+        </button>
+      </div>
+      <p className="text-[11px] text-muted-foreground leading-relaxed px-0.5">
+        {description}
+      </p>
+    </div>
   );
 }
