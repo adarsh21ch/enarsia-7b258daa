@@ -41,7 +41,7 @@ import {
 import { WhatsAppIcon } from '@/components/ui/ActionIcons';
 import { format, parseISO, formatDistanceToNow } from 'date-fns';
 import { toast } from 'sonner';
-import { logCallMade } from '@/lib/callLog';
+import { logCallMade, logWhatsAppSent, logSmsSent } from '@/lib/callLog';
 import { cn } from '@/lib/utils';
 import { useTrackingTags } from '@/hooks/useTrackingTags';
 import { useIsMobile } from '@/hooks/use-mobile';
