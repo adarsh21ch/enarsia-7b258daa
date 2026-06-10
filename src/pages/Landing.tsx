@@ -107,13 +107,13 @@ export default function Landing() {
               Built in India 🇮🇳 for Network Marketers
             </div>
             <h1 className="mt-5 text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-extrabold tracking-tight leading-[1.05]">
-              The personal CRM<br />
+              Never Miss a Follow-Up.<br />
               <span className="bg-gradient-to-r from-primary via-primary to-accent bg-clip-text text-transparent">
-                built for network marketers.
+                Never Lose a Prospect.
               </span>
             </h1>
             <p className="mt-5 text-base sm:text-lg text-muted-foreground max-w-xl leading-relaxed">
-              Manage your leads, follow up on time, and close more enrolments — all in one app, right on your phone.
+              Manage leads, follow up on time, stay organized, and know exactly what to do next—every day.
             </p>
             <div className="mt-7 flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-5">
               <Link to="/auth">
