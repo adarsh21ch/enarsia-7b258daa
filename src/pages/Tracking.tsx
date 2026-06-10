@@ -380,7 +380,16 @@ export default function Tracking() {
       />
 
       {/* Tracking Settings Dialog */}
-      <TrackingSettingsDialog open={showSettings} onOpenChange={setShowSettings} />
+      <TrackingSettingsDialog
+        open={showSettings}
+        onOpenChange={setShowSettings}
+        onEditFunnelConfig={() => { setShowSettings(false); setShowFunnelConfig(true); }}
+      />
+      <FunnelConfigDialog
+        open={showFunnelConfig}
+        onOpenChange={setShowFunnelConfig}
+        required={viewType === 'funnel' && funnelNotConfigured}
+      />
       <TrackingGuideSheet open={showGuide} onOpenChange={setShowGuide} />
       <AIInsightsSettings open={showAIInsights} onOpenChange={setShowAIInsights} hideGlobalToggles />
 
