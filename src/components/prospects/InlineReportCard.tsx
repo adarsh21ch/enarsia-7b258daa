@@ -150,6 +150,7 @@ const [localData, setLocalData] = useState<Partial<Prospect>>({});
 
   const openWhatsApp = (e: React.MouseEvent) => {
     e.stopPropagation();
+    logWhatsAppSent({ prospectId: prospect.id, name: prospect.name, phone: prospect.phone });
     // Use whatsapp:// protocol to open native app directly
     window.location.href = `whatsapp://send?phone=${cleanPhoneNumber(prospect.phone)}`;
   };
@@ -173,6 +174,7 @@ const [localData, setLocalData] = useState<Partial<Prospect>>({});
 
   const openSMS = (e: React.MouseEvent) => {
     e.stopPropagation();
+    logSmsSent({ prospectId: prospect.id, name: prospect.name, phone: prospect.phone });
     window.location.href = `sms:${cleanPhoneNumber(prospect.phone)}`;
   };
 
