@@ -93,6 +93,47 @@ export function RecentActivityView({ selectedDate: externalDate, searchQuery: ex
         prospectId: log.prospect_id || null,
       }));
 
+    const whatsappEntries: ActivityItem[] = activityLogs
+      .filter(log => log.activity_type === 'whatsapp_sent')
+      .map(log => ({
+        id: log.id,
+        type: 'whatsapp',
+        name: log.description || 'WhatsApp',
+        phone: log.new_value || null,
+        stage: null,
+        action: null,
+        time: new Date(log.created_at),
+        prospectId: log.prospect_id || null,
+      }));
+
+    const smsEntries: ActivityItem[] = activityLogs
+      .filter(log => log.activity_type === 'sms_sent')
+      .map(log => ({
+        id: log.id,
+        type: 'sms',
+        name: log.description || 'Text',
+        phone: log.new_value || null,
+        stage: null,
+        action: null,
+        time: new Date(log.created_at),
+        prospectId: log.prospect_id || null,
+      }));
+
+    const tagEntries: ActivityItem[] = activityLogs
+      .filter(log => log.activity_type === 'response_tag_set' || log.activity_type === 'stage_tag_set')
+      .map(log => ({
+        id: log.id,
+        type: log.activity_type === 'response_tag_set' ? 'tag' : 'stage',
+        name: log.description || 'Tag updated',
+        phone: null,
+        stage: null,
+        action: null,
+        time: new Date(log.created_at),
+        prospectId: log.prospect_id || null,
+        tagOldValue: log.old_value || null,
+        tagNewValue: log.new_value || null,
+      }));
+
     const prospectActivities: ActivityItem[] = prospects
       .filter(p => {
         const addedTime = new Date(p.date_added).getTime();
@@ -124,7 +165,15 @@ export function RecentActivityView({ selectedDate: externalDate, searchQuery: ex
     const monthStart = startOfMonth(calendar.currentMonth).getTime();
     const monthEnd = endOfMonth(calendar.currentMonth).getTime();
 
-    let list: ActivityItem[] = [...prospectActivities, ...importEntries, ...callEntries, ...todoActivities]
+    let list: ActivityItem[] = [
+      ...prospectActivities,
+      ...importEntries,
+      ...callEntries,
+      ...whatsappEntries,
+      ...smsEntries,
+      ...tagEntries,
+      ...todoActivities,
+    ]
       .filter(a => {
         const t = a.time.getTime();
         return t >= monthStart && t <= monthEnd;
