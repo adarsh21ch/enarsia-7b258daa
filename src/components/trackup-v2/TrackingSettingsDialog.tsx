@@ -74,68 +74,34 @@ export function TrackingSettingsDialog({ open, onOpenChange, onEditFunnelConfig 
           <DialogDescription>Choose how your tracking data is recorded.</DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-6 pt-2">
+        <div className="space-y-5 pt-2">
           {/* Personal Tracking Mode */}
-          <div className="space-y-3">
-            <h3 className="text-sm font-semibold text-foreground">Personal Tracking Mode</h3>
-            <RadioGroup
-              value={localPersonal}
-              onValueChange={(v) => setLocalPersonal(v as TrackingSource)}
-              className="gap-3"
-            >
-              <div className="flex items-start gap-3">
-                <RadioGroupItem value="MANUAL" id="personal-manual" className="mt-0.5" />
-                <Label htmlFor="personal-manual" className="text-sm font-normal cursor-pointer">
-                  Manual Entry
-                </Label>
-              </div>
-              <div className="flex items-start gap-3">
-                <RadioGroupItem value="AUTO" id="personal-auto" className="mt-0.5" disabled={!canPersonalAuto} />
-                <Label htmlFor="personal-auto" className={`text-sm font-normal ${canPersonalAuto ? 'cursor-pointer' : 'text-muted-foreground cursor-not-allowed'}`}>
-                  Automatic (From Application)
-                </Label>
-                {!canPersonalAuto && (
-                  <Badge variant="outline" className="text-[10px] gap-1 border-amber-500/50 text-amber-600">
-                    <Crown className="h-3 w-3" /> {personalTierLabel}
-                  </Badge>
-                )}
-              </div>
-            </RadioGroup>
-            <p className="text-[11px] text-muted-foreground leading-relaxed">
-              Automatic mode updates your tracking from app activities like calling, follow-ups, and enrollments.
-            </p>
-          </div>
+          <ModeToggle
+            title="Personal Tracking"
+            value={localPersonal}
+            onChange={setLocalPersonal}
+            autoDisabled={!canPersonalAuto}
+            lockedTierLabel={personalTierLabel}
+            description={
+              localPersonal === 'AUTO'
+                ? 'Updates automatically from your in-app activity — calls, follow-ups, and enrollments.'
+                : 'You enter your own numbers each day. Nothing is tracked from the app.'
+            }
+          />
 
           {/* Total Tracking Mode */}
-          <div className="space-y-3">
-            <h3 className="text-sm font-semibold text-foreground">Total Tracking Mode</h3>
-            <RadioGroup
-              value={localTeam}
-              onValueChange={(v) => setLocalTeam(v as TrackingSource)}
-              className="gap-3"
-            >
-              <div className="flex items-start gap-3">
-                <RadioGroupItem value="MANUAL" id="total-manual" className="mt-0.5" />
-                <Label htmlFor="total-manual" className="text-sm font-normal cursor-pointer">
-                  Manual Entry
-                </Label>
-              </div>
-              <div className="flex items-start gap-3">
-                <RadioGroupItem value="AUTO" id="total-auto" className="mt-0.5" disabled={!canTotalAuto} />
-                <Label htmlFor="total-auto" className={`text-sm font-normal ${canTotalAuto ? 'cursor-pointer' : 'text-muted-foreground cursor-not-allowed'}`}>
-                  Automatic (Personal + Team Auto Calculation)
-                </Label>
-                {!canTotalAuto && (
-                  <Badge variant="outline" className="text-[10px] gap-1 border-amber-500/50 text-amber-600">
-                    <Crown className="h-3 w-3" /> {totalTierLabel}
-                  </Badge>
-                )}
-              </div>
-            </RadioGroup>
-            <p className="text-[11px] text-muted-foreground leading-relaxed">
-              Automatic total tracking calculates your personal + team data automatically.
-            </p>
-          </div>
+          <ModeToggle
+            title="Total Tracking"
+            value={localTeam}
+            onChange={setLocalTeam}
+            autoDisabled={!canTotalAuto}
+            lockedTierLabel={totalTierLabel}
+            description={
+              localTeam === 'AUTO'
+                ? 'Calculates your total as Personal + Team automatically.'
+                : 'You enter total numbers manually. Team data is not added.'
+            }
+          />
 
           {/* Funnel Configuration entry */}
           {onEditFunnelConfig && (
