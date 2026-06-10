@@ -13,7 +13,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Phone, Trash2, Calendar as CalendarIcon, ChevronDown, MapPin, Target, X } from 'lucide-react';
 import { WhatsAppIcon } from '@/components/ui/ActionIcons';
 import { format, parseISO, formatDistanceToNow } from 'date-fns';
-import { logCallMade } from '@/lib/callLog';
+import { logCallMade, logWhatsAppSent } from '@/lib/callLog';
 import { cn } from '@/lib/utils';
 import { useActivityLogs } from '@/hooks/useActivityLogs';
 import { useCustomOptionsContext } from '@/contexts/CustomOptionsContext';
