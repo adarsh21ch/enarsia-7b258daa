@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Close as PopoverPrimitiveClose } from '@radix-ui/react-popover';
+
 import { Checkbox } from '@/components/ui/checkbox';
 import { X, ChevronDown, Settings2, Lock } from 'lucide-react';
 import { FUNNEL_STAGES, EXTENDED_ACTIONS, FunnelStage, ProspectQuality, ExtendedActionTaken } from '@/types/prospect';
@@ -93,7 +95,7 @@ export function ProspectFilters({
     <div className="flex items-center">
       <div className="flex gap-1.5 items-center">
         {/* Multi-select Stages Filter - only show if showStagesFilter is true */}
-        {showStagesFilter && <Popover>
+        {showStagesFilter && <Popover modal>
           <PopoverTrigger asChild>
             <Button data-onboarding="retargeting-btn" variant="outline" className={cn("h-9 w-auto text-xs shrink-0 justify-between gap-1 rounded-xl", filters.stages.length > 0 && "border-primary/50 bg-primary/5", !canRetarget && "opacity-60")}
               onClick={!canRetarget ? (e: React.MouseEvent) => { e.preventDefault(); toast.error('Upgrade your plan to use retargeting filters'); } : undefined}
@@ -116,15 +118,17 @@ export function ProspectFilters({
             })}>
               Clear Stages
             </Button>}
-            <Button variant="ghost" size="sm" className="w-full mt-2 h-8 text-xs gap-1 text-muted-foreground" onClick={() => setShowStageTagsDialog(true)}>
-              <Settings2 className="h-3 w-3" />
-              Manage Tags
-            </Button>
+            <PopoverPrimitiveClose asChild>
+              <Button variant="ghost" size="sm" className="w-full mt-2 h-8 text-xs gap-1 text-muted-foreground">
+                <X className="h-3 w-3" />
+                Close
+              </Button>
+            </PopoverPrimitiveClose>
           </PopoverContent>}
         </Popover>}
 
         {/* Multi-select Responses Filter - only show if showResponsesFilter is true */}
-        {showResponsesFilter && <Popover>
+        {showResponsesFilter && <Popover modal>
           <PopoverTrigger asChild>
             <Button variant="outline" className={cn("h-9 w-auto text-xs shrink-0 justify-between gap-1 rounded-xl", filters.actions.length > 0 && "border-primary/50 bg-primary/5", !canRetarget && "opacity-60")}
               onClick={!canRetarget ? (e: React.MouseEvent) => { e.preventDefault(); toast.error('Upgrade your plan to use retargeting filters'); } : undefined}
@@ -147,17 +151,24 @@ export function ProspectFilters({
             })}>
               Clear Responses
             </Button>}
-            <Button variant="ghost" size="sm" className="w-full mt-2 h-8 text-xs gap-1 text-muted-foreground" onClick={() => setShowResponseTagsDialog(true)}>
-              <Settings2 className="h-3 w-3" />
-              Manage Tags
-            </Button>
+            <PopoverPrimitiveClose asChild>
+              <Button variant="ghost" size="sm" className="w-full mt-2 h-8 text-xs gap-1 text-muted-foreground">
+                <X className="h-3 w-3" />
+                Close
+              </Button>
+            </PopoverPrimitiveClose>
           </PopoverContent>}
         </Popover>}
 
         {/* Filter Tag button - inline with other controls (only on desktop) */}
         {!isMobile && filterTagButton}
 
-        {hasFilters && <Button variant="ghost" size="sm" onClick={clearFilters} className="h-9 px-2 text-xs shrink-0">
+        {hasFilters && <Button
+          variant="ghost"
+          size="sm"
+          onClick={clearFilters}
+          className="h-9 px-2 text-xs shrink-0 text-destructive hover:text-destructive hover:bg-destructive/10"
+        >
           <X className="h-3.5 w-3.5 sm:mr-1" />
           {!isMobile && 'Clear'}
         </Button>}
