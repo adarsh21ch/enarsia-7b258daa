@@ -25,10 +25,12 @@ interface TrackingSettingsDialogProps {
   onEditFunnelConfig?: () => void;
 }
 
-export function TrackingSettingsDialog({ open, onOpenChange }: TrackingSettingsDialogProps) {
+export function TrackingSettingsDialog({ open, onOpenChange, onEditFunnelConfig }: TrackingSettingsDialogProps) {
   const { personalSource, teamSource, setPreferences, isUpdating } = useTrackingSourcePreferences();
   const { checkFeature } = usePermissions();
   const { config } = useAdminConfig();
+  const { config: funnelConfig, getEffectiveConfig, isReadOnly: funnelReadOnly, leaderName } = useFunnelConfig();
+  const effectiveFunnel = getEffectiveConfig();
 
   const canPersonalAuto = checkFeature('personal_auto_tracking');
   const canTotalAuto = checkFeature('total_auto_tracking');
