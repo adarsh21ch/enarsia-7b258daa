@@ -9,6 +9,7 @@ import { encrypt as clientEncrypt, hasEncryptionKey } from '@/lib/encryption';
 import { useDailyTrackingLog } from '@/hooks/useDailyTrackingLog';
 import { useTrackingFormat } from '@/hooks/useTrackingFormat';
 import { useAutoTrackingSync } from '@/hooks/useAutoTrackingSync';
+import { logTagChange } from '@/lib/callLog';
 
 // Map database prospect to app prospect
 const mapDbProspect = (dbProspect: any): Prospect => ({
