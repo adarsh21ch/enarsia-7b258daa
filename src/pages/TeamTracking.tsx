@@ -166,14 +166,16 @@ export default function TeamTracking() {
   const { snapshots: personalSnapshots } = usePersonalSnapshotV2Read(
     monthYear, leadsTrackingTagNames, stageTagNames, undefined, targetUserId,
   );
-  const { snapshots: totalSnapshots } = useTotalSnapshotV2Read(
-    monthYear, leadsTrackingTagNames, stageTagNames, targetUserId,
+  // Server-side rollup for any "Total" view: leader + their direct downline,
+  // aggregated from personal_snapshot_v2 in one RPC call.
+  const { snapshots: rolledTotalSnapshots } = useTeamTotalRollup(
+    targetUserId, monthYear, leadsTrackingTagNames, stageTagNames,
   );
 
   const isPersonalView =
     selected.kind === 'self_personal' ||
     (selected.kind === 'member' && selected.isPersonal);
-  const activeSnapshots = isPersonalView ? personalSnapshots : totalSnapshots;
+  const activeSnapshots = isPersonalView ? personalSnapshots : rolledTotalSnapshots;
 
   const {
     dailyMetrics, monthlyTotals, kpiData, funnelPeriods,
