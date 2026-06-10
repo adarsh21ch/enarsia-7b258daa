@@ -13,7 +13,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Phone, Trash2, Calendar as CalendarIcon, ChevronDown, MapPin, Target, X } from 'lucide-react';
 import { WhatsAppIcon } from '@/components/ui/ActionIcons';
 import { format, parseISO, formatDistanceToNow } from 'date-fns';
-import { logCallMade } from '@/lib/callLog';
+import { logCallMade, logWhatsAppSent } from '@/lib/callLog';
 import { cn } from '@/lib/utils';
 import { useActivityLogs } from '@/hooks/useActivityLogs';
 import { useCustomOptionsContext } from '@/contexts/CustomOptionsContext';
@@ -117,9 +117,10 @@ const [localData, setLocalData] = useState({
   const openWhatsApp = useCallback((e: React.MouseEvent) => {
     e.stopPropagation();
     onMarkLastContacted?.();
+    logWhatsAppSent({ prospectId: prospect.id, name: prospect.name, phone: prospect.phone });
     // Use whatsapp:// protocol to open native app directly
     window.location.href = `whatsapp://send?phone=${cleanPhoneNumber(prospect.phone)}`;
-  }, [prospect.phone, onMarkLastContacted]);
+  }, [prospect.id, prospect.name, prospect.phone, onMarkLastContacted]);
 
   const openCall = useCallback((e: React.MouseEvent) => {
     e.preventDefault();

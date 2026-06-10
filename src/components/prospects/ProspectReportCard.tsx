@@ -13,7 +13,7 @@ import { Phone, MessageCircle, MessageSquareText, Calendar as CalendarIcon, Cloc
 import { format, parseISO, formatDistanceToNow } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
-import { logCallMade } from '@/lib/callLog';
+import { logCallMade, logWhatsAppSent, logSmsSent } from '@/lib/callLog';
 
 interface ProspectReportCardProps {
   prospect: Prospect | null;
@@ -100,6 +100,7 @@ export function ProspectReportCard({ prospect, open, onOpenChange, onUpdate }: P
   const cleanPhoneNumber = (phone: string) => phone.replace(/[^0-9+]/g, '');
 
   const openWhatsApp = () => {
+    logWhatsAppSent({ prospectId: prospect.id, name: prospect.name, phone: prospect.phone });
     window.location.href = `whatsapp://send?phone=${cleanPhoneNumber(prospect.phone)}`;
   };
 
@@ -109,6 +110,7 @@ export function ProspectReportCard({ prospect, open, onOpenChange, onUpdate }: P
   };
 
   const openSMS = () => {
+    logSmsSent({ prospectId: prospect.id, name: prospect.name, phone: prospect.phone });
     window.location.href = `sms:${cleanPhoneNumber(prospect.phone)}`;
   };
 

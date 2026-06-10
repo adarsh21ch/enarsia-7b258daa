@@ -11,7 +11,7 @@ import { X, Phone, ChevronDown, Instagram, Clock, Trash2, MessageSquareText, Mai
 import { WhatsAppIcon } from '@/components/ui/ActionIcons';
 import { formatDistanceToNow, parseISO, format } from 'date-fns';
 import { toast } from 'sonner';
-import { logCallMade } from '@/lib/callLog';
+import { logCallMade, logWhatsAppSent, logSmsSent } from '@/lib/callLog';
 import { cn } from '@/lib/utils';
 import { useTrackingTags } from '@/hooks/useTrackingTags';
 
@@ -150,6 +150,7 @@ const [localData, setLocalData] = useState<Partial<Prospect>>({});
 
   const openWhatsApp = (e: React.MouseEvent) => {
     e.stopPropagation();
+    logWhatsAppSent({ prospectId: prospect.id, name: prospect.name, phone: prospect.phone });
     // Use whatsapp:// protocol to open native app directly
     window.location.href = `whatsapp://send?phone=${cleanPhoneNumber(prospect.phone)}`;
   };
@@ -173,6 +174,7 @@ const [localData, setLocalData] = useState<Partial<Prospect>>({});
 
   const openSMS = (e: React.MouseEvent) => {
     e.stopPropagation();
+    logSmsSent({ prospectId: prospect.id, name: prospect.name, phone: prospect.phone });
     window.location.href = `sms:${cleanPhoneNumber(prospect.phone)}`;
   };
 

@@ -41,7 +41,7 @@ import {
 import { WhatsAppIcon } from '@/components/ui/ActionIcons';
 import { format, parseISO, formatDistanceToNow } from 'date-fns';
 import { toast } from 'sonner';
-import { logCallMade } from '@/lib/callLog';
+import { logCallMade, logWhatsAppSent, logSmsSent } from '@/lib/callLog';
 import { cn } from '@/lib/utils';
 import { useTrackingTags } from '@/hooks/useTrackingTags';
 import { useIsMobile } from '@/hooks/use-mobile';
@@ -525,6 +525,7 @@ function ProspectDetailBody({
           </a>
           <a
             href={`sms:${phone}`}
+            onClick={() => logSmsSent({ prospectId: prospect.id, name: prospect.name, phone: prospect.phone })}
             className="flex items-center justify-center gap-1.5 h-10 rounded-xl bg-muted/50 hover:bg-muted active:scale-[0.97] transition-all"
           >
             <MessageSquareText className="h-4 w-4 text-blue-500" />
@@ -534,6 +535,7 @@ function ProspectDetailBody({
             href={`https://wa.me/${phone}`}
             target="_blank"
             rel="noreferrer"
+            onClick={() => logWhatsAppSent({ prospectId: prospect.id, name: prospect.name, phone: prospect.phone })}
             className="flex items-center justify-center gap-1.5 h-10 rounded-xl bg-muted/50 hover:bg-muted active:scale-[0.97] transition-all"
           >
             <WhatsAppIcon className="h-4 w-4 text-green-600" />

@@ -9,6 +9,7 @@ import { encrypt as clientEncrypt, hasEncryptionKey } from '@/lib/encryption';
 import { useDailyTrackingLog } from '@/hooks/useDailyTrackingLog';
 import { useTrackingFormat } from '@/hooks/useTrackingFormat';
 import { useAutoTrackingSync } from '@/hooks/useAutoTrackingSync';
+import { logTagChange } from '@/lib/callLog';
 
 // Map database prospect to app prospect
 const mapDbProspect = (dbProspect: any): Prospect => ({
@@ -345,7 +346,34 @@ export function ProspectsProvider({ children }: { children: ReactNode }) {
     if (updates.action_taken !== undefined || updates.funnel_stage !== undefined) {
       triggerDailyLog();
     }
-    
+
+    // Log discrete tag/stage changes so the Activity feed shows each event
+    // (otherwise only the latest prospect state is visible).
+    if (
+      updates.action_taken !== undefined &&
+      (updates.action_taken || '') !== (originalProspect.action_taken || '')
+    ) {
+      logTagChange({
+        prospectId: id,
+        name: originalProspect.name,
+        field: 'response',
+        oldValue: originalProspect.action_taken || null,
+        newValue: updates.action_taken || null,
+      });
+    }
+    if (
+      updates.funnel_stage !== undefined &&
+      (updates.funnel_stage || '') !== (originalProspect.funnel_stage || '')
+    ) {
+      logTagChange({
+        prospectId: id,
+        name: originalProspect.name,
+        field: 'stage',
+        oldValue: originalProspect.funnel_stage || null,
+        newValue: updates.funnel_stage || null,
+      });
+    }
+
     return updatedProspect as Prospect;
   }, [user, encryptFields, prospects, triggerDailyLog]);
 
