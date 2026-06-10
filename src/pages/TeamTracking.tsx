@@ -386,6 +386,7 @@ export default function TeamTracking() {
                 onSelect={selectMember}
                 isPriority={prioritySet.has(m.user_id)}
                 onTogglePriority={togglePriority}
+                onOpenProspects={openMemberProspects}
               />
             ))}
           </div>
