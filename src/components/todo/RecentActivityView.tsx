@@ -323,6 +323,26 @@ export function RecentActivityView({ selectedDate: externalDate, searchQuery: ex
                                   <Phone className="h-3 w-3" />
                                 </span>
                               )}
+                              {activity.type === 'whatsapp' && (
+                                <span className="shrink-0 mt-0.5 h-6 w-6 rounded-full bg-emerald-500/15 text-emerald-600 flex items-center justify-center">
+                                  <WhatsAppIcon className="h-3 w-3" />
+                                </span>
+                              )}
+                              {activity.type === 'sms' && (
+                                <span className="shrink-0 mt-0.5 h-6 w-6 rounded-full bg-blue-500/15 text-blue-600 flex items-center justify-center">
+                                  <MessageSquareText className="h-3 w-3" />
+                                </span>
+                              )}
+                              {activity.type === 'tag' && (
+                                <span className="shrink-0 mt-0.5 h-6 w-6 rounded-full bg-amber-500/15 text-amber-600 flex items-center justify-center">
+                                  <Tag className="h-3 w-3" />
+                                </span>
+                              )}
+                              {activity.type === 'stage' && (
+                                <span className="shrink-0 mt-0.5 h-6 w-6 rounded-full bg-violet-500/15 text-violet-600 flex items-center justify-center">
+                                  <Flag className="h-3 w-3" />
+                                </span>
+                              )}
                               <div className="min-w-0 flex-1">
                                 <p className="text-sm font-semibold truncate">{activity.name}</p>
                                 <div className="flex items-center gap-1.5 flex-wrap mt-1.5">
@@ -331,12 +351,32 @@ export function RecentActivityView({ selectedDate: externalDate, searchQuery: ex
                                       Called · {activity.phone}
                                     </span>
                                   )}
-                                  {activity.stage && (
+                                  {activity.type === 'whatsapp' && activity.phone && (
+                                    <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 font-medium">
+                                      WhatsApp · {activity.phone}
+                                    </span>
+                                  )}
+                                  {activity.type === 'sms' && activity.phone && (
+                                    <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-blue-500/10 text-blue-600 font-medium">
+                                      Text · {activity.phone}
+                                    </span>
+                                  )}
+                                  {activity.type === 'tag' && (
+                                    <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-amber-500/10 text-amber-600 font-medium">
+                                      Tag → {activity.tagNewValue || 'cleared'}
+                                    </span>
+                                  )}
+                                  {activity.type === 'stage' && (
+                                    <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-violet-500/10 text-violet-600 font-medium">
+                                      Stage → {activity.tagNewValue || 'cleared'}
+                                    </span>
+                                  )}
+                                  {activity.type === 'lead' && activity.stage && (
                                     <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-primary/10 text-primary">
                                       {activity.stage}
                                     </span>
                                   )}
-                                  {activity.action && (
+                                  {activity.type === 'lead' && activity.action && (
                                     <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-muted text-muted-foreground">
                                       {activity.action}
                                     </span>
