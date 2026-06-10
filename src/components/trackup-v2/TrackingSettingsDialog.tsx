@@ -11,21 +11,26 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Crown } from 'lucide-react';
+import { Crown, CalendarDays, ChevronRight } from 'lucide-react';
+import { format } from 'date-fns';
 import { useTrackingSourcePreferences, type TrackingSource } from '@/hooks/useTrackingSourcePreferences';
 import { usePermissions } from '@/contexts/PermissionsContext';
 import { useAdminConfig } from '@/hooks/useAdminConfig';
+import { useFunnelConfig } from '@/hooks/useFunnelConfig';
 import { getTierDisplayName } from '@/config/tierLabels';
 
 interface TrackingSettingsDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  onEditFunnelConfig?: () => void;
 }
 
-export function TrackingSettingsDialog({ open, onOpenChange }: TrackingSettingsDialogProps) {
+export function TrackingSettingsDialog({ open, onOpenChange, onEditFunnelConfig }: TrackingSettingsDialogProps) {
   const { personalSource, teamSource, setPreferences, isUpdating } = useTrackingSourcePreferences();
   const { checkFeature } = usePermissions();
   const { config } = useAdminConfig();
+  const { getEffectiveConfig, isReadOnly: funnelReadOnly, leaderName } = useFunnelConfig();
+  const effectiveFunnel = getEffectiveConfig();
 
   const canPersonalAuto = checkFeature('personal_auto_tracking');
   const canTotalAuto = checkFeature('total_auto_tracking');
@@ -131,7 +136,38 @@ export function TrackingSettingsDialog({ open, onOpenChange }: TrackingSettingsD
               Automatic total tracking calculates your personal + team data automatically.
             </p>
           </div>
+
+          {/* Funnel Configuration entry */}
+          {onEditFunnelConfig && (
+            <div className="space-y-2">
+              <h3 className="text-sm font-semibold text-foreground">Funnel Configuration</h3>
+              <button
+                type="button"
+                onClick={onEditFunnelConfig}
+                className="w-full flex items-center justify-between gap-3 rounded-lg border bg-muted/30 hover:bg-muted/60 transition px-3 py-2.5 text-left"
+              >
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className="p-1.5 rounded-md bg-primary/10 shrink-0">
+                    <CalendarDays className="h-4 w-4 text-primary" />
+                  </div>
+                  <div className="min-w-0">
+                    <div className="text-sm font-medium truncate">
+                      {funnelReadOnly ? 'View funnel setup' : 'Edit funnel setup'}
+                    </div>
+                    <div className="text-[11px] text-muted-foreground truncate">
+                      {effectiveFunnel?.day_1_start && effectiveFunnel?.funnel_length
+                        ? `Day 1: ${format(new Date(effectiveFunnel.day_1_start), 'MMM d, yyyy')} • ${effectiveFunnel.funnel_length} ${effectiveFunnel.funnel_length === 1 ? 'day' : 'days'}`
+                        : 'Not configured yet — tap to set up'}
+                      {funnelReadOnly && leaderName ? ` (from ${leaderName})` : ''}
+                    </div>
+                  </div>
+                </div>
+                <ChevronRight className="h-4 w-4 text-muted-foreground shrink-0" />
+              </button>
+            </div>
+          )}
         </div>
+
 
         <Button
           onClick={handleSave}

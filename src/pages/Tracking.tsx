@@ -19,6 +19,7 @@ import { MonthlyTotalsTable } from '@/components/trackup-v2/MonthlyTotalsTable';
 import { ManualUpdateDrawer } from '@/components/trackup-v2/ManualUpdateDrawer';
 import { FloatingUpdateButton } from '@/components/trackup-v2/FloatingUpdateButton';
 import { TrackingSettingsDialog } from '@/components/trackup-v2/TrackingSettingsDialog';
+import { FunnelConfigDialog } from '@/components/trackup-v2/FunnelConfigDialog';
 import { LayoutToggle, type LayoutMode } from '@/components/trackup-v2/LayoutToggle';
 import { MetricCardView } from '@/components/trackup-v2/MetricCardView';
 import { MetricChartView } from '@/components/trackup-v2/MetricChartView';
@@ -62,6 +63,7 @@ export default function Tracking() {
   const [showSettings, setShowSettings] = useState(false);
   const [showGuide, setShowGuide] = useState(false);
   const [showAIInsights, setShowAIInsights] = useState(false);
+  const [showFunnelConfig, setShowFunnelConfig] = useState(false);
 
   // Layout mode (Table / Card / Chart) — persisted per data mode (personal vs total)
   const [layoutMode, setLayoutModeState] = useState<LayoutMode>(() => {
@@ -104,8 +106,17 @@ export default function Tracking() {
   const { personalSource, teamSource } = useTrackingSourcePreferences();
 
   // Funnel config
-  const { getEffectiveConfig } = useFunnelConfig();
+  const { config: ownFunnelConfig, loading: funnelConfigLoading, getEffectiveConfig, isReadOnly: funnelConfigReadOnly } = useFunnelConfig();
   const effectiveConfig = getEffectiveConfig();
+
+  // Auto-prompt when user switches to Funnel view and hasn't configured their funnel yet.
+  // Skip when read-only (leader-controlled) — the leader's config is inherited.
+  const funnelNotConfigured = !funnelConfigReadOnly && (!ownFunnelConfig?.day_1_start || !ownFunnelConfig?.funnel_length);
+  useEffect(() => {
+    if (viewType === 'funnel' && !funnelConfigLoading && funnelNotConfigured) {
+      setShowFunnelConfig(true);
+    }
+  }, [viewType, funnelConfigLoading, funnelNotConfigured]);
 
   // Read snapshots — when source is AUTO, compute from prospects table directly
   const { snapshots: manualSnapshots } = usePersonalSnapshotV2Read(monthYear, leadsTrackingTagNames, stageTagNames);
@@ -369,7 +380,16 @@ export default function Tracking() {
       />
 
       {/* Tracking Settings Dialog */}
-      <TrackingSettingsDialog open={showSettings} onOpenChange={setShowSettings} />
+      <TrackingSettingsDialog
+        open={showSettings}
+        onOpenChange={setShowSettings}
+        onEditFunnelConfig={() => { setShowSettings(false); setShowFunnelConfig(true); }}
+      />
+      <FunnelConfigDialog
+        open={showFunnelConfig}
+        onOpenChange={setShowFunnelConfig}
+        required={viewType === 'funnel' && funnelNotConfigured}
+      />
       <TrackingGuideSheet open={showGuide} onOpenChange={setShowGuide} />
       <AIInsightsSettings open={showAIInsights} onOpenChange={setShowAIInsights} hideGlobalToggles />
 
