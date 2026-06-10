@@ -11,7 +11,7 @@ import { X, Phone, ChevronDown, Instagram, Clock, Trash2, MessageSquareText, Mai
 import { WhatsAppIcon } from '@/components/ui/ActionIcons';
 import { formatDistanceToNow, parseISO, format } from 'date-fns';
 import { toast } from 'sonner';
-import { logCallMade } from '@/lib/callLog';
+import { logCallMade, logWhatsAppSent, logSmsSent } from '@/lib/callLog';
 import { cn } from '@/lib/utils';
 import { useTrackingTags } from '@/hooks/useTrackingTags';
 
