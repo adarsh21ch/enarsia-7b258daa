@@ -583,7 +583,7 @@ export default function TeamTracking() {
                         selected.isPersonal ? 'bg-background shadow-sm' : 'text-muted-foreground',
                       )}
                     >
-                      Personal Only
+                      Front Only
                     </button>
                   </div>
                   <Button
