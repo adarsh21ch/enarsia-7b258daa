@@ -97,7 +97,7 @@ export function TrackingSettingsDialog({ open, onOpenChange, onEditFunnelConfig 
             lockedTierLabel={totalTierLabel}
             description={
               localTeam === 'AUTO'
-                ? 'Calculates your total as Personal + Team automatically.'
+                ? 'Calculates your total as Front + Team automatically.'
                 : 'You enter total numbers manually. Team data is not added.'
             }
           />
