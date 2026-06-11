@@ -315,8 +315,8 @@ export default function TeamTracking() {
           active={selected.kind === 'self_personal'}
           onClick={selectSelfPersonal}
           icon={<BarChart3 className="h-3.5 w-3.5 text-primary" />}
-          label="My Personal"
-          sub="Your activity only"
+          label="My Front"
+          sub="Your front business only"
         />
         <div className="my-2 border-t border-border/40" />
 
