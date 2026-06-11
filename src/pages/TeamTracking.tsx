@@ -228,15 +228,16 @@ export default function TeamTracking() {
 
   if (!user) return null;
 
+  // Front = personal_snapshot_v2 (terminology rename only)
   const headerTitle =
     selected.kind === 'self_total' ? 'My Team Total' :
-    selected.kind === 'self_personal' ? 'My Personal' :
+    selected.kind === 'self_personal' ? 'My Front' :
     selected.displayName;
 
   const headerSubtitle =
     selected.kind === 'self_total' ? 'You + entire downline (rolled up)' :
-    selected.kind === 'self_personal' ? 'Your own activity only' :
-    selected.kind === 'member' && selected.isPersonal ? 'Member personal activity' :
+    selected.kind === 'self_personal' ? 'Your own front business only' :
+    selected.kind === 'member' && selected.isPersonal ? 'Member front business activity' :
     'Member + their downline (rolled up)';
 
   // Sidebar contents (used by desktop full / desktop rail / mobile drawer)
