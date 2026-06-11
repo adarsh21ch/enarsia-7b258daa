@@ -74,9 +74,9 @@ export function TrackingSettingsDialog({ open, onOpenChange, onEditFunnelConfig 
         </DialogHeader>
 
         <div className="space-y-5 pt-2">
-          {/* Personal Tracking Mode */}
+          {/* Front Tracking Mode (Front = personal_snapshot_v2, terminology rename only) */}
           <ModeToggle
-            title="Personal Tracking"
+            title="Front Tracking"
             value={localPersonal}
             onChange={setLocalPersonal}
             autoDisabled={!canPersonalAuto}
