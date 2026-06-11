@@ -79,7 +79,7 @@ export function CompareColumnsSheet({
                   source === s ? 'bg-background shadow-sm' : 'text-muted-foreground',
                 )}
               >
-                {s === 'total' ? 'Team Total' : 'Personal'}
+                {s === 'total' ? 'Team Total' : 'Front'}
               </button>
             ))}
           </div>
