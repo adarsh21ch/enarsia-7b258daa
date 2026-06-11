@@ -228,15 +228,16 @@ export default function TeamTracking() {
 
   if (!user) return null;
 
+  // Front = personal_snapshot_v2 (terminology rename only)
   const headerTitle =
     selected.kind === 'self_total' ? 'My Team Total' :
-    selected.kind === 'self_personal' ? 'My Personal' :
+    selected.kind === 'self_personal' ? 'My Front' :
     selected.displayName;
 
   const headerSubtitle =
     selected.kind === 'self_total' ? 'You + entire downline (rolled up)' :
-    selected.kind === 'self_personal' ? 'Your own activity only' :
-    selected.kind === 'member' && selected.isPersonal ? 'Member personal activity' :
+    selected.kind === 'self_personal' ? 'Your own front business only' :
+    selected.kind === 'member' && selected.isPersonal ? 'Member front business activity' :
     'Member + their downline (rolled up)';
 
   // Sidebar contents (used by desktop full / desktop rail / mobile drawer)
@@ -271,7 +272,7 @@ export default function TeamTracking() {
                   <BarChart3 className="h-4 w-4 text-primary" />
                 </button>
               </TooltipTrigger>
-              <TooltipContent side="right">My Personal</TooltipContent>
+              <TooltipContent side="right">My Front</TooltipContent>
             </Tooltip>
             {members.length > 0 && <div className="my-1 h-px w-6 bg-border/60" />}
             {members.map(m => {
@@ -314,8 +315,8 @@ export default function TeamTracking() {
           active={selected.kind === 'self_personal'}
           onClick={selectSelfPersonal}
           icon={<BarChart3 className="h-3.5 w-3.5 text-primary" />}
-          label="My Personal"
-          sub="Your activity only"
+          label="My Front"
+          sub="Your front business only"
         />
         <div className="my-2 border-t border-border/40" />
 
@@ -582,7 +583,7 @@ export default function TeamTracking() {
                         selected.isPersonal ? 'bg-background shadow-sm' : 'text-muted-foreground',
                       )}
                     >
-                      Personal Only
+                      Front Only
                     </button>
                   </div>
                   <Button

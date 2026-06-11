@@ -113,7 +113,7 @@ export function QuickUpdateModal({
       Quick Update{targetUserName ? ` — ${targetUserName}` : ''}
     </span>
   );
-  const headerDesc = `Personal · ${dateStr}`;
+  const headerDesc = `Front · ${dateStr}`;
 
   const body = (
     <div className="space-y-3 p-4 overflow-y-auto">

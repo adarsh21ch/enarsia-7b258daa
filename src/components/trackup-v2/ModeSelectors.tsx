@@ -41,7 +41,7 @@ export function ModeSelectors({
             )}
           >
             <User className="h-3.5 w-3.5" />
-            Personal
+            Front
           </button>
           <button
             onClick={() => onDataModeChange('total')}
