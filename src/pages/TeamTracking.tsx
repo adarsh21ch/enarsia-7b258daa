@@ -272,7 +272,7 @@ export default function TeamTracking() {
                   <BarChart3 className="h-4 w-4 text-primary" />
                 </button>
               </TooltipTrigger>
-              <TooltipContent side="right">My Personal</TooltipContent>
+              <TooltipContent side="right">My Front</TooltipContent>
             </Tooltip>
             {members.length > 0 && <div className="my-1 h-px w-6 bg-border/60" />}
             {members.map(m => {
